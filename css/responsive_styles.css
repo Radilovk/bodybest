@@ -3,11 +3,12 @@
    ========================================================================== */
 @media (max-width: 768px) {
   html { font-size: 95%; }
-  :root { 
-    --space-lg: 1.2rem; --space-md: 0.8rem; 
-    --tabs-height: 60px; 
+  :root {
+    --space-lg: 1.2rem; --space-md: 0.8rem;
+    --header-height: 55px;
+    --tabs-height: 60px;
     /* --chat-font-size: 1rem; */ /* Chat specific, should be with chat styles or here if truly global */
-  } 
+  }
   body:has(.chat-widget) { /* Example: If chat font size affects body, keep it here */
     --chat-font-size: 1rem; 
   }
@@ -38,6 +39,16 @@
   }
   td ul { padding-left: var(--space-sm); }
 
+  /* Fix tabs navigation to bottom on mobile */
+  nav.tabs {
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    z-index: 999;
+  }
+  body { padding-bottom: var(--tabs-height); }
+
   nav.tabs.styled-tabs .tab-btn { padding: 0.5rem 0.3rem; } 
   nav.tabs.styled-tabs .tab-btn .tab-icon { font-size: 1.2em; }
   nav.tabs.styled-tabs .tab-btn .tab-label { font-size: 0.6rem; }
@@ -53,21 +64,21 @@
   .detailed-metric-item .value-current { font-size: 1em; }
 
   #chat-fab, #feedback-fab {
-    width: 55px; 
+    width: 55px;
     height: 55px;
-    font-size: 26px; 
-    bottom: var(--space-md); 
+    font-size: 26px;
+    bottom: calc(var(--tabs-height) + var(--space-md)); /* keep above bottom nav */
   }
   #chat-fab { right: var(--space-md); }
   #feedback-fab { left: var(--space-md); }
 
   .chat-widget {
-    width: calc(100vw - 2 * var(--space-md)); 
+    width: calc(100vw - 2 * var(--space-md));
     right: var(--space-md);
-    bottom: calc(var(--space-md) + 70px); 
-    height: 65vh; 
-    max-height: 480px; 
-    border-radius: var(--radius-lg); 
+    bottom: calc(var(--tabs-height) + var(--space-md) + 70px); /* account for bottom nav */
+    height: 65vh;
+    max-height: 480px;
+    border-radius: var(--radius-lg);
   }
   .chat-header { padding: var(--space-sm) var(--space-md); }
   .chat-header h4 { font-size: 1.1rem; }
@@ -116,11 +127,12 @@
 
 @media (max-width: 480px) {
   html { font-size: 90%; }
-  :root { 
+  :root {
     --radius-lg: 0.6rem; --radius-md: 0.4rem;
-    --tabs-height: 55px; 
+    --header-height: 50px;
+    --tabs-height: 55px;
     /* --chat-font-size: 0.95rem; */ /* Chat specific */
-  } 
+  }
   body:has(.chat-widget) {
     --chat-font-size: 0.95rem; 
   }
@@ -141,19 +153,19 @@
 
 
   #chat-fab, #feedback-fab {
-    width: 50px; 
+    width: 50px;
     height: 50px;
-    font-size: 24px; 
-    bottom: var(--space-sm); 
+    font-size: 24px;
+    bottom: calc(var(--tabs-height) + var(--space-sm)); /* keep above bottom nav */
   }
   #chat-fab { right: var(--space-sm); }
   #feedback-fab { left: var(--space-sm); }
 
   .chat-widget {
-    bottom: calc(var(--space-sm) + 65px); 
-    height: 70vh; 
-    max-height: 450px; 
-    border-radius: var(--radius-md); 
+    bottom: calc(var(--tabs-height) + var(--space-sm) + 65px); /* account for bottom nav */
+    height: 70vh;
+    max-height: 450px;
+    border-radius: var(--radius-md);
   }
    .chat-header { padding: var(--space-xs) var(--space-sm); }
    .chat-header h4 { font-size: 1rem; }
