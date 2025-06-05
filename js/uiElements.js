@@ -4,7 +4,6 @@ import { showLoading } from './uiHandlers.js'; // Needed for error in initialize
 export const selectors = {};
 
 export function initializeSelectors() {
-    console.log("Initializing selectors...");
     const selDefs = {
         appWrapper: 'appWrapper', loadingOverlay: 'loadingOverlay', loadingOverlayText: 'loadingOverlayText', planPendingState: 'planPendingState',
         headerTitle: 'headerTitle', menuToggle: 'menu-toggle', mainMenu: 'main-menu', menuClose: 'main-menu .menu-close',
@@ -85,7 +84,6 @@ export function initializeSelectors() {
         console.warn("Основният контейнер за адаптивния въпросник ('adaptiveQuizWrapper') не е намерен. Специфичните селектори за въпросника няма да бъдат инициализирани.");
     }
 
-    console.log("Selectors initialized.");
     if (missingCriticalCount > 0) {
          const errorMsg = `CRITICAL ERROR: ${missingCriticalCount} essential HTML element(s) are missing. Functionality will be severely impaired. Please check your HTML structure.`;
          console.error(errorMsg);
