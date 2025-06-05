@@ -16,8 +16,7 @@ export const apiEndpoints = {
     logExtraMeal: `${workerBaseUrl}/api/log-extra-meal`,
     getAdaptiveQuiz: `${workerBaseUrl}/api/getAdaptiveQuiz`,
     submitAdaptiveQuiz: `${workerBaseUrl}/api/submitAdaptiveQuiz`,
-    acknowledgeAiUpdate: `${workerBaseUrl}/api/acknowledgeAiUpdate`,
-    forgotPassword: `${workerBaseUrl}/api/forgotPassword`
+    acknowledgeAiUpdate: `${workerBaseUrl}/api/acknowledgeAiUpdate`
 };
 
 export const generateId = (prefix = 'id') => `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
