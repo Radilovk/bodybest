@@ -89,7 +89,7 @@ function createTestData() {
 // ==========================================================================
 function initializeApp() {
     try {
-        if (isLocalDevelopment) console.log("initializeApp starting from app.js...");
+        console.log("initializeApp starting from app.js...");
         initializeSelectors();
         showLoading(true, "Инициализация на таблото...");
         currentUserId = sessionStorage.getItem('userId');
@@ -110,7 +110,7 @@ function initializeApp() {
         setupStaticEventListeners(); // from eventListeners.js
         initializeTheme(); // from uiHandlers.js
         loadDashboardData();
-        if (isLocalDevelopment) console.log("initializeApp finished successfully.");
+        console.log("initializeApp finished successfully.");
     } catch (error) {
         console.error("Критична грешка при инициализация:", error.message, error.stack);
         if(selectors.loadingOverlayText && !selectors.loadingOverlayText.textContent.includes("Критична грешка")) {
@@ -125,7 +125,7 @@ function initializeApp() {
 // ЗАРЕЖДАНЕ И ОБРАБОТКА НА ДАННИ
 // ==========================================================================
 export async function loadDashboardData() { // Exported for adaptiveQuiz.js to call after submit
-    if (isLocalDevelopment) console.log("loadDashboardData starting for user:", currentUserId);
+    console.log("loadDashboardData starting for user:", currentUserId);
     if (!currentUserId) {
          showPlanPendingState("Грешка: Потребителска сесия не е намерена. Моля, <a href='index.html' style='color: var(--primary-color); text-decoration: underline;'>влезте отново</a>.");
          showLoading(false);
@@ -137,7 +137,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
     try {
         if (currentUserId.includes('test_user') || window.location.hostname.includes('replit')) {
             const data = createTestData();
-            if (isLocalDevelopment) console.log("Using test data for development:", data);
+            console.log("Using test data for development:", data);
             fullDashboardData = data;
             chatHistory = []; // Reset chat history for test user on reload
 
@@ -166,7 +166,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
         const data = await response.json();
         if (!data.success) throw new Error(data.message || 'Неуспешно зареждане на данни от сървъра.');
 
-        if (isLocalDevelopment) console.log("Data received from worker:", data);
+        console.log("Data received from worker:", data);
         fullDashboardData = data;
         // chatHistory = []; // Do not reset chat history on normal data load, only for test user or logout
 
@@ -339,7 +339,7 @@ export async function handleFeedbackFormSubmit(event) { // Exported for eventLis
         rating: formData.get('feedbackRating')
     };
 
-    if (isLocalDevelopment) console.log("Feedback to send:", feedbackData);
+    console.log("Feedback to send:", feedbackData);
     showLoading(true, "Изпращане на обратна връзка...");
     setTimeout(() => {
         showLoading(false);
@@ -355,11 +355,11 @@ export async function handleFeedbackFormSubmit(event) { // Exported for eventLis
 // ==========================================================================
 
 export async function _generateAdaptiveQuizClientSide(userId, context = {}) { // Prefixed to avoid clash if adaptiveQuiz.js also defines it
-    if (isLocalDevelopment) console.log("generateAdaptiveQuizClientSide (app.js) called for user:", userId, "with context:", context);
+    console.log("generateAdaptiveQuizClientSide (app.js) called for user:", userId, "with context:", context);
     if (!userId) throw new Error("Липсва потребителско ID за генериране на въпросник.");
 
     if (userId.includes('test_user') || window.location.hostname.includes('replit')) {
-        if (isLocalDevelopment) console.log("Generating test quiz data (app.js)");
+        console.log("Generating test quiz data (app.js)");
         return {
             quizId: 'test_quiz_' + Date.now(),
             quizTitle: "Тестов Въпросник от App.js",
@@ -385,7 +385,7 @@ export async function _generateAdaptiveQuizClientSide(userId, context = {}) { //
         if (!result.success || !result.showQuiz || !result.quizData) {
             throw new Error(result.message || "Неуспешно зареждане или генериране на въпросник от сървъра.");
         }
-        if (isLocalDevelopment) console.log("Quiz data received from worker (app.js):", result.quizData);
+        console.log("Quiz data received from worker (app.js):", result.quizData);
         return result.quizData;
     } catch (error) {
         console.error("Error in generateAdaptiveQuizClientSide (app.js):", error);
@@ -394,13 +394,13 @@ export async function _generateAdaptiveQuizClientSide(userId, context = {}) { //
 }
 
 export async function _analyzeQuizAnswersAndAdaptClientSide(userId, quizId, submittedAnswers) { // Prefixed
-    if (isLocalDevelopment) console.log("analyzeQuizAnswersAndAdaptClientSide (app.js) called for quiz:", quizId, "answers:", submittedAnswers);
+    console.log("analyzeQuizAnswersAndAdaptClientSide (app.js) called for quiz:", quizId, "answers:", submittedAnswers);
     if (!userId || !quizId || !submittedAnswers) {
         throw new Error("Липсват необходими данни за подаване на въпросника.");
     }
 
     if (userId.includes('test_user') || window.location.hostname.includes('replit')) {
-        if (isLocalDevelopment) console.log("Simulating quiz analysis for test user (app.js)");
+        console.log("Simulating quiz analysis for test user (app.js)");
         return {
             success: true,
             message: "Тестовият въпросник (App.js) беше подаден успешно!",
@@ -423,7 +423,7 @@ export async function _analyzeQuizAnswersAndAdaptClientSide(userId, quizId, subm
         if (!result.success) {
             throw new Error(result.message || "Неуспешна обработка на отговорите от сървъра.");
         }
-        if (isLocalDevelopment) console.log("Analysis result from worker (app.js):", result);
+        console.log("Analysis result from worker (app.js):", result);
         return result;
     } catch (error) {
         console.error("Error in analyzeQuizAnswersAndAdaptClientSide (app.js):", error);

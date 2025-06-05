@@ -266,6 +266,7 @@
                 }
 
                 // УСПЕШЕН ВХОД
+                console.log('Login successful:', data);
                 sessionStorage.setItem('userId', data.userId);
                 sessionStorage.setItem('userEmail', email);
                 sessionStorage.setItem('planStatus', data.planStatus || 'unknown');
