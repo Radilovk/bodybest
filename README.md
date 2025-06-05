@@ -39,3 +39,11 @@ Check the source code with ESLint:
 ```bash
 npm run lint
 ```
+
+### Test
+
+Run unit tests with Jest:
+
+```bash
+npm test
+```
