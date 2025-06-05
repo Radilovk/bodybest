@@ -5,17 +5,19 @@ import { apiEndpoints } from './config.js';
 import { safeGet, safeParseFloat } from './utils.js';
 import {
     currentUserId,
-    currentQuizData, // state from app.js
-    userQuizAnswers, // state from app.js
-    currentQuestionIndex, // state from app.js
-    fullDashboardData, // state from app.js
-    setCurrentQuizData, // setter from app.js
-    setUserQuizAnswers, // setter from app.js
-    setCurrentQuestionIndex, // setter from app.js
-    loadDashboardData, // function from app.js
-    _generateAdaptiveQuizClientSide, // API call from app.js
-    _analyzeQuizAnswersAndAdaptClientSide // API call from app.js
+    currentQuizData,
+    userQuizAnswers,
+    currentQuestionIndex,
+    fullDashboardData,
+    setCurrentQuizData,
+    setUserQuizAnswers,
+    setCurrentQuestionIndex
 } from './app.js';
+import { loadDashboardData } from './dataLoader.js';
+import {
+    _generateAdaptiveQuizClientSide,
+    _analyzeQuizAnswersAndAdaptClientSide
+} from './quizProcessing.js';
 
 export async function openAdaptiveQuizModal() {
     if (!selectors.adaptiveQuizModal || !selectors.adaptiveQuizContainer) {

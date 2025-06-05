@@ -9,13 +9,18 @@ import {
 import { handleLogout } from './auth.js';
 import { openExtraMealModal } from './extraMealForm.js';
 import {
-    handleSaveLog, handleFeedbackFormSubmit, // from app.js
-    handleChatSend, handleChatInputKeypress, // from app.js / chat.js
-    _handlePrevQuizQuestion, _handleNextQuizQuestion, _handleSubmitQuizAnswersClientSide, // from app.js
-    _handleTriggerAdaptiveQuizClientSide, // from app.js
-    todaysMealCompletionStatus, activeTooltip // from app.js
+    handleSaveLog,
+    handleFeedbackFormSubmit,
+    todaysMealCompletionStatus,
+    activeTooltip
 } from './app.js';
-import { toggleChatWidget, closeChatWidget } from './chat.js';
+import { handleChatSend, handleChatInputKeypress, toggleChatWidget, closeChatWidget } from './chat.js';
+import {
+    _handlePrevQuizQuestion,
+    _handleNextQuizQuestion,
+    _handleSubmitQuizAnswersClientSide,
+    _handleTriggerAdaptiveQuizClientSide
+} from './quizProcessing.js';
 
 
 export function setupStaticEventListeners() {

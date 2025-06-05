@@ -1,7 +1,8 @@
 
 // chat.js - Логика за Чат
 import { selectors } from './uiElements.js';
-import { chatHistory } from './app.js'; // Accessing chatHistory from app.js
+import { apiEndpoints } from './config.js';
+import { currentUserId, chatHistory } from './app.js';
 
 export function toggleChatWidget() {
     if (!selectors.chatWidget || !selectors.chatFab) return;
@@ -56,4 +57,36 @@ export function displayTypingIndicator(show) {
 
 export function scrollToChatBottom() { if (selectors.chatMessages) selectors.chatMessages.scrollTop = selectors.chatMessages.scrollHeight; }
 
-// handleChatSend and handleChatInputKeypress remain in app.js as they modify chatHistory and call API
+export async function handleChatSend() {
+    if (!selectors.chatInput || !selectors.chatSend) return;
+    const messageText = selectors.chatInput.value.trim();
+    if (!messageText || !currentUserId) return;
+
+    displayMessage(messageText, 'user');
+    chatHistory.push({ text: messageText, sender: 'user', isError: false });
+
+    selectors.chatInput.value = '';
+    selectors.chatInput.disabled = true;
+    selectors.chatSend.disabled = true;
+    displayTypingIndicator(true);
+    try {
+        const payload = { userId: currentUserId, message: messageText, history: chatHistory.slice(-10) };
+        const response = await fetch(apiEndpoints.chat, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
+        displayMessage(result.reply, 'bot');
+        chatHistory.push({ text: result.reply, sender: 'bot', isError: false });
+    } catch (e) {
+        const errorMsg = `Грешка при комуникация с асистента: ${e.message}`;
+        displayMessage(errorMsg, 'bot', true);
+        chatHistory.push({ text: errorMsg, sender: 'bot', isError: true });
+    } finally {
+        displayTypingIndicator(false);
+        if(selectors.chatInput) { selectors.chatInput.disabled = false; selectors.chatInput.focus(); }
+        if(selectors.chatSend) selectors.chatSend.disabled = false;
+    }
+}
+
+export function handleChatInputKeypress(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); handleChatSend(); } }
