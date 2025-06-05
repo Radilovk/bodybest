@@ -290,6 +290,12 @@ body.dark-theme .button-icon-only:hover { background-color: rgba(255,255,255,0.0
   padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;
 }
 .text-muted { color: var(--text-color-muted) !important; font-size: 0.9rem; }
+.text-center { text-align: center !important; }
+.w-100 { width: 100% !important; }
+.mt-sm { margin-top: var(--space-sm) !important; }
+.mt-md { margin-top: var(--space-md) !important; }
+.mt-lg { margin-top: var(--space-lg) !important; }
+.mb-lg { margin-bottom: var(--space-lg) !important; }
 .placeholder, .placeholder-row td {
   color: var(--text-color-muted); font-style: italic; text-align: center !important;
   padding: var(--space-lg) var(--space-md) !important;
