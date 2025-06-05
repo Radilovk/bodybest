@@ -3,11 +3,12 @@
    ========================================================================== */
 @media (max-width: 768px) {
   html { font-size: 95%; }
-  :root { 
-    --space-lg: 1.2rem; --space-md: 0.8rem; 
-    --tabs-height: 60px; 
+  :root {
+    --space-lg: 1.2rem; --space-md: 0.8rem;
+    --header-height: 55px;
+    --tabs-height: 60px;
     /* --chat-font-size: 1rem; */ /* Chat specific, should be with chat styles or here if truly global */
-  } 
+  }
   body:has(.chat-widget) { /* Example: If chat font size affects body, keep it here */
     --chat-font-size: 1rem; 
   }
@@ -37,6 +38,16 @@
     font-weight: 700; color: var(--primary-color);
   }
   td ul { padding-left: var(--space-sm); }
+
+  /* Fix tabs navigation to bottom on mobile */
+  nav.tabs {
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    z-index: 999;
+  }
+  body { padding-bottom: var(--tabs-height); }
 
   nav.tabs.styled-tabs .tab-btn { padding: 0.5rem 0.3rem; } 
   nav.tabs.styled-tabs .tab-btn .tab-icon { font-size: 1.2em; }
@@ -116,11 +127,12 @@
 
 @media (max-width: 480px) {
   html { font-size: 90%; }
-  :root { 
+  :root {
     --radius-lg: 0.6rem; --radius-md: 0.4rem;
-    --tabs-height: 55px; 
+    --header-height: 50px;
+    --tabs-height: 55px;
     /* --chat-font-size: 0.95rem; */ /* Chat specific */
-  } 
+  }
   body:has(.chat-widget) {
     --chat-font-size: 0.95rem; 
   }
