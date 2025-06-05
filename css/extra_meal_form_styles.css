@@ -2,27 +2,6 @@
    11. СТИЛОВЕ ЗА ФОРМА ЗА ИЗВЪНРЕДНО ХРАНЕНЕ (Extra Meal Form)
    ========================================================================== */
 
-/* --- Общи елементи на wizard формата --- */
-#extraMealEntryModal .form-wizard-header {
-  margin-bottom: var(--space-lg);
-}
-
-#extraMealEntryModal .modal-form-title {
-  text-align: center;
-  margin-bottom: var(--space-md);
-}
-
-#extraMealEntryModal .radio-group-vertical {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-#extraMealEntryModal small.form-helper-text {
-  display: block;
-  margin-top: var(--space-xs);
-}
-
 /* --- Контейнер за Autocomplete --- */
 #extraMealEntryModal .autocomplete-container {
   position: relative;
@@ -112,7 +91,7 @@
 /* --- Заглавия на стъпките във формата --- */
 #extraMealEntryModal .form-step .step-title {
     font-size: 1.2em;
-    color: var(--primary-color);
+    color: var(--secondary-color);
     margin-bottom: var(--space-lg);
     padding-bottom: var(--space-sm);
     border-bottom: 1px solid var(--border-color-soft);
@@ -260,9 +239,6 @@
     width: 0%;
     transition: width 0.4s ease-in-out;
     border-radius: var(--radius-sm);
-}
-#extraMealEntryModal #stepProgressBar.start-width-20 {
-    width: 20%;
 }
 
 /* --- ВИЗУАЛНИ КАРТИ/БУТОНИ ЗА КОЛИЧЕСТВО (Стъпка 2) - С УВЕЛИЧЕН ШРИФТ --- */

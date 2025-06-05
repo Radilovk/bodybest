@@ -63,7 +63,7 @@
     <!-- ======================================================================= -->
     <!-- ============================ APP WRAPPER ============================== -->
     <!-- ======================================================================= -->
-    <div id="appWrapper" class="hidden">
+    <div id="appWrapper" style="display: none;">
 
         <!-- ========================== HEADER & MAIN MENU ========================= -->
         <header>
@@ -168,7 +168,7 @@
                             <svg class="icon arrow"><use href="#icon-chevron-right"></use></svg>
                         </div>
                         <div id="detailedAnalyticsContent" class="accordion-content" role="region">
-                            <div id="dashboardTextualAnalysis" class="mb-lg">
+                            <div id="dashboardTextualAnalysis" style="margin-bottom: var(--space-lg);">
                                 <p class="placeholder">Генериране на текстов анализ...</p>
                             </div>
                             <ul id="detailedAnalyticsList" class="detailed-metrics-list">
@@ -179,7 +179,7 @@
                     <!-- Край Акордеон детайлни показатели -->
 
                     <!-- Карта за история на напредъка -->
-                    <div class="card mt-lg" id="progressHistoryCard">
+                    <div class="card" id="progressHistoryCard" style="margin-top: var(--space-lg);">
                         <h4><svg class="icon" style="width: 1em; height: 1em; margin-right: 0.3em;"><use href="#icon-chart-line"></use></svg> История на Напредъка</h4>
                         <div class="chart-container">
                             <p class="placeholder">Зареждане на историята на напредъка...</p>
@@ -204,10 +204,10 @@
                             <div class="placeholder">Зареждане на тракера...</div>
                         </div>
 
-                        <button id="openExtraMealModalBtn" class="button-secondary w-100" style="margin-bottom: 0.5rem;">🍽️ Добави извънредно хранене</button>
+                        <button id="openExtraMealModalBtn" class="button-secondary" style="margin-bottom: 0.5rem; width: 100%;">🍽️ Добави извънредно хранене</button>
                         <button id="add-note-btn" class="button-secondary" aria-label="Добавяне или скриване на бележка за деня"></button>
                         <textarea id="daily-note" class="hidden" placeholder="Вашите бележки за деня..." rows="3" aria-label="Бележки за деня"></textarea>
-                        <button id="saveLogBtn" class="button-primary mt-md">Запази Дневен Лог</button>
+                        <button id="saveLogBtn" class="button-primary" style="margin-top: 1rem;">Запази Дневен Лог</button>
                     </div>
                     <!-- Край Дневен Лог -->
                 </div>
@@ -238,9 +238,9 @@
                             <p class="placeholder">Зареждане на съображенията...</p>
                         </div>
                     </div>
-                    <div class="card mt-lg">
+                    <div class="card" style="margin-top: var(--space-lg);">
                         <h3>⚙️ Инструменти за Индивидуализация</h3>
-                         <button id="triggerAdaptiveQuizBtn" class="button-secondary w-100">Стартирай Въпросник за Актуализация на Плана</button>
+                         <button id="triggerAdaptiveQuizBtn" class="button-secondary" style="width:100%;">Стартирай Въпросник за Актуализация на Плана</button>
                     </div>
                 </div>
             </section>
@@ -269,7 +269,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="card mt-lg">
+                    <div class="card" style="margin-top: var(--space-lg);">
                         <h4>🧭 Принципи и Фокус за Следващите Седмици</h4>
                         <div id="weeklyPrinciplesFocus" class="accordion-group">
                             <p class="placeholder">Зареждане на принципите...</p>
@@ -353,13 +353,13 @@
                 <button class="close-button" data-modal-close="welcomeScreenModal" aria-label="Затвори прозореца">
                     <svg class="icon" style="width: 1.2em; height: 1.2em;"><use href="#icon-close"></use></svg>
                 </button>
-                <h3 id="welcomeModalTitle" class="text-center">Добре дошли в MyBody.Best!</h3>
+                <h3 id="welcomeModalTitle" style="text-align:center;">Добре дошли в MyBody.Best!</h3>
                 <div id="welcomeModalBody">
-                    <p class="text-center" style="font-size:1.5rem; margin-bottom:1rem;">🎉</p>
+                    <p style="text-align:center; font-size:1.5rem; margin-bottom:1rem;">🎉</p>
                     <p>Вашият персонализиран план е готов! Разгледайте секциите, за да се запознаете с него.</p>
                     <p>Не забравяйте да попълвате дневния си лог и да следите напредъка си. Успех!</p>
                 </div>
-                <button class="button-primary modal-close-btn mt-lg" data-modal-close="welcomeScreenModal">Разбрах, да започваме!</button>
+                <button class="button-primary modal-close-btn" data-modal-close="welcomeScreenModal" style="margin-top: 1.5rem;">Разбрах, да започваме!</button>
             </div>
         </div>
 
@@ -381,7 +381,7 @@
                 <button class="close-button" data-modal-close="infoModal" aria-label="Затвори прозореца">
                     <svg class="icon" style="width: 1.2em; height: 1.2em;"><use href="#icon-close"></use></svg>
                 </button>
-                <h4 id="infoModalTitle" class="text-center">Информация</h4>
+                <h4 id="infoModalTitle" style="text-align:center;">Информация</h4>
                 <div id="infoModalBody" style="white-space: pre-wrap; text-align: left;">...</div>
                 <button class="button-primary modal-close-btn" data-modal-close="infoModal">Затвори</button>
             </div>
@@ -393,11 +393,11 @@
                 <button class="close-button" data-modal-close="aiUpdateNotificationModal" aria-label="Затвори съобщението">
                     <svg class="icon" style="width: 1.2em; height: 1.2em;"><use href="#icon-close"></use></svg>
                 </button>
-                <h3 id="aiUpdateModalTitle" class="text-center">📣 Информация за Актуализация</h3>
+                <h3 id="aiUpdateModalTitle" style="text-align:center;">📣 Информация за Актуализация</h3>
                 <div id="aiUpdateModalBody" style="white-space: pre-wrap; text-align: left;">
                     <p class="placeholder">Зареждане на актуализации...</p>
                 </div>
-                <button class="button-primary modal-close-btn mt-lg" data-modal-close="aiUpdateNotificationModal">Разбрах</button>
+                <button class="button-primary modal-close-btn" data-modal-close="aiUpdateNotificationModal" style="margin-top: 1.5rem;">Разбрах</button>
             </div>
         </div>
 
@@ -517,7 +517,7 @@
                 <button class="close-button" data-modal-close="feedbackModal" aria-label="Затвори прозореца">
                     <svg class="icon" style="width: 1.2em; height: 1.2em;"><use href="#icon-close"></use></svg>
                 </button>
-                <h3 id="feedbackModalTitle" class="text-center">Обратна Връзка</h3>
+                <h3 id="feedbackModalTitle" style="text-align:center;">Обратна Връзка</h3>
                 <form id="feedbackForm" aria-labelledby="feedbackModalTitle">
                     <div>
                         <label for="feedbackType">Тип на обратната връзка:</label>
@@ -543,7 +543,7 @@
                             <option value="1">⭐ (Лошо)</option>
                         </select>
                     </div>
-                    <button type="submit" class="button-primary mt-lg w-100">Изпрати</button>
+                    <button type="submit" class="button-primary" style="margin-top: var(--space-lg); width:100%;">Изпрати</button>
                 </form>
             </div>
         </div>
