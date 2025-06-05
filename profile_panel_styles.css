@@ -1,0 +1,31 @@
+/* --- 6.2. Таб "Моят Профил" --- */
+#profile-panel .card ul.profile-data-list { list-style: none; padding-left: 0; }
+#profile-panel .card li {
+  padding: var(--space-sm) 0; 
+  border-bottom: 1px dashed var(--border-color-soft);
+  display: flex; 
+  justify-content: space-between; 
+  align-items: baseline; 
+  gap: var(--space-md); 
+}
+#profile-panel .card li:last-child { border-bottom: none; }
+#profile-panel .card li strong { 
+    color: var(--primary-color); 
+    flex-shrink: 0; 
+}
+#profile-panel .card li .profile-value-unit-group {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-xs); 
+    text-align: right;
+    font-weight: 500; 
+}
+#profile-panel .card li span[data-profile-value] { 
+    word-break: break-word; 
+}
+#profile-panel .card li span[data-profile-unit] {
+    font-size: 0.9em;
+    color: var(--text-color-muted);
+}
+#profileConsiderations .note-base { margin-top: var(--space-sm); }
+#profileConsiderations ul { padding-left: var(--space-md); list-style: disc; margin-top: var(--space-xs); }

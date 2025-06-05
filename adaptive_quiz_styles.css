@@ -1,0 +1,749 @@
+/* ==========================================================================
+   10. СТИЛОВЕ ЗА АДАПТИВЕН ВЪПРОСНИК (HYBRID ДИЗАЙН)
+   ========================================================================== */
+
+/* === АДАПТИВЕН ВЪПРОСНИК СТИЛОВЕ === */
+.aq-wrapper-hybrid {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--modal-overlay-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0.4s;
+    padding: var(--space-md);
+}
+
+.aq-wrapper-hybrid.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.aq-modal-content {
+    background: var(--surface-background);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 700px;
+    max-height: 95vh;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-color-soft);
+    transform: scale(0.92) translateY(40px);
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    display: flex;
+    flex-direction: column;
+}
+
+.aq-wrapper-hybrid.visible .aq-modal-content {
+    transform: scale(1) translateY(0);
+}
+
+.aq-close-btn-hybrid {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-color-muted);
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.aq-close-btn-hybrid:hover {
+    background: var(--border-color);
+    color: var(--text-color);
+}
+
+.aq-header-hybrid {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: var(--text-color-on-primary);
+    padding: var(--space-xl) var(--space-xl) var(--space-lg);
+    text-align: center;
+    position: relative;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.aq-title-section {
+    margin-bottom: var(--space-lg);
+}
+
+.aq-main-title-hybrid {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.aq-subtitle-hybrid {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.aq-progress-section {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    margin-top: var(--space-md);
+}
+
+.aq-progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+/* Added .aq-progress-text and .aq-progress-counter based on HTML structure of hybrid quiz */
+.aq-progress-text {
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.aq-progress-counter {
+    font-weight: 600;
+    background: color-mix(in srgb, var(--text-color-on-primary) 20%, transparent);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+}
+
+.aq-progress-bar-container-hybrid {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.aq-progress-bar-hybrid {
+    height: 100%;
+    background: var(--secondary-color); /* Was --white, changed to secondary for better visibility if text-on-primary is dark */
+    border-radius: 10px;
+    width: 0%;
+    transition: width 0.6s ease;
+}
+
+.aq-question-container-hybrid {
+    padding: var(--space-xl);
+    min-height: 400px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-y: auto; /* Changed from hidden to auto */
+}
+
+.aq-question-content { /* This is a sub-container within aq-question-card-hybrid */
+    background: rgba(var(--surface-background-rgb), 0.02); /* Adjusted for dark/light theme compatibility */
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    border: 1px solid var(--border-color-soft);
+    box-shadow: var(--shadow-sm);
+    margin-top: var(--space-md); /* Added margin */
+}
+body.dark-theme .aq-question-content {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+
+.aq-question-card-hybrid {
+    opacity: 1; /* Initial state before animation */
+    transform: translateX(0); /* Initial state */
+    /* transition: all 0.4s ease; */ /* Can conflict with specific animations */
+}
+
+.aq-question-card-hybrid.aq-entering-right {
+    animation: aq-quiz-slideInRight 0.4s ease forwards;
+}
+
+.aq-question-card-hybrid.aq-entering-left {
+    animation: aq-quiz-slideInLeft 0.4s ease forwards;
+}
+
+.aq-question-card-hybrid.aq-exiting-left {
+    animation: aq-quiz-slideOutLeft 0.4s ease forwards;
+}
+
+.aq-question-card-hybrid.aq-exiting-right {
+    animation: aq-quiz-slideOutRight 0.4s ease forwards;
+}
+
+@keyframes aq-quiz-slideInRight { /* Renamed for consistency */
+    from { opacity: 0; transform: translateX(50px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes aq-quiz-slideInLeft { /* Renamed for consistency */
+    from { opacity: 0; transform: translateX(-50px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes aq-quiz-slideOutLeft { /* Renamed for consistency */
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(-50px); }
+}
+
+@keyframes aq-quiz-slideOutRight { /* Renamed for consistency */
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(50px); }
+}
+
+.aq-question-header {
+    margin-bottom: var(--space-md);
+}
+
+.aq-question-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-color-muted);
+    font-size: 0.9rem;
+}
+
+.aq-question-icon {
+    font-size: 1.2rem;
+}
+
+/* Using h4.question-text as per HTML, or .question-text if that's the final class */
+h4.question-text, .question-text { /* Combined for flexibility */
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-color-primary); /* Changed from --text-color */
+    margin: var(--space-md) 0 var(--space-xl) 0; /* Added bottom margin */
+    line-height: 1.5;
+    text-align: center; /* Added */
+}
+.question-text .required-asterisk {
+    color: var(--color-danger);
+    font-weight: 700;
+    margin-left: var(--space-xs);
+    vertical-align: super;
+}
+
+
+.question-input-area {
+    margin: var(--space-xl) 0;
+}
+
+.rating-squares {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: var(--space-md) 0;
+    flex-wrap: wrap;
+}
+
+.rating-square {
+    width: 50px;
+    height: 50px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+    color: var(--text-color-muted);
+    background: var(--input-bg); /* Changed from --card-bg for consistency with inputs */
+    word-break: break-word; /* Added */
+    hyphens: auto;          /* Added */
+    padding: 4px; /* Added */
+    text-align: center; /* Added */
+}
+
+.rating-square:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-color-light, color-mix(in srgb, var(--primary-color) 10%, transparent));
+    transform: scale(1.05);
+}
+
+.rating-square.filled {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--text-color-on-primary);
+}
+
+.scale-input-wrapper {
+    text-align: center;
+    margin: var(--space-lg) auto; /* Added */
+    max-width: 480px; /* Added */
+    width: 100%; /* Added */
+}
+
+.scale-min-label,
+.scale-max-label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-color-muted);
+    margin: 10px 0;
+    line-height: 1.3; /* Added */
+}
+
+.radio-group-vertical,
+.checkbox-group-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.radio-group-vertical label,
+.checkbox-group-vertical label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+    background-color: var(--input-bg); /* Added */
+}
+
+.radio-group-vertical label:hover,
+.checkbox-group-vertical label:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-color-light, color-mix(in srgb, var(--primary-color) 10%, transparent));
+}
+
+/* Styling for selected state based on input:checked */
+.radio-group-vertical label:has(input:checked),
+.checkbox-group-vertical label:has(input:checked) {
+    border-color: var(--primary-color);
+    background-color: var(--primary-color-light, color-mix(in srgb, var(--primary-color) 10%, transparent));
+    box-shadow: 0 0 0 2px var(--primary-color); /* Added focus-like ring */
+}
+
+.radio-group-vertical input[type="radio"], /* Hiding default radio/checkbox */
+.checkbox-group-vertical input[type="checkbox"] {
+    appearance: none; width: 1.25em; height: 1.25em;
+    border: 2px solid var(--border-color);
+    margin-right: var(--space-md); /* Was --space-lg */
+    flex-shrink: 0;
+    position: relative;
+    transition: all 0.15s ease-out;
+}
+.radio-group-vertical input[type="radio"] { border-radius: 50%; }
+.checkbox-group-vertical input[type="checkbox"] { border-radius: var(--radius-sm); }
+
+.radio-group-vertical input[type="radio"]:checked,
+.checkbox-group-vertical input[type="checkbox"]:checked {
+    border-color: var(--primary-color); background-color: var(--primary-color);
+}
+.radio-group-vertical input[type="radio"]:checked::before {
+    content: ''; display: block; width: 0.5em; height: 0.5em; border-radius: 50%;
+    background: var(--text-color-on-primary);
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+}
+.checkbox-group-vertical input[type="checkbox"]:checked::before {
+    content: ''; width: 0.65em; height: 0.35em;
+    border: 0.15em solid var(--text-color-on-primary);
+    border-top: none; border-right: none;
+    position: absolute; top: 45%; left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.radio-group-vertical input:checked + span, /* Span refers to the text part */
+.checkbox-group-vertical input:checked + span {
+    font-weight: 600;
+    color: var(--primary-color); /* Added */
+}
+
+.question-input-area input[type="text"],
+.question-input-area input[type="number"],
+.question-input-area input[type="date"],
+.question-input-area textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--input-border-color); /* Changed from --border-color */
+    border-radius: var(--radius-md); /* Was --radius-lg */
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease; /* Added box-shadow transition */
+    background: var(--input-bg);
+    color: var(--text-color-primary); /* Changed from --text-color */
+}
+
+.question-input-area input:focus, /* Combined for brevity */
+.question-input-area textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--input-focus-shadow); /* Using global focus shadow */
+}
+
+.question-input-area textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.question-validation-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-danger);
+    font-size: 0.9rem;
+    margin-top: 15px;
+    padding: 10px 15px;
+    background: var(--color-danger-bg);
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-sm);
+    animation: aq-quiz-shake 0.5s ease-in-out; /* Added */
+}
+@keyframes aq-quiz-shake { /* Added shake animation */
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+
+.question-validation-message.hidden { /* Already in base_styles, but keep for context if needed */
+    display: none !important;
+}
+.question-validation-message .validation-icon { /* Added for icon styling */
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.aq-navigation-hybrid {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding: var(--space-xl);
+    border-top: 1px solid var(--border-color);
+}
+
+.aq-nav-btn-hybrid {
+    padding: 12px 24px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--card-bg); /* Using --card-bg might be too transparent, consider --input-bg or a less transparent var */
+    color: var(--text-color-muted);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Added */
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex: 1; /* Added for equal width buttons */
+}
+.aq-nav-btn-hybrid:not(:only-child):nth-child(1) { /* Previous button */
+    background: transparent;
+    color: var(--text-color-secondary);
+    border-color: var(--border-color);
+}
+.aq-nav-btn-hybrid:not(:only-child):nth-child(1):hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--text-color-on-primary);
+    transform: translateY(-1px);
+}
+
+
+.aq-nav-btn-hybrid:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.aq-nav-btn-hybrid.aq-btn-primary { /* Next/Submit button */
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--text-color-on-primary);
+}
+
+.aq-nav-btn-hybrid.aq-btn-primary:hover {
+    background: color-mix(in srgb, var(--primary-color) 85%, black); /* Was --primary-color-dark */
+    border-color: color-mix(in srgb, var(--primary-color) 85%, black); /* Was --primary-color-dark */
+}
+
+/* This was for aq-btn-secondary, now handled by default .aq-nav-btn-hybrid or first-child logic */
+/*
+.aq-nav-btn-hybrid.aq-btn-secondary {
+    background: transparent;
+    color: var(--text-color-secondary);
+    border-color: var(--border-color);
+}
+
+.aq-nav-btn-hybrid.aq-btn-secondary:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--text-color-on-primary);
+}
+*/
+.aq-nav-btn-hybrid .icon { /* Added from previous block */
+    width: 18px; /* Was 1.1em */
+    height: 18px; /* Was 1.1em */
+    transition: transform 0.2s;
+}
+.aq-nav-btn-hybrid:hover .icon { /* Added */
+    transform: scale(1.05);
+}
+.aq-nav-btn-hybrid #prevQuestionBtnIcon { margin-right: var(--space-sm); } /* Example if IDs are used for icons */
+.aq-nav-btn-hybrid #nextQuestionBtnIcon,
+.aq-nav-btn-hybrid #submitQuizBtnIcon { margin-left: var(--space-sm); }
+
+
+.aq-nav-btn-hybrid.hidden {
+    display: none !important; /* Combined from two rules */
+}
+.aq-nav-btn-hybrid:only-child { /* Added from previous block */
+    margin-left: auto; flex-grow: 0; min-width: 200px;
+}
+/* If prev is hidden, next/submit takes its place */
+#prevQuestionBtn.hidden + .aq-nav-btn-hybrid:not(.hidden) {
+    margin-left: 0; /* It becomes the first visible, so no auto margin */
+}
+/* If there's only one button and it's not the first child (e.g. submit only) */
+.aq-nav-btn-hybrid:not(.hidden):nth-last-child(1):first-child {
+     margin-left: auto; flex-grow: 0; min-width: 200px;
+}
+
+
+.aq-state-overlay-hybrid { /* For loading/error */
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--surface-background); /* Was --card-bg, changed for better opacity control */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    z-index: 10; /* Added */
+    border-radius: var(--radius-xl); /* Match modal content radius */
+    opacity: 0; /* For fade in animation */
+    animation: aq-quiz-fadeIn 0.5s ease-out forwards; /* Added */
+}
+@keyframes aq-quiz-fadeIn { /* Added */
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.aq-loading-content h4,
+.aq-error-content h4 {
+    font-size: 1.3rem;
+    margin: 20px 0 10px 0;
+    color: var(--primary-color); /* Was --text-color */
+}
+
+.aq-loading-content p,
+.aq-error-content p {
+    color: var(--text-color-muted);
+    line-height: 1.6;
+    max-width: 400px;
+    margin-bottom: var(--space-lg); /* Added */
+}
+
+.aq-spinner-hybrid { /* Spinner container */
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color-soft); /* Was --border-color-light */
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: aq-quiz-spin 1s linear infinite; /* Renamed for consistency */
+    margin: 0 auto var(--space-lg); /* Added */
+}
+
+.aq-error-icon { /* Container for error icon */
+    width: 80px; /* Added */
+    height: 80px; /* Added */
+    margin: 0 auto var(--space-lg); /* Added */
+    padding: var(--space-lg); /* Added */
+    background: var(--color-danger-bg); /* Added */
+    border-radius: var(--radius-round); /* Added */
+    display: flex; /* Added */
+    align-items: center; /* Added */
+    justify-content: center; /* Added */
+}
+.aq-error-icon svg {
+    width: 48px;
+    height: 48px;
+    color: var(--color-danger);
+}
+
+@keyframes aq-quiz-spin { /* Renamed for consistency */
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+/* Placeholder styles if needed */
+.quiz-question-placeholder {
+    text-align: center;
+    padding: var(--space-xl);
+    color: var(--text-color-muted);
+}
+
+.loading-spinner { /* General loading spinner if used directly */
+    width: 40px;
+    height: 40px;
+    margin: 0 auto var(--space-md);
+}
+.loading-spinner svg { /* If spinner is an SVG */
+    animation: aq-quiz-spin 2s linear infinite;
+}
+
+/* Button for closing error state */
+#closeQuizErrorBtn {
+    margin-top: var(--space-xl); background-color: var(--input-bg);
+    color: var(--text-color-primary); border: 2px solid var(--border-color);
+    padding: var(--space-md) var(--space-xl); font-size: 1rem; font-weight: 600;
+    border-radius: var(--radius-lg); transition: all 0.2s ease-out;
+}
+#closeQuizErrorBtn:hover {
+    border-color: var(--text-color-secondary);
+    /* background-color: var(--border-color-light); */ /* border-color-light not defined, using mix */
+    background-color: color-mix(in srgb, var(--border-color) 20%, transparent);
+    transform: translateY(-1px); box-shadow: var(--shadow-sm);
+}
+
+
+@media (max-width: 768px) { /* This media query was from the Hybrid block */
+    .aq-modal-content { /* Specific to quiz modal */
+        width: 95%;
+        /* margin: 20px; */ /* Padding is on aq-wrapper-hybrid */
+    }
+
+    .aq-header-hybrid {
+        padding: 30px 20px 20px;
+    }
+
+    .aq-main-title-hybrid {
+        font-size: 1.6rem;
+    }
+
+    .aq-question-container-hybrid {
+        padding: var(--space-md);
+    }
+
+    .rating-squares { /* Quiz specific */
+        gap: 6px;
+    }
+
+    .rating-square { /* Quiz specific */
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+
+    .aq-navigation-hybrid {
+        flex-direction: column;
+        padding: var(--space-md);
+    }
+
+    .aq-nav-btn-hybrid {
+        width: 100%;
+        justify-content: center;
+        margin-left: 0 !important; /* Ensure full width */
+    }
+    .aq-nav-btn-hybrid:only-child { /* Override for single button */
+        min-width: auto;
+    }
+}
+
+/* Additional Media Queries from the end of original Section 10 - specific to adaptive quiz */
+@media (max-width: 700px) { /* This seems to be a refined version of 768px or for slightly smaller screens */
+    #adaptiveQuizWrapper .aq-header-hybrid h3#adaptiveQuizGeneralTitle, /* Assuming .aq-main-title-hybrid is used now */
+    .aq-main-title-hybrid {
+        font-size: 1.6rem;
+    }
+    #adaptiveQuizWrapper .aq-header-hybrid p#adaptiveQuizGeneralDescription, /* Assuming .aq-subtitle-hybrid is used now */
+    .aq-subtitle-hybrid {
+        font-size: 0.95rem;
+    }
+    h4.question-text, .question-text { /* Quiz specific */
+        font-size: 1.25rem;
+        margin-bottom: var(--space-lg);
+    }
+    .question-input-area .radio-group-vertical label, /* Quiz specific */
+    .question-input-area .checkbox-group-vertical label {
+        padding: var(--space-md);
+    }
+    .question-input-area .radio-group-vertical label span, /* Quiz specific */
+    .question-input-area .checkbox-group-vertical label span {
+        font-size: 0.95rem;
+    }
+    .question-input-area .scale-input-wrapper { /* Quiz specific */
+        flex-direction: column;
+        gap: var(--space-md);
+        max-width: 100%;
+    }
+    .question-input-area .scale-min-label, /* Quiz specific */
+    .question-input-area .scale-max-label {
+        text-align: center;
+        flex-basis: auto;
+        width: 100%;
+        padding: var(--space-xs) 0;
+    }
+    .question-input-area .rating-squares { /* Quiz specific */
+        width: 100%;
+        justify-content: space-around;
+    }
+    .question-input-area .rating-square { /* Quiz specific */
+      min-width: 40px; /* Keep min-width */
+      width: auto; /* Allow flex to size */
+      height: 38px;
+      font-size: 0.8rem;
+  }
+
+    .aq-navigation-hybrid { /* Quiz specific */
+        /* flex-direction: column; */ /* Already set at 768px */
+        /* gap: var(--space-md); */ /* Already set */
+    }
+    .aq-nav-btn-hybrid { /* Quiz specific */
+        /* width: 100%; */ /* Already set */
+        /* margin-left: 0 !important; */ /* Already set */
+        /* flex-grow: 1; */ /* Already set */
+    }
+    .aq-nav-btn-hybrid:only-child { /* Quiz specific */
+        /* min-width: auto; */ /* Already set */
+    }
+}
+@media (max-width: 480px) {
+    #adaptiveQuizWrapper .aq-header-hybrid h3#adaptiveQuizGeneralTitle, /* Assuming .aq-main-title-hybrid is used now */
+    .aq-main-title-hybrid {
+        font-size: 1.4rem;
+    }
+    #adaptiveQuizWrapper .aq-header-hybrid p#adaptiveQuizGeneralDescription, /* Assuming .aq-subtitle-hybrid is used now */
+    .aq-subtitle-hybrid {
+        font-size: 0.9rem;
+    }
+     h4.question-text, .question-text { /* Quiz specific */
+        font-size: 1.1rem;
+    }
+    .question-input-area .rating-square { /* Quiz specific */
+      min-width: 36px; /* Keep min-width */
+      width: auto; /* Allow flex to size */
+      height: 36px;
+      font-size: 0.75rem;
+  }
+
+    .aq-navigation-hybrid .aq-nav-btn-hybrid { /* Quiz specific */
+        font-size: 0.95rem;
+        padding: var(--space-sm) var(--space-md);
+    }
+}

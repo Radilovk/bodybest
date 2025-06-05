@@ -1,0 +1,186 @@
+/* ==========================================================================
+   9. РЕСПОНСИВ СТИЛОВЕ (Responsive Styles)
+   ========================================================================== */
+@media (max-width: 768px) {
+  html { font-size: 95%; }
+  :root { 
+    --space-lg: 1.2rem; --space-md: 0.8rem; 
+    --tabs-height: 60px; 
+    /* --chat-font-size: 1rem; */ /* Chat specific, should be with chat styles or here if truly global */
+  } 
+  body:has(.chat-widget) { /* Example: If chat font size affects body, keep it here */
+    --chat-font-size: 1rem; 
+  }
+
+  .container { padding: var(--space-md); }
+  .main-indexes { grid-template-columns: 1fr; }
+  .index-card { min-height: auto; padding: var(--space-md); } 
+  .index-card h4 { font-size: 1rem; margin-bottom: var(--space-xs); }
+  .index-card .index-value { font-size: 1.1rem; }
+
+  .table-wrapper { border: none; box-shadow: none; background: transparent; overflow: visible; }
+  table { border: none; } thead { display: none; }
+  tr {
+    display: block; margin-bottom: var(--space-lg); border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg); padding: var(--space-md);
+    background: var(--card-bg); box-shadow: var(--shadow-md);
+  }
+  td {
+    display: block; text-align: right !important; border: none;
+    border-bottom: 1px dashed var(--border-color-soft); padding: var(--space-sm) 0;
+    padding-left: 50%; position: relative; min-height: 1.8em;
+  }
+  td:last-child { border-bottom: none; }
+  td::before {
+    content: attr(data-label); position: absolute; left: 0; width: 45%;
+    padding-right: var(--space-sm); text-align: left !important;
+    font-weight: 700; color: var(--primary-color);
+  }
+  td ul { padding-left: var(--space-sm); }
+
+  nav.tabs.styled-tabs .tab-btn { padding: 0.5rem 0.3rem; } 
+  nav.tabs.styled-tabs .tab-btn .tab-icon { font-size: 1.2em; }
+  nav.tabs.styled-tabs .tab-btn .tab-label { font-size: 0.6rem; }
+
+  .note-base { flex-direction: column; gap: var(--space-xs); align-items: flex-start;}
+  .note-base .icon.prefix-icon { margin-bottom: var(--space-xs); } 
+
+  .detailed-metric-item .metric-item-values { 
+      padding-left: 0; 
+      grid-template-columns: 1fr; 
+  }
+  .detailed-metric-item .metric-label { font-size: 1.05em; }
+  .detailed-metric-item .value-current { font-size: 1em; }
+
+  #chat-fab, #feedback-fab {
+    width: 55px; 
+    height: 55px;
+    font-size: 26px; 
+    bottom: var(--space-md); 
+  }
+  #chat-fab { right: var(--space-md); }
+  #feedback-fab { left: var(--space-md); }
+
+  .chat-widget {
+    width: calc(100vw - 2 * var(--space-md)); 
+    right: var(--space-md);
+    bottom: calc(var(--space-md) + 70px); 
+    height: 65vh; 
+    max-height: 480px; 
+    border-radius: var(--radius-lg); 
+  }
+  .chat-header { padding: var(--space-sm) var(--space-md); }
+  .chat-header h4 { font-size: 1.1rem; }
+  .chat-messages { padding: var(--space-md); gap: var(--space-sm); }
+  #chat-input { 
+      min-height: 40px; 
+      border-radius: 20px; 
+      padding: 0.65rem 1rem;
+      font-size: 1rem; /* chat specific font size */
+    }
+  #chat-send { width: 40px; height: 40px; }
+  #chat-send svg { width: 18px; height: 18px; }
+
+  .tracker .metric-rating {
+    flex-direction: column; 
+    align-items: flex-start; 
+  }
+  .tracker .metric-rating label {
+    flex-basis: auto; 
+    margin-bottom: var(--space-sm); 
+  }
+  .tracker .daily-log-weight-metric .daily-log-weight-input-field,
+  .tracker .rating-squares {
+    width: 100%; 
+    max-width: none; 
+    justify-content: space-around; 
+  }
+  .rating-square { flex-grow: 1; } 
+
+  /* Responsive changes for meal list */
+  .meal-list li {
+      flex-direction: column; 
+  }
+  .meal-list li .actions {
+      flex-direction: row; 
+      justify-content: flex-end; 
+      width: 100%;
+      margin-top: var(--space-md);
+      gap: var(--space-md);
+  }
+  .meal-list li .actions .button-icon-only svg.icon {
+      width: 1.6em; 
+      height: 1.6em;
+  }
+}
+
+@media (max-width: 480px) {
+  html { font-size: 90%; }
+  :root { 
+    --radius-lg: 0.6rem; --radius-md: 0.4rem;
+    --tabs-height: 55px; 
+    /* --chat-font-size: 0.95rem; */ /* Chat specific */
+  } 
+  body:has(.chat-widget) {
+    --chat-font-size: 0.95rem; 
+  }
+  header h1 { font-size: 1.2rem; }
+  .card { padding: var(--space-md); }
+  /* .actions button svg.icon { width: 1.4em; height: 1.4em; } */ /* This seems too generic for meal list actions, already handled there */
+  .modal-content { padding: var(--space-md); }
+  #toast { width: calc(100% - 2 * var(--space-md)); }
+  td { padding-left: 40%; }
+  td::before { width: 35%; }
+
+  nav.tabs.styled-tabs .tab-btn { padding: 0.4rem 0.2rem; } 
+  nav.tabs.styled-tabs .tab-btn .tab-icon { font-size: 1.1em; }
+  nav.tabs.styled-tabs .tab-btn .tab-label { font-size: 0.55rem; letter-spacing: 0.2px; }
+
+  .rating-square { width: 28px; height: 28px; /* gap: 4px; This is for rating-squares container */ }
+  .rating-squares { gap: 4px; }
+
+
+  #chat-fab, #feedback-fab {
+    width: 50px; 
+    height: 50px;
+    font-size: 24px; 
+    bottom: var(--space-sm); 
+  }
+  #chat-fab { right: var(--space-sm); }
+  #feedback-fab { left: var(--space-sm); }
+
+  .chat-widget {
+    bottom: calc(var(--space-sm) + 65px); 
+    height: 70vh; 
+    max-height: 450px; 
+    border-radius: var(--radius-md); 
+  }
+   .chat-header { padding: var(--space-xs) var(--space-sm); }
+   .chat-header h4 { font-size: 1rem; }
+   .chat-header h4 .emoji { font-size: 0.9em; margin-right: var(--space-xs); }
+   /* .chat-close-btn svg.icon { width: 20px; height: 20px; } */ /* This is a general icon, should be sized by its context or font-size */
+   .chat-close-btn { font-size: 1.3rem; /* Adjust size of close button itself */ }
+
+
+   .chat-messages { padding: var(--space-sm); gap: var(--space-xs); }
+   #chat-input { 
+       min-height: 38px; 
+       border-radius: 19px; 
+       padding: 0.5rem 0.9rem;
+       font-size: 0.95rem; /* chat specific font size */
+    }
+   #chat-send { width: 38px; height: 38px; }
+   #chat-send svg { width: 16px; height: 16px; }
+
+  /* Responsive for Quiz elements - these should be in adaptive_quiz_styles.css */
+  /*
+  .question-input-area .rating-squares { 
+      gap: var(--space-xs);
+  }
+  .question-input-area .rating-square {
+    width: 35px; 
+    height: 35px; 
+    font-size: 0.9em;
+  }
+  */
+}

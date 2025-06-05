@@ -1,0 +1,42 @@
+/* --- 6.4. Таб "Препоръки" - Стилизиране на картите като кутийки --- */
+.recommendation-section { margin-bottom: var(--space-xl); }
+.recommendation-section > h3 {
+  font-size: clamp(1.35rem, 3.2vw, 1.75rem); border-bottom: 2px solid var(--border-color);
+  padding-bottom: var(--space-sm); margin-bottom: var(--space-lg);
+}
+.recommendation-section .card { 
+  margin-bottom: var(--space-lg); 
+  background-color: var(--metric-value-group-bg-initial); 
+  border: 1px solid var(--border-color);
+  padding: var(--space-lg);
+}
+body.dark-theme .recommendation-section .card {
+  background-color: var(--metric-value-group-bg-initial);
+}
+.recommendation-section .card h4 { /* Заглавията в картите на препоръките */
+    color: var(--primary-color);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border-color-soft);
+}
+
+#recFoodAllowedContent ul, #recFoodLimitContent ul, #recSupplementsContent ul {
+  padding-left: var(--space-md); columns: 2; column-gap: var(--space-lg);
+}
+@media (max-width: 768px) { #recFoodAllowedContent ul, #recFoodLimitContent ul, #recSupplementsContent ul { columns: 1; } }
+#recFoodAllowedContent li, #recFoodLimitContent li, #recSupplementsContent li {
+  list-style: disc; margin-bottom: var(--space-xs); padding-left: var(--space-xs);
+}
+#recFoodAllowedContent strong {
+  font-weight: 700; color: var(--primary-color); display: block;
+  margin-top: var(--space-md); margin-bottom: var(--space-xs); font-size: 1.05em;
+}
+#recFoodAllowedContent ul:first-of-type strong { margin-top: 0; }
+
+/* --- 6.5. Нови секции: История на прогреса --- */
+#progressHistoryCard .chart-container {
+    min-height: 250px; 
+    position: relative;
+    padding: var(--space-sm);
+}
+/* #motivationalMessageCard - Премахнато */

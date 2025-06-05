@@ -1,0 +1,460 @@
+/* ==========================================================================
+   11. СТИЛОВЕ ЗА ФОРМА ЗА ИЗВЪНРЕДНО ХРАНЕНЕ (Extra Meal Form)
+   ========================================================================== */
+
+/* --- Контейнер за Autocomplete --- */
+#extraMealEntryModal .autocomplete-container {
+  position: relative;
+}
+
+/* --- Падащ списък с предложения за храни --- */
+#extraMealEntryModal .autocomplete-suggestions {
+  position: absolute;
+  background-color: var(--surface-background);
+  border: 1px solid var(--input-border-color);
+  border-top: none;
+  z-index: 1050;
+  width: 100%;
+  max-height: 150px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-sm);
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+#extraMealEntryModal .autocomplete-suggestions.hidden {
+  display: none;
+}
+#extraMealEntryModal .autocomplete-suggestions div[role="option"] {
+  padding: var(--space-sm);
+  cursor: pointer;
+  color: var(--text-color-primary);
+}
+#extraMealEntryModal .autocomplete-suggestions div[role="option"]:hover,
+#extraMealEntryModal .autocomplete-suggestions div[role="option"].active-suggestion {
+  background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  color: var(--primary-color);
+}
+
+/* --- Скрити полета, които се показват при нужда --- */
+#extraMealEntryModal .form-control-small-margin.hidden {
+  display: none !important;
+}
+#extraMealEntryModal .form-control-small-margin {
+  margin-top: var(--space-sm);
+}
+
+/* --- Радио бутони с икони (за усещане) --- */
+#extraMealEntryModal .radio-group-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+#extraMealEntryModal .icon-radio-label {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--input-border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  font-size: 1rem;
+  background-color: var(--input-bg);
+  color: var(--text-color-primary);
+}
+#extraMealEntryModal .icon-radio-label input[type="radio"] {
+  opacity: 0;
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+#extraMealEntryModal .icon-radio-label:hover {
+  border-color: var(--accent-color);
+  background-color: color-mix(in srgb, var(--accent-color) 5%, transparent);
+}
+#extraMealEntryModal .icon-radio-label.selected,
+#extraMealEntryModal .icon-radio-label:has(input[type="radio"]:checked) {
+  border-color: var(--primary-color);
+  background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  font-weight: 500;
+  color: var(--primary-color);
+}
+#extraMealEntryModal .icon-radio-label .icon-radio-text {
+  margin-left: var(--space-xs);
+  color: var(--text-color-secondary);
+}
+#extraMealEntryModal .icon-radio-label.selected .icon-radio-text,
+#extraMealEntryModal .icon-radio-label:has(input[type="radio"]:checked) .icon-radio-text {
+  color: var(--primary-color);
+}
+
+/* --- Заглавия на стъпките във формата --- */
+#extraMealEntryModal .form-step .step-title {
+    font-size: 1.2em;
+    color: var(--secondary-color);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border-color-soft);
+}
+#extraMealEntryModal .form-step .step-title .step-icon {
+    margin-right: var(--space-sm);
+    font-size: 1.1em;
+}
+
+/* --- Групиране на полета (fieldset) --- */
+#extraMealEntryModal .form-step fieldset.form-group {
+    margin-bottom: var(--space-lg);
+    padding: 0;
+    border: none;
+}
+#extraMealEntryModal .form-step fieldset.form-group legend {
+    font-weight: 500;
+    color: var(--text-color-secondary);
+    margin-bottom: var(--space-sm);
+    font-size: 0.95rem;
+    padding: 0;
+}
+
+/* --- Радио и чекбокс групи (вертикални) - за стъпка 3 и 4 --- */
+#extraMealEntryModal .radio-group-vertical label,
+#extraMealEntryModal .checkbox-group-vertical label {
+    display: block;
+    margin-bottom: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    font-size: 0.95em;
+    background-color: var(--input-bg);
+    color: var(--text-color-primary);
+}
+#extraMealEntryModal .radio-group-vertical label:hover,
+#extraMealEntryModal .checkbox-group-vertical label:hover {
+    border-color: var(--accent-color);
+    background-color: color-mix(in srgb, var(--accent-color) 5%, transparent);
+}
+#extraMealEntryModal .radio-group-vertical label:has(input[type="radio"]:checked),
+#extraMealEntryModal .checkbox-group-vertical label:has(input[type="checkbox"]:checked) {
+    border-color: var(--primary-color);
+    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    font-weight: 500;
+    color: var(--primary-color);
+}
+#extraMealEntryModal .radio-group-vertical label input[type="radio"],
+#extraMealEntryModal .checkbox-group-vertical label input[type="checkbox"] {
+    margin-right: var(--space-sm);
+    transform: scale(1.1);
+    accent-color: var(--primary-color);
+    vertical-align: middle;
+}
+#extraMealEntryModal .radio-group-vertical label .emoji-icon,
+#extraMealEntryModal .checkbox-group-vertical label .emoji-icon {
+    margin-right: var(--space-xs);
+    font-size: 1.1em;
+}
+
+/* --- Бутон за отказ в модалната форма --- */
+#extraMealEntryModal .form-wizard-navigation button#emCancelBtn.modal-close-btn-form {
+    background-color: var(--text-color-muted);
+    color: var(--text-color-on-primary);
+}
+#extraMealEntryModal .form-wizard-navigation button#emCancelBtn.modal-close-btn-form:hover {
+    background-color: color-mix(in srgb, var(--text-color-muted) 85%, black);
+}
+
+/* --- Подравняване на бутоните за навигация в wizard-a --- */
+#extraMealEntryModal .form-wizard-navigation {
+    margin-top: var(--space-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-sm);
+    border-top: 1px solid var(--border-color-soft);
+    padding-top: var(--space-lg);
+}
+#extraMealEntryModal .form-wizard-navigation button {
+    flex-grow: 1;
+}
+#extraMealEntryModal .form-wizard-navigation #emNextStepBtn,
+#extraMealEntryModal .form-wizard-navigation #emSubmitBtn {
+    min-width: 100px;
+}
+
+/* --- Стил за полето за резюме --- */
+#extraMealEntryModal #extraMealSummary.summary-box {
+    background-color: var(--metric-value-group-bg-initial);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    margin-bottom: var(--space-lg);
+    font-size: 0.9em;
+}
+#extraMealEntryModal #extraMealSummary.summary-box p {
+    margin-bottom: var(--space-sm);
+    color: var(--text-color-secondary);
+    font-weight: 500;
+}
+#extraMealEntryModal #extraMealSummary.summary-box div {
+    margin-bottom: var(--space-xs);
+    padding: var(--space-xs) 0;
+    border-bottom: 1px dotted var(--border-color-soft);
+}
+#extraMealEntryModal #extraMealSummary.summary-box div:last-child {
+    border-bottom: none;
+}
+#extraMealEntryModal #extraMealSummary.summary-box strong {
+    color: var(--text-color-primary);
+    margin-right: var(--space-xs);
+    min-width: 130px;
+    display: inline-block;
+}
+#extraMealEntryModal #extraMealSummary.summary-box span[data-summary] {
+    color: var(--text-color-secondary);
+}
+
+/* --- Индикатор за стъпките и прогрес бар --- */
+#extraMealEntryModal .step-indicator-container {
+    margin-bottom: var(--space-lg);
+    text-align: center;
+}
+#extraMealEntryModal .step-indicator-label {
+    display: block;
+    font-size: 0.85em;
+    color: var(--text-color-muted);
+    margin-bottom: var(--space-xs);
+}
+#extraMealEntryModal .progress-bar-steps {
+    width: 100%;
+    height: 8px;
+    background-color: var(--progress-bar-bg-empty);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin: 0 auto;
+    max-width: 300px;
+}
+#extraMealEntryModal #stepProgressBar {
+    height: 100%;
+    background-color: var(--secondary-color); /* Основен цвят за прогрес бара */
+    width: 0%;
+    transition: width 0.4s ease-in-out;
+    border-radius: var(--radius-sm);
+}
+
+/* --- ВИЗУАЛНИ КАРТИ/БУТОНИ ЗА КОЛИЧЕСТВО (Стъпка 2) - С УВЕЛИЧЕН ШРИФТ --- */
+#extraMealEntryModal .quantity-card-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+  gap: calc(var(--space-sm) * 0.75);
+  margin-bottom: var(--space-md);
+}
+
+#extraMealEntryModal .quantity-card-option {
+  display: flex;
+  border: 1px solid var(--input-border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+  background-color: var(--input-bg);
+  text-align: center;
+  position: relative;
+}
+
+#extraMealEntryModal .quantity-card-option:hover {
+  border-color: var(--accent-color);
+  box-shadow: var(--shadow-sm);
+}
+
+#extraMealEntryModal .quantity-card-option input[type="radio"] {
+  opacity: 0;
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+#extraMealEntryModal .quantity-card-option .card-content {
+  padding: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Центриране на съдържанието */
+  width: 100%;
+  min-height: 80px; /* Намалена min-height */
+}
+
+#extraMealEntryModal .quantity-card-option .card-icon {
+  font-size: 1.8em;   /* Леко намалена икона, ако текстът е по-голям */
+  margin-bottom: calc(var(--space-xs) * 0.5); /* Намалено разстояние под иконата */
+  line-height: 1;
+  color: var(--text-color-secondary);
+}
+
+#extraMealEntryModal .quantity-card-option .card-label {
+  font-weight: 500;
+  color: var(--text-color-primary);
+  font-size: 1em;   /* УВЕЛИЧЕН: Основен шрифт */
+  margin-bottom: calc(var(--space-xs) * 0.75);
+  line-height: 1.25;
+  word-break: keep-all;
+  white-space: normal;
+}
+
+#extraMealEntryModal .quantity-card-option .card-desc {
+  font-size: 0.95em; /* УВЕЛИЧЕН: Описателен текст */
+  color: var(--text-color-muted);
+  line-height: 1.2;
+  white-space: normal;
+}
+
+#extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked) {
+  border-color: var(--primary-color);
+  background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 50%, transparent);
+}
+
+#extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked) .card-label,
+#extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked) .card-icon {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+/* === КОРЕКЦИИ НА КОНТРАСТА ЗА ТЪМНА ТЕМА В МОДАЛА === */
+body.dark-theme #extraMealEntryModal .modal-content {
+  background: var(--surface-background);
+}
+
+body.dark-theme #extraMealEntryModal #extraMealModalFormTitle {
+    color: var(--text-color-primary);
+}
+body.dark-theme #extraMealEntryModal .form-step .step-title {
+    color: var(--primary-color);
+    border-bottom-color: var(--border-color-soft);
+}
+body.dark-theme #extraMealEntryModal .form-group > label,
+body.dark-theme #extraMealEntryModal .form-step fieldset.form-group legend {
+    color: var(--text-color-secondary);
+}
+body.dark-theme #extraMealEntryModal small.form-text-muted {
+    color: var(--text-color-muted);
+}
+
+/* Прогрес бар на стъпките в тъмна тема */
+body.dark-theme #extraMealEntryModal #stepProgressBar {
+    background-color: var(--primary-color); /* По-светъл цвят за запълнената част */
+}
+body.dark-theme #extraMealEntryModal .progress-bar-steps {
+    background-color: #455A64; /* По-светъл фон за празната част, ако е нужно */
+}
+
+
+/* Бутони за навигация в тъмна тема */
+body.dark-theme #extraMealEntryModal .form-wizard-navigation button.button-primary,
+body.dark-theme #extraMealEntryModal .form-wizard-navigation button#emSubmitBtn {
+    background-color: var(--primary-color);
+    color: var(--text-color-on-primary);
+    border: 1px solid color-mix(in srgb, var(--primary-color) 80%, white);
+}
+body.dark-theme #extraMealEntryModal .form-wizard-navigation button.button-primary:hover,
+body.dark-theme #extraMealEntryModal .form-wizard-navigation button#emSubmitBtn:hover {
+    background-color: color-mix(in srgb, var(--primary-color) 85%, black);
+    border-color: var(--primary-color);
+}
+
+body.dark-theme #extraMealEntryModal .form-wizard-navigation button.button-secondary,
+body.dark-theme #extraMealEntryModal .form-wizard-navigation button#emPrevStepBtn {
+    background-color: var(--secondary-color);
+    color: var(--text-color-on-secondary);
+    border: 1px solid color-mix(in srgb, var(--secondary-color) 80%, white);
+}
+body.dark-theme #extraMealEntryModal .form-wizard-navigation button.button-secondary:hover,
+body.dark-theme #extraMealEntryModal .form-wizard-navigation button#emPrevStepBtn:hover {
+    background-color: color-mix(in srgb, var(--secondary-color) 85%, black);
+    border-color: var(--secondary-color);
+}
+
+body.dark-theme #extraMealEntryModal .form-wizard-navigation button#emCancelBtn.modal-close-btn-form {
+    background-color: var(--accent-color);
+    color: var(--text-color-on-primary);
+    border: 1px solid color-mix(in srgb, var(--accent-color) 80%, white);
+}
+body.dark-theme #extraMealEntryModal .form-wizard-navigation button#emCancelBtn.modal-close-btn-form:hover {
+    background-color: color-mix(in srgb, var(--accent-color) 85%, black);
+    border-color: var(--accent-color);
+}
+
+/* Визуални карти за количество в тъмна тема */
+body.dark-theme #extraMealEntryModal .quantity-card-option {
+  background-color: var(--input-bg);
+  border-color: var(--input-border-color);
+}
+body.dark-theme #extraMealEntryModal .quantity-card-option .card-label {
+  color: var(--text-color-primary); /* Основен текст за етикет */
+}
+body.dark-theme #extraMealEntryModal .quantity-card-option .card-icon {
+  color: var(--text-color-secondary); /* Икона */
+}
+body.dark-theme #extraMealEntryModal .quantity-card-option .card-desc {
+  color: var(--text-color-muted); /* Описание */
+}
+body.dark-theme #extraMealEntryModal .quantity-card-option:hover {
+  border-color: var(--accent-color);
+  background-color: color-mix(in srgb, var(--accent-color) 5%, transparent);
+}
+body.dark-theme #extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked) {
+  border-color: var(--primary-color);
+  background-color: color-mix(in srgb, var(--primary-color) 15%, var(--input-bg) 85%);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 60%, transparent);
+}
+body.dark-theme #extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked) .card-label,
+body.dark-theme #extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked) .card-icon {
+  color: var(--primary-color); /* За избрана карта, текстът и иконата стават в основния цвят на темата */
+}
+
+/* Радио групи (вертикални и с икони) в тъмна тема */
+body.dark-theme #extraMealEntryModal .radio-group-vertical label,
+body.dark-theme #extraMealEntryModal .icon-radio-label {
+    background-color: var(--input-bg);
+    border-color: var(--input-border-color);
+    color: var(--text-color-primary);
+}
+body.dark-theme #extraMealEntryModal .radio-group-vertical label:hover,
+body.dark-theme #extraMealEntryModal .icon-radio-label:hover {
+    border-color: var(--accent-color);
+    background-color: color-mix(in srgb, var(--accent-color) 10%, transparent);
+}
+body.dark-theme #extraMealEntryModal .radio-group-vertical label:has(input[type="radio"]:checked),
+body.dark-theme #extraMealEntryModal .icon-radio-label.selected,
+body.dark-theme #extraMealEntryModal .icon-radio-label:has(input[type="radio"]:checked) {
+    border-color: var(--primary-color);
+    background-color: color-mix(in srgb, var(--primary-color) 15%, var(--input-bg) 85%);
+    color: var(--primary-color);
+}
+body.dark-theme #extraMealEntryModal .icon-radio-label .icon-radio-text {
+  color: var(--text-color-primary);
+}
+body.dark-theme #extraMealEntryModal .icon-radio-label.selected .icon-radio-text,
+body.dark-theme #extraMealEntryModal .icon-radio-label:has(input[type="radio"]:checked) .icon-radio-text {
+  color: var(--primary-color);
+}
+
+/* Responsive adjustments for quantity cards if needed */
+@media (max-width: 480px) {
+  #extraMealEntryModal .quantity-card-selector-grid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: var(--space-xs);
+  }
+  #extraMealEntryModal .quantity-card-option .card-content {
+    min-height: 70px; /* Намалена височина за мобилни */
+    padding: calc(var(--space-sm) * 0.75);
+  }
+  #extraMealEntryModal .quantity-card-option .card-icon {
+    font-size: 1.6em; /* Коригиран размер за мобилни */
+  }
+  #extraMealEntryModal .quantity-card-option .card-label {
+    font-size: 0.9em; /* Коригиран размер за мобилни */
+  }
+   #extraMealEntryModal .quantity-card-option .card-desc {
+    font-size: 0.8em;  /* Коригиран размер за мобилни */
+  }
+}

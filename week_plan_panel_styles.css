@@ -1,0 +1,35 @@
+/* --- 6.3. Таб "Седмичен План" --- */
+.table-wrapper {
+  overflow-x: auto; margin-bottom: var(--space-lg);
+  border: 1px solid var(--border-color); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md); background: var(--surface-background);
+}
+.table-wrapper::-webkit-scrollbar { height: 8px; }
+.table-wrapper::-webkit-scrollbar-track { background: transparent; }
+.table-wrapper::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; }
+th, td {
+  padding: var(--space-sm) var(--space-md); text-align: left;
+  border: 1px solid var(--border-color-soft);
+}
+th {
+  background-color: color-mix(in srgb, var(--primary-color) 5%, transparent);
+  font-weight: 700; color: var(--primary-color); text-align: center;
+  position: sticky; top: 0; z-index: 10; 
+}
+td { text-align: center; vertical-align: top; font-size: 0.9rem; }
+tbody tr:nth-child(even) { background-color: color-mix(in srgb, var(--surface-background) 97%, var(--bg-color)); }
+tbody tr:hover { background-color: color-mix(in srgb, var(--primary-color) 8%, transparent); }
+td ul { padding-left: var(--space-md); text-align: left; margin-top: var(--space-xs); }
+td li { margin-bottom: var(--space-xs); list-style: disc; }
+td strong.meal-name-desktop { 
+    display: block; 
+    margin-bottom: var(--space-xs); 
+    font-weight: 700; 
+    color: var(--text-color-primary); 
+}
+@media (max-width: 768px) {
+    td strong.meal-name-desktop {
+        display: none; 
+    }
+}
