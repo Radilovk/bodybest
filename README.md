@@ -19,6 +19,9 @@ Run the Vite dev server which provides hot reload:
 npm run dev
 ```
 
+API requests to paths starting with `/api` are automatically proxied to
+`https://openapichatbot.radilov-k.workers.dev` when running the dev server.
+
 The application will be available at `http://localhost:5173` by default.
 
 ### Build

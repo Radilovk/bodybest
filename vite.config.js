@@ -3,6 +3,15 @@ import { resolve } from 'path';
 
 export default defineConfig({
   base: './',
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://openapichatbot.radilov-k.workers.dev',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
   build: {
     rollupOptions: {
       input: {
