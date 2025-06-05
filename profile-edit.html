@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyBody.Best - Редакция на Профил</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="css/base_styles.css" rel="stylesheet">
+    <link href="css/layout_styles.css" rel="stylesheet">
+    <link href="css/components_styles.css" rel="stylesheet">
+    <link href="css/responsive_styles.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <h1 id="headerTitle">Редакция на Профил</h1>
+        <a href="code.html" class="button-secondary">← Назад</a>
+    </header>
+    <main class="container" style="padding-top: var(--space-lg);">
+        <div class="card">
+            <h2 style="margin-top:0">Лични Данни</h2>
+            <form id="profileEditForm" novalidate>
+                <div class="form-group">
+                    <label for="name">Име</label>
+                    <input id="name" name="name" type="text" required>
+                </div>
+                <div class="form-group">
+                    <label for="age">Възраст</label>
+                    <input id="age" name="age" type="number" min="0" step="1">
+                </div>
+                <div class="form-group">
+                    <label for="gender">Пол</label>
+                    <select id="gender" name="gender">
+                        <option value="">- Изберете -</option>
+                        <option value="male">Мъж</option>
+                        <option value="female">Жена</option>
+                        <option value="other">Друго</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="weight">Текущо тегло (кг)</label>
+                    <input id="weight" name="weight" type="number" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="height">Височина (см)</label>
+                    <input id="height" name="height" type="number" step="1">
+                </div>
+                <button type="submit" class="button" style="width:100%">Запази</button>
+            </form>
+        </div>
+    </main>
+    <script type="module" src="js/profileEdit.js" defer></script>
+</body>
+</html>
