@@ -1,60 +1,53 @@
-import { safeParseFloat, safeGet } from './utils.js';
-
-// Apply saved theme so the page matches the dashboard
-(function applySavedTheme() {
-  const saved = localStorage.getItem('theme') || 'system';
-  const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  const theme = saved === 'system' ? system : saved;
-  document.body.classList.remove('light-theme', 'dark-theme');
-  document.body.classList.add(theme === 'dark' ? 'dark-theme' : 'light-theme');
-})();
-
-const form = document.getElementById('profileEditForm');
-
-if (form) {
-  const prefillProfileData = async () => {
-    try {
-      const res = await fetch('/api/getProfile');
-      if (!res.ok) throw new Error('Server error');
-      const data = await res.json();
-      form.name.value = safeGet(data, 'name', '');
-      const age = safeParseFloat(safeGet(data, 'age'));
-      if (age !== null && age !== undefined) form.age.value = age;
-      const gender = safeGet(data, 'gender');
-      if (gender) form.gender.value = gender;
-      const weight = safeParseFloat(safeGet(data, 'weight'));
-      if (weight !== null && weight !== undefined) form.weight.value = weight;
-      const height = safeParseFloat(safeGet(data, 'height'));
-      if (height !== null && height !== undefined) form.height.value = height;
-    } catch (err) {
-      console.warn('Could not load profile data:', err);
-    }
-  };
-
-  prefillProfileData();
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = {
-      name: form.name.value.trim(),
-      age: safeParseFloat(form.age.value),
-      gender: form.gender.value,
-      weight: safeParseFloat(form.weight.value),
-      height: safeParseFloat(form.height.value),
-    };
-    try {
-      const res = await fetch('/api/updateProfile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error('Server error');
-      alert('Профилът е обновен успешно');
-      window.location.href = 'code.html';
-    } catch (err) {
-      alert('Грешка при обновяване на профила');
-      console.error(err);
-    }
-  });
-}
-
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyBody.Best - Редакция на Профил</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="css/base_styles.css" rel="stylesheet">
+    <link href="css/layout_styles.css" rel="stylesheet">
+    <link href="css/components_styles.css" rel="stylesheet">
+    <link href="css/responsive_styles.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <h1 id="headerTitle">Редакция на Профил</h1>
+        <a href="code.html" class="button-secondary">← Назад</a>
+    </header>
+    <main class="container" style="padding-top: var(--space-lg);">
+        <div class="card">
+            <h2 style="margin-top:0">Лични Данни</h2>
+            <form id="profileEditForm" novalidate>
+                <div class="form-group">
+                    <label for="name">Име</label>
+                    <input id="name" name="name" type="text" required>
+                </div>
+                <div class="form-group">
+                    <label for="age">Възраст</label>
+                    <input id="age" name="age" type="number" min="0" step="1">
+                </div>
+                <div class="form-group">
+                    <label for="gender">Пол</label>
+                    <select id="gender" name="gender">
+                        <option value="">- Изберете -</option>
+                        <option value="male">Мъж</option>
+                        <option value="female">Жена</option>
+                        <option value="other">Друго</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="weight">Текущо тегло (кг)</label>
+                    <input id="weight" name="weight" type="number" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="height">Височина (см)</label>
+                    <input id="height" name="height" type="number" step="1">
+                </div>
+                <button type="submit" class="button" style="width:100%">Запази</button>
+            </form>
+        </div>
+    </main>
+    <script type="module" src="js/profileEdit.js" defer></script>
+</body>
+</html>
