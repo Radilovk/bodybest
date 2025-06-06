@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Подобрен Хомеопатичен Въпросник</title>
+	<style type="text/css">:root {
+            --primary-color: #0056b3; /* Тъмно синьо */
+            --secondary-color: #4a90e2; /* По-светло синьо */
+            --accent-color: #e7f3fe; /* Много светло синьо (фон) */
+            --text-color: #333;
+            --label-color: #555;
+            --border-color: #ccc;
+            --error-color: #d9534f;
+            --success-color: #5cb85c;
+            --disabled-color: #ddd;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 25px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 1.8em;
+        }
+
+        fieldset {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 25px;
+            padding: 20px 25px;
+            background-color: #fff;
+            transition: opacity 0.5s ease-in-out, max-height 0.5s ease-in-out, border-color 0.3s ease;
+            overflow: hidden;
+        }
+
+        fieldset.hidden {
+            opacity: 0;
+            max-height: 0;
+            padding: 0 25px;
+            margin-bottom: 0;
+            border: none;
+        }
+
+        fieldset.highlight-section {
+            border-color: var(--secondary-color);
+            border-width: 2px;
+            background-color: #fdfdff; /* Лек акцент на фона */
+        }
+
+        legend {
+            font-weight: 600;
+            font-size: 1.3em;
+            padding: 5px 15px;
+            color: var(--primary-color);
+            background-color: var(--accent-color);
+            border-radius: 5px;
+            margin-bottom: 15px; /* Отстояние под легендата */
+            border: 1px solid var(--secondary-color);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px; /* Увеличено разстояние */
+            font-weight: 600;
+            color: var(--label-color);
+            font-size: 1em;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .info, .warning {
+            font-style: italic;
+            color: #666;
+            margin: 15px 0;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 0.95em;
+            border-left: 4px solid var(--border-color);
+        }
+        .warning {
+             color: #8a6d3b;
+             background-color: #fcf8e3;
+             border-left-color: #faebcc;
+             font-style: normal;
+             font-weight: bold;
+        }
+
+        .focus-info {
+            background-color: var(--accent-color);
+            border-left: 5px solid var(--secondary-color);
+            padding: 12px 15px;
+            margin: 15px 0;
+            font-size: 1em;
+            border-radius: 4px;
+        }
+
+        .question-group {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed #eee;
+        }
+        .question-group:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        button[type="submit"] {
+            background-color: var(--success-color);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, opacity 0.3s ease;
+            display: block;
+            margin: 30px auto 0 auto;
+            min-width: 200px;
+            text-align: center;
+        }
+        button[type="submit"]:hover:not(:disabled) {
+            background-color: #4cae4c;
+        }
+        button[type="submit"]:disabled {
+            background-color: var(--disabled-color);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* Styling for radio/checkbox groups */
+        .choice-group label, .checkbox-group label {
+            display: block; /* Вертикално подреждане по подразбиране */
+            margin-bottom: 8px;
+            font-weight: normal;
+            cursor: pointer;
+            padding-left: 5px;
+        }
+        .choice-group input[type="radio"], .checkbox-group input[type="checkbox"] {
+            margin-right: 10px;
+            vertical-align: middle;
+            cursor: pointer;
+            width: auto; /* Предотвратява разтягане */
+            margin-bottom: 0; /* Нулиране на долното поле */
+        }
+
+        small {
+            font-size: 0.9em;
+            color: #777;
+            display: block;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+
+         /* Feedback area */
+         #feedback {
+            margin-top: 25px;
+            padding: 12px 15px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.05em;
+            display: none; /* Скрито по подразбиране */
+         }
+         #feedback.success { background-color: #dff0d8; color: #3c763d; border: 1px solid #d6e9c6; display: block; }
+         #feedback.error { background-color: #f2dede; color: var(--error-color); border: 1px solid #ebccd1; display: block; }
+         #feedback.loading { background-color: #f0f0f0; color: var(--text-color); border: 1px solid var(--border-color); display: block; }
+
+         /* Loader animation */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Media Queries for Responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+            h1 { font-size: 1.6em; }
+            legend { font-size: 1.2em; }
+             label { font-size: 0.95em; }
+            input[type="text"], input[type="email"], input[type="tel"], input[type="date"], textarea, select {
+                padding: 9px 10px;
+                font-size: 0.95em;
+            }
+             button[type="submit"] {
+                 padding: 11px 20px;
+                 font-size: 1em;
+            }
+        }
+
+         @media (max-width: 480px) {
+            body { padding: 10px; }
+            .container { padding: 15px 10px; }
+            h1 { font-size: 1.4em; margin-bottom: 20px; }
+            legend { font-size: 1.1em; padding: 4px 10px;}
+            fieldset { padding: 15px; margin-bottom: 20px; }
+             label { margin-bottom: 5px; }
+             input, textarea, select { margin-bottom: 12px; }
+             button[type="submit"] {
+                width: 100%; /* Пълна ширина на малки екрани */
+                padding: 12px 15px;
+            }
+            .choice-group label, .checkbox-group label {
+                 font-size: 0.9em; /* По-малък текст за опциите */
+            }
+            .question-group { padding-bottom: 15px; margin-bottom: 15px; }
+        }
+	</style>
+</head>
+<body>
+<div class="container">
+<h1>Подобрен Хомеопатичен Въпросник</h1>
+
+<p class="warning">Моля, изберете най-подходящите отговори и добавете кратки пояснения, където е необходимо. Вашите отговори са конфиденциални.</p>
+
+<form id="homeopathy-questionnaire"><!-- Секция 0: Фокус на Консултацията -->
+<fieldset><legend>Основен Фокус</legend>
+
+<div class="question-group"><label id="label_main_focus">Каква е основната цел на консултацията?</label>
+
+<div aria-labelledby="label_main_focus" class="choice-group"><label><input name="main_focus" required="" type="radio" value="physical" /> Физически проблем/заболяване</label> <label><input name="main_focus" required="" type="radio" value="psycho_emotional" /> Психо-емоционално състояние</label> <label><input name="main_focus" required="" type="radio" value="both" /> Комбинация / Превенция</label></div>
+</div>
+
+<div class="focus-info" id="focus-guidance" style="display: none;"></div>
+</fieldset>
+<!-- Секция 1: Лични Данни (Винаги видима) -->
+
+<fieldset id="fieldset-personal"><legend>1. Лични Данни</legend>
+
+<div class="question-group"><label for="name">Име и Фамилия (Важно за името на файла):</label> <input id="name" name="name" placeholder="Вашите имена" required="" type="text" /></div>
+
+<div class="question-group"><label for="birthdate">Дата на раждане:</label> <input id="birthdate" name="birthdate" type="date" /></div>
+
+<div class="question-group"><label for="gender">Пол:</label> <select id="gender" name="gender"><option value="">-- Изберете --</option><option value="female">Жена</option><option value="male">Мъж</option><option value="other">Друг</option> </select></div>
+
+<div class="question-group"><label for="occupation">Професия / Занимание:</label> <input id="occupation" name="occupation" placeholder="С какво се занимавате?" type="text" /></div>
+
+<div class="question-group"><label for="contact_email">Имейл за връзка:</label> <input id="contact_email" name="contact_email" placeholder="За обратна връзка" type="email" /></div>
+</fieldset>
+<!-- Секция 3A: Менструален цикъл и женско здраве (УСЛОВНА) -->
+
+<fieldset class="hidden" id="fieldset-female-health"><legend>3А. Женско Здраве</legend>
+
+<p class="info">Моля, отговорете на тези въпроси, ако сте избрали пол &quot;Жена&quot;.</p>
+
+<div class="question-group"><label id="label_menarche_age">На каква възраст беше първата Ви менструация (менархе)?</label> <input aria-labelledby="label_menarche_age" id="menarche_age" max="20" min="8" name="menarche_age" placeholder="Възраст в години" type="number" /></div>
+
+<div class="question-group"><label id="label_cycle_regularity">Менструалният Ви цикъл редовен ли е?</label> <select aria-labelledby="label_cycle_regularity" id="cycle_regularity" name="cycle_regularity"><option value="">-- Изберете --</option><option value="regular">Да, редовен (на колко дни?)</option><option value="irregular">Не, нередовен</option><option value="absent">Липсващ (аменорея)</option><option value="menopause">В менопауза съм / След менопауза</option> </select> <input id="cycle_length" name="cycle_length" placeholder="Продължителност на цикъла в дни (ако е редовен)" type="text" /></div>
+
+<div class="question-group"><label id="label_menstruation_duration">Колко дни обикновено продължава менструацията?</label> <input aria-labelledby="label_menstruation_duration" id="menstruation_duration" max="15" min="1" name="menstruation_duration" placeholder="Брой дни" type="number" /></div>
+
+<div class="question-group"><label id="label_menstruation_flow">Какво е количеството на кръвотечението?</label> <select aria-labelledby="label_menstruation_flow" id="menstruation_flow" name="menstruation_flow"><option value="">-- Изберете --</option><option value="scanty">Оскъдно</option><option value="normal">Нормално</option><option value="heavy">Обилно</option><option value="heavy_clots">Обилно със съсиреци</option> </select> <input id="flow_color_odor" name="flow_color_odor" placeholder="Цвят (ясен, тъмен), миризма?" type="text" /></div>
+
+<div class="question-group"><label id="label_menstrual_pain">Изпитвате ли болка по време на менструация (дисменорея)?</label>
+
+<div aria-labelledby="label_menstrual_pain" class="choice-group"><label><input name="menstrual_pain" type="radio" value="none" /> Не, нямам болка</label> <label><input name="menstrual_pain" type="radio" value="mild" /> Лека, поносима</label> <label><input name="menstrual_pain" type="radio" value="moderate" /> Умерена, изисква обезболяващи понякога</label> <label><input name="menstrual_pain" type="radio" value="severe" /> Силна, пречи на ежедневието</label></div>
+<textarea name="menstrual_pain_details" placeholder="Описание на болката: локализация (корем, кръст), тип (спазми, дърпаща), кога се появява/облекчава?" rows="2"></textarea></div>
+
+<div class="question-group"><label id="label_pms">Имате ли Предменструален Синдром (ПМС)? Отбележете симптомите:</label>
+
+<div aria-labelledby="label_pms" class="checkbox-group"><label><input name="pms_symptoms" type="checkbox" value="mood_swings" /> Промени в настроението (тъга, раздразнителност)</label> <label><input name="pms_symptoms" type="checkbox" value="bloating" /> Подуване на корема / Задържане на течности</label> <label><input name="pms_symptoms" type="checkbox" value="breast_tenderness" /> Чувствителност / Болезненост на гърдите</label> <label><input name="pms_symptoms" type="checkbox" value="headache" /> Главоболие</label> <label><input name="pms_symptoms" type="checkbox" value="cravings" /> Силно желание за определени храни (сладко?)</label> <label><input name="pms_symptoms" type="checkbox" value="fatigue" /> Умора</label> <label><input name="pms_symptoms" type="checkbox" value="acne" /> Влошаване на акне</label> <label><input name="pms_symptoms" type="checkbox" value="none" /> Нямам ПМС симптоми</label></div>
+<textarea name="pms_details" placeholder="Други симптоми или кога започват?" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_menopause">Ако сте в менопауза/перименопауза, кога започна? Отбележете симптомите:</label> <input aria-labelledby="label_menopause" id="menopause_age" name="menopause_age" placeholder="Възраст на начало / последна менструация" type="text" />
+<div aria-labelledby="label_menopause" class="checkbox-group" style="margin-top:10px;"><label><input name="menopause_symptoms" type="checkbox" value="hot_flashes" /> Горещи вълни</label> <label><input name="menopause_symptoms" type="checkbox" value="night_sweats" /> Нощни изпотявания</label> <label><input name="menopause_symptoms" type="checkbox" value="sleep_disturbance" /> Нарушения на съня</label> <label><input name="menopause_symptoms" type="checkbox" value="vaginal_dryness" /> Вагинална сухота</label> <label><input name="menopause_symptoms" type="checkbox" value="mood_changes" /> Промени в настроението / Тревожност</label> <label><input name="menopause_symptoms" type="checkbox" value="memory_issues" /> Проблеми с паметта/концентрацията</label> <label><input name="menopause_symptoms" type="checkbox" value="fatigue" /> Умора</label> <label><input name="menopause_symptoms" type="checkbox" value="libido_decreased" /> Намалено либидо</label></div>
+<textarea name="menopause_details" placeholder="Други симптоми или уточнения" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_other_female_issues">Други гинекологични проблеми?</label>
+
+<div aria-labelledby="label_other_female_issues" class="checkbox-group"><label><input name="other_female_issues" type="checkbox" value="vaginal_discharge" /> Необичайно вагинално течение (цвят, мирис?)</label> <label><input name="other_female_issues" type="checkbox" value="itching_irritation" /> Вагинален сърбеж / Дразнене</label> <label><input name="other_female_issues" type="checkbox" value="fibroids" /> Миоми</label> <label><input name="other_female_issues" type="checkbox" value="cysts" /> Кисти на яйчниците</label> <label><input name="other_female_issues" type="checkbox" value="endometriosis" /> Ендометриоза</label> <label><input name="other_female_issues" type="checkbox" value="infertility" /> Проблеми със забременяването</label> <label><input name="other_female_issues" type="checkbox" value="pregnancy_issues" /> Проблеми по време на бременност/раждане</label></div>
+<textarea name="other_female_issues_details" placeholder="Уточнения" rows="1"></textarea></div>
+</fieldset>
+<!-- Секция 2: Основно Оплакване (Винаги видима) -->
+
+<fieldset id="fieldset-main-complaint"><legend>2. Основно Оплакване</legend> <!-- Съдържанието на секция 2 остава същото като в предишния Ви вариант -->
+
+<div class="question-group"><label for="main_complaint">Опишете с няколко думи основния проблем/оплакване:</label><textarea id="main_complaint" name="main_complaint" placeholder="Напр. 'Чести мигрени', 'Постоянна тревожност', 'Проблеми със съня', 'Кожен обрив'" required="" rows="3"></textarea></div>
+
+<div class="question-group"><label for="complaint_onset_trigger" id="label_complaint_onset_trigger">Кога започна? Имаше ли конкретен отключващ фактор?</label> <select aria-labelledby="label_complaint_onset_trigger" id="complaint_onset_trigger" name="complaint_onset_trigger"><option value="">-- Изберете или опишете --</option><option value="gradual">Постепенно, без ясна причина</option><option value="after_illness">След прекарано заболяване/вирус</option><option value="after_stress">След силен стрес/емоционален шок</option><option value="after_medication">След прием на лекарства/ваксина</option><option value="after_life_change">След промяна в живота (работа, връзка, загуба)</option><option value="childhood">От детството</option><option value="other">Друго (опишете по-долу)</option> </select><textarea id="complaint_onset_details" name="complaint_onset_details" placeholder="Допълнителни детайли за началото/причината (ако е нужно)" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_complaint_sensation">Какво е усещането? (Изберете най-характерните)</label>
+
+<div aria-labelledby="label_complaint_sensation" class="checkbox-group"><label><input name="complaint_sensation" type="checkbox" value="aching" /> Тъпа/болезнена болка</label> <label><input name="complaint_sensation" type="checkbox" value="burning" /> Парене</label> <label><input name="complaint_sensation" type="checkbox" value="stitching" /> Пробождане/Шиеща болка</label> <label><input name="complaint_sensation" type="checkbox" value="throbbing" /> Пулсиране</label> <label><input name="complaint_sensation" type="checkbox" value="cramping" /> Стягане/Спазъм</label> <label><input name="complaint_sensation" type="checkbox" value="pressure" /> Натиск/Тежест</label> <label><input name="complaint_sensation" type="checkbox" value="numbness" /> Изтръпване/Мравучкане</label> <label><input name="complaint_sensation" type="checkbox" value="itching" /> Сърбеж</label> <label><input name="complaint_sensation_emo" type="checkbox" value="anxiety" /> Тревожност/Безпокойство</label> <label><input name="complaint_sensation_emo" type="checkbox" value="fear" /> Страх</label> <label><input name="complaint_sensation_emo" type="checkbox" value="sadness" /> Тъга/Отчаяние</label> <label><input name="complaint_sensation_emo" type="checkbox" value="irritability" /> Раздразнителност</label> <label><input name="complaint_sensation_emo" type="checkbox" value="emptiness" /> Празнота/Апатия</label></div>
+<textarea id="complaint_sensation_details" name="complaint_sensation_details" placeholder="Уточнение за усещането (ако е нужно)" rows="1"></textarea></div>
+
+<div class="question-group"><label for="complaint_location_context">Локализация (ако е физическо) / Ситуации (ако е емоционално):</label> <input id="complaint_location_context" name="complaint_location_context" placeholder="Напр. 'Ляво слепоочие', 'Стомах', 'При среща с непознати', 'Вечер преди заспиване'" type="text" /></div>
+
+<div class="question-group"><label id="label_modalities_worse">Какво влошава състоянието? (Изберете основните)</label>
+
+<div aria-labelledby="label_modalities_worse" class="checkbox-group"><label><input name="modalities_worse" type="checkbox" value="time_morning" /> Сутрин</label> <label><input name="modalities_worse" type="checkbox" value="time_afternoon" /> Следобед</label> <label><input name="modalities_worse" type="checkbox" value="time_evening" /> Вечер</label> <label><input name="modalities_worse" type="checkbox" value="time_night" /> Нощем (в леглото / при събуждане)</label> <label><input name="modalities_worse" type="checkbox" value="temp_heat" /> Топлина / Топло помещение</label> <label><input name="modalities_worse" type="checkbox" value="temp_cold" /> Студ / Студено време</label> <label><input name="modalities_worse" type="checkbox" value="weather_damp" /> Влажно време</label> <label><input name="modalities_worse" type="checkbox" value="weather_wind" /> Вятър</label> <label><input name="modalities_worse" type="checkbox" value="weather_storm" /> Буря / Преди буря</label> <label><input name="modalities_worse" type="checkbox" value="position_lying" /> Легнало положение</label> <label><input name="modalities_worse" type="checkbox" value="position_sitting" /> Седнало положение</label> <label><input name="modalities_worse" type="checkbox" value="position_standing" /> Право положение</label> <label><input name="modalities_worse" type="checkbox" value="motion_start" /> При започване на движение</label> <label><input name="modalities_worse" type="checkbox" value="motion_continue" /> При продължително движение</label> <label><input name="modalities_worse" type="checkbox" value="rest" /> В покой</label> <label><input name="modalities_worse" type="checkbox" value="food_eating" /> По време/след хранене</label> <label><input name="modalities_worse" type="checkbox" value="food_specific" /> Определени храни (опишете)</label> <label><input name="modalities_worse" type="checkbox" value="emo_stress" /> Стрес / Напрежение</label> <label><input name="modalities_worse" type="checkbox" value="emo_consolation" /> Утеха</label> <label><input name="modalities_worse" type="checkbox" value="emo_alone" /> Самота</label> <label><input name="modalities_worse" type="checkbox" value="emo_company" /> Компания / Тълпа</label> <label><input name="modalities_worse" type="checkbox" value="other_touch" /> Докосване / Натиск</label> <label><input name="modalities_worse" type="checkbox" value="other_noise" /> Шум</label> <label><input name="modalities_worse" type="checkbox" value="other_light" /> Светлина</label></div>
+<textarea id="modalities_worse_details" name="modalities_worse_details" placeholder="Други влошаващи фактори или уточнения" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_modalities_better">Какво облекчава състоянието? (Изберете основните)</label>
+
+<div aria-labelledby="label_modalities_better" class="checkbox-group"><label><input name="modalities_better" type="checkbox" value="temp_heat" /> Топлина / Топли компреси</label> <label><input name="modalities_better" type="checkbox" value="temp_cold" /> Студ / Студени компреси / Свеж въздух</label> <label><input name="modalities_better" type="checkbox" value="weather_open_air" /> На открито</label> <label><input name="modalities_better" type="checkbox" value="position_lying" /> Легнало положение (на коя страна?)</label> <label><input name="modalities_better" type="checkbox" value="position_sitting" /> Седнало положение</label> <label><input name="modalities_better" type="checkbox" value="motion_gentle" /> Леко движение / Разходка</label> <label><input name="modalities_better" type="checkbox" value="motion_vigorous" /> Силно движение</label> <label><input name="modalities_better" type="checkbox" value="rest" /> Покой / Почивка</label> <label><input name="modalities_better" type="checkbox" value="food_eating" /> Хранене</label> <label><input name="modalities_better" type="checkbox" value="food_drinking" /> Пиене (топло/студено?)</label> <label><input name="modalities_better" type="checkbox" value="emo_consolation" /> Утеха / Подкрепа</label> <label><input name="modalities_better" type="checkbox" value="emo_alone" /> Самота / Тишина</label> <label><input name="modalities_better" type="checkbox" value="emo_distraction" /> Разсейване / Занимание</label> <label><input name="modalities_better" type="checkbox" value="other_pressure" /> Натиск / Пристягане</label> <label><input name="modalities_better" type="checkbox" value="other_rubbing" /> Разтриване</label> <label><input name="modalities_better" type="checkbox" value="other_darkness" /> Тъмнина</label></div>
+<textarea id="modalities_better_details" name="modalities_better_details" placeholder="Други облекчаващи фактори или уточнения" rows="1"></textarea></div>
+
+<div class="question-group"><label for="complaint_impact" id="label_complaint_impact">Как този проблем влияе на ежедневието Ви?</label> <select aria-labelledby="label_complaint_impact" id="complaint_impact" name="complaint_impact"><option value="">-- Изберете степен --</option><option value="mild">Слабо, почти не пречи</option><option value="moderate">Умерено, пречи понякога</option><option value="severe">Силно, пречи на работа/соц. живот</option><option value="very_severe">Много силно, почти инвалидизиращо</option> </select><textarea id="complaint_impact_details" name="complaint_impact_details" placeholder="Кратко пояснение как точно влияе (ако е нужно)" rows="1"></textarea></div>
+</fieldset>
+<!-- Секция 3: Физически Симптоми (Видима при фокус 'physical' или 'both') -->
+
+<fieldset class="hidden" id="fieldset-physical-symptoms"><legend>3. Други Физически Симптоми</legend>
+
+<p class="info">Отбележете други значими *физически* оплаквания, които имате редовно.</p>
+<!-- Всички групи въпроси от предишния Ви вариант за Секция 3 идват тук -->
+
+<div class="question-group"><label id="label_symptoms_head">Глава / Нервна с-ма:</label>
+
+<div aria-labelledby="label_symptoms_head" class="checkbox-group"><label><input name="symptoms_head" type="checkbox" value="headache_freq" /> Чести главоболия</label> <label><input name="symptoms_head" type="checkbox" value="migraine" /> Мигрени (със/без аура?)</label> <label><input name="symptoms_head" type="checkbox" value="dizziness" /> Световъртеж / Замайване</label> <label><input name="symptoms_head" type="checkbox" value="scalp" /> Проблеми със скалпа (сърбеж, пърхот, косопад)</label> <label><input name="symptoms_head" type="checkbox" value="tremor" /> Треперене (ръце, друго)</label> <label><input name="symptoms_head" type="checkbox" value="numbness_other" /> Изтръпване/мравучкане (освен основното)</label></div>
+<textarea name="symptoms_head_details" placeholder="Уточнения (локализация, тип болка, модалности)" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_symptoms_ents">Очи / Уши / Нос / Гърло:</label>
+
+<div aria-labelledby="label_symptoms_ents" class="checkbox-group"><label><input name="symptoms_ents" type="checkbox" value="vision" /> Проблеми със зрението</label> <label><input name="symptoms_ents" type="checkbox" value="eye_irritation" /> Дразнене/сухота/сълзене на очи</label> <label><input name="symptoms_ents" type="checkbox" value="hearing" /> Проблеми със слуха / Шум в ушите</label> <label><input name="symptoms_ents" type="checkbox" value="ear_pain" /> Болки в ушите</label> <label><input name="symptoms_ents" type="checkbox" value="sinusitis" /> Чести хреми / Синузит</label> <label><input name="symptoms_ents" type="checkbox" value="nosebleed" /> Кървене от носа</label> <label><input name="symptoms_ents" type="checkbox" value="sore_throat" /> Чести болки в гърлото / Ангини</label> <label><input name="symptoms_ents" type="checkbox" value="hoarseness" /> Пресипнал глас</label> <label><input name="symptoms_ents" type="checkbox" value="mouth_sores" /> Афти / Проблеми в устата</label></div>
+<textarea name="symptoms_ents_details" placeholder="Уточнения" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_symptoms_resp_cardio">Дихателна / Сърдечно-съдова:</label>
+
+<div aria-labelledby="label_symptoms_resp_cardio" class="checkbox-group"><label><input name="symptoms_resp_cardio" type="checkbox" value="cough" /> Хронична кашлица (суха/влажна?)</label> <label><input name="symptoms_resp_cardio" type="checkbox" value="asthma" /> Астма / Задух</label> <label><input name="symptoms_resp_cardio" type="checkbox" value="palpitations" /> Сърцебиене</label> <label><input name="symptoms_resp_cardio" type="checkbox" value="chest_pain" /> Болка/Тежест в гърдите</label> <label><input name="symptoms_resp_cardio" type="checkbox" value="bp_issues" /> Проблеми с кръвното (високо/ниско)</label> <label><input name="symptoms_resp_cardio" type="checkbox" value="cold_extremities" /> Студени ръце/крака</label></div>
+<textarea name="symptoms_resp_cardio_details" placeholder="Уточнения (кога, как се усеща)" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_symptoms_digestive">Храносмилателна система:</label>
+
+<div aria-labelledby="label_symptoms_digestive" class="checkbox-group"><label><input name="symptoms_digestive" type="checkbox" value="appetite_low" /> Намален апетит</label> <label><input name="symptoms_digestive" type="checkbox" value="appetite_high" /> Повишен апетит</label> <label><input name="symptoms_digestive" type="checkbox" value="heartburn" /> Киселини / Рефлукс</label> <label><input name="symptoms_digestive" type="checkbox" value="nausea" /> Гадене / Повръщане</label> <label><input name="symptoms_digestive" type="checkbox" value="bloating" /> Подуване / Газове</label> <label><input name="symptoms_digestive" type="checkbox" value="abdominal_pain" /> Болки в корема (къде?)</label> <label><input name="symptoms_digestive" type="checkbox" value="constipation" /> Запек</label> <label><input name="symptoms_digestive" type="checkbox" value="diarrhea" /> Диария</label> <label><input name="symptoms_digestive" type="checkbox" value="ibs" /> Синдром на раздразненото черво</label></div>
+<textarea name="symptoms_digestive_details" placeholder="Уточнения (след кои храни, вид изпражнения)" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_symptoms_urinary">Отделителна система:</label>
+
+<div aria-labelledby="label_symptoms_urinary" class="checkbox-group"><label><input name="symptoms_urinary" type="checkbox" value="frequent" /> Често уриниране (ден/нощ?)</label> <label><input name="symptoms_urinary" type="checkbox" value="urgent" /> Позиви за уриниране</label> <label><input name="symptoms_urinary" type="checkbox" value="pain_burning" /> Болка/Парене при уриниране</label> <label><input name="symptoms_urinary" type="checkbox" value="uti_recurrent" /> Чести уринарни инфекции</label> <label><input name="symptoms_urinary" type="checkbox" value="incontinence" /> Инконтиненция (при кашляне/смях?)</label> <label><input name="symptoms_urinary" type="checkbox" value="odor_color" /> Необичаен цвят/мирис на урината</label></div>
+<textarea name="symptoms_urinary_details" placeholder="Уточнения" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_symptoms_musculoskeletal">Опорно-двигателен апарат:</label>
+
+<div aria-labelledby="label_symptoms_musculoskeletal" class="checkbox-group"><label><input name="symptoms_musculoskeletal" type="checkbox" value="joint_pain" /> Болки в ставите (кои?)</label> <label><input name="symptoms_musculoskeletal" type="checkbox" value="muscle_pain" /> Болки в мускулите</label> <label><input name="symptoms_musculoskeletal" type="checkbox" value="stiffness" /> Скованост (сутрин/след покой?)</label> <label><input name="symptoms_musculoskeletal" type="checkbox" value="back_pain" /> Болки в гърба/кръста</label> <label><input name="symptoms_musculoskeletal" type="checkbox" value="weakness" /> Мускулна слабост</label> <label><input name="symptoms_musculoskeletal" type="checkbox" value="cramps" /> Крампи</label></div>
+<textarea name="symptoms_musculoskeletal_details" placeholder="Уточнения (модалности - какво влошава/облекчава)" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_symptoms_skin">Кожа:</label>
+
+<div aria-labelledby="label_symptoms_skin" class="checkbox-group"><label><input name="symptoms_skin" type="checkbox" value="dry" /> Суха кожа</label> <label><input name="symptoms_skin" type="checkbox" value="oily" /> Мазна кожа / Акне</label> <label><input name="symptoms_skin" type="checkbox" value="eczema" /> Екзема / Дерматит</label> <label><input name="symptoms_skin" type="checkbox" value="psoriasis" /> Псориазис</label> <label><input name="symptoms_skin" type="checkbox" value="hives" /> Уртикария / Копривна треска</label> <label><input name="symptoms_skin" type="checkbox" value="itching_other" /> Сърбеж (без обрив)</label> <label><input name="symptoms_skin" type="checkbox" value="warts" /> Брадавици / Папиломи</label> <label><input name="symptoms_skin" type="checkbox" value="wounds" /> Бавно зарастващи рани</label> <label><input name="symptoms_skin" type="checkbox" value="bruising" /> Лесно образуване на синини</label> <label><input name="symptoms_skin" type="checkbox" value="hair_loss" /> Косопад (освен скалп)</label> <label><input name="symptoms_skin" type="checkbox" value="nail_issues" /> Проблеми с ноктите</label></div>
+<textarea name="symptoms_skin_details" placeholder="Уточнения (локализация, вид обрив, модалности)" rows="1"></textarea></div>
+<!-- За мъже може да се добави условна секция за мъжко здраве тук --></fieldset>
+<!-- Секция 4: Психо-емоционално Състояние (Видима при фокус 'psycho_emotional' или 'both') -->
+
+<fieldset class="hidden" id="fieldset-psycho-emotional"><legend>4. Психо-емоционално Състояние</legend>
+
+<p class="info">Опишете как се чувствате и реагирате обикновено.</p>
+<!-- Всички групи въпроси от предишния Ви вариант за Секция 4 идват тук -->
+
+<div class="question-group"><label id="label_psy_mood">Преобладаващо настроение:</label>
+
+<div aria-labelledby="label_psy_mood" class="choice-group"><label><input name="psy_mood" type="radio" value="anxious" /> Тревожно / Напрегнато</label> <label><input name="psy_mood" type="radio" value="irritable" /> Раздразнително / Гневливо</label> <label><input name="psy_mood" type="radio" value="sad" /> Тъжно / Меланхолично</label> <label><input name="psy_mood" type="radio" value="apathetic" /> Апатично / Безразлично</label> <label><input name="psy_mood" type="radio" value="changeable" /> Променливо</label> <label><input name="psy_mood" type="radio" value="calm" /> Като цяло спокойно</label></div>
+<textarea name="psy_mood_details" placeholder="Уточнения / Нюанси" rows="1"></textarea></div>
+
+<div class="question-group"><label for="psy_stress_reaction" id="label_psy_stress_reaction">Реакция при стрес/конфликт:</label> <select aria-labelledby="label_psy_stress_reaction" id="psy_stress_reaction" name="psy_stress_reaction"><option value="">-- Изберете типичната реакция --</option><option value="withdraw">Оттеглям се / Затварям се</option><option value="anger_outburst">Избухвам / Крещя</option><option value="cry">Плача лесно</option><option value="freeze">Блокирам / Не мога да реагирам</option><option value="talk_resolve">Опитвам се да говоря / разреша проблема</option><option value="anxiety_panic">Ставам много тревожен / Паникьосвам се</option><option value="physical_symptoms">Появяват се физически симптоми</option> </select><textarea name="psy_stress_reaction_details" placeholder="Допълнение" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_psy_fears">Основни страхове (ако има):</label>
+
+<div aria-labelledby="label_psy_fears" class="checkbox-group"><label><input name="psy_fears" type="checkbox" value="dark" /> Тъмно</label> <label><input name="psy_fears" type="checkbox" value="heights" /> Височини</label> <label><input name="psy_fears" type="checkbox" value="closed_spaces" /> Затворени пространства</label> <label><input name="psy_fears" type="checkbox" value="crowds" /> Тълпи</label> <label><input name="psy_fears" type="checkbox" value="alone" /> Самота</label> <label><input name="psy_fears" type="checkbox" value="illness_death" /> Болести / Смърт</label> <label><input name="psy_fears" type="checkbox" value="failure" /> Провал / Критика</label> <label><input name="psy_fears" type="checkbox" value="animals_insects" /> Животни / Насекоми</label> <label><input name="psy_fears" type="checkbox" value="future" /> Несигурност за бъдещето</label> <label><input name="psy_fears" type="checkbox" value="poverty" /> Бедност</label> <label><input name="psy_fears" type="checkbox" value="thunderstorms" /> Гръмотевични бури</label></div>
+<textarea name="psy_fears_details" placeholder="Други страхове или уточнения" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_psy_sadness">Тъга / Депресивни състояния:</label>
+
+<div aria-labelledby="label_psy_sadness" class="checkbox-group"><label><input name="psy_sadness_triggers" type="checkbox" value="loss" /> След загуба/раздяла</label> <label><input name="psy_sadness_triggers" type="checkbox" value="disappointment" /> След разочарование</label> <label><input name="psy_sadness_triggers" type="checkbox" value="no_reason" /> Без видима причина</label> <label><input name="psy_sadness_triggers" type="checkbox" value="weather" /> При лошо/мрачно време</label></div>
+<textarea name="psy_sadness_details" placeholder="Как се проявява (плач, апатия, чувство за вина, мисли)? Колко често?" rows="2"></textarea></div>
+
+<div class="question-group"><label id="label_psy_anger">Гняв / Раздразнителност:</label>
+
+<div aria-labelledby="label_psy_anger" class="choice-group"><label><input name="psy_anger_expression" type="radio" value="outward" /> Изразявам го навън (викам, споря)</label> <label><input name="psy_anger_expression" type="radio" value="inward" /> Потискам го / Насочвам го навътре</label> <label><input name="psy_anger_expression" type="radio" value="passive" /> Пасивно-агресивно (сърдя се, мълча)</label> <label><input name="psy_anger_expression" type="radio" value="rarely" /> Рядко се ядосвам</label></div>
+<textarea name="psy_anger_details" placeholder="Какво Ви провокира най-често?" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_psy_social">Социални контакти / Взаимоотношения:</label>
+
+<div aria-labelledby="label_psy_social" class="choice-group"><label><input name="psy_social_preference" type="radio" value="company" /> Предпочитам компания</label> <label><input name="psy_social_preference" type="radio" value="solitude" /> Предпочитам самота</label> <label><input name="psy_social_preference" type="radio" value="balanced" /> Балансирано / Зависи</label></div>
+<textarea name="psy_social_details" placeholder="Лесно ли създавате контакти? Имате ли близки приятели? Конфликтни ли сте? Как се чувствате в големи групи?" rows="2"></textarea></div>
+
+<div class="question-group"><label id="label_psy_confidence">Самочувствие / Чувствителност:</label> <select aria-labelledby="label_psy_confidence" name="psy_confidence_level"><option value="">-- Оценете самочувствието --</option><option value="high">Високо</option><option value="average">Средно</option><option value="low">Ниско</option><option value="variable">Променливо</option> </select>
+
+<div class="choice-group" style="margin-top: 10px;"><label>Чувствителност към критика/мнение:</label> <label><input name="psy_criticism_sensitivity" type="radio" value="very" /> Много чувствителен/а</label> <label><input name="psy_criticism_sensitivity" type="radio" value="moderate" /> Умерено чувствителен/а</label> <label><input name="psy_criticism_sensitivity" type="radio" value="low" /> Слабо чувствителен/а</label></div>
+</div>
+
+<div class="question-group"><label id="label_psy_consolation">Как реагирате на утеха, когато сте разстроени?</label>
+
+<div aria-labelledby="label_psy_consolation" class="choice-group"><label><input name="psy_consolation" type="radio" value="better" /> Помага ми / Успокоява ме</label> <label><input name="psy_consolation" type="radio" value="worse" /> Дразни ме / Влошава ме</label> <label><input name="psy_consolation" type="radio" value="indifferent" /> Безразлично ми е</label></div>
+</div>
+
+<div class="question-group"><label for="psy_memory_concentration" id="label_psy_memory_concentration">Памет и концентрация:</label> <select aria-labelledby="label_psy_memory_concentration" id="psy_memory_concentration" name="psy_memory_concentration"><option value="">-- Оценете --</option><option value="good">Добри</option><option value="average">Средни</option><option value="poor">Слаби / Влошени</option><option value="variable">Променливи</option> </select><textarea name="psy_memory_concentration_details" placeholder="В кои ситуации са по-зле/добре? За какво забравяте?" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_psy_orderliness">Подреденост / Организираност:</label>
+
+<div aria-labelledby="label_psy_orderliness" class="choice-group"><label><input name="psy_orderliness" type="radio" value="very_tidy" /> Много подреден/а, педантичен/а</label> <label><input name="psy_orderliness" type="radio" value="tidy" /> Подреден/а като цяло</label> <label><input name="psy_orderliness" type="radio" value="untidy" /> Неподреден/а, хаотичен/а</label> <label><input name="psy_orderliness" type="radio" value="variable" /> Променливо / На периоди</label></div>
+</div>
+
+<div class="question-group"><label id="label_psy_dreams">Сънища:</label>
+
+<div aria-labelledby="label_psy_dreams" class="checkbox-group"><label><input name="psy_dreams_type" type="checkbox" value="vivid" /> Ярки, запомнящи се</label> <label><input name="psy_dreams_type" type="checkbox" value="recurrent" /> Повтарящи се</label> <label><input name="psy_dreams_type" type="checkbox" value="anxious" /> Тревожни / Напрегнати</label> <label><input name="psy_dreams_type" type="checkbox" value="nightmares" /> Кошмари</label> <label><input name="psy_dreams_type" type="checkbox" value="prophetic" /> Пророчески</label> <label><input name="psy_dreams_type" type="checkbox" value="none" /> Не помня сънища / Рядко сънувам</label></div>
+<textarea name="psy_dreams_details" placeholder="Теми на повтарящи се сънища или кошмари?" rows="2"></textarea></div>
+</fieldset>
+<!-- Секция 5: Общи Характеристики (Винаги видима) -->
+
+<fieldset id="fieldset-general-modalities"><legend>5. Общи Характеристики</legend> <!-- Всички групи въпроси от предишния Ви вариант за Секция 5 идват тук -->
+
+<div class="question-group"><label for="general_energy" id="label_general_energy">Енергийно ниво през деня:</label> <select aria-labelledby="label_general_energy" id="general_energy" name="general_energy"><option value="">-- Изберете --</option><option value="high_am">Най-високо сутрин</option><option value="high_pm">Най-високо следобед/вечер</option><option value="low_always">Като цяло ниско</option><option value="variable">Променливо</option><option value="good_overall">Добро като цяло</option> </select><textarea name="general_energy_details" placeholder="Часове на пик/спад, нужда от дрямка?" rows="1"></textarea></div>
+
+<div class="question-group"><label for="general_sleep_quality" id="label_general_sleep_quality">Сън:</label> <select aria-labelledby="label_general_sleep_quality" id="general_sleep_quality" name="general_sleep_quality"><option value="">-- Качество на съня --</option><option value="good">Добър, освежаващ</option><option value="light">Лек, лесно се будя</option><option value="restless">Неспокоен, въртя се</option><option value="interrupted">На пресекулки, будя се често</option><option value="unrefreshing">Неосвежаващ</option> </select> <label id="label_general_sleep_issues" style="margin-top: 10px; font-weight: normal; color: #666;">Проблеми със съня (ако има):</label>
+
+<div aria-labelledby="label_general_sleep_issues" class="checkbox-group"><label>&nbsp;<input name="general_sleep_issues" type="checkbox" value="difficulty_falling_asleep" /> Трудно заспиване</label> <label>&nbsp;<input name="general_sleep_issues" type="checkbox" value="waking_night" /> Събуждане през нощта (кога?)</label> <label>&nbsp;<input name="general_sleep_issues" type="checkbox" value="waking_early" /> Ранно събуждане <label><input name="general_sleep_issues" type="checkbox" value="nightmares" /> Кошмари / Ярки сънища (виж секция 4)</label> <label><input name="general_sleep_issues" type="checkbox" value="snoring" /> Хъркане / Апнея</label> <label><input name="general_sleep_issues" type="checkbox" value="talking_walking" /> Говорене / Ходене насън</label> <label><input name="general_sleep_issues" type="checkbox" value="teeth_grinding" /> Скърцане със зъби (бруксизъм)</label> </label></div>
+<input name="general_sleep_position" placeholder="Предпочитана поза за сън (гръб, корем, ляво/дясно)?" type="text" /></div>
+
+<div class="question-group"><label id="label_general_temperature_preference">Реакция на температура:</label>
+
+<div aria-labelledby="label_general_temperature_preference" class="choice-group"><label><input name="general_temperature_preference" type="radio" value="chilly" /> Зиморничав/а, предпочитам топло</label> <label><input name="general_temperature_preference" type="radio" value="warm" /> Лесно ми става топло, предпочитам хлад</label> <label><input name="general_temperature_preference" type="radio" value="neutral" /> Адаптивен/а, нямам силни предпочитания</label></div>
+
+<p><small>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Как понасяте крайности (много студено/много топло)?</small></p>
+<textarea name="general_temperature_details" placeholder="Напр. 'Мразя течение', 'Слънцето ме изтощава', 'Нуждая се от много завивки'" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_general_weather_sensitivity">Как Ви влияе времето?</label>
+
+<div aria-labelledby="label_general_weather_sensitivity" class="checkbox-group"><label><input name="general_weather_sensitivity" type="checkbox" value="damp_cold" /> Влошавам се от студено и влажно</label> <label><input name="general_weather_sensitivity" type="checkbox" value="hot_sun" /> Влошавам се от горещо слънце</label> <label><input name="general_weather_sensitivity" type="checkbox" value="wind" /> Влошавам се от вятър</label> <label><input name="general_weather_sensitivity" type="checkbox" value="storm" /> Влошавам се преди/по време на буря</label> <label><input name="general_weather_sensitivity" type="checkbox" value="change" /> Чувствителен/а към всяка промяна</label> <label><input name="general_weather_sensitivity" type="checkbox" value="fog" /> Влошавам се при мъгла</label> <label><input name="general_weather_sensitivity" type="checkbox" value="better_specific" /> Подобрявам се при определено време (опишете)</label> <label><input name="general_weather_sensitivity" type="checkbox" value="none" /> Не ми влияе особено</label></div>
+<textarea name="general_weather_details" placeholder="Уточнения (напр. 'подобрявам се на море/планина')" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_general_food_cravings">Желание за храни/напитки ( cravings):</label>
+
+<div aria-labelledby="label_general_food_cravings" class="checkbox-group"><label><input name="general_food_cravings" type="checkbox" value="sweet" /> Сладко</label> <label><input name="general_food_cravings" type="checkbox" value="salty" /> Солено</label> <label><input name="general_food_cravings" type="checkbox" value="sour" /> Кисело</label> <label><input name="general_food_cravings" type="checkbox" value="spicy" /> Люто / Пикантно</label> <label><input name="general_food_cravings" type="checkbox" value="fatty" /> Мазно</label> <label><input name="general_food_cravings" type="checkbox" value="bread_pasta" /> Тестено</label> <label><input name="general_food_cravings" type="checkbox" value="dairy" /> Млечни / Сирене</label> <label><input name="general_food_cravings" type="checkbox" value="meat" /> Месо</label> <label><input name="general_food_cravings" type="checkbox" value="fish" /> Риба</label> <label><input name="general_food_cravings" type="checkbox" value="eggs" /> Яйца</label> <label><input name="general_food_cravings" type="checkbox" value="fruit_veg" /> Плодове / Зеленчуци</label> <label><input name="general_food_cravings" type="checkbox" value="coffee" /> Кафе</label> <label><input name="general_food_cravings" type="checkbox" value="alcohol" /> Алкохол</label> <label><input name="general_food_cravings" type="checkbox" value="cold_drinks" /> Студени напитки</label> <label><input name="general_food_cravings" type="checkbox" value="warm_drinks" /> Топли напитки</label> <label><input name="general_food_cravings" type="checkbox" value="ice" /> Лед</label></div>
+<textarea name="general_food_cravings_details" placeholder="Други специфични желания?" rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_general_food_aversions">Отвращение/непоносимост към храни/напитки (aversions):</label>
+
+<div aria-labelledby="label_general_food_aversions" class="checkbox-group"><label><input name="general_food_aversions" type="checkbox" value="fatty" /> Мазно</label> <label><input name="general_food_aversions" type="checkbox" value="meat" /> Месо (кое?)</label> <label><input name="general_food_aversions" type="checkbox" value="fish" /> Риба</label> <label><input name="general_food_aversions" type="checkbox" value="eggs" /> Яйца</label> <label><input name="general_food_aversions" type="checkbox" value="milk" /> Прясно мляко</label> <label><input name="general_food_aversions" type="checkbox" value="sweet" /> Сладко</label> <label><input name="general_food_aversions" type="checkbox" value="coffee" /> Кафе</label> <label><input name="general_food_aversions" type="checkbox" value="warm_food" /> Топла храна</label> <label><input name="general_food_aversions" type="checkbox" value="onions_garlic" /> Лук / Чесън</label> <label><input name="general_food_aversions" type="checkbox" value="specific_veg" /> Определени зеленчуци (кои?)</label></div>
+<textarea name="general_food_aversions_details" placeholder="Други или как реагирате (гадене, повръщане, диария)?" rows="1"></textarea></div>
+
+<div class="question-group"><label for="general_thirst" id="label_general_thirst">Жажда:</label> <select aria-labelledby="label_general_thirst" id="general_thirst" name="general_thirst"><option value="">-- Изберете --</option><option value="high">Силна жажда, пия много</option><option value="moderate">Умерена жажда</option><option value="low">Слаба жажда, пия малко</option><option value="thirstless">Почти не изпитвам жажда</option> </select> <input name="general_thirst_preference" placeholder="Предпочитание за температура на напитките (ледено студени, хладки, топли)?" type="text" /></div>
+
+<div class="question-group"><label for="general_sweating_amount" id="label_general_sweating_amount">Изпотяване:</label> <select aria-labelledby="label_general_sweating_amount" id="general_sweating_amount" name="general_sweating_amount"><option value="">-- Количество --</option><option value="profuse">Обилно, лесно се потя</option><option value="moderate">Умерено</option><option value="scanty">Оскъдно, трудно се потя</option> </select> <input name="general_sweating_location" placeholder="Локализация (глава, длани, стъпала, подмишници, цяло тяло)?" type="text" /> <input name="general_sweating_odor" placeholder="Миризма (липсва, кисела, остра, друга)?" type="text" /> <input name="general_sweating_stains" placeholder="Оставя ли петна? Какъв цвят?" type="text" /></div>
+
+<div class="question-group"><label for="general_appearance">Телосложение / Външен вид (кратко описание):</label><textarea id="general_appearance" name="general_appearance" placeholder="Напр. слаб, пълен, среден; лесно/трудно напълняване/отслабване; цвят коса/очи; характерни белези." rows="2"></textarea></div>
+</fieldset>
+<!-- Секция 6: Минали Заболявания и Фамилна Анамнеза (Винаги видима) -->
+
+<fieldset id="fieldset-history"><legend>6. История и Фамилна Предразположеност</legend> <!-- Всички групи въпроси от предишния Ви вариант за Секция 6 идват тук -->
+
+<div class="question-group"><label for="history_childhood">Значими заболявания/събития в детството:</label><textarea id="history_childhood" name="history_childhood" placeholder="Шарки, чести инфекции (ангини, отити), операции, травми, емоционални травми" rows="2"></textarea></div>
+
+<div class="question-group"><label for="history_past_illnesses">Други сериозни/хронични заболявания през живота:</label><textarea id="history_past_illnesses" name="history_past_illnesses" placeholder="Диагнози, операции, хоспитализации, сериозни травми" rows="2"></textarea></div>
+
+<div class="question-group"><label for="history_vaccinations">Поставяни ваксини и реакции към тях (ако е имало):</label><textarea id="history_vaccinations" name="history_vaccinations" placeholder="Опишете реакциите, ако си спомняте" rows="1"></textarea></div>
+
+<div class="question-group"><label for="history_medications">Приемани лекарства (редовно / продължително):</label><textarea id="history_medications" name="history_medications" placeholder="Антибиотици, хормони, антидепресанти, обезболяващи, др." rows="1"></textarea></div>
+
+<div class="question-group"><label id="label_family_history">Фамилна обремененост (родители, братя/сестри, баби/дядовци):</label>
+
+<div aria-labelledby="label_family_history" class="checkbox-group"><label><input name="family_history" type="checkbox" value="cancer" /> Рак</label> <label><input name="family_history" type="checkbox" value="diabetes" /> Диабет</label> <label><input name="family_history" type="checkbox" value="cardio" /> Сърдечно-съдови (инфаркт, инсулт, високо кръвно)</label> <label><input name="family_history" type="checkbox" value="autoimmune" /> Автоимунни (Хашимото, РА, МС)</label> <label><input name="family_history" type="checkbox" value="mental" /> Психични (депресия, тревожност, шизофрения, др.)</label> <label><input name="family_history" type="checkbox" value="allergies" /> Алергии / Астма</label> <label><input name="family_history" type="checkbox" value="tuberculosis" /> Туберкулоза</label> <label><input name="family_history" type="checkbox" value="epilepsy" /> Епилепсия</label> <label><input name="family_history" type="checkbox" value="alcoholism" /> Алкохолизъм</label></div>
+<textarea name="family_history_details" placeholder="Други или уточнения кой роднина и от какво точно е страдал" rows="1"></textarea></div>
+</fieldset>
+<!-- Секция 7: Допълнителна Информация (Винаги видима) -->
+
+<fieldset id="fieldset-additional"><legend>7. Допълнителна Информация</legend>
+
+<div class="question-group"><label for="additional_info">Има ли нещо друго важно, което смятате, че трябва да знам и не беше засегнато дотук?</label><textarea id="additional_info" name="additional_info" placeholder="Странни, редки или особени симптоми/усещания; хобита; специфични диети; начин на живот; значими стресови събития; други терапии, които ползвате; вашите очаквания от хомеопатията..." rows="4"></textarea></div>
+</fieldset>
+<!-- Зона за обратна връзка -->
+
+<div id="feedback"></div>
+<!-- Бутон за генериране и запазване --><button id="submit-button" type="submit">Запази / Актуализирай Отговорите</button></form>
+</div>
+<!-- /.container --><script>
+        // --- Конфигурация ---
+        const API_URL = 'file_manager_api.php'; // Поставете правилния път до вашия PHP API скрипт
+        const API_TOKEN = 'FXW29QFHZ3M70VDUFN1FSLG6WVI9UOF1'; // Вашият статичен API ключ
+
+        // --- Елементи от DOM ---
+        const form = document.getElementById('homeopathy-questionnaire');
+        const focusRadios = document.querySelectorAll('input[name="main_focus"]');
+        const focusGuidanceDiv = document.getElementById('focus-guidance');
+        const feedbackDiv = document.getElementById('feedback');
+        const nameInput = document.getElementById('name');
+        const genderSelect = document.getElementById('gender'); // Добавено
+        const submitButton = document.getElementById('submit-button'); // Добавено
+
+        const physicalSymptomsFieldset = document.getElementById('fieldset-physical-symptoms');
+        const psychoEmotionalFieldset = document.getElementById('fieldset-psycho-emotional');
+        const femaleHealthFieldset = document.getElementById('fieldset-female-health'); // Добавено
+
+        // --- Функция за показване/скриване на секции ---
+        function updateSectionsVisibility() {
+            const selectedFocus = form.querySelector('input[name="main_focus"]:checked');
+            const selectedGender = genderSelect.value;
+            const focusValue = selectedFocus ? selectedFocus.value : null;
+
+            let guidanceText = '';
+            // Скриваме всички условни секции първо
+            physicalSymptomsFieldset.classList.add('hidden');
+            psychoEmotionalFieldset.classList.add('hidden');
+            femaleHealthFieldset.classList.add('hidden');
+            // Нулираме подсветката
+             document.querySelectorAll('fieldset').forEach(fs => fs.classList.remove('highlight-section'));
+
+            if (!focusValue) {
+                focusGuidanceDiv.style.display = 'none';
+                return; // Ако няма избран фокус, не правим нищо повече
+            }
+
+            // Показваме според фокуса
+            if (focusValue === 'physical' || focusValue === 'both') {
+                physicalSymptomsFieldset.classList.remove('hidden');
+                physicalSymptomsFieldset.classList.add('highlight-section');
+            }
+            if (focusValue === 'psycho_emotional' || focusValue === 'both') {
+                 psychoEmotionalFieldset.classList.remove('hidden');
+                 psychoEmotionalFieldset.classList.add('highlight-section');
+            }
+
+             // Показваме секция за женско здраве САМО ако е избран пол Жена И фокусът НЕ е САМО Психо-емоционален
+            if (selectedGender === 'female' && focusValue !== 'psycho_emotional') {
+                 femaleHealthFieldset.classList.remove('hidden');
+                 // Може да се добави и highlight-section, ако е физически или комбиниран фокус
+                 if (focusValue === 'physical' || focusValue === 'both') {
+                    femaleHealthFieldset.classList.add('highlight-section');
+                 }
+            }
+
+            // Генерираме текста за насока
+            if (focusValue === 'physical') {
+                guidanceText = 'Фокус: Физически проблем. Моля, бъдете подробни в секции 2 и 3';
+                 if(selectedGender === 'female') guidanceText += ' (и 3А)';
+                 guidanceText += '.';
+                 document.getElementById('fieldset-main-complaint').classList.add('highlight-section');
+
+            } else if (focusValue === 'psycho_emotional') {
+                guidanceText = 'Фокус: Психо-емоционално състояние. Моля, бъдете подробни в секции 2 и 4.';
+                 document.getElementById('fieldset-main-complaint').classList.add('highlight-section');
+            } else if (focusValue === 'both') {
+                 guidanceText = 'Фокус: Комбинация / Превенция. Моля, попълнете всички релевантни за Вас секции (2, 3, 4';
+                 if(selectedGender === 'female') guidanceText += ', 3А';
+                  guidanceText += ').';
+                  document.getElementById('fieldset-main-complaint').classList.add('highlight-section');
+            }
+
+            focusGuidanceDiv.textContent = guidanceText;
+            focusGuidanceDiv.style.display = 'block';
+
+             // Force reflow за плавни преходи
+            void physicalSymptomsFieldset.offsetWidth;
+            void psychoEmotionalFieldset.offsetWidth;
+            void femaleHealthFieldset.offsetWidth;
+        }
+
+        // --- Слушатели за промяна на фокус и пол ---
+        focusRadios.forEach(radio => {
+            radio.addEventListener('change', updateSectionsVisibility);
+        });
+        genderSelect.addEventListener('change', updateSectionsVisibility); // Добавен слушател за пол
+
+        // Първоначално извикване при зареждане
+         updateSectionsVisibility();
+
+
+        // --- Функция за проверка дали файл съществува ---
+        async function checkIfFileExists(filename) {
+            // Използваме GET заявка, която чете съдържанието на файла.
+            // Ако върне 200 ОК - файлът съществува.
+            // Ако върне 404 Not Found - файлът не съществува.
+            const checkUrl = `${API_URL}?action=read_file&filename=${encodeURIComponent(filename)}`;
+            try {
+                const response = await fetch(checkUrl, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${API_TOKEN}` }
+                });
+                if (response.ok) { // Status 200-299
+                    return true; // Файлът съществува
+                } else if (response.status === 404) {
+                    return false; // Файлът не е намерен
+                } else {
+                    // Друга грешка при проверката (напр. 401 Unauthorized, 500 Server Error)
+                    console.warn(`Неочакван статус при проверка за файл (${response.status}). Ще се опита създаване.`);
+                    // Връщаме false, за да опита POST, но може да се промени логиката при нужда
+                    return false;
+                }
+            } catch (error) {
+                console.error('Мрежова грешка при проверка за съществуване на файл:', error);
+                // При мрежова грешка, приемаме, че не съществува, за да опитаме POST
+                return false;
+            }
+        }
+
+        // --- Функция за генериране на текстов доклад ---
+        function generateReportContent() {
+            let reportContent = "ХОМЕОПАТИЧЕН ВЪПРОСНИК - ОТГОВОРИ\n";
+            reportContent += "=====================================\n\n";
+            const timestamp = new Date().toLocaleString('bg-BG');
+            reportContent += `Дата на последна актуализация: ${timestamp}\n`;
+            const patientNameValue = nameInput.value.trim() || 'UnknownPatient';
+            reportContent += `Пациент: ${patientNameValue}\n\n`;
+
+            const selectedFocusRadio = form.querySelector('input[name="main_focus"]:checked');
+            if (selectedFocusRadio) {
+                 const focusLabelElement = form.querySelector(`label[for="${selectedFocusRadio.id}"]`) || selectedFocusRadio.closest('label');
+                 const focusLabelText = focusLabelElement ? focusLabelElement.textContent.trim() : selectedFocusRadio.value;
+                 reportContent += "-------------------------------------\n";
+                 reportContent += `--- 0. ОСНОВЕН ФОКУС ---\n`;
+                 reportContent += "-------------------------------------\n";
+                 reportContent += `Въпрос: Каква е основната цел на консултацията?\n`;
+                 reportContent += `Отговор (Избор): ${focusLabelText}\n\n`;
+            }
+
+            // Обхождане на ВСИЧКИ fieldset-и (включително скритите), но добавяме съдържание само от видимите
+            const fieldsets = form.querySelectorAll('fieldset');
+            fieldsets.forEach(fieldset => {
+                 if (fieldset.classList.contains('hidden') || fieldset.id === 'fieldset-personal' || fieldset.querySelector('input[name="main_focus"]')) return; // Пропускаме скритите, личните данни (вече добавени) и фокуса
+
+                const legend = fieldset.querySelector('legend');
+                let sectionOutput = ""; // Събираме съдържанието на секцията тук
+                let sectionHasContent = false;
+
+                const questionGroups = fieldset.querySelectorAll('.question-group');
+                questionGroups.forEach(group => {
+                    const mainLabelElement = group.querySelector('label:not(.choice-group label):not(.checkbox-group label)'); // Основен label за групата
+                    if (!mainLabelElement) return; // Ако няма основен label, пропускаме групата?
+
+                    const mainQuestionText = mainLabelElement.textContent.replace(':', '').trim();
+                    let questionAnswersOutput = ""; // Отговори за текущия въпрос
+
+                    const elements = group.querySelectorAll('input:not([type="submit"]), textarea, select');
+                    let collectedCheckboxValues = {}; // За групиране на чекбоксове
+
+                    elements.forEach(element => {
+                        if (!element.name) return;
+
+                        let answerValue = '';
+                        let answerLabel = ''; // За радио/чекбокс/селект
+
+                         if (element.type === 'radio') {
+                            if (element.checked) {
+                                const radioLabelElement = element.closest('label');
+                                answerValue = radioLabelElement ? radioLabelElement.textContent.trim() : element.value;
+                                questionAnswersOutput += `Отговор (Избор): ${answerValue}\n`;
+                                sectionHasContent = true;
+                            }
+                        } else if (element.type === 'checkbox') {
+                            if (element.checked) {
+                                if (!collectedCheckboxValues[element.name]) {
+                                    collectedCheckboxValues[element.name] = [];
+                                }
+                                const checkboxLabelElement = element.closest('label');
+                                answerValue = checkboxLabelElement ? checkboxLabelElement.textContent.trim() : element.value;
+                                collectedCheckboxValues[element.name].push(` - ${answerValue}`);
+                                sectionHasContent = true;
+                            }
+                        } else if (element.tagName === 'SELECT') {
+                            if (element.value) {
+                                const selectedOption = element.options[element.selectedIndex];
+                                answerValue = selectedOption.text.trim();
+                                // Определяне на типа на отговора въз основа на ID или NAME
+                                let answerType = "Избор";
+                                if(element.name.includes("quality")) answerType = "Качество";
+                                if(element.name.includes("reaction")) answerType = "Реакция";
+                                if(element.name.includes("level") || element.name.includes("impact")) answerType = "Оценка/Степен";
+                                if(element.name.includes("preference")) answerType = "Предпочитание";
+                                if(element.name.includes("amount")) answerType = "Количество";
+                                questionAnswersOutput += `Отговор (${answerType}): ${answerValue}\n`;
+                                sectionHasContent = true;
+                            }
+                        } else { // input[type=text], textarea, date, number etc.
+                            answerValue = element.value.trim();
+                            if (answerValue) {
+                                // Определяне на типа на отговора
+                                let answerType = "Отговор";
+                                if(element.name.includes("details") || element.name.includes("description")) answerType = "Детайли/Уточнения";
+                                if(element.name.includes("date")) answerType = "Дата";
+                                if(element.name.includes("age")) answerType = "Възраст";
+                                if(element.name.includes("length")) answerType = "Продължителност";
+                                if(element.name.includes("position")) answerType = "Поза";
+                                if(element.name.includes("location")) answerType = "Локализация";
+                                if(element.name.includes("odor")) answerType = "Миризма";
+                                if(element.name.includes("stains")) answerType = "Петна";
+                                if(element.id.includes("complaint_location_context")) answerType = "Локализация/Ситуации";
+                                if(element.id.includes("general_thirst_preference")) answerType = "Предпочитание темп.";
+                                if(element.id.includes("flow_color_odor")) answerType = "Цвят/Миризма";
+
+                                questionAnswersOutput += `Отговор (${answerType}): ${answerValue}\n`;
+                                sectionHasContent = true;
+                            }
+                        }
+                    }); // end elements.forEach
+
+                    // Добавяне на събраните чекбокс отговори
+                    for (const name in collectedCheckboxValues) {
+                        if (collectedCheckboxValues[name].length > 0) {
+                            questionAnswersOutput += `Отговор(и) (Избор):\n${collectedCheckboxValues[name].join('\n')}\n`;
+                        }
+                    }
+
+                    // Добавяне на въпроса и неговите отговори към изхода на секцията
+                    if (questionAnswersOutput) {
+                        sectionOutput += `Въпрос: ${mainQuestionText}\n${questionAnswersOutput}\n`;
+                    }
+                }); // end questionGroups.forEach
+
+                // Добавяне на заглавието и съдържанието на секцията към общия доклад, само ако има съдържание
+                if (sectionHasContent && legend) {
+                    reportContent += `-------------------------------------\n`;
+                    reportContent += `--- ${legend.textContent.toUpperCase()} ---\n`;
+                    reportContent += `-------------------------------------\n`;
+                    reportContent += sectionOutput;
+                }
+
+            }); // end fieldsets.forEach
+
+             // Добавяне на личните данни накрая за прегледност? Или в началото е по-добре? Оставям ги в началото.
+             // Но може да се добави секция 1 тук, ако се пропусне горе.
+              const personalFieldset = document.getElementById('fieldset-personal');
+              let personalSectionOutput = "";
+              let personalSectionHasContent = false;
+               const personalQGroups = personalFieldset.querySelectorAll('.question-group');
+               personalQGroups.forEach(group => {
+                   const mainLabelElement = group.querySelector('label');
+                   const element = group.querySelector('input, select');
+                   if (mainLabelElement && element && element.value) {
+                       const questionText = mainLabelElement.textContent.replace(':', '').trim();
+                       let answerText = element.value.trim();
+                       if(element.tagName === 'SELECT') {
+                            const selectedOption = element.options[element.selectedIndex];
+                             answerText = selectedOption.text.trim();
+                       }
+                       personalSectionOutput += `Въпрос: ${questionText}\nОтговор: ${answerText}\n\n`;
+                       personalSectionHasContent = true;
+                   }
+               });
+
+               if(personalSectionHasContent) {
+                    reportContent = reportContent.replace("Пациент: " + patientNameValue, `Пациент: ${patientNameValue}\n\n`
+                    + "-------------------------------------\n"
+                    + "--- 1. ЛИЧНИ ДАННИ ---\n"
+                    + "-------------------------------------\n" + personalSectionOutput);
+               }
+
+
+            return reportContent;
+        }
+
+
+        // --- Логика за изпращане на формата ---
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            feedbackDiv.textContent = 'Обработка...';
+            feedbackDiv.className = 'loading'; // Показваме неутрално съобщение
+            feedbackDiv.innerHTML = 'Обработка... <div class="loader"></div>'; // Добавяме спинър
+            submitButton.disabled = true; // Деактивираме бутона
+
+            const patientNameForFile = nameInput.value.trim();
+            if (!patientNameForFile) {
+                 feedbackDiv.textContent = 'Грешка: Моля, въведете Име и Фамилия.';
+                 feedbackDiv.className = 'error';
+                 nameInput.focus();
+                 submitButton.disabled = false; // Активираме бутона
+                 return;
+            }
+
+            // --- Генериране на име на файла (Име_Дата) ---
+            const cleanPatientName = patientNameForFile.replace(/[^a-z0-9_\-\s\u0400-\u04FF]/gi, '').replace(/\s+/g, '_').replace(/_+/g, '_'); // Позволява и кирилица
+            const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+            const filename = `${cleanPatientName}_${dateStr}.txt`;
+
+            // --- Генериране на съдържанието ---
+            const reportContent = generateReportContent();
+            // console.log("---- REPORT CONTENT ----\n", reportContent); // За дебъг
+
+            // --- Проверка дали файлът съществува и избор на метод (POST/PUT) ---
+            feedbackDiv.innerHTML = 'Проверка за съществуващ файл... <div class="loader"></div>';
+            const fileExists = await checkIfFileExists(filename);
+
+            let method;
+            let fetchUrl;
+            let body;
+            let successMessage;
+
+            if (fileExists) {
+                method = 'PUT';
+                fetchUrl = API_URL;
+                const params = new URLSearchParams();
+                params.append('filename', filename);
+                params.append('content', reportContent);
+                body = params;
+                feedbackDiv.innerHTML = 'Актуализиране на файл... <div class="loader"></div>';
+                successMessage = `Успех! Отговорите за ${patientNameForFile} са актуализирани във файл: ${filename}`;
+            } else {
+                method = 'POST';
+                fetchUrl = API_URL;
+                const formData = new FormData();
+                formData.append('filename', filename);
+                formData.append('content', reportContent);
+                body = formData;
+                feedbackDiv.innerHTML = 'Създаване на нов файл... <div class="loader"></div>';
+                successMessage = `Успех! Отговорите за ${patientNameForFile} са запазени в нов файл: ${filename}`;
+            }
+
+            // --- Изпращане към API ---
+            try {
+                const response = await fetch(fetchUrl, {
+                    method: method,
+                    headers: {
+                        'Authorization': `Bearer ${API_TOKEN}`,
+                        ...(method === 'PUT' && { 'Content-Type': 'application/x-www-form-urlencoded' })
+                    },
+                    body: body
+                });
+
+                const responseData = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`API грешка ${response.status}: ${responseData.error || response.statusText}`);
+                }
+
+                console.log('API Response:', responseData);
+                feedbackDiv.textContent = successMessage;
+                feedbackDiv.className = 'success';
+                // form.reset(); // По желание
+                // updateSectionsVisibility(); // По желание
+
+            } catch (error) {
+                console.error(`Грешка при ${method} заявка към API:`, error);
+                feedbackDiv.textContent = `Грешка при запазване/актуализация: ${error.message}`;
+                feedbackDiv.className = 'error';
+            } finally {
+                 submitButton.disabled = false; // Активираме бутона отново
+                 // Премахваме спинъра от feedbackDiv, ако все още е там
+                 const loader = feedbackDiv.querySelector('.loader');
+                 if (loader) loader.remove();
+            }
+        });
+    </script></body>
+</html>

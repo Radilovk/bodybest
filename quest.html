@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <!-- Ключ за мобилни устройства -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Въпросник за хранителни навици (Dynamic)</title>
+  <style type="text/css">
+    /* Основен стил – запазен от оригиналната версия с допълнения за мобилност */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #E0E0E0;
+      overflow-x: hidden;
+    }
+    .container {
+      max-width: 600px;
+      margin: 60px auto 20px;
+      padding: 20px;
+      background-color: #1e1e1e;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.6);
+    }
+    .question-text {
+      font-size: 18px;
+      color: #80cbc4;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+    .answer-label {
+      font-size: 16px;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      display: block;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #80cbc4;
+      margin-bottom: 20px;
+    }
+    p {
+      text-align: center;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    /* Прогрес бар */
+    #progressContainer {
+      width: 100%;
+      background-color: #333;
+      height: 10px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+    }
+    #progressBar {
+      height: 100%;
+      width: 0%;
+      background-color: #4fc3a1;
+      transition: width 0.4s ease;
+    }
+    /* Всяка страница се състои от "екран" */
+    .page {
+      display: none;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+    .page.active {
+      display: block;
+    }
+    /* Навигационни бутони */
+    .nav-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    button {
+      background-color: #4fc3a1;
+      color: #121212;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      min-height: 48px;
+    }
+    button:hover {
+      background-color: #43a088;
+      box-shadow: 0 0 10px #80cbc4;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    textarea,
+    select {
+      width: 93%;
+      padding: 10px;
+      margin: 10px 0 20px;
+      border: 1px solid #333;
+      border-radius: 5px;
+      background-color: #1e1e1e;
+      color: #E0E0E0;
+    }
+    input[type="radio"],
+    input[type="checkbox"] {
+      margin-right: 6px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 600px) {
+      .container {
+        margin: 80px 15px 20px;
+        padding: 15px;
+      }
+      .nav-buttons button {
+        width: 100%;
+      }
+      .question-text {
+        font-size: 16px;
+      }
+      button {
+        font-size: 16px;
+        min-height: 52px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Прогрес бар -->
+<div id="progressContainer">
+  <div id="progressBar"></div>
+</div>
+
+<div class="container" id="dynamicContainer">
+  <!-- Динамично генерираните "страници" ще се вмъкнат тук -->
+</div>
+
+<!-- Тайна зона за мобилни устройства за Admin достъп -->
+<div id="secretTapArea" style="position: fixed; top: 0; left: 0; width: 30px; height: 30px; opacity: 0; z-index: 9999;"></div>
+
+<!-- Скрит Admin бутон -->
+<a href="admin.html" id="adminLink" style="display:none; position: fixed; bottom: 10px; right: 10px; background: #4fc3a1; color: #121212; padding: 5px 10px; border-radius: 5px; text-decoration: none;">
+  Admin
+</a>
+
+<script>
+  /***** Глобални променливи *****/
+  let rawQuestions = [];     // Суровият масив от questions.json (йерархичен)
+  let flatPages = [];        // Плосък масив от всички въпроси (след рекурсивно сплескване)
+  let currentPageIndex = 0;
+  let totalPages = 0;
+  const responses = {};
+
+  /***** Функция за рекурсивно сплескване на въпросите *****/
+  function flattenQuestions(questions) {
+    let output = [];
+    questions.forEach(q => {
+      let qCopy = Object.assign({}, q);
+      delete qCopy.children;
+      output.push(qCopy);
+      if (q.children && Array.isArray(q.children)) {
+        // Ако children е масив (за по-прости случаи)
+        output = output.concat(flattenQuestions(q.children));
+      } else if (q.children && typeof q.children === 'object') {
+        for (const answer in q.children) {
+          let childArray = q.children[answer];
+          if (Array.isArray(childArray)) { // Добавена проверка дали е масив
+             childArray.forEach(child => {
+                child.dependency = { question: q.id, value: answer };
+             });
+             output = output.concat(flattenQuestions(childArray));
+          } else {
+             console.warn(`Expected an array for children under key '${answer}' in question '${q.id}', but got:`, typeof childArray);
+          }
+        }
+      }
+    });
+    return output;
+  }
+
+  /***** Функция за изграждане на страниците *****/
+  function buildDynamicPages() {
+    const container = document.getElementById('dynamicContainer');
+    if (!container) {
+        console.error("Container #dynamicContainer not found!");
+        return;
+    }
+    container.innerHTML = ""; // Изчистване на контейнера
+
+    createStartPage();
+    flatPages = flattenQuestions(rawQuestions);
+
+    if (!flatPages.find(q => q.id === 'email')) {
+        console.error("Критична грешка: Въпрос с id 'email' не е намерен в questions.json. Той е задължителен за изпращане.");
+        // Показване на грешка на потребителя
+        container.innerHTML = `<div style="color: #e74c3c; text-align: center; padding: 20px;">Грешка в конфигурацията на въпросника (липсва поле за имейл). Моля, свържете се с администратор.</div>`;
+        return; // Прекратяване на изграждането
+    }
+
+    flatPages.forEach((q, idx) => {
+      createQuestionPage(q, idx + 1);
+    });
+    createFinalPage();
+    setupFinalPageListener(); // Настройваме listener-а след като финалната страница е създадена
+
+    totalPages = 1 + flatPages.length + 1; // Стартова + Въпроси + Финална
+    console.log("Общо страници (включително старт и финал):", totalPages);
+
+    showPage(0); // Показваме стартовата страница
+  }
+
+  /***** Създаване на стартова страница *****/
+  function createStartPage() {
+    const container = document.getElementById('dynamicContainer');
+    if (!container) return;
+    const pageDiv = document.createElement('div');
+    pageDiv.className = 'page';
+    pageDiv.id = 'page0';
+    pageDiv.innerHTML = `
+      <h1>Добре дошли!<br><br>
+        <span style="font-family:Verdana,Geneva,sans-serif;">
+          <span style="font-size:24px;">Нека заедно да направим първата стъпка към Вашето по-добро Аз</span>
+        </span>
+      </h1>
+      <p><span style="font-size:48px;">🌱</span></p>
+      <h1>
+        <span style="color:#ecf0f1;">
+          <span style="font-size:18px;">
+            <span style="font-family:Verdana,Geneva,sans-serif;">
+              Този въпросник ще помогне за създаването на Вашият план с хранене и съвети. Натиснете бутона по-долу, за да започнете.
+            </span>
+          </span>
+        </span>
+      </h1>
+      <div class="nav-buttons">
+        <button type="button" id="startBtn">Започни</button> <!-- Добавен type="button" -->
+      </div>
+    `;
+    container.appendChild(pageDiv);
+    const startBtn = pageDiv.querySelector('#startBtn');
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+          console.log("Бутон 'Започни' е натиснат.");
+          showPage(1); // Преминаваме към първия въпрос
+        });
+    } else {
+        console.error("Start button not found on start page.");
+    }
+  }
+
+  /***** Създаване на страница за всеки въпрос *****/
+  function createQuestionPage(question, pageIndex) {
+    const container = document.getElementById('dynamicContainer');
+     if (!container || !question || !question.id) {
+         console.error("Missing container or question data for page", pageIndex);
+         return;
+     };
+    const pageDiv = document.createElement('div');
+    pageDiv.className = 'page';
+    pageDiv.id = 'page' + pageIndex;
+    let html = `<div class="question-text">${question.text || 'Липсва текст на въпроса'}</div>`;
+
+    const isRequired = (question.id === 'email'); // Пример за задължително поле
+
+    if (['text','number','email'].includes(question.type)) {
+      html += `<input id="${question.id}" type="${question.type}" placeholder="" ${isRequired ? 'required' : ''} ${question.type === 'email' ? 'autocomplete="email"' : ''}>`;
+    } else if (question.type === 'textarea') {
+      html += `<textarea id="${question.id}" rows="4" ${isRequired ? 'required' : ''}></textarea>`;
+    } else if (question.type === 'select') {
+      html += `<select id="${question.id}" ${isRequired ? 'required' : ''}><option value="">Изберете</option>`;
+      (question.options || []).forEach(opt => {
+        html += `<option value="${String(opt)}">${String(opt)}</option>`; // Преобразуваме към стринг за всеки случай
+      });
+      html += `</select>`;
+    } else if (question.type === 'radio') {
+      (question.options || []).forEach((opt, index) => {
+          const optionValue = String(opt); // Уверяваме се, че е стринг
+        html += `<label class="answer-label">
+                   <input name="${question.id}" type="radio" value="${optionValue}" ${isRequired && index === 0 ? 'required' : ''}> ${optionValue}
+                 </label>`;
+      });
+    } else if (question.type === 'checkbox') {
+      (question.options || []).forEach(opt => {
+          const optionValue = String(opt);
+        html += `<label class="answer-label">
+                   <input name="${question.id}" type="checkbox" value="${optionValue}"> ${optionValue}
+                 </label>`;
+      });
+    } else {
+        console.warn(`Unsupported question type: ${question.type} for question ID: ${question.id}`);
+        html += `<p style="color: red;">Грешка: Неподдържан тип въпрос.</p>`;
+    }
+
+    if (question.dependency) {
+      html += `<div style="font-size:12px; color:#aaa; margin-top: 10px;">(Показва се ако '${question.dependency.question}' е '${question.dependency.value}')</div>`;
+    }
+
+    // Навигационни бутони
+    html += `<div class="nav-buttons">
+               <button type="button" id="nextBtn${pageIndex}">Напред ▶</button>
+               ${pageIndex > 1 ? `<button type="button" id="prevBtn${pageIndex}">◀ Назад</button>` : ''} <!-- Показва "Назад" само ако не е първи въпрос -->
+             </div>`;
+
+    pageDiv.innerHTML = html;
+    container.appendChild(pageDiv);
+
+    // Event listeners за бутоните
+    const nextBtn = pageDiv.querySelector(`#nextBtn${pageIndex}`);
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          if (!validateAnswer(question)) {
+            return;
+          }
+          saveAnswer(question);
+          console.log(`Преминаване от страница ${pageIndex} към ${pageIndex + 1}`);
+          showPage(pageIndex + 1);
+        });
+    } else {
+        console.error(`Next button not found for page ${pageIndex}`);
+    }
+
+    const prevBtn = pageDiv.querySelector(`#prevBtn${pageIndex}`);
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+           console.log(`Връщане от страница ${pageIndex} към ${pageIndex - 1}`);
+           // Презапазване на текущия отговор преди връщане назад
+           saveAnswer(question);
+           showPage(pageIndex - 1);
+        });
+    }
+  }
+
+  /***** Създаване на финална страница *****/
+  function createFinalPage() {
+    const container = document.getElementById('dynamicContainer');
+    if (!container) return;
+    const finalIndex = flatPages.length + 1;
+    const pageDiv = document.createElement('div');
+    pageDiv.className = 'page';
+    pageDiv.id = 'page' + finalIndex;
+    pageDiv.innerHTML = `
+      <h2>Поздравления! 🎉<br> Току що направихте най-важната стъпка по пътя към промяната</h2>
+      <p>Натиснете бутона, за да изпратите вашите отговори за обработка.</p>
+      <div class="nav-buttons" style="justify-content: center;">
+        <button id="submitBtn" type="button">Изпрати</button>
+        <button id="restartBtn" type="button">Отначало</button>
+      </div>
+       <div id="submit-message" class="message" style="margin-top: 15px; text-align: center; font-weight: bold; word-wrap: break-word;"></div> <!-- Добавен message клас -->
+    `;
+    container.appendChild(pageDiv);
+  }
+
+    // --- Функция за настройка на Event Listener-а на Финалната Страница ---
+   function setupFinalPageListener() {
+        const finalIndex = flatPages.length + 1;
+        const pageDiv = document.getElementById('page' + finalIndex);
+        if (!pageDiv) {
+            console.error("Финалната страница не е намерена при настройка на listener.");
+            return;
+        }
+        const submitBtn = pageDiv.querySelector('#submitBtn');
+        const restartBtn = pageDiv.querySelector('#restartBtn');
+        const submitMessage = pageDiv.querySelector('#submit-message');
+
+        if (!submitBtn || !restartBtn || !submitMessage) {
+             console.error("Един или повече елементи липсват на финалната страница.");
+             return;
+        }
+
+        restartBtn.addEventListener('click', () => { location.reload(); });
+
+        submitBtn.addEventListener('click', async () => {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Изпращане...';
+            submitMessage.textContent = '';
+            submitMessage.className = 'message'; // Изчистваме класовете за грешка/успех
+            submitMessage.style.display = 'none'; // Скриваме го първоначално
+
+            try {
+                console.log("Submit button clicked, calling submitResponses...");
+                const result = await submitResponses(); // Извикваме обновената функция
+
+                console.log("submitResponses finished successfully.", result);
+                submitMessage.textContent = result.message || "Отговорите са изпратени успешно за обработка!"; // Използваме съобщението от Worker-а, ако има
+                submitMessage.className = 'message success'; // Зелено за успех
+                submitMessage.style.display = 'block';
+                submitBtn.style.display = "none";
+                        // --- НАЧАЛО НА ФРАГМЕНТА ЗА ДОБАВЯНЕ ---
+        // Показваме съобщението за успех (този ред вече съществува преди фрагмента)
+        // submitMessage.style.display = 'block';
+
+        const lastQuestionPageIndex = totalPages - 2; // Индекс на последната страница с въпрос
+
+        // Само ако има предишна страница с въпрос, към която да се върнем
+        if (lastQuestionPageIndex >= 0) {
+            // Създаваме бутона "Редактирай" динамично
+            const backToEditBtn = document.createElement('button');
+            backToEditBtn.textContent = '◀ Редактирай последен';
+            backToEditBtn.type = 'button';
+            backToEditBtn.style.marginTop = '15px'; // Малко отстояние
+            backToEditBtn.style.backgroundColor = '#f39c12'; // Оранжев цвят
+            backToEditBtn.style.color = '#1e1e1e';
+            backToEditBtn.id = 'dynamicBackBtn'; // Даваме му ID, ако потрябва
+
+            // Добавяме му функционалност при клик
+            backToEditBtn.onclick = () => {
+                console.log("Динамичен бутон 'Редактирай последен' натиснат.");
+                // 1. Скриваме съобщението за успех
+                if (submitMessage) {
+                    submitMessage.style.display = 'none';
+                    submitMessage.textContent = '';
+                    submitMessage.className = 'message';
+                }
+                // 2. Премахваме самия бутон "Редактирай"
+                backToEditBtn.remove();
+
+                // 3. Показваме отново оригиналния Submit бутон, готов за ново изпращане
+                if (submitBtn) {
+                    submitBtn.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Изпрати отново'; // Актуализираме текста
+                }
+                 // 4. Активираме и бутона Рестарт (ако е бил деактивиран)
+                if (restartBtn) {
+                    restartBtn.disabled = false;
+                }
+
+                // 5. Навигираме към последната страница с въпрос
+                showPage(lastQuestionPageIndex);
+            };
+
+            // Вмъкваме новия бутон ВЕДНАГА СЛЕД съобщението за успех
+            submitMessage.parentNode.insertBefore(backToEditBtn, submitMessage.nextSibling);
+
+            // Уверяваме се, че оригиналният Submit бутон остава скрит след успех
+            submitBtn.style.display = "none";
+             // Активираме бутона Рестарт след успешно изпращане
+             restartBtn.disabled = false;
+             restartBtn.textContent = "Започни наново";
+
+        } else {
+             // Ако няма въпроси (lastQuestionPageIndex < 0), няма смисъл от бутон "Назад"
+             // Просто активираме Рестарт и скриваме Submit
+             submitBtn.style.display = "none";
+             restartBtn.disabled = false;
+             restartBtn.textContent = "Започни наново";
+        }
+        // --- КРАЙ НА ФРАГМЕНТА ЗА ДОБАВЯНЕ ---
+                restartBtn.textContent = "Попълни отново";
+
+            } catch (error) {
+                console.error("Error caught in submitBtn listener:", error);
+                submitMessage.textContent = `Грешка: ${error.message || 'Неуспешно изпращане.'}`;
+                submitMessage.className = 'message error'; // Червено за грешка
+                submitMessage.style.display = 'block';
+                submitBtn.disabled = false; // Активираме бутона отново
+                submitBtn.textContent = 'Опитай отново';
+            }
+        });
+   }
+
+  /***** Функция за показване на страница с условна логика *****/
+  function showPage(index) {
+    const pages = document.querySelectorAll('.page');
+    if (!pages || pages.length === 0) {
+        console.error("Не са намерени страници за показване.");
+        return;
+    }
+
+    // --- Логика за прескачане на страници (условна логика) ---
+    if (index > currentPageIndex) { // Преминаване напред
+        let targetIndex = index;
+        while (targetIndex < pages.length - 1) { // Не прескачаме финалната страница
+             // flatPages[targetIndex-1] е въпросът на страницата, КЪМ която отиваме
+             const question = flatPages[targetIndex - 1];
+            if (question && question.dependency) {
+                const parentAnswer = responses[question.dependency.question];
+                const dependencyValue = question.dependency.value;
+                let shouldShow = false;
+                 // Проверка за съответствие (включително за чекбокси)
+                 if (Array.isArray(parentAnswer)) {
+                    shouldShow = parentAnswer.includes(dependencyValue);
+                 } else {
+                     shouldShow = parentAnswer === dependencyValue;
+                 }
+
+                if (!shouldShow) {
+                    console.log(`Прескачане напред: стр. ${targetIndex} (ID: ${question.id}) поради dependency: '${question.dependency.question}' = '${parentAnswer}' (изисква '${dependencyValue}')`);
+                    targetIndex++; // Опитай следващата
+                    continue; // Продължи проверката от новия targetIndex
+                 }
+            }
+             break; // Намерена е видима страница
+         }
+         index = targetIndex; // Актуализирай индекса, до който сме стигнали
+     } else if (index < currentPageIndex) { // Преминаване назад
+         let targetIndex = index;
+         while (targetIndex > 0) { // Не прескачаме стартовата страница
+            const question = flatPages[targetIndex - 1]; // Въпросът на страницата, КЪМ която отиваме
+             if (question && question.dependency) {
+                 const parentAnswer = responses[question.dependency.question];
+                 const dependencyValue = question.dependency.value;
+                 let shouldShow = false;
+                  if (Array.isArray(parentAnswer)) {
+                     shouldShow = parentAnswer.includes(dependencyValue);
+                  } else {
+                      shouldShow = parentAnswer === dependencyValue;
+                  }
+
+                 if (!shouldShow) {
+                     console.log(`Прескачане назад: стр. ${targetIndex} (ID: ${question.id}) поради dependency: '${question.dependency.question}' = '${parentAnswer}' (изисква '${dependencyValue}')`);
+                     targetIndex--; // Опитай предишната
+                     continue; // Продължи проверката
+                 }
+             }
+             break; // Намерена видима страница
+         }
+         index = targetIndex; // Актуализирай индекса
+     }
+     // --------------------------------------------------------
+
+    // Гарантираме, че индексът е в границите
+    if (index < 0) index = 0;
+    if (index >= pages.length) index = pages.length - 1;
+
+    // Презапазване на отговора на ТЕКУЩАТА (предишна) страница преди смяна
+     if (currentPageIndex > 0 && currentPageIndex < pages.length -1) {
+         // flatPages[currentPageIndex-1] е въпросът на страницата, КОЯТО напускаме
+         const previousQuestion = flatPages[currentPageIndex - 1];
+         if (previousQuestion) {
+             saveAnswer(previousQuestion);
+         }
+     }
+
+    // Показване на новата страница
+    currentPageIndex = index;
+    pages.forEach((pg, idx) => {
+        if (idx === currentPageIndex) {
+            pg.classList.add('active');
+        } else {
+            pg.classList.remove('active');
+        }
+    });
+
+    // Автоматично фокусиране
+    const activePage = pages[currentPageIndex];
+    if (activePage) {
+        const firstInput = activePage.querySelector('input, select, textarea');
+        if (firstInput) {
+             setTimeout(() => {
+                 try { firstInput.focus(); } catch (e) { console.warn("Неуспешен опит за фокусиране:", e); }
+             }, 50); // Малко забавяне
+         }
+    } else {
+      console.error(`Грешка: Активна страница с индекс ${currentPageIndex} не е намерена.`);
+    }
+
+    updateProgress();
+    console.log("Показване на страница:", currentPageIndex, `(ID: page${currentPageIndex})`);
+  }
+
+  /***** Функция за обновяване на прогрес бара *****/
+  function updateProgress() {
+    const progressBar = document.getElementById('progressBar');
+    const progressContainer = document.getElementById('progressContainer');
+    if (!progressBar || !progressContainer || totalPages <= 1) return;
+
+    // Прогресът е от 0 до (totalPages - 1), тъй като индексите са от 0
+    const currentStep = currentPageIndex;
+    // Общият брой стъпки е totalPages - 1 (тъй като не броим прогрес *след* финалната страница)
+    const totalSteps = totalPages > 1 ? totalPages - 1 : 1;
+    const percent = totalSteps > 0 ? Math.round((currentStep / totalSteps) * 100) : 0;
+
+    progressBar.style.width = Math.max(0, Math.min(100, percent)) + '%'; // Гарантираме 0-100
+  }
+
+  /***** Функция за запазване на отговор за даден въпрос *****/
+  function saveAnswer(question) {
+      if (!question || !question.id) {
+          // console.warn("Опит за запазване на отговор за невалиден въпрос.");
+          return;
+      }
+    const qId = question.id;
+    let answer;
+    const element = document.getElementById(qId);
+
+    if (['text', 'number', 'email', 'textarea'].includes(question.type)) {
+      if (element) answer = element.value.trim();
+    } else if (question.type === 'select') {
+        if(element) answer = element.value;
+    } else if (question.type === 'radio') {
+      const checkedRadio = document.querySelector(`input[name="${qId}"]:checked`);
+      if (checkedRadio) answer = checkedRadio.value;
+       else answer = null; // Ако нищо не е избрано, записваме null
+    } else if (question.type === 'checkbox') {
+      const checked = document.querySelectorAll(`input[name="${qId}"]:checked`);
+      answer = Array.from(checked).map(ch => ch.value);
+    }
+
+    // Запазваме отговора
+     if (answer !== undefined) { // Запазваме дори null или празен масив
+        responses[qId] = answer;
+         // console.log(`Запазен отговор за ${qId}:`, answer);
+     } else {
+         console.warn(`Не е намерен контрол или стойност за въпрос с ID: ${qId}`);
+     }
+  }
+
+  /***** Функция за валидиране на отговора *****/
+  function validateAnswer(question) {
+    if (!question || !question.id) return true;
+
+    const qId = question.id;
+    let isValid = true;
+    let errorMessage = '';
+
+    const element = document.getElementById(qId);
+    const radioButtons = document.querySelectorAll(`input[name="${qId}"][type="radio"]`);
+    const checkBoxes = document.querySelectorAll(`input[name="${qId}"][type="checkbox"]`);
+
+    // --- Дефиниране на задължителните полета ---
+    const requiredFields = ['email']; // Добавете други ID-та тук, ако е нужно
+    const isRequired = requiredFields.includes(qId);
+    // -------------------------------------------
+
+    let value = '';
+    if (['text', 'number', 'email', 'textarea'].includes(question.type)) {
+        if (element) value = element.value.trim();
+        if (isRequired && !value) {
+            isValid = false; errorMessage = "Моля, попълнете това поле.";
+        } else if (question.type === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            isValid = false; errorMessage = "Моля, въведете валиден имейл адрес.";
+        } else if (question.type === 'number' && value && isNaN(Number(value))) {
+            isValid = false; errorMessage = "Моля, въведете число.";
+        }
+    } else if (question.type === 'select') {
+         if (element) value = element.value;
+         if (isRequired && !value) { // Проверка дали е избрана опция различна от празната
+             isValid = false; errorMessage = "Моля, направете избор.";
+         }
+     } else if (question.type === 'radio') {
+        const checkedRadio = document.querySelector(`input[name="${qId}"]:checked`);
+        if (isRequired && !checkedRadio) {
+            isValid = false; errorMessage = "Моля, изберете една от опциите.";
+        }
+    } else if (question.type === 'checkbox') {
+        const checkedBoxes = document.querySelectorAll(`input[name="${qId}"]:checked`);
+        if (isRequired && checkedBoxes.length === 0) {
+            isValid = false; errorMessage = "Моля, изберете поне една опция.";
+        }
+    }
+
+    // Показване/скриване на съобщение за грешка
+    const errorElementId = `error-${qId}`;
+    let errorElement = document.getElementById(errorElementId);
+    const pageElement = document.getElementById('page' + (flatPages.findIndex(p => p.id === qId) + 1)); // Намираме родителската страница
+
+    if (!isValid) {
+        if (!errorElement && pageElement) { // Създаваме само ако няма и ако има родител
+            errorElement = document.createElement('div');
+            errorElement.id = errorElementId;
+            errorElement.className = 'validation-error'; // Добавяме клас за стилизиране
+            errorElement.style.color = '#e74c3c';
+            errorElement.style.fontSize = '0.9em';
+            errorElement.style.marginTop = '5px';
+            errorElement.setAttribute('role', 'alert'); // За достъпност
+
+            const lastControlElement = checkBoxes.length > 0 ? checkBoxes[checkBoxes.length - 1].closest('label') :
+                                       (radioButtons.length > 0 ? radioButtons[radioButtons.length - 1].closest('label') :
+                                       element);
+
+             // Опитваме да вмъкнем след контрола или в края на страницата
+             if (lastControlElement && lastControlElement.parentNode) {
+                 // Вмъкваме след последния контрол или неговия label
+                 lastControlElement.parentNode.insertBefore(errorElement, lastControlElement.nextSibling);
+             } else if(pageElement) {
+                  // Като резервен вариант, добавяме преди бутоните
+                  const navButtons = pageElement.querySelector('.nav-buttons');
+                  if(navButtons) {
+                      pageElement.insertBefore(errorElement, navButtons);
+                  } else {
+                      pageElement.appendChild(errorElement); // Краен случай
+                  }
+             }
+        }
+        if (errorElement) { // Уверяваме се, че е създаден
+           errorElement.textContent = errorMessage;
+        }
+
+        // Фокусиране (ако елементът е видим)
+         const activePageId = 'page' + currentPageIndex;
+         if (pageElement && pageElement.id === activePageId) {
+             if (element && element.offsetParent !== null) element.focus(); // Фокус само ако е видим
+             else if (radioButtons.length > 0 && radioButtons[0].offsetParent !== null) radioButtons[0].focus();
+             else if (checkBoxes.length > 0 && checkBoxes[0].offsetParent !== null) checkBoxes[0].focus();
+         }
+
+    } else if (errorElement) {
+        errorElement.remove(); // Премахваме съобщението, ако е валидно
+    }
+
+    return isValid;
+  }
+
+
+  /* ============================================================================
+     РЕВИЗИРАНА ФУНКЦИЯ ЗА ИЗПРАЩАНЕ НА ДАННИ
+     Изпраща първо към Worker-а (критичната част) и само ако е успешно,
+     ще опитаме да изпратим TXT към PHP API (некритичната част).
+     Ще добавим повече console.log стъпки за дебъгване.
+     ============================================================================ */
+
+  const phpFileManagerUrl = "http://mybody.best/wp-content/uploads/file_manager_api.php";
+  const workerSubmitUrl = "https://openapichatbot.radilov-k.workers.dev/api/submitQuestionnaire";
+  const phpApiToken = "FXW29QFHZ3M70VDUFN1FSLG6WVI9UOF1";
+
+   // Преместваме ги извън функцията, за да са достъпни, ако е нужно
+   const questionMapping = {
+        name: "Име:", gender: "Пол:", age: "Възраст:", height: "Ръст (в см):", weight: "Тегло (в кг):",
+        email: "Имейл адрес:", goal: "Основна цел:", lossKg: "Желани килограми за отслабване:",
+        motivation: "Мотивация:", weightChange: "Рязко покачване на тегло:", weightChangeDetails: "Детайли за покачване:",
+        dietHistory: "Спазвана диета:", dietType: "Тип диета:", dietResult: "Резултат от диета:",
+        sleepHours: "Часове сън:", sleepInterrupt: "Прекъсвания на съня:", chronotype: "Хронотип:",
+        q1745878295708: "Ниво на активност:", stressLevel: "Ниво на стрес:", waterIntake: "Прием на вода:",
+        waterReplaceFreq: "Заместване на водата:", q1745891342178: "Заместващи напитки (Рядко):", q1745891468155: "Заместващи напитки (Понякога):", q1745891537884: "Заместващи напитки (Често):",
+        q1745891416176: "Други напитки (Рядко):", q1745891643967: "Други напитки (Понякога):", q1745891620471: "Други напитки (Често):",
+        overeatingFrequency: "Честота на преяждане:", foodCravings: "Нужда от храни:", foodCravingsDetails: "Кои храни (нужда):", q1745891797364: "Други храни (нужда):",
+        foodTriggers: "Ситуации за хранене:", q1745891178105: "Други ситуации:", nighteat: "Хранителни навици:", q1745891865984: "Други навици:",
+        compensationmethod: "Методи за компенсация:", q1745806296700: "Други методи за компенсация:", comparisson: "Сравнение с други:",
+        q1745805447648: "Хранене навън (честота):", q1745805721482: "Тип хранене навън:", alcoholFrequency: "Консумация на алкохол:",
+        medications: "Прием на лекарства/добавки:", q1745889856829: "Описание лекарства/добавки:",
+        physicalActivity: "Спортни занимания:", q1745877358368: "Видове активност:", q1745877861010: "Друг вид спорт:", q1745878063775: "Честота на активност (пъти/седм.):", q1745890775342: "Продължителност на активност:",
+        medicalConditions: "Медицинско състояние:", q1745804366749: "Друго мед. състояние:",
+        foodPreference: "Хранителни предпочитания/ограничения:", q1745806409218: "Други предпочитания/Не обичам:", q1745806494081: "Други предпочитания/Не обичам (алт):",
+        mainChallenge: "Най-голямо предизвикателство:", q1745892518511: "Допълнителна информация:",
+        submissionDate: "Дата на подаване:" // Добавяме и датата към мапинга
+    };
+   // const order = [ /* ... вашият order - може да не е нужен, ако обхождаме всички отговори ... */ ];
+
+  async function submitResponses() {
+      const now = new Date();
+      // Добавяме датата КЪМ responses обекта, преди да го изпратим
+      responses.submissionDate = now.toISOString();
+
+      console.log("Starting submitResponses...");
+      // Използваме JSON.stringify за по-добро логване на обекта, особено масиви
+      console.log("Current responses object:", JSON.stringify(responses, null, 2));
+
+      // --- Валидация на имейл ПРЕДИ изпращане ---
+       const userEmail = responses.email ? String(responses.email).trim() : null; // Уверяваме се, че е стринг
+       if (!userEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
+           console.error("Validation Error: Invalid or missing email.", responses.email);
+           // Изтриваме датата, ако ще хвърляме грешка
+           delete responses.submissionDate;
+           throw new Error("Имейлът е задължителен и трябва да е валиден, за да изпратите отговорите.");
+       }
+       console.log("Email validation passed:", userEmail);
+       // ------------------------------------------
+
+       // --- Изпращане към Worker (Критична част) ---
+       let workerResult;
+       try {
+            console.log("Attempting to send JSON to Worker:", workerSubmitUrl);
+            const workerResponse = await fetch(workerSubmitUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 'Authorization': `Bearer ${sessionStorage.getItem('authToken')}` // Ако е нужно
+                },
+                body: JSON.stringify(responses) // Изпращаме целия актуален обект
+            });
+            console.log("Worker fetch completed. Status:", workerResponse.status);
+
+             const responseText = await workerResponse.text();
+             let responseData;
+             try {
+                 responseData = JSON.parse(responseText);
+             } catch (parseError) {
+                 console.error("Failed to parse Worker response as JSON:", responseText);
+                 throw new Error(`Грешка от сървъра: ${workerResponse.status}. Отговор: ${responseText}`);
+             }
+
+            if (!workerResponse.ok) {
+                console.error("Worker responded with error:", responseData);
+                throw new Error(responseData.message || `Worker отговори със статус ${workerResponse.status}`);
+            }
+
+            console.log("Successful response from Worker:", responseData);
+            workerResult = responseData;
+
+        } catch (error) {
+             console.error("Error during Worker fetch or processing:", error);
+             delete responses.submissionDate; // Изтриваме датата при грешка
+             throw new Error(`Грешка при комуникация със сървъра: ${error.message}`);
+        }
+       // --- Край на изпращане към Worker ---
+
+      // --- Изпращане на TXT към PHP API (Некритична част) ---
+      console.log("Worker request successful. Proceeding with TXT backup.");
+      try {
+          let fileContent = "";
+          // Обхождаме ВСИЧКИ ключове в responses, за да включим всичко в TXT
+          for (const key in responses) {
+               if (responses.hasOwnProperty(key)) {
+                  const questionObj = flatPages.find(q => q.id === key);
+                  const questionText = (questionObj && questionObj.text) ? questionObj.text : (questionMapping[key] || key.replace(/_/g, ' ')); // По-добро резервно име
+                  const answerValue = responses[key];
+                  // Форматиране на отговора
+                   let answerText = '';
+                   if (answerValue === null || answerValue === undefined) {
+                       answerText = '(няма отговор)';
+                   } else if (Array.isArray(answerValue)) {
+                       answerText = answerValue.length > 0 ? answerValue.join(', ') : '(няма избор)';
+                   } else {
+                       answerText = String(answerValue);
+                   }
+
+                  fileContent += `${questionText}\nОтговор: ${answerText}\n\n`;
+               }
+          }
+
+          const clientName = (responses.name || "client").replace(/[^a-zA-Z0-9_\-]/g, "_");
+          const timestamp = now.toISOString().replace(/[:\-T.]/g, "").slice(0, 14);
+          const filename = `${clientName}_${timestamp}.txt`;
+
+          const txtFormData = new FormData();
+          txtFormData.append("filename", filename);
+          txtFormData.append("content", fileContent);
+          txtFormData.append("directory", "client_answers_test"); // Папка на хостинга
+          txtFormData.append("action", "create_file");
+
+          console.log("Attempting to send TXT to PHP API:", phpFileManagerUrl);
+          fetch(phpFileManagerUrl, { // Не чакаме (await) този fetch, за да не бавим
+              method: "POST",
+              body: txtFormData,
+              headers: {
+                  "Authorization": `Bearer ${phpApiToken}`
+              }
+          })
+          .then(async phpResponse => {
+              const phpData = await phpResponse.json().catch(() => ({error: 'Невалиден JSON от PHP'})); // Предпазваме от грешка при парсване
+              if (!phpResponse.ok) {
+                  console.warn("TXT backup failed:", phpData.error || `Статус ${phpResponse.status}`);
+              } else {
+                  console.log("TXT backup successful:", phpData);
+              }
+          })
+          .catch(txtError => {
+              console.warn("Error sending TXT backup (network or other):", txtError);
+          });
+
+       } catch (txtError) {
+           console.warn("Error preparing or sending TXT backup:", txtError);
+       }
+       // --- Край на изпращане на TXT ---
+
+      // Връщаме резултата от Worker-а (от първия try блок)
+      delete responses.submissionDate; // Изтриваме датата преди да върнем резултата
+      return workerResult;
+  }
+
+
+  // --- Зареждане на въпросника при старт ---
+   document.addEventListener('DOMContentLoaded', () => {
+     fetch('questions.json')
+       .then(res => {
+         if (!res.ok) throw new Error(`HTTP ${res.status} при зареждане на questions.json`);
+         // Добавяме проверка за Content-Type, ако е възможно
+         const contentType = res.headers.get("content-type");
+            if (contentType && !contentType.includes("application/json")) {
+                throw new TypeError(`Очакван JSON, но получен ${contentType}`);
+             }
+         return res.json();
+       })
+       .then(data => {
+         if (!Array.isArray(data) || data.length === 0) {
+            throw new Error("questions.json е празен или невалиден масив.");
+         }
+         rawQuestions = data;
+         buildDynamicPages(); // Извикваме ИЗЦЯЛО изграждането СЛЕД успешен fetch
+       })
+       .catch(err => {
+           console.error('Грешка при зареждане или обработка на questions.json:', err);
+           const container = document.getElementById('dynamicContainer');
+           if(container) {
+                container.innerHTML = `<div style="color: #e74c3c; text-align: center; padding: 20px;">Възникна грешка при зареждане на въпросника. Моля, опитайте да презаредите страницата или се свържете с администратор. (${err.message})</div>`;
+           }
+        });
+
+       // Тайна зона за Admin - без промяна
+       const secretArea = document.getElementById('secretTapArea');
+       const adminLink = document.getElementById('adminLink');
+       if(secretArea && adminLink) {
+           secretArea.addEventListener('click', function() {
+             adminLink.style.display = 'block';
+             setTimeout(() => {
+               adminLink.style.display = 'none';
+             }, 10000);
+           });
+       }
+   });
+
+</script>
+
+</body>
+</html>
