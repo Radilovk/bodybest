@@ -1,4 +1,5 @@
 import { safeParseFloat, safeGet } from './utils.js';
+import { currentUserId } from './app.js';
 
 // Apply saved theme so the page matches the dashboard
 (function applySavedTheme() {
@@ -14,7 +15,7 @@ const form = document.getElementById('profileEditForm');
 if (form) {
   const prefillProfileData = async () => {
     try {
-      const res = await fetch('/api/getProfile');
+      const res = await fetch(`/api/getProfile?userId=${currentUserId}`);
       if (!res.ok) throw new Error('Server error');
       const data = await res.json();
 
@@ -43,12 +44,11 @@ if (form) {
     };
 
     try {
-      const res = await fetch('/api/updateProfile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+      const res = await fetch("/api/updateProfile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, userId: currentUserId }),
       });
-      if (!res.ok) throw new Error('Server error');
       alert('Профилът е обновен успешно');
       window.location.href = 'code.html';
     } catch (err) {

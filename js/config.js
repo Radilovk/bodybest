@@ -14,6 +14,8 @@ export const apiEndpoints = {
     log: `${workerBaseUrl}/api/log`,
     chat: `${workerBaseUrl}/api/chat`,
     logExtraMeal: `${workerBaseUrl}/api/log-extra-meal`,
+    getProfile: `${workerBaseUrl}/api/getProfile`,
+    updateProfile: `${workerBaseUrl}/api/updateProfile`,
     getAdaptiveQuiz: `${workerBaseUrl}/api/getAdaptiveQuiz`,
     submitAdaptiveQuiz: `${workerBaseUrl}/api/submitAdaptiveQuiz`,
     acknowledgeAiUpdate: `${workerBaseUrl}/api/acknowledgeAiUpdate`,
