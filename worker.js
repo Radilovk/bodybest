@@ -74,6 +74,10 @@ export default {
                 responseBody = await handleChatRequest(request, env);
             } else if (method === 'POST' && path === '/api/log-extra-meal') { // Имплементиран
                  responseBody = await handleLogExtraMealRequest(request, env);
+            } else if (method === 'GET' && path === '/api/getProfile') {
+                responseBody = await handleGetProfileRequest(request, env);
+            } else if (method === 'POST' && path === '/api/updateProfile') {
+                responseBody = await handleUpdateProfileRequest(request, env);
             } else if (method === 'POST' && path === '/api/requestPasswordReset') {
                 responseBody = { success: false, message: 'Функцията "Забравена парола" е в разработка.' };
                 responseStatus = 501;
@@ -750,6 +754,42 @@ async function handleLogExtraMealRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleLogExtraMealRequest -------------
+// ------------- START FUNCTION: handleGetProfileRequest -------------
+async function handleGetProfileRequest(request, env) {
+    try {
+        const url = new URL(request.url);
+        const userId = url.searchParams.get("userId");
+        if (!userId) return { success: false, message: "Липсва ID на потребител.", statusHint: 400 };
+        const profileStr = await env.USER_METADATA_KV.get(`${userId}_profile`);
+        const profile = profileStr ? safeParseJson(profileStr, {}) : {};
+        return { success: true, ...profile };
+    } catch (error) {
+        console.error("Error in handleGetProfileRequest:", error.message, error.stack);
+        return { success: false, message: "Грешка при зареждане на профила.", statusHint: 500 };
+}
+}
+// ------------- END FUNCTION: handleGetProfileRequest -------------
+
+// ------------- START FUNCTION: handleUpdateProfileRequest -------------
+async function handleUpdateProfileRequest(request, env) {
+    try {
+        const data = await request.json();
+        const userId = data.userId;
+        if (!userId) return { success: false, message: "Липсва ID на потребител.", statusHint: 400 };
+        const profile = {
+            name: data.name ? String(data.name).trim() : "",
+            age: (typeof data.age === "number" && !isNaN(data.age)) ? data.age : null,
+            height: (typeof data.height === "number" && !isNaN(data.height)) ? data.height : null
+        };
+        await env.USER_METADATA_KV.put(`${userId}_profile`, JSON.stringify(profile));
+        return { success: true, message: "Профилът е обновен успешно" };
+    } catch (error) {
+        console.error("Error in handleUpdateProfileRequest:", error.message, error.stack);
+        const uid = (await request.json().catch(() => ({}))).userId || "unknown_user";
+        return { success: false, message: "Грешка при запис на профила.", statusHint: 500, userId: uid };
+}
+}
+// ------------- END FUNCTION: handleUpdateProfileRequest -------------
 
 // ------------- START FUNCTION: handleGetAdaptiveQuizRequest -------------
 async function handleGetAdaptiveQuizRequest(request, env) {
@@ -2282,3 +2322,4 @@ async function sendTxtBackupToPhp(userId, answers, env) {
 }
 // ------------- END FUNCTION: sendTxtBackupToPhp -------------
 // ------------- INSERTION POINT: EndOfFile -------------
+export { handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest };

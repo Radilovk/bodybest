@@ -5,6 +5,8 @@ import { apiEndpoints } from './config.js';
 import { currentUserId } from './app.js'; // Accessing currentUserId from app.js
 
 let extraMealFormLoaded = false;
+let commonFoods = [];
+fetch("data/commonFoods.json").then(r=>r.json()).then(d=>{if(Array.isArray(d)) commonFoods=d;}).catch(e=>console.error("Failed to load foods",e));
 
 function initializeExtraMealFormLogic(formContainerElement) {
     const form = formContainerElement.querySelector('#extraMealEntryFormActual');
@@ -128,9 +130,6 @@ function initializeExtraMealFormLogic(formContainerElement) {
     const replacedPlannedRadioGroup = form.querySelectorAll('input[name="replacedPlanned"]');
     const skippedMealSelect = form.querySelector('#skippedMeal');
 
-    const commonFoods = [
-        "Шоколад (млечен)", "Шоколад (черен/натурален)", "Шоколадов бонбон", "Шоколадов десерт (напр. вафла, барче)", "Бисквити (сладки)", "Кекс/Мъфин", "Сладкиш (общо)", "Торта (парче)", "Паста (сладка)", "Сладолед", "Локум", "Халва", "Кроасан (сладък)", "Кифла (сладка)", "Поничка", "Палачинка (сладка)", "Гофрета (сладка)", "Сладко/Конфитюр", "Мед", "Течен шоколад", "Крем (десертен)", "Пудинг", "Чипс", "Снакс (солен, царевичен)", "Солети", "Крекери (солени)", "Пуканки (солени)", "Ядки (печени, солени)", "Фъстъци (солени)", "Семки (слънчогледови/тиквени)", "Баница/Бюрек (със сирене)", "Пица (парче)", "Принцеса (с кайма/кашкавал)", "Тостер сандвич (готов)", "Дюнер/Гирос", "Бургер (fast food)", "Хот-дог", "Пържени картофки", "Лучени кръгчета", "Ябълка", "Банан", "Портокал", "Мандарина", "Круша", "Праскова", "Кайсия", "Слива", "Грозде", "Ягоди", "Малини", "Боровинки", "Къпини", "Череши", "Вишни", "Диня (парче)", "Пъпеш (парче)", "Кисело мляко", "Прясно мляко", "Сирене", "Кашкавал", "Извара", "Пилешко месо", "Свинско месо", "Телешко месо", "Риба", "Яйца", "Хляб (бял)", "Хляб (пълнозърнест)", "Ориз", "Картофи", "Макарони/Паста", "Домат", "Краставица", "Зеле", "Маруля", "Чушка", "Морков", "Лук", "Вода", "Чай (неподсладен)", "Кафе (чисто)", "Айрян", "Газирана напитка (със захар)", "Газирана напитка (без захар)", "Натурален сок (кутия)", "Фреш", "Бира", "Вино"
-    ].sort((a, b) => a.localeCompare(b, 'bg'));
     let activeSuggestionIndex = -1;
 
     function showSuggestions(inputValue) {
