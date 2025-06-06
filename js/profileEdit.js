@@ -17,15 +17,15 @@ if (form) {
       const res = await fetch('/api/getProfile');
       if (!res.ok) throw new Error('Server error');
       const data = await res.json();
+
       form.name.value = safeGet(data, 'name', '');
+
       const age = safeParseFloat(safeGet(data, 'age'));
       if (age !== null && age !== undefined) form.age.value = age;
-      const gender = safeGet(data, 'gender');
-      if (gender) form.gender.value = gender;
-      const weight = safeParseFloat(safeGet(data, 'weight'));
-      if (weight !== null && weight !== undefined) form.weight.value = weight;
+
       const height = safeParseFloat(safeGet(data, 'height'));
       if (height !== null && height !== undefined) form.height.value = height;
+
     } catch (err) {
       console.warn('Could not load profile data:', err);
     }
@@ -35,13 +35,13 @@ if (form) {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const data = {
       name: form.name.value.trim(),
       age: safeParseFloat(form.age.value),
-      gender: form.gender.value,
-      weight: safeParseFloat(form.weight.value),
       height: safeParseFloat(form.height.value),
     };
+
     try {
       const res = await fetch('/api/updateProfile', {
         method: 'POST',
