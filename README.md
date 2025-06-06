@@ -47,3 +47,28 @@ Run unit tests with Jest:
 ```bash
 npm test
 ```
+
+## Deployment to Cloudflare
+
+A GitHub Action workflow at `.github/workflows/deploy.yml` automatically publishes the worker when you push to `main`. It runs `wrangler publish` using the secret `CF_API_TOKEN` for authentication.
+
+To set the token:
+
+1. Generate an API token with **Edit Cloudflare Workers** permissions.
+2. In your repository settings, create a GitHub secret named `CF_API_TOKEN` containing the token value.
+
+The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed.
+
+### Required Worker Secrets
+
+Before deploying, configure the following secrets in Cloudflare (via the dashboard or `wrangler secret put`):
+
+- `GEMINI_API_KEY`
+- `тут_ваш_php_api_url_secret_name`
+- `тут_ваш_php_api_token_secret_name`
+
+These names are referenced in `worker.js` and must exist for the worker to function.
+
+## License
+
+This project is licensed under the ISC license. See [LICENSE](LICENSE).
