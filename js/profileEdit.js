@@ -1,5 +1,14 @@
 import { safeParseFloat, safeGet } from './utils.js';
 
+// Apply saved theme so the page matches the dashboard
+(function applySavedTheme() {
+  const saved = localStorage.getItem('theme') || 'system';
+  const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  const theme = saved === 'system' ? system : saved;
+  document.body.classList.remove('light-theme', 'dark-theme');
+  document.body.classList.add(theme === 'dark' ? 'dark-theme' : 'light-theme');
+})();
+
 const form = document.getElementById('profileEditForm');
 
 if (form) {
@@ -9,8 +18,8 @@ if (form) {
       if (!res.ok) throw new Error('Server error');
       const data = await res.json();
       form.name.value = safeGet(data, 'name', '');
-      const weight = safeParseFloat(safeGet(data, 'weight'));
-      if (weight !== null && weight !== undefined) form.weight.value = weight;
+      const age = safeParseFloat(safeGet(data, 'age'));
+      if (age !== null && age !== undefined) form.age.value = age;
       const height = safeParseFloat(safeGet(data, 'height'));
       if (height !== null && height !== undefined) form.height.value = height;
     } catch (err) {
@@ -24,7 +33,7 @@ if (form) {
     e.preventDefault();
     const data = {
       name: form.name.value.trim(),
-      weight: safeParseFloat(form.weight.value),
+      age: safeParseFloat(form.age.value),
       height: safeParseFloat(form.height.value),
     };
     try {

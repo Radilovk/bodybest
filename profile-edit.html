@@ -15,23 +15,23 @@
         <h1 id="headerTitle">Редакция на Профил</h1>
         <a href="code.html" class="button-secondary">← Назад</a>
     </header>
-    <main class="container" style="padding-top: var(--space-lg);">
+    <main class="container" style="padding-top: var(--space-lg); max-width: 500px;">
         <div class="card">
             <h2 style="margin-top:0">Лични Данни</h2>
-            <form id="profileEditForm">
+            <form id="profileEditForm" novalidate>
                 <div class="form-group">
                     <label for="name">Име</label>
                     <input id="name" name="name" type="text" required>
                 </div>
                 <div class="form-group">
-                    <label for="weight">Тегло (кг)</label>
-                    <input id="weight" name="weight" type="number" step="0.1">
+                    <label for="age">Възраст</label>
+                    <input id="age" name="age" type="number" min="0" step="1">
                 </div>
                 <div class="form-group">
                     <label for="height">Височина (см)</label>
                     <input id="height" name="height" type="number" step="1">
                 </div>
-                <button type="submit" class="button" style="width:100%">Запази</button>
+                <button type="submit" class="button">Запази</button>
             </form>
         </div>
     </main>
