@@ -3,7 +3,15 @@
 
 // Конфигурация
 define('UPLOADS_DIR', __DIR__ . '/user_profiles/'); // ОСТАВА БЕЗ ПРОМЯНА
-define('STATIC_TOKEN', 'FXW29QFHZ3M70VDUFN1FSLG6WVI9UOF1'); // API ключ за удостоверяване
+// Статичният токен вече се подава чрез променлива на средата
+$envToken = getenv('STATIC_TOKEN');
+if ($envToken === false) {
+    error_log('STATIC_TOKEN environment variable not set');
+    http_response_code(500);
+    echo json_encode(['error' => 'Server configuration error']);
+    exit;
+}
+define('STATIC_TOKEN', $envToken); // API ключ за удостоверяване
 
 // Задаване на CORS заглавки
 header("Access-Control-Allow-Origin: *"); // Може да се ограничи до твоя Worker или домейни

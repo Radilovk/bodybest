@@ -717,7 +717,7 @@
 
   const phpFileManagerUrl = "http://mybody.best/wp-content/uploads/file_manager_api.php";
   const workerSubmitUrl = "https://openapichatbot.radilov-k.workers.dev/api/submitQuestionnaire";
-  const phpApiToken = "FXW29QFHZ3M70VDUFN1FSLG6WVI9UOF1";
+  const phpApiToken = window.FILE_API_TOKEN || "";
 
    // Преместваме ги извън функцията, за да са достъпни, ако е нужно
    const questionMapping = {
