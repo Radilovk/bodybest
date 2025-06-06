@@ -68,6 +68,21 @@ Before deploying, configure the following secrets in Cloudflare (via the dashboa
 - `тут_ваш_php_api_token_secret_name`
 
 These names are referenced in `worker.js` and must exist for the worker to function.
+
+### PHP API Environment Variables
+
+The PHP helper scripts expect the following variables set in the server environment:
+
+- `STATIC_TOKEN` – shared secret token used for authentication in `file_manager_api.php`.
+- `ADMIN_PASS_HASH` – bcrypt hash of the admin password for `login.php`.
+
+Example of generating a hash:
+
+```bash
+php -r "echo password_hash('yourPassword', PASSWORD_DEFAULT);"
+```
+
+Set the output as the value for `ADMIN_PASS_HASH`.
 ## Допълнителни функции
 - **Извънредно хранене** – бутонът "Добави извънредно хранене" в `code.html` отваря модалната форма `extra-meal-entry-form.html`. Логиката в `js/extraMealForm.js` изпраща данните към `/api/log-extra-meal` в `worker.js`.
 

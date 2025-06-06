@@ -521,7 +521,8 @@
 <!-- /.container --><script>
         // --- Конфигурация ---
         const API_URL = 'file_manager_api.php'; // Поставете правилния път до вашия PHP API скрипт
-        const API_TOKEN = 'FXW29QFHZ3M70VDUFN1FSLG6WVI9UOF1'; // Вашият статичен API ключ
+        // Токенът вече може да се подава чрез глобална променлива
+        const API_TOKEN = window.FILE_API_TOKEN || '';
 
         // --- Елементи от DOM ---
         const form = document.getElementById('homeopathy-questionnaire');

@@ -14,9 +14,15 @@ if (!$data || !isset($data['password'])) {
     exit;
 }
 
-define('ADMIN_PASS', 'admin123');
+// Очакваме хеш на паролата в променлива на средата
+$adminHash = getenv('ADMIN_PASS_HASH');
+if ($adminHash === false) {
+    error_log('ADMIN_PASS_HASH env not set');
+    echo json_encode(["success"=>false, "message"=>"Server configuration error"]);
+    exit;
+}
 
-if ($data['password'] === ADMIN_PASS) {
+if (password_verify($data['password'], $adminHash)) {
     $_SESSION['isAdmin'] = true;
     echo json_encode(["success"=>true, "message"=>"Logged in"]);
 } else {
