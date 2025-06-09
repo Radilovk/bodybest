@@ -36,9 +36,53 @@
 }
 .index-card .index-value {
   font-size: 1.2rem; font-weight: 700; color: var(--primary-color);
-  text-align: center; 
-  margin-top: var(--space-sm); 
-  margin-bottom: var(--space-xs); 
+  text-align: center;
+  margin-top: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+/* Streak Card */
+.streak-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  justify-items: center;
+  margin-bottom: var(--space-sm);
+}
+.streak-day {
+  width: 18px; height: 18px; border-radius: 50%; background: var(--border-color);
+}
+.streak-day.logged { background: var(--color-success); }
+
+/* Analytics Cards Grid */
+.analytics-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-lg);
+}
+.analytics-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+}
+.analytics-card h5 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+  font-size: 1.05rem;
+}
+.analytics-card canvas { width: 100%; height: 130px; }
+.analytics-card .history-chart { display: none; margin-top: var(--space-sm); height: 120px; }
+.analytics-card.open .history-chart { display: block; }
+.analytics-card .history-toggle {
+  background: none;
+  border: none;
+  color: var(--accent-color);
+  cursor: pointer;
+  margin-top: var(--space-xs);
+  font-size: 0.9rem;
 }
 
 /* Детайлни Показатели на Таблото - Корекции */
