@@ -16,10 +16,6 @@ import {
     todaysMealCompletionStatus, activeTooltip // from app.js
 } from './app.js';
 import { toggleChatWidget, closeChatWidget } from './chat.js';
-import { computeSwipeTargetIndex } from './swipeUtils.js';
-
-let touchStartX = null;
-const SWIPE_THRESHOLD = 50;
 
 
 export function setupStaticEventListeners() {
@@ -34,16 +30,6 @@ export function setupStaticEventListeners() {
         selectors.tabButtons.forEach(button => {
             button.addEventListener('click', () => activateTab(button));
             button.addEventListener('keydown', handleTabKeydown);
-        });
-        selectors.tabsContainer.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
-        selectors.tabsContainer.addEventListener('touchend', e => {
-            if (touchStartX === null) return;
-            const diff = e.changedTouches[0].clientX - touchStartX;
-            const buttons = Array.from(selectors.tabButtons);
-            const currentIndex = buttons.findIndex(btn => btn.getAttribute('aria-selected') === 'true');
-            const newIndex = computeSwipeTargetIndex(currentIndex, diff, SWIPE_THRESHOLD, buttons.length);
-            if (newIndex !== currentIndex) activateTab(buttons[newIndex]);
-            touchStartX = null;
         });
     }
     if (selectors.addNoteBtn) selectors.addNoteBtn.addEventListener('click', toggleDailyNote);
