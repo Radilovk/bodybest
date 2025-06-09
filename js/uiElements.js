@@ -15,7 +15,6 @@ export function initializeSelectors() {
         healthProgressBar: 'healthProgressBar', healthProgressMask: 'healthProgressMask', healthProgressText: 'healthProgressText',
         detailedAnalyticsAccordion: 'detailedAnalyticsAccordion', detailedAnalyticsContent: 'detailedAnalyticsContent',
         dashboardTextualAnalysis: 'dashboardTextualAnalysis',
-        detailedAnalyticsList: 'detailedAnalyticsList',
         dailyPlanTitle: 'dailyPlanTitle', dailyMealList: 'dailyMealList',
         dailyTracker: 'dailyTracker', addNoteBtn: 'add-note-btn', dailyNote: 'daily-note', saveLogBtn: 'saveLogBtn', dailyLogDate: 'dailyLogDate',
         openExtraMealModalBtn: 'openExtraMealModalBtn',
@@ -33,6 +32,9 @@ export function initializeSelectors() {
         feedbackFab: 'feedback-fab',
         feedbackForm: 'feedbackForm',
         progressHistoryCard: 'progressHistoryCard',
+        streakGrid: 'streakGrid',
+        streakCount: 'streakCount',
+        analyticsCardsContainer: 'analyticsCardsContainer',
         tooltipTracker: 'tooltip-tracker',
         toast: 'toast', chatFab: 'chat-fab', chatWidget: 'chat-widget', chatClose: 'chat-close',
         chatMessages: 'chat-messages', chatInput: 'chat-input', chatSend: 'chat-send'
@@ -52,6 +54,7 @@ export function initializeSelectors() {
             const optionalOrDynamic = [
                 'menuClose', 'extraMealFormContainer', 'userAllergiesNote', 'userAllergiesList',
                 'feedbackForm', 'tooltipTracker', 'triggerAdaptiveQuizBtn',
+                'streakGrid', 'streakCount', 'analyticsCardsContainer',
             ];
             if (!optionalOrDynamic.includes(key) && key !== 'adaptiveQuizModal' && key !== 'adaptiveQuizContainer') {
                 console.warn(`HTML element not found: ${key} (selector: '${selectorValue}')`);
