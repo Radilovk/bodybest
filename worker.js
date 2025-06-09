@@ -42,11 +42,19 @@ export default {
         const path = url.pathname;
         const method = request.method;
 
+        const allowedOrigins = [
+            'https://radilovk.github.io',
+            'https://radilov-k.github.io',
+            'http://localhost:5173',
+            'http://localhost:3000'
+        ];
+        const requestOrigin = request.headers.get('Origin');
         const corsHeaders = {
-            'Access-Control-Allow-Origin': 'https://radilovk.github.io', // Или вашият домейн
+            'Access-Control-Allow-Origin': allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
             'Access-Control-Max-Age': '86400',
+            'Vary': 'Origin'
         };
 
         if (method === 'OPTIONS') {
