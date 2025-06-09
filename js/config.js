@@ -19,6 +19,7 @@ export const apiEndpoints = {
     getAdaptiveQuiz: `${workerBaseUrl}/api/getAdaptiveQuiz`,
     submitAdaptiveQuiz: `${workerBaseUrl}/api/submitAdaptiveQuiz`,
     acknowledgeAiUpdate: `${workerBaseUrl}/api/acknowledgeAiUpdate`,
+    recordFeedbackChat: `${workerBaseUrl}/api/recordFeedbackChat`,
     forgotPassword: `${workerBaseUrl}/api/forgotPassword`
 };
 
