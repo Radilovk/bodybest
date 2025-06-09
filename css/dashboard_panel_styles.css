@@ -36,9 +36,70 @@
 }
 .index-card .index-value {
   font-size: 1.2rem; font-weight: 700; color: var(--primary-color);
-  text-align: center; 
-  margin-top: var(--space-sm); 
-  margin-bottom: var(--space-xs); 
+  text-align: center;
+  margin-top: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+/* Streak Card */
+.streak-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  justify-items: center;
+  margin-bottom: var(--space-sm);
+}
+.streak-day {
+  width: 18px; height: 18px; border-radius: 50%; background: var(--border-color);
+}
+.streak-day.logged { background: var(--color-success); }
+
+/* Analytics Cards Grid */
+.analytics-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-lg);
+}
+.analytics-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+}
+.analytics-card h5 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+  font-size: 1.05rem;
+}
+.analytics-card .mini-progress-bar {
+  background: var(--progress-gradient);
+  border-radius: var(--progress-bar-radius);
+  position: relative;
+  height: 0.5rem;
+  overflow: hidden;
+  margin-bottom: var(--space-sm);
+}
+.analytics-card .mini-progress-mask {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: auto;
+  background: var(--progress-bar-bg-empty);
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+}
+.analytics-card .history-chart { display: none; width: 100%; height: 120px; margin-top: var(--space-sm); }
+.analytics-card.open .history-chart { display: block; }
+.analytics-card .history-toggle {
+  background: none;
+  border: none;
+  color: var(--accent-color);
+  cursor: pointer;
+  margin-top: var(--space-xs);
+  font-size: 0.9rem;
 }
 
 /* Детайлни Показатели на Таблото - Корекции */
