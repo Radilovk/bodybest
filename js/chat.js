@@ -1,25 +1,12 @@
 
 // chat.js - Логика за Чат
 import { selectors } from './uiElements.js';
-import { chatHistory, currentUserId } from './app.js'; // Access chatHistory and userId
-import { apiEndpoints } from './config.js';
-
-export let automatedChatPending = false;
-export function setAutomatedChatPending(val) { automatedChatPending = val; }
+import { chatHistory } from './app.js'; // Accessing chatHistory from app.js
 
 export function toggleChatWidget() {
     if (!selectors.chatWidget || !selectors.chatFab) return;
     const isVisible = selectors.chatWidget.classList.toggle('visible');
     selectors.chatFab.setAttribute('aria-expanded', isVisible.toString());
-    if (isVisible && automatedChatPending && currentUserId) {
-        selectors.chatFab.classList.remove('notification');
-        automatedChatPending = false;
-        fetch(apiEndpoints.recordFeedbackChat, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUserId })
-        }).catch(() => {});
-    }
     if (isVisible) {
         if(selectors.chatInput) selectors.chatInput.focus();
         if (selectors.chatMessages) {

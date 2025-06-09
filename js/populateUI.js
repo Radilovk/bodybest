@@ -13,7 +13,6 @@ export function populateUI() {
     try { populateUserInfo(data.userName); } catch(e) { console.error("Error in populateUserInfo:", e); }
     try { populateDashboardMainIndexes(data.analytics?.current); } catch(e) { console.error("Error in populateDashboardMainIndexes:", e); }
     try { populateDashboardDetailedAnalytics(data.analytics); } catch(e) { console.error("Error in populateDashboardDetailedAnalytics:", e); }
-    try { populateDashboardStreak(data.analytics?.streak); } catch(e) { console.error("Error in populateDashboardStreak:", e); }
     try { populateDashboardDailyPlan(data.planData?.week1Menu, data.dailyLogs, data.recipeData); } catch(e) { console.error("Error in populateDashboardDailyPlan:", e); }
     try { populateDashboardLog(data.dailyLogs, data.currentStatus, data.initialData); } catch(e) { console.error("Error in populateDashboardLog:", e); }
     try { populateProfileTab(data.userName, data.initialData, data.currentStatus, data.initialAnswers); } catch(e) { console.error("Error in populateProfileTab:", e); }
@@ -61,15 +60,15 @@ function populateDashboardMainIndexes(currentAnalytics) {
 }
 
 function populateDashboardDetailedAnalytics(analyticsData) {
-    const cardsContainer = selectors.analyticsCardsContainer;
+    const list = selectors.detailedAnalyticsList;
     const accordionContent = selectors.detailedAnalyticsContent;
     const textualAnalysisContainer = selectors.dashboardTextualAnalysis;
 
-    if (!cardsContainer || !accordionContent || !textualAnalysisContainer) {
+    if (!list || !accordionContent || !textualAnalysisContainer) {
         console.warn("Detailed analytics elements for dashboard not found.");
         return;
     }
-    cardsContainer.innerHTML = '';
+    list.innerHTML = '';
     textualAnalysisContainer.innerHTML = '';
 
     const detailedMetrics = safeGet(analyticsData, 'detailed', []);
@@ -83,73 +82,45 @@ function populateDashboardDetailedAnalytics(analyticsData) {
 
     if (Array.isArray(detailedMetrics) && detailedMetrics.length > 0) {
         detailedMetrics.forEach(metric => {
-            const card = document.createElement('div');
-            card.className = 'analytics-card';
+            const initialText = metric.initialValueText || 'Няма данни';
+            const expectedText = metric.expectedValueText || 'Не е зададена';
+            const currentText = metric.currentValueText || 'Няма данни';
 
-            const header = document.createElement('h5');
-            header.textContent = metric.label || 'Показател';
-            card.appendChild(header);
+            const li = document.createElement('li');
+            li.classList.add('detailed-metric-item');
 
-            const progress = document.createElement('div');
-            progress.className = 'mini-progress-bar';
-            const mask = document.createElement('div');
-            mask.className = 'mini-progress-mask';
-            progress.appendChild(mask);
-            card.appendChild(progress);
-
-            const currentDiv = document.createElement('div');
-            currentDiv.className = 'metric-current-text';
-            currentDiv.textContent = metric.currentValueText || 'Няма данни';
-            card.appendChild(currentDiv);
-
-            const valuesDiv = document.createElement('div');
-            valuesDiv.className = 'metric-item-values';
-            const formatValue = (val, cls) => {
-                if (val === 'N/A' || val === 'Няма данни' || val === 'Не е зададена' || val === null || val === undefined) {
-                    return `<span class="value-muted">${val === null || val === undefined ? 'Няма данни' : val}</span>`;
+            const formatValue = (value, typeClassSuffix) => {
+                if (value === 'N/A' || value === 'Няма данни' || value === 'Не е зададена' || value === null || value === undefined) {
+                    return `<span class="value-muted">${value === null || value === undefined ? 'Няма данни' : value}</span>`;
                 }
-                return `<span class="value-${cls}">${val}</span>`;
+                return `<span class="value-${typeClassSuffix}">${value}</span>`;
             };
-            valuesDiv.innerHTML = `
-                <div class="metric-value-group">
-                    <span class="metric-value-label">Начална стойност:</span>
-                    ${formatValue(metric.initialValueText || 'Няма данни', 'initial')}
+
+            li.innerHTML = `
+                <div class="metric-item-header">
+                    <span class="metric-label">${metric.label || 'Неизвестен показател'}</span>
+                    <button class="button-icon-only info-btn-metric" data-info-key="${metric.infoTextKey || (metric.key ? metric.key + '_info' : generateId('info'))}" aria-label="Информация за ${metric.label || 'показател'}">
+                        <svg class="icon"><use href="#icon-info"/></svg>
+                    </button>
                 </div>
-                <div class="metric-value-group">
-                    <span class="metric-value-label">Целева стойност:</span>
-                    ${formatValue(metric.expectedValueText || 'Не е зададена', 'expected')}
-                </div>
-                <div class="metric-value-group">
-                    <span class="metric-value-label">Текуща стойност:</span>
-                    ${formatValue(metric.currentValueText || 'Няма данни', 'current')}
+                <div class="metric-item-values">
+                    <div class="metric-value-group">
+                        <span class="metric-value-label">Начална стойност:</span>
+                        ${formatValue(initialText, 'initial')}
+                    </div>
+                    <div class="metric-value-group">
+                        <span class="metric-value-label">Целева стойност:</span>
+                        ${formatValue(expectedText, 'expected')}
+                    </div>
+                    <div class="metric-value-group">
+                        <span class="metric-value-label">Текуща стойност:</span>
+                        ${formatValue(currentText, 'current')}
+                    </div>
                 </div>`;
-
-            const details = document.createElement('div');
-            details.className = 'analytics-card-details';
-            const infoText = detailedMetricInfoTexts[metric.infoTextKey || (metric.key ? metric.key + '_info' : '')] || metric.infoText || '';
-            if (infoText) {
-                const p = document.createElement('p');
-                p.className = 'metric-info';
-                p.textContent = infoText;
-                details.appendChild(p);
-            }
-            details.appendChild(valuesDiv);
-            card.appendChild(details);
-
-            card.addEventListener('click', () => {
-                card.classList.toggle('open');
-            });
-
-            if (!isNaN(metric.currentValueNumeric)) {
-                const value = Number(metric.currentValueNumeric);
-                const percent = value <= 5 ? ((value - 1) / 4) * 100 : Math.min(100, value);
-                mask.style.width = `${100 - percent}%`;
-            }
-
-            cardsContainer.appendChild(card);
+            list.appendChild(li);
         });
     } else {
-        cardsContainer.innerHTML = '<p class="placeholder">Няма налични детайлни показатели за показване.</p>';
+        list.innerHTML = '<li class="placeholder">Няма налични детайлни показатели за показване.</li>';
     }
 
     const accordionHeader = selectors.detailedAnalyticsAccordion?.querySelector('.accordion-header');
@@ -166,19 +137,6 @@ function populateDashboardDetailedAnalytics(analyticsData) {
             }
         }
     }
-}
-
-function populateDashboardStreak(streakData) {
-    if (!selectors.streakGrid || !selectors.streakCount) return;
-    selectors.streakGrid.innerHTML = '';
-    const days = streakData?.dailyStatusArray || [];
-    days.forEach(d => {
-        const el = document.createElement('div');
-        el.className = 'streak-day' + (d.logged ? ' logged' : '');
-        el.title = new Date(d.date).toLocaleDateString('bg-BG');
-        selectors.streakGrid.appendChild(el);
-    });
-    selectors.streakCount.textContent = streakData?.currentCount || 0;
 }
 
 function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
