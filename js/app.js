@@ -17,8 +17,7 @@ import { setupStaticEventListeners, setupDynamicEventListeners } from './eventLi
 import { handleLogout as performLogout } from './auth.js';
 import {
     toggleChatWidget, closeChatWidget, displayMessage as displayChatMessage,
-    displayTypingIndicator as displayChatTypingIndicator, scrollToChatBottom,
-    setAutomatedChatPending
+    displayTypingIndicator as displayChatTypingIndicator, scrollToChatBottom
 } from './chat.js';
 import { openExtraMealModal } from './extraMealForm.js';
 import {
@@ -204,11 +203,6 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
                  headers: {'Content-Type': 'application/json'},
                  body: JSON.stringify({userId: currentUserId})
             }).catch(err => console.warn("Failed to acknowledge AI update:", err));
-        }
-
-        if (data.triggerAutomatedFeedbackChat) {
-            setAutomatedChatPending(true);
-            if (selectors.chatFab) selectors.chatFab.classList.add('notification');
         }
 
         populateUI();
