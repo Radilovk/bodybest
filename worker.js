@@ -31,7 +31,6 @@ const ADAPTIVE_QUIZ_WEIGHT_STAGNATION_THRESHOLD_KG_GAIN = 0.2;
 const ADAPTIVE_QUIZ_LOW_ENGAGEMENT_DAYS = 7;
 const ADAPTIVE_QUIZ_ANSWERS_LOOKBACK_DAYS = 35; // Колко назад да търсим отговори от въпросник за контекст
 const PREVIOUS_QUIZZES_FOR_CONTEXT_COUNT = 2; // Брой предишни въпросници за контекст при генериране на нов
-const AUTOMATED_FEEDBACK_TRIGGER_DAYS = 3; // След толкова дни предлагаме автоматичен чат
 // ------------- END BLOCK: GlobalConstantsAndBindings -------------
 
 // ------------- START BLOCK: MainWorkerExport -------------
@@ -93,8 +92,6 @@ export default {
                 responseBody = await handleTriggerAdaptiveQuizTestRequest(request, env, ctx);
             } else if (method === 'POST' && path === '/api/acknowledgeAiUpdate') { // НОВ ендпойнт
                 responseBody = await handleAcknowledgeAiUpdateRequest(request, env);
-            } else if (method === 'POST' && path === '/api/recordFeedbackChat') {
-                responseBody = await handleRecordFeedbackChatRequest(request, env);
             } else {
                 responseBody = { success: false, error: 'Not Found', message: 'Ресурсът не е намерен.' };
                 responseStatus = 404;
@@ -385,9 +382,7 @@ async function handleDashboardDataRequest(request, env) {
             initialAnswersStr, finalPlanStr, recipeDataStr, planStatus,
             currentStatusStr, currentPrinciplesStr, firstLoginFlagStr,
             adaptiveQuizPendingStr,
-            aiUpdateSummaryAckStr,
-            lastUpdateTsStr,
-            lastFeedbackChatTsStr
+            aiUpdateSummaryAckStr // Променено от _ai_update_summary_pending на _ai_update_pending_ack
         ] = await Promise.all([
             env.USER_METADATA_KV.get(`${userId}_initial_answers`),
             env.USER_METADATA_KV.get(`${userId}_final_plan`),
@@ -397,9 +392,7 @@ async function handleDashboardDataRequest(request, env) {
             env.USER_METADATA_KV.get(`${userId}_current_principles`),
             env.USER_METADATA_KV.get(`${userId}_welcome_seen`),
             env.USER_METADATA_KV.get(`${userId}_adaptive_quiz_pending`),
-            env.USER_METADATA_KV.get(`${userId}_ai_update_pending_ack`),
-            env.USER_METADATA_KV.get(`${userId}_last_significant_update_ts`),
-            env.USER_METADATA_KV.get(`${userId}_last_feedback_chat_ts`)
+            env.USER_METADATA_KV.get(`${userId}_ai_update_pending_ack`) // Нов ключ за четене
         ]);
 
         const actualPlanStatus = planStatus || 'unknown';
@@ -431,16 +424,12 @@ async function handleDashboardDataRequest(request, env) {
         }
         
         const aiUpdateSummary = aiUpdateSummaryAckStr ? safeParseJson(aiUpdateSummaryAckStr) : null;
-        const lastUpdateTs = lastUpdateTsStr ? parseInt(lastUpdateTsStr, 10) : 0;
-        const lastChatTs = lastFeedbackChatTsStr ? parseInt(lastFeedbackChatTsStr, 10) : 0;
-        const triggerAutomatedFeedbackChat = shouldTriggerAutomatedFeedbackChat(lastUpdateTs, lastChatTs);
 
         const baseResponse = {
             success: true, userId, planStatus: actualPlanStatus, userName, initialAnswers, initialData,
             recipeData, dailyLogs: logEntries, currentStatus, isFirstLoginWithReadyPlan,
             showAdaptiveQuiz: adaptiveQuizPendingStr === "true",
-            aiUpdateSummary: aiUpdateSummary, // Добавено тук
-            triggerAutomatedFeedbackChat
+            aiUpdateSummary: aiUpdateSummary // Добавено тук
         };
 
         if (actualPlanStatus === 'pending' || actualPlanStatus === 'processing') {
@@ -472,16 +461,15 @@ async function handleDashboardDataRequest(request, env) {
         console.error(`Error in handleDashboardDataRequest for ${userId}:`, error.message, error.stack);
         const fallbackInitialAnswers = safeParseJson(await env.USER_METADATA_KV.get(`${userId}_initial_answers`), {});
         const planStatusOnError = await env.USER_METADATA_KV.get(`plan_status_${userId}`) || 'error';
-        return {
-            success: false,
-            message: 'Възникна вътрешна грешка при зареждане на данните за таблото. Моля, опитайте отново по-късно.',
-            statusHint: 500,
-            userId,
-            userName: fallbackInitialAnswers.name || 'Клиент',
-            initialAnswers: fallbackInitialAnswers,
+        return { 
+            success: false, 
+            message: 'Възникна вътрешна грешка при зареждане на данните за таблото. Моля, опитайте отново по-късно.', 
+            statusHint: 500, 
+            userId, 
+            userName: fallbackInitialAnswers.name || 'Клиент', 
+            initialAnswers: fallbackInitialAnswers, 
             planStatus: planStatusOnError,
-            aiUpdateSummary: null, // Ensure aiUpdateSummary is present even on error
-            triggerAutomatedFeedbackChat: false
+            aiUpdateSummary: null // Ensure aiUpdateSummary is present even on error
         };
     }
 }
@@ -923,20 +911,6 @@ async function handleAcknowledgeAiUpdateRequest(request, env) {
 }
 // ------------- END FUNCTION: handleAcknowledgeAiUpdateRequest -------------
 
-// ------------- START FUNCTION: handleRecordFeedbackChatRequest -------------
-async function handleRecordFeedbackChatRequest(request, env) {
-    try {
-        const { userId } = await request.json();
-        if (!userId) return { success: false, message: 'Липсва потребителско ID (userId).', statusHint: 400 };
-        await env.USER_METADATA_KV.put(`${userId}_last_feedback_chat_ts`, Date.now().toString());
-        return { success: true };
-    } catch (error) {
-        console.error('Error in handleRecordFeedbackChatRequest:', error.message, error.stack);
-        return { success: false, message: 'Грешка при запис на времето на обратната връзка.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleRecordFeedbackChatRequest -------------
-
 
 // ------------- START BLOCK: PlanGenerationHeaderComment -------------
 // ===============================================
@@ -1030,7 +1004,6 @@ async function processSingleUserPlan(userId, env) {
         } else {
             await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'ready', { metadata: { status: 'ready' } });
             await env.USER_METADATA_KV.delete(`${userId}_processing_error`); // Изтриваме евентуална стара грешка
-            await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
             console.log(`PROCESS_USER_PLAN (${userId}): Successfully generated and saved UNIFIED plan. Status set to 'ready'.`);
         }
     } catch (error) {
@@ -1238,7 +1211,6 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
         if (principlesToSave && principlesToSave.length > 10) {
             await env.USER_METADATA_KV.put(`${userId}_current_principles`, principlesToSave);
             await env.USER_METADATA_KV.put(`${userId}_last_principle_update_ts`, Date.now().toString());
-            await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
             console.log(`PRINCIPLE_ADJUST (${userId}): Successfully updated principles.`);
 
             if (summaryForUser && !calledFromQuizAnalysis) { // Показваме резюме само ако не е извикано от анализ на въпросник (който има собствен механизъм за резюме)
@@ -2246,27 +2218,10 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         textualAnalysisSummary = `Възникна грешка при генериране на текстов анализ на напредъка.`;
     }
 
-    // ----- Streak Calculation -----
-    const streak = { currentCount: 0, dailyStatusArray: [] };
-    try {
-        const today = new Date();
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(today); d.setDate(today.getDate() - i);
-            const key = d.toISOString().split('T')[0];
-            const entry = logEntries.find(l => l.date === key);
-            const logged = !!(entry && entry.data && Object.keys(entry.data).length > 0);
-            streak.dailyStatusArray.push({ date: key, logged });
-        }
-        for (let i = streak.dailyStatusArray.length - 1; i >= 0; i--) {
-            if (streak.dailyStatusArray[i].logged) streak.currentCount++; else break;
-        }
-    } catch(err) { console.error('STREAK_CALC_ERROR', err); }
-
     const finalAnalyticsObject = {
         current: currentAnalytics,
         detailed: detailedAnalyticsMetrics,
-        textualAnalysis: textualAnalysisSummary,
-        streak
+        textualAnalysis: textualAnalysisSummary
     };
     // console.log(`ANALYTICS_CALC (${userLogId}): Calculation finished. Overall score: ${currentAnalytics.overallHealthScore}`);
     return finalAnalyticsObject;
@@ -2366,15 +2321,5 @@ async function sendTxtBackupToPhp(userId, answers, env) {
     }
 }
 // ------------- END FUNCTION: sendTxtBackupToPhp -------------
-
-// ------------- START FUNCTION: shouldTriggerAutomatedFeedbackChat -------------
-function shouldTriggerAutomatedFeedbackChat(lastUpdateTs, lastChatTs, currentTime = Date.now()) {
-    if (!lastUpdateTs) return false;
-    const daysSinceUpdate = (currentTime - lastUpdateTs) / (1000 * 60 * 60 * 24);
-    if (daysSinceUpdate < AUTOMATED_FEEDBACK_TRIGGER_DAYS) return false;
-    if (lastChatTs && lastChatTs > lastUpdateTs) return false;
-    return true;
-}
-// ------------- END FUNCTION: shouldTriggerAutomatedFeedbackChat -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, handleRecordFeedbackChatRequest };
+export { handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest };

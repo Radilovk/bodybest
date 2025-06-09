@@ -177,11 +177,7 @@
         const registerMessage = document.getElementById('register-message');
 
         // Базов URL на Worker-а
-        const isLocalDev = window.location.hostname === 'localhost' ||
-                           window.location.hostname.includes('replit') ||
-                           window.location.hostname.includes('preview');
-        const workerBaseUrl = isLocalDev ? '/api' :
-            'https://openapichatbot.radilov-k.workers.dev';
+        const workerBaseUrl = 'https://openapichatbot.radilov-k.workers.dev';
 
         // API Endpoints
         const loginEndpoint = `${workerBaseUrl}/api/login`;
@@ -280,10 +276,7 @@
 
             } catch (error) {
                 console.error('Login failed:', error);
-                const msg = error instanceof TypeError ?
-                    'Неуспешна връзка със сървъра. Проверете интернет връзката.' :
-                    error.message;
-                showMessage(loginMessage, msg, true);
+                showMessage(loginMessage, error.message, true);
                 loginButton.disabled = false;
                 loginButton.textContent = originalButtonText;
             }
