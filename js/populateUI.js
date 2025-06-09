@@ -91,8 +91,35 @@ function populateDashboardDetailedAnalytics(analyticsData) {
                 `<button class="button-icon-only info-btn-metric" data-info-key="${metric.infoTextKey || (metric.key ? metric.key + '_info' : generateId('info'))}" aria-label="Информация за ${metric.label || 'показател'}"><svg class="icon"><use href="#icon-info"/></svg></button>`;
             card.appendChild(header);
 
-            const donutCanvas = document.createElement('canvas');
-            card.appendChild(donutCanvas);
+            const progress = document.createElement('div');
+            progress.className = 'mini-progress-bar';
+            const mask = document.createElement('div');
+            mask.className = 'mini-progress-mask';
+            progress.appendChild(mask);
+            card.appendChild(progress);
+
+            const valuesDiv = document.createElement('div');
+            valuesDiv.className = 'metric-item-values';
+            const formatValue = (val, cls) => {
+                if (val === 'N/A' || val === 'Няма данни' || val === 'Не е зададена' || val === null || val === undefined) {
+                    return `<span class="value-muted">${val === null || val === undefined ? 'Няма данни' : val}</span>`;
+                }
+                return `<span class="value-${cls}">${val}</span>`;
+            };
+            valuesDiv.innerHTML = `
+                <div class="metric-value-group">
+                    <span class="metric-value-label">Начална стойност:</span>
+                    ${formatValue(metric.initialValueText || 'Няма данни', 'initial')}
+                </div>
+                <div class="metric-value-group">
+                    <span class="metric-value-label">Целева стойност:</span>
+                    ${formatValue(metric.expectedValueText || 'Не е зададена', 'expected')}
+                </div>
+                <div class="metric-value-group">
+                    <span class="metric-value-label">Текуща стойност:</span>
+                    ${formatValue(metric.currentValueText || 'Няма данни', 'current')}
+                </div>`;
+            card.appendChild(valuesDiv);
 
             const historyBtn = document.createElement('button');
             historyBtn.className = 'history-toggle';
@@ -108,14 +135,27 @@ function populateDashboardDetailedAnalytics(analyticsData) {
                 historyBtn.textContent = open ? 'Свий ▲' : 'История ▼';
             });
 
-            if (typeof Chart !== 'undefined' && !isNaN(metric.currentValueNumeric)) {
+            if (typeof Chart !== 'undefined' && Array.isArray(metric.history)) {
+                new Chart(historyCanvas.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: metric.history.map(h => h.label),
+                        datasets: [{
+                            data: metric.history.map(h => h.value),
+                            borderColor: 'var(--accent-color)',
+                            backgroundColor: 'rgba(0,0,0,0)',
+                            tension: 0.3,
+                            pointRadius: 2
+                        }]
+                    },
+                    options: { scales: { x: { display:false }, y: { display:false } }, plugins: { legend:{display:false}, tooltip:{enabled:false} } }
+                });
+            }
+
+            if (!isNaN(metric.currentValueNumeric)) {
                 const value = Number(metric.currentValueNumeric);
                 const percent = value <= 5 ? ((value - 1) / 4) * 100 : Math.min(100, value);
-                new Chart(donutCanvas.getContext('2d'), {
-                    type: 'doughnut',
-                    data: { datasets: [{ data: [percent, 100 - percent], backgroundColor: ['var(--accent-color)','var(--border-color-soft)'], borderWidth:0 }] },
-                    options: { cutout: '70%', plugins: { legend: { display:false }, tooltip:{enabled:false} } }
-                });
+                mask.style.width = `${100 - percent}%`;
             }
 
             cardsContainer.appendChild(card);
