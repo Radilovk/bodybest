@@ -87,8 +87,7 @@ function populateDashboardDetailedAnalytics(analyticsData) {
             card.className = 'analytics-card';
 
             const header = document.createElement('h5');
-            header.innerHTML = `<span>${metric.label || 'Показател'}</span>` +
-                `<button class="button-icon-only info-btn-metric" data-info-key="${metric.infoTextKey || (metric.key ? metric.key + '_info' : generateId('info'))}" aria-label="Информация за ${metric.label || 'показател'}"><svg class="icon"><use href="#icon-info"/></svg></button>`;
+            header.textContent = metric.label || 'Показател';
             card.appendChild(header);
 
             const progress = document.createElement('div');
@@ -97,6 +96,11 @@ function populateDashboardDetailedAnalytics(analyticsData) {
             mask.className = 'mini-progress-mask';
             progress.appendChild(mask);
             card.appendChild(progress);
+
+            const currentDiv = document.createElement('div');
+            currentDiv.className = 'metric-current-text';
+            currentDiv.textContent = metric.currentValueText || 'Няма данни';
+            card.appendChild(currentDiv);
 
             const valuesDiv = document.createElement('div');
             valuesDiv.className = 'metric-item-values';
@@ -119,38 +123,22 @@ function populateDashboardDetailedAnalytics(analyticsData) {
                     <span class="metric-value-label">Текуща стойност:</span>
                     ${formatValue(metric.currentValueText || 'Няма данни', 'current')}
                 </div>`;
-            card.appendChild(valuesDiv);
 
-            const historyBtn = document.createElement('button');
-            historyBtn.className = 'history-toggle';
-            historyBtn.textContent = 'История ▼';
-            card.appendChild(historyBtn);
-
-            const historyCanvas = document.createElement('canvas');
-            historyCanvas.className = 'history-chart';
-            card.appendChild(historyCanvas);
-
-            historyBtn.addEventListener('click', () => {
-                const open = card.classList.toggle('open');
-                historyBtn.textContent = open ? 'Свий ▲' : 'История ▼';
-            });
-
-            if (typeof Chart !== 'undefined' && Array.isArray(metric.history)) {
-                new Chart(historyCanvas.getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: metric.history.map(h => h.label),
-                        datasets: [{
-                            data: metric.history.map(h => h.value),
-                            borderColor: 'var(--accent-color)',
-                            backgroundColor: 'rgba(0,0,0,0)',
-                            tension: 0.3,
-                            pointRadius: 2
-                        }]
-                    },
-                    options: { scales: { x: { display:false }, y: { display:false } }, plugins: { legend:{display:false}, tooltip:{enabled:false} } }
-                });
+            const details = document.createElement('div');
+            details.className = 'analytics-card-details';
+            const infoText = detailedMetricInfoTexts[metric.infoTextKey || (metric.key ? metric.key + '_info' : '')] || metric.infoText || '';
+            if (infoText) {
+                const p = document.createElement('p');
+                p.className = 'metric-info';
+                p.textContent = infoText;
+                details.appendChild(p);
             }
+            details.appendChild(valuesDiv);
+            card.appendChild(details);
+
+            card.addEventListener('click', () => {
+                card.classList.toggle('open');
+            });
 
             if (!isNaN(metric.currentValueNumeric)) {
                 const value = Number(metric.currentValueNumeric);

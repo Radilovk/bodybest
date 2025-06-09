@@ -169,12 +169,11 @@ function handleDelegatedClicks(event) {
     const target = event.target;
     if (target.closest('.modal-content') && !target.closest('[data-modal-close]')) return;
 
-    const infoButton = target.closest('button.info, button.info-btn-metric, button.metric-info-btn');
+    const infoButton = target.closest('button.info, button.metric-info-btn');
     if (infoButton) {
         event.stopPropagation();
         let type = null; let key = null;
         if (infoButton.classList.contains('info')) { type = infoButton.dataset.type || 'recipe'; key = infoButton.dataset.key; }
-        else if (infoButton.classList.contains('info-btn-metric')) { type = 'detailedMetricInfo'; key = infoButton.dataset.infoKey; }
         else if (infoButton.classList.contains('metric-info-btn')) {
             const label = infoButton.closest('label[data-tooltip-key]');
             if (label) {
