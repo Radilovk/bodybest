@@ -102,6 +102,16 @@
   bottom: var(--space-lg); right: var(--space-lg);
   background-color: var(--fab-bg); color: var(--fab-icon);
 }
+#chat-fab.notification::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-danger);
+}
 #feedback-fab {
   bottom: var(--space-lg); left: var(--space-lg);
   background-color: var(--secondary-color); color: var(--text-color-on-secondary);
