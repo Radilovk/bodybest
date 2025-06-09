@@ -16,6 +16,10 @@ import {
     todaysMealCompletionStatus, activeTooltip // from app.js
 } from './app.js';
 import { toggleChatWidget, closeChatWidget } from './chat.js';
+import { computeSwipeTargetIndex } from './swipeUtils.js';
+
+let touchStartX = null;
+const SWIPE_THRESHOLD = 50;
 
 
 export function setupStaticEventListeners() {
@@ -30,6 +34,16 @@ export function setupStaticEventListeners() {
         selectors.tabButtons.forEach(button => {
             button.addEventListener('click', () => activateTab(button));
             button.addEventListener('keydown', handleTabKeydown);
+        });
+        selectors.tabsContainer.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+        selectors.tabsContainer.addEventListener('touchend', e => {
+            if (touchStartX === null) return;
+            const diff = e.changedTouches[0].clientX - touchStartX;
+            const buttons = Array.from(selectors.tabButtons);
+            const currentIndex = buttons.findIndex(btn => btn.getAttribute('aria-selected') === 'true');
+            const newIndex = computeSwipeTargetIndex(currentIndex, diff, SWIPE_THRESHOLD, buttons.length);
+            if (newIndex !== currentIndex) activateTab(buttons[newIndex]);
+            touchStartX = null;
         });
     }
     if (selectors.addNoteBtn) selectors.addNoteBtn.addEventListener('click', toggleDailyNote);
@@ -155,12 +169,11 @@ function handleDelegatedClicks(event) {
     const target = event.target;
     if (target.closest('.modal-content') && !target.closest('[data-modal-close]')) return;
 
-    const infoButton = target.closest('button.info, button.info-btn-metric, button.metric-info-btn');
+    const infoButton = target.closest('button.info, button.metric-info-btn');
     if (infoButton) {
         event.stopPropagation();
         let type = null; let key = null;
         if (infoButton.classList.contains('info')) { type = infoButton.dataset.type || 'recipe'; key = infoButton.dataset.key; }
-        else if (infoButton.classList.contains('info-btn-metric')) { type = 'detailedMetricInfo'; key = infoButton.dataset.infoKey; }
         else if (infoButton.classList.contains('metric-info-btn')) {
             const label = infoButton.closest('label[data-tooltip-key]');
             if (label) {
