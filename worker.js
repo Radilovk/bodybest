@@ -2141,7 +2141,8 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         expectedValueText: safeGetL(finalPlan, 'detailedTargets.sleep_quality_target_text', "7-8 ч., непрекъснат"),
         currentValueNumeric: currentSleepNumeric,
         currentValueText: currentSleepNumeric !== null ? `${scoreToText(currentSleepNumeric, 'sleep')} (${currentSleepNumeric.toFixed(1)}/5)` : "Няма данни",
-        infoTextKey: "sleep_quality_info"
+        infoTextKey: "sleep_quality_info",
+        periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
     });
 
     const currentCalmnessNumeric = avgCalmness !== "N/A" ? parseFloat(avgCalmness) : null;
@@ -2151,7 +2152,8 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         expectedValueText: safeGetL(finalPlan, 'detailedTargets.stress_level_target_text', "Ниско ниво на стрес"),
         currentValueNumeric: currentCalmnessNumeric,
         currentValueText: currentCalmnessNumeric !== null ? `${scoreToText(currentCalmnessNumeric, 'stress')} (${currentCalmnessNumeric.toFixed(1)}/5)` : "Няма данни",
-        infoTextKey: "stress_level_info"
+        infoTextKey: "stress_level_info",
+        periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
     });
     
     const currentEnergyNumeric = avgEnergy !== "N/A" ? parseFloat(avgEnergy) : null;
@@ -2161,7 +2163,8 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         expectedValueText: safeGetL(finalPlan, 'detailedTargets.energy_level_target_text', "Високо и стабилно"),
         currentValueNumeric: currentEnergyNumeric,
         currentValueText: currentEnergyNumeric !== null ? `${scoreToText(currentEnergyNumeric, 'general')} (${currentEnergyNumeric.toFixed(1)}/5)` : "Няма данни",
-        infoTextKey: "energy_level_info"
+        infoTextKey: "energy_level_info",
+        periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
     });
 
     const currentHydrationNumeric = avgHydration !== "N/A" ? parseFloat(avgHydration) : null;
@@ -2171,7 +2174,8 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         expectedValueText: safeGetL(finalPlan, 'hydrationCookingSupplements.hydration_recommendations.daily_liters', "2-2.5л") + " вода",
         currentValueNumeric: currentHydrationNumeric,
         currentValueText: currentHydrationNumeric !== null ? `${scoreToText(currentHydrationNumeric, 'general')} (${currentHydrationNumeric.toFixed(1)}/5)` : "Няма данни",
-        infoTextKey: "hydration_status_info"
+        infoTextKey: "hydration_status_info",
+        periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
     });
 
     const initialBmiValue = initialWeight && heightCm ? (initialWeight / ((heightCm / 100) ** 2)) : null;
@@ -2183,7 +2187,8 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         expectedValueText: `${expectedBmiNumeric.toFixed(1)} (${getBmiCategory(expectedBmiNumeric)})`,
         currentValueNumeric: currentBmiValue !== null ? parseFloat(currentBmiValue.toFixed(1)) : null,
         currentValueText: currentBmiValue !== null ? `${currentBmiValue.toFixed(1)} (${getBmiCategory(currentBmiValue)})` : "Няма данни",
-        infoTextKey: "bmi_info"
+        infoTextKey: "bmi_info",
+        periodDays: 0
     });
 
     detailedAnalyticsMetrics.push({
@@ -2192,7 +2197,8 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         expectedValueText: safeGetL(finalPlan, 'detailedTargets.meal_adherence_target_text', "> 85%"),
         currentValueNumeric: parseFloat(averageMealAdherence.toFixed(1)),
         currentValueText: `${Math.round(averageMealAdherence)}%`,
-        infoTextKey: "meal_adherence_info"
+        infoTextKey: "meal_adherence_info",
+        periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
     });
 
     detailedAnalyticsMetrics.push({
@@ -2201,7 +2207,8 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         expectedValueText: safeGetL(finalPlan, 'detailedTargets.log_consistency_target_text', "> 80%"),
         currentValueNumeric: parseFloat(logCompletionRate.toFixed(1)),
         currentValueText: `${Math.round(logCompletionRate)}%`,
-        infoTextKey: "log_consistency_info"
+        infoTextKey: "log_consistency_info",
+        periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
     });
 
     let textualAnalysisSummary = "Анализът на Вашия напредък се генерира...";

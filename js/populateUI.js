@@ -126,13 +126,24 @@ function populateDashboardDetailedAnalytics(analyticsData) {
 
             const details = document.createElement('div');
             details.className = 'analytics-card-details';
+            const infoContainer = document.createElement('div');
+            infoContainer.className = 'metric-info-container';
             const infoText = detailedMetricInfoTexts[metric.infoTextKey || (metric.key ? metric.key + '_info' : '')] || metric.infoText || '';
             if (infoText) {
                 const p = document.createElement('p');
                 p.className = 'metric-info';
                 p.textContent = infoText;
-                details.appendChild(p);
+                infoContainer.appendChild(p);
             }
+            if (metric.periodDays !== undefined) {
+                const pPeriod = document.createElement('p');
+                pPeriod.className = 'metric-period';
+                pPeriod.textContent = metric.periodDays > 0
+                    ? `Период на изчисление: последните ${metric.periodDays} дни.`
+                    : 'Изчислено от последните налични данни.';
+                infoContainer.appendChild(pPeriod);
+            }
+            details.appendChild(infoContainer);
             details.appendChild(valuesDiv);
             card.appendChild(details);
 
