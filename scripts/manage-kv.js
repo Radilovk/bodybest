@@ -12,7 +12,8 @@ const args = ['kv:key', action, key];
 if (action === 'put') args.push(value);
 args.push('--binding', binding);
 
-const result = spawnSync('wrangler', args, { stdio: 'inherit' });
+// Използваме `npx`, за да работи без глобална инсталация на wrangler
+const result = spawnSync('npx', ['wrangler', ...args], { stdio: 'inherit' });
 
 if (result.error) {
   console.error('Failed to run wrangler:', result.error);

@@ -86,9 +86,11 @@ node scripts/manage-kv.js put exampleKey "примерна стойност"
 node scripts/manage-kv.js get exampleKey
 node scripts/manage-kv.js delete exampleKey
 ```
-Можете да стартирате скрипта и директно:
+Скриптът използва `npx wrangler`, така че не е нужна глобална инсталация.
+За директно изпълнение дайте права и извикайте:
 
 ```bash
+chmod +x scripts/manage-kv.js
 ./scripts/manage-kv.js put exampleKey "примерна стойност"
 ```
 
