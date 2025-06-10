@@ -59,6 +59,39 @@ To set the token:
 
 The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed.
 
+### Manual publish
+
+For manual deployment run:
+
+```bash
+npx wrangler publish
+```
+
+This will upload the worker using the settings from `wrangler.toml`.
+
+### Работа с KV
+
+Можете да управлявате съдържанието на KV директно през `wrangler`:
+
+```bash
+wrangler kv:key put <ключ> "<стойност>" --binding=RESOURCES_KV
+wrangler kv:key get <ключ> --binding=RESOURCES_KV
+wrangler kv:key delete <ключ> --binding=RESOURCES_KV
+```
+
+Заменете `RESOURCES_KV` с `USER_METADATA_KV` при нужда. В директорията `scripts` има примерен Node скрипт `manage-kv.js`, който изпълнява същите операции:
+
+```bash
+node scripts/manage-kv.js put exampleKey "примерна стойност"
+node scripts/manage-kv.js get exampleKey
+node scripts/manage-kv.js delete exampleKey
+```
+Можете да стартирате скрипта и директно:
+
+```bash
+./scripts/manage-kv.js put exampleKey "примерна стойност"
+```
+
 ### Required Worker Secrets
 
 Before deploying, configure the following secrets in Cloudflare (via the dashboard or `wrangler secret put`):
