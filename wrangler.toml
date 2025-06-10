@@ -11,5 +11,5 @@ preview_id = "8ebf65a6ed0a44e7b7d1b4bc6f24465e"
 
 [[kv_namespaces]]
 binding = "USER_METADATA_KV"
-id = "00000000000000000000000000000000"
-preview_id = "00000000000000000000000000000000"
+id = "00000000000000000000000000000000"       # Replace with your real namespace ID
+preview_id = "00000000000000000000000000000000" # Replace with your preview namespace ID

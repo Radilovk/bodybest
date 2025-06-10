@@ -57,7 +57,8 @@ To set the token:
 1. Generate an API token with **Edit Cloudflare Workers** permissions.
 2. In your repository settings, create a GitHub secret named `CF_API_TOKEN` containing the token value.
 
-The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed.
+The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed. The file also contains
+placeholders for the `USER_METADATA_KV` namespace – replace `000000...` with the real KV IDs from your Cloudflare dashboard.
 
 ### Manual publish
 
@@ -103,6 +104,7 @@ The PHP helper scripts expect the following variables set in the server environm
 
 - `STATIC_TOKEN` – shared secret token used for authentication in `file_manager_api.php`.
 - `ADMIN_PASS_HASH` – bcrypt hash of the admin password for `login.php`.
+- `CF_API_TOKEN` – token used by `save-questions.php` to update the Cloudflare KV store.
 
 Example of generating a hash:
 

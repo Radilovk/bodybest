@@ -1,9 +1,8 @@
 <?php
 header("Content-Type: application/json; charset=utf-8");
 
-// ----- ХАРДКОДНАТИ КОНФИГУРАЦИОННИ ПРОМЕНЛИВИ -----
-// !!! ВНИМАНИЕ: ХАРДКОДВАНЕТО НА API ТОКЕНИ Е РИСК ЗА СИГУРНОСТТА !!!
-$cloudflareApiToken = 'XIqmUGr4S3xT6FLsqPzIdN9IuG67ctXISGCzBZ3i'; // API Токен (Уверете се, че това е ТОКЕНЪТ, а не Namespace ID)
+// ----- Конфигурация чрез променливи на средата -----
+$cloudflareApiToken = getenv('CF_API_TOKEN');
 $cloudflareAccountId = 'c2015f4060e04bc3c414f78a9946668e'; // Cloudflare Account ID
 $kvNamespaceId = '8ebf65a6ed0a44e7b7d1b4bc6f24465e'; // Namespace ID за RESOURCES_KV
 $kvKeyName = 'question_definitions';
@@ -28,8 +27,8 @@ function respondAndExit($code, $success, $message) {
 
 // Проверка дали конфигурацията е попълнена (проста проверка)
 if (empty($cloudflareApiToken) || empty($cloudflareAccountId) || empty($kvNamespaceId)) {
-    error_log("save-questions.php: Липсва ХАРДКОДНАТА конфигурация за Cloudflare API.");
-    respondAndExit(500, false, "Грешка в сървърната конфигурация (API данни).");
+    error_log("save-questions.php: Липсва CF_API_TOKEN или друга конфигурация.");
+    respondAndExit(500, false, "Сървърът няма достъп до Cloudflare (липсва CF_API_TOKEN).");
 }
 
 
