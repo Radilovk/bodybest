@@ -86,6 +86,11 @@ node scripts/manage-kv.js put exampleKey "примерна стойност"
 node scripts/manage-kv.js get exampleKey
 node scripts/manage-kv.js delete exampleKey
 ```
+Можете да стартирате скрипта и директно:
+
+```bash
+./scripts/manage-kv.js put exampleKey "примерна стойност"
+```
 
 ### Required Worker Secrets
 

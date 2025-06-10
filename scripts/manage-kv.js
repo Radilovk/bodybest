@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { spawnSync } from 'child_process';
 
 const [action, key, value, binding = 'RESOURCES_KV'] = process.argv.slice(2);
