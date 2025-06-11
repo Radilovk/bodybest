@@ -3,6 +3,8 @@ import { selectors } from './uiElements.js';
 import { openModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
 
+const medalEmojis = ['🥇', '🥈', '🥉', '🏆', '🎖️', '🏅'];
+
 let achievements = [];
 let currentUserId = null;
 
@@ -39,7 +41,7 @@ function renderAchievements(newIndex = -1) {
         const el = document.createElement('div');
         el.className = 'achievement-medal';
         if (index === newIndex) el.classList.add('new');
-        el.textContent = '🏅';
+        el.textContent = a.emoji || '🏅';
         el.dataset.index = index;
         selectors.streakGrid.appendChild(el);
     });
@@ -47,14 +49,17 @@ function renderAchievements(newIndex = -1) {
 }
 
 export function createAchievement(title, message) {
-    achievements.push({ date: Date.now(), title, message });
+    const emoji = medalEmojis[achievements.length % medalEmojis.length];
+    achievements.push({ date: Date.now(), title, message, emoji });
     if (achievements.length > 7) achievements.shift();
     saveAchievements();
     renderAchievements(achievements.length - 1);
     const body = document.getElementById('achievementModalBody');
     const modalTitle = document.getElementById('achievementModalTitle');
+    const emojiEl = document.getElementById('achievementModalEmoji');
     if (body) body.textContent = message;
     if (modalTitle) modalTitle.textContent = title;
+    if (emojiEl) emojiEl.textContent = emoji;
     openModal('achievementModal');
     localStorage.setItem('lastPraiseDate', String(Date.now()));
 }
@@ -67,8 +72,10 @@ export function handleAchievementClick(e) {
     if (!ach) return;
     const body = document.getElementById('achievementModalBody');
     const modalTitle = document.getElementById('achievementModalTitle');
+    const emojiEl = document.getElementById('achievementModalEmoji');
     if (body) body.textContent = ach.message;
     if (modalTitle) modalTitle.textContent = ach.title;
+    if (emojiEl) emojiEl.textContent = ach.emoji || '🏅';
     openModal('achievementModal');
 }
 
