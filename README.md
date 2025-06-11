@@ -10,6 +10,10 @@ A simple static web application for tracking nutrition and workouts.
 ```bash
 npm install
 ```
+You can also run the setup script to install dependencies:
+```bash
+sh scripts/setup.sh
+```
 
 ### Start Development Server
 
@@ -41,6 +45,7 @@ npm run lint
 ```
 
 ### Test
+Before running tests, make sure dependencies are installed (`npm install` or `sh scripts/setup.sh`).
 
 Run unit tests with Jest:
 
