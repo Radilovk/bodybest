@@ -33,7 +33,6 @@ export function initializeSelectors() {
         feedbackForm: 'feedbackForm',
         progressHistoryCard: 'progressHistoryCard',
         streakGrid: 'streakGrid',
-        streakCount: 'streakCount',
         analyticsCardsContainer: 'analyticsCardsContainer',
         tooltipTracker: 'tooltip-tracker',
         toast: 'toast', chatFab: 'chat-fab', chatWidget: 'chat-widget', chatClose: 'chat-close',
@@ -54,7 +53,7 @@ export function initializeSelectors() {
             const optionalOrDynamic = [
                 'menuClose', 'extraMealFormContainer', 'userAllergiesNote', 'userAllergiesList',
                 'feedbackForm', 'tooltipTracker', 'triggerAdaptiveQuizBtn',
-                'streakGrid', 'streakCount', 'analyticsCardsContainer',
+                'streakGrid', 'analyticsCardsContainer',
             ];
             if (!optionalOrDynamic.includes(key) && key !== 'adaptiveQuizModal' && key !== 'adaptiveQuizContainer') {
                 console.warn(`HTML element not found: ${key} (selector: '${selectorValue}')`);
