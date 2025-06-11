@@ -17,6 +17,7 @@ import {
 } from './app.js';
 import { toggleChatWidget, closeChatWidget } from './chat.js';
 import { computeSwipeTargetIndex } from './swipeUtils.js';
+import { handleAchievementClick } from './achievements.js';
 
 let touchStartX = null;
 const SWIPE_THRESHOLD = 50;
@@ -215,5 +216,12 @@ function handleDelegatedClicks(event) {
                 if (sValue <= selectedValue) s.classList.add('filled', `level-${sValue}`);
             });
         }
+    }
+
+    const medal = target.closest('.achievement-medal');
+    if (medal) {
+        event.stopPropagation();
+        handleAchievementClick(event);
+        return;
     }
 }
