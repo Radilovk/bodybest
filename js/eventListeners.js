@@ -55,7 +55,10 @@ export function setupStaticEventListeners() {
     if (selectors.goalCard) selectors.goalCard.addEventListener('click', () => openMainIndexInfo('goalProgress'));
     if (selectors.engagementCard) selectors.engagementCard.addEventListener('click', () => openMainIndexInfo('engagement'));
     if (selectors.healthCard) selectors.healthCard.addEventListener('click', () => openMainIndexInfo('overallHealth'));
-    if (selectors.streakCard) selectors.streakCard.addEventListener('click', () => openMainIndexInfo('successes'));
+    if (selectors.streakCard) selectors.streakCard.addEventListener('click', (e) => {
+        if (e.target.closest('.achievement-medal')) return;
+        openMainIndexInfo('successes');
+    });
 
 
     if (selectors.detailedAnalyticsAccordion) {
