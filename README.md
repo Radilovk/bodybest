@@ -48,6 +48,15 @@ Run unit tests with Jest:
 npm test
 ```
 
+### Generate Documentation
+
+Create API documentation using Typedoc:
+
+```bash
+npm run docs
+```
+The output is placed in the `docs/` folder.
+
 ## Deployment to Cloudflare
 
 A GitHub Action workflow at `.github/workflows/deploy.yml` automatically publishes the worker when you push to `main`. It runs `wrangler publish` using the secret `CF_API_TOKEN` for authentication.

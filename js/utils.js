@@ -1,5 +1,12 @@
 // utils.js - Помощни Функции
 
+/**
+ * Безопасно достъпва дълбоко вложена стойност в обект.
+ * @param {Object} obj - Обектът, от който се чете.
+ * @param {string|string[]} path - Пътят до стойността (низ с точки или масив).
+ * @param {*} [defaultValue=null] - Стойност по подразбиране при липса на ключ.
+ * @returns {*} Намерената стойност или defaultValue.
+ */
 export const safeGet = (obj, path, defaultValue = null) => {
     try {
         const keys = Array.isArray(path) ? path : String(path).split('.');
@@ -14,6 +21,12 @@ export const safeGet = (obj, path, defaultValue = null) => {
     }
 };
 
+/**
+ * Парсира число от низ, като връща стойност по подразбиране при грешка.
+ * @param {string|number|null} val - Стойността за парсване.
+ * @param {*} [defaultVal=null] - Стойност по подразбиране.
+ * @returns {number|null} Парсираното число или defaultVal.
+ */
 export const safeParseFloat = (val, defaultVal = null) => {
   if (val === null || val === undefined || String(val).trim() === '') return defaultVal;
   const num = parseFloat(String(val).replace(',', '.'));
