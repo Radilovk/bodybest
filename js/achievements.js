@@ -61,6 +61,9 @@ function renderAchievements(newIndex = -1) {
         if (index === newIndex) el.classList.add('new');
         el.textContent = a.emoji || medalEmojis[index % medalEmojis.length];
         el.dataset.index = index;
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('aria-label', a.title || 'Успех');
         selectors.streakGrid.appendChild(el);
     });
 }
