@@ -7,10 +7,10 @@
   gap: var(--space-lg); margin-bottom: var(--space-lg);
 }
 .index-card {
-    display: flex; 
+    display: flex;
     flex-direction: column;
-    justify-content: space-around; 
-    min-height: 180px; 
+    justify-content: space-around;
+    min-height: 123px;
 }
 .index-card h4 {
   font-size: 1.1rem; 
@@ -51,7 +51,7 @@
 }
 
 #streakCard {
-  min-height: 120px;
+  min-height: 123px;
 }
 .streak-day { width: 18px; height: 18px; border-radius: 50%; background: var(--border-color); }
 .streak-day.logged { background: var(--color-success); }
