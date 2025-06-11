@@ -32,12 +32,13 @@ function saveAchievements() {
     localStorage.setItem('achievements', JSON.stringify(achievements));
 }
 
-function renderAchievements() {
+function renderAchievements(newIndex = -1) {
     if (!selectors.streakGrid) return;
     selectors.streakGrid.innerHTML = '';
     achievements.forEach((a, index) => {
         const el = document.createElement('div');
         el.className = 'achievement-medal';
+        if (index === newIndex) el.classList.add('new');
         el.textContent = '🏅';
         el.dataset.index = index;
         selectors.streakGrid.appendChild(el);
@@ -49,7 +50,7 @@ export function createAchievement(title, message) {
     achievements.push({ date: Date.now(), title, message });
     if (achievements.length > 7) achievements.shift();
     saveAchievements();
-    renderAchievements();
+    renderAchievements(achievements.length - 1);
     const body = document.getElementById('achievementModalBody');
     const modalTitle = document.getElementById('achievementModalTitle');
     if (body) body.textContent = message;

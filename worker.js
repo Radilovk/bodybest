@@ -994,9 +994,20 @@ async function handleGeneratePraiseRequest(request, env) {
 
         const now = Date.now();
         const lastTsStr = await env.USER_METADATA_KV.get(`${userId}_last_praise_ts`);
+        const achStr = await env.USER_METADATA_KV.get(`${userId}_achievements`);
+        const achievements = safeParseJson(achStr, []);
+
+        if (!lastTsStr && achievements.length === 0) {
+            const title = 'Първа стъпка';
+            const message = 'Ти направи нещо, което мнозина отлагат с месеци, години, а други въобще не започват — реши да направиш първата крачка към твоето по-добро АЗ.\nОттук нататък ние сме част от твоята кауза и стъпките, които правиш с нашата подкрепа ще донесат резултат\nСамото присъствие тук вече те отличава!';
+            const newAch = { date: now, title, message };
+            achievements.push(newAch);
+            await env.USER_METADATA_KV.put(`${userId}_achievements`, JSON.stringify(achievements));
+            await env.USER_METADATA_KV.put(`${userId}_last_praise_ts`, now.toString());
+            return { success: true, title, message };
+        }
+
         if (lastTsStr && now - parseInt(lastTsStr, 10) < PRAISE_INTERVAL_DAYS * 86400000) {
-            const achStr = await env.USER_METADATA_KV.get(`${userId}_achievements`);
-            const achievements = safeParseJson(achStr, []);
             const lastAch = achievements[achievements.length - 1] || null;
             return { success: true, alreadyGenerated: true, ...(lastAch || {}) };
         }
@@ -1076,8 +1087,6 @@ async function handleGeneratePraiseRequest(request, env) {
             }
         }
 
-        const achStr = await env.USER_METADATA_KV.get(`${userId}_achievements`);
-        const achievements = safeParseJson(achStr, []);
         const newAch = { date: now, title, message };
         achievements.push(newAch);
         if (achievements.length > 7) achievements.shift();
