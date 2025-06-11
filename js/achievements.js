@@ -5,6 +5,7 @@ import { apiEndpoints } from './config.js';
 
 const medalEmojis = ['🥇', '🥈', '🥉', '🏆', '🎖️', '🏅'];
 
+// Анимирано показване на емоджи в модала за постижение
 function showAchievementEmoji(emoji) {
     const emojiEl = document.getElementById('achievementModalEmoji');
     if (!emojiEl) return;
