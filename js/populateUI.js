@@ -180,7 +180,7 @@ function populateDashboardDetailedAnalytics(analyticsData) {
 }
 
 function populateDashboardStreak(streakData) {
-    if (!selectors.streakGrid || !selectors.streakCount) return;
+    if (!selectors.streakGrid) return;
     selectors.streakGrid.innerHTML = '';
     const days = streakData?.dailyStatusArray || [];
     days.forEach(d => {
@@ -189,7 +189,7 @@ function populateDashboardStreak(streakData) {
         el.title = new Date(d.date).toLocaleDateString('bg-BG');
         selectors.streakGrid.appendChild(el);
     });
-    selectors.streakCount.textContent = streakData?.currentCount || 0;
+    if (selectors.streakCount) selectors.streakCount.textContent = streakData?.currentCount || 0;
 }
 
 function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
