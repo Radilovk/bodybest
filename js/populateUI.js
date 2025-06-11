@@ -17,8 +17,8 @@ export function populateUI() {
     try { populateDashboardDailyPlan(data.planData?.week1Menu, data.dailyLogs, data.recipeData); } catch(e) { console.error("Error in populateDashboardDailyPlan:", e); }
     try { populateDashboardLog(data.dailyLogs, data.currentStatus, data.initialData); } catch(e) { console.error("Error in populateDashboardLog:", e); }
     try { populateProfileTab(data.userName, data.initialData, data.currentStatus, data.initialAnswers); } catch(e) { console.error("Error in populateProfileTab:", e); }
-    try { populateWeekPlanTab(data.planData?.week1Menu, data.planData?.currentPrinciples || data.planData?.principlesWeek2_4); } catch(e) { console.error("Error in populateWeekPlanTab:", e); }
-    try { populateRecsTab(data.planData, data.initialAnswers); } catch(e) { console.error("Error in populateRecsTab:", e); }
+    try { populateWeekPlanTab(data.planData?.week1Menu); } catch(e) { console.error("Error in populateWeekPlanTab:", e); }
+    try { populateRecsTab(data.planData, data.initialAnswers, data.planData?.currentPrinciples || data.planData?.principlesWeek2_4); } catch(e) { console.error("Error in populateRecsTab:", e); }
     try { populateProgressHistory(data.dailyLogs, data.initialData); } catch(e) { console.error("Error in populateProgressHistory:", e); }
 }
 
@@ -430,7 +430,7 @@ function populateProfileTab(userName, initialData, currentStatus, initialAnswers
     }
 }
 
-function populateWeekPlanTab(week1Menu, principles) {
+function populateWeekPlanTab(week1Menu) {
     const tbody = selectors.weeklyPlanTbody;
     if (tbody) {
         tbody.innerHTML = '';
@@ -476,20 +476,9 @@ function populateWeekPlanTab(week1Menu, principles) {
             if (!planHasContentOverall) tbody.innerHTML = '<tr class="placeholder-row"><td colspan="6">Планът е празен.</td></tr>';
         } else tbody.innerHTML = '<tr class="placeholder-row"><td colspan="6">Планът не е наличен.</td></tr>';
     }
-    let principlesToRender = principles;
-    if (typeof principles === 'string' && principles.trim() !== '') {
-        if (principles.trim().startsWith('[') && principles.trim().endsWith(']')) {
-            try { principlesToRender = JSON.parse(principles); } catch (e) { console.warn("Could not parse principles string as JSON:", e); principlesToRender = [{ title: "Основни Принципи", content: principles }]; }
-        } else {
-             principlesToRender = [{ title: "Основни Принципи", content: principles }];
-        }
-    } else if (!Array.isArray(principles)) {
-        principlesToRender = [];
-    }
-    renderAccordionGroup(selectors.weeklyPrinciplesFocus, principlesToRender, "Няма заредени принципи.");
 }
 
-function populateRecsTab(planData, initialAnswers) {
+function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
     const { allowedForbiddenFoods, hydrationCookingSupplements, psychologicalGuidance } = planData || {};
     if (selectors.recFoodAllowedContent) {
         const placeholderEl = selectors.recFoodAllowedContent.querySelector('p.placeholder'); if (placeholderEl) placeholderEl.remove();
@@ -573,6 +562,20 @@ function populateRecsTab(planData, initialAnswers) {
             supplementsHtml += '</ul>';
         } else supplementsHtml = '<p class="placeholder">Няма специфични препоръки за добавки.</p>';
         selectors.recSupplementsContent.innerHTML = supplementsHtml;
+    }
+    if (selectors.additionalGuidelines) {
+        let guidelinesToRender = additionalGuidelines;
+        if (typeof additionalGuidelines === "string" && additionalGuidelines.trim() !== "") {
+            if (additionalGuidelines.trim().startsWith("[") && additionalGuidelines.trim().endsWith("]")) {
+                try { guidelinesToRender = JSON.parse(additionalGuidelines); } catch(e) { console.warn("Could not parse additionalGuidelines as JSON:", e); guidelinesToRender = [{ title: "Допълнителни насоки", content: additionalGuidelines }]; }
+            } else {
+                guidelinesToRender = [{ title: "Допълнителни насоки", content: additionalGuidelines }];
+            }
+        } else if (!Array.isArray(additionalGuidelines)) {
+            guidelinesToRender = [];
+        }
+        renderAccordionGroup(selectors.additionalGuidelines, guidelinesToRender, "<div class="card placeholder"><p>Няма налични насоки.</p></div>", true);
+    }
     }
 }
 
