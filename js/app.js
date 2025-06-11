@@ -21,7 +21,6 @@ import {
     setAutomatedChatPending
 } from './chat.js';
 import { openExtraMealModal } from './extraMealForm.js';
-import { initializeAchievements } from './achievements.js';
 import {
     openAdaptiveQuizModal as _openAdaptiveQuizModal,
     renderCurrentQuizQuestion,
@@ -156,7 +155,6 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
             if(selectors.appWrapper) selectors.appWrapper.style.display = 'block';
 
             populateUI();
-            initializeAchievements(currentUserId);
             setupDynamicEventListeners();
 
             const activeTabId = sessionStorage.getItem('activeTabId') || selectors.tabButtons[0]?.id;
@@ -223,7 +221,6 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
         }
 
         populateUI();
-        initializeAchievements(currentUserId);
         setupDynamicEventListeners();
 
         const activeTabId = sessionStorage.getItem('activeTabId') || selectors.tabButtons[0]?.id;
@@ -339,7 +336,6 @@ export async function handleSaveLog() { // Exported for eventListeners.js
             }
         }
         populateUI();
-        initializeAchievements(currentUserId);
         showToast(result.message || "Логът е запазен!", false);
     } catch (error) {
         showToast(`Грешка при запис на лог: ${error.message}`, true);
