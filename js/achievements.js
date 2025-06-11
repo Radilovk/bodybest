@@ -5,6 +5,18 @@ import { apiEndpoints } from './config.js';
 
 const medalEmojis = ['🥇', '🥈', '🥉', '🏆', '🎖️', '🏅'];
 
+// Анимирано показване на емоджи в модала за постижение
+function showAchievementEmoji(emoji) {
+    const emojiEl = document.getElementById('achievementModalEmoji');
+    if (!emojiEl) return;
+    emojiEl.textContent = emoji;
+    emojiEl.setAttribute('aria-hidden', 'false');
+    emojiEl.style.animation = 'none';
+    // Trigger reflow to restart animation
+    void emojiEl.offsetWidth;
+    emojiEl.style.animation = '';
+}
+
 let achievements = [];
 let currentUserId = null;
 
@@ -56,10 +68,9 @@ export function createAchievement(title, message) {
     renderAchievements(achievements.length - 1);
     const body = document.getElementById('achievementModalBody');
     const modalTitle = document.getElementById('achievementModalTitle');
-    const emojiEl = document.getElementById('achievementModalEmoji');
     if (body) body.textContent = message;
     if (modalTitle) modalTitle.textContent = title;
-    if (emojiEl) emojiEl.textContent = emoji;
+    showAchievementEmoji(emoji);
     openModal('achievementModal');
     localStorage.setItem('lastPraiseDate', String(Date.now()));
 }
@@ -72,10 +83,9 @@ export function handleAchievementClick(e) {
     if (!ach) return;
     const body = document.getElementById('achievementModalBody');
     const modalTitle = document.getElementById('achievementModalTitle');
-    const emojiEl = document.getElementById('achievementModalEmoji');
     if (body) body.textContent = ach.message;
     if (modalTitle) modalTitle.textContent = ach.title;
-    if (emojiEl) emojiEl.textContent = ach.emoji || '🏅';
+    showAchievementEmoji(ach.emoji || '🏅');
     openModal('achievementModal');
 }
 
