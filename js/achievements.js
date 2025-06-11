@@ -3,6 +3,19 @@ import { selectors } from './uiElements.js';
 import { openModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
 
+const medalEmojis = ['🥇', '🥈', '🥉', '🏆', '🎖️', '🏅'];
+
+function showAchievementEmoji(emoji) {
+    const emojiEl = document.getElementById('achievementModalEmoji');
+    if (!emojiEl) return;
+    emojiEl.textContent = emoji;
+    emojiEl.setAttribute('aria-hidden', 'false');
+    emojiEl.style.animation = 'none';
+    // Trigger reflow to restart animation
+    void emojiEl.offsetWidth;
+    emojiEl.style.animation = '';
+}
+
 let achievements = [];
 let currentUserId = null;
 
@@ -39,7 +52,7 @@ function renderAchievements(newIndex = -1) {
         const el = document.createElement('div');
         el.className = 'achievement-medal';
         if (index === newIndex) el.classList.add('new');
-        el.textContent = '🏅';
+        el.textContent = a.emoji || '🏅';
         el.dataset.index = index;
         selectors.streakGrid.appendChild(el);
     });
@@ -47,7 +60,8 @@ function renderAchievements(newIndex = -1) {
 }
 
 export function createAchievement(title, message) {
-    achievements.push({ date: Date.now(), title, message });
+    const emoji = medalEmojis[achievements.length % medalEmojis.length];
+    achievements.push({ date: Date.now(), title, message, emoji });
     if (achievements.length > 7) achievements.shift();
     saveAchievements();
     renderAchievements(achievements.length - 1);
@@ -55,6 +69,7 @@ export function createAchievement(title, message) {
     const modalTitle = document.getElementById('achievementModalTitle');
     if (body) body.textContent = message;
     if (modalTitle) modalTitle.textContent = title;
+    showAchievementEmoji(emoji);
     openModal('achievementModal');
     localStorage.setItem('lastPraiseDate', String(Date.now()));
 }
@@ -69,6 +84,7 @@ export function handleAchievementClick(e) {
     const modalTitle = document.getElementById('achievementModalTitle');
     if (body) body.textContent = ach.message;
     if (modalTitle) modalTitle.textContent = ach.title;
+    showAchievementEmoji(ach.emoji || '🏅');
     openModal('achievementModal');
 }
 

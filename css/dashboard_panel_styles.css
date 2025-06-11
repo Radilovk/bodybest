@@ -49,6 +49,10 @@
   justify-items: center;
   margin-bottom: var(--space-sm);
 }
+
+#streakCard {
+  min-height: 120px;
+}
 .streak-day { width: 18px; height: 18px; border-radius: 50%; background: var(--border-color); }
 .streak-day.logged { background: var(--color-success); }
 
