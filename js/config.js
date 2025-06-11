@@ -20,9 +20,7 @@ export const apiEndpoints = {
     submitAdaptiveQuiz: `${workerBaseUrl}/api/submitAdaptiveQuiz`,
     acknowledgeAiUpdate: `${workerBaseUrl}/api/acknowledgeAiUpdate`,
     recordFeedbackChat: `${workerBaseUrl}/api/recordFeedbackChat`,
-    forgotPassword: `${workerBaseUrl}/api/forgotPassword`,
-    getAchievements: `${workerBaseUrl}/api/getAchievements`,
-    generatePraise: `${workerBaseUrl}/api/generatePraise`
+    forgotPassword: `${workerBaseUrl}/api/forgotPassword`
 };
 
 export const generateId = (prefix = 'id') => `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
