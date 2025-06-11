@@ -88,6 +88,10 @@ function createTestData() {
 // ==========================================================================
 // ИНИЦИАЛИЗАЦИЯ НА ПРИЛОЖЕНИЕТО
 // ==========================================================================
+/**
+ * Инициализира потребителския интерфейс и зарежда данните на таблото.
+ * Извиква се при събитието DOMContentLoaded.
+ */
 function initializeApp() {
     try {
         if (isLocalDevelopment) console.log("initializeApp starting from app.js...");
@@ -125,6 +129,11 @@ function initializeApp() {
 // ==========================================================================
 // ЗАРЕЖДАНЕ И ОБРАБОТКА НА ДАННИ
 // ==========================================================================
+/**
+ * Зарежда данни за таблото от бекенда и обновява интерфейса.
+ * Използва се и от модула adaptiveQuiz.js след изпращане на тест.
+ * @returns {Promise<void>}
+ */
 export async function loadDashboardData() { // Exported for adaptiveQuiz.js to call after submit
     if (isLocalDevelopment) console.log("loadDashboardData starting for user:", currentUserId);
     if (!currentUserId) {

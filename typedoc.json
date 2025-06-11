@@ -1,0 +1,5 @@
+{
+  "entryPoints": ["worker.js", "js"],
+  "out": "docs",
+  "excludePrivate": true
+}

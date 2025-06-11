@@ -37,6 +37,14 @@ const AUTOMATED_FEEDBACK_TRIGGER_DAYS = 3; // След толкова дни п�
 // ------------- START BLOCK: MainWorkerExport -------------
 export default {
     // ------------- START FUNCTION: fetch -------------
+    /**
+     * Главна точка на Cloudflare Worker-а. Разпределя заявките към
+     * съответните REST обработчици.
+     * @param {Request} request
+     * @param {Object} env
+     * @param {ExecutionContext} ctx
+     * @returns {Promise<Response>}
+     */
     async fetch(request, env, ctx) {
         const url = new URL(request.url);
         const path = url.pathname;
@@ -287,6 +295,12 @@ export default {
 // ------------- END BLOCK: ApiHandlersHeaderComment -------------
 
 // ------------- START FUNCTION: handleRegisterRequest -------------
+/**
+ * Създава нов потребител и записва данните му чрез PHP API.
+ * @param {Request} request
+ * @param {Object} env - Обект с environment променливи и KV връзки.
+ * @returns {Promise<Object>} Резултат от операцията.
+ */
 async function handleRegisterRequest(request, env) {
      try {
         const { email, password, confirm_password } = await request.json();
@@ -316,6 +330,12 @@ async function handleRegisterRequest(request, env) {
 // ------------- END FUNCTION: handleRegisterRequest -------------
 
 // ------------- START FUNCTION: handleLoginRequest -------------
+/**
+ * Валидира вход на потребител чрез данните в PHP API.
+ * @param {Request} request
+ * @param {Object} env
+ * @returns {Promise<Object>} Резултат от проверката.
+ */
 async function handleLoginRequest(request, env) {
      try {
          const { email, password } = await request.json(); const trimmedEmail = email ? String(email).trim().toLowerCase() : null; if (!trimmedEmail || !password) { return { success: false, message: 'Имейл и парола са задължителни.', statusHint: 400 }; }
