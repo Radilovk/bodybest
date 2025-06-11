@@ -3,7 +3,7 @@ import { selectors } from './uiElements.js';
 import {
     toggleMenu, closeMenu, handleOutsideMenuClick, handleMenuKeydown,
     toggleTheme, activateTab, handleTabKeydown, closeModal,
-    openInfoModalWithDetails, toggleDailyNote,
+    openInfoModalWithDetails, toggleDailyNote, openMainIndexInfo,
     handleTrackerTooltipShow, handleTrackerTooltipHide, showToast
 } from './uiHandlers.js';
 import { handleLogout } from './auth.js';
@@ -51,6 +51,11 @@ export function setupStaticEventListeners() {
     if (selectors.saveLogBtn) selectors.saveLogBtn.addEventListener('click', handleSaveLog);
     if (selectors.openExtraMealModalBtn) selectors.openExtraMealModalBtn.addEventListener('click', openExtraMealModal);
     if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.addEventListener('click', _handleTriggerAdaptiveQuizClientSide);
+
+    if (selectors.goalCard) selectors.goalCard.addEventListener('click', () => openMainIndexInfo('goalProgress'));
+    if (selectors.engagementCard) selectors.engagementCard.addEventListener('click', () => openMainIndexInfo('engagement'));
+    if (selectors.healthCard) selectors.healthCard.addEventListener('click', () => openMainIndexInfo('overallHealth'));
+    if (selectors.streakCard) selectors.streakCard.addEventListener('click', () => openMainIndexInfo('successes'));
 
 
     if (selectors.detailedAnalyticsAccordion) {
