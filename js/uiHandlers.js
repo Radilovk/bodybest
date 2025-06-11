@@ -5,7 +5,7 @@ import {
     activeTooltip, // state from app.js that this module will modify
     setActiveTooltip // function from app.js to update activeTooltip state
 } from './app.js';
-import { trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
+import { trackerInfoTexts, detailedMetricInfoTexts, mainIndexInfoTexts } from './uiElements.js';
 import { capitalizeFirstLetter, safeGet } from './utils.js';
 
 // Variable to hold the toast timeout ID, managed locally within this module
@@ -145,6 +145,15 @@ export function openInfoModalWithDetails(key, type) {
             body += "\n\nСтойности:\n" + Object.values(metricInfo.levels).join("\n");
         }
     }
+    if (selectors.infoModalTitle) selectors.infoModalTitle.textContent = title;
+    if (selectors.infoModalBody) selectors.infoModalBody.innerHTML = String(body).replace(/\n/g, '<br>');
+    openModal('infoModal');
+}
+
+export function openMainIndexInfo(key) {
+    const info = mainIndexInfoTexts[key] || {};
+    const title = info.title || 'Информация';
+    const body = info.text || 'Няма налична информация.';
     if (selectors.infoModalTitle) selectors.infoModalTitle.textContent = title;
     if (selectors.infoModalBody) selectors.infoModalBody.innerHTML = String(body).replace(/\n/g, '<br>');
     openModal('infoModal');

@@ -11,6 +11,7 @@
     flex-direction: column;
     justify-content: space-around;
     min-height: 123px;
+    cursor: pointer;
 }
 .index-card h4 {
   font-size: 1.1rem; 

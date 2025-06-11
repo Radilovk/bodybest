@@ -13,6 +13,7 @@ export function initializeSelectors() {
         goalProgressBar: 'goalProgressBar', goalProgressMask: 'goalProgressMask', goalProgressText: 'goalProgressText',
         engagementProgressBar: 'engagementProgressBar', engagementProgressMask: 'engagementProgressMask', engagementProgressText: 'engagementProgressText',
         healthProgressBar: 'healthProgressBar', healthProgressMask: 'healthProgressMask', healthProgressText: 'healthProgressText',
+        goalCard: 'goalCard', engagementCard: 'engagementCard', healthCard: 'healthCard', streakCard: 'streakCard',
         detailedAnalyticsAccordion: 'detailedAnalyticsAccordion', detailedAnalyticsContent: 'detailedAnalyticsContent',
         dashboardTextualAnalysis: 'dashboardTextualAnalysis',
         dailyPlanTitle: 'dailyPlanTitle', dailyMealList: 'dailyMealList',
@@ -55,6 +56,7 @@ export function initializeSelectors() {
                 'menuClose', 'extraMealFormContainer', 'userAllergiesNote', 'userAllergiesList',
                 'feedbackForm', 'tooltipTracker', 'triggerAdaptiveQuizBtn',
                 'streakGrid', 'streakCount', 'analyticsCardsContainer',
+                'goalCard', 'engagementCard', 'healthCard', 'streakCard'
             ];
             if (!optionalOrDynamic.includes(key) && key !== 'adaptiveQuizModal' && key !== 'adaptiveQuizContainer') {
                 console.warn(`HTML element not found: ${key} (selector: '${selectorValue}')`);
@@ -135,4 +137,11 @@ export const detailedMetricInfoTexts = {
     meal_adherence_info: "Процентът на спазени планирани хранения. Високата стойност показва добро придържане към хранителната част на програмата.",
     log_consistency_info: "Колко редовно попълвате своя дневен лог. Редовното водене на дневник помага за осъзнатост и проследяване на напредъка.",
     emotional_eating_control_info: "Отчита способността ви да управлявате храненето, породено от емоции, а не от физически глад. Развиването на този контрол е важно за дългосрочен успех."
+};
+
+export const mainIndexInfoTexts = {
+    goalProgress: { title: "Напредък към Цел", text: "Индикаторът показва колко сте близо до зададената цел." },
+    engagement: { title: "Ангажираност", text: "Отразява колко редовно използвате програмата и попълвате дневника." },
+    overallHealth: { title: "Общо Здраве", text: "Комбинирана оценка на ключови показатели като сън, стрес и хранене." },
+    successes: { title: "Моите успехи", text: "Показва поредицата от дни и събрани постижения." }
 };
