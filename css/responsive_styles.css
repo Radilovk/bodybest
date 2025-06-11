@@ -15,7 +15,11 @@
 
   .container { padding: var(--space-md); }
   .main-indexes { grid-template-columns: 1fr; }
-  .index-card { min-height: auto; padding: var(--space-md); } 
+  .index-card {
+    min-height: var(--index-card-min-height);
+    padding: var(--space-md);
+    gap: var(--space-sm);
+  }
   .index-card h4 { font-size: 1rem; margin-bottom: var(--space-xs); }
   .index-card .index-value { font-size: 1.1rem; }
 
