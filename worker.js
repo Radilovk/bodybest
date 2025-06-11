@@ -32,6 +32,7 @@ const ADAPTIVE_QUIZ_LOW_ENGAGEMENT_DAYS = 7;
 const ADAPTIVE_QUIZ_ANSWERS_LOOKBACK_DAYS = 35; // Колко назад да търсим отговори от въпросник за контекст
 const PREVIOUS_QUIZZES_FOR_CONTEXT_COUNT = 2; // Брой предишни въпросници за контекст при генериране на нов
 const AUTOMATED_FEEDBACK_TRIGGER_DAYS = 3; // След толкова дни предлагаме автоматичен чат
+const PRAISE_INTERVAL_DAYS = 3; // Интервал за нова похвала/значка
 // ------------- END BLOCK: GlobalConstantsAndBindings -------------
 
 // ------------- START BLOCK: MainWorkerExport -------------
@@ -111,6 +112,10 @@ export default {
                 responseBody = await handleAcknowledgeAiUpdateRequest(request, env);
             } else if (method === 'POST' && path === '/api/recordFeedbackChat') {
                 responseBody = await handleRecordFeedbackChatRequest(request, env);
+            } else if (method === 'GET' && path === '/api/getAchievements') {
+                responseBody = await handleGetAchievementsRequest(request, env);
+            } else if (method === 'POST' && path === '/api/generatePraise') {
+                responseBody = await handleGeneratePraiseRequest(request, env);
             } else {
                 responseBody = { success: false, error: 'Not Found', message: 'Ресурсът не е намерен.' };
                 responseStatus = 404;
@@ -964,6 +969,128 @@ async function handleRecordFeedbackChatRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleRecordFeedbackChatRequest -------------
+
+// ------------- START FUNCTION: handleGetAchievementsRequest -------------
+async function handleGetAchievementsRequest(request, env) {
+    try {
+        const url = new URL(request.url);
+        const userId = url.searchParams.get('userId');
+        if (!userId) return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
+        const achStr = await env.USER_METADATA_KV.get(`${userId}_achievements`);
+        const achievements = safeParseJson(achStr, []);
+        return { success: true, achievements };
+    } catch (error) {
+        console.error('Error in handleGetAchievementsRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при зареждане на постижения.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleGetAchievementsRequest -------------
+
+// ------------- START FUNCTION: handleGeneratePraiseRequest -------------
+async function handleGeneratePraiseRequest(request, env) {
+    try {
+        const { userId } = await request.json();
+        if (!userId) return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
+
+        const now = Date.now();
+        const lastTsStr = await env.USER_METADATA_KV.get(`${userId}_last_praise_ts`);
+        if (lastTsStr && now - parseInt(lastTsStr, 10) < PRAISE_INTERVAL_DAYS * 86400000) {
+            const achStr = await env.USER_METADATA_KV.get(`${userId}_achievements`);
+            const achievements = safeParseJson(achStr, []);
+            const lastAch = achievements[achievements.length - 1] || null;
+            return { success: true, alreadyGenerated: true, ...(lastAch || {}) };
+        }
+
+        const initialAnswersStr = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
+        const initialAnswers = safeParseJson(initialAnswersStr, {});
+
+        const logKeys = [];
+        const today = new Date();
+        for (let i = 0; i < PRAISE_INTERVAL_DAYS; i++) {
+            const d = new Date(today); d.setDate(today.getDate() - i);
+            logKeys.push(`${userId}_log_${d.toISOString().split('T')[0]}`);
+        }
+        const logStrings = await Promise.all(logKeys.map(k => env.USER_METADATA_KV.get(k)));
+        const logs = logStrings.map((ls, idx) => {
+            if (ls) { const d = new Date(today); d.setDate(today.getDate() - idx); return { date: d.toISOString().split('T')[0], data: safeParseJson(ls, {}) }; }
+            return null;
+        }).filter(Boolean);
+
+        const avgMetric = (key) => {
+            let sum = 0, count = 0;
+            logs.forEach(l => { const v = parseFloat(l.data[key]); if (!isNaN(v)) { sum += v; count++; } });
+            return count > 0 ? (sum / count).toFixed(1) : 'N/A';
+        };
+
+        const mealAdh = () => {
+            let total = 0, done = 0;
+            logs.forEach(l => {
+                const cs = l.data.completedMealsStatus || {};
+                const vals = Object.values(cs);
+                done += vals.filter(v => v === true).length;
+                total += vals.length;
+            });
+            return total > 0 ? Math.round((done / total) * 100) : 0;
+        };
+
+        const promptTpl = await env.RESOURCES_KV.get('prompt_praise_generation');
+        const geminiKey = env[GEMINI_API_KEY_SECRET_NAME];
+        const model = await env.RESOURCES_KV.get('model_chat') || await env.RESOURCES_KV.get('model_plan_generation');
+
+        let title = 'Браво!';
+        let message = 'Продължавай в същия дух!';
+
+        if (promptTpl && geminiKey && model) {
+            const replacements = {
+                '%%име%%': initialAnswers.name || 'Клиент',
+                '%%възраст%%': initialAnswers.age || 'N/A',
+                '%%формулировка_на_целта%%': initialAnswers.goal || 'N/A',
+                '%%извлечени_от_въпросника_ключови_моменти_като_mainChallenge_стрес_ниво_мотивационни_проблеми_или_синтезиран_кратък_психо_портрет_ако_има%%': initialAnswers.mainChallenge || '',
+                '%%брой_попълнени_дни%%': logs.length,
+                '%%общо_дни_в_периода%%': PRAISE_INTERVAL_DAYS,
+                '%%средна_енергия_за_периода%%': avgMetric('energy'),
+                '%%средна_енергия_предходен_период%%': 'N/A',
+                '%%средно_настроение_за_периода%%': avgMetric('mood'),
+                '%%средно_настроение_предходен_период%%': 'N/A',
+                '%%средна_хидратация_за_периода%%': avgMetric('hydration'),
+                '%%процент_придържане_към_хран_план_за_периода%%': mealAdh(),
+                '%%процент_придържане_предходен_период%%': 'N/A',
+                '%%средно_качество_сън_за_периода%%': avgMetric('sleep_quality'),
+                '%%цитат1_от_бележка_или_чат%%': logs[0]?.data?.note || '',
+                '%%цитат2_от_бележка_или_чат%%': logs[1]?.data?.note || '',
+                '%%заглавие_постижение_N-1%%': '',
+                '%%заглавие_постижение_N-2%%': ''
+            };
+            const populated = populatePrompt(promptTpl, replacements);
+            try {
+                const raw = await callGeminiAPI(populated, geminiKey, { temperature: 0.6, maxOutputTokens: 400 }, [], model);
+                const cleaned = cleanGeminiJson(raw);
+                const parsed = safeParseJson(cleaned, null);
+                if (parsed && parsed.title && parsed.message) {
+                    title = parsed.title; message = parsed.message;
+                } else {
+                    message = cleaned;
+                }
+            } catch (err) {
+                console.error('Praise generation AI error:', err.message);
+            }
+        }
+
+        const achStr = await env.USER_METADATA_KV.get(`${userId}_achievements`);
+        const achievements = safeParseJson(achStr, []);
+        const newAch = { date: now, title, message };
+        achievements.push(newAch);
+        if (achievements.length > 7) achievements.shift();
+        await env.USER_METADATA_KV.put(`${userId}_achievements`, JSON.stringify(achievements));
+        await env.USER_METADATA_KV.put(`${userId}_last_praise_ts`, now.toString());
+
+        return { success: true, title, message };
+    } catch (error) {
+        console.error('Error in handleGeneratePraiseRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при генериране на похвала.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleGeneratePraiseRequest -------------
 
 
 // ------------- START BLOCK: PlanGenerationHeaderComment -------------
@@ -2412,4 +2539,4 @@ function shouldTriggerAutomatedFeedbackChat(lastUpdateTs, lastChatTs, currentTim
 }
 // ------------- END FUNCTION: shouldTriggerAutomatedFeedbackChat -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, handleRecordFeedbackChatRequest };
+export { handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest };
