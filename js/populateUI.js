@@ -574,13 +574,8 @@ function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
         } else if (!Array.isArray(additionalGuidelines)) {
             guidelinesToRender = [];
         }
-renderAccordionGroup(
-    selectors.additionalGuidelines,
-    guidelinesToRender,
-    '<div class="card placeholder"><p>Няма налични насоки.</p></div>',
-    true
-);
-
+        renderAccordionGroup(selectors.additionalGuidelines, guidelinesToRender, "<div class="card placeholder"><p>Няма налични насоки.</p></div>", true);
+    }
     }
 }
 
