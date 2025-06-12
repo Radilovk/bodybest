@@ -84,6 +84,21 @@ export function activateTab(activeTabButton) {
     sessionStorage.setItem('activeTabId', activeTabButton.id);
 }
 
+export function updateTabsOverflowIndicator() {
+    if (!selectors.tabsContainer) return;
+    const nav = selectors.tabsContainer;
+
+    function refresh() {
+        const hasOverflow = nav.scrollWidth > nav.clientWidth + 1;
+        const atEnd = nav.scrollLeft >= nav.scrollWidth - nav.clientWidth - 1;
+        nav.classList.toggle('has-overflow', hasOverflow && !atEnd);
+    }
+
+    nav.addEventListener('scroll', refresh);
+    window.addEventListener('resize', refresh);
+    refresh();
+}
+
 export function handleTabKeydown(e) {
     const key = e.key; const currentTab = e.currentTarget;
     if(!selectors.tabButtons || selectors.tabButtons.length === 0) return;

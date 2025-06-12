@@ -9,7 +9,7 @@ import {
     openModal, closeModal, openInfoModalWithDetails,
     toggleDailyNote,
     showTrackerTooltip, hideTrackerTooltip, handleTrackerTooltipShow, handleTrackerTooltipHide,
-    showLoading, showToast
+    showLoading, showToast, updateTabsOverflowIndicator
 } from './uiHandlers.js';
 import { populateUI } from './populateUI.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
@@ -97,6 +97,7 @@ function initializeApp() {
     try {
         if (isLocalDevelopment) console.log("initializeApp starting from app.js...");
         initializeSelectors();
+        updateTabsOverflowIndicator();
         showLoading(true, "Инициализация на таблото...");
         currentUserId = sessionStorage.getItem('userId');
 
