@@ -574,12 +574,17 @@ function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
         } else if (!Array.isArray(additionalGuidelines)) {
             guidelinesToRender = [];
         }
+ ym3oei-codex/разработи-стратегии-за-динамично-адаптиране-на-клиентска-про
         renderAccordionGroup(
-            selectors.additionalGuidelines,
-            guidelinesToRender,
-            '<div class="card placeholder"><p>Няма налични насоки.</p></div>',
-            true
-        );
+    selectors.additionalGuidelines,
+    guidelinesToRender,
+    '<div class="card placeholder"><p>Няма налични насоки.</p></div>',
+    true
+);
+=======
+        renderAccordionGroup(selectors.additionalGuidelines, guidelinesToRender, "<div class="card placeholder"><p>Няма налични насоки.</p></div>", true);
+    }
+ main
     }
 }
 
