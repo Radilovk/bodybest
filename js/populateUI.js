@@ -581,6 +581,15 @@ function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
             } else {
                 guidelinesToRender = [{ title: "Допълнителни насоки", content: additionalGuidelines }];
             }
+        } else if (!Array.isArray(additionalGuidelines) && additionalGuidelines) {
+            if (additionalGuidelines.title || additionalGuidelines.content || additionalGuidelines.items) {
+                guidelinesToRender = [additionalGuidelines];
+            } else {
+                guidelinesToRender = Object.entries(additionalGuidelines).map(([key, value]) => ({
+                    title: key,
+                    content: Array.isArray(value) ? value : String(value)
+                }));
+            }
         } else if (!Array.isArray(additionalGuidelines)) {
             guidelinesToRender = [];
         }
