@@ -148,6 +148,7 @@ export default {
         let processedUsersForPlan = 0;
         let processedUsersForPrinciples = 0;
         let processedUsersForAdaptiveQuiz = 0;
+        let processedUserEvents = 0;
         const MAX_PROCESS_PER_RUN_PLAN_GEN = 1;
         const MAX_PROCESS_PER_RUN_PRINCIPLES = 2;
         const MAX_PROCESS_PER_RUN_ADAPTIVE_QUIZ = 3;
@@ -188,6 +189,7 @@ export default {
             }
             if (processedUsersForPlan === 0) console.log("[CRON-PlanGen] No pending users for plan generation.");
 
+            processedUserEvents = await processPendingUserEvents(env, ctx);
             // --- Потребители с готов план ---
             const listResultReadyPlans = await env.USER_METADATA_KV.list({ prefix: "plan_status_" });
             const usersWithReadyPlan = [];
@@ -286,7 +288,7 @@ export default {
         } catch(error) {
             console.error("[CRON] Error during scheduled execution:", error.message, error.stack);
         }
-        console.log(`[CRON] Trigger finished. PlanGen: ${processedUsersForPlan}, Principles: ${processedUsersForPrinciples}, AdaptiveQuiz: ${processedUsersForAdaptiveQuiz}`);
+        console.log(`[CRON] Trigger finished. PlanGen: ${processedUsersForPlan}, Principles: ${processedUsersForPrinciples}, AdaptiveQuiz: ${processedUsersForAdaptiveQuiz}, Events: ${processedUserEvents}`);
     }
     // ------------- END FUNCTION: scheduled -------------
 };
@@ -435,6 +437,8 @@ async function handleDashboardDataRequest(request, env) {
             env.USER_METADATA_KV.get(`${userId}_last_feedback_chat_ts`)
         ]);
 
+        if (finalPlanStr) console.log(`final_plan snippet: ${finalPlanStr.slice(0,200)}`);
+
         const actualPlanStatus = planStatus || 'unknown';
         if (!initialAnswersStr) return { success: false, message: 'Основните данни на потребителя не са намерени.', statusHint: 404, userId };
         const initialAnswers = safeParseJson(initialAnswersStr, {});
@@ -485,13 +489,14 @@ async function handleDashboardDataRequest(request, env) {
             console.error(`DASHBOARD_DATA (${userId}): Plan status is 'error'. Error: ${errorMsg}`);
             return { ...baseResponse, success: false, message: `Възникна грешка при генерирането на Вашия план: ${errorMsg ? errorMsg.split('\n')[0] : 'Неизвестна грешка.'}`, planData: null, analytics: null, statusHint: 500 };
         }
+        const logTimestamp = new Date().toISOString();
         if (!finalPlanStr) {
-            console.warn(`DASHBOARD_DATA (${userId}): Plan status is '${actualPlanStatus}' but final_plan is missing.`);
+            console.warn(`DASHBOARD_DATA (${userId}) [${logTimestamp}]: Plan status '${actualPlanStatus}' but final_plan is missing. Snippet: ${String(finalPlanStr).slice(0,200)}`);
             return { ...baseResponse, success: false, message: 'Планът Ви не е наличен в системата, въпреки че статусът показва готовност. Моля, свържете се с поддръжка.', statusHint: 404, planData: null, analytics: null };
         }
         const finalPlan = safeParseJson(finalPlanStr, {});
         if (Object.keys(finalPlan).length === 0 && finalPlanStr) { // finalPlanStr ensures it wasn't null initially
-            console.error(`DASHBOARD_DATA (${userId}): Failed to parse final_plan JSON.`);
+            console.error(`DASHBOARD_DATA (${userId}) [${logTimestamp}]: Failed to parse final_plan JSON. Status: '${actualPlanStatus}'. Snippet: ${finalPlanStr.slice(0,200)}`);
             return { ...baseResponse, success: false, message: 'Грешка при зареждане на данните на Вашия план.', statusHint: 500, planData: null, analytics: null };
         }
         
@@ -709,8 +714,29 @@ async function handleChatRequest(request, env) {
         const populatedPrompt = populatePrompt(chatPromptTpl,r);
         const geminiRespRaw = await callGeminiAPI(populatedPrompt,geminiKey,{temperature:0.7,maxOutputTokens:800},[],chatModel); // Increased tokens slightly
         
-        let respToUser = geminiRespRaw.trim(); let planModReq=null; const sig='[PLAN_MODIFICATION_REQUEST]'; const sigIdx=respToUser.lastIndexOf(sig);
-        if(sigIdx!==-1){planModReq=respToUser.substring(sigIdx+sig.length).trim(); respToUser=respToUser.substring(0,sigIdx).trim(); console.log(`CHAT_INFO (${userId}): Plan modification signal detected: "${planModReq}"`); try{const reqKey=`${userId}_pending_plan_modification_request`; const reqData={timestamp:Date.now(),request_description:planModReq,original_user_message:message,status:'pending'}; await env.USER_METADATA_KV.put(reqKey,JSON.stringify(reqData));}catch(kvErr){console.error(`CHAT_ERROR (${userId}): Failed save pending modification request:`,kvErr);}}
+        let respToUser = geminiRespRaw.trim();
+        let planModReq = null;
+        const sig = '[PLAN_MODIFICATION_REQUEST]';
+        const sigIdx = respToUser.lastIndexOf(sig);
+        if (sigIdx !== -1) {
+            planModReq = respToUser.substring(sigIdx + sig.length).trim();
+            respToUser = respToUser.substring(0, sigIdx).trim();
+            console.log(`CHAT_INFO (${userId}): Plan modification signal detected: "${planModReq}"`);
+            try {
+                const reqKey = `${userId}_pending_plan_modification_request`;
+                const reqData = {
+                    timestamp: Date.now(),
+                    request_description: planModReq,
+                    original_user_message: message,
+                    status: 'pending'
+                };
+                await env.USER_METADATA_KV.put(reqKey, JSON.stringify(reqData));
+                const eventKey = `event_planMod_${userId}`;
+                await env.USER_METADATA_KV.put(eventKey, JSON.stringify({ status: 'pending', description: planModReq, createdTimestamp: Date.now() }));
+            } catch (kvErr) {
+                console.error(`CHAT_ERROR (${userId}): Failed save pending modification request:`, kvErr);
+            }
+        }
         
         storedChatHistory.push({role:'model',parts:[{text:respToUser}]});
         if(storedChatHistory.length>MAX_CHAT_HISTORY_MESSAGES) storedChatHistory=storedChatHistory.slice(-MAX_CHAT_HISTORY_MESSAGES);
@@ -1124,7 +1150,7 @@ async function processSingleUserPlan(userId, env) {
             throw new Error(`Parsed initial answers are empty for ${userId}.`);
         }
         console.log(`PROCESS_USER_PLAN (${userId}): Processing for email: ${initialAnswers.email || 'N/A'}`);
-        const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, principlesWeek2_4: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
+        const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, principlesWeek2_4: [], additionalGuidelines: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
         const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, planModelName, unifiedPromptTemplate ] = await Promise.all([
             env.RESOURCES_KV.get('question_definitions'), env.RESOURCES_KV.get('base_diet_model'),
             env.RESOURCES_KV.get('allowed_meal_combinations'), env.RESOURCES_KV.get('eating_psychology'),
@@ -2538,6 +2564,66 @@ async function sendTxtBackupToPhp(userId, answers, env) {
 }
 // ------------- END FUNCTION: sendTxtBackupToPhp -------------
 
+// ------------- START FUNCTION: processPendingPlanModRequests -------------
+async function processPendingPlanModRequests(env, ctx, maxToProcess = 2) {
+    const list = await env.USER_METADATA_KV.list();
+    const pendingKeys = list.keys.filter(k => k.name.endsWith('_pending_plan_modification_request'));
+    let processed = 0;
+    for (const key of pendingKeys) {
+        if (processed >= maxToProcess) break;
+        const reqStr = await env.USER_METADATA_KV.get(key.name);
+        const reqData = safeParseJson(reqStr, {});
+        if (reqData && reqData.status === 'pending') {
+            const userId = key.name.replace('_pending_plan_modification_request', '');
+            ctx.waitUntil(processSingleUserPlan(userId, env));
+            reqData.status = 'processed';
+            reqData.processedTimestamp = Date.now();
+            await env.USER_METADATA_KV.put(key.name, JSON.stringify(reqData));
+            processed++;
+        }
+    }
+    if (processed > 0) console.log(`[CRON-PlanMod] Processed ${processed} modification request(s).`);
+    else console.log('[CRON-PlanMod] No pending modification requests.');
+    return processed;
+}
+// ------------- END FUNCTION: processPendingPlanModRequests -------------
+
+// ------------- START FUNCTION: processPendingUserEvents -------------
+async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
+    let processed = await processPendingPlanModRequests(env, ctx, maxToProcess);
+    if (processed >= maxToProcess) return processed;
+    const list = await env.USER_METADATA_KV.list({ prefix: "event_" });
+    for (const key of list.keys) {
+        if (processed >= maxToProcess) break;
+        const parts = key.name.split("_");
+        const prefix = parts.shift();
+        const eventType = parts.shift();
+        const userId = parts.join("_");
+        if (prefix !== "event" || !userId) continue;
+        const eventStr = await env.USER_METADATA_KV.get(key.name);
+        const eventData = safeParseJson(eventStr, {});
+        if (!eventData || eventData.status !== "pending") continue;
+        switch(eventType) {
+            case "planMod":
+                ctx.waitUntil(processSingleUserPlan(userId, env));
+                break;
+            case "testResult":
+            case "irisDiag":
+                // Future event types
+                break;
+            default:
+                console.log(`[CRON-UserEvent] Unknown event type ${eventType} for user ${userId}`);
+        }
+        eventData.status = "processed";
+        eventData.processedTimestamp = Date.now();
+        await env.USER_METADATA_KV.put(key.name, JSON.stringify(eventData));
+        processed++;
+    }
+    if (processed > 0) console.log(`[CRON-UserEvent] Processed ${processed} event(s).`);
+    else console.log('[CRON-UserEvent] No pending events.');
+    return processed;
+}
+// ------------- END FUNCTION: processPendingUserEvents -------------
 // ------------- START FUNCTION: shouldTriggerAutomatedFeedbackChat -------------
 function shouldTriggerAutomatedFeedbackChat(lastUpdateTs, lastChatTs, currentTime = Date.now()) {
     if (!lastUpdateTs) return false;
@@ -2548,4 +2634,4 @@ function shouldTriggerAutomatedFeedbackChat(lastUpdateTs, lastChatTs, currentTim
 }
 // ------------- END FUNCTION: shouldTriggerAutomatedFeedbackChat -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest };
+export { processPendingUserEvents, processPendingPlanModRequests, processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest };

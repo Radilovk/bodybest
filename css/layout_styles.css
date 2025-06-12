@@ -98,18 +98,30 @@ header h1 { color: var(--text-color-on-primary); margin: 0; font-size: clamp(1.3
 /* ==========================================================================
    4. ТАБОВЕ И ПАНЕЛИ
    ========================================================================== */
-nav.tabs { 
+nav.tabs {
   display: flex; flex-wrap: nowrap; background: var(--surface-background);
   box-shadow: var(--shadow-sm); border-bottom: 1px solid var(--border-color);
-  overflow-x: auto; 
+  overflow-x: auto;
   position: sticky;
-  top: var(--header-height); 
+  top: var(--header-height);
   z-index: 990;
-  height: var(--tabs-height); 
+  height: var(--tabs-height);
+  position: relative;
 }
 nav.tabs::-webkit-scrollbar { height: 4px; }
 nav.tabs::-webkit-scrollbar-track { background: transparent; }
 nav.tabs::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 4px; }
+
+nav.tabs.has-overflow::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 30px;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(to left, var(--surface-background), transparent);
+}
 
 nav.tabs.styled-tabs .tab-btn {
   display: flex; 
