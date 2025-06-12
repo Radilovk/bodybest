@@ -149,6 +149,7 @@ export default {
         let processedUsersForPrinciples = 0;
         let processedUsersForAdaptiveQuiz = 0;
         let processedPlanModRequests = 0;
+        let processedUserEvents = 0;
         const MAX_PROCESS_PER_RUN_PLAN_GEN = 1;
         const MAX_PROCESS_PER_RUN_PRINCIPLES = 2;
         const MAX_PROCESS_PER_RUN_ADAPTIVE_QUIZ = 3;
@@ -190,6 +191,7 @@ export default {
             if (processedUsersForPlan === 0) console.log("[CRON-PlanGen] No pending users for plan generation.");
 
             processedPlanModRequests = await processPendingPlanModRequests(env, ctx);
+            processedUserEvents = await processPendingUserEvents(env, ctx);
             // --- Потребители с готов план ---
             const listResultReadyPlans = await env.USER_METADATA_KV.list({ prefix: "plan_status_" });
             const usersWithReadyPlan = [];
@@ -288,7 +290,7 @@ export default {
         } catch(error) {
             console.error("[CRON] Error during scheduled execution:", error.message, error.stack);
         }
-        console.log(`[CRON] Trigger finished. PlanGen: ${processedUsersForPlan}, Principles: ${processedUsersForPrinciples}, AdaptiveQuiz: ${processedUsersForAdaptiveQuiz}, PlanModReq: ${processedPlanModRequests}`);
+        console.log(`[CRON] Trigger finished. PlanGen: ${processedUsersForPlan}, Principles: ${processedUsersForPrinciples}, AdaptiveQuiz: ${processedUsersForAdaptiveQuiz}, PlanModReq: ${processedPlanModRequests}, UserEvents: ${processedUserEvents}`);
     }
     // ------------- END FUNCTION: scheduled -------------
 };
@@ -2576,5 +2578,46 @@ function shouldTriggerAutomatedFeedbackChat(lastUpdateTs, lastChatTs, currentTim
     return true;
 }
 // ------------- END FUNCTION: shouldTriggerAutomatedFeedbackChat -------------
+
+// ------------- START BLOCK: UserEventHandlers -------------
+const EVENT_HANDLERS = {
+    planMod: async (userId, env) => {
+        await processSingleUserPlan(userId, env);
+    },
+    testResult: async (userId, env) => {
+        console.log(`[CRON-UserEvent] testResult handler not implemented for ${userId}`);
+    },
+    irisDiag: async (userId, env) => {
+        console.log(`[CRON-UserEvent] irisDiag handler not implemented for ${userId}`);
+    }
+};
+
+async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
+    const list = await env.USER_METADATA_KV.list({ prefix: 'user_event_' });
+    let processed = 0;
+    for (const key of list.keys) {
+        if (processed >= maxToProcess) break;
+        const eventStr = await env.USER_METADATA_KV.get(key.name);
+        const eventData = safeParseJson(eventStr, {});
+        if (!eventData || !eventData.type || !eventData.userId) {
+            await env.USER_METADATA_KV.delete(key.name);
+            continue;
+        }
+        const eventType = eventData.type;
+        const userId = eventData.userId;
+        const handler = EVENT_HANDLERS[eventType];
+        if (handler) {
+            ctx.waitUntil(handler(userId, env));
+        } else {
+            console.log(`[CRON-UserEvent] Unknown event type ${eventType} for user ${userId}`);
+        }
+        await env.USER_METADATA_KV.delete(key.name);
+        processed++;
+    }
+    if (processed > 0) console.log(`[CRON-UserEvent] Processed ${processed} event(s).`);
+    else console.log('[CRON-UserEvent] No pending events.');
+    return processed;
+}
+// ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processPendingPlanModRequests, processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest };
+export { processPendingPlanModRequests, processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest };
