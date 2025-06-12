@@ -4,8 +4,8 @@ A simple static web application for tracking nutrition and workouts.
 
 ## Development Setup
 
-1. Install [Node.js](https://nodejs.org/) (version 14 or later).
-2. Install dependencies:
+1. Install [Node.js](https://nodejs.org/) (version 18 or later).
+2. Install dependencies (Jest is included as a dev dependency):
 
 ```bash
 npm install
@@ -42,10 +42,11 @@ npm run lint
 
 ### Инсталация на зависимости
 
-Преди да стартирате тестовете, инсталирайте необходимите зависимости:
+Преди да стартирате тестовете, инсталирайте необходимите зависимости, за да бъде
+достъпен Jest:
 
 ```bash
-npm ci
+npm ci # или npm install
 ```
 
 ### Test
@@ -53,7 +54,9 @@ npm ci
 Run unit tests with Jest:
 
 ```bash
-npm test
+npm test         # изпълнява "npx jest"
+# или стартирайте директно
+npx jest
 ```
 
 ### Generate Documentation
