@@ -148,6 +148,7 @@ export default {
         let processedUsersForPlan = 0;
         let processedUsersForPrinciples = 0;
         let processedUsersForAdaptiveQuiz = 0;
+        let processedUserEvents = 0;
         const MAX_PROCESS_PER_RUN_PLAN_GEN = 1;
         const MAX_PROCESS_PER_RUN_PRINCIPLES = 2;
         const MAX_PROCESS_PER_RUN_ADAPTIVE_QUIZ = 3;
@@ -188,6 +189,7 @@ export default {
             }
             if (processedUsersForPlan === 0) console.log("[CRON-PlanGen] No pending users for plan generation.");
 
+            processedUserEvents = await processPendingUserEvents(env, ctx);
             // --- Потребители с готов план ---
             const listResultReadyPlans = await env.USER_METADATA_KV.list({ prefix: "plan_status_" });
             const usersWithReadyPlan = [];
@@ -286,7 +288,7 @@ export default {
         } catch(error) {
             console.error("[CRON] Error during scheduled execution:", error.message, error.stack);
         }
-        console.log(`[CRON] Trigger finished. PlanGen: ${processedUsersForPlan}, Principles: ${processedUsersForPrinciples}, AdaptiveQuiz: ${processedUsersForAdaptiveQuiz}`);
+        console.log(`[CRON] Trigger finished. PlanGen: ${processedUsersForPlan}, Principles: ${processedUsersForPrinciples}, AdaptiveQuiz: ${processedUsersForAdaptiveQuiz}, Events: ${processedUserEvents}`);
     }
     // ------------- END FUNCTION: scheduled -------------
 };
@@ -2538,6 +2540,65 @@ async function sendTxtBackupToPhp(userId, answers, env) {
 }
 // ------------- END FUNCTION: sendTxtBackupToPhp -------------
 
+// ------------- START FUNCTION: processPendingPlanModRequests -------------
+async function processPendingPlanModRequests(env, ctx, maxToProcess = 2) {
+    const list = await env.USER_METADATA_KV.list();
+    const pendingKeys = list.keys.filter(k => k.name.endsWith('_pending_plan_modification_request'));
+    let processed = 0;
+    for (const key of pendingKeys) {
+        if (processed >= maxToProcess) break;
+        const reqStr = await env.USER_METADATA_KV.get(key.name);
+        const reqData = safeParseJson(reqStr, {});
+        if (reqData && reqData.status === 'pending') {
+            const userId = key.name.replace('_pending_plan_modification_request', '');
+            ctx.waitUntil(processSingleUserPlan(userId, env));
+            reqData.status = 'processed';
+            reqData.processedTimestamp = Date.now();
+            await env.USER_METADATA_KV.put(key.name, JSON.stringify(reqData));
+            processed++;
+        }
+    }
+    if (processed > 0) console.log(`[CRON-PlanMod] Processed ${processed} modification request(s).`);
+    else console.log('[CRON-PlanMod] No pending modification requests.');
+    return processed;
+}
+// ------------- END FUNCTION: processPendingPlanModRequests -------------
+
+// ------------- START FUNCTION: processPendingUserEvents -------------
+async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
+    let processed = await processPendingPlanModRequests(env, ctx, maxToProcess);
+    if (processed >= maxToProcess) return processed;
+    const list = await env.USER_METADATA_KV.list({ prefix: 'event_' });
+    for (const key of list.keys) {
+        if (processed >= maxToProcess) break;
+        const [prefix, eventType, ...userParts] = key.name.split('_');
+        if (prefix !== 'event' || userParts.length === 0) continue;
+        const userId = userParts.join('_');
+        const eventStr = await env.USER_METADATA_KV.get(key.name);
+        const eventData = safeParseJson(eventStr, {});
+        if (!eventData || eventData.status !== 'pending') continue;
+        switch(eventType) {
+            case 'planMod':
+                ctx.waitUntil(processSingleUserPlan(userId, env));
+                break;
+            case 'testResult':
+            case 'irisDiag':
+                // Placeholder for future event types
+                break;
+            default:
+                console.log(`[CRON-UserEvent] Unknown event type ${eventType} for user ${userId}`);
+        }
+        eventData.status = 'processed';
+        eventData.processedTimestamp = Date.now();
+        await env.USER_METADATA_KV.put(key.name, JSON.stringify(eventData));
+        processed++;
+    }
+    if (processed > 0) console.log(`[CRON-UserEvent] Processed ${processed} event(s).`);
+    else console.log('[CRON-UserEvent] No pending events.');
+    return processed;
+}
+// ------------- END FUNCTION: processPendingUserEvents -------------
+
 // ------------- START FUNCTION: shouldTriggerAutomatedFeedbackChat -------------
 function shouldTriggerAutomatedFeedbackChat(lastUpdateTs, lastChatTs, currentTime = Date.now()) {
     if (!lastUpdateTs) return false;
@@ -2548,4 +2609,4 @@ function shouldTriggerAutomatedFeedbackChat(lastUpdateTs, lastChatTs, currentTim
 }
 // ------------- END FUNCTION: shouldTriggerAutomatedFeedbackChat -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest };
+export { processPendingUserEvents, processPendingPlanModRequests, processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest };
