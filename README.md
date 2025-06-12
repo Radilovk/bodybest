@@ -95,10 +95,12 @@ This will upload the worker using the settings from `wrangler.toml`.
 Можете да управлявате съдържанието на KV директно през `wrangler`:
 
 ```bash
-wrangler kv:key put <ключ> "<стойност>" --binding=RESOURCES_KV
-wrangler kv:key get <ключ> --binding=RESOURCES_KV
-wrangler kv:key delete <ключ> --binding=RESOURCES_KV
+wrangler kv key put <ключ> "<стойност>" --binding=RESOURCES_KV
+wrangler kv key get <ключ> --binding=RESOURCES_KV
+wrangler kv key delete <ключ> --binding=RESOURCES_KV
 ```
+
+> За работа с тези команди трябва да имате зададен `CF_API_TOKEN` или да сте изпълнили `wrangler login`.
 
 Заменете `RESOURCES_KV` с `USER_METADATA_KV` при нужда. В директорията `scripts` има примерен Node скрипт `manage-kv.js`, който изпълнява същите операции:
 
