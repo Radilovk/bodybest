@@ -163,6 +163,8 @@ function planHasRecContent(plan) {
     return hasFoodData || hasHydrationData || hasCookingData || hasSuppData || hasPsychData;
 }
 
+export { planHasRecContent };
+
 // ==========================================================================
 // ИНИЦИАЛИЗАЦИЯ НА ПРИЛОЖЕНИЕТО
 // ==========================================================================

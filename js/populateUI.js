@@ -2,7 +2,7 @@
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter } from './utils.js';
 import { generateId } from './config.js';
-import { fullDashboardData, todaysMealCompletionStatus } from './app.js'; // Assuming app.js exports these
+import { fullDashboardData, todaysMealCompletionStatus, planHasRecContent } from './app.js';
 import { showToast, openModal, closeModal } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 
 export function populateUI() {
@@ -484,11 +484,7 @@ function populateWeekPlanTab(week1Menu) {
 }
 
 function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
-    if (!planData || (
-        (!planData.allowedForbiddenFoods || Object.keys(planData.allowedForbiddenFoods).length === 0) &&
-        (!planData.hydrationCookingSupplements || Object.keys(planData.hydrationCookingSupplements).length === 0) &&
-        (!planData.psychologicalGuidance || Object.keys(planData.psychologicalGuidance).length === 0)
-    )) {
+    if (!planHasRecContent(planData)) {
         console.warn("populateRecsTab: няма данни за показване");
         if (selectors.recFoodAllowedContent) selectors.recFoodAllowedContent.innerHTML = '<p class="placeholder">Няма налични препоръки.</p>';
         if (selectors.recFoodLimitContent) selectors.recFoodLimitContent.innerHTML = '<p class="placeholder">Няма налични препоръки.</p>';
