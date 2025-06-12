@@ -567,29 +567,25 @@ function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
         let guidelinesToRender = additionalGuidelines;
         if (typeof additionalGuidelines === "string" && additionalGuidelines.trim() !== "") {
             if (additionalGuidelines.trim().startsWith("[") && additionalGuidelines.trim().endsWith("]")) {
-                try { guidelinesToRender = JSON.parse(additionalGuidelines); } catch(e) { console.warn("Could not parse additionalGuidelines as JSON:", e); guidelinesToRender = [{ title: "Допълнителни насоки", content: additionalGuidelines }]; }
+                try {
+                    guidelinesToRender = JSON.parse(additionalGuidelines);
+                } catch (e) {
+                    console.warn("Could not parse additionalGuidelines as JSON:", e);
+                    guidelinesToRender = [{ title: "Допълнителни насоки", content: additionalGuidelines }];
+                }
             } else {
                 guidelinesToRender = [{ title: "Допълнителни насоки", content: additionalGuidelines }];
             }
         } else if (!Array.isArray(additionalGuidelines)) {
             guidelinesToRender = [];
         }
- ym3oei-codex/разработи-стратегии-за-динамично-адаптиране-на-клиентска-про
-        renderAccordionGroup(
-    selectors.additionalGuidelines,
-    guidelinesToRender,
-    '<div class="card placeholder"><p>Няма налични насоки.</p></div>',
-    true
-);
- renderAccordionGroup(
-  selectors.additionalGuidelines,
-  guidelinesToRender,
-  '<div class="card placeholder"><p>Няма налични насоки.</p></div>',
-  true
-);
 
-    }
- main
+        renderAccordionGroup(
+            selectors.additionalGuidelines,
+            guidelinesToRender,
+            '<div class="card placeholder"><p>Няма налични насоки.</p></div>',
+            true
+        );
     }
 
 export function renderAccordionGroup(containerElement, itemsArray, placeholderText = "Няма данни.", isCardWrapper = false) {
