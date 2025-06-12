@@ -160,7 +160,13 @@ function planHasRecContent(plan) {
     const hasPsychData = ['coping_strategies', 'motivational_messages'].some(k => Array.isArray(psych[k]) && psych[k].length > 0) ||
         psych.habit_building_tip || psych.self_compassion_reminder;
 
-    return hasFoodData || hasHydrationData || hasCookingData || hasSuppData || hasPsychData;
+    const guidelineFields = [plan.currentPrinciples, plan.principlesWeek2_4, plan.additionalGuidelines];
+    const hasGuidelineData = guidelineFields.some(g => {
+        if (Array.isArray(g)) return g.length > 0;
+        return typeof g === 'string' && g.trim() !== '';
+    });
+
+    return hasFoodData || hasHydrationData || hasCookingData || hasSuppData || hasPsychData || hasGuidelineData;
 }
 
 export { planHasRecContent };
@@ -256,6 +262,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
         const response = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}`);
         if (!response.ok) throw new Error(`Грешка от сървъра: ${response.status} ${response.statusText}`);
         const data = await response.json();
+        console.log('Received planData', data.planData);
         if (!data.success) throw new Error(data.message || 'Неуспешно зареждане на данни от сървъра.');
 
         if (isLocalDevelopment) console.log("Data received from worker:", data);

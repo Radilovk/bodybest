@@ -484,7 +484,9 @@ function populateWeekPlanTab(week1Menu) {
 }
 
 function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
-    if (!planHasRecContent(planData)) {
+    const hasPlanContent = planHasRecContent(planData);
+    const hasExtraGuidelines = additionalGuidelines && ((Array.isArray(additionalGuidelines) && additionalGuidelines.length > 0) || (typeof additionalGuidelines === 'string' && additionalGuidelines.trim() !== ''));
+    if (!hasPlanContent && !hasExtraGuidelines) {
         console.warn("populateRecsTab: няма данни за показване");
         if (selectors.recFoodAllowedContent) selectors.recFoodAllowedContent.innerHTML = '<p class="placeholder">Няма налични препоръки.</p>';
         if (selectors.recFoodLimitContent) selectors.recFoodLimitContent.innerHTML = '<p class="placeholder">Няма налични препоръки.</p>';

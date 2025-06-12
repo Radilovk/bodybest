@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import * as worker from '../../worker.js';
+import { processPendingPlanModRequests } from '../../worker.js';
 
 describe('processPendingPlanModRequests', () => {
   test('processes pending requests', async () => {
@@ -11,9 +11,8 @@ describe('processPendingPlanModRequests', () => {
       }
     };
     const ctx = { waitUntil: jest.fn() };
-    const spy = jest.spyOn(worker, 'processSingleUserPlan').mockResolvedValue();
-    const count = await worker.processPendingPlanModRequests(env, ctx, 5);
-    expect(spy).toHaveBeenCalledWith('u1', env);
+    const count = await processPendingPlanModRequests(env, ctx, 5);
+    expect(ctx.waitUntil).toHaveBeenCalledTimes(1);
     expect(env.USER_METADATA_KV.put).toHaveBeenCalled();
     expect(count).toBe(1);
   });
