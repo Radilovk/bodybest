@@ -484,6 +484,21 @@ function populateWeekPlanTab(week1Menu) {
 }
 
 function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
+    if (!planData || (
+        (!planData.allowedForbiddenFoods || Object.keys(planData.allowedForbiddenFoods).length === 0) &&
+        (!planData.hydrationCookingSupplements || Object.keys(planData.hydrationCookingSupplements).length === 0) &&
+        (!planData.psychologicalGuidance || Object.keys(planData.psychologicalGuidance).length === 0)
+    )) {
+        console.warn("populateRecsTab: няма данни за показване");
+        if (selectors.recFoodAllowedContent) selectors.recFoodAllowedContent.innerHTML = '<p class="placeholder">Няма налични препоръки.</p>';
+        if (selectors.recFoodLimitContent) selectors.recFoodLimitContent.innerHTML = '<p class="placeholder">Няма налични препоръки.</p>';
+        if (selectors.recHydrationContent) selectors.recHydrationContent.innerHTML = '<p class="placeholder">Няма налични препоръки.</p>';
+        if (selectors.recCookingMethodsContent) selectors.recCookingMethodsContent.innerHTML = '<p class="placeholder">Няма налични препоръки.</p>';
+        if (selectors.recStrategiesContent) selectors.recStrategiesContent.innerHTML = '<div class="card placeholder"><p>Няма налични препоръки.</p></div>';
+        if (selectors.recSupplementsContent) selectors.recSupplementsContent.innerHTML = '<p class="placeholder">Няма налични препоръки.</p>';
+        if (selectors.additionalGuidelines) selectors.additionalGuidelines.innerHTML = '<div class="card placeholder"><p>Няма налични препоръки.</p></div>';
+        return;
+    }
     const { allowedForbiddenFoods, hydrationCookingSupplements, psychologicalGuidance } = planData || {};
     if (selectors.recFoodAllowedContent) {
         const placeholderEl = selectors.recFoodAllowedContent.querySelector('p.placeholder'); if (placeholderEl) placeholderEl.remove();

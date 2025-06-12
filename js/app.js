@@ -277,6 +277,17 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
         }
 
         populateUI();
+
+        const plan = fullDashboardData.planData;
+        const hasRecs = plan && (
+            (plan.allowedForbiddenFoods && Object.keys(plan.allowedForbiddenFoods).length > 0) ||
+            (plan.hydrationCookingSupplements && Object.keys(plan.hydrationCookingSupplements).length > 0) ||
+            (plan.psychologicalGuidance && Object.keys(plan.psychologicalGuidance).length > 0)
+        );
+        if (!hasRecs) {
+            showToast("Препоръките не са налични.", true);
+        }
+
         initializeAchievements(currentUserId);
         setupDynamicEventListeners();
 
