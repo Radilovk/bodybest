@@ -20,7 +20,7 @@ export function initializeSelectors() {
         dailyTracker: 'dailyTracker', addNoteBtn: 'add-note-btn', dailyNote: 'daily-note', saveLogBtn: 'saveLogBtn', dailyLogDate: 'dailyLogDate',
         openExtraMealModalBtn: 'openExtraMealModalBtn',
         profilePersonalData: 'profilePersonalData', profileGoals: 'profileGoals', profileConsiderations: 'profileConsiderations',
-        weeklyPlanTbody: 'weeklyPlanTbody', weeklyPrinciplesFocus: 'weeklyPrinciplesFocus',
+        weeklyPlanTbody: 'weeklyPlanTbody', additionalGuidelines: 'additionalGuidelines',
         recFoodAllowedContent: 'recFoodAllowedContent', recFoodLimitContent: 'recFoodLimitContent', userAllergiesNote: 'userAllergiesNote',
         userAllergiesList: 'userAllergiesList', recHydrationContent: 'recHydrationContent', recCookingMethodsContent: 'recCookingMethodsContent',
         recStrategiesContent: 'recStrategiesContent', recSupplementsContent: 'recSupplementsContent',
