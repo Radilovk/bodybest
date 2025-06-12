@@ -581,7 +581,6 @@ function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
     '<div class="card placeholder"><p>Няма налични насоки.</p></div>',
     true
 );
-=======
         renderAccordionGroup(selectors.additionalGuidelines, guidelinesToRender, "<div class="card placeholder"><p>Няма налични насоки.</p></div>", true);
     }
  main
