@@ -139,30 +139,6 @@ function createTestData() {
     };
 }
 
-function planHasRecContent(plan) {
-    if (!plan) return false;
-    const aff = plan.allowedForbiddenFoods || {};
-    const hcs = plan.hydrationCookingSupplements || {};
-    const psych = plan.psychologicalGuidance || {};
-
-    const foodArrays = ['main_allowed_foods', 'main_forbidden_foods', 'detailed_allowed_suggestions', 'detailed_limit_suggestions', 'dressing_flavoring_ideas'];
-    const hasFoodData = foodArrays.some(key => Array.isArray(aff[key]) && aff[key].length > 0);
-
-    const hyd = hcs.hydration_recommendations || {};
-    const hasHydrationData = hyd.daily_liters ||
-        ['tips', 'suitable_drinks', 'unsuitable_drinks'].some(k => Array.isArray(hyd[k]) && hyd[k].length > 0);
-
-    const cook = hcs.cooking_methods || {};
-    const hasCookingData = ['recommended', 'limit_or_avoid'].some(k => Array.isArray(cook[k]) && cook[k].length > 0) || cook.fat_usage_tip;
-
-    const hasSuppData = Array.isArray(hcs.supplement_suggestions) && hcs.supplement_suggestions.length > 0;
-
-    const hasPsychData = ['coping_strategies', 'motivational_messages'].some(k => Array.isArray(psych[k]) && psych[k].length > 0) ||
-        psych.habit_building_tip || psych.self_compassion_reminder;
-
-    return hasFoodData || hasHydrationData || hasCookingData || hasSuppData || hasPsychData;
-}
-
 // ==========================================================================
 // ИНИЦИАЛИЗАЦИЯ НА ПРИЛОЖЕНИЕТО
 // ==========================================================================
@@ -303,7 +279,11 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
         populateUI();
 
         const plan = fullDashboardData.planData;
-        const hasRecs = planHasRecContent(plan);
+        const hasRecs = plan && (
+            (plan.allowedForbiddenFoods && Object.keys(plan.allowedForbiddenFoods).length > 0) ||
+            (plan.hydrationCookingSupplements && Object.keys(plan.hydrationCookingSupplements).length > 0) ||
+            (plan.psychologicalGuidance && Object.keys(plan.psychologicalGuidance).length > 0)
+        );
         if (!hasRecs) {
             showToast("Препоръките не са налични.", true);
         }
