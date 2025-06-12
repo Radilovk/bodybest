@@ -40,6 +40,14 @@ Check the source code with ESLint:
 npm run lint
 ```
 
+### Инсталация на зависимости
+
+Преди да стартирате тестовете, инсталирайте необходимите зависимости:
+
+```bash
+npm ci
+```
+
 ### Test
 
 Run unit tests with Jest:
