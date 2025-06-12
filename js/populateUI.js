@@ -18,7 +18,12 @@ export function populateUI() {
     try { populateDashboardLog(data.dailyLogs, data.currentStatus, data.initialData); } catch(e) { console.error("Error in populateDashboardLog:", e); }
     try { populateProfileTab(data.userName, data.initialData, data.currentStatus, data.initialAnswers); } catch(e) { console.error("Error in populateProfileTab:", e); }
     try { populateWeekPlanTab(data.planData?.week1Menu); } catch(e) { console.error("Error in populateWeekPlanTab:", e); }
-    try { populateRecsTab(data.planData, data.initialAnswers, data.planData?.currentPrinciples || data.planData?.principlesWeek2_4); } catch(e) { console.error("Error in populateRecsTab:", e); }
+    const guidelinesData =
+        data.planData?.currentPrinciples ||
+        data.planData?.principlesWeek2_4 ||
+        data.planData?.additionalGuidelines ||
+        data.additionalGuidelines;
+    try { populateRecsTab(data.planData, data.initialAnswers, guidelinesData); } catch(e) { console.error("Error in populateRecsTab:", e); }
     try { populateProgressHistory(data.dailyLogs, data.initialData); } catch(e) { console.error("Error in populateProgressHistory:", e); }
 }
 
