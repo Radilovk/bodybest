@@ -92,6 +92,10 @@ export default {
                 responseBody = await handleChatRequest(request, env);
             } else if (method === 'POST' && path === '/api/log-extra-meal') { // Имплементиран
                  responseBody = await handleLogExtraMealRequest(request, env);
+            } else if (method === 'POST' && path === '/api/uploadTestResult') {
+                responseBody = await handleUploadTestResult(request, env);
+            } else if (method === 'POST' && path === '/api/uploadIrisDiag') {
+                responseBody = await handleUploadIrisDiag(request, env);
             } else if (method === 'GET' && path === '/api/getProfile') {
                 responseBody = await handleGetProfileRequest(request, env);
             } else if (method === 'POST' && path === '/api/updateProfile') {
@@ -717,7 +721,16 @@ async function handleChatRequest(request, env) {
         const geminiRespRaw = await callGeminiAPI(populatedPrompt,geminiKey,{temperature:0.7,maxOutputTokens:800},[],chatModel); // Increased tokens slightly
         
         let respToUser = geminiRespRaw.trim(); let planModReq=null; const sig='[PLAN_MODIFICATION_REQUEST]'; const sigIdx=respToUser.lastIndexOf(sig);
-        if(sigIdx!==-1){planModReq=respToUser.substring(sigIdx+sig.length).trim(); respToUser=respToUser.substring(0,sigIdx).trim(); console.log(`CHAT_INFO (${userId}): Plan modification signal detected: "${planModReq}"`); try{const reqKey=`${userId}_pending_plan_modification_request`; const reqData={timestamp:Date.now(),request_description:planModReq,original_user_message:message,status:'pending'}; await env.USER_METADATA_KV.put(reqKey,JSON.stringify(reqData));}catch(kvErr){console.error(`CHAT_ERROR (${userId}): Failed save pending modification request:`,kvErr);}}
+        if(sigIdx!==-1){
+            planModReq=respToUser.substring(sigIdx+sig.length).trim();
+            respToUser=respToUser.substring(0,sigIdx).trim();
+            console.log(`CHAT_INFO (${userId}): Plan modification signal detected: "${planModReq}"`);
+            try{
+                await createUserEvent('planMod', userId, { description: planModReq, originalMessage: message }, env);
+            }catch(kvErr){
+                console.error(`CHAT_ERROR (${userId}): Failed save pending modification request:`,kvErr);
+            }
+        }
         
         storedChatHistory.push({role:'model',parts:[{text:respToUser}]});
         if(storedChatHistory.length>MAX_CHAT_HISTORY_MESSAGES) storedChatHistory=storedChatHistory.slice(-MAX_CHAT_HISTORY_MESSAGES);
@@ -1107,6 +1120,40 @@ async function handleGeneratePraiseRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleGeneratePraiseRequest -------------
+
+// ------------- START FUNCTION: handleUploadTestResult -------------
+async function handleUploadTestResult(request, env) {
+    try {
+        const { userId, result } = await request.json();
+        if (!userId || !result) {
+            return { success: false, message: 'Липсват userId или result.', statusHint: 400 };
+        }
+        await createUserEvent('testResult', userId, { result }, env);
+        return { success: true };
+    } catch (error) {
+        console.error('Error in handleUploadTestResult:', error.message, error.stack);
+        const body = await request.json().catch(() => ({}));
+        return { success: false, message: 'Грешка при запис на резултата.', statusHint: 500, userId: body.userId || 'unknown' };
+    }
+}
+// ------------- END FUNCTION: handleUploadTestResult -------------
+
+// ------------- START FUNCTION: handleUploadIrisDiag -------------
+async function handleUploadIrisDiag(request, env) {
+    try {
+        const { userId, data } = await request.json();
+        if (!userId || !data) {
+            return { success: false, message: 'Липсват userId или данни.', statusHint: 400 };
+        }
+        await createUserEvent('irisDiag', userId, { data }, env);
+        return { success: true };
+    } catch (error) {
+        console.error('Error in handleUploadIrisDiag:', error.message, error.stack);
+        const body = await request.json().catch(() => ({}));
+        return { success: false, message: 'Грешка при запис на данните.', statusHint: 500, userId: body.userId || 'unknown' };
+    }
+}
+// ------------- END FUNCTION: handleUploadIrisDiag -------------
 
 
 // ------------- START BLOCK: PlanGenerationHeaderComment -------------
@@ -1895,6 +1942,21 @@ const safeParseFloat = (val, defaultVal = null) => { if (val === null || val ===
 const safeParseJson = (jsonString, defaultValue = null) => { if (typeof jsonString !== 'string' || !jsonString.trim()) { return defaultValue; } try { return JSON.parse(jsonString); } catch (e) { console.warn(`Failed JSON parse: ${e.message}. String (start): "${jsonString.substring(0, 150)}..."`); return defaultValue; } };
 // ------------- END FUNCTION: safeParseJson -------------
 
+// ------------- START FUNCTION: createUserEvent -------------
+async function createUserEvent(eventType, userId, payload, env) {
+    if (!eventType || !userId) return;
+    const key = `event_${eventType}_${userId}`;
+    const data = {
+        type: eventType,
+        userId,
+        status: 'pending',
+        createdTimestamp: Date.now(),
+        payload
+    };
+    await env.USER_METADATA_KV.put(key, JSON.stringify(data));
+}
+// ------------- END FUNCTION: createUserEvent -------------
+
 // ------------- START FUNCTION: cleanGeminiJson -------------
 function cleanGeminiJson(rawJsonString) {
     if (typeof rawJsonString !== 'string') return '{}';
@@ -2579,21 +2641,33 @@ function shouldTriggerAutomatedFeedbackChat(lastUpdateTs, lastChatTs, currentTim
 }
 // ------------- END FUNCTION: shouldTriggerAutomatedFeedbackChat -------------
 
+async function handleTestResultEvent(userId, payload, env) {
+    console.log(`[CRON-UserEvent] Processing testResult for ${userId}`);
+    await env.USER_METADATA_KV.put(`${userId}_latest_test_result`, JSON.stringify(payload || {}));
+    await processSingleUserPlan(userId, env);
+}
+
+async function handleIrisDiagEvent(userId, payload, env) {
+    console.log(`[CRON-UserEvent] Processing irisDiag for ${userId}`);
+    await env.USER_METADATA_KV.put(`${userId}_latest_iris_diag`, JSON.stringify(payload || {}));
+    await processSingleUserPlan(userId, env);
+}
+
 // ------------- START BLOCK: UserEventHandlers -------------
 const EVENT_HANDLERS = {
     planMod: async (userId, env) => {
         await processSingleUserPlan(userId, env);
     },
-    testResult: async (userId, env) => {
-        console.log(`[CRON-UserEvent] testResult handler not implemented for ${userId}`);
+    testResult: async (userId, env, payload) => {
+        await handleTestResultEvent(userId, payload, env);
     },
-    irisDiag: async (userId, env) => {
-        console.log(`[CRON-UserEvent] irisDiag handler not implemented for ${userId}`);
+    irisDiag: async (userId, env, payload) => {
+        await handleIrisDiagEvent(userId, payload, env);
     }
 };
 
 async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
-    const list = await env.USER_METADATA_KV.list({ prefix: 'user_event_' });
+    const list = await env.USER_METADATA_KV.list({ prefix: 'event_' });
     let processed = 0;
     for (const key of list.keys) {
         if (processed >= maxToProcess) break;
@@ -2607,7 +2681,7 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
         const userId = eventData.userId;
         const handler = EVENT_HANDLERS[eventType];
         if (handler) {
-            ctx.waitUntil(handler(userId, env));
+            ctx.waitUntil(handler(userId, env, eventData.payload));
         } else {
             console.log(`[CRON-UserEvent] Unknown event type ${eventType} for user ${userId}`);
         }
@@ -2620,4 +2694,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processPendingPlanModRequests, processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest };
+export { processPendingPlanModRequests, processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag };
