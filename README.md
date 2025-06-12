@@ -124,6 +124,8 @@ php -r "echo password_hash('yourPassword', PASSWORD_DEFAULT);"
 Set the output as the value for `ADMIN_PASS_HASH`.
 ## Допълнителни функции
 - **Извънредно хранене** – бутонът "Добави извънредно хранене" в `code.html` отваря модалната форма `extra-meal-entry-form.html`. Логиката в `js/extraMealForm.js` изпраща данните към `/api/log-extra-meal` в `worker.js`.
+- **Допълнителни насоки** – секцията с основни принципи се премести в таба „Съвети" и се визуализира като разгръщащ се контейнер с идентификатор `additionalGuidelines`.
+- **Динамична адаптация** – cron процесът в `worker.js` периодично проверява за събития в KV (напр. ключове `event_*`). Когато ботът предложи промяна, се записва както `_pending_plan_modification_request`, така и `event_planMod_<userId>`. Чрез `processPendingUserEvents` тези събития задействат автоматична адаптация на плана.
 
 ## License
 

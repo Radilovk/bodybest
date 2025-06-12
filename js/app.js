@@ -9,7 +9,7 @@ import {
     openModal, closeModal, openInfoModalWithDetails,
     toggleDailyNote,
     showTrackerTooltip, hideTrackerTooltip, handleTrackerTooltipShow, handleTrackerTooltipHide,
-    showLoading, showToast
+    showLoading, showToast, updateTabsOverflowIndicator
 } from './uiHandlers.js';
 import { populateUI } from './populateUI.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
@@ -66,6 +66,7 @@ export function resetAppState() {
 }
 
 // Функция за създаване на тестови данни
+
 function createTestData() {
     return {
         success: true,
@@ -75,9 +76,62 @@ function createTestData() {
         analytics: {
             current: { goalProgress: 65, engagementScore: 78, overallHealthScore: 72 },
             detailed: [{ label: "BMI", initialValueText: "28.5", expectedValueText: "24.0", currentValueText: "26.2", key: "bmi", infoTextKey: "bmi_info" }],
-            textualAnalysis: "Вашият напредък е стабилен. Продължавайте със силната работа!"
+            textualAnalysis: "Вашият напредък е стабилен. Продължавайте със силната работа!",
         },
-        planData: { week1Menu: { monday: [{ meal_name: "Закуска", items: [{ name: "Овесена каша", grams: "50г" }, { name: "Банан", grams: "1 бр." }] }] }},
+        planData: {
+            week1Menu: {
+                monday: [{
+                    meal_name: "Закуска",
+                    items: [
+                        { name: "Овесена каша", grams: "50г" },
+                        { name: "Банан", grams: "1 бр." }
+                    ]
+                }]
+            },
+            allowedForbiddenFoods: {
+                main_allowed_foods: ["Пилешко месо", "Риба", "Бобови"],
+                main_forbidden_foods: ["Сладкиши", "Газирани напитки"],
+                detailed_allowed_suggestions: ["Комбинирайте зеленчуци с белтъчини", "Използвайте зехтин"],
+                detailed_limit_suggestions: ["Избягвайте преработени меса"],
+                dressing_flavoring_ideas: ["Лимонов сок", "Билки"]
+            },
+            hydrationCookingSupplements: {
+                hydration_recommendations: {
+                    daily_liters: "2.5 л",
+                    tips: ["Пийте вода през целия ден", "Избягвайте подсладени напитки"],
+                    suitable_drinks: ["вода", "билков чай"],
+                    unsuitable_drinks: ["алкохол", "газирани напитки"]
+                },
+                cooking_methods: {
+                    recommended: ["Печене", "Готвене на пара"],
+                    limit_or_avoid: ["Пържене"],
+                    fat_usage_tip: "Използвайте минимално количество зехтин"
+                },
+                supplement_suggestions: [
+                    {
+                        supplement_name: "Витамин D",
+                        reasoning: "за поддържане на имунната система",
+                        dosage_suggestion: "1000 IU дневно",
+                        caution: "Консултирайте се с лекар"
+                    },
+                    {
+                        supplement_name: "Рибено масло",
+                        reasoning: "омега-3 мастни киселини",
+                        dosage_suggestion: "1 капсула дневно"
+                    }
+                ]
+            },
+            psychologicalGuidance: {
+                coping_strategies: ["Правете кратки разходки", "Дишайте дълбоко"],
+                motivational_messages: ["Продължавайте все така!"],
+                habit_building_tip: "Записвайте храната си в дневник",
+                self_compassion_reminder: "Бъдете добри към себе си"
+            },
+            additionalGuidelines: [
+                { title: "Общи насоки", content: "Пийте повече вода" },
+                { title: "Здравословни навици", content: "Ограничете захарта" }
+            ]
+        },
         dailyLogs: [],
         currentStatus: { weight: 75.5 },
         initialData: { weight: 80.0, height: 175 },
@@ -85,6 +139,37 @@ function createTestData() {
     };
 }
 
+function planHasRecContent(plan) {
+    if (!plan) return false;
+    const aff = plan.allowedForbiddenFoods || {};
+    const hcs = plan.hydrationCookingSupplements || {};
+    const psych = plan.psychologicalGuidance || {};
+
+    const foodArrays = ['main_allowed_foods', 'main_forbidden_foods', 'detailed_allowed_suggestions', 'detailed_limit_suggestions', 'dressing_flavoring_ideas'];
+    const hasFoodData = foodArrays.some(key => Array.isArray(aff[key]) && aff[key].length > 0);
+
+    const hyd = hcs.hydration_recommendations || {};
+    const hasHydrationData = hyd.daily_liters ||
+        ['tips', 'suitable_drinks', 'unsuitable_drinks'].some(k => Array.isArray(hyd[k]) && hyd[k].length > 0);
+
+    const cook = hcs.cooking_methods || {};
+    const hasCookingData = ['recommended', 'limit_or_avoid'].some(k => Array.isArray(cook[k]) && cook[k].length > 0) || cook.fat_usage_tip;
+
+    const hasSuppData = Array.isArray(hcs.supplement_suggestions) && hcs.supplement_suggestions.length > 0;
+
+    const hasPsychData = ['coping_strategies', 'motivational_messages'].some(k => Array.isArray(psych[k]) && psych[k].length > 0) ||
+        psych.habit_building_tip || psych.self_compassion_reminder;
+
+    const guidelineFields = [plan.currentPrinciples, plan.principlesWeek2_4, plan.additionalGuidelines];
+    const hasGuidelineData = guidelineFields.some(g => {
+        if (Array.isArray(g)) return g.length > 0;
+        return typeof g === 'string' && g.trim() !== '';
+    });
+
+    return hasFoodData || hasHydrationData || hasCookingData || hasSuppData || hasPsychData || hasGuidelineData;
+}
+
+export { planHasRecContent };
 
 // ==========================================================================
 // ИНИЦИАЛИЗАЦИЯ НА ПРИЛОЖЕНИЕТО
@@ -97,6 +182,7 @@ function initializeApp() {
     try {
         if (isLocalDevelopment) console.log("initializeApp starting from app.js...");
         initializeSelectors();
+        updateTabsOverflowIndicator();
         showLoading(true, "Инициализация на таблото...");
         currentUserId = sessionStorage.getItem('userId');
 
@@ -223,6 +309,13 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
         }
 
         populateUI();
+
+        const plan = fullDashboardData.planData;
+        const hasRecs = planHasRecContent(plan);
+        if (!hasRecs) {
+            showToast("Препоръките не са налични.", true);
+        }
+
         initializeAchievements(currentUserId);
         setupDynamicEventListeners();
 
