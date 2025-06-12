@@ -66,7 +66,6 @@ export function resetAppState() {
 }
 
 // Функция за създаване на тестови данни
-
 function createTestData() {
     return {
         success: true,
@@ -76,68 +75,16 @@ function createTestData() {
         analytics: {
             current: { goalProgress: 65, engagementScore: 78, overallHealthScore: 72 },
             detailed: [{ label: "BMI", initialValueText: "28.5", expectedValueText: "24.0", currentValueText: "26.2", key: "bmi", infoTextKey: "bmi_info" }],
-            textualAnalysis: "Вашият напредък е стабилен. Продължавайте със силната работа!",
+            textualAnalysis: "Вашият напредък е стабилен. Продължавайте със силната работа!"
         },
-        planData: {
-            week1Menu: {
-                monday: [{
-                    meal_name: "Закуска",
-                    items: [
-                        { name: "Овесена каша", grams: "50г" },
-                        { name: "Банан", grams: "1 бр." }
-                    ]
-                }]
-            },
-            allowedForbiddenFoods: {
-                main_allowed_foods: ["Пилешко месо", "Риба", "Бобови"],
-                main_forbidden_foods: ["Сладкиши", "Газирани напитки"],
-                detailed_allowed_suggestions: ["Комбинирайте зеленчуци с белтъчини", "Използвайте зехтин"],
-                detailed_limit_suggestions: ["Избягвайте преработени меса"],
-                dressing_flavoring_ideas: ["Лимонов сок", "Билки"]
-            },
-            hydrationCookingSupplements: {
-                hydration_recommendations: {
-                    daily_liters: "2.5 л",
-                    tips: ["Пийте вода през целия ден", "Избягвайте подсладени напитки"],
-                    suitable_drinks: ["вода", "билков чай"],
-                    unsuitable_drinks: ["алкохол", "газирани напитки"]
-                },
-                cooking_methods: {
-                    recommended: ["Печене", "Готвене на пара"],
-                    limit_or_avoid: ["Пържене"],
-                    fat_usage_tip: "Използвайте минимално количество зехтин"
-                },
-                supplement_suggestions: [
-                    {
-                        supplement_name: "Витамин D",
-                        reasoning: "за поддържане на имунната система",
-                        dosage_suggestion: "1000 IU дневно",
-                        caution: "Консултирайте се с лекар"
-                    },
-                    {
-                        supplement_name: "Рибено масло",
-                        reasoning: "омега-3 мастни киселини",
-                        dosage_suggestion: "1 капсула дневно"
-                    }
-                ]
-            },
-            psychologicalGuidance: {
-                coping_strategies: ["Правете кратки разходки", "Дишайте дълбоко"],
-                motivational_messages: ["Продължавайте все така!"],
-                habit_building_tip: "Записвайте храната си в дневник",
-                self_compassion_reminder: "Бъдете добри към себе си"
-            },
-            additionalGuidelines: [
-                { title: "Общи насоки", content: "Пийте повече вода" },
-                { title: "Здравословни навици", content: "Ограничете захарта" }
-            ]
-        },
+        planData: { week1Menu: { monday: [{ meal_name: "Закуска", items: [{ name: "Овесена каша", grams: "50г" }, { name: "Банан", grams: "1 бр." }] }] }},
         dailyLogs: [],
         currentStatus: { weight: 75.5 },
         initialData: { weight: 80.0, height: 175 },
         initialAnswers: { goal: "отслабване", age: "30", gender: "жена" }
     };
 }
+
 
 // ==========================================================================
 // ИНИЦИАЛИЗАЦИЯ НА ПРИЛОЖЕНИЕТО
