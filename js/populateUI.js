@@ -591,7 +591,6 @@ function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
     }
  main
     }
-}
 
 export function renderAccordionGroup(containerElement, itemsArray, placeholderText = "Няма данни.", isCardWrapper = false) {
     if (!containerElement) { console.warn("renderAccordionGroup: containerElement is null for ID:", containerElement?.id); return; }
