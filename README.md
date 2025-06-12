@@ -132,6 +132,7 @@ php -r "echo password_hash('yourPassword', PASSWORD_DEFAULT);"
 Set the output as the value for `ADMIN_PASS_HASH`.
 ## Допълнителни функции
 - **Извънредно хранене** – бутонът "Добави извънредно хранене" в `code.html` отваря модалната форма `extra-meal-entry-form.html`. Логиката в `js/extraMealForm.js` изпраща данните към `/api/log-extra-meal` в `worker.js`.
+- **Изследвания** – POST заявки към `/api/uploadTestResult` и `/api/uploadIrisDiag` записват данни за проведени тестове или ирисова диагностика и създават събитие за автоматична адаптация на плана.
 
 ## License
 
