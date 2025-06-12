@@ -7,7 +7,7 @@ if (!['get', 'put', 'delete'].includes(action) || !key || (action === 'put' && !
   process.exit(1);
 }
 
-const args = ['kv:key', action, key];
+const args = ['kv', 'key', action, key];
 if (action === 'put') args.push(value);
 args.push('--binding', binding);
 
