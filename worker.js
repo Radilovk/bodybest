@@ -9,6 +9,8 @@
 // - Попълнени липсващи части от предходни версии.
 // - Запазени всички предходни функционалности.
 
+import { jsonrepair } from 'jsonrepair';
+
 // ------------- START BLOCK: GlobalConstantsAndBindings -------------
 const PHP_FILE_MANAGER_API_URL_SECRET_NAME = 'тут_ваш_php_api_url_secret_name';
 const PHP_API_STATIC_TOKEN_SECRET_NAME = 'тут_ваш_php_api_token_secret_name';
@@ -2047,19 +2049,29 @@ function cleanGeminiJson(rawJsonString) {
         }
     }
 
+    const attemptRepair = (str) => {
+        try {
+            const repaired = jsonrepair(str);
+            JSON.parse(repaired);
+            return repaired;
+        } catch (_) {
+            return null;
+        }
+    };
+
     if (start !== -1 && end !== -1) {
         cleaned = cleaned.substring(start, end + 1);
-        // Final check if the extracted substring is valid JSON
         try {
             JSON.parse(cleaned);
             return cleaned; // It's valid
-        } catch (e) {
-            // console.warn(`cleanGeminiJson: Extracted string is NOT valid JSON after slicing. Error: ${e.message}. Original (cleaned): ${cleaned.substring(0,200)}...`);
-            // Fallback to empty object/array depending on what it looked like
+        } catch (_) {
+            const repaired = attemptRepair(cleaned);
+            if (repaired) return repaired;
             return isObject ? '{}' : (isArray ? '[]' : '{}');
         }
     } else {
-        // console.warn(`cleanGeminiJson: Could not find valid JSON structure ({...} or [...]). Raw (start): ${rawJsonString.substring(0,200)}...`);
+        const repaired = attemptRepair(cleaned);
+        if (repaired) return repaired;
         return '{}'; // Default to empty object if nothing sensible found
     }
 }
