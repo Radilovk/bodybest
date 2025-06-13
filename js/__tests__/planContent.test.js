@@ -1,14 +1,9 @@
 import { jest } from '@jest/globals';
 let planHasRecContent;
-let consoleErrorMock;
 beforeAll(async () => {
   global.window = { location: { hostname: 'localhost' } };
   global.document = { addEventListener: jest.fn() };
-  consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
   ({ planHasRecContent } = await import('../app.js'));
-});
-afterAll(() => {
-  consoleErrorMock.mockRestore();
 });
 
 describe('planHasRecContent', () => {

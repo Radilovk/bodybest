@@ -6,10 +6,7 @@ import { currentUserId } from './app.js'; // Accessing currentUserId from app.js
 
 let extraMealFormLoaded = false;
 let commonFoods = [];
-fetch(new URL("../data/commonFoods.json", import.meta.url))
-    .then(r => r.json())
-    .then(d => { if (Array.isArray(d)) commonFoods = d; })
-    .catch(e => console.error("Failed to load foods", e));
+fetch("data/commonFoods.json").then(r=>r.json()).then(d=>{if(Array.isArray(d)) commonFoods=d;}).catch(e=>console.error("Failed to load foods",e));
 
 function initializeExtraMealFormLogic(formContainerElement) {
     const form = formContainerElement.querySelector('#extraMealEntryFormActual');
