@@ -76,6 +76,23 @@ npm config delete https-proxy
 Тези стъпки намаляват предупрежденията и потенциално ускоряват старта на
 тестовете.
 
+### Отстраняване на проблеми
+
+Ако при стартиране на worker-а или тестовете видите грешка като:
+
+```text
+Uncaught Error: No such module "jsonrepair". imported from "worker.js"
+```
+
+липсват инсталираните зависимости. Решението е да изпълните:
+
+```bash
+npm install
+```
+
+След успешната инсталация можете отново да стартирате `npm run dev` или
+`npx wrangler publish`.
+
 ### Generate Documentation
 
 Create API documentation using Typedoc:
