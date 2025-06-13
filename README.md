@@ -173,6 +173,28 @@ Set the output as the value for `ADMIN_PASS_HASH`.
   Полето `status` обозначава текущия етап на обработка (напр. `pending`, `done`),
   а `createdTimestamp` съдържа UNIX време на създаване в милисекунди.
 
+## Cron configuration
+
+Cloudflare позволява изпълнение на работници по зададен график.
+За да създадете Cron trigger:
+
+1. Отворете **Workers & Pages** в Cloudflare dashboard и изберете своя worker.
+2. В раздел **Triggers** → **Cron Triggers** натиснете **Add Cron Trigger**.
+3. Въведете израз като `0 */1 * * *`, който ще задейства работника на всеки час.
+
+При активиране на Cron тригера Cloudflare извиква `scheduled` хендлъра в `worker.js`,
+което позволява автоматично обновяване на плановете.
+
+Можете да опишете графика и директно във `wrangler.toml`:
+
+```toml
+[triggers]
+crons = ["0 */1 * * *"]
+```
+
+Файлът `wrangler.toml` се използва от GitHub Actions и от `wrangler publish`,
+затова добавеният блок ще приложи същия график и при автоматичното публикуване.
+
 ## License
 
 This project is licensed under the ISC license. See [LICENSE](LICENSE).
