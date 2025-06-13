@@ -13,8 +13,6 @@
 const PHP_FILE_MANAGER_API_URL_SECRET_NAME = 'тут_ваш_php_api_url_secret_name';
 const PHP_API_STATIC_TOKEN_SECRET_NAME = 'тут_ваш_php_api_token_secret_name';
 const GEMINI_API_KEY_SECRET_NAME = 'GEMINI_API_KEY';
-const CF_AI_TOKEN_SECRET_NAME = 'CF_AI_TOKEN';
-const CF_ACCOUNT_ID_VAR_NAME = 'CF_ACCOUNT_ID';
 
 const GEMINI_API_URL_BASE = `https://generativelanguage.googleapis.com/v1beta/models/`;
 // Очаквани Bindings: RESOURCES_KV, USER_METADATA_KV
@@ -122,8 +120,6 @@ export default {
                 responseBody = await handleGetAchievementsRequest(request, env);
             } else if (method === 'POST' && path === '/api/generatePraise') {
                 responseBody = await handleGeneratePraiseRequest(request, env);
-            } else if (method === 'POST' && path === '/api/aiHelper') {
-                responseBody = await handleAiHelperRequest(request, env);
             } else {
                 responseBody = { success: false, error: 'Not Found', message: 'Ресурсът не е намерен.' };
                 responseStatus = 404;
@@ -1159,42 +1155,6 @@ async function handleUploadIrisDiag(request, env) {
 }
 // ------------- END FUNCTION: handleUploadIrisDiag -------------
 
-// ------------- START FUNCTION: handleAiHelperRequest -------------
-async function handleAiHelperRequest(request, env) {
-    try {
-        const { userId, lookbackDays = 3, prompt = 'Обобщи следните логове' } = await request.json();
-        if (!userId) {
-            console.warn('AI_HELPER_ERROR: Missing userId.');
-            return { success: false, message: 'Липсва userId.', statusHint: 400 };
-        }
-
-        const days = Math.min(Math.max(parseInt(lookbackDays, 10) || 3, 1), 14);
-        const logKeys = [];
-        const today = new Date();
-        for (let i = 0; i < days; i++) {
-            const d = new Date(today); d.setDate(today.getDate() - i);
-            logKeys.push(`${userId}_log_${d.toISOString().split('T')[0]}`);
-        }
-        const logStrings = await Promise.all(logKeys.map(k => env.USER_METADATA_KV.get(k)));
-        const logs = logStrings.map((s, idx) => {
-            if (s) { const d = new Date(today); d.setDate(today.getDate() - idx); return { date: d.toISOString().split('T')[0], data: safeParseJson(s, {}) }; }
-            return null;
-        }).filter(Boolean);
-
-        const messages = [
-            { role: 'system', content: 'You are a friendly assistant that summarizes user logs in Bulgarian.' },
-            { role: 'user', content: `${prompt}:\n${JSON.stringify(logs)}` }
-        ];
-
-        const aiResp = await callCfAi('@cf/meta/llama-3-8b-instruct', messages, env);
-        return { success: true, aiResponse: aiResp };
-    } catch (error) {
-        console.error('Error in handleAiHelperRequest:', error.message, error.stack);
-        return { success: false, message: 'Грешка при извикване на Cloudflare AI.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleAiHelperRequest -------------
-
 
 // ------------- START BLOCK: PlanGenerationHeaderComment -------------
 // ===============================================
@@ -2204,31 +2164,6 @@ async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettin
 }
 // ------------- END FUNCTION: callGeminiAPI -------------
 
-// ------------- START FUNCTION: callCfAi -------------
-async function callCfAi(model, messages, env) {
-    const accountId = env[CF_ACCOUNT_ID_VAR_NAME];
-    const token = env[CF_AI_TOKEN_SECRET_NAME];
-    if (!accountId || !token) {
-        throw new Error('Missing Cloudflare AI credentials.');
-    }
-    const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`;
-    const resp = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ messages })
-    });
-    const data = await resp.json();
-    if (!resp.ok) {
-        const msg = data?.errors?.[0]?.message || `HTTP ${resp.status}`;
-        throw new Error(`CF AI error: ${msg}`);
-    }
-    return data.result?.response || data;
-}
-// ------------- END FUNCTION: callCfAi -------------
-
 // ------------- START FUNCTION: calculateAnalyticsIndexes -------------
 async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries = [], currentStatus = {}, env) {
     const userLogId = initialAnswers?.email || userId || 'calcAnalyticsUser'; // Enhanced logging ID
@@ -2759,4 +2694,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processPendingPlanModRequests, processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, callCfAi };
+export { processPendingPlanModRequests, processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag };
