@@ -30,6 +30,12 @@ describe('handleAiHelperRequest', () => {
     const res = await handleAiHelperRequest(request, env);
     expect(res.success).toBe(true);
     expect(res.aiResponse).toBe('summary');
+    const expectedUrl =
+      'https://api.cloudflare.com/client/v4/accounts/acc/ai/run/@cf/meta/llama-3-8b-instruct';
+    expect(global.fetch).toHaveBeenCalledWith(
+      expectedUrl,
+      expect.objectContaining({ method: 'POST' })
+    );
   });
 
   test('handles AI error', async () => {
