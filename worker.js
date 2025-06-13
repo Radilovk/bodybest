@@ -1276,7 +1276,12 @@ async function processSingleUserPlan(userId, env) {
             const { generationMetadata, ...restOfGeneratedPlan } = generatedPlanObject;
             Object.assign(planBuilder, restOfGeneratedPlan);
             if (generationMetadata && Array.isArray(generationMetadata.errors)) planBuilder.generationMetadata.errors.push(...generationMetadata.errors);
-        } catch (e) { const errorMsg = `Unified Plan Generation Error for ${userId}: ${e.message}. Raw response (start): ${rawResponseFromGemini.substring(0, 500)}...`; console.error(errorMsg); planBuilder.generationMetadata.errors.push(errorMsg); }
+        } catch (e) {
+            const errorMsg = `Unified Plan Generation Error for ${userId}: ${e.message}. Raw response (start): ${rawResponseFromGemini.substring(0, 500)}...`;
+            console.error(errorMsg);
+            await env.USER_METADATA_KV.put(`${userId}_last_plan_raw_error`, rawResponseFromGemini.substring(0, 300));
+            planBuilder.generationMetadata.errors.push(errorMsg);
+        }
         
         console.log(`PROCESS_USER_PLAN (${userId}): Assembling and saving final plan. Recorded errors during generation: ${planBuilder.generationMetadata.errors.length}`);
         planBuilder.generationMetadata.timestamp = planBuilder.generationMetadata.timestamp || new Date().toISOString();
@@ -1655,6 +1660,7 @@ async function getPreviousQuizzesContext(userId, env, count = PREVIOUS_QUIZZES_F
 // ------------- START FUNCTION: generateAndStoreAdaptiveQuiz -------------
 async function generateAndStoreAdaptiveQuiz(userId, initialAnswers, env) {
     console.log(`[ADAPT_QUIZ_GEN] Attempting to generate adaptive quiz for user ${userId}`);
+    let rawQuizResponse = "";
     try {
         const geminiApiKey = env[GEMINI_API_KEY_SECRET_NAME];
         const quizPromptTemplate = await env.RESOURCES_KV.get('prompt_adaptive_quiz_generation');
@@ -1737,7 +1743,7 @@ async function generateAndStoreAdaptiveQuiz(userId, initialAnswers, env) {
         const populatedQuizPrompt = populatePrompt(quizPromptTemplate, replacements);
 
         console.log(`[ADAPT_QUIZ_GEN] Calling Gemini (${quizModelName}) for user ${userId}. Prompt length: ${populatedQuizPrompt.length}`);
-        const rawQuizResponse = await callGeminiAPI(populatedQuizPrompt, geminiApiKey, { temperature: 0.7, maxOutputTokens: 2500 }, [], quizModelName);
+        rawQuizResponse = await callGeminiAPI(populatedQuizPrompt, geminiApiKey, { temperature: 0.7, maxOutputTokens: 2500 }, [], quizModelName);
         
         const cleanedQuizJson = cleanGeminiJson(rawQuizResponse);
         let parsedQuizArray;
@@ -1813,6 +1819,7 @@ async function generateAndStoreAdaptiveQuiz(userId, initialAnswers, env) {
     } catch (error) {
         console.error(`[ADAPT_QUIZ_GEN_FATAL_ERROR] Error during adaptive quiz generation for user ${userId}:`, error.message, error.stack);
         await env.USER_METADATA_KV.put(`${userId}_adaptive_quiz_error`, `Вътрешна грешка при генериране на въпросник: ${error.message.substring(0,100)}`);
+        await env.USER_METADATA_KV.put(`${userId}_last_quiz_raw_error`, rawQuizResponse.substring(0, 300));
     }
 }
 // ------------- END FUNCTION: generateAndStoreAdaptiveQuiz -------------
