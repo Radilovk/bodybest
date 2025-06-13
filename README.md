@@ -11,6 +11,17 @@ A simple static web application for tracking nutrition and workouts.
 npm install
 ```
 
+### Local environment variables
+
+Copy `.env.example` to `.env` and fill in your Cloudflare credentials and tokens:
+
+```bash
+cp .env.example .env
+# Edit .env and set CF_AI_TOKEN, CF_API_TOKEN and other values
+```
+
+The defaults in `.env.example` use the account ID `c2015f4060e04bc3c414f78a9946668e`. Replace the placeholder tokens with your own.
+
 ### Start Development Server
 
 Run the Vite dev server which provides hot reload:
@@ -222,6 +233,23 @@ php -r "echo password_hash('yourPassword', PASSWORD_DEFAULT);"
 ```
 
 Set the output as the value for `ADMIN_PASS_HASH`.
+
+### Chat Assistant
+
+The standalone page `assistant.html` allows you to send direct commands to the worker.
+Open the file in a browser, enter your message and it will call the `/api/chat` endpoint.
+The Cloudflare account ID is filled automatically from `config.js`.
+
+Example test request with `curl`:
+
+```bash
+curl https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/meta/llama-2-7b-chat-fp16 \
+  -H "Authorization: Bearer <CF_AI_TOKEN>" \
+  -H "Content-Type: application/json" \
+  --data '{"messages":[{"role":"user","content":"Здравей"}]}'
+```
+
+Replace the placeholders with your own values and keep the token secret.
 ## Допълнителни функции
 - **Извънредно хранене** – бутонът "Добави извънредно хранене" в `code.html` отваря модалната форма `extra-meal-entry-form.html`. Логиката в `js/extraMealForm.js` изпраща данните към `/api/log-extra-meal` в `worker.js`.
 - **Изследвания** – POST заявки към `/api/uploadTestResult` и `/api/uploadIrisDiag` записват данни за проведени тестове или ирисова диагностика в KV и създават събитие за автоматична адаптация на плана.

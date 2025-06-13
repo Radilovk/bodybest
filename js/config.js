@@ -28,6 +28,6 @@ export const apiEndpoints = {
 };
 
 // Cloudflare Account ID за използване в чат асистента
-export const cloudflareAccountId = 'c2015f4060e04bc3c414f78a9946668e';
+export const cloudflareAccountId = window.CF_ACCOUNT_ID || 'c2015f4060e04bc3c414f78a9946668e';
 
 export const generateId = (prefix = 'id') => `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
