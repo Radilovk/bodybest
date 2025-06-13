@@ -11,6 +11,17 @@ A simple static web application for tracking nutrition and workouts.
 npm install
 ```
 
+### Local environment variables
+
+Copy `.env.example` to `.env` and fill in your Cloudflare credentials and tokens:
+
+```bash
+cp .env.example .env
+# Edit .env and set CF_AI_TOKEN, CF_API_TOKEN and other values
+```
+
+The defaults in `.env.example` use the account ID `c2015f4060e04bc3c414f78a9946668e`. Replace the placeholder tokens with your own.
+
 ### Start Development Server
 
 Run the Vite dev server which provides hot reload:
