@@ -54,20 +54,24 @@ npm ci # или npm install
 Run unit tests with Jest:
 
 ```bash
-npm test         # изпълнява "npx jest"
+npm test         # изпълнява "scripts/test.sh" и Jest
 # или стартирайте директно
 npx jest
 ```
-If your environment defines `HTTP_PROXY`, `HTTPS_PROXY` or directly sets
-`npm_config_http_proxy`/`npm_config_https_proxy`, remove these variables before
-running `npm test` to avoid warnings. Например временно изключване може да се
-направи със следните команди:
+`npm test` автоматично изключва HTTP/HTTPS proxy променливите и проверява дали
+е инсталиран Jest. Ако липсва, скриптът ще изведе грешка и ще прекрати
+изпълнението, затова първо пуснете `npm ci` или `npm install`.
+Ако стартирате `npx jest` директно и срещате
+предупреждение "Unknown env config \"http-proxy\"", временно можете да ги
+изключите със следните команди:
 
 ```bash
 unset HTTP_PROXY HTTPS_PROXY npm_config_http_proxy npm_config_https_proxy
 npm config delete proxy
 npm config delete https-proxy
 ```
+Предупреждението може напълно да се скрие чрез файла `.npmrc`, който задава
+`loglevel=error` и е включен в репозиторито.
 Тези стъпки намаляват предупрежденията и потенциално ускоряват старта на
 тестовете.
 
