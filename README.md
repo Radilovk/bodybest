@@ -89,8 +89,7 @@ To set the token:
 1. Generate an API token with **Edit Cloudflare Workers** permissions.
 2. In your repository settings, create a GitHub secret named `CF_API_TOKEN` containing the token value.
 
-The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed. The file also contains
-placeholders for the `USER_METADATA_KV` namespace – replace `000000...` with the real KV IDs from your Cloudflare dashboard.
+The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed. For the `USER_METADATA_KV` namespace the file expects the environment variables `USER_METADATA_KV_ID` and `USER_METADATA_KV_PREVIEW_ID`. Configure them as GitHub secrets so the workflow can substitute the correct IDs before publishing.
 You can verify this setup locally by running:
 
 ```bash
