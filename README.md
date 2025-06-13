@@ -149,6 +149,16 @@ node scripts/manage-kv.js get exampleKey
 node scripts/manage-kv.js delete exampleKey
 ```
 
+За поправяне на запис от дневника, който съдържа невалиден JSON, може да
+използвате помощния скрипт `repair-log.js`:
+
+```bash
+node scripts/repair-log.js <userId> <YYYY-MM-DD>
+```
+
+Скриптът изтегля стойността от `USER_METADATA_KV`, опитва да я поправи с помощта
+на `jsonrepair` и я записва обратно, ако корекцията е успешна.
+
 ### Задължителни ключове в `RESOURCES_KV`
 
 Следните ключове трябва да са налични в KV пространството `RESOURCES_KV`, за да
