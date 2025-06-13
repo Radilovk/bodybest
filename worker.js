@@ -1740,13 +1740,9 @@ async function generateAndStoreAdaptiveQuiz(userId, initialAnswers, env) {
         const rawQuizResponse = await callGeminiAPI(populatedQuizPrompt, geminiApiKey, { temperature: 0.7, maxOutputTokens: 2500 }, [], quizModelName);
         
         const cleanedQuizJson = cleanGeminiJson(rawQuizResponse);
-        let parsedQuizArray;
-        try { parsedQuizArray = JSON.parse(cleanedQuizJson); } catch (e) {
-            console.error(`[ADAPT_QUIZ_GEN_ERROR] Failed to parse JSON from AI for ${userId}. Response: ${cleanedQuizJson.substring(0,300)}... Error: ${e.message}`);
-            await env.USER_METADATA_KV.put(`${userId}_adaptive_quiz_error`, "AI генерира невалиден формат за въпросника."); return;
-        }
+        let parsedQuizArray = safeParseJson(cleanedQuizJson, []);
         if (!Array.isArray(parsedQuizArray) || parsedQuizArray.length === 0) {
-            console.error(`[ADAPT_QUIZ_GEN_ERROR] AI response is not a non-empty array for ${userId}. Parsed: ${JSON.stringify(parsedQuizArray)}`);
+            console.error(`[ADAPT_QUIZ_GEN_ERROR] Failed to parse or AI response invalid for ${userId}. Raw: ${cleanedQuizJson.substring(0,300)}...`);
             await env.USER_METADATA_KV.put(`${userId}_adaptive_quiz_error`, "AI генерира празен или невалиден въпросник."); return;
         }
 
