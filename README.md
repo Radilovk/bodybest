@@ -80,6 +80,12 @@ To set the token:
 
 The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed. The file also contains
 placeholders for the `USER_METADATA_KV` namespace – replace `000000...` with the real KV IDs from your Cloudflare dashboard.
+You can verify this setup locally by running:
+
+```bash
+node scripts/validate-wrangler.js
+```
+This script checks for placeholder values and for a provided `CF_API_TOKEN`.
 
 ### Manual publish
 
