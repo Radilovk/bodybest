@@ -2,8 +2,16 @@ import fs from 'fs';
 
 try {
   const toml = fs.readFileSync('wrangler.toml', 'utf8');
+
+  if (/\$\{USER_METADATA_KV_ID\}/.test(toml) || /\$\{USER_METADATA_KV_PREVIEW_ID\}/.test(toml)) {
+    if (!process.env.USER_METADATA_KV_ID || !process.env.USER_METADATA_KV_PREVIEW_ID) {
+      console.error('Липсват USER_METADATA_KV_ID или USER_METADATA_KV_PREVIEW_ID като променливи на средата.');
+      process.exit(1);
+    }
+  }
+
   if (/00000000000000000000000000000000/.test(toml)) {
-    console.error('wrangler.toml съдържа стойности placeholder за KV namespace. Заменете ги с реални ID.');
+    console.error('wrangler.toml съдържа стойности placeholder за KV namespace. Заменете ги с реални ID или използвайте env променливи.');
     process.exit(1);
   }
 
