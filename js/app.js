@@ -264,8 +264,21 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
         }
 
         const response = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}`);
-        if (!response.ok) throw new Error(`Грешка от сървъра: ${response.status} ${response.statusText}`);
-        const data = await response.json();
+        let data = {};
+        const isJson = response.headers.get('content-type')?.includes('application/json');
+        if (isJson) {
+            data = await response.json().catch(err => {
+                console.error('Error parsing dashboard response JSON:', err);
+                return {};
+            });
+        } else {
+            const text = await response.text().catch(() => '');
+            if (text) data.message = text;
+        }
+        if (!response.ok) {
+            const serverMsg = data.message || `${response.status} ${response.statusText}`;
+            throw new Error(`Грешка от сървъра: ${serverMsg}`);
+        }
         console.log('Received planData', data.planData);
         if (!data.success) throw new Error(data.message || 'Неуспешно зареждане на данни от сървъра.');
 
