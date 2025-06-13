@@ -156,7 +156,6 @@ export default {
         let processedUsersForPlan = 0;
         let processedUsersForPrinciples = 0;
         let processedUsersForAdaptiveQuiz = 0;
-        let processedPlanModRequests = 0;
         let processedUserEvents = 0;
         const MAX_PROCESS_PER_RUN_PLAN_GEN = 1;
         const MAX_PROCESS_PER_RUN_PRINCIPLES = 2;
@@ -198,7 +197,6 @@ export default {
             }
             if (processedUsersForPlan === 0) console.log("[CRON-PlanGen] No pending users for plan generation.");
 
-            processedPlanModRequests = await processPendingPlanModRequests(env, ctx);
             processedUserEvents = await processPendingUserEvents(env, ctx);
             // --- Потребители с готов план ---
             const listResultReadyPlans = await env.USER_METADATA_KV.list({ prefix: "plan_status_" });
@@ -298,7 +296,7 @@ export default {
         } catch(error) {
             console.error("[CRON] Error during scheduled execution:", error.message, error.stack);
         }
-        console.log(`[CRON] Trigger finished. PlanGen: ${processedUsersForPlan}, Principles: ${processedUsersForPrinciples}, AdaptiveQuiz: ${processedUsersForAdaptiveQuiz}, PlanModReq: ${processedPlanModRequests}, UserEvents: ${processedUserEvents}`);
+        console.log(`[CRON] Trigger finished. PlanGen: ${processedUsersForPlan}, Principles: ${processedUsersForPrinciples}, AdaptiveQuiz: ${processedUsersForAdaptiveQuiz}, UserEvents: ${processedUserEvents}`);
     }
     // ------------- END FUNCTION: scheduled -------------
 };
@@ -2672,29 +2670,6 @@ async function sendTxtBackupToPhp(userId, answers, env) {
 }
 // ------------- END FUNCTION: sendTxtBackupToPhp -------------
 
-// ------------- START FUNCTION: processPendingPlanModRequests -------------
-async function processPendingPlanModRequests(env, ctx, maxToProcess = 2) {
-    const list = await env.USER_METADATA_KV.list();
-    const pendingKeys = list.keys.filter(k => k.name.endsWith('_pending_plan_modification_request'));
-    let processed = 0;
-    for (const key of pendingKeys) {
-        if (processed >= maxToProcess) break;
-        const reqStr = await env.USER_METADATA_KV.get(key.name);
-        const reqData = safeParseJson(reqStr, {});
-        if (reqData && reqData.status === 'pending') {
-            const userId = key.name.replace('_pending_plan_modification_request', '');
-            ctx.waitUntil(processSingleUserPlan(userId, env));
-            reqData.status = 'processed';
-            reqData.processedTimestamp = Date.now();
-            await env.USER_METADATA_KV.put(key.name, JSON.stringify(reqData));
-            processed++;
-        }
-    }
-    if (processed > 0) console.log(`[CRON-PlanMod] Processed ${processed} modification request(s).`);
-    else console.log('[CRON-PlanMod] No pending modification requests.');
-    return processed;
-}
-// ------------- END FUNCTION: processPendingPlanModRequests -------------
 
 // ------------- START FUNCTION: shouldTriggerAutomatedFeedbackChat -------------
 function shouldTriggerAutomatedFeedbackChat(lastUpdateTs, lastChatTs, currentTime = Date.now()) {
@@ -2759,4 +2734,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processPendingPlanModRequests, processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, callCfAi };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, callCfAi };
