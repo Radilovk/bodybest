@@ -58,7 +58,14 @@ npm test         # изпълнява "npx jest"
 # или стартирайте директно
 npx jest
 ```
-If your environment defines `HTTP_PROXY` or `HTTPS_PROXY`, rename them to `npm_config_proxy` and `npm_config_https_proxy` or unset them before running `npm test` to avoid warnings.
+If your environment defines `HTTP_PROXY` or `HTTPS_PROXY`, rename them to `npm_config_proxy` and `npm_config_https_proxy` or unset them before running `npm test` to avoid warnings. Например временно изключване може да се направи със следните команди:
+
+```bash
+unset HTTP_PROXY HTTPS_PROXY
+npm config delete proxy
+npm config delete https-proxy
+```
+Тези стъпки намаляват предупрежденията и потенциално ускоряват старта на тестовете.
 
 ### Generate Documentation
 
