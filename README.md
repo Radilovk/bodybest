@@ -124,6 +124,41 @@ node scripts/manage-kv.js get exampleKey
 node scripts/manage-kv.js delete exampleKey
 ```
 
+### Задължителни ключове в `RESOURCES_KV`
+
+Следните ключове трябва да са налични в KV пространството `RESOURCES_KV`, за да
+работи правилно Cloudflare worker-ът. Стойностите им могат да се качат чрез
+`wrangler kv key put`.
+
+| Ключ | Предназначение |
+|------|----------------|
+| `allowed_meal_combinations` | JSON със списък на позволените комбинации от хранения |
+| `base_diet_model` | Описание на базовия диетичен модел |
+| `eating_psychology` | Текстове с психологически насоки при хранене |
+| `model_adaptive_quiz` | Име на модела за генериране на адаптивни въпросници |
+| `model_adaptive_quiz_analysis` | Модел за анализ на отговорите от адаптивен въпросник |
+| `model_chat` | Модел за чат асистента |
+| `model_plan_generation` | Модел за първоначално генериране на план |
+| `model_principle_adjustment` | Модел за корекция на принципите |
+| `prompt_adaptive_quiz_generation` | Шаблон за създаване на адаптивен въпросник |
+| `prompt_analytics_textual_summary` | Шаблон за текстов анализ на прогреса |
+| `prompt_analyze_quiz_and_suggest_changes` | Шаблон за анализ на отговорите и предложения за промяна |
+| `prompt_chat` | Шаблон за чат промптове |
+| `prompt_praise_generation` | Шаблон за генериране на похвали |
+| `prompt_principle_adjustment` | Шаблон за промпт при корекция на принципи |
+| `prompt_unified_plan_generation_v2` | Шаблон за унифицирано генериране на план |
+| `question_definitions` | JSON с дефиниции на всички въпроси |
+| `recipe_data` | Данни за примерни рецепти |
+
+Примерни команди за добавяне на стойности:
+
+```bash
+# качване на шаблон за чат
+wrangler kv key put prompt_chat "$(cat templates/prompt_chat.txt)" --binding=RESOURCES_KV
+# качване на рецепти
+wrangler kv key put recipe_data "$(cat data/recipes.json)" --binding=RESOURCES_KV
+```
+
 ### Required Worker Secrets
 
 Before deploying, configure the following secrets in Cloudflare (via the dashboard or `wrangler secret put`):
