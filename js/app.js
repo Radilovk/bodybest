@@ -284,7 +284,9 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
             const serverMsg = data.message || rawText || `${response.status} ${response.statusText}`;
             throw new Error(`Грешка от сървъра: ${serverMsg}`);
         }
-        console.log('Received planData', data.planData);
+        if (isLocalDevelopment) {
+            console.log('Received planData', data.planData);
+        }
         if (!data.success) throw new Error(data.message || 'Неуспешно зареждане на данни от сървъра.');
 
         if (isLocalDevelopment) console.log("Data received from worker:", data);
