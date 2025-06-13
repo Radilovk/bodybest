@@ -117,6 +117,9 @@ Before deploying, configure the following secrets in Cloudflare (via the dashboa
 - `GEMINI_API_KEY`
 - `тут_ваш_php_api_url_secret_name`
 - `тут_ваш_php_api_token_secret_name`
+- `CF_AI_TOKEN` – API token used for Cloudflare AI requests
+
+Optionally set `CF_ACCOUNT_ID` via `wrangler secret put` if it differs from the value in `wrangler.toml`. Ако липсва, работникът използва стойността от `wrangler.toml`.
 
 These names are referenced in `worker.js` and must exist for the worker to function.
 
@@ -138,6 +141,7 @@ Set the output as the value for `ADMIN_PASS_HASH`.
 ## Допълнителни функции
 - **Извънредно хранене** – бутонът "Добави извънредно хранене" в `code.html` отваря модалната форма `extra-meal-entry-form.html`. Логиката в `js/extraMealForm.js` изпраща данните към `/api/log-extra-meal` в `worker.js`.
 - **Изследвания** – POST заявки към `/api/uploadTestResult` и `/api/uploadIrisDiag` записват данни за проведени тестове или ирисова диагностика в KV и създават събитие за автоматична адаптация на плана.
+- **AI помощник** – POST заявка към `/api/aiHelper` изпраща последните логове на потребителя към Cloudflare AI и връща обобщение чрез модела `@cf/baai/bge-m3`.
 
 - **Пример за запис в KV**
 
