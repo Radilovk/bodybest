@@ -58,6 +58,7 @@ npm test         # изпълнява "npx jest"
 # или стартирайте директно
 npx jest
 ```
+If your environment defines `HTTP_PROXY` or `HTTPS_PROXY`, rename them to `npm_config_proxy` and `npm_config_https_proxy` or unset them before running `npm test` to avoid warnings.
 
 ### Generate Documentation
 
