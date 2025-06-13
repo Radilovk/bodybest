@@ -1267,9 +1267,9 @@ async function processSingleUserPlan(userId, env) {
             console.log(`PROCESS_USER_PLAN (${userId}): Calling Gemini for unified plan. Prompt length: ${populatedUnifiedPrompt.length}`);
             rawResponseFromGemini = await callGeminiAPI(populatedUnifiedPrompt, geminiApiKey, { temperature: 0.1, maxOutputTokens: 20000 }, [], planModelName); // maxOutputTokens: 8192 for gemini-pro, check model limits
             const cleanedJson = cleanGeminiJson(rawResponseFromGemini);
-            generatedPlanObject = JSON.parse(cleanedJson);
+            generatedPlanObject = safeParseJson(cleanedJson);
             if (!generatedPlanObject || !generatedPlanObject.profileSummary || !generatedPlanObject.week1Menu || !generatedPlanObject.principlesWeek2_4 || !generatedPlanObject.detailedTargets) {
-                 console.error(`PROCESS_USER_PLAN_ERROR (${userId}): Unified plan generation returned an invalid or incomplete JSON structure. Cleaned JSON (start): ${cleanedJson.substring(0,300)}`);
+                 console.error(`PROCESS_USER_PLAN_ERROR (${userId}): Unified plan generation returned an invalid or incomplete JSON structure. Original response (start): ${rawResponseFromGemini.substring(0,300)}`);
                 throw new Error("Unified plan generation returned an invalid or incomplete JSON structure.");
             }
             console.log(`PROCESS_USER_PLAN (${userId}): Unified plan JSON parsed successfully.`);
