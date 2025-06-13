@@ -222,20 +222,6 @@ php -r "echo password_hash('yourPassword', PASSWORD_DEFAULT);"
 ```
 
 Set the output as the value for `ADMIN_PASS_HASH`.
-
-### Deploying the PHP backend
-
-Changes to `file_manager_api.php`, `save-questions.php` or `questions.json` can
-be automatically uploaded to your server through the workflow
-`.github/workflows/deploy-backend.yml`.
-
-1. Create the secrets `BACKEND_HOST`, `BACKEND_USERNAME`, `BACKEND_SSH_KEY` and
-   `BACKEND_PATH` in your repository settings. The SSH key must allow rsync
-   access to the target directory.
-2. Push your modifications or trigger the workflow manually from the **Actions**
-   tab. The job runs `rsync` over SSH to keep the server in sync.
-
-This keeps the backend up to date without exposing credentials in the repository.
 ## Допълнителни функции
 - **Извънредно хранене** – бутонът "Добави извънредно хранене" в `code.html` отваря модалната форма `extra-meal-entry-form.html`. Логиката в `js/extraMealForm.js` изпраща данните към `/api/log-extra-meal` в `worker.js`.
 - **Изследвания** – POST заявки към `/api/uploadTestResult` и `/api/uploadIrisDiag` записват данни за проведени тестове или ирисова диагностика в KV и създават събитие за автоматична адаптация на плана.
