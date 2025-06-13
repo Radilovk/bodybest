@@ -1180,7 +1180,14 @@ async function handleAiHelperRequest(request, env) {
         }).filter(Boolean);
 
         const textInput = `${prompt}:\n${JSON.stringify(logs)}`;
-        const aiResp = await callCfAi('@cf/baai/bge-m3', { text: textInput }, env);
+        const aiResp = await callCfAi(
+            '@cf/meta/llama-3-8b-instruct',
+            {
+                messages: [{ role: 'user', content: textInput }],
+                stream: false
+            },
+            env
+        );
         return { success: true, aiResponse: aiResp };
     } catch (error) {
         console.error('Error in handleAiHelperRequest:', error.message, error.stack);
