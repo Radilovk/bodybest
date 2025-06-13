@@ -23,8 +23,7 @@ export const apiEndpoints = {
     recordFeedbackChat: `${workerBaseUrl}/api/recordFeedbackChat`,
     forgotPassword: `${workerBaseUrl}/api/forgotPassword`,
     getAchievements: `${workerBaseUrl}/api/getAchievements`,
-    generatePraise: `${workerBaseUrl}/api/generatePraise`,
-    aiHelper: `${workerBaseUrl}/api/aiHelper`
+    generatePraise: `${workerBaseUrl}/api/generatePraise`
 };
 
 export const generateId = (prefix = 'id') => `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
