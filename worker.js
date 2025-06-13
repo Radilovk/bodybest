@@ -9,6 +9,7 @@
 // - Попълнени липсващи части от предходни версии.
 // - Запазени всички предходни функционалности.
 
+import { jsonrepair } from 'jsonrepair';
 // ------------- START BLOCK: GlobalConstantsAndBindings -------------
 const PHP_FILE_MANAGER_API_URL_SECRET_NAME = 'тут_ваш_php_api_url_secret_name';
 const PHP_API_STATIC_TOKEN_SECRET_NAME = 'тут_ваш_php_api_token_secret_name';
@@ -1980,7 +1981,23 @@ const safeParseFloat = (val, defaultVal = null) => { if (val === null || val ===
 // ------------- END FUNCTION: safeParseFloat -------------
 
 // ------------- START FUNCTION: safeParseJson -------------
-const safeParseJson = (jsonString, defaultValue = null) => { if (typeof jsonString !== 'string' || !jsonString.trim()) { return defaultValue; } try { return JSON.parse(jsonString); } catch (e) { console.warn(`Failed JSON parse: ${e.message}. String (start): "${jsonString.substring(0, 150)}..."`); return defaultValue; } };
+const safeParseJson = (jsonString, defaultValue = null) => {
+    if (typeof jsonString !== 'string' || !jsonString.trim()) {
+        return defaultValue;
+    }
+    try {
+        return JSON.parse(jsonString);
+    } catch (e) {
+        console.warn(`Failed JSON parse: ${e.message}. Attempting repair.`);
+        try {
+            const repaired = jsonrepair(jsonString);
+            return JSON.parse(repaired);
+        } catch (err) {
+            console.warn(`JSON repair also failed: ${err.message}. String (start): "${jsonString.substring(0, 150)}..."`);
+            return defaultValue;
+        }
+    }
+};
 // ------------- END FUNCTION: safeParseJson -------------
 
 // ------------- START FUNCTION: createUserEvent -------------
