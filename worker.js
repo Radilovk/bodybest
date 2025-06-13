@@ -2206,7 +2206,7 @@ async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettin
 
 // ------------- START FUNCTION: callCfAi -------------
 async function callCfAi(model, messages, env) {
-    const accountId = env[CF_ACCOUNT_ID_VAR_NAME];
+    const accountId = env[CF_ACCOUNT_ID_VAR_NAME] || env.accountId || env.ACCOUNT_ID;
     const token = env[CF_AI_TOKEN_SECRET_NAME];
     if (!accountId || !token) {
         throw new Error('Missing Cloudflare AI credentials.');

@@ -119,7 +119,7 @@ Before deploying, configure the following secrets in Cloudflare (via the dashboa
 - `тут_ваш_php_api_token_secret_name`
 - `CF_AI_TOKEN` – API token used for Cloudflare AI requests
 
-Optionally set `CF_ACCOUNT_ID` via `wrangler secret put` if it differs from the value in `wrangler.toml`.
+Optionally set `CF_ACCOUNT_ID` via `wrangler secret put` if it differs from the value in `wrangler.toml`. Ако липсва, работникът използва стойността от `wrangler.toml`.
 
 These names are referenced in `worker.js` and must exist for the worker to function.
 
