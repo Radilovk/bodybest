@@ -41,6 +41,10 @@ export let chatHistory = [];
 export let todaysMealCompletionStatus = {}; // Updated by populateUI and eventListeners
 export let activeTooltip = null; // Managed by uiHandlers via setActiveTooltip
 
+// Управление на интервал за проверка на статус на плана
+let planStatusInterval = null;
+let planStatusTimeout = null;
+
 // Променливи за адаптивния въпросник - управлявани от app.js
 export let currentQuizData = null;
 export let userQuizAnswers = {};
@@ -359,6 +363,48 @@ function showPlanPendingState(customMessage) {
     showLoading(false);
 }
 
+export function stopPlanStatusPolling() {
+    if (planStatusInterval) {
+        clearInterval(planStatusInterval);
+        planStatusInterval = null;
+    }
+    if (planStatusTimeout) {
+        clearTimeout(planStatusTimeout);
+        planStatusTimeout = null;
+    }
+    window.removeEventListener('beforeunload', stopPlanStatusPolling);
+}
+
+export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
+    if (!currentUserId) return;
+    stopPlanStatusPolling();
+    showToast('Обновявам плана...', false, 3000);
+
+    async function checkStatus() {
+        try {
+            const resp = await fetch(`${apiEndpoints.planStatus}?userId=${currentUserId}`);
+            const data = await resp.json();
+            if (resp.ok && data.success) {
+                if (data.planStatus === 'ready') {
+                    stopPlanStatusPolling();
+                    await loadDashboardData();
+                    showToast('Планът е обновен.', false, 4000);
+                } else if (data.planStatus === 'error') {
+                    stopPlanStatusPolling();
+                    showToast(`Грешка при обновяване: ${data.error || ''}`, true, 6000);
+                }
+            }
+        } catch (err) {
+            console.error('pollPlanStatus error:', err);
+        }
+    }
+
+    checkStatus();
+    planStatusInterval = setInterval(checkStatus, intervalMs);
+    planStatusTimeout = setTimeout(stopPlanStatusPolling, maxDurationMs);
+    window.addEventListener('beforeunload', stopPlanStatusPolling);
+}
+
 // ==========================================================================
 // ФУНКЦИИ ЗА УПРАВЛЕНИЕ НА ДАННИ (ЗАПИС)
 // ==========================================================================
@@ -669,8 +715,16 @@ export async function handleChatSend() { // Exported for eventListeners.js
         const result = await response.json();
         if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
 
-        displayChatMessage(result.reply, 'bot'); // from chat.js
-        chatHistory.push({ text: result.reply, sender: 'bot', isError: false });
+        let botReply = result.reply || '';
+        const sig = '[PLAN_MODIFICATION_REQUEST]';
+        const sigIdx = botReply.indexOf(sig);
+        if (sigIdx !== -1) {
+            botReply = botReply.substring(0, sigIdx).trim();
+            pollPlanStatus();
+        }
+
+        displayChatMessage(botReply, 'bot'); // from chat.js
+        chatHistory.push({ text: botReply, sender: 'bot', isError: false });
 
     } catch (e) {
         const errorMsg = `Грешка при комуникация с асистента: ${e.message}`;
