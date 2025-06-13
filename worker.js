@@ -1179,12 +1179,8 @@ async function handleAiHelperRequest(request, env) {
             return null;
         }).filter(Boolean);
 
-        const messages = [
-            { role: 'system', content: 'You are a friendly assistant that summarizes user logs in Bulgarian.' },
-            { role: 'user', content: `${prompt}:\n${JSON.stringify(logs)}` }
-        ];
-
-        const aiResp = await callCfAi('@cf/meta/llama-3-8b-instruct', messages, env);
+        const textInput = `${prompt}:\n${JSON.stringify(logs)}`;
+        const aiResp = await callCfAi('@cf/baai/bge-m3', { text: textInput }, env);
         return { success: true, aiResponse: aiResp };
     } catch (error) {
         console.error('Error in handleAiHelperRequest:', error.message, error.stack);
@@ -2203,7 +2199,7 @@ async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettin
 // ------------- END FUNCTION: callGeminiAPI -------------
 
 // ------------- START FUNCTION: callCfAi -------------
-async function callCfAi(model, messages, env) {
+async function callCfAi(model, payload, env) {
     const accountId = env[CF_ACCOUNT_ID_VAR_NAME] || env.accountId || env.ACCOUNT_ID;
     const token = env[CF_AI_TOKEN_SECRET_NAME];
     if (!accountId || !token) {
@@ -2216,7 +2212,7 @@ async function callCfAi(model, messages, env) {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ messages })
+        body: JSON.stringify(payload)
     });
     const data = await resp.json();
     if (!resp.ok) {
