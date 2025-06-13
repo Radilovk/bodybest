@@ -34,7 +34,7 @@ npm run build
 
 ### Lint
 
-Check the source code with ESLint:
+Check the source code with ESLint (see `eslint.config.js` for configuration):
 
 ```bash
 npm run lint
