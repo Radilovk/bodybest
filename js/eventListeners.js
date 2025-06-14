@@ -4,8 +4,7 @@ import {
     toggleMenu, closeMenu, handleOutsideMenuClick, handleMenuKeydown,
     toggleTheme, activateTab, handleTabKeydown, closeModal,
     openInfoModalWithDetails, toggleDailyNote, openMainIndexInfo,
-    handleTrackerTooltipShow, handleTrackerTooltipHide, showToast,
-    openModal, getCurrentModalId
+    handleTrackerTooltipShow, handleTrackerTooltipHide, showToast
 } from './uiHandlers.js';
 import { handleLogout } from './auth.js';
 import { openExtraMealModal } from './extraMealForm.js';
@@ -99,8 +98,8 @@ export function setupStaticEventListeners() {
     });
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
-            const modalId = getCurrentModalId();
-            if (modalId) closeModal(modalId);
+            const visibleModal = document.querySelector('.modal.visible');
+            if (visibleModal) closeModal(visibleModal.id);
             if (activeTooltip) handleTrackerTooltipHide(); // Call hide from uiHandlers
         }
     });
