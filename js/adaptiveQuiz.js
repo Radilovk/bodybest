@@ -14,7 +14,7 @@ import {
     setCurrentQuestionIndex, // setter from app.js
     loadDashboardData, // function from app.js
     _generateAdaptiveQuizClientSide, // API call from app.js
-    _analyzeQuizAnswersAndAdaptClientSide // API call from app.js
+    _submitAdaptiveQuizClientSide // API call from app.js
 } from './app.js';
 
 export async function openAdaptiveQuizModal() {

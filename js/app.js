@@ -572,8 +572,8 @@ export async function _generateAdaptiveQuizClientSide(userId, context = {}) { //
     }
 }
 
-export async function _analyzeQuizAnswersAndAdaptClientSide(userId, quizId, submittedAnswers) { // Prefixed
-    if (isLocalDevelopment) console.log("analyzeQuizAnswersAndAdaptClientSide (app.js) called for quiz:", quizId, "answers:", submittedAnswers);
+export async function _submitAdaptiveQuizClientSide(userId, quizId, submittedAnswers) { // Prefixed
+    if (isLocalDevelopment) console.log("submitAdaptiveQuizClientSide (app.js) called for quiz:", quizId, "answers:", submittedAnswers);
     if (!userId || !quizId || !submittedAnswers) {
         throw new Error("Липсват необходими данни за подаване на въпросника.");
     }
@@ -602,10 +602,10 @@ export async function _analyzeQuizAnswersAndAdaptClientSide(userId, quizId, subm
         if (!result.success) {
             throw new Error(result.message || "Неуспешна обработка на отговорите от сървъра.");
         }
-        if (isLocalDevelopment) console.log("Analysis result from worker (app.js):", result);
+        if (isLocalDevelopment) console.log("Quiz submit result from worker (app.js):", result);
         return result;
     } catch (error) {
-        console.error("Error in analyzeQuizAnswersAndAdaptClientSide (app.js):", error);
+        console.error("Error in submitAdaptiveQuizClientSide (app.js):", error);
         throw error;
     }
 }
@@ -661,7 +661,7 @@ export async function _handleSubmitQuizAnswersClientSide() {
 
     showLoading(true, "Обработка на вашите отговори...");
     try {
-        const analysisResult = await _analyzeQuizAnswersAndAdaptClientSide(currentUserId, currentQuizData.quizId, userQuizAnswers);
+        const analysisResult = await _submitAdaptiveQuizClientSide(currentUserId, currentQuizData.quizId, userQuizAnswers);
         showToast("Въпросникът е успешно подаден!", false, 2000);
 
         setTimeout(() => {
