@@ -7,7 +7,7 @@ export const isLocalDevelopment = window.location.hostname === 'localhost' ||
 
 export const workerBaseUrl = isLocalDevelopment ?
     '/api' : // Използваме локалния proxy в развойна среда
-    'https://openapichatbot.radilov-k.workers.dev'; // Директно към Worker в продукция
+    (window.WORKER_BASE_URL || 'https://openapichatbot.radilov-k.workers.dev'); // Директно към Worker в продукция
 
 export const apiEndpoints = {
     dashboard: `${workerBaseUrl}/api/dashboardData`,
@@ -28,6 +28,6 @@ export const apiEndpoints = {
 };
 
 // Cloudflare Account ID за използване в чат асистента
-export const cloudflareAccountId = 'c2015f4060e04bc3c414f78a9946668e';
+export const cloudflareAccountId = window.CF_ACCOUNT_ID || 'c2015f4060e04bc3c414f78a9946668e';
 
 export const generateId = (prefix = 'id') => `${prefix}-${Math.random().toString(36).substr(2, 9)}`;

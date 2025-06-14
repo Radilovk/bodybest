@@ -716,7 +716,7 @@
      ============================================================================ */
 
   const phpFileManagerUrl = "http://mybody.best/wp-content/uploads/file_manager_api.php";
-  const workerSubmitUrl = "https://openapichatbot.radilov-k.workers.dev/api/submitQuestionnaire";
+  const workerSubmitUrl = (window.WORKER_BASE_URL || "https://openapichatbot.radilov-k.workers.dev") + "/api/submitQuestionnaire";
   const phpApiToken = window.FILE_API_TOKEN || "";
 
    // Преместваме ги извън функцията, за да са достъпни, ако е нужно
