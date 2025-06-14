@@ -9,7 +9,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://openapichatbot.radilov-k.workers.dev',
+        target: process.env.WORKER_BASE_URL || 'https://openapichatbot.radilov-k.workers.dev',
         changeOrigin: true,
         secure: false,
       },
@@ -24,6 +24,7 @@ export default defineConfig({
         extraMealEntry: resolve(__dirname, 'extra-meal-entry-form.html'),
         adaptiveQuizTemplate: resolve(__dirname, 'adaptive_quiz_template.html'),
         profileEdit: resolve(__dirname, 'profile-edit.html'),
+        assistant: resolve(__dirname, 'assistant.html'),
       },
     },
   },

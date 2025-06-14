@@ -181,7 +181,7 @@
                            window.location.hostname.includes('replit') ||
                            window.location.hostname.includes('preview');
         const workerBaseUrl = isLocalDev ? '/api' :
-            'https://openapichatbot.radilov-k.workers.dev';
+            (window.WORKER_BASE_URL || 'https://openapichatbot.radilov-k.workers.dev');
 
         // API Endpoints
         const loginEndpoint = `${workerBaseUrl}/api/login`;
