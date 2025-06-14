@@ -1496,9 +1496,23 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
             await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
             console.log(`PRINCIPLE_ADJUST (${userId}): Successfully updated principles.`);
 
-            if (summaryForUser && !calledFromQuizAnalysis) { // Показваме резюме само ако не е извикано от анализ на въпросник (който има собствен механизъм за резюме)
-                 await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summaryForUser));
-                 console.log(`PRINCIPLE_ADJUST (${userId}): AI update summary for non-quiz adjustment stored.`);
+            if (!summaryForUser) {
+                const changeLines = principlesToSave
+                    .split('\n')
+                    .map(l => l.replace(/^[-*]\s*/, '').trim())
+                    .filter(Boolean)
+                    .slice(0, 3);
+                summaryForUser = {
+                    title: 'Актуализация на Вашите Принципи',
+                    introduction: 'Въз основа на последните Ви данни прегледахме хранителните насоки.',
+                    changes: changeLines.length > 0 ? changeLines : [principlesToSave.substring(0, 200)],
+                    encouragement: 'Следвайте актуализираните насоки за по-добри резултати.'
+                };
+            }
+
+            if (!calledFromQuizAnalysis) {
+                await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summaryForUser));
+                console.log(`PRINCIPLE_ADJUST (${userId}): AI update summary stored.`);
             }
             return principlesToSave;
         } else {
@@ -2627,4 +2641,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, callCfAi };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, callCfAi, handlePrincipleAdjustment };

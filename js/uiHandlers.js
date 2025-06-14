@@ -112,31 +112,35 @@ export function handleTabKeydown(e) {
     e.preventDefault(); activateTab(tabButtonsArray[newIndex]);
 }
 
-export function openModal(modalId) {
+let modalQueue = [];
+
+function openModalInternal(modalId) {
     const modal = document.getElementById(modalId); if (!modal) return;
     modal.classList.add('visible'); modal.setAttribute('aria-hidden', 'false');
-    const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])');
+    const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
     if (firstFocusable) firstFocusable.focus();
     else modal.focus();
-
-    // Специално за adaptiveQuizModal, ако се отваря от тук (макар че adaptiveQuiz.js има своя логика за open)
     if (modalId === 'adaptiveQuizWrapper') {
-        modal.style.display = 'flex'; // Гарантираме, че е flex преди анимацията
-        setTimeout(() => {
-            modal.classList.add('visible'); // Активираме transition-а
-        }, 10); // Малко забавяне, за да се приложи display:flex първо
+        modal.style.display = 'flex';
+        setTimeout(() => { modal.classList.add('visible'); }, 10);
     }
+}
+
+export function openModal(modalId) {
+    const visibleModal = document.querySelector('.modal.visible');
+    if (visibleModal) { modalQueue.push(modalId); return; }
+    openModalInternal(modalId);
 }
 
 export function closeModal(modalId) {
     const modal = document.getElementById(modalId); if (!modal) return;
-    modal.classList.remove('visible'); modal.setAttribute('aria-hidden', 'true');
-
-    if (modalId === 'adaptiveQuizWrapper') {
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 300); // Време за анимацията от CSS
-        // Рестартирането на състоянието на въпросника ще се управлява от adaptiveQuiz.js или app.js
+    modal.classList.remove("visible"); modal.setAttribute("aria-hidden", "true");
+    if (modalId === "adaptiveQuizWrapper") {
+        setTimeout(() => { modal.style.display = "none"; }, 300);
+    }
+    if (modalQueue.length > 0) {
+        const next = modalQueue.shift();
+        openModalInternal(next);
     }
 }
 
