@@ -164,7 +164,7 @@ function planHasRecContent(plan) {
     const hasPsychData = ['coping_strategies', 'motivational_messages'].some(k => Array.isArray(psych[k]) && psych[k].length > 0) ||
         psych.habit_building_tip || psych.self_compassion_reminder;
 
-    const guidelineFields = [plan.currentPrinciples, plan.principlesWeek2_4, plan.additionalGuidelines];
+    const guidelineFields = [plan.principlesWeek2_4, plan.additionalGuidelines];
     const hasGuidelineData = guidelineFields.some(g => {
         if (Array.isArray(g)) return g.length > 0;
         return typeof g === 'string' && g.trim() !== '';

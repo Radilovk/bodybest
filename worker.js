@@ -221,9 +221,9 @@ export default {
                 }
                 if (!isActive) continue;
 
-                const lastPrincipleUpdateTsStr = await env.USER_METADATA_KV.get(`${userId}_last_principle_update_ts`);
-                const lastPrincipleUpdateTs = lastPrincipleUpdateTsStr ? parseInt(lastPrincipleUpdateTsStr, 10) : 0;
-                const daysSinceLastPrincipleUpdate = (Date.now() - lastPrincipleUpdateTs) / (1000 * 60 * 60 * 24);
+                const lastUpdateTsStrForPrinciples = await env.USER_METADATA_KV.get(`${userId}_last_significant_update_ts`);
+                const lastUpdateTsForPrinciples = lastUpdateTsStrForPrinciples ? parseInt(lastUpdateTsStrForPrinciples, 10) : 0;
+                const daysSinceLastPrincipleUpdate = (Date.now() - lastUpdateTsForPrinciples) / (1000 * 60 * 60 * 24);
 
                 const lastQuizCompletionTsStr = await env.USER_METADATA_KV.get(`${userId}_last_adaptive_quiz_ts`);
                 const lastQuizCompletionTs = lastQuizCompletionTsStr ? parseInt(lastQuizCompletionTsStr, 10) : 0;
@@ -427,7 +427,7 @@ async function handleDashboardDataRequest(request, env) {
     try {
         const [
             initialAnswersStr, finalPlanStr, recipeDataStr, planStatus,
-            currentStatusStr, currentPrinciplesStr, firstLoginFlagStr,
+            currentStatusStr,                     firstLoginFlagStr,
             adaptiveQuizPendingStr,
             aiUpdateSummaryAckStr,
             lastUpdateTsStr,
@@ -438,7 +438,6 @@ async function handleDashboardDataRequest(request, env) {
             env.RESOURCES_KV.get('recipe_data'),
             env.USER_METADATA_KV.get(`plan_status_${userId}`),
             env.USER_METADATA_KV.get(`${userId}_current_status`),
-            env.USER_METADATA_KV.get(`${userId}_current_principles`),
             env.USER_METADATA_KV.get(`${userId}_welcome_seen`),
             env.USER_METADATA_KV.get(`${userId}_adaptive_quiz_pending`),
             env.USER_METADATA_KV.get(`${userId}_ai_update_pending_ack`),
@@ -457,7 +456,6 @@ async function handleDashboardDataRequest(request, env) {
         const initialData = { weight: initialAnswers.weight, height: initialAnswers.height, goal: initialAnswers.goal };
         const recipeData = safeParseJson(recipeDataStr, {});
         const currentStatus = safeParseJson(currentStatusStr, {});
-        const currentPrinciples = currentPrinciplesStr || null;
         
         const logKeys = [];
         const today = new Date();
@@ -510,7 +508,7 @@ async function handleDashboardDataRequest(request, env) {
         }
         
         const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries, currentStatus, env); // Добавен userId
-        const planDataForClient = { ...finalPlan, currentPrinciples: currentPrinciples || safeGet(finalPlan, 'principlesWeek2_4', 'Общи принципи.') };
+        const planDataForClient = { ...finalPlan };
         
         console.log(`DASHBOARD_DATA (${userId}): Successfully fetched data. Plan status: ${actualPlanStatus}.`);
         return { ...baseResponse, planData: planDataForClient, analytics: analyticsData };
@@ -649,11 +647,10 @@ async function handleChatRequest(request, env) {
     const { userId, message } = await request.json();
     if (!userId || !message) return { success: false, message: 'Липсва userId или съобщение.', statusHint: 400 };
     try {
-        const [ initialAnswersStr, finalPlanStr, planStatus, recipeDataStr, storedChatHistoryStr, currentStatusStr, currentPrinciplesStr, ...logStringsForChat ] = await Promise.all([
+        const [ initialAnswersStr, finalPlanStr, planStatus, recipeDataStr, storedChatHistoryStr, currentStatusStr, ...logStringsForChat ] = await Promise.all([
             env.USER_METADATA_KV.get(`${userId}_initial_answers`), env.USER_METADATA_KV.get(`${userId}_final_plan`),
             env.USER_METADATA_KV.get(`plan_status_${userId}`), env.RESOURCES_KV.get('recipe_data'),
             env.USER_METADATA_KV.get(`${userId}_chat_history`), env.USER_METADATA_KV.get(`${userId}_current_status`),
-            env.USER_METADATA_KV.get(`${userId}_current_principles`),
             ...Array.from({ length: 3 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return env.USER_METADATA_KV.get(`${userId}_log_${d.toISOString().split('T')[0]}`); })
         ]);
         const actualPlanStatus = planStatus || 'unknown';
@@ -666,7 +663,7 @@ async function handleChatRequest(request, env) {
         }
         const initialAnswers = safeParseJson(initialAnswersStr, {}); const finalPlan = safeParseJson(finalPlanStr, {});
         let storedChatHistory = safeParseJson(storedChatHistoryStr, []); const currentStatus = safeParseJson(currentStatusStr, {});
-        const currentPrinciples = currentPrinciplesStr || safeGet(finalPlan, 'principlesWeek2_4', 'Общи принципи.');
+        const currentPrinciples = safeGet(finalPlan, 'principlesWeek2_4', 'Общи принципи.');
         if (Object.keys(initialAnswers).length === 0 || Object.keys(finalPlan).length === 0) {
             console.error(`CHAT_REQUEST_ERROR (${userId}): Critical data (initialAnswers or finalPlan) empty after parsing.`);
             return { success: false, message: 'Грешка при зареждане на данни за чат асистента.', statusHint: 500 };
@@ -704,8 +701,8 @@ async function handleChatRequest(request, env) {
         const r = {
             '%%USER_NAME%%':userName, '%%USER_GOAL%%':userGoal, '%%USER_CONDITIONS%%':userConditions, 
             '%%USER_PREFERENCES%%':userPreferences, '%%INITIAL_CALORIES_MACROS%%':initCalMac, 
-            '%%PLAN_APPROACH_SUMMARY%%':planSum, '%%ALLOWED_FOODS_SUMMARY%%':allowedF, 
-            '%%FORBIDDEN_FOODS_SUMMARY%%':forbiddenF, '%%CURRENT_PRINCIPLES%%':currentPrinciples, 
+            '%%PLAN_APPROACH_SUMMARY%%':planSum, '%%ALLOWED_FOODS_SUMMARY%%':allowedF,
+            '%%FORBIDDEN_FOODS_SUMMARY%%':forbiddenF, '%%CURRENT_PRINCIPLES%%': currentPrinciples,
             '%%HYDRATION_TARGET%%':hydrTarget, '%%COOKING_METHODS%%':cookMethods, 
             '%%SUPPLEMENT_SUGGESTIONS%%':suppSuggest, '%%TODAY_DATE%%':today.toLocaleDateString('bg-BG'), 
             '%%CURRENT_WEIGHT%%':currW, 
@@ -1496,8 +1493,6 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
 
 
         if (principlesToSave && principlesToSave.length > 10) {
-            await env.USER_METADATA_KV.put(`${userId}_current_principles`, principlesToSave);
-            await env.USER_METADATA_KV.put(`${userId}_last_principle_update_ts`, Date.now().toString());
             await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
             console.log(`PRINCIPLE_ADJUST (${userId}): Successfully updated principles.`);
 
@@ -1671,7 +1666,7 @@ async function generateAndStoreAdaptiveQuiz(userId, initialAnswers, env) {
         const finalPlan = safeParseJson(finalPlanStr, {});
         const currentStatusStr = await env.USER_METADATA_KV.get(`${userId}_current_status`);
         const currentStatus = safeParseJson(currentStatusStr, {});
-        const currentPrinciples = await env.USER_METADATA_KV.get(`${userId}_current_principles`) || safeGet(finalPlan, 'principlesWeek2_4', 'Общи принципи.');
+        const currentPrinciples = safeGet(finalPlan, 'principlesWeek2_4', 'Общи принципи.');
         
         const logKeys = [];
         const today = new Date();
