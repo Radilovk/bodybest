@@ -8,6 +8,9 @@ import {
 import { trackerInfoTexts, detailedMetricInfoTexts, mainIndexInfoTexts } from './uiElements.js';
 import { capitalizeFirstLetter, safeGet } from './utils.js';
 
+// Продължителност на анимацията при скриване/показване на модали
+const MODAL_TRANSITION_MS = 300;
+
 // Variable to hold the toast timeout ID, managed locally within this module
 let toastTimeoutUiHandlers;
 
@@ -136,11 +139,11 @@ export function closeModal(modalId) {
     const modal = document.getElementById(modalId); if (!modal) return;
     modal.classList.remove("visible"); modal.setAttribute("aria-hidden", "true");
     if (modalId === "adaptiveQuizWrapper") {
-        setTimeout(() => { modal.style.display = "none"; }, 300);
+        setTimeout(() => { modal.style.display = "none"; }, MODAL_TRANSITION_MS);
     }
     if (modalQueue.length > 0) {
         const next = modalQueue.shift();
-        openModalInternal(next);
+        setTimeout(() => openModalInternal(next), MODAL_TRANSITION_MS);
     }
 }
 
