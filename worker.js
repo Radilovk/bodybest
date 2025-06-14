@@ -25,7 +25,6 @@ const PRINCIPLE_UPDATE_INTERVAL_DAYS = 7; // За ръчна актуализа�
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS = 10;
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS = 7;
 const RECENT_CHAT_MESSAGES_FOR_PRINCIPLES = 10;
-const MAX_PLAN_RETRY_ATTEMPTS = 3;
 
 const ADAPTIVE_QUIZ_PERIODICITY_DAYS = 28;
 const ADAPTIVE_QUIZ_TRIGGER_COOLDOWN_DAYS = 14;
@@ -1200,13 +1199,6 @@ async function handleAiHelperRequest(request, env) {
 // ------------- START FUNCTION: processSingleUserPlan -------------
 async function processSingleUserPlan(userId, env) {
     console.log(`PROCESS_USER_PLAN (${userId}): Starting plan generation.`);
-    const retryCountStr = await env.USER_METADATA_KV.get(`${userId}_plan_retry_count`);
-    let currentRetryCount = 0;
-    if (retryCountStr) {
-        const parsed = parseInt(retryCountStr, 10);
-        currentRetryCount = Number.isNaN(parsed) ? 0 : parsed;
-    }
-    console.log(`PROCESS_USER_PLAN (${userId}): Attempt ${currentRetryCount + 1} of ${MAX_PLAN_RETRY_ATTEMPTS}.`);
     try {
         console.log(`PROCESS_USER_PLAN (${userId}): Step 0 - Loading prerequisites.`);
         const initialAnswersString = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
@@ -1289,46 +1281,24 @@ async function processSingleUserPlan(userId, env) {
         await env.USER_METADATA_KV.put(`${userId}_final_plan`, finalPlanString);
         
         if (planBuilder.generationMetadata.errors.length > 0) {
-            let retryCount = currentRetryCount;
-            retryCount++;
-            await env.USER_METADATA_KV.put(`${userId}_plan_retry_count`, String(retryCount));
+            await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
             await env.USER_METADATA_KV.put(`${userId}_processing_error`, planBuilder.generationMetadata.errors.join('\n---\n'));
-            if (retryCount < MAX_PLAN_RETRY_ATTEMPTS) {
-                await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
-                console.log(`PROCESS_USER_PLAN (${userId}): Generation failed. Retry ${retryCount}/${MAX_PLAN_RETRY_ATTEMPTS}. Re-queued.`);
-            } else {
-                await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
-                console.log(`PROCESS_USER_PLAN (${userId}): Reached max retries (${retryCount}). Status set to 'error'.`);
-            }
+            console.log(`PROCESS_USER_PLAN (${userId}): Finished with errors. Status set to 'error'.`);
         } else {
             await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'ready', { metadata: { status: 'ready' } });
             await env.USER_METADATA_KV.delete(`${userId}_processing_error`); // Изтриваме евентуална стара грешка
-            await env.USER_METADATA_KV.delete(`${userId}_plan_retry_count`);
             await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
             console.log(`PROCESS_USER_PLAN (${userId}): Successfully generated and saved UNIFIED plan. Status set to 'ready'.`);
         }
     } catch (error) {
         console.error(`PROCESS_USER_PLAN (${userId}): >>> FATAL Processing Error <<< :`, error.name, error.message, error.stack);
         try {
-            const latestCountStr = await env.USER_METADATA_KV.get(`${userId}_plan_retry_count`);
-            let retryCount = 0;
-            if (latestCountStr) {
-                const parsedRetry = parseInt(latestCountStr, 10);
-                retryCount = Number.isNaN(parsedRetry) ? 0 : parsedRetry;
-            }
-            retryCount++;
-            await env.USER_METADATA_KV.put(`${userId}_plan_retry_count`, String(retryCount));
+            await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
             const detailedErrorMessage = `[${new Date().toISOString()}] FATAL ERROR during plan generation for user ${userId}: ${error.name}: ${error.message}\nStack: ${error.stack}`;
             await env.USER_METADATA_KV.put(`${userId}_processing_error`, detailedErrorMessage);
-            if (retryCount < MAX_PLAN_RETRY_ATTEMPTS) {
-                await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
-                console.log(`PROCESS_USER_PLAN (${userId}): Fatal error. Retry ${retryCount}/${MAX_PLAN_RETRY_ATTEMPTS}. Re-queued.`);
-            } else {
-                await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
-                console.log(`PROCESS_USER_PLAN (${userId}): Fatal error - reached max retries (${retryCount}). Status set to 'error'.`);
-            }
+            console.log(`PROCESS_USER_PLAN (${userId}): Set status to 'error' after fatal exception.`);
         } catch (statusError) {
-            console.error(`PROCESS_USER_PLAN (${userId}): CRITICAL - Failed to set status after fatal exception:`, statusError.message, statusError.stack);
+            console.error(`PROCESS_USER_PLAN (${userId}): CRITICAL - Failed to set error status after fatal exception:`, statusError.message, statusError.stack);
         }
     } finally {
         console.log(`PROCESS_USER_PLAN (${userId}): Finished processing cycle.`);
