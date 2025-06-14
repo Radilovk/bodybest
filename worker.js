@@ -9,7 +9,6 @@
 // - Попълнени липсващи части от предходни версии.
 // - Запазени всички предходни функционалности.
 
-import { jsonrepair } from 'jsonrepair';
 // ------------- START BLOCK: GlobalConstantsAndBindings -------------
 const PHP_FILE_MANAGER_API_URL_SECRET_NAME = 'тут_ваш_php_api_url_secret_name';
 const PHP_API_STATIC_TOKEN_SECRET_NAME = 'тут_ваш_php_api_token_secret_name';
@@ -1497,17 +1496,7 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
             console.log(`PRINCIPLE_ADJUST (${userId}): Successfully updated principles.`);
 
             if (!summaryForUser) {
-                const changeLines = principlesToSave
-                    .split('\n')
-                    .map(l => l.replace(/^[-*]\s*/, '').trim())
-                    .filter(Boolean)
-                    .slice(0, 3);
-                summaryForUser = {
-                    title: 'Актуализация на Вашите Принципи',
-                    introduction: 'Въз основа на последните Ви данни прегледахме хранителните насоки.',
-                    changes: changeLines.length > 0 ? changeLines : [principlesToSave.substring(0, 200)],
-                    encouragement: 'Следвайте актуализираните насоки за по-добри резултати.'
-                };
+                summaryForUser = createFallbackPrincipleSummary(principlesToSave);
             }
 
             if (!calledFromQuizAnalysis) {
@@ -1875,17 +1864,27 @@ const safeParseJson = (jsonString, defaultValue = null) => {
     try {
         return JSON.parse(jsonString);
     } catch (e) {
-        console.warn(`Failed JSON parse: ${e.message}. Attempting repair.`);
-        try {
-            const repaired = jsonrepair(jsonString);
-            return JSON.parse(repaired);
-        } catch (err) {
-            console.warn(`JSON repair also failed: ${err.message}. String (start): "${jsonString.substring(0, 150)}..."`);
-            return defaultValue;
-        }
+        console.warn(`Failed JSON parse: ${e.message}. String (start): "${jsonString.substring(0, 150)}..."`);
+        return defaultValue;
     }
 };
 // ------------- END FUNCTION: safeParseJson -------------
+
+// ------------- START FUNCTION: createFallbackPrincipleSummary -------------
+function createFallbackPrincipleSummary(principlesText) {
+    const changeLines = principlesText
+        .split('\n')
+        .map(l => l.replace(/^[-*]\s*/, '').trim())
+        .filter(Boolean)
+        .slice(0, 3);
+    return {
+        title: 'Актуализация на Вашите Принципи',
+        introduction: 'Въз основа на последните Ви данни прегледахме хранителните насоки.',
+        changes: changeLines.length > 0 ? changeLines : [principlesText.substring(0, 200)],
+        encouragement: 'Следвайте актуализираните насоки за по-добри резултати.'
+    };
+}
+// ------------- END FUNCTION: createFallbackPrincipleSummary -------------
 
 // ------------- START FUNCTION: createUserEvent -------------
 async function createUserEvent(eventType, userId, payload, env) {
@@ -2641,4 +2640,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, callCfAi, handlePrincipleAdjustment };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary };

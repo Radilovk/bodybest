@@ -78,17 +78,12 @@ npm config delete https-proxy
 
 ### Отстраняване на проблеми
 
-Ако при стартиране на worker-а или тестовете видите грешка като:
-
-```text
-Uncaught Error: No such module "jsonrepair". imported from "worker.js"
-```
-
-липсват инсталираните зависимости. Решението е да изпълните:
+Ако при стартиране на worker-а или тестовете липсват инсталираните зависимости, изпълнете:
 
 ```bash
 npm install
 ```
+
 
 След успешната инсталация можете отново да стартирате `npm run dev` или
 `npx wrangler publish`.
