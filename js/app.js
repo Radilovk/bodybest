@@ -376,7 +376,7 @@ function showPlanPendingState(customMessage) {
             if (pElements.length > 1) pElements[1].innerHTML = customMessage;
             else if (pElements.length > 0) pElements[0].innerHTML = customMessage;
         } else {
-             if (pElements.length > 0) pElements[0].textContent = "Благодарим ви за попълнения въпросник! Вашият персонализиран план MyBody.Best се изготвя.";
+             if (pElements.length > 0) pElements[0].textContent = "Благодарим ви за попълнения въпросник! Вашият персонализиран план MyBody.Best се генерира.";
              if (pElements.length > 1) pElements[1].textContent = "Моля, проверете отново по-късно. Ще бъдете уведомени (ако сте позволили известия) или опитайте да презаредите страницата след известно време.";
         }
     }
@@ -398,6 +398,7 @@ export function stopPlanStatusPolling() {
 export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
     if (!currentUserId) return;
     stopPlanStatusPolling();
+    showPlanPendingState();
     showToast('Обновявам плана...', false, 3000);
 
     async function checkStatus() {
@@ -407,10 +408,12 @@ export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
             if (resp.ok && data.success) {
                 if (data.planStatus === 'ready') {
                     stopPlanStatusPolling();
+                    if (selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
                     await loadDashboardData();
                     showToast('Планът е обновен.', false, 4000);
                 } else if (data.planStatus === 'error') {
                     stopPlanStatusPolling();
+                    if (selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
                     showToast(`Грешка при обновяване: ${data.error || ''}`, true, 6000);
                 }
             }
