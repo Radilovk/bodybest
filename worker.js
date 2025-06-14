@@ -3,7 +3,7 @@
 // - Пълна логика за Адаптивен Въпросник: генериране, подаване, анализ на отговори. (Запазена и подобрена от v2.1)
 // - Актуализиран handlePrincipleAdjustment с по-детайлни данни от въпросник. (Запазено от v2.1)
 // - Актуализиран generateAndStoreAdaptiveQuiz с по-детайлни данни от предишни въпросници. (Запазено от v2.1)
-// - Актуализиран analyzeQuizAnswersAndAdapt с по-добро форматиране на отговори и нов ключ за AI резюме.
+// - Автоматичният анализ на отговорите се заменя със събитие planMod.
 // - Имплементиран нов ендпойнт /api/log-extra-meal.
 // - Имплементиран нов ендпойнт /api/acknowledgeAiUpdate.
 // - Попълнени липсващи части от предходни версии.
@@ -909,17 +909,12 @@ async function handleSubmitAdaptiveQuizRequest(request, env, ctx) {
 
         // Запазваме _adaptive_quiz_content_${quizId} за история, ако е генериран с ID, а не само общия.
         // Функцията generateAndStoreAdaptiveQuiz вече прави това.
-        // ctx.waitUntil(analyzeQuizAnswersAndAdapt(userId, answers, quizId, env)); // Преместено в try...catch
+        console.log(`SUBMIT_ADAPTIVE_QUIZ (${userId}): Answers for quiz ${quizId} saved to ${answersKey}.`);
 
-        console.log(`SUBMIT_ADAPTIVE_QUIZ (${userId}): Answers for quiz ${quizId} saved to ${answersKey}. Adaptation process initiated.`);
-        
-        // Инициираме анализа и адаптацията във фонов режим
-        ctx.waitUntil(
-            analyzeQuizAnswersAndAdapt(userId, answers, quizId, env)
-                .catch(err => console.error(`SUBMIT_ADAPTIVE_QUIZ_ERROR (${userId}): Background task analyzeQuizAnswersAndAdapt failed for quiz ${quizId}:`, err.message, err.stack))
-        );
+        // Създаваме събитие за последваща адаптация на плана
+        await createUserEvent('planMod', userId, { reason: 'adaptiveQuiz', quizId }, env);
 
-        return { success: true, message: "Вашите отговори бяха успешно записани! Резултатите от анализа и евентуални корекции по програмата Ви ще бъдат видими в таблото при следващо зареждане." };
+        return { success: true, message: "Вашите отговори бяха успешно записани! Актуализацията на плана ще бъде извършена скоро." };
     } catch (error) {
         console.error("Error in handleSubmitAdaptiveQuizRequest:", error.message, error.stack);
         const userIdFromBody = (await request.json().catch(() => ({}))).userId || 'unknown';
@@ -1846,126 +1841,6 @@ function formatQuizAnswersForContext(quizDefinition, answers, title = "Резю�
 }
 // ------------- END FUNCTION: formatQuizAnswersForContext -------------
 
-// ------------- START FUNCTION: analyzeQuizAnswersAndAdapt -------------
-async function analyzeQuizAnswersAndAdapt(userId, answers, quizId, env) {
-    console.log(`[QUIZ_ANALYSIS] Starting analysis for user ${userId}, quizId ${quizId}`);
-    try {
-        const [initialAnswersStr, finalPlanStr, currentPrinciplesStr, quizDefinitionStrFromSpecific, quizDefinitionStrGeneral] = await Promise.all([
-            env.USER_METADATA_KV.get(`${userId}_initial_answers`),
-            env.USER_METADATA_KV.get(`${userId}_final_plan`),
-            env.USER_METADATA_KV.get(`${userId}_current_principles`),
-            env.USER_METADATA_KV.get(`${userId}_adaptive_quiz_content_${quizId}`), // Първо специфичната дефиниция
-            env.USER_METADATA_KV.get(`${userId}_adaptive_quiz_content`)          // После общата като fallback
-        ]);
-        
-        const quizDefinition = safeParseJson(quizDefinitionStrFromSpecific || quizDefinitionStrGeneral); // Използваме специфичната, ако я има
-
-        if (!initialAnswersStr || !finalPlanStr || !quizDefinition || !quizDefinition.questions) {
-            console.error(`[QUIZ_ANALYSIS_ERROR] (${userId}, Quiz ${quizId}) Missing critical data: initialAnswers, finalPlan, or valid quizDefinition. Cannot adapt.`);
-             await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify({ // Използваме новия ключ
-                title: "Грешка при обработка на въпросника",
-                introduction: "Възникна проблем с намирането на необходимите данни за анализ на Вашите отговори от въпросника.",
-                changes: ["Моля, свържете се с поддръжка, като посочите ID на въпросника (ако е видимо) и часа на попълване."],
-                encouragement: ""
-            }));
-            return;
-        }
-        const initialAnswers = safeParseJson(initialAnswersStr);
-        const finalPlan = safeParseJson(finalPlanStr);
-        const currentPrinciples = currentPrinciplesStr || safeGet(finalPlan, 'principlesWeek2_4', 'Общи принципи.');
-
-        const analysisPromptTemplate = await env.RESOURCES_KV.get('prompt_analyze_quiz_and_suggest_changes');
-        const analysisModelName = await env.RESOURCES_KV.get('model_adaptive_quiz_analysis') || await env.RESOURCES_KV.get('model_chat');
-        const geminiApiKey = env[GEMINI_API_KEY_SECRET_NAME];
-
-        if (!analysisPromptTemplate || !analysisModelName || !geminiApiKey) {
-            console.error(`[QUIZ_ANALYSIS_ERROR] (${userId}) Missing prerequisites for AI analysis (prompt, model, or API key).`);
-            await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify({ // Използваме новия ключ
-                title: "Техническа грешка при анализ",
-                introduction: "В момента автоматичният анализ на отговорите от въпросника не е достъпен поради технически проблем.",
-                changes: ["Специалист ще прегледа отговорите Ви при първа възможност. Не е нужно да правите нищо допълнително."],
-                encouragement: "Благодарим за разбирането!"
-            }));
-            return;
-        }
-
-        const formattedAnswers = formatQuizAnswersForContext(quizDefinition, answers, `ОТГОВОРИ ОТ АДАПТИВЕН ВЪПРОСНИК (ID: ${quizId}, Потребител: ${userId})`);
-
-        const contextForAnalysis = `
-            ПОТРЕБИТЕЛСКИ ДАННИ И КОНТЕКСТ:
-            - ID на потребителя: ${userId}
-            - Основна цел на потребителя: ${initialAnswers.goal || 'N/A'}
-            - Ключови данни от първоначалния въпросник: ${JSON.stringify({food_preference: initialAnswers.foodPreference, medical_conditions: initialAnswers.medicalConditions, disliked_foods: initialAnswers.q1745806494081 || initialAnswers.q1745806409218, main_challenge: initialAnswers.mainChallenge}).substring(0,500)}...
-            - Текущ хранителен план (калории/макроси): ${JSON.stringify(finalPlan.caloriesMacros).substring(0,300)}...
-            - Текущи хранителни принципи (преди този анализ): ${typeof currentPrinciples === 'string' ? currentPrinciples.substring(0,700) : JSON.stringify(currentPrinciples).substring(0,700)}...
-            
-            ${formattedAnswers}
-
-            ЗАДАЧА ЗА AI АСИСТЕНТА:
-            1. Внимателно анализирай отговорите от адаптивния въпросник в контекста на останалите потребителски данни, текущия му план и принципи.
-            2. Идентифицирай основните нужди, проблеми, предизвикателства или успехи, които произтичат от отговорите.
-            3. Предложи актуализирани или напълно нови хранителни принципи (между 3 и 5 на брой), които АДРЕСИРАТ директно идентифицираното в точка 2. Принципите трябва да са на български език, да са ясни, конкретни и лесни за изпълнение (actionable). Ако текущите принципи са напълно адекватни и отговорите не налагат промяна, можеш да ги запазиш или само леко да ги модифицираш/преформулираш за по-голяма яснота.
-            4. Генерирай кратко (2-4 изречения) резюме НА БЪЛГАРСКИ ЕЗИК за потребителя. То трябва да обяснява:
-                а) Какви са основните изводи от неговите отговори.
-                б) Какви промени са направени в хранителните принципи (или да потвърди, че текущите са добри и се запазват).
-                в) ЗАЩО са направени тези промени (или защо се запазват), като се свържат с отговорите от въпросника.
-            5. По желание, можеш да генерираш и по-общо заглавие и окуражаващо съобщение за потребителя.
-            
-            ИЗХОДЕН ФОРМАТ (ЗАДЪЛЖИТЕЛНО JSON ОБЕКТ):
-            {
-              "updatedPrinciples": "Текст на новите/актуализирани принципи. Всеки принцип да е на нов ред, започващ с тире (-) или номер (1., 2., ...).",
-              "changeSummaryForUser": "Текст на резюмето за потребителя, както е описано в точка 4.",
-              "titleForUser": "Кратко, позитивно заглавие за потребителя (напр. 'Вашата програма е актуализирана!')",
-              "introductionForUser": "Въвеждащо изречение за потребителя (напр. 'Въз основа на Вашите отговори от последния въпросник...')",
-              "encouragementForUser": "Кратко окуражаващо съобщение (напр. 'Продължавайте все така напред!')"
-            }
-            ВАЖНО: Стриктно следвай изходния JSON формат. Увери се, че всички текстове са на български език. Ако няма нужда от промени в принципите, върни съществуващите принципи в полето "updatedPrinciples" и обясни в "changeSummaryForUser" защо не са необходими промени.
-        `.trim().replace(/\s+/g, ' ');
-
-        const replacements = { '%%QUIZ_ANSWERS_AND_CONTEXT%%': contextForAnalysis }; // Увери се, че KV промптът ползва този плейсхолдър
-        const populatedAnalysisPrompt = populatePrompt(analysisPromptTemplate, replacements);
-
-        console.log(`[QUIZ_ANALYSIS] (${userId}, Quiz ${quizId}) Calling AI (${analysisModelName}) for analysis and suggestions. Prompt length: ${populatedAnalysisPrompt.length}`);
-        const rawAnalysisResponse = await callGeminiAPI(populatedAnalysisPrompt, geminiApiKey, { temperature: 0.5, maxOutputTokens: 2000 }, [], analysisModelName);
-        const cleanedAnalysisJson = cleanGeminiJson(rawAnalysisResponse);
-        const analysisResult = safeParseJson(cleanedAnalysisJson);
-
-        if (!analysisResult || typeof analysisResult.updatedPrinciples !== 'string' || typeof analysisResult.changeSummaryForUser !== 'string') {
-            console.error(`[QUIZ_ANALYSIS_ERROR] (${userId}, Quiz ${quizId}) AI did not return valid analysis/suggestions in the expected JSON format. Raw response (start): ${rawAnalysisResponse.substring(0,300)}... Cleaned JSON: ${cleanedAnalysisJson.substring(0,300)}...`);
-            await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify({ // Използваме новия ключ
-                title: "Отговорите от въпросника са получени",
-                introduction: "Благодарим Ви за отделеното време! Вашите отговори са приети и записани.",
-                changes: ["В момента има техническо затруднение с автоматичния анализ. Специалист ще прегледа отговорите Ви и при нужда ще актуализира програмата Ви или ще се свърже с Вас."],
-                encouragement: "Продължавайте да следите напредъка си и да попълвате дневника си!"
-            }));
-            return;
-        }
-
-        await env.USER_METADATA_KV.put(`${userId}_current_principles`, analysisResult.updatedPrinciples.trim());
-        await env.USER_METADATA_KV.put(`${userId}_last_principle_update_ts`, Date.now().toString()); // Маркираме, че принципите са актуализирани
-        console.log(`[QUIZ_ANALYSIS_SUCCESS] (${userId}, Quiz ${quizId}) Principles updated based on quiz analysis.`);
-
-        const summaryForUser = {
-            title: analysisResult.titleForUser || "Вашата програма е актуализирана!",
-            introduction: analysisResult.introductionForUser || "Въз основа на Вашите отговори от последния въпросник, направихме следните корекции и изводи:",
-            // Промените могат да бъдат един стринг или масив от стрингове. За консистентност, правим го масив.
-            changes: Array.isArray(analysisResult.changeSummaryForUser) ? analysisResult.changeSummaryForUser : (typeof analysisResult.changeSummaryForUser === 'string' ? [analysisResult.changeSummaryForUser] : ["Направени са някои корекции по Вашата програма, за да отговаря по-добре на текущите Ви нужди."]),
-            encouragement: analysisResult.encouragementForUser || "Продължавайте в същия дух и не се колебайте да използвате чат асистента при въпроси!"
-        };
-        await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summaryForUser)); // Използваме новия ключ
-        console.log(`[QUIZ_ANALYSIS_SUCCESS] (${userId}, Quiz ${quizId}) AI update summary stored for user.`);
-
-    } catch (error) {
-        console.error(`[QUIZ_ANALYSIS_FATAL_ERROR] Error during quiz analysis for user ${userId}, quizId ${quizId}:`, error.message, error.stack);
-         await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify({ // Използваме новия ключ
-            title: "Обработка на отговорите от въпросника",
-            introduction: "Вашите отговори от въпросника са приети. Възникна неочаквано затруднение при автоматичната им обработка.",
-            changes: ["Специалист ще ги прегледа при първа възможност. Моля, извинете за причиненото неудобство."],
-            encouragement: ""
-        }));
-    }
-}
-// ------------- END FUNCTION: analyzeQuizAnswersAndAdapt -------------
 // ------------- END BLOCK: HelperFunctionsForAdaptiveQuiz -------------
 
 
