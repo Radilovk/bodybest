@@ -661,48 +661,23 @@ export async function _handleSubmitQuizAnswersClientSide() {
 
     showLoading(true, "Обработка на вашите отговори...");
     try {
-        const analysisResult = await _submitAdaptiveQuizClientSide(currentUserId, currentQuizData.quizId, userQuizAnswers);
+        await _submitAdaptiveQuizClientSide(currentUserId, currentQuizData.quizId, userQuizAnswers);
         showToast("Въпросникът е успешно подаден!", false, 2000);
 
         setTimeout(() => {
-            // closeModal се импортира от uiHandlers.js и ще се използва директно
-            // ако selectors.adaptiveQuizModal е наличен.
-            // В adaptiveQuiz.js closeModal се извиква през genericCloseModal, което е alias на closeModal
             if (selectors.adaptiveQuizModal) {
-                 closeModal('adaptiveQuizWrapper');
+                closeModal('adaptiveQuizWrapper');
             }
         }, 1500);
 
-        const aiSummaryFromWorker = safeGet(analysisResult, 'aiUpdateSummary');
-        if (aiSummaryFromWorker && (aiSummaryFromWorker.title || aiSummaryFromWorker.introduction || aiSummaryFromWorker.changes || aiSummaryFromWorker.encouragement)) {
-            let summaryHtml = `<h3>${aiSummaryFromWorker.title || 'Резултат от Вашия Чек-ин'}</h3>`;
-            if (aiSummaryFromWorker.introduction) summaryHtml += `<p>${aiSummaryFromWorker.introduction.replace(/\n/g, '<br>')}</p>`;
-            if (aiSummaryFromWorker.changes && Array.isArray(aiSummaryFromWorker.changes) && aiSummaryFromWorker.changes.length > 0) {
-                summaryHtml += `<ul>${aiSummaryFromWorker.changes.map(ch => `<li>${String(ch).replace(/\n/g, '<br>')}</li>`).join('')}</ul>`;
-            }
-            if (aiSummaryFromWorker.encouragement) summaryHtml += `<p>${aiSummaryFromWorker.encouragement.replace(/\n/g, '<br>')}</p>`;
+        showPlanPendingState();
+        pollPlanStatus();
 
-            // openInfoModalWithDetails се импортира от uiHandlers
-            // и очаква key и type, които тук не са релевантни по същия начин.
-            // Затова директно задаваме съдържанието на infoModal.
-            if (selectors.infoModalTitle) selectors.infoModalTitle.textContent = aiSummaryFromWorker.title || 'Информация';
-            if (selectors.infoModalBody) selectors.infoModalBody.innerHTML = summaryHtml;
-            openModal('infoModal'); // openModal от uiHandlers
-
-            fetch(apiEndpoints.acknowledgeAiUpdate, {
-                 method: 'POST', headers: {'Content-Type': 'application/json'},
-                 body: JSON.stringify({userId: currentUserId})
-            }).catch(err => console.warn("Failed to acknowledge AI update to worker:", err));
-        } else if (analysisResult && analysisResult.message) {
-             showToast(analysisResult.message, false, 4000);
-        }
-
-        await loadDashboardData();
         setCurrentQuizData(null);
         setUserQuizAnswers({});
         setCurrentQuestionIndex(0);
     } catch (error) {
-        console.error("Error submitting quiz answers and adapting:", error);
+        console.error("Error submitting quiz answers:", error);
         showToast(`Грешка при подаване на въпросника: ${error.message}`, true);
     } finally {
         showLoading(false);
