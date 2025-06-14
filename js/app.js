@@ -311,21 +311,21 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
 
         if (data.aiUpdateSummary) {
             const { title, introduction, changes, encouragement } = data.aiUpdateSummary;
-            if (selectors.aiUpdateModalTitle) selectors.aiUpdateModalTitle.textContent = title || '📣 Информация за Актуализация';
-            let summaryHtml = '';
+            let summaryHtml = `<h3>${title || 'Важни Актуализации'}</h3>`;
             if (introduction) summaryHtml += `<p>${introduction.replace(/\n/g, '<br>')}</p>`;
             if (changes && Array.isArray(changes) && changes.length > 0) {
                 summaryHtml += `<ul>${changes.map(ch => `<li>${String(ch).replace(/\n/g, '<br>')}</li>`).join('')}</ul>`;
             }
             if (encouragement) summaryHtml += `<p>${encouragement.replace(/\n/g, '<br>')}</p>`;
 
-            if (selectors.aiUpdateModalBody) selectors.aiUpdateModalBody.innerHTML = summaryHtml;
-            openModal('aiUpdateNotificationModal');
+            if (selectors.infoModalTitle) selectors.infoModalTitle.textContent = title || 'Информация';
+            if (selectors.infoModalBody) selectors.infoModalBody.innerHTML = summaryHtml;
+            openModal('infoModal');
             fetch(apiEndpoints.acknowledgeAiUpdate, {
                  method: 'POST',
                  headers: {'Content-Type': 'application/json'},
                  body: JSON.stringify({userId: currentUserId})
-            }).catch(err => console.warn('Failed to acknowledge AI update:', err));
+            }).catch(err => console.warn("Failed to acknowledge AI update:", err));
         }
 
         if (data.triggerAutomatedFeedbackChat) {
