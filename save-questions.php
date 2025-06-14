@@ -3,8 +3,8 @@ header("Content-Type: application/json; charset=utf-8");
 
 // ----- Конфигурация чрез променливи на средата -----
 $cloudflareApiToken = getenv('CF_API_TOKEN');
-$cloudflareAccountId = 'c2015f4060e04bc3c414f78a9946668e'; // Cloudflare Account ID
-$kvNamespaceId = '8ebf65a6ed0a44e7b7d1b4bc6f24465e'; // Namespace ID за RESOURCES_KV
+$cloudflareAccountId = getenv('CF_ACCOUNT_ID') ?: 'c2015f4060e04bc3c414f78a9946668e';
+$kvNamespaceId = getenv('RESOURCES_KV_ID') ?: '8ebf65a6ed0a44e7b7d1b4bc6f24465e';
 $kvKeyName = 'question_definitions';
 // -----------------------------------------------------
 

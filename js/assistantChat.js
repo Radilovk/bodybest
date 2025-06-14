@@ -2,6 +2,10 @@ import { apiEndpoints, cloudflareAccountId } from './config.js';
 
 const chatEndpoint = apiEndpoints.chat;
 const chatHistory = [];
+
+function saveHistory() {
+    sessionStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+}
 let typingEl = null;
 
 function scrollChatToBottom() {
@@ -43,6 +47,7 @@ async function sendMessage() {
 
     addMessage(message, 'user');
     chatHistory.push({ text: message, sender: 'user', isError: false });
+    saveHistory();
     inputEl.value = '';
     inputEl.focus();
     showTyping();
@@ -57,15 +62,18 @@ async function sendMessage() {
         if (res.ok && data.success) {
             addMessage(data.reply, 'bot');
             chatHistory.push({ text: data.reply, sender: 'bot', isError: false });
+            saveHistory();
         } else {
             const msg = data.message || 'Грешка при заявката.';
             addMessage(msg, 'bot', true);
             chatHistory.push({ text: msg, sender: 'bot', isError: true });
+            saveHistory();
         }
     } catch (err) {
         const msg = 'Неуспешна връзка с Cloudflare Worker.';
         addMessage(msg, 'bot', true);
         chatHistory.push({ text: msg, sender: 'bot', isError: true });
+        saveHistory();
     } finally {
         hideTyping();
     }
@@ -82,6 +90,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     userIdInput.value = savedId;
     userIdInput.disabled = true;
+
+    const storedHistory = sessionStorage.getItem('chatHistory');
+    if (storedHistory) {
+        try {
+            const parsed = JSON.parse(storedHistory);
+            parsed.forEach(h => {
+                addMessage(h.text, h.sender, h.isError);
+                chatHistory.push(h);
+            });
+        } catch { /* ignore parse errors */ }
+    }
 
     document.getElementById('chat-send').addEventListener('click', sendMessage);
     document.getElementById('chat-input').addEventListener('keypress', e => {
