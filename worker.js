@@ -1201,11 +1201,13 @@ async function processSingleUserPlan(userId, env) {
     try {
         console.log(`PROCESS_USER_PLAN (${userId}): Step 0 - Loading prerequisites.`);
         const initialAnswersString = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
+        const previousPlanStr = await env.USER_METADATA_KV.get(`${userId}_final_plan`);
         if (!initialAnswersString) {
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): Initial answers not found. Cannot generate plan.`);
             throw new Error(`Initial answers not found for ${userId}. Cannot generate plan.`);
         }
         const initialAnswers = safeParseJson(initialAnswersString, {});
+        const previousPlan = safeParseJson(previousPlanStr, {});
         if (Object.keys(initialAnswers).length === 0) {
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): Parsed initial answers are empty.`);
             throw new Error(`Parsed initial answers are empty for ${userId}.`);
@@ -1287,6 +1289,8 @@ async function processSingleUserPlan(userId, env) {
             await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'ready', { metadata: { status: 'ready' } });
             await env.USER_METADATA_KV.delete(`${userId}_processing_error`); // Изтриваме евентуална стара грешка
             await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
+            const summary = createPlanUpdateSummary(planBuilder, previousPlan);
+            await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summary));
             console.log(`PROCESS_USER_PLAN (${userId}): Successfully generated and saved UNIFIED plan. Status set to 'ready'.`);
         }
     } catch (error) {
@@ -1885,6 +1889,35 @@ function createFallbackPrincipleSummary(principlesText) {
     };
 }
 // ------------- END FUNCTION: createFallbackPrincipleSummary -------------
+
+// ------------- START FUNCTION: createPlanUpdateSummary -------------
+function createPlanUpdateSummary(newPlan, oldPlan = {}) {
+    const changes = [];
+    const newCal = safeGet(newPlan, 'caloriesMacros.calories');
+    const oldCal = safeGet(oldPlan, 'caloriesMacros.calories');
+    if (newCal) {
+        if (!oldCal || newCal !== oldCal) {
+            changes.push(`Дневен калориен прием: около ${newCal} kcal`);
+        }
+    }
+
+    const principlesText = safeGet(newPlan, 'principlesWeek2_4', '');
+    const principleLines = typeof principlesText === 'string'
+        ? principlesText.split('\n')
+        : Array.isArray(principlesText) ? principlesText : [];
+    principleLines.forEach(l => {
+        const t = String(l).replace(/^[-*]\s*/, '').trim();
+        if (t) changes.push(t);
+    });
+
+    return {
+        title: 'Обновен персонализиран план',
+        introduction: 'Вашият план беше генериран отново. Ето няколко основни акцента:',
+        changes: changes.slice(0, 3),
+        encouragement: 'Разгледайте плана и следвайте препоръките!'
+    };
+}
+// ------------- END FUNCTION: createPlanUpdateSummary -------------
 
 // ------------- START FUNCTION: createUserEvent -------------
 async function createUserEvent(eventType, userId, payload, env) {
@@ -2640,4 +2673,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary };
