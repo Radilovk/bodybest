@@ -29,6 +29,7 @@ export function initializeSelectors() {
         adaptiveQuizContainer: 'adaptiveQuizWrapper',
         triggerAdaptiveQuizBtn: 'triggerAdaptiveQuizBtn',
         infoModal: 'infoModal', infoModalTitle: 'infoModalTitle', infoModalBody: 'infoModalBody',
+        aiUpdateNotificationModal: 'aiUpdateNotificationModal', aiUpdateModalTitle: 'aiUpdateModalTitle', aiUpdateModalBody: 'aiUpdateModalBody',
         feedbackModal: 'feedbackModal',
         feedbackFab: 'feedback-fab',
         feedbackForm: 'feedbackForm',

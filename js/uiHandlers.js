@@ -116,9 +116,15 @@ export function handleTabKeydown(e) {
 }
 
 let modalQueue = [];
+let currentModalId = null;
+
+export function getCurrentModalId() {
+    return currentModalId;
+}
 
 function openModalInternal(modalId) {
     const modal = document.getElementById(modalId); if (!modal) return;
+    currentModalId = modalId;
     modal.classList.add('visible'); modal.setAttribute('aria-hidden', 'false');
     const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
     if (firstFocusable) firstFocusable.focus();
@@ -130,8 +136,7 @@ function openModalInternal(modalId) {
 }
 
 export function openModal(modalId) {
-    const visibleModal = document.querySelector('.modal.visible');
-    if (visibleModal) { modalQueue.push(modalId); return; }
+    if (currentModalId) { modalQueue.push(modalId); return; }
     openModalInternal(modalId);
 }
 
@@ -141,6 +146,7 @@ export function closeModal(modalId) {
     if (modalId === "adaptiveQuizWrapper") {
         setTimeout(() => { modal.style.display = "none"; }, MODAL_TRANSITION_MS);
     }
+    currentModalId = null;
     if (modalQueue.length > 0) {
         const next = modalQueue.shift();
         setTimeout(() => openModalInternal(next), MODAL_TRANSITION_MS);
