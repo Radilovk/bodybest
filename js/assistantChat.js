@@ -1,4 +1,4 @@
-import { apiEndpoints, cloudflareAccountId } from './config.js';
+import { apiEndpoints, cloudflareAccountId, cloudflareAiToken } from './config.js';
 
 const chatEndpoint = apiEndpoints.chat;
 const chatHistory = [];
@@ -59,24 +59,32 @@ async function sendMessage() {
     showTyping();
 
     try {
+        const messages = [
+            { role: 'system', content: 'You are a helpful assistant.' },
+            ...chatHistory.slice(-10).map(h => ({ role: h.sender === 'user' ? 'user' : 'assistant', content: h.text })),
+            { role: 'user', content: message }
+        ];
         const res = await fetch(chatEndpoint, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, message, history: chatHistory.slice(-10) })
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${cloudflareAiToken}`
+            },
+            body: JSON.stringify({ messages })
         });
         const data = await res.json();
-        if (res.ok && data.success) {
-            addMessage(data.reply, 'bot');
-            chatHistory.push({ text: data.reply, sender: 'bot', isError: false });
+        if (res.ok && data.result?.response) {
+            addMessage(data.result.response, 'bot');
+            chatHistory.push({ text: data.result.response, sender: 'bot', isError: false });
             saveHistory();
         } else {
-            const msg = data.message || 'Грешка при заявката.';
+            const msg = data.errors?.[0]?.message || 'Грешка при заявката.';
             addMessage(msg, 'bot', true);
             chatHistory.push({ text: msg, sender: 'bot', isError: true });
             saveHistory();
         }
     } catch (err) {
-        const msg = 'Неуспешна връзка с Cloudflare Worker.';
+        const msg = 'Неуспешна връзка с Cloudflare AI.';
         addMessage(msg, 'bot', true);
         chatHistory.push({ text: msg, sender: 'bot', isError: true });
         saveHistory();

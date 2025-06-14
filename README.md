@@ -225,9 +225,9 @@ Set the output as the value for `ADMIN_PASS_HASH`.
 
 ### Chat Assistant
 
-The standalone page `assistant.html` allows you to send direct commands to the worker.
-Open the file in a browser, enter your message and it will call the `/api/chat` endpoint.
-The Cloudflare account ID is filled automatically from `config.js`.
+The standalone page `assistant.html` allows you to send direct commands to Cloudflare Workers AI.
+Open the file in a browser, enter your message and it will call the Cloudflare AI endpoint directly.
+The Cloudflare account ID is filled automatically from `config.js` and the request includes an API token.
 
 Example test request with `curl`:
 
