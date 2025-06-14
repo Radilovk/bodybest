@@ -43,6 +43,12 @@ export function closeChatWidget() {
     if (selectors.chatFab) selectors.chatFab.focus();
 }
 
+export function clearChat() {
+    if (!selectors.chatMessages) return;
+    selectors.chatMessages.innerHTML = '';
+    chatHistory.length = 0;
+}
+
 export function displayMessage(text, sender = 'bot', isError = false) {
     if (!selectors.chatMessages) return;
     const messageDiv = document.createElement('div');

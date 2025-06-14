@@ -594,9 +594,12 @@
         <div id="chat-widget" class="chat-widget" role="log" aria-live="polite">
             <div class="chat-header">
                 <h4>💬 Чат с Асистент</h4>
-                <button id="chat-close" class="chat-close-btn" aria-label="Затвори чата">
-                    <svg class="icon"><use href="#icon-close"></use></svg>
-                </button>
+                <div class="chat-actions">
+                    <button id="chat-clear" class="chat-clear-btn" aria-label="Изчисти чата">🗑</button>
+                    <button id="chat-close" class="chat-close-btn" aria-label="Затвори чата">
+                        <svg class="icon"><use href="#icon-close"></use></svg>
+                    </button>
+                </div>
             </div>
             <div id="chat-messages" class="chat-messages">
                 <!-- Messages will be added here by JS -->

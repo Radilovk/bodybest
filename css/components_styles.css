@@ -152,11 +152,22 @@
 }
 .chat-header h4 { margin: 0; font-size: 1.1rem; color: var(--chat-header-text); display: flex; align-items: center; }
 .chat-header h4 .emoji { margin-right: var(--space-sm); font-size: 1em; } 
-.chat-close-btn {
-  font-size: 1.5rem; color: var(--chat-header-text); padding: var(--space-xs);
-  line-height: 1; background: none; border: none; cursor: pointer; opacity: 0.8;
+.chat-header .chat-actions { display: flex; gap: var(--space-xs); align-items: center; }
+.chat-close-btn,
+.chat-clear-btn {
+  font-size: 1.5rem;
+  color: var(--chat-header-text);
+  padding: var(--space-xs);
+  line-height: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.8;
 }
-.chat-close-btn:hover { opacity: 1; }
+.chat-close-btn:hover,
+.chat-clear-btn:hover {
+  opacity: 1;
+}
 .chat-messages {
   flex-grow: 1; overflow-y: auto; padding: var(--space-md);
   display: flex; flex-direction: column; gap: var(--space-sm);
