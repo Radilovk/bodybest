@@ -13,6 +13,12 @@ function scrollChatToBottom() {
     container.scrollTop = container.scrollHeight;
 }
 
+function clearChat() {
+    document.getElementById('chat-messages').innerHTML = '';
+    chatHistory.length = 0;
+    sessionStorage.removeItem('chatHistory');
+}
+
 function addMessage(text, sender = 'bot', isError = false) {
     const msg = document.createElement('div');
     msg.className = `message ${sender}` + (isError ? ' error' : '');
@@ -106,4 +112,5 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('chat-input').addEventListener('keypress', e => {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     });
+    document.getElementById('chat-clear').addEventListener('click', clearChat);
 });

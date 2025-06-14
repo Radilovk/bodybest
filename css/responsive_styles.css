@@ -171,7 +171,8 @@
    .chat-header h4 { font-size: 1rem; }
    .chat-header h4 .emoji { font-size: 0.9em; margin-right: var(--space-xs); }
    /* .chat-close-btn svg.icon { width: 20px; height: 20px; } */ /* This is a general icon, should be sized by its context or font-size */
-   .chat-close-btn { font-size: 1.3rem; /* Adjust size of close button itself */ }
+   .chat-close-btn,
+   .chat-clear-btn { font-size: 1.3rem; /* Adjust size of header buttons */ }
 
 
    .chat-messages { padding: var(--space-sm); gap: var(--space-xs); }

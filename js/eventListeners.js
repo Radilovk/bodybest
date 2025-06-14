@@ -15,7 +15,7 @@ import {
     _handleTriggerAdaptiveQuizClientSide, // from app.js
     todaysMealCompletionStatus, activeTooltip // from app.js
 } from './app.js';
-import { toggleChatWidget, closeChatWidget } from './chat.js';
+import { toggleChatWidget, closeChatWidget, clearChat } from './chat.js';
 import { computeSwipeTargetIndex } from './swipeUtils.js';
 import { handleAchievementClick } from './achievements.js';
 
@@ -105,6 +105,7 @@ export function setupStaticEventListeners() {
     });
     if (selectors.chatFab) selectors.chatFab.addEventListener('click', toggleChatWidget);
     if (selectors.chatClose) selectors.chatClose.addEventListener('click', closeChatWidget);
+    if (selectors.chatClear) selectors.chatClear.addEventListener('click', clearChat);
     if (selectors.chatSend) selectors.chatSend.addEventListener('click', handleChatSend);
     if (selectors.chatInput) selectors.chatInput.addEventListener('keypress', handleChatInputKeypress);
 

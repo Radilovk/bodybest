@@ -38,6 +38,7 @@ export function initializeSelectors() {
         analyticsCardsContainer: 'analyticsCardsContainer',
         tooltipTracker: 'tooltip-tracker',
         toast: 'toast', chatFab: 'chat-fab', chatWidget: 'chat-widget', chatClose: 'chat-close',
+        chatClear: 'chat-clear',
         chatMessages: 'chat-messages', chatInput: 'chat-input', chatSend: 'chat-send'
     };
     let missingCriticalCount = 0;
