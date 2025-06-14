@@ -19,7 +19,6 @@ export function populateUI() {
     try { populateProfileTab(data.userName, data.initialData, data.currentStatus, data.initialAnswers); } catch(e) { console.error("Error in populateProfileTab:", e); }
     try { populateWeekPlanTab(data.planData?.week1Menu); } catch(e) { console.error("Error in populateWeekPlanTab:", e); }
     const guidelinesData =
-        data.planData?.currentPrinciples ||
         data.planData?.principlesWeek2_4 ||
         data.planData?.additionalGuidelines ||
         data.additionalGuidelines;
