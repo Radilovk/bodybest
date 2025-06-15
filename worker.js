@@ -1954,6 +1954,10 @@ function createPlanUpdateSummary(newPlan, oldPlan = {}) {
         if (t) changes.push(t);
     });
 
+    if (changes.length === 0) {
+        changes.push('Няма съществени промени – планът е обновен без значителни разлики.');
+    }
+
     return {
         title: 'Обновен персонализиран план',
         introduction: 'Вашият план беше генериран отново. Ето няколко основни акцента:',
