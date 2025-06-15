@@ -119,13 +119,19 @@ let modalQueue = [];
 
 function openModalInternal(modalId) {
     const modal = document.getElementById(modalId); if (!modal) return;
-    modal.classList.add('visible'); modal.setAttribute('aria-hidden', 'false');
-    const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-    if (firstFocusable) firstFocusable.focus();
-    else modal.focus();
     if (modalId === 'adaptiveQuizWrapper') {
         modal.style.display = 'flex';
-        setTimeout(() => { modal.classList.add('visible'); }, 10);
+        requestAnimationFrame(() => {
+            modal.classList.add('visible');
+            modal.setAttribute('aria-hidden', 'false');
+            const first = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            (first || modal).focus();
+        });
+    } else {
+        modal.classList.add('visible');
+        modal.setAttribute('aria-hidden', 'false');
+        const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        (firstFocusable || modal).focus();
     }
 }
 
@@ -138,13 +144,22 @@ export function openModal(modalId) {
 export function closeModal(modalId) {
     const modal = document.getElementById(modalId); if (!modal) return;
     modal.classList.remove("visible"); modal.setAttribute("aria-hidden", "true");
-    if (modalId === "adaptiveQuizWrapper") {
-        setTimeout(() => { modal.style.display = "none"; }, MODAL_TRANSITION_MS);
-    }
-    if (modalQueue.length > 0) {
-        const next = modalQueue.shift();
-        setTimeout(() => openModalInternal(next), MODAL_TRANSITION_MS);
-    }
+
+    const handleTransitionEnd = () => {
+        modal.removeEventListener('transitionend', handleTransitionEnd);
+        if (modalId === "adaptiveQuizWrapper") {
+            modal.style.display = "none";
+        }
+        if (modalQueue.length > 0) {
+            const next = modalQueue.shift();
+            openModalInternal(next);
+        }
+    };
+    const fallbackTimer = setTimeout(handleTransitionEnd, MODAL_TRANSITION_MS);
+    modal.addEventListener('transitionend', () => {
+        clearTimeout(fallbackTimer);
+        handleTransitionEnd();
+    }, { once: true });
 }
 
 export function openInfoModalWithDetails(key, type) {

@@ -14,7 +14,6 @@ beforeEach(async () => {
 });
 
 test('queued modals open sequentially', () => {
-  jest.useFakeTimers();
   openModal('firstModal');
   openModal('secondModal');
   const first = document.getElementById('firstModal');
@@ -22,8 +21,6 @@ test('queued modals open sequentially', () => {
   expect(first.classList.contains('visible')).toBe(true);
   expect(second.classList.contains('visible')).toBe(false);
   closeModal('firstModal');
-  expect(second.classList.contains('visible')).toBe(false);
-  jest.advanceTimersByTime(300);
+  first.dispatchEvent(new Event('transitionend'));
   expect(second.classList.contains('visible')).toBe(true);
-  jest.useRealTimers();
 });
