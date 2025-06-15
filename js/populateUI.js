@@ -1,6 +1,6 @@
 // populateUI.js - Попълване на UI с данни
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
-import { safeGet, safeParseFloat, capitalizeFirstLetter } from './utils.js';
+import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml } from './utils.js';
 import { generateId } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, planHasRecContent } from './app.js';
 import { showToast, openModal, closeModal } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
@@ -80,7 +80,7 @@ function populateDashboardDetailedAnalytics(analyticsData) {
     const textualAnalysis = safeGet(analyticsData, 'textualAnalysis');
 
     if (textualAnalysis) {
-        textualAnalysisContainer.innerHTML = `<p>${textualAnalysis.replace(/\n/g, "<br>")}</p>`;
+        textualAnalysisContainer.innerHTML = `<p>${escapeHtml(textualAnalysis).replace(/\n/g, "<br>")}</p>`;
     } else {
         textualAnalysisContainer.innerHTML = '<p class="placeholder">Текстовият анализ се генерира или не е наличен...</p>';
     }
