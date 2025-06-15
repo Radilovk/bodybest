@@ -29,6 +29,7 @@ The output MUST be plain text, suitable for direct display to the user. Each pri
 **4. Recent Chat Interaction Summary (Focus on user's expressed needs, struggles, or questions - last ~10 messages):**
 ```text
 %%RECENT_CHAT_SUMMARY%%
+```
 
 5. Specific Concerns Identified (from logs or explicitly stated by user, if any):
 %%USER_SPECIFIC_CONCERNS_FROM_LOGS_OR_CHAT%% (e.g., "User reports persistent afternoon hunger", "User struggles with low energy despite good sleep logs", "N/A")
