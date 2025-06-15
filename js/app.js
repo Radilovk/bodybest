@@ -31,6 +31,14 @@ import {
     getSummaryFromPreviousQuizzes // For potential use in app.js
 } from './adaptiveQuiz.js';
 
+function normalizeText(input) {
+    if (input === undefined || input === null) return '';
+    if (typeof input === 'string') return input;
+    if (Array.isArray(input)) return input.map(normalizeText).join(', ');
+    if (typeof input === 'object') return Object.values(input).map(normalizeText).join(', ');
+    return String(input);
+}
+
 // ==========================================================================
 // ГЛОБАЛНИ ПРОМЕНЛИВИ ЗА СЪСТОЯНИЕТО НА ПРИЛОЖЕНИЕТО
 // ==========================================================================
@@ -311,19 +319,19 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
 
         if (data.aiUpdateSummary) {
             const { title, introduction, changes, encouragement } = data.aiUpdateSummary;
-            let summaryHtml = `<h3>${title || 'Важни Актуализации'}</h3>`;
-            if (introduction) summaryHtml += `<p>${introduction.replace(/\n/g, '<br>')}</p>`;
+            let summaryHtml = '';
+            if (introduction) summaryHtml += `<p>${normalizeText(introduction).replace(/\n/g, '<br>')}</p>`;
             if (changes && Array.isArray(changes)) {
                 if (changes.length > 0) {
-                    summaryHtml += `<ul>${changes.map(ch => `<li>${String(ch).replace(/\n/g, '<br>')}</li>`).join('')}</ul>`;
+                    summaryHtml += `<ul>${changes.map(ch => `<li>${normalizeText(ch).replace(/\n/g, '<br>')}</li>`).join('')}</ul>`;
                 } else {
                     summaryHtml += '<p>Няма съществени промени – планът е обновен без значителни разлики.</p>';
                 }
             }
-            if (encouragement) summaryHtml += `<p>${encouragement.replace(/\n/g, '<br>')}</p>`;
+            if (encouragement) summaryHtml += `<p>${normalizeText(encouragement).replace(/\n/g, '<br>')}</p>`;
 
-            if (selectors.infoModalTitle) selectors.infoModalTitle.textContent = title || 'Информация';
-            if (selectors.infoModalBody) selectors.infoModalBody.innerHTML = summaryHtml;
+            if (selectors.infoModalTitle) selectors.infoModalTitle.textContent = normalizeText(title) || 'Информация';
+            if (selectors.infoModalBody) selectors.infoModalBody.innerHTML = summaryHtml || '<p>Няма детайли.</p>';
             openModal('infoModal');
             fetch(apiEndpoints.acknowledgeAiUpdate, {
                  method: 'POST',
