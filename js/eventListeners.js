@@ -22,6 +22,12 @@ import { handleAchievementClick } from './achievements.js';
 let touchStartX = null;
 const SWIPE_THRESHOLD = 50;
 
+export function handleAdaptiveQuizBtnClick(triggerFn = _handleTriggerAdaptiveQuizClientSide) {
+    const modal = document.getElementById('adaptiveQuizWrapper');
+    if (modal && modal.classList.contains('visible')) return;
+    triggerFn();
+}
+
 
 export function setupStaticEventListeners() {
     if (selectors.menuToggle) selectors.menuToggle.addEventListener('click', toggleMenu);
@@ -50,7 +56,7 @@ export function setupStaticEventListeners() {
     if (selectors.addNoteBtn) selectors.addNoteBtn.addEventListener('click', toggleDailyNote);
     if (selectors.saveLogBtn) selectors.saveLogBtn.addEventListener('click', handleSaveLog);
     if (selectors.openExtraMealModalBtn) selectors.openExtraMealModalBtn.addEventListener('click', openExtraMealModal);
-    if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.addEventListener('click', _handleTriggerAdaptiveQuizClientSide);
+    if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.addEventListener('click', () => handleAdaptiveQuizBtnClick());
 
     if (selectors.goalCard) selectors.goalCard.addEventListener('click', () => openMainIndexInfo('goalProgress'));
     if (selectors.engagementCard) selectors.engagementCard.addEventListener('click', () => openMainIndexInfo('engagement'));
