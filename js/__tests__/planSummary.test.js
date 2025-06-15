@@ -36,4 +36,17 @@ describe('createPlanUpdateSummary', () => {
     expect(summary.changes.length).toBeGreaterThan(0);
     expect(summary.changes[0]).toContain('Няма съществени промени');
   });
+
+  test('handles principle objects correctly', () => {
+    const newPlan = {
+      principlesWeek2_4: [
+        { title: 'Заглавие', content: 'Съдържание' },
+        { title: 'Другo', content: 'Текст' }
+      ]
+    };
+    const summary = createPlanUpdateSummary(newPlan, {});
+    expect(summary.changes.length).toBe(2);
+    const total = summary.changes.join(' ');
+    expect(total).not.toContain('[object Object]');
+  });
 });
