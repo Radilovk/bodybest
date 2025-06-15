@@ -124,6 +124,8 @@ export default {
                 responseBody = await handleGeneratePraiseRequest(request, env);
             } else if (method === 'POST' && path === '/api/aiHelper') {
                 responseBody = await handleAiHelperRequest(request, env);
+            } else if (method === 'GET' && path === '/') {
+                responseBody = { message: 'Използвайте /api/<endpoint>' };
             } else {
                 responseBody = { success: false, error: 'Not Found', message: 'Ресурсът не е намерен.' };
                 responseStatus = 404;
