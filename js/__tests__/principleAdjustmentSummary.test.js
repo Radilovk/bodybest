@@ -50,3 +50,19 @@ describe('handlePrincipleAdjustment', () => {
     global.fetch = originalFetch;
   });
 });
+
+describe('createUserConcernsSummary', () => {
+  test('summarizes notes and extra meals', () => {
+    const logs = [
+      JSON.stringify({ note: 'Чувствам глад', extraMeals: [{}, {}] }),
+      null
+    ];
+    const chat = [
+      { role: 'user', parts: [{ text: 'Трудно ми е да спазвам плана' }] }
+    ];
+    const res = mod.createUserConcernsSummary(logs, chat);
+    expect(res).toContain('Чувствам');
+    expect(res).toContain('2');
+    expect(res).toContain('Трудно');
+  });
+});

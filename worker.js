@@ -1239,6 +1239,7 @@ async function processSingleUserPlan(userId, env) {
         const formattedAnswersForPrompt = Object.entries(initialAnswers).filter(([qId]) => qId !== 'submissionDate' && qId !== 'email' && qId !== 'name').map(([qId, aVal]) => { const qText = questionTextMap.get(qId) || qId.replace(/_/g, ' '); let aText = ''; if (aVal === null || aVal === undefined || String(aVal).trim() === '') aText = '(няма отговор)'; else if (Array.isArray(aVal)) aText = aVal.length > 0 ? aVal.join(', ') : '(няма избран отговор)'; else aText = String(aVal); return `В: ${qText}\nО: ${aText}`; }).join('\n\n').trim();
         
         console.log(`PROCESS_USER_PLAN (${userId}): Preparing for unified Gemini call.`);
+
         const replacements = {
             '%%FORMATTED_ANSWERS%%': formattedAnswersForPrompt, '%%USER_ID%%': userId, '%%USER_NAME%%': safeGet(initialAnswers, 'name', 'Потребител'),
             '%%USER_EMAIL%%': safeGet(initialAnswers, 'email', 'N/A'), '%%USER_GOAL%%': safeGet(initialAnswers, 'goal', 'Общо здраве'),
@@ -1444,6 +1445,8 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
                                 .join('\n---\n');
         }
 
+        const userConcernsSummary = createUserConcernsSummary(logStringsForWeightCheck, chatHistory);
+
         const replacements = {
             '%%USER_ID%%': userId,
             '%%ORIGINAL_GOAL%%': originalGoal,
@@ -1457,7 +1460,7 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
             '%%AVERAGE_SLEEP_QUALITY_LAST_WEEK%%': `${avgSleep}/5`,
             '%%MEAL_ADHERENCE_PERCENT_LAST_WEEK%%': mealAdherencePercent,
             '%%RECENT_CHAT_SUMMARY%%': recentChatSummary,
-            '%%USER_SPECIFIC_CONCERNS_FROM_LOGS_OR_CHAT%%': "Анализирай логовете (особено полетата 'note' и 'extraMeals') и чат историята за повтарящи се проблеми, оплаквания, извънредни хранения, трудности със следването на плана.",
+            '%%USER_SPECIFIC_CONCERNS_FROM_LOGS_OR_CHAT%%': userConcernsSummary,
             '%%LAST_ADAPTIVE_QUIZ_DATE%%': lastAdaptiveQuizDate,
             '%%ADAPTIVE_QUIZ_SUMMARY%%': detailedAdaptiveQuizSummary
         };
@@ -1918,6 +1921,50 @@ function createPlanUpdateSummary(newPlan, oldPlan = {}) {
     };
 }
 // ------------- END FUNCTION: createPlanUpdateSummary -------------
+
+// ------------- START FUNCTION: createUserConcernsSummary -------------
+function createUserConcernsSummary(logStrings = [], chatHistory = []) {
+    const notes = [];
+    const extras = [];
+    for (let i = 0; i < logStrings.length; i++) {
+        const logStr = logStrings[i];
+        if (!logStr) continue;
+        const log = safeParseJson(logStr, {});
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dStr = date.toLocaleDateString('bg-BG', { day: '2-digit', month: 'short' });
+        if (log.note && notes.length < 3) {
+            const snippet = String(log.note).trim();
+            if (snippet) notes.push(`${dStr}: \"${snippet.substring(0, 30)}${snippet.length > 30 ? '...' : ''}\"`);
+        }
+        if (Array.isArray(log.extraMeals) && log.extraMeals.length > 0 && extras.length < 3) {
+            extras.push(`${dStr}: ${log.extraMeals.length}`);
+        }
+    }
+
+    const chatSnippets = [];
+    if (Array.isArray(chatHistory)) {
+        chatHistory
+            .filter(m => m && m.role === 'user' && m.parts && m.parts[0] && m.parts[0].text)
+            .slice(-RECENT_CHAT_MESSAGES_FOR_PRINCIPLES)
+            .forEach(m => {
+                const txt = m.parts[0].text.trim();
+                if (txt && chatSnippets.length < 3) {
+                    chatSnippets.push(`\"${txt.substring(0, 30)}${txt.length > 30 ? '...' : ''}\"`);
+                }
+            });
+    }
+
+    const parts = [];
+    if (notes.length) parts.push(`Бележки: ${notes.join('; ')}`);
+    if (extras.length) parts.push(`Извънредни хранения: ${extras.join('; ')}`);
+    if (chatSnippets.length) parts.push(`Проблеми от чата: ${chatSnippets.join('; ')}`);
+
+    return parts.length > 0
+        ? parts.join('\n')
+        : 'Няма специални бележки или извънредни хранения в последните дни.';
+}
+// ------------- END FUNCTION: createUserConcernsSummary -------------
 
 // ------------- START FUNCTION: createUserEvent -------------
 async function createUserEvent(eventType, userId, payload, env) {
@@ -2673,4 +2720,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary };
