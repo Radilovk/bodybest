@@ -1,6 +1,6 @@
 // app.js - Основен Файл на Приложението
 import { isLocalDevelopment, workerBaseUrl, apiEndpoints, generateId } from './config.js';
-import { safeGet, safeParseFloat, capitalizeFirstLetter } from './utils.js';
+import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml } from './utils.js';
 import { selectors, initializeSelectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import {
     toggleMenu, closeMenu, handleOutsideMenuClick, handleMenuKeydown,
@@ -320,15 +320,15 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
         if (data.aiUpdateSummary) {
             const { title, introduction, changes, encouragement } = data.aiUpdateSummary;
             let summaryHtml = '';
-            if (introduction) summaryHtml += `<p>${normalizeText(introduction).replace(/\n/g, '<br>')}</p>`;
+            if (introduction) summaryHtml += `<p>${escapeHtml(normalizeText(introduction)).replace(/\n/g, '<br>')}</p>`;
             if (changes && Array.isArray(changes)) {
                 if (changes.length > 0) {
-                    summaryHtml += `<ul>${changes.map(ch => `<li>${normalizeText(ch).replace(/\n/g, '<br>')}</li>`).join('')}</ul>`;
+                    summaryHtml += `<ul>${changes.map(ch => `<li>${escapeHtml(normalizeText(ch)).replace(/\n/g, '<br>')}</li>`).join('')}</ul>`;
                 } else {
                     summaryHtml += '<p>Няма съществени промени – планът е обновен без значителни разлики.</p>';
                 }
             }
-            if (encouragement) summaryHtml += `<p>${normalizeText(encouragement).replace(/\n/g, '<br>')}</p>`;
+            if (encouragement) summaryHtml += `<p>${escapeHtml(normalizeText(encouragement)).replace(/\n/g, '<br>')}</p>`;
 
             if (selectors.infoModalTitle) selectors.infoModalTitle.textContent = normalizeText(title) || 'Информация';
             if (selectors.infoModalBody) selectors.infoModalBody.innerHTML = summaryHtml || '<p>Няма детайли.</p>';

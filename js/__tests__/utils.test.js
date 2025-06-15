@@ -1,4 +1,4 @@
-import { safeGet, safeParseFloat, capitalizeFirstLetter } from '../utils.js';
+import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml } from '../utils.js';
 
 describe('utils', () => {
   test('safeGet returns nested value', () => {
@@ -23,5 +23,16 @@ describe('utils', () => {
   test('capitalizeFirstLetter works', () => {
     expect(capitalizeFirstLetter('hello')).toBe('Hello');
     expect(capitalizeFirstLetter('')).toBe('');
+  });
+
+  test('escapeHtml replaces special characters', () => {
+    const input = '<div class="test">O\'Reilly & "Co"</div>';
+    const expected = '&lt;div class=&quot;test&quot;&gt;O&#39;Reilly &amp; &quot;Co&quot;&lt;/div&gt;';
+    expect(escapeHtml(input)).toBe(expected);
+  });
+
+  test('escapeHtml handles null and undefined', () => {
+    expect(escapeHtml(null)).toBe('');
+    expect(escapeHtml(undefined)).toBe('');
   });
 });

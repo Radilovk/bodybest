@@ -37,3 +37,13 @@ export const capitalizeFirstLetter = (string) => {
     if (!string || typeof string !== 'string') return '';
     return string.charAt(0).toUpperCase() + string.slice(1);
 };
+
+export const escapeHtml = (text) => {
+    if (text === undefined || text === null) return '';
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+};

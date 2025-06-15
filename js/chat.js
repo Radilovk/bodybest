@@ -3,6 +3,7 @@
 import { selectors } from './uiElements.js';
 import { chatHistory, currentUserId } from './app.js'; // Access chatHistory and userId
 import { apiEndpoints } from './config.js';
+import { escapeHtml } from './utils.js';
 
 export let automatedChatPending = false;
 export function setAutomatedChatPending(val) { automatedChatPending = val; }
@@ -54,6 +55,7 @@ export function displayMessage(text, sender = 'bot', isError = false) {
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('message', sender);
     if (isError) messageDiv.classList.add('error');
+    text = escapeHtml(text);
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>');
     messageDiv.innerHTML = text.replace(/\n/g, '<br>');
     selectors.chatMessages.appendChild(messageDiv); scrollToChatBottom();
