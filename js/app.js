@@ -333,11 +333,20 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
             if (selectors.infoModalTitle) selectors.infoModalTitle.textContent = normalizeText(title) || 'Информация';
             if (selectors.infoModalBody) selectors.infoModalBody.innerHTML = summaryHtml || '<p>Няма детайли.</p>';
             openModal('infoModal');
-            fetch(apiEndpoints.acknowledgeAiUpdate, {
-                 method: 'POST',
-                 headers: {'Content-Type': 'application/json'},
-                 body: JSON.stringify({userId: currentUserId})
-            }).catch(err => console.warn("Failed to acknowledge AI update:", err));
+            try {
+                const ackResp = await fetch(apiEndpoints.acknowledgeAiUpdate, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUserId })
+                });
+                if (!ackResp.ok) {
+                    const msg = await ackResp.text().catch(() => '');
+                    throw new Error(msg || `Status ${ackResp.status}`);
+                }
+            } catch (err) {
+                console.error('Failed to acknowledge AI update:', err);
+                showToast('Проблем при потвърждаване на AI обновлението.', true, 5000);
+            }
         }
 
         if (data.triggerAutomatedFeedbackChat) {
