@@ -32,11 +32,7 @@ export async function openAdaptiveQuizModal() {
         return;
     }
 
-    selectors.adaptiveQuizModal.style.display = 'flex';
-    setTimeout(() => {
-        selectors.adaptiveQuizModal.classList.add('visible');
-        selectors.adaptiveQuizModal.setAttribute('aria-hidden', 'false');
-    }, 10);
+    genericOpenModal('adaptiveQuizWrapper');
 
     selectors.quizNavigation.classList.add('hidden');
     selectors.quizQuestionContainer.innerHTML = '';
