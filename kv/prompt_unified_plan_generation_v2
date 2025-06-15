@@ -4,6 +4,12 @@ Your primary goal is to analyze the provided user questionnaire answers and gene
 
 **Overall Tone and Language:** Use a supportive, positive, and easily understandable tone in Bulgarian for all textual content. Avoid overly medical or technical jargon unless quoting user input. Ensure all generated text is practical and actionable for the user. STRIVE FOR ORIGINALITY AND SPECIFICITY: Especially in `psychologicalGuidance` and `principlesWeek2_4`, avoid overly generic phrases or clichés. Try to make the advice feel unique to the user's situation where possible, drawing from their `%%MAIN_CHALLENGES%%` and other answers.
 
+**Допълнителни данни от дневник:** Работерът ще подаде следните показатели за последните дни, които може да използваш в краткия преглед и насоките:
+- `%%RECENT_WEIGHT_KG%%` – последно отчетено тегло в кг.
+- `%%WEIGHT_CHANGE_LAST_7_DAYS%%` – промяна спрямо теглото преди седмица.
+- `%%AVG_MOOD_LAST_7_DAYS%%` – средна оценка на настроение (1‑5).
+- `%%AVG_ENERGY_LAST_7_DAYS%%` – средна оценка на енергия (1‑5).
+
 **Expected JSON Output Structure:**
 
 ```json
@@ -14,6 +20,7 @@ Your primary goal is to analyze the provided user questionnaire answers and gene
   // Mention key medical conditions from %%CONDITIONS%% (e.g., 'Инсулинова резистентност', 'Хипотиреоидизъм').
   // Include stated food preferences from %%FOOD_PREFERENCE%% (e.g., 'Вегетариански режим') and general activity level from %%ACTIVITY_LEVEL%%.
   // Example: "Потребител с цел Отслабване, има Инсулинова резистентност, предпочита Вегетариански режим и има Средно ниво на активност."
+  // Ако има налични данни за скорошен прогрес, спомени накратко теглото: "Текущо тегло %%RECENT_WEIGHT_KG%% (промяна за 7 дни: %%WEIGHT_CHANGE_LAST_7_DAYS%%)".
 
   "caloriesMacros": {
     "calories": "number (integer)", // Estimated daily calorie intake (e.g., 1800). Base on user details, goal, and activity.
@@ -96,6 +103,7 @@ Your primary goal is to analyze the provided user questionnaire answers and gene
   "psychologicalGuidance": {
     // All text in Bulgarian. Tailor advice to user's %%STRESS_LEVEL%%, %%SLEEP_INFO%%, %%MAIN_CHALLENGES%%, and other relevant answers. Use %%EATING_PSYCHOLOGY_SUMMARY%% for general principles.
     // STRIVE FOR ORIGINALITY AND SPECIFICITY: Avoid overly generic phrases or clichés. Try to make the advice feel unique to the user's situation where possible, drawing from their `%%MAIN_CHALLENGES%%` and other answers.
+    // Може да използваш средните стойности %%AVG_MOOD_LAST_7_DAYS%% и %%AVG_ENERGY_LAST_7_DAYS%% като ориентир за психо‑емоционално състояние.
     "coping_strategies": ["string"], // BG: 2-4 brief, practical strategies for managing stress, emotional eating, or cravings, based on user's triggers and habits (identified from %%MAIN_CHALLENGES%%, %%STRESS_LEVEL%%, %%FORMATTED_ANSWERS%% if applicable). Example: "При усещане за тъга, опитайте 10-минутна разходка или слушане на успокояваща музика вместо посягане към храна."
     "motivational_messages": ["string"], // BG: 2-3 short, encouraging messages tailored to the user's goal (%%USER_GOAL%%) and potential challenges (%%MAIN_CHALLENGES%%). Example: "Всяка малка стъпка напред е победа! Фокусирайте се върху това как се чувствате, не само върху кантара."
     "habit_building_tip": "string", // BG: One concise tip focused on building sustainable healthy habits, relevant to %%MAIN_CHALLENGES%% or %%USER_GOAL%%. Example: "Започнете с една малка, постижима промяна всяка седмица, например добавяне на повече зеленчуци към обяда."

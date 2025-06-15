@@ -1236,6 +1236,43 @@ async function processSingleUserPlan(userId, env) {
         let questionTextMap = new Map();
         if (questionsJsonString) { try { const defs = JSON.parse(questionsJsonString); if (Array.isArray(defs)) defs.forEach(q => { if (q.id && q.text) questionTextMap.set(q.id, q.text); }); } catch (e) { console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Failed to parse question_definitions: ${e.message}`); } } else { console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Resource 'question_definitions' not found.`); }
         const recipeData = safeParseJson(recipeDataStr, {});
+
+        // --- Нов блок: извличане на данни от последните дневници ---
+        const currentStatusStr = await env.USER_METADATA_KV.get(`${userId}_current_status`);
+        const currentStatus = safeParseJson(currentStatusStr, {});
+        const logStringsForMetrics = await Promise.all(
+            Array.from({ length: 7 }, (_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                return env.USER_METADATA_KV.get(`${userId}_log_${d.toISOString().split('T')[0]}`);
+            })
+        );
+        const logEntries = [];
+        for (let i = 0; i < logStringsForMetrics.length; i++) {
+            if (logStringsForMetrics[i]) {
+                const ld = safeParseJson(logStringsForMetrics[i], {});
+                logEntries.push(ld);
+            } else {
+                logEntries.push({});
+            }
+        }
+        const safeNum = (v) => { const n = parseFloat(v); return isNaN(n) ? null : n; };
+        let recentWeight = safeNum(currentStatus.weight);
+        if (recentWeight === null && logEntries[0]) recentWeight = safeNum(logEntries[0].weight);
+        let weightSevenDaysAgo = null;
+        if (logEntries[6]) weightSevenDaysAgo = safeNum(logEntries[6].weight);
+        let weightChangeStr = 'N/A';
+        if (recentWeight !== null && weightSevenDaysAgo !== null) {
+            const diff = recentWeight - weightSevenDaysAgo;
+            weightChangeStr = `${diff >= 0 ? '+' : ''}${diff.toFixed(1)} кг`;
+        }
+        const avgOf = (key) => {
+            const vals = logEntries.map(l => safeNum(l[key])).filter(v => v !== null);
+            return vals.length > 0 ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : 'N/A';
+        };
+        const avgMood = avgOf('mood');
+        const avgEnergy = avgOf('energy');
+
         const formattedAnswersForPrompt = Object.entries(initialAnswers).filter(([qId]) => qId !== 'submissionDate' && qId !== 'email' && qId !== 'name').map(([qId, aVal]) => { const qText = questionTextMap.get(qId) || qId.replace(/_/g, ' '); let aText = ''; if (aVal === null || aVal === undefined || String(aVal).trim() === '') aText = '(няма отговор)'; else if (Array.isArray(aVal)) aText = aVal.length > 0 ? aVal.join(', ') : '(няма избран отговор)'; else aText = String(aVal); return `В: ${qText}\nО: ${aText}`; }).join('\n\n').trim();
         
         console.log(`PROCESS_USER_PLAN (${userId}): Preparing for unified Gemini call.`);
@@ -1252,7 +1289,11 @@ async function processSingleUserPlan(userId, env) {
             '%%USER_GENDER%%': safeGet(initialAnswers, 'gender', 'Няма данни'), '%%USER_HEIGHT%%': safeGet(initialAnswers, 'height', 'Няма данни'),
             '%%USER_WEIGHT%%': safeGet(initialAnswers, 'weight', 'Няма данни'), '%%TARGET_WEIGHT_CHANGE_KG%%': safeGet(initialAnswers, 'lossKg', safeGet(initialAnswers, 'gainKg', 'N/A')),
             '%%BASE_DIET_MODEL_SUMMARY%%': (baseDietModelContent || '').substring(0, 3000), '%%ALLOWED_MEAL_COMBINATIONS%%': (allowedMealCombinationsContent || '').substring(0, 2500),
-            '%%EATING_PSYCHOLOGY_SUMMARY%%': (eatingPsychologyContent || '').substring(0, 3000), '%%RECIPE_KEYS%%': Object.keys(recipeData).join(', ') || 'няма налични рецепти за референция'
+            '%%EATING_PSYCHOLOGY_SUMMARY%%': (eatingPsychologyContent || '').substring(0, 3000), '%%RECIPE_KEYS%%': Object.keys(recipeData).join(', ') || 'няма налични рецепти за референция',
+            '%%RECENT_WEIGHT_KG%%': recentWeight !== null ? `${recentWeight.toFixed(1)} кг` : 'N/A',
+            '%%WEIGHT_CHANGE_LAST_7_DAYS%%': weightChangeStr,
+            '%%AVG_MOOD_LAST_7_DAYS%%': avgMood !== 'N/A' ? `${avgMood}/5` : 'N/A',
+            '%%AVG_ENERGY_LAST_7_DAYS%%': avgEnergy !== 'N/A' ? `${avgEnergy}/5` : 'N/A'
         };
         const populatedUnifiedPrompt = populatePrompt(unifiedPromptTemplate, replacements);
         let generatedPlanObject = null; let rawResponseFromGemini = "";
