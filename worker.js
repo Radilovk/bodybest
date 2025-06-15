@@ -1958,10 +1958,14 @@ function createPlanUpdateSummary(newPlan, oldPlan = {}) {
         changes.push('Няма съществени промени – планът е обновен без значителни разлики.');
     }
 
+    const MAX_CHANGES = 5;
+    const totalLength = changes.reduce((sum, ch) => sum + ch.length, 0);
+    const finalChanges = totalLength <= 120 ? changes : changes.slice(0, MAX_CHANGES);
+
     return {
         title: 'Обновен персонализиран план',
         introduction: 'Вашият план беше генериран отново. Ето няколко основни акцента:',
-        changes: changes.slice(0, 3),
+        changes: finalChanges,
         encouragement: 'Разгледайте плана и следвайте препоръките!'
     };
 }
