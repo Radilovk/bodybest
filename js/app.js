@@ -703,6 +703,9 @@ export async function _handleSubmitQuizAnswersClientSide() {
     } catch (error) {
         console.error("Error submitting quiz answers:", error);
         showToast(`Грешка при подаване на въпросника: ${error.message}`, true);
+        setCurrentQuizData(null);
+        setUserQuizAnswers({});
+        setCurrentQuestionIndex(0);
     } finally {
         showLoading(false);
     }
