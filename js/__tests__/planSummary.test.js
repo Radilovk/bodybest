@@ -11,4 +11,11 @@ describe('createPlanUpdateSummary', () => {
     expect(summary.changes[0]).toContain('1800');
     expect(summary.changes.length).toBeGreaterThan(0);
   });
+
+  test('adds explanation when there are no changes', () => {
+    const newPlan = {};
+    const summary = createPlanUpdateSummary(newPlan, {});
+    expect(summary.changes.length).toBeGreaterThan(0);
+    expect(summary.changes[0]).toContain('Няма съществени промени');
+  });
 });
