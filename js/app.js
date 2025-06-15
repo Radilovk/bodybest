@@ -707,6 +707,12 @@ export async function _handleTriggerAdaptiveQuizClientSide() { // Exported for e
 // ==========================================================================
 // ЧАТ ФУНКЦИИ (API комуникация и управление на историята)
 // ==========================================================================
+
+export function stripPlanModSignature(reply) {
+    const sig = '[PLAN_MODIFICATION_REQUEST]';
+    const idx = reply.lastIndexOf(sig);
+    return idx !== -1 ? reply.substring(0, idx).trim() : reply;
+}
 export async function handleChatSend() { // Exported for eventListeners.js
     if (!selectors.chatInput || !selectors.chatSend) return;
     const messageText = selectors.chatInput.value.trim();
@@ -726,11 +732,12 @@ export async function handleChatSend() { // Exported for eventListeners.js
         if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
 
         let botReply = result.reply || '';
-        const sig = '[PLAN_MODIFICATION_REQUEST]';
-        const sigIdx = botReply.indexOf(sig);
-        if (sigIdx !== -1) {
-            botReply = botReply.substring(0, sigIdx).trim();
+        const cleaned = stripPlanModSignature(botReply);
+        if (cleaned !== botReply) {
+            botReply = cleaned;
             pollPlanStatus();
+        } else {
+            botReply = cleaned;
         }
 
         displayChatMessage(botReply, 'bot'); // from chat.js
