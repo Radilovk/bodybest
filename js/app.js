@@ -31,6 +31,8 @@ import {
     getSummaryFromPreviousQuizzes // For potential use in app.js
 } from './adaptiveQuiz.js';
 
+const planModificationPrompt = 'Моля, опишете накратко желаните от вас промени в плана.';
+
 function normalizeText(input) {
     if (input === undefined || input === null) return '';
     if (typeof input === 'string') return input;
@@ -700,6 +702,30 @@ export async function _handleSubmitQuizAnswersClientSide() {
 export async function _handleTriggerAdaptiveQuizClientSide() { // Exported for eventListeners.js
     if (!currentUserId) { showToast("Моля, влезте първо.", true); return; }
     _openAdaptiveQuizModal(); // from adaptiveQuiz.js
+}
+
+export async function openPlanModificationChat() {
+    if (!currentUserId) { showToast('Моля, влезте първо.', true); return; }
+    if (!selectors.chatWidget?.classList.contains('visible')) toggleChatWidget();
+    displayChatTypingIndicator(true);
+    try {
+        const payload = { userId: currentUserId, message: planModificationPrompt, history: chatHistory.slice(-10) };
+        const resp = await fetch(apiEndpoints.chat, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.success) throw new Error(data.message || `HTTP ${resp.status}`);
+        displayChatMessage(data.reply, 'bot');
+        chatHistory.push({ text: data.reply, sender: 'bot', isError: false });
+    } catch (e) {
+        const msg = `Грешка при зареждане: ${e.message}`;
+        displayChatMessage(msg, 'bot', true);
+        chatHistory.push({ text: msg, sender: 'bot', isError: true });
+    } finally {
+        displayChatTypingIndicator(false);
+    }
 }
 
 // ==========================================================================

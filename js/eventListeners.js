@@ -14,7 +14,8 @@ import {
     handleChatSend, handleChatInputKeypress, // from app.js / chat.js
     _handlePrevQuizQuestion, _handleNextQuizQuestion, _handleSubmitQuizAnswersClientSide, // from app.js
     _handleTriggerAdaptiveQuizClientSide, // from app.js
-    todaysMealCompletionStatus, activeTooltip, currentUserId // from app.js
+    todaysMealCompletionStatus, activeTooltip, currentUserId, // from app.js
+    openPlanModificationChat
 } from './app.js';
 import { toggleChatWidget, closeChatWidget, clearChat } from './chat.js';
 import { computeSwipeTargetIndex } from './swipeUtils.js';
@@ -74,7 +75,7 @@ export function setupStaticEventListeners() {
     if (selectors.addNoteBtn) selectors.addNoteBtn.addEventListener('click', toggleDailyNote);
     if (selectors.saveLogBtn) selectors.saveLogBtn.addEventListener('click', handleSaveLog);
     if (selectors.openExtraMealModalBtn) selectors.openExtraMealModalBtn.addEventListener('click', openExtraMealModal);
-    if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.addEventListener('click', () => handleAdaptiveQuizBtnClick());
+    if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.addEventListener('click', openPlanModificationChat);
 
     if (selectors.goalCard) selectors.goalCard.addEventListener('click', () => openMainIndexInfo('goalProgress'));
     if (selectors.engagementCard) selectors.engagementCard.addEventListener('click', () => openMainIndexInfo('engagement'));
