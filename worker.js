@@ -37,6 +37,29 @@ const AUTOMATED_FEEDBACK_TRIGGER_DAYS = 3; // След толкова дни п�
 const PRAISE_INTERVAL_DAYS = 3; // Интервал за нова похвала/значка
 // ------------- END BLOCK: GlobalConstantsAndBindings -------------
 
+// ------------- START BLOCK: HelperFunctions -------------
+/**
+ * Генерира стандартен JSON отговор с правилен статус.
+ * @param {Object} body
+ * @param {number} [defaultStatus=200]
+ * @returns {{status:number, body:string, headers:Object}}
+ */
+function makeJsonResponse(body, defaultStatus = 200) {
+    let status = defaultStatus;
+    if (body && body.statusHint !== undefined) {
+        status = body.statusHint;
+        delete body.statusHint;
+    } else if (body && body.success === false) {
+        status = 400;
+    }
+    return {
+        status,
+        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json' }
+    };
+}
+// ------------- END BLOCK: HelperFunctions -------------
+
 // ------------- START BLOCK: MainWorkerExport -------------
 export default {
     // ------------- START FUNCTION: fetch -------------
@@ -129,12 +152,6 @@ export default {
                 responseStatus = 404;
             }
 
-            if (responseStatus === 200 && responseBody.success === false && !responseBody.statusHint) {
-                 responseStatus = 400;
-            } else if (responseBody.statusHint) {
-                 responseStatus = responseBody.statusHint;
-                 delete responseBody.statusHint;
-            }
 
         } catch (error) {
              console.error(`!!! Worker Uncaught Error in fetch handler for ${method} ${path}:`, error);
@@ -143,9 +160,10 @@ export default {
              if (error.stack) { console.error("Error Stack:", error.stack); }
         }
 
-        return new Response(JSON.stringify(responseBody), {
-            status: responseStatus,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        const { status, body, headers } = makeJsonResponse(responseBody, responseStatus);
+        return new Response(body, {
+            status,
+            headers: { ...headers, ...corsHeaders }
         });
     },
     // ------------- END FUNCTION: fetch -------------
