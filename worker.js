@@ -145,6 +145,8 @@ export default {
                 responseBody = await handleGetAchievementsRequest(request, env);
             } else if (method === 'POST' && path === '/api/generatePraise') {
                 responseBody = await handleGeneratePraiseRequest(request, env);
+            } else if (method === 'GET' && path === '/api/getPlanModificationPrompt') {
+                responseBody = await handleGetPlanModificationPrompt(request, env);
             } else if (method === 'POST' && path === '/api/aiHelper') {
                 responseBody = await handleAiHelperRequest(request, env);
             } else {
@@ -1205,6 +1207,29 @@ async function handleAiHelperRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleAiHelperRequest -------------
+
+// ------------- START FUNCTION: handleGetPlanModificationPrompt -------------
+async function handleGetPlanModificationPrompt(request, env) {
+    try {
+        const url = new URL(request.url);
+        const userId = url.searchParams.get('userId');
+        if (!userId) return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
+
+        const promptTpl = await env.RESOURCES_KV.get('prompt_plan_modification');
+        const model = await env.RESOURCES_KV.get('model_chat');
+
+        if (!promptTpl || !model) {
+            console.error(`PLAN_MOD_PROMPT_ERROR (${userId}): Missing prompt or model.`);
+            return { success: false, message: 'Липсва промпт или модел.', statusHint: 500 };
+        }
+
+        return { success: true, prompt: promptTpl, model };
+    } catch (error) {
+        console.error('Error in handleGetPlanModificationPrompt:', error.message, error.stack);
+        return { success: false, message: 'Грешка при зареждане на промпта.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleGetPlanModificationPrompt -------------
 
 
 // ------------- START BLOCK: PlanGenerationHeaderComment -------------
@@ -2798,4 +2823,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary };
