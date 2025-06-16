@@ -2018,7 +2018,7 @@ function createUserConcernsSummary(logStrings = [], chatHistory = []) {
 // ------------- START FUNCTION: createUserEvent -------------
 async function createUserEvent(eventType, userId, payload, env) {
     if (!eventType || !userId) return;
-    const key = `event_${eventType}_${userId}`;
+    const key = `event_${eventType}_${userId}_${Date.now()}`;
     const data = {
         type: eventType,
         userId,
@@ -2743,24 +2743,27 @@ const EVENT_HANDLERS = {
 
 async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
     const list = await env.USER_METADATA_KV.list({ prefix: 'event_' });
-    let processed = 0;
+    const events = [];
     for (const key of list.keys) {
-        if (processed >= maxToProcess) break;
         const eventStr = await env.USER_METADATA_KV.get(key.name);
-        const eventData = safeParseJson(eventStr, {});
+        const eventData = safeParseJson(eventStr, null);
         if (!eventData || !eventData.type || !eventData.userId) {
             await env.USER_METADATA_KV.delete(key.name);
             continue;
         }
-        const eventType = eventData.type;
-        const userId = eventData.userId;
-        const handler = EVENT_HANDLERS[eventType];
+        events.push({ key: key.name, data: eventData });
+    }
+    events.sort((a, b) => (a.data.createdTimestamp || 0) - (b.data.createdTimestamp || 0));
+    let processed = 0;
+    for (const { key, data } of events) {
+        if (processed >= maxToProcess) break;
+        const handler = EVENT_HANDLERS[data.type];
         if (handler) {
-            ctx.waitUntil(handler(userId, env, eventData.payload));
+            ctx.waitUntil(handler(data.userId, env, data.payload));
         } else {
-            console.log(`[CRON-UserEvent] Unknown event type ${eventType} for user ${userId}`);
+            console.log(`[CRON-UserEvent] Unknown event type ${data.type} for user ${data.userId}`);
         }
-        await env.USER_METADATA_KV.delete(key.name);
+        await env.USER_METADATA_KV.delete(key);
         processed++;
     }
     if (processed > 0) console.log(`[CRON-UserEvent] Processed ${processed} event(s).`);
