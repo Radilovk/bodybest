@@ -745,7 +745,8 @@ async function handleChatRequest(request, env) {
             respToUser=respToUser.substring(0,sigIdx).trim();
             console.log(`CHAT_INFO (${userId}): Plan modification signal detected: "${planModReq}"`);
             try{
-                await createUserEvent('planMod', userId, { description: planModReq, originalMessage: message }, env);
+                const evRes = await createUserEvent('planMod', userId, { description: planModReq, originalMessage: message }, env);
+                if(evRes && evRes.message) respToUser += `\n\n${evRes.message}`;
             }catch(kvErr){
                 console.error(`CHAT_ERROR (${userId}): Failed save pending modification request:`,kvErr);
             }
@@ -928,9 +929,11 @@ async function handleSubmitAdaptiveQuizRequest(request, env, ctx) {
         console.log(`SUBMIT_ADAPTIVE_QUIZ (${userId}): Answers for quiz ${quizId} saved to ${answersKey}.`);
 
         // Създаваме събитие за последваща адаптация на плана
-        await createUserEvent('planMod', userId, { reason: 'adaptiveQuiz', quizId }, env);
+        const evRes = await createUserEvent('planMod', userId, { reason: 'adaptiveQuiz', quizId }, env);
+        let finalMsg = "Вашите отговори бяха успешно записани! Актуализацията на плана ще бъде извършена скоро.";
+        if(evRes && evRes.message) finalMsg = `${evRes.message} Отговорите ви са записани.`;
 
-        return { success: true, message: "Вашите отговори бяха успешно записани! Актуализацията на плана ще бъде извършена скоро." };
+        return { success: true, message: finalMsg };
     } catch (error) {
         console.error("Error in handleSubmitAdaptiveQuizRequest:", error.message, error.stack);
         const userIdFromBody = (await request.json().catch(() => ({}))).userId || 'unknown';
@@ -2068,7 +2071,23 @@ function createUserConcernsSummary(logStrings = [], chatHistory = []) {
 
 // ------------- START FUNCTION: createUserEvent -------------
 async function createUserEvent(eventType, userId, payload, env) {
-    if (!eventType || !userId) return;
+    if (!eventType || !userId) return { success: false, message: 'Невалидни параметри.' };
+
+    if (eventType === 'planMod') {
+        try {
+            const existing = await env.USER_METADATA_KV.list({ prefix: `event_planMod_${userId}` });
+            for (const { name } of existing.keys) {
+                const val = await env.USER_METADATA_KV.get(name);
+                const parsed = safeParseJson(val, null);
+                if (parsed && parsed.status === 'pending') {
+                    return { success: false, message: 'Вече има чакаща заявка за промяна на плана.' };
+                }
+            }
+        } catch (err) {
+            console.error(`EVENT_CHECK_ERROR (${userId}):`, err);
+        }
+    }
+
     const key = `event_${eventType}_${userId}_${Date.now()}`;
     const data = {
         type: eventType,
@@ -2078,6 +2097,7 @@ async function createUserEvent(eventType, userId, payload, env) {
         payload
     };
     await env.USER_METADATA_KV.put(key, JSON.stringify(data));
+    return { success: true };
 }
 // ------------- END FUNCTION: createUserEvent -------------
 
