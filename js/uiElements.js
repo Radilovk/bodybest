@@ -28,6 +28,7 @@ export function initializeSelectors() {
         adaptiveQuizModal: 'adaptiveQuizWrapper',
         adaptiveQuizContainer: 'adaptiveQuizWrapper',
         triggerAdaptiveQuizBtn: 'triggerAdaptiveQuizBtn',
+        planModInProgressIcon: 'planModInProgressIcon',
         infoModal: 'infoModal', infoModalTitle: 'infoModalTitle', infoModalBody: 'infoModalBody',
         feedbackModal: 'feedbackModal',
         feedbackFab: 'feedback-fab',
@@ -55,7 +56,7 @@ export function initializeSelectors() {
         if (!selectors[key] || (key === 'tabButtons' && selectors[key].length === 0)) {
             const optionalOrDynamic = [
                 'menuClose', 'extraMealFormContainer', 'userAllergiesNote', 'userAllergiesList',
-                'feedbackForm', 'tooltipTracker', 'triggerAdaptiveQuizBtn',
+                'feedbackForm', 'tooltipTracker', 'triggerAdaptiveQuizBtn', 'planModInProgressIcon',
                 'streakGrid', 'streakCount', 'analyticsCardsContainer',
                 'goalCard', 'engagementCard', 'healthCard', 'streakCard'
             ];
