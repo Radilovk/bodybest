@@ -1950,7 +1950,15 @@ function createPlanUpdateSummary(newPlan, oldPlan = {}) {
         ? principlesText.split('\n')
         : Array.isArray(principlesText) ? principlesText : [];
     principleLines.forEach(l => {
-        const t = String(l).replace(/^[-*]\s*/, '').trim();
+        let combined = '';
+        if (l && typeof l === 'object') {
+            const title = l.title ? String(l.title).trim() : '';
+            const content = l.content ? String(l.content).trim() : '';
+            combined = `${title} ${content}`.replace(/\s+/g, ' ').trim();
+        } else {
+            combined = String(l);
+        }
+        const t = combined.replace(/^[-*]\s*/, '').trim();
         if (t) changes.push(t);
     });
 
