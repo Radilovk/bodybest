@@ -745,7 +745,8 @@ async function handleChatRequest(request, env) {
             respToUser=respToUser.substring(0,sigIdx).trim();
             console.log(`CHAT_INFO (${userId}): Plan modification signal detected: "${planModReq}"`);
             try{
-                await createUserEvent('planMod', userId, { description: planModReq, originalMessage: message }, env);
+                const evalRes = await evaluatePlanChange(userId, { source: 'chat' }, env);
+                await createUserEvent('planMod', userId, { description: planModReq, originalMessage: message, evaluation: evalRes }, env);
             }catch(kvErr){
                 console.error(`CHAT_ERROR (${userId}): Failed save pending modification request:`,kvErr);
             }
@@ -928,7 +929,8 @@ async function handleSubmitAdaptiveQuizRequest(request, env, ctx) {
         console.log(`SUBMIT_ADAPTIVE_QUIZ (${userId}): Answers for quiz ${quizId} saved to ${answersKey}.`);
 
         // Създаваме събитие за последваща адаптация на плана
-        await createUserEvent('planMod', userId, { reason: 'adaptiveQuiz', quizId }, env);
+        const evalRes = await evaluatePlanChange(userId, { source: 'adaptiveQuiz', quizId }, env);
+        await createUserEvent('planMod', userId, { reason: 'adaptiveQuiz', quizId, evaluation: evalRes }, env);
 
         return { success: true, message: "Вашите отговори бяха успешно записани! Актуализацията на плана ще бъде извършена скоро." };
     } catch (error) {
@@ -2066,6 +2068,55 @@ function createUserConcernsSummary(logStrings = [], chatHistory = []) {
 }
 // ------------- END FUNCTION: createUserConcernsSummary -------------
 
+// ------------- START FUNCTION: evaluatePlanChange -------------
+async function evaluatePlanChange(userId, requestData, env) {
+    try {
+        const [initialStr, statusStr, ...logStrings] = await Promise.all([
+            env.USER_METADATA_KV.get(`${userId}_initial_answers`),
+            env.USER_METADATA_KV.get(`${userId}_current_status`),
+            ...Array.from({ length: 3 }, (_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                return env.USER_METADATA_KV.get(`${userId}_log_${d.toISOString().split('T')[0]}`);
+            })
+        ]);
+        const initial = safeParseJson(initialStr, {});
+        const status = safeParseJson(statusStr, {});
+        let currentWeight = safeParseFloat(status.weight);
+        if (currentWeight === null) {
+            for (const ls of logStrings) {
+                const ld = safeParseJson(ls, {});
+                const w = safeParseFloat(ld.weight);
+                if (w !== null) { currentWeight = w; break; }
+            }
+        }
+        const startWeight = safeParseFloat(initial.weight);
+        if (startWeight === null || currentWeight === null) {
+            return { deviationPercent: 0, comment: 'Няма достатъчно данни' };
+        }
+        let targetWeight = startWeight;
+        const goal = initial.goal;
+        if (goal === 'отслабване') {
+            targetWeight = startWeight - safeParseFloat(initial.lossKg, 0);
+        } else if (goal === 'покачване на мускулна маса') {
+            targetWeight = startWeight + safeParseFloat(initial.gainKg, 0);
+        } else if (goal === 'поддържане') {
+            targetWeight = safeParseFloat(initial.maintenanceWeight, startWeight);
+        }
+        const totalDiff = Math.abs(startWeight - targetWeight) || 1;
+        const deviationPercent = Math.round(Math.abs(currentWeight - targetWeight) / totalDiff * 100);
+        const diffKg = (currentWeight - targetWeight).toFixed(1);
+        const comment = deviationPercent <= 5
+            ? 'Теглото е близо до целевото.'
+            : `Отклонение от целевото тегло: ${diffKg > 0 ? '+' : ''}${diffKg} кг`;
+        return { deviationPercent, comment };
+    } catch (e) {
+        console.error(`EVAL_PLAN_CHANGE_ERROR (${userId}):`, e.message);
+        return { deviationPercent: 0, comment: 'Грешка при анализ' };
+    }
+}
+// ------------- END FUNCTION: evaluatePlanChange -------------
+
 // ------------- START FUNCTION: createUserEvent -------------
 async function createUserEvent(eventType, userId, payload, env) {
     if (!eventType || !userId) return;
@@ -2823,4 +2874,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange };
