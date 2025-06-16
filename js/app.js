@@ -196,6 +196,17 @@ function initializeApp() {
     try {
         if (isLocalDevelopment) console.log("initializeApp starting from app.js...");
         initializeSelectors();
+        if (!document.getElementById('planModInProgressIcon') && selectors.triggerAdaptiveQuizBtn) {
+            const icon = document.createElement('svg');
+            icon.id = 'planModInProgressIcon';
+            icon.classList.add('icon', 'spinner', 'hidden');
+            icon.style.width = '24px';
+            icon.style.height = '24px';
+            icon.style.marginLeft = '0.5rem';
+            icon.innerHTML = '<use href="#icon-spinner"></use>';
+            selectors.triggerAdaptiveQuizBtn.insertAdjacentElement('afterend', icon);
+            selectors.planModInProgressIcon = icon;
+        }
         updateTabsOverflowIndicator();
         showLoading(true, "Инициализация на таблото...");
         currentUserId = sessionStorage.getItem('userId');
@@ -402,11 +413,15 @@ export function stopPlanStatusPolling() {
         planStatusTimeout = null;
     }
     window.removeEventListener('beforeunload', stopPlanStatusPolling);
+    if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.add('hidden');
+    if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.classList.remove('hidden');
 }
 
 export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
     if (!currentUserId) return;
     stopPlanStatusPolling();
+    if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.remove('hidden');
+    if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.classList.add('hidden');
     showPlanPendingState();
     showToast('Обновявам плана...', false, 3000);
 
@@ -418,11 +433,15 @@ export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
                 if (data.planStatus === 'ready') {
                     stopPlanStatusPolling();
                     if (selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
+                    if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.add('hidden');
+                    if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.classList.remove('hidden');
                     await loadDashboardData();
                     showToast('Планът е обновен.', false, 4000);
                 } else if (data.planStatus === 'error') {
                     stopPlanStatusPolling();
                     if (selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
+                    if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.add('hidden');
+                    if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.classList.remove('hidden');
                     showToast(`Грешка при обновяване: ${data.error || ''}`, true, 6000);
                 }
             }
