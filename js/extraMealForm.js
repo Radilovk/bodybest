@@ -6,10 +6,17 @@ import { currentUserId } from './app.js'; // Accessing currentUserId from app.js
 
 let extraMealFormLoaded = false;
 let commonFoods = [];
+let commonFoodsErrorShown = false;
 fetch(new URL("../data/commonFoods.json", import.meta.url))
     .then(r => r.json())
     .then(d => { if (Array.isArray(d)) commonFoods = d; })
-    .catch(e => console.error("Failed to load foods", e));
+    .catch(e => {
+        console.error("Failed to load foods", e);
+        if (!commonFoodsErrorShown) {
+            showToast("Неуспешно зареждане на списъка с храни", true);
+            commonFoodsErrorShown = true;
+        }
+    });
 
 function initializeExtraMealFormLogic(formContainerElement) {
     const form = formContainerElement.querySelector('#extraMealEntryFormActual');
