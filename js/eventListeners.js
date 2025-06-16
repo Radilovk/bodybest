@@ -8,12 +8,13 @@ import {
 } from './uiHandlers.js';
 import { handleLogout } from './auth.js';
 import { openExtraMealModal } from './extraMealForm.js';
+import { apiEndpoints } from './config.js';
 import {
     handleSaveLog, handleFeedbackFormSubmit, // from app.js
     handleChatSend, handleChatInputKeypress, // from app.js / chat.js
     _handlePrevQuizQuestion, _handleNextQuizQuestion, _handleSubmitQuizAnswersClientSide, // from app.js
     _handleTriggerAdaptiveQuizClientSide, // from app.js
-    todaysMealCompletionStatus, activeTooltip // from app.js
+    todaysMealCompletionStatus, activeTooltip, currentUserId // from app.js
 } from './app.js';
 import { toggleChatWidget, closeChatWidget, clearChat } from './chat.js';
 import { computeSwipeTargetIndex } from './swipeUtils.js';
@@ -21,6 +22,23 @@ import { handleAchievementClick } from './achievements.js';
 
 let touchStartX = null;
 const SWIPE_THRESHOLD = 50;
+
+async function acknowledgeAiUpdate() {
+    if (!currentUserId) return;
+    try {
+        const resp = await fetch(apiEndpoints.acknowledgeAiUpdate, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUserId })
+        });
+        if (!resp.ok) {
+            const msg = await resp.text().catch(() => '');
+            console.warn('Неуспешно потвърждение на AI обновление:', msg || resp.status);
+        }
+    } catch (err) {
+        console.warn('Неуспешно потвърждение на AI обновление:', err);
+    }
+}
 
 export function handleAdaptiveQuizBtnClick(triggerFn = _handleTriggerAdaptiveQuizClientSide) {
     const modal = document.getElementById('adaptiveQuizWrapper');
@@ -99,13 +117,26 @@ export function setupStaticEventListeners() {
 
     document.addEventListener('click', function(event) {
         const closeBtn = event.target.closest('[data-modal-close]');
-        if (closeBtn) { closeModal(closeBtn.dataset.modalClose); return; }
-        if (event.target.classList.contains('modal') && event.target.classList.contains('visible')) closeModal(event.target.id);
+        if (closeBtn) {
+            const modalId = closeBtn.dataset.modalClose;
+            closeModal(modalId);
+            if (modalId === 'infoModal') acknowledgeAiUpdate();
+            return;
+        }
+        if (event.target.classList.contains('modal') && event.target.classList.contains('visible')) {
+            const modalId = event.target.id;
+            closeModal(modalId);
+            if (modalId === 'infoModal') acknowledgeAiUpdate();
+        }
     });
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             const visibleModal = document.querySelector('.modal.visible');
-            if (visibleModal) closeModal(visibleModal.id);
+            if (visibleModal) {
+                const modalId = visibleModal.id;
+                closeModal(modalId);
+                if (modalId === 'infoModal') acknowledgeAiUpdate();
+            }
             if (activeTooltip) handleTrackerTooltipHide(); // Call hide from uiHandlers
         }
     });
