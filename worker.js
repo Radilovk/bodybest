@@ -745,7 +745,8 @@ async function handleChatRequest(request, env) {
             respToUser=respToUser.substring(0,sigIdx).trim();
             console.log(`CHAT_INFO (${userId}): Plan modification signal detected: "${planModReq}"`);
             try{
-                const evRes = await createUserEvent('planMod', userId, { description: planModReq, originalMessage: message }, env);
+                const evaluation = await evaluatePlanChange(userId, { source: 'chat', request: planModReq }, env);
+                const evRes = await createUserEvent('planMod', userId, { description: planModReq, originalMessage: message, evaluation }, env);
                 if(evRes && evRes.message) respToUser += `\n\n${evRes.message}`;
             }catch(kvErr){
                 console.error(`CHAT_ERROR (${userId}): Failed save pending modification request:`,kvErr);
@@ -929,7 +930,8 @@ async function handleSubmitAdaptiveQuizRequest(request, env, ctx) {
         console.log(`SUBMIT_ADAPTIVE_QUIZ (${userId}): Answers for quiz ${quizId} saved to ${answersKey}.`);
 
         // Създаваме събитие за последваща адаптация на плана
-        const evRes = await createUserEvent('planMod', userId, { reason: 'adaptiveQuiz', quizId }, env);
+        const evaluation = await evaluatePlanChange(userId, { reason: 'adaptiveQuiz', quizId }, env);
+        const evRes = await createUserEvent('planMod', userId, { reason: 'adaptiveQuiz', quizId, evaluation }, env);
         let finalMsg = "Вашите отговори бяха успешно записани! Актуализацията на плана ще бъде извършена скоро.";
         if(evRes && evRes.message) finalMsg = `${evRes.message} Отговорите ви са записани.`;
 
@@ -2069,6 +2071,63 @@ function createUserConcernsSummary(logStrings = [], chatHistory = []) {
 }
 // ------------- END FUNCTION: createUserConcernsSummary -------------
 
+// ------------- START FUNCTION: evaluatePlanChange -------------
+async function evaluatePlanChange(userId, requestData, env) {
+    try {
+        const initialStr = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
+        const initial = safeParseJson(initialStr, {});
+        if (!initial || Object.keys(initial).length === 0) {
+            return { deviationPercent: null, explanation: 'Липсват първоначални данни.' };
+        }
+
+        const logs = [];
+        for (let i = 0; i < USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const logStr = await env.USER_METADATA_KV.get(`${userId}_log_${d.toISOString().split('T')[0]}`);
+            if (logStr) logs.push(safeParseJson(logStr, {}));
+        }
+
+        let currentWeight = null;
+        for (const log of logs) {
+            if (log && log.weight !== undefined) {
+                const w = safeParseFloat(log.weight);
+                if (w !== null) { currentWeight = w; break; }
+            }
+        }
+        if (currentWeight === null) {
+            const statusStr = await env.USER_METADATA_KV.get(`${userId}_current_status`);
+            const status = safeParseJson(statusStr, {});
+            currentWeight = safeParseFloat(status.weight, null);
+        }
+
+        const initialWeight = safeParseFloat(initial.weight);
+        let targetWeight = null;
+        if (initial.goal === 'отслабване') {
+            const lossKg = safeParseFloat(initial.lossKg);
+            if (lossKg !== null) targetWeight = initialWeight - lossKg;
+        } else if (initial.goal === 'покачване на мускулна маса') {
+            const gainKg = safeParseFloat(initial.gainKg);
+            if (gainKg !== null) targetWeight = initialWeight + gainKg;
+        } else {
+            targetWeight = safeParseFloat(initial.maintenanceWeight, initialWeight);
+        }
+
+        if (currentWeight === null || targetWeight === null) {
+            return { deviationPercent: null, explanation: 'Недостатъчни данни за изчисляване на отклонението.' };
+        }
+
+        const deviationPercent = Math.round(Math.abs((currentWeight - targetWeight) / targetWeight * 100));
+        const explanation = `Текущо тегло ${currentWeight.toFixed(1)} кг спрямо цел ${targetWeight.toFixed(1)} кг. Отклонение ${deviationPercent}%`;
+
+        return { deviationPercent, explanation };
+    } catch (e) {
+        console.error(`EVAL_PLAN_CHANGE_ERROR (${userId}):`, e.message);
+        return { deviationPercent: null, explanation: 'Грешка при изчисление на отклонението.' };
+    }
+}
+// ------------- END FUNCTION: evaluatePlanChange -------------
+
 // ------------- START FUNCTION: createUserEvent -------------
 async function createUserEvent(eventType, userId, payload, env) {
     if (!eventType || !userId) return { success: false, message: 'Невалидни параметри.' };
@@ -2843,4 +2902,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange };
