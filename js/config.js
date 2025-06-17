@@ -24,7 +24,8 @@ export const apiEndpoints = {
     forgotPassword: `${workerBaseUrl}/api/forgotPassword`,
     getAchievements: `${workerBaseUrl}/api/getAchievements`,
     generatePraise: `${workerBaseUrl}/api/generatePraise`,
-    aiHelper: `${workerBaseUrl}/api/aiHelper`
+    aiHelper: `${workerBaseUrl}/api/aiHelper`,
+    getPlanModificationPrompt: `${workerBaseUrl}/api/getPlanModificationPrompt`
 };
 
 // Cloudflare Account ID за използване в чат асистента
