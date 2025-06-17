@@ -728,14 +728,15 @@ export async function _handleTriggerAdaptiveQuizClientSide() { // Exported for e
     _openAdaptiveQuizModal(); // from adaptiveQuiz.js
 }
 
-export async function openPlanModificationChat() {
-    if (!currentUserId) { showToast('Моля, влезте първо.', true); return; }
+export async function openPlanModificationChat(userIdOverride = null) {
+    const uid = userIdOverride || currentUserId;
+    if (!uid) { showToast('Моля, влезте първо.', true); return; }
     if (!selectors.chatWidget?.classList.contains('visible')) toggleChatWidget();
     displayChatTypingIndicator(true);
     let promptOverride = null;
     let modelFromPrompt = null;
     try {
-        const respPrompt = await fetch(`${apiEndpoints.getPlanModificationPrompt}?userId=${currentUserId}`);
+        const respPrompt = await fetch(`${apiEndpoints.getPlanModificationPrompt}?userId=${uid}`);
         if (respPrompt.ok) {
             const dataPrompt = await respPrompt.json();
             if (dataPrompt && dataPrompt.prompt) promptOverride = dataPrompt.prompt;
@@ -743,6 +744,7 @@ export async function openPlanModificationChat() {
         }
     } catch (err) {
         console.warn('Failed to fetch plan modification prompt:', err);
+        showToast('Грешка при зареждане на промпта за промени', true);
     }
     displayChatTypingIndicator(false);
     chatModelOverride = modelFromPrompt;
