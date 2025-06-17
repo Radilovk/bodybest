@@ -663,7 +663,7 @@ async function handleUpdateStatusRequest(request, env) {
 
 // ------------- START FUNCTION: handleChatRequest -------------
 async function handleChatRequest(request, env) {
-    const { userId, message } = await request.json();
+    const { userId, message, model } = await request.json();
     if (!userId || !message) return { success: false, message: 'Липсва userId или съобщение.', statusHint: 400 };
     try {
         const [ initialAnswersStr, finalPlanStr, planStatus, recipeDataStr, storedChatHistoryStr, currentStatusStr, ...logStringsForChat ] = await Promise.all([
@@ -709,10 +709,12 @@ async function handleChatRequest(request, env) {
         if(recentLogs.length>0) recentLogsSummary = recentLogs.map(l=>{ const df=new Date(l.date).toLocaleDateString('bg-BG',{day:'2-digit',month:'short'}); const m=l.data.mood?`Настр:${l.data.mood}/5`:''; const e=l.data.energy?`Енерг:${l.data.energy}/5`:''; const s=l.data.sleep?`Сън:${l.data.sleep}/5`:''; const n=l.data.note?`Бел:"${l.data.note.substring(0,20)}..."`:''; const c=l.data.completedMealsStatus?`${Object.values(l.data.completedMealsStatus).filter(v=>v===true).length} изп. хран.`:''; return `${df}: ${[m,e,s,c,n].filter(Boolean).join('; ')}`;}).join('\n');
         
         const historyPrompt = storedChatHistory.slice(-10).map(e=>`${e.role==='model'?'АСИСТЕНТ':'ПОТРЕБИТЕЛ'}: ${e.parts?.[0]?.text||''}`).join('\n');
-        const chatPromptTpl = await env.RESOURCES_KV.get('prompt_chat'); const chatModel = await env.RESOURCES_KV.get('model_chat');
+        const chatPromptTpl = await env.RESOURCES_KV.get('prompt_chat');
+        const chatModel = await env.RESOURCES_KV.get('model_chat');
+        const modelToUse = model || chatModel;
         const geminiKey = env[GEMINI_API_KEY_SECRET_NAME];
 
-        if(!geminiKey||!chatPromptTpl||!chatModel) {
+        if(!geminiKey||!chatPromptTpl||!modelToUse) {
             console.error(`CHAT_REQUEST_ERROR (${userId}): Missing Gemini key, chat prompt template, or chat model name.`);
             return {success:false, message:'Грешка в конфигурацията на чат асистента. Моля, опитайте по-късно.', statusHint:500};
         }
@@ -737,7 +739,7 @@ async function handleChatRequest(request, env) {
             '%%RECENT_LOGS_SUMMARY%%':recentLogsSummary
         };
         const populatedPrompt = populatePrompt(chatPromptTpl,r);
-        const geminiRespRaw = await callGeminiAPI(populatedPrompt,geminiKey,{temperature:0.7,maxOutputTokens:800},[],chatModel); // Increased tokens slightly
+        const geminiRespRaw = await callGeminiAPI(populatedPrompt,geminiKey,{temperature:0.7,maxOutputTokens:800},[],modelToUse); // Increased tokens slightly
         
         let respToUser = geminiRespRaw.trim(); let planModReq=null; const sig='[PLAN_MODIFICATION_REQUEST]'; const sigIdx=respToUser.lastIndexOf(sig);
         if(sigIdx!==-1){
@@ -2902,4 +2904,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest };
