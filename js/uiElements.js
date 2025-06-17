@@ -29,6 +29,12 @@ export function initializeSelectors() {
         adaptiveQuizContainer: 'adaptiveQuizWrapper',
         planModificationBtn: 'planModificationBtn',
         planModInProgressIcon: 'planModInProgressIcon',
+        planModChatModal: 'planModChatModal',
+        planModChatMessages: 'planModChatMessages',
+        planModChatInput: 'planModChatInput',
+        planModChatSend: 'planModChatSend',
+        planModChatClose: 'planModChatClose',
+        planModChatClear: 'planModChatClear',
         infoModal: 'infoModal', infoModalTitle: 'infoModalTitle', infoModalBody: 'infoModalBody',
         feedbackModal: 'feedbackModal',
         feedbackFab: 'feedback-fab',
@@ -57,6 +63,8 @@ export function initializeSelectors() {
             const optionalOrDynamic = [
                 'menuClose', 'extraMealFormContainer', 'userAllergiesNote', 'userAllergiesList',
                 'feedbackForm', 'tooltipTracker', 'planModificationBtn', 'planModInProgressIcon',
+                'planModChatModal', 'planModChatMessages', 'planModChatInput',
+                'planModChatSend', 'planModChatClose', 'planModChatClear',
                 'streakGrid', 'streakCount', 'analyticsCardsContainer',
                 'goalCard', 'engagementCard', 'healthCard', 'streakCard'
             ];
