@@ -50,6 +50,7 @@ let toastTimeoutApp; // Managed by app.js, uiHandlers.js has its own for its sho
 export let chatHistory = [];
 export let todaysMealCompletionStatus = {}; // Updated by populateUI and eventListeners
 export let activeTooltip = null; // Managed by uiHandlers via setActiveTooltip
+export let chatModelOverride = null; // Optional model override for next chat message
 
 // Управление на интервал за проверка на статус на плана
 let planStatusInterval = null;
@@ -741,25 +742,11 @@ export async function openPlanModificationChat() {
     } catch (err) {
         console.warn('Failed to fetch plan modification prompt:', err);
     }
-    try {
-        const payload = { userId: currentUserId, message: prompt, history: chatHistory.slice(-10) };
-        if (modelFromPrompt) payload.model = modelFromPrompt;
-        const resp = await fetch(apiEndpoints.chat, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        const data = await resp.json();
-        if (!resp.ok || !data.success) throw new Error(data.message || `HTTP ${resp.status}`);
-        displayChatMessage(data.reply, 'bot');
-        chatHistory.push({ text: data.reply, sender: 'bot', isError: false });
-    } catch (e) {
-        const msg = `Грешка при зареждане: ${e.message}`;
-        displayChatMessage(msg, 'bot', true);
-        chatHistory.push({ text: msg, sender: 'bot', isError: true });
-    } finally {
-        displayChatTypingIndicator(false);
-    }
+    displayChatTypingIndicator(false);
+    chatModelOverride = modelFromPrompt;
+    displayChatMessage(prompt, 'bot');
+    chatHistory.push({ text: prompt, sender: 'bot', isError: false });
+    if (selectors.chatInput) selectors.chatInput.focus();
 }
 
 // ==========================================================================
@@ -783,6 +770,7 @@ export async function handleChatSend() { // Exported for eventListeners.js
     displayChatTypingIndicator(true); // from chat.js
     try {
         const payload = { userId: currentUserId, message: messageText, history: chatHistory.slice(-10) }; // Send some history context
+        if (chatModelOverride) payload.model = chatModelOverride;
         const response = await fetch(apiEndpoints.chat, {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
         });
@@ -794,6 +782,7 @@ export async function handleChatSend() { // Exported for eventListeners.js
         if (cleaned !== botReply) {
             botReply = cleaned;
             pollPlanStatus();
+            chatModelOverride = null; // reset after plan modification request
         } else {
             botReply = cleaned;
         }
