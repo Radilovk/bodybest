@@ -80,17 +80,32 @@
     max-height: 480px;
     border-radius: var(--radius-lg);
   }
+  .plan-mod-chat-content {
+    width: calc(100vw - 2 * var(--space-md));
+    max-width: none;
+    height: 65vh;
+    max-height: 480px;
+    border-radius: var(--radius-lg);
+  }
   .chat-header { padding: var(--space-sm) var(--space-md); }
   .chat-header h4 { font-size: 1.1rem; }
   .chat-messages { padding: var(--space-md); gap: var(--space-sm); }
-  #chat-input { 
-      min-height: 40px; 
+  #chat-input {
+      min-height: 40px;
       border-radius: 20px; 
       padding: 0.65rem 1rem;
       font-size: 1rem; /* chat specific font size */
     }
   #chat-send { width: 40px; height: 40px; }
   #chat-send svg { width: 18px; height: 18px; }
+  #planModChatInput {
+      min-height: 40px;
+      border-radius: 20px;
+      padding: 0.65rem 1rem;
+      font-size: 1rem;
+    }
+  #planModChatSend { width: 40px; height: 40px; }
+  #planModChatSend svg { width: 18px; height: 18px; }
 
   .tracker .metric-rating {
     flex-direction: column; 
@@ -167,6 +182,11 @@
     max-height: 450px;
     border-radius: var(--radius-md);
   }
+  .plan-mod-chat-content {
+    height: 70vh;
+    max-height: 450px;
+    border-radius: var(--radius-md);
+  }
    .chat-header { padding: var(--space-xs) var(--space-sm); }
    .chat-header h4 { font-size: 1rem; }
    .chat-header h4 .emoji { font-size: 0.9em; margin-right: var(--space-xs); }
@@ -174,16 +194,27 @@
    .chat-close-btn,
    .chat-clear-btn { font-size: 1.3rem; /* Adjust size of header buttons */ }
 
+   .plan-mod-chat-clear,
+   .plan-mod-chat-close { font-size: 1.3rem; }
+
 
    .chat-messages { padding: var(--space-sm); gap: var(--space-xs); }
-   #chat-input { 
-       min-height: 38px; 
+   #chat-input {
+       min-height: 38px;
        border-radius: 19px; 
        padding: 0.5rem 0.9rem;
        font-size: 0.95rem; /* chat specific font size */
     }
    #chat-send { width: 38px; height: 38px; }
    #chat-send svg { width: 16px; height: 16px; }
+   #planModChatInput {
+       min-height: 38px;
+       border-radius: 19px;
+       padding: 0.5rem 0.9rem;
+       font-size: 0.95rem;
+    }
+   #planModChatSend { width: 38px; height: 38px; }
+   #planModChatSend svg { width: 16px; height: 16px; }
 
   /* Responsive for Quiz elements - these should be in adaptive_quiz_styles.css */
   /*
