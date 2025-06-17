@@ -53,9 +53,14 @@ export let todaysMealCompletionStatus = {}; // Updated by populateUI and eventLi
 export let activeTooltip = null; // Managed by uiHandlers via setActiveTooltip
 export let chatModelOverride = null; // Optional model override for next chat message
 export let chatPromptOverride = null; // Optional prompt override for next chat message
+export let planModChatHistory = [];
+export let planModChatModelOverride = null;
+export let planModChatPromptOverride = null;
 
 export function setChatModelOverride(val) { chatModelOverride = val; }
 export function setChatPromptOverride(val) { chatPromptOverride = val; }
+export function setPlanModChatModelOverride(val) { planModChatModelOverride = val; }
+export function setPlanModChatPromptOverride(val) { planModChatPromptOverride = val; }
 
 // Управление на интервал за проверка на статус на плана
 let planStatusInterval = null;
@@ -80,6 +85,9 @@ export function resetAppState() {
     todaysMealCompletionStatus = {};
     activeTooltip = null;
     chatPromptOverride = null;
+    planModChatHistory = [];
+    planModChatModelOverride = null;
+    planModChatPromptOverride = null;
     currentQuizData = null;
     userQuizAnswers = {};
     currentQuestionIndex = 0;
