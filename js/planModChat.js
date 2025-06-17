@@ -112,7 +112,7 @@ export async function openPlanModificationChat(userIdOverride = null) {
   let modelFromPrompt = null;
   let promptError = false;
   try {
-    const respPrompt = await fetch(`${apiEndpoints.getPlanModificationPrompt}?userId=${uid}`);
+    const respPrompt = await fetch(apiEndpoints.getPlanModificationPrompt);
     if (!respPrompt.ok) {
       let errorText;
       try {

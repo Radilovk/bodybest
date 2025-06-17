@@ -1220,13 +1220,13 @@ async function handleGetPlanModificationPrompt(request, env) {
     try {
         const url = new URL(request.url);
         const userId = url.searchParams.get('userId');
-        if (!userId) return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
+        if (userId) console.log(`PLAN_MOD_PROMPT requested by ${userId}`);
 
         const promptTpl = await env.RESOURCES_KV.get('prompt_plan_modification');
         const model = await env.RESOURCES_KV.get('model_chat');
 
         if (!promptTpl || !model) {
-            console.error(`PLAN_MOD_PROMPT_ERROR (${userId}): Missing prompt or model.`);
+            console.error(`PLAN_MOD_PROMPT_ERROR${userId ? ` (${userId})` : ''}: Missing prompt or model.`);
             return { success: false, message: 'Липсва промпт или модел.', statusHint: 500 };
         }
 
