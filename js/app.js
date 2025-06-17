@@ -415,6 +415,7 @@ export function stopPlanStatusPolling() {
     window.removeEventListener('beforeunload', stopPlanStatusPolling);
     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.add('hidden');
     if (selectors.planModificationBtn) selectors.planModificationBtn.classList.remove('hidden');
+    if (selectors.chatFab) selectors.chatFab.classList.remove('planmod-processing');
 }
 
 export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
@@ -422,6 +423,7 @@ export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
     stopPlanStatusPolling();
     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.remove('hidden');
     if (selectors.planModificationBtn) selectors.planModificationBtn.classList.add('hidden');
+    if (selectors.chatFab) selectors.chatFab.classList.add('planmod-processing');
     showPlanPendingState();
     showToast('Обновявам плана...', false, 3000);
 
