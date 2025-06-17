@@ -730,17 +730,20 @@ export async function openPlanModificationChat() {
     if (!selectors.chatWidget?.classList.contains('visible')) toggleChatWidget();
     displayChatTypingIndicator(true);
     let prompt = planModificationPrompt;
+    let modelFromPrompt = null;
     try {
         const respPrompt = await fetch(`${apiEndpoints.getPlanModificationPrompt}?userId=${currentUserId}`);
         if (respPrompt.ok) {
             const dataPrompt = await respPrompt.json();
             if (dataPrompt && dataPrompt.prompt) prompt = dataPrompt.prompt;
+            if (dataPrompt && dataPrompt.model) modelFromPrompt = dataPrompt.model;
         }
     } catch (err) {
         console.warn('Failed to fetch plan modification prompt:', err);
     }
     try {
         const payload = { userId: currentUserId, message: prompt, history: chatHistory.slice(-10) };
+        if (modelFromPrompt) payload.model = modelFromPrompt;
         const resp = await fetch(apiEndpoints.chat, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
