@@ -110,22 +110,36 @@ export async function openPlanModificationChat(userIdOverride = null) {
   displayPlanModChatTypingIndicator(true);
   let promptOverride = null;
   let modelFromPrompt = null;
+  let promptError = false;
   try {
     const respPrompt = await fetch(`${apiEndpoints.getPlanModificationPrompt}?userId=${uid}`);
-    if (!respPrompt.ok) throw new Error(`HTTP ${respPrompt.status}`);
-    const dataPrompt = await respPrompt.json();
-    if (dataPrompt && dataPrompt.promptOverride)
-      promptOverride = dataPrompt.promptOverride;
-    if (dataPrompt && dataPrompt.model) modelFromPrompt = dataPrompt.model;
+    if (!respPrompt.ok) {
+      let errorText;
+      try {
+        errorText = (await respPrompt.text()) || `HTTP ${respPrompt.status}`;
+      } catch {
+        errorText = `HTTP ${respPrompt.status}`;
+      }
+      showToast(errorText, true);
+      promptError = true;
+    } else {
+      const dataPrompt = await respPrompt.json();
+      if (dataPrompt && dataPrompt.promptOverride)
+        promptOverride = dataPrompt.promptOverride;
+      if (dataPrompt && dataPrompt.model) modelFromPrompt = dataPrompt.model;
+    }
   } catch (err) {
     console.warn('Failed to fetch plan modification prompt:', err);
     showToast('Грешка при зареждане на промпта за промени', true);
+    promptError = true;
   }
   displayPlanModChatTypingIndicator(false);
   appState.setChatModelOverride(modelFromPrompt);
   appState.setChatPromptOverride(promptOverride);
-  const initialMsg = promptOverride || planModificationPrompt;
-  displayPlanModChatMessage(initialMsg, 'bot');
-  appState.chatHistory.push({ text: initialMsg, sender: 'bot', isError: false });
+  if (!promptError) {
+    const initialMsg = promptOverride || planModificationPrompt;
+    displayPlanModChatMessage(initialMsg, 'bot');
+    appState.chatHistory.push({ text: initialMsg, sender: 'bot', isError: false });
+  }
   if (selectors.planModChatInput) selectors.planModChatInput.focus();
 }
