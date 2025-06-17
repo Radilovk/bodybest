@@ -62,7 +62,7 @@ beforeEach(async () => {
 test('shows toast on fetch error', async () => {
   await app.openPlanModificationChat('u1');
   expect(showToastMock).toHaveBeenCalledWith('Грешка при зареждане на промпта за промени', true);
-  expect(app.chatHistory.length).toBe(0);
+  expect(app.planModChatHistory.length).toBe(0);
 });
 
 test('uses backend prompt when fetch succeeds', async () => {
@@ -71,7 +71,7 @@ test('uses backend prompt when fetch succeeds', async () => {
     json: async () => ({ promptOverride: 'BACK', model: 'm' })
   });
   await app.openPlanModificationChat('u1');
-  expect(app.chatHistory[0].text).toBe('BACK');
+  expect(app.planModChatHistory[0].text).toBe('BACK');
 });
 
 test('handles non-ok response without initial message', async () => {
@@ -82,5 +82,16 @@ test('handles non-ok response without initial message', async () => {
   });
   await app.openPlanModificationChat('u1');
   expect(showToastMock).toHaveBeenCalledWith('Server error', true);
-  expect(app.chatHistory.length).toBe(0);
+  expect(app.planModChatHistory.length).toBe(0);
+});
+
+test('opening plan mod chat does not affect main chat history', async () => {
+  global.fetch.mockResolvedValueOnce({
+    ok: true,
+    json: async () => ({ promptOverride: 'BACK', model: 'm' })
+  });
+  app.chatHistory.push({ text: 'hi', sender: 'user', isError: false });
+  await app.openPlanModificationChat('u1');
+  expect(app.chatHistory.length).toBe(1);
+  expect(app.planModChatHistory[0].text).toBe('BACK');
 });
