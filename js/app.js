@@ -54,6 +54,9 @@ export let activeTooltip = null; // Managed by uiHandlers via setActiveTooltip
 export let chatModelOverride = null; // Optional model override for next chat message
 export let chatPromptOverride = null; // Optional prompt override for next chat message
 
+export function setChatModelOverride(val) { chatModelOverride = val; }
+export function setChatPromptOverride(val) { chatPromptOverride = val; }
+
 // Управление на интервал за проверка на статус на плана
 let planStatusInterval = null;
 let planStatusTimeout = null;
