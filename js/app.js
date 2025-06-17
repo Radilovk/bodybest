@@ -51,6 +51,7 @@ export let chatHistory = [];
 export let todaysMealCompletionStatus = {}; // Updated by populateUI and eventListeners
 export let activeTooltip = null; // Managed by uiHandlers via setActiveTooltip
 export let chatModelOverride = null; // Optional model override for next chat message
+export let chatPromptOverride = null; // Optional prompt override for next chat message
 
 // Управление на интервал за проверка на статус на плана
 let planStatusInterval = null;
@@ -74,6 +75,7 @@ export function resetAppState() {
     chatHistory = [];
     todaysMealCompletionStatus = {};
     activeTooltip = null;
+    chatPromptOverride = null;
     currentQuizData = null;
     userQuizAnswers = {};
     currentQuestionIndex = 0;
@@ -730,13 +732,13 @@ export async function openPlanModificationChat() {
     if (!currentUserId) { showToast('Моля, влезте първо.', true); return; }
     if (!selectors.chatWidget?.classList.contains('visible')) toggleChatWidget();
     displayChatTypingIndicator(true);
-    let prompt = planModificationPrompt;
+    let promptOverride = null;
     let modelFromPrompt = null;
     try {
         const respPrompt = await fetch(`${apiEndpoints.getPlanModificationPrompt}?userId=${currentUserId}`);
         if (respPrompt.ok) {
             const dataPrompt = await respPrompt.json();
-            if (dataPrompt && dataPrompt.prompt) prompt = dataPrompt.prompt;
+            if (dataPrompt && dataPrompt.prompt) promptOverride = dataPrompt.prompt;
             if (dataPrompt && dataPrompt.model) modelFromPrompt = dataPrompt.model;
         }
     } catch (err) {
@@ -744,8 +746,9 @@ export async function openPlanModificationChat() {
     }
     displayChatTypingIndicator(false);
     chatModelOverride = modelFromPrompt;
-    displayChatMessage(prompt, 'bot');
-    chatHistory.push({ text: prompt, sender: 'bot', isError: false });
+    chatPromptOverride = promptOverride;
+    displayChatMessage(planModificationPrompt, 'bot');
+    chatHistory.push({ text: planModificationPrompt, sender: 'bot', isError: false });
     if (selectors.chatInput) selectors.chatInput.focus();
 }
 
@@ -771,6 +774,7 @@ export async function handleChatSend() { // Exported for eventListeners.js
     try {
         const payload = { userId: currentUserId, message: messageText, history: chatHistory.slice(-10) }; // Send some history context
         if (chatModelOverride) payload.model = chatModelOverride;
+        if (chatPromptOverride) payload.promptOverride = chatPromptOverride;
         const response = await fetch(apiEndpoints.chat, {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
         });
@@ -783,6 +787,7 @@ export async function handleChatSend() { // Exported for eventListeners.js
             botReply = cleaned;
             pollPlanStatus();
             chatModelOverride = null; // reset after plan modification request
+            chatPromptOverride = null;
         } else {
             botReply = cleaned;
         }

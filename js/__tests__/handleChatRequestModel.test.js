@@ -46,4 +46,16 @@ describe('handleChatRequest model option', () => {
     const url = global.fetch.mock.calls[0][0];
     expect(url).toContain('override');
   });
+
+  test('uses promptOverride when supplied', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ candidates: [{ content: { parts: [{ text: 'hi' }] } }] })
+    });
+    const request = { json: async () => ({ userId: 'u1', message: 'm', promptOverride: 'Override %%USER_MESSAGE%%' }) };
+    const res = await handleChatRequest(request, { ...baseEnv });
+    expect(res.success).toBe(true);
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.contents[0].parts[0].text).toContain('Override m');
+  });
 });

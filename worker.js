@@ -663,7 +663,7 @@ async function handleUpdateStatusRequest(request, env) {
 
 // ------------- START FUNCTION: handleChatRequest -------------
 async function handleChatRequest(request, env) {
-    const { userId, message, model } = await request.json();
+    const { userId, message, model, promptOverride } = await request.json();
     if (!userId || !message) return { success: false, message: 'Липсва userId или съобщение.', statusHint: 400 };
     try {
         const [ initialAnswersStr, finalPlanStr, planStatus, recipeDataStr, storedChatHistoryStr, currentStatusStr, ...logStringsForChat ] = await Promise.all([
@@ -709,7 +709,7 @@ async function handleChatRequest(request, env) {
         if(recentLogs.length>0) recentLogsSummary = recentLogs.map(l=>{ const df=new Date(l.date).toLocaleDateString('bg-BG',{day:'2-digit',month:'short'}); const m=l.data.mood?`Настр:${l.data.mood}/5`:''; const e=l.data.energy?`Енерг:${l.data.energy}/5`:''; const s=l.data.sleep?`Сън:${l.data.sleep}/5`:''; const n=l.data.note?`Бел:"${l.data.note.substring(0,20)}..."`:''; const c=l.data.completedMealsStatus?`${Object.values(l.data.completedMealsStatus).filter(v=>v===true).length} изп. хран.`:''; return `${df}: ${[m,e,s,c,n].filter(Boolean).join('; ')}`;}).join('\n');
         
         const historyPrompt = storedChatHistory.slice(-10).map(e=>`${e.role==='model'?'АСИСТЕНТ':'ПОТРЕБИТЕЛ'}: ${e.parts?.[0]?.text||''}`).join('\n');
-        const chatPromptTpl = await env.RESOURCES_KV.get('prompt_chat');
+        const chatPromptTpl = promptOverride || await env.RESOURCES_KV.get('prompt_chat');
         const chatModel = await env.RESOURCES_KV.get('model_chat');
         const modelToUse = model || chatModel;
         const geminiKey = env[GEMINI_API_KEY_SECRET_NAME];
