@@ -27,7 +27,7 @@ export function initializeSelectors() {
         welcomeScreenModal: 'welcomeScreenModal', extraMealEntryModal: 'extraMealEntryModal', extraMealFormContainer: 'extraMealFormContainer',
         adaptiveQuizModal: 'adaptiveQuizWrapper',
         adaptiveQuizContainer: 'adaptiveQuizWrapper',
-        triggerAdaptiveQuizBtn: 'triggerAdaptiveQuizBtn',
+        planModificationBtn: 'planModificationBtn',
         planModInProgressIcon: 'planModInProgressIcon',
         infoModal: 'infoModal', infoModalTitle: 'infoModalTitle', infoModalBody: 'infoModalBody',
         feedbackModal: 'feedbackModal',
@@ -56,7 +56,7 @@ export function initializeSelectors() {
         if (!selectors[key] || (key === 'tabButtons' && selectors[key].length === 0)) {
             const optionalOrDynamic = [
                 'menuClose', 'extraMealFormContainer', 'userAllergiesNote', 'userAllergiesList',
-                'feedbackForm', 'tooltipTracker', 'triggerAdaptiveQuizBtn', 'planModInProgressIcon',
+                'feedbackForm', 'tooltipTracker', 'planModificationBtn', 'planModInProgressIcon',
                 'streakGrid', 'streakCount', 'analyticsCardsContainer',
                 'goalCard', 'engagementCard', 'healthCard', 'streakCard'
             ];

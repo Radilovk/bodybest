@@ -196,7 +196,7 @@ function initializeApp() {
     try {
         if (isLocalDevelopment) console.log("initializeApp starting from app.js...");
         initializeSelectors();
-        if (!document.getElementById('planModInProgressIcon') && selectors.triggerAdaptiveQuizBtn) {
+        if (!document.getElementById('planModInProgressIcon') && selectors.planModificationBtn) {
             const icon = document.createElement('svg');
             icon.id = 'planModInProgressIcon';
             icon.classList.add('icon', 'spinner', 'hidden');
@@ -204,7 +204,7 @@ function initializeApp() {
             icon.style.height = '24px';
             icon.style.marginLeft = '0.5rem';
             icon.innerHTML = '<use href="#icon-spinner"></use>';
-            selectors.triggerAdaptiveQuizBtn.insertAdjacentElement('afterend', icon);
+            selectors.planModificationBtn.insertAdjacentElement('afterend', icon);
             selectors.planModInProgressIcon = icon;
         }
         updateTabsOverflowIndicator();
@@ -414,14 +414,14 @@ export function stopPlanStatusPolling() {
     }
     window.removeEventListener('beforeunload', stopPlanStatusPolling);
     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.add('hidden');
-    if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.classList.remove('hidden');
+    if (selectors.planModificationBtn) selectors.planModificationBtn.classList.remove('hidden');
 }
 
 export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
     if (!currentUserId) return;
     stopPlanStatusPolling();
     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.remove('hidden');
-    if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.classList.add('hidden');
+    if (selectors.planModificationBtn) selectors.planModificationBtn.classList.add('hidden');
     showPlanPendingState();
     showToast('Обновявам плана...', false, 3000);
 
@@ -434,14 +434,14 @@ export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
                     stopPlanStatusPolling();
                     if (selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
                     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.add('hidden');
-                    if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.classList.remove('hidden');
+                    if (selectors.planModificationBtn) selectors.planModificationBtn.classList.remove('hidden');
                     await loadDashboardData();
                     showToast('Планът е обновен.', false, 4000);
                 } else if (data.planStatus === 'error') {
                     stopPlanStatusPolling();
                     if (selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
                     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.add('hidden');
-                    if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.classList.remove('hidden');
+                    if (selectors.planModificationBtn) selectors.planModificationBtn.classList.remove('hidden');
                     showToast(`Грешка при обновяване: ${data.error || ''}`, true, 6000);
                 }
             }
@@ -727,8 +727,18 @@ export async function openPlanModificationChat() {
     if (!currentUserId) { showToast('Моля, влезте първо.', true); return; }
     if (!selectors.chatWidget?.classList.contains('visible')) toggleChatWidget();
     displayChatTypingIndicator(true);
+    let prompt = planModificationPrompt;
     try {
-        const payload = { userId: currentUserId, message: planModificationPrompt, history: chatHistory.slice(-10) };
+        const respPrompt = await fetch(`${apiEndpoints.getPlanModificationPrompt}?userId=${currentUserId}`);
+        if (respPrompt.ok) {
+            const dataPrompt = await respPrompt.json();
+            if (dataPrompt && dataPrompt.prompt) prompt = dataPrompt.prompt;
+        }
+    } catch (err) {
+        console.warn('Failed to fetch plan modification prompt:', err);
+    }
+    try {
+        const payload = { userId: currentUserId, message: prompt, history: chatHistory.slice(-10) };
         const resp = await fetch(apiEndpoints.chat, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
