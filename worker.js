@@ -2156,6 +2156,9 @@ async function createUserEvent(eventType, userId, payload, env) {
         payload
     };
     await env.USER_METADATA_KV.put(key, JSON.stringify(data));
+    if (eventType === 'planMod') {
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
+    }
     return { success: true };
 }
 // ------------- END FUNCTION: createUserEvent -------------
