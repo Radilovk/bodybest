@@ -1264,12 +1264,19 @@ async function processSingleUserPlan(userId, env) {
         }
         console.log(`PROCESS_USER_PLAN (${userId}): Processing for email: ${initialAnswers.email || 'N/A'}`);
         const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, principlesWeek2_4: [], additionalGuidelines: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
-        const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, planModelName, unifiedPromptTemplate ] = await Promise.all([
+        const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, planModelName, unifiedPromptTemplate, pendingPlanModStr ] = await Promise.all([
             env.RESOURCES_KV.get('question_definitions'), env.RESOURCES_KV.get('base_diet_model'),
             env.RESOURCES_KV.get('allowed_meal_combinations'), env.RESOURCES_KV.get('eating_psychology'),
             env.RESOURCES_KV.get('recipe_data'), env[GEMINI_API_KEY_SECRET_NAME],
-            env.RESOURCES_KV.get('model_plan_generation'), env.RESOURCES_KV.get('prompt_unified_plan_generation_v2')
+            env.RESOURCES_KV.get('model_plan_generation'), env.RESOURCES_KV.get('prompt_unified_plan_generation_v2'),
+            env.USER_METADATA_KV.get(`pending_plan_mod_${userId}`)
         ]);
+        const pendingPlanModData = safeParseJson(pendingPlanModStr, pendingPlanModStr);
+        let pendingPlanModText = '';
+        if (pendingPlanModData) {
+            if (typeof pendingPlanModData === 'string') pendingPlanModText = pendingPlanModData;
+            else pendingPlanModText = JSON.stringify(pendingPlanModData);
+        }
         if (!geminiApiKey) {
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): CRITICAL: Gemini API Key secret not found or empty.`);
             throw new Error("CRITICAL: Gemini API Key secret not found or empty.");
@@ -1347,10 +1354,14 @@ async function processSingleUserPlan(userId, env) {
             '%%AVG_ENERGY_LAST_7_DAYS%%': avgEnergy !== 'N/A' ? `${avgEnergy}/5` : 'N/A'
         };
         const populatedUnifiedPrompt = populatePrompt(unifiedPromptTemplate, replacements);
+        let finalPrompt = populatedUnifiedPrompt;
+        if (pendingPlanModText) {
+            finalPrompt += `\n\n[PLAN_MODIFICATION]\n${pendingPlanModText}`;
+        }
         let generatedPlanObject = null; let rawResponseFromGemini = "";
         try {
-            console.log(`PROCESS_USER_PLAN (${userId}): Calling Gemini for unified plan. Prompt length: ${populatedUnifiedPrompt.length}`);
-            rawResponseFromGemini = await callGeminiAPI(populatedUnifiedPrompt, geminiApiKey, { temperature: 0.1, maxOutputTokens: 20000 }, [], planModelName); // maxOutputTokens: 8192 for gemini-pro, check model limits
+            console.log(`PROCESS_USER_PLAN (${userId}): Calling Gemini for unified plan. Prompt length: ${finalPrompt.length}`);
+            rawResponseFromGemini = await callGeminiAPI(finalPrompt, geminiApiKey, { temperature: 0.1, maxOutputTokens: 20000 }, [], planModelName); // maxOutputTokens: 8192 for gemini-pro, check model limits
             const cleanedJson = cleanGeminiJson(rawResponseFromGemini);
             generatedPlanObject = safeParseJson(cleanedJson);
             if (!generatedPlanObject || !generatedPlanObject.profileSummary || !generatedPlanObject.week1Menu || !generatedPlanObject.principlesWeek2_4 || !generatedPlanObject.detailedTargets) {
@@ -1380,6 +1391,7 @@ async function processSingleUserPlan(userId, env) {
         } else {
             await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'ready', { metadata: { status: 'ready' } });
             await env.USER_METADATA_KV.delete(`${userId}_processing_error`); // Изтриваме евентуална стара грешка
+            await env.USER_METADATA_KV.delete(`pending_plan_mod_${userId}`);
             await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
             const summary = createPlanUpdateSummary(planBuilder, previousPlan);
             await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summary));
@@ -2158,6 +2170,13 @@ async function createUserEvent(eventType, userId, payload, env) {
         payload
     };
     await env.USER_METADATA_KV.put(key, JSON.stringify(data));
+    if (eventType === 'planMod') {
+        try {
+            await env.USER_METADATA_KV.put(`pending_plan_mod_${userId}`, JSON.stringify(payload || {}));
+        } catch (err) {
+            console.error(`EVENT_SAVE_PENDING_MOD_ERROR (${userId}):`, err);
+        }
+    }
     return { success: true };
 }
 // ------------- END FUNCTION: createUserEvent -------------
