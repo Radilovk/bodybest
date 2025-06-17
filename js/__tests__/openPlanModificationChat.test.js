@@ -62,6 +62,7 @@ beforeEach(async () => {
 test('shows toast on fetch error', async () => {
   await app.openPlanModificationChat('u1');
   expect(showToastMock).toHaveBeenCalledWith('Грешка при зареждане на промпта за промени', true);
+  expect(app.chatHistory.length).toBe(0);
 });
 
 test('uses backend prompt when fetch succeeds', async () => {
@@ -71,4 +72,15 @@ test('uses backend prompt when fetch succeeds', async () => {
   });
   await app.openPlanModificationChat('u1');
   expect(app.chatHistory[0].text).toBe('BACK');
+});
+
+test('handles non-ok response without initial message', async () => {
+  global.fetch.mockResolvedValueOnce({
+    ok: false,
+    status: 500,
+    text: async () => 'Server error'
+  });
+  await app.openPlanModificationChat('u1');
+  expect(showToastMock).toHaveBeenCalledWith('Server error', true);
+  expect(app.chatHistory.length).toBe(0);
 });
