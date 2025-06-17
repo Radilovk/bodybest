@@ -141,7 +141,7 @@ export function setupStaticEventListeners() {
             if (activeTooltip) handleTrackerTooltipHide(); // Call hide from uiHandlers
         }
     });
-    if (selectors.chatFab) selectors.chatFab.addEventListener('click', toggleChatWidget);
+    if (selectors.chatFab) selectors.chatFab.addEventListener('click', () => toggleChatWidget());
     if (selectors.chatClose) selectors.chatClose.addEventListener('click', closeChatWidget);
     if (selectors.chatClear) selectors.chatClear.addEventListener('click', clearChat);
     if (selectors.chatSend) selectors.chatSend.addEventListener('click', handleChatSend);

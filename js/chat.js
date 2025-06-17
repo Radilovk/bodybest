@@ -8,7 +8,7 @@ import { escapeHtml } from './utils.js';
 export let automatedChatPending = false;
 export function setAutomatedChatPending(val) { automatedChatPending = val; }
 
-export function toggleChatWidget() {
+export function toggleChatWidget(skipInit = false) {
     if (!selectors.chatWidget || !selectors.chatFab) return;
     const isVisible = selectors.chatWidget.classList.toggle('visible');
     selectors.chatFab.setAttribute('aria-expanded', isVisible.toString());
@@ -24,7 +24,7 @@ export function toggleChatWidget() {
     if (isVisible) {
         if(selectors.chatInput) selectors.chatInput.focus();
         if (selectors.chatMessages) {
-            if (chatHistory.length === 0 && selectors.chatMessages.children.length === 0) {
+            if (!skipInit && chatHistory.length === 0 && selectors.chatMessages.children.length === 0) {
                  const initialBotMessage = "Здравейте! Аз съм вашият виртуален асистент MyBody.Best. Как мога да ви помогна днес?";
                  displayMessage(initialBotMessage, 'bot');
                  chatHistory.push({ text: initialBotMessage, sender: 'bot', isError: false });
