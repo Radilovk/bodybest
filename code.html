@@ -17,6 +17,7 @@
     <link href="css/recommendations_panel_styles.css" rel="stylesheet">
     <link href="css/adaptive_quiz_styles.css" rel="stylesheet">
     <link href="css/extra_meal_form_styles.css" rel="stylesheet">
+    <link href="css/plan_mod_chat_styles.css" rel="stylesheet">
     <link href="css/responsive_styles.css" rel="stylesheet">
     <!-- Chart.js - зарежда се в края на body за по-добра производителност -->
 </head>
@@ -571,6 +572,28 @@
                 </form>
             </div>
         </div>
+
+        <!-- Plan Modification Chat Modal -->
+        <div id="planModChatModal" class="modal" role="dialog" aria-labelledby="planModChatTitle" aria-modal="true" aria-hidden="true">
+            <div class="modal-content plan-mod-chat-content">
+                <div class="plan-mod-chat-header">
+                    <h4 id="planModChatTitle">💬 Промяна на план</h4>
+                    <div class="chat-actions">
+                        <button id="planModChatClear" class="plan-mod-chat-clear" aria-label="Изчисти чата">🗑</button>
+                        <button id="planModChatClose" class="plan-mod-chat-close" aria-label="Затвори чата">
+                            <svg class="icon"><use href="#icon-close"></use></svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="planModChatMessages" class="plan-mod-chat-messages"></div>
+                <div class="plan-mod-chat-input-area">
+                    <textarea id="planModChatInput" placeholder="Вашето съобщение..." rows="2" aria-label="Поле за въвеждане на съобщение"></textarea>
+                    <button id="planModChatSend" aria-label="Изпрати съобщение">
+                        <svg class="icon"><use href="#icon-send"></use></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
         <!-- ======================= END MODAL WINDOWS =========================== -->
 
         <!-- ======================================================================= -->
@@ -620,6 +643,7 @@
 
     <!-- Коригирана JavaScript Връзка -->
     <script type="module" src="js/app.js" defer></script>
+    <script type="module" src="js/planModChat.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 </body>
 </html>

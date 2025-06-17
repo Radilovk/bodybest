@@ -31,8 +31,8 @@ import {
     getSummaryFromLastCompletedQuiz, // For potential use in app.js
     getSummaryFromPreviousQuizzes // For potential use in app.js
 } from './adaptiveQuiz.js';
+export { openPlanModificationChat } from './planModChat.js';
 
-const planModificationPrompt = 'Моля, опишете накратко желаните от вас промени в плана.';
 
 function normalizeText(input) {
     if (input === undefined || input === null) return '';
@@ -729,32 +729,6 @@ export async function _handleTriggerAdaptiveQuizClientSide() { // Exported for e
     _openAdaptiveQuizModal(); // from adaptiveQuiz.js
 }
 
-export async function openPlanModificationChat(userIdOverride = null) {
-    const uid = userIdOverride || currentUserId;
-    if (!uid) { showToast('Моля, влезте първо.', true); return; }
-    clearChat();
-    if (!selectors.chatWidget?.classList.contains('visible')) toggleChatWidget(true);
-    displayChatTypingIndicator(true);
-    let promptOverride = null;
-    let modelFromPrompt = null;
-    try {
-        const respPrompt = await fetch(`${apiEndpoints.getPlanModificationPrompt}?userId=${uid}`);
-        if (respPrompt.ok) {
-            const dataPrompt = await respPrompt.json();
-            if (dataPrompt && dataPrompt.prompt) promptOverride = dataPrompt.prompt;
-            if (dataPrompt && dataPrompt.model) modelFromPrompt = dataPrompt.model;
-        }
-    } catch (err) {
-        console.warn('Failed to fetch plan modification prompt:', err);
-        showToast('Грешка при зареждане на промпта за промени', true);
-    }
-    displayChatTypingIndicator(false);
-    chatModelOverride = modelFromPrompt;
-    chatPromptOverride = promptOverride;
-    displayChatMessage(planModificationPrompt, 'bot');
-    chatHistory.push({ text: planModificationPrompt, sender: 'bot', isError: false });
-    if (selectors.chatInput) selectors.chatInput.focus();
-}
 
 // ==========================================================================
 // ЧАТ ФУНКЦИИ (API комуникация и управление на историята)

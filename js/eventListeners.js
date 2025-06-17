@@ -14,9 +14,14 @@ import {
     handleChatSend, handleChatInputKeypress, // from app.js / chat.js
     _handlePrevQuizQuestion, _handleNextQuizQuestion, _handleSubmitQuizAnswersClientSide, // from app.js
     _handleTriggerAdaptiveQuizClientSide, // from app.js
-    todaysMealCompletionStatus, activeTooltip, currentUserId, // from app.js
-    openPlanModificationChat
+    todaysMealCompletionStatus, activeTooltip, currentUserId
 } from './app.js';
+import {
+    openPlanModificationChat,
+    clearPlanModChat,
+    handlePlanModChatSend,
+    handlePlanModChatInputKeypress
+} from './planModChat.js';
 import { toggleChatWidget, closeChatWidget, clearChat } from './chat.js';
 import { computeSwipeTargetIndex } from './swipeUtils.js';
 import { handleAchievementClick } from './achievements.js';
@@ -146,6 +151,11 @@ export function setupStaticEventListeners() {
     if (selectors.chatClear) selectors.chatClear.addEventListener('click', clearChat);
     if (selectors.chatSend) selectors.chatSend.addEventListener('click', handleChatSend);
     if (selectors.chatInput) selectors.chatInput.addEventListener('keypress', handleChatInputKeypress);
+
+    if (selectors.planModChatClose) selectors.planModChatClose.addEventListener('click', () => closeModal('planModChatModal'));
+    if (selectors.planModChatClear) selectors.planModChatClear.addEventListener('click', clearPlanModChat);
+    if (selectors.planModChatSend) selectors.planModChatSend.addEventListener('click', handlePlanModChatSend);
+    if (selectors.planModChatInput) selectors.planModChatInput.addEventListener('keypress', handlePlanModChatInputKeypress);
 
     if (selectors.feedbackFab) selectors.feedbackFab.addEventListener('click', () => openModal('feedbackModal')); // openModal from uiHandlers
     if (selectors.feedbackForm) selectors.feedbackForm.addEventListener('submit', handleFeedbackFormSubmit);
