@@ -16,7 +16,8 @@ import { populateUI } from './populateUI.js';
 import { setupStaticEventListeners, setupDynamicEventListeners } from './eventListeners.js';
 import { handleLogout as performLogout } from './auth.js';
 import {
-    toggleChatWidget, closeChatWidget, displayMessage as displayChatMessage,
+    toggleChatWidget, closeChatWidget, clearChat,
+    displayMessage as displayChatMessage,
     displayTypingIndicator as displayChatTypingIndicator, scrollToChatBottom,
     setAutomatedChatPending
 } from './chat.js';
@@ -731,7 +732,8 @@ export async function _handleTriggerAdaptiveQuizClientSide() { // Exported for e
 export async function openPlanModificationChat(userIdOverride = null) {
     const uid = userIdOverride || currentUserId;
     if (!uid) { showToast('Моля, влезте първо.', true); return; }
-    if (!selectors.chatWidget?.classList.contains('visible')) toggleChatWidget();
+    clearChat();
+    if (!selectors.chatWidget?.classList.contains('visible')) toggleChatWidget(true);
     displayChatTypingIndicator(true);
     let promptOverride = null;
     let modelFromPrompt = null;
