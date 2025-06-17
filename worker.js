@@ -2173,6 +2173,7 @@ async function createUserEvent(eventType, userId, payload, env) {
     if (eventType === 'planMod') {
         try {
             await env.USER_METADATA_KV.put(`pending_plan_mod_${userId}`, JSON.stringify(payload || {}));
+            await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata:{status:'pending'} });
         } catch (err) {
             console.error(`EVENT_SAVE_PENDING_MOD_ERROR (${userId}):`, err);
         }
