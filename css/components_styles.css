@@ -124,6 +124,20 @@
   border-radius: 50%;
   background: var(--color-danger);
 }
+#chat-fab.plan-mod-processing::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 3px solid var(--primary-color);
+  border-top-color: transparent;
+  background: transparent;
+  animation: spin 1s linear infinite;
+}
 #feedback-fab {
   bottom: var(--space-lg); left: var(--space-lg);
   background-color: var(--secondary-color); color: var(--text-color-on-secondary);

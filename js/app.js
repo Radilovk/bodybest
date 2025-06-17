@@ -415,6 +415,7 @@ export function stopPlanStatusPolling() {
     window.removeEventListener('beforeunload', stopPlanStatusPolling);
     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.add('hidden');
     if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.classList.remove('hidden');
+    if (selectors.chatFab) selectors.chatFab.classList.remove('plan-mod-processing');
 }
 
 export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
@@ -422,6 +423,7 @@ export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
     stopPlanStatusPolling();
     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.remove('hidden');
     if (selectors.triggerAdaptiveQuizBtn) selectors.triggerAdaptiveQuizBtn.classList.add('hidden');
+    if (selectors.chatFab) selectors.chatFab.classList.add('plan-mod-processing');
     showPlanPendingState();
     showToast('Обновявам плана...', false, 3000);
 
@@ -727,8 +729,18 @@ export async function openPlanModificationChat() {
     if (!currentUserId) { showToast('Моля, влезте първо.', true); return; }
     if (!selectors.chatWidget?.classList.contains('visible')) toggleChatWidget();
     displayChatTypingIndicator(true);
+    let promptToUse = planModificationPrompt;
     try {
-        const payload = { userId: currentUserId, message: planModificationPrompt, history: chatHistory.slice(-10) };
+        const pResp = await fetch(`${apiEndpoints.getPlanModificationPrompt}?userId=${currentUserId}`);
+        if (pResp.ok) {
+            const pData = await pResp.json().catch(() => ({}));
+            if (pData.success && pData.prompt) promptToUse = pData.prompt;
+        }
+    } catch (err) {
+        console.warn('Error fetching plan modification prompt:', err);
+    }
+    try {
+        const payload = { userId: currentUserId, message: promptToUse, history: chatHistory.slice(-10) };
         const resp = await fetch(apiEndpoints.chat, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -736,8 +748,16 @@ export async function openPlanModificationChat() {
         });
         const data = await resp.json();
         if (!resp.ok || !data.success) throw new Error(data.message || `HTTP ${resp.status}`);
-        displayChatMessage(data.reply, 'bot');
-        chatHistory.push({ text: data.reply, sender: 'bot', isError: false });
+        let reply = data.reply || '';
+        const cleaned = stripPlanModSignature(reply);
+        if (cleaned !== reply) {
+            reply = cleaned;
+            pollPlanStatus();
+        } else {
+            reply = cleaned;
+        }
+        displayChatMessage(reply, 'bot');
+        chatHistory.push({ text: reply, sender: 'bot', isError: false });
     } catch (e) {
         const msg = `Грешка при зареждане: ${e.message}`;
         displayChatMessage(msg, 'bot', true);
