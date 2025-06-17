@@ -124,6 +124,19 @@
   border-radius: 50%;
   background: var(--color-danger);
 }
+#chat-fab.planmod-processing::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 3px solid var(--accent-color);
+  border-top-color: transparent;
+  border-left-color: transparent;
+  animation: spin 1s linear infinite;
+}
 #feedback-fab {
   bottom: var(--space-lg); left: var(--space-lg);
   background-color: var(--secondary-color); color: var(--text-color-on-secondary);
