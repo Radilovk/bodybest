@@ -129,3 +129,8 @@ test('forceRefresh ignores cache and updates prompt', async () => {
     JSON.stringify({ promptOverride: 'NEW', model: 'b' })
   );
 });
+
+test('fetch called with userId in query', async () => {
+  await app.openPlanModificationChat('u1');
+  expect(global.fetch).toHaveBeenCalledWith('/prompt?userId=u1');
+});
