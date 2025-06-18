@@ -36,6 +36,8 @@ export { openPlanModificationChat };
 
 function showPlanModificationConfirm(initialMessage) {
     if (!selectors.chatMessages) return;
+    const existing = selectors.chatMessages.querySelector('.plan-mod-confirm-btn');
+    existing?.parentElement?.remove();
     const wrapper = document.createElement('div');
     const btn = document.createElement('button');
     btn.textContent = 'Потвърди промяната';

@@ -3,6 +3,8 @@ import { jest } from '@jest/globals';
 
 let handleChatSend;
 let openPlanModificationChatMock;
+let selectors;
+let chatMessages;
 
 beforeEach(async () => {
   jest.resetModules();
@@ -23,13 +25,14 @@ beforeEach(async () => {
     scrollToChatBottom: jest.fn(),
     setAutomatedChatPending: jest.fn()
   }));
-  const chatMessages = document.createElement('div');
+  chatMessages = document.createElement('div');
+  selectors = {
+    chatInput: { value: 'hi', disabled: false, focus: jest.fn() },
+    chatSend: { disabled: false },
+    chatMessages
+  };
   jest.unstable_mockModule('../uiElements.js', () => ({
-    selectors: {
-      chatInput: { value: 'hi', disabled: false, focus: jest.fn() },
-      chatSend: { disabled: false },
-      chatMessages
-    },
+    selectors,
     initializeSelectors: jest.fn(),
     trackerInfoTexts: {},
     detailedMetricInfoTexts: {}
@@ -78,4 +81,12 @@ beforeEach(async () => {
 test('does not open plan modification chat without confirmation', async () => {
   await handleChatSend();
   expect(openPlanModificationChatMock).not.toHaveBeenCalled();
+});
+
+test('confirmation button is not duplicated', async () => {
+  await handleChatSend();
+  selectors.chatInput.value = 'hi';
+  await handleChatSend();
+  const btns = chatMessages.querySelectorAll('.plan-mod-confirm-btn');
+  expect(btns).toHaveLength(1);
 });
