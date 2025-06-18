@@ -57,9 +57,80 @@ beforeEach(async () => {
   }));
   global.fetch = jest.fn(() => Promise.reject(new Error('fail')));
   app = await import('../app.js');
+  sessionStorage.clear();
 });
 
 test('shows toast on fetch error', async () => {
   await app.openPlanModificationChat('u1');
   expect(showToastMock).toHaveBeenCalledWith('Грешка при зареждане на промпта за промени', true);
+  expect(app.planModChatHistory.length).toBe(0);
+});
+
+test('uses backend prompt when fetch succeeds', async () => {
+  global.fetch.mockResolvedValueOnce({
+    ok: true,
+    json: async () => ({ promptOverride: 'BACK', model: 'm' })
+  });
+  await app.openPlanModificationChat('u1');
+  expect(app.planModChatHistory[0].text).toBe('BACK');
+});
+
+test('handles non-ok response without initial message', async () => {
+  global.fetch.mockResolvedValueOnce({
+    ok: false,
+    status: 500,
+    text: async () => 'Server error'
+  });
+  await app.openPlanModificationChat('u1');
+  expect(showToastMock).toHaveBeenCalledWith('Server error', true);
+  expect(app.planModChatHistory.length).toBe(0);
+});
+
+test('opening plan mod chat does not affect main chat history', async () => {
+  global.fetch.mockResolvedValueOnce({
+    ok: true,
+    json: async () => ({ promptOverride: 'BACK', model: 'm' })
+  });
+  app.chatHistory.push({ text: 'hi', sender: 'user', isError: false });
+  await app.openPlanModificationChat('u1');
+  expect(app.chatHistory.length).toBe(1);
+  expect(app.planModChatHistory[0].text).toBe('BACK');
+});
+
+test('reuses cached prompt on subsequent openings', async () => {
+  global.fetch.mockResolvedValueOnce({
+    ok: true,
+    json: async () => ({ promptOverride: 'CACHED', model: 'm' })
+  });
+  await app.openPlanModificationChat('u1');
+  expect(sessionStorage.getItem('planModPrompt')).toBe(
+    JSON.stringify({ promptOverride: 'CACHED', model: 'm' })
+  );
+  global.fetch.mockClear();
+  await app.openPlanModificationChat('u1');
+  expect(global.fetch).not.toHaveBeenCalled();
+  expect(app.planModChatHistory[0].text).toBe('CACHED');
+});
+
+test('forceRefresh ignores cache and updates prompt', async () => {
+  global.fetch.mockResolvedValueOnce({
+    ok: true,
+    json: async () => ({ promptOverride: 'FIRST', model: 'a' })
+  });
+  await app.openPlanModificationChat('u1');
+  global.fetch.mockResolvedValueOnce({
+    ok: true,
+    json: async () => ({ promptOverride: 'NEW', model: 'b' })
+  });
+  await app.openPlanModificationChat('u1', true);
+  expect(global.fetch).toHaveBeenCalled();
+  expect(app.planModChatHistory[0].text).toBe('NEW');
+  expect(sessionStorage.getItem('planModPrompt')).toBe(
+    JSON.stringify({ promptOverride: 'NEW', model: 'b' })
+  );
+});
+
+test('fetch called with userId in query', async () => {
+  await app.openPlanModificationChat('u1');
+  expect(global.fetch).toHaveBeenCalledWith('/prompt?userId=u1');
 });
