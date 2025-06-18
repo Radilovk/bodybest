@@ -85,8 +85,7 @@ npm install
 ```
 
 
-След успешната инсталация можете отново да стартирате `npm run dev` или
-`npx wrangler publish`.
+След успешната инсталация можете отново да стартирате `npm run dev`.
 
 ### Generate Documentation
 
@@ -114,15 +113,6 @@ node scripts/validate-wrangler.js
 ```
 This script checks for placeholder values and for a provided `CF_API_TOKEN`.
 
-### Manual publish
-
-For manual deployment run:
-
-```bash
-npx wrangler publish
-```
-
-This will upload the worker using the settings from `wrangler.toml`.
 
 ### Работа с KV
 
