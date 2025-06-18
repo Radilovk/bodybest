@@ -4,8 +4,6 @@ import { openModal, showToast } from './uiHandlers.js';
 import { escapeHtml } from './utils.js';
 import { currentUserId, chatHistory, setChatModelOverride, setChatPromptOverride, chatModelOverride, chatPromptOverride, stripPlanModSignature, pollPlanStatus } from './app.js';
 
-const planModificationPrompt = 'Моля, опишете накратко желаните от вас промени в плана.';
-
 export function clearPlanModChat() {
   if (selectors.planModChatMessages) selectors.planModChatMessages.innerHTML = '';
   chatHistory.length = 0;
@@ -124,8 +122,6 @@ export async function openPlanModificationChat(userIdOverride = null, initialMes
   displayPlanModChatTypingIndicator(false);
   setChatModelOverride(modelFromPrompt);
   setChatPromptOverride(promptOverride);
-  displayPlanModChatMessage(planModificationPrompt, 'bot');
-  chatHistory.push({ text: planModificationPrompt, sender: 'bot', isError: false });
 
   if (initialMessage) {
     displayPlanModChatMessage(initialMessage, 'user');
