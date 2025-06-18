@@ -60,4 +60,24 @@ describe('handleChatRequest plan modification marker', () => {
     const keys = env.USER_METADATA_KV.put.mock.calls.map(c => c[0]);
     expect(keys.some(k => k.startsWith('event_planMod_u1_'))).toBe(true);
   });
+
+  test('populates USER_REQUEST correctly', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ candidates: [{ content: { parts: [{ text: 'reply' }] } }] })
+    });
+    const req1 = { json: async () => ({ userId: 'u1', message: 'first', source: 'planModChat', history: [] }) };
+    await handleChatRequest(req1, { ...env });
+    let body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    const prompt1 = body.contents[0].parts[0].text;
+    expect(prompt1).toContain('first');
+    global.fetch.mockClear();
+
+    const req2 = { json: async () => ({ userId: 'u1', message: 'second', source: 'planModChat', history: [] }) };
+    await handleChatRequest(req2, { ...env });
+    body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    const prompt2 = body.contents[0].parts[0].text;
+    expect(prompt2).toContain('second');
+    expect(prompt1).not.toBe(prompt2);
+  });
 });
