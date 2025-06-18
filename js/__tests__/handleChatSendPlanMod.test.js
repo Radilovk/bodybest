@@ -75,7 +75,7 @@ beforeEach(async () => {
 
 test('opens plan modification chat when marker detected', async () => {
   await handleChatSend();
-  expect(openPlanModificationChatMock).toHaveBeenCalledWith('hi');
+  expect(openPlanModificationChatMock).toHaveBeenCalledWith('u1', 'hi');
   const chatCall = global.fetch.mock.calls.find(c => c[0] === '/chat');
   const body = JSON.parse(chatCall[1].body);
   expect(body.source).toBeUndefined();
