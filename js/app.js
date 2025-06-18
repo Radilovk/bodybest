@@ -768,7 +768,7 @@ export async function handleChatSend() { // Exported for eventListeners.js
         const cleaned = stripPlanModSignature(botReply);
         if (cleaned !== botReply) {
             botReply = cleaned;
-            openPlanModificationChat(messageText);
+            openPlanModificationChat(currentUserId, messageText);
         } else {
             botReply = cleaned;
         }
