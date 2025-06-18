@@ -20,8 +20,7 @@ import {
     openPlanModificationChat,
     clearPlanModChat,
     handlePlanModChatSend,
-    handlePlanModChatInputKeypress,
-    closePlanModificationChat
+    handlePlanModChatInputKeypress
 } from './planModChat.js';
 import { toggleChatWidget, closeChatWidget, clearChat } from './chat.js';
 import { computeSwipeTargetIndex } from './swipeUtils.js';
@@ -126,15 +125,13 @@ export function setupStaticEventListeners() {
         const closeBtn = event.target.closest('[data-modal-close]');
         if (closeBtn) {
             const modalId = closeBtn.dataset.modalClose;
-            if (modalId === 'planModChatModal') closePlanModificationChat();
-            else closeModal(modalId);
+            closeModal(modalId);
             if (modalId === 'infoModal') acknowledgeAiUpdate();
             return;
         }
         if (event.target.classList.contains('modal') && event.target.classList.contains('visible')) {
             const modalId = event.target.id;
-            if (modalId === 'planModChatModal') closePlanModificationChat();
-            else closeModal(modalId);
+            closeModal(modalId);
             if (modalId === 'infoModal') acknowledgeAiUpdate();
         }
     });
@@ -143,8 +140,7 @@ export function setupStaticEventListeners() {
             const visibleModal = document.querySelector('.modal.visible');
             if (visibleModal) {
                 const modalId = visibleModal.id;
-                if (modalId === 'planModChatModal') closePlanModificationChat();
-                else closeModal(modalId);
+                closeModal(modalId);
                 if (modalId === 'infoModal') acknowledgeAiUpdate();
             }
             if (activeTooltip) handleTrackerTooltipHide(); // Call hide from uiHandlers
@@ -156,7 +152,7 @@ export function setupStaticEventListeners() {
     if (selectors.chatSend) selectors.chatSend.addEventListener('click', handleChatSend);
     if (selectors.chatInput) selectors.chatInput.addEventListener('keypress', handleChatInputKeypress);
 
-    if (selectors.planModChatClose) selectors.planModChatClose.addEventListener('click', closePlanModificationChat);
+    if (selectors.planModChatClose) selectors.planModChatClose.addEventListener('click', () => closeModal('planModChatModal'));
     if (selectors.planModChatClear) selectors.planModChatClear.addEventListener('click', clearPlanModChat);
     if (selectors.planModChatSend) selectors.planModChatSend.addEventListener('click', handlePlanModChatSend);
     if (selectors.planModChatInput) selectors.planModChatInput.addEventListener('keypress', handlePlanModChatInputKeypress);

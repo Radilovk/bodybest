@@ -53,19 +53,9 @@ export let todaysMealCompletionStatus = {}; // Updated by populateUI and eventLi
 export let activeTooltip = null; // Managed by uiHandlers via setActiveTooltip
 export let chatModelOverride = null; // Optional model override for next chat message
 export let chatPromptOverride = null; // Optional prompt override for next chat message
-export let planModChatHistory = [];
-export let planModChatModelOverride = null;
-export let planModChatPromptOverride = null;
-export let planModRequestHistory = [];
-export let planModFlowActive = false;
-
-export function setPlanModFlowActive(val) { planModFlowActive = val; }
-export function setCurrentUserId(val) { currentUserId = val; }
 
 export function setChatModelOverride(val) { chatModelOverride = val; }
 export function setChatPromptOverride(val) { chatPromptOverride = val; }
-export function setPlanModChatModelOverride(val) { planModChatModelOverride = val; }
-export function setPlanModChatPromptOverride(val) { planModChatPromptOverride = val; }
 
 // Управление на интервал за проверка на статус на плана
 let planStatusInterval = null;
@@ -90,11 +80,6 @@ export function resetAppState() {
     todaysMealCompletionStatus = {};
     activeTooltip = null;
     chatPromptOverride = null;
-    planModRequestHistory = [];
-    planModFlowActive = false;
-    planModChatHistory = [];
-    planModChatModelOverride = null;
-    planModChatPromptOverride = null;
     currentQuizData = null;
     userQuizAnswers = {};
     currentQuestionIndex = 0;
@@ -764,13 +749,11 @@ export async function handleChatSend() { // Exported for eventListeners.js
 
     displayChatMessage(messageText, 'user'); // from chat.js
     chatHistory.push({ text: messageText, sender: 'user', isError: false });
-    if (planModFlowActive) planModRequestHistory.push({ text: messageText, sender: 'user', isError: false });
 
     selectors.chatInput.value = ''; selectors.chatInput.disabled = true; selectors.chatSend.disabled = true;
     displayChatTypingIndicator(true); // from chat.js
     try {
-        const historyToSend = planModFlowActive ? planModRequestHistory.slice(-10) : chatHistory.slice(-10);
-        const payload = { userId: currentUserId, message: messageText, history: historyToSend }; // Send some history context
+        const payload = { userId: currentUserId, message: messageText, history: chatHistory.slice(-10) }; // Send some history context
         if (chatModelOverride) payload.model = chatModelOverride;
         if (chatPromptOverride) payload.promptOverride = chatPromptOverride;
         const response = await fetch(apiEndpoints.chat, {
@@ -781,50 +764,22 @@ export async function handleChatSend() { // Exported for eventListeners.js
 
         let botReply = result.reply || '';
         const cleaned = stripPlanModSignature(botReply);
-        const hasMarker = cleaned !== botReply;
-        botReply = cleaned;
+        if (cleaned !== botReply) {
+            botReply = cleaned;
+            pollPlanStatus();
+            chatModelOverride = null; // reset after plan modification request
+            chatPromptOverride = null;
+        } else {
+            botReply = cleaned;
+        }
 
         displayChatMessage(botReply, 'bot'); // from chat.js
         chatHistory.push({ text: botReply, sender: 'bot', isError: false });
-
-        if (planModFlowActive) {
-            planModRequestHistory.push({ text: botReply, sender: 'bot', isError: false });
-            if (hasMarker) {
-                pollPlanStatus();
-                setPlanModFlowActive(false);
-                planModRequestHistory = [];
-                chatModelOverride = null;
-                chatPromptOverride = null;
-            }
-        } else if (hasMarker) {
-            planModRequestHistory = [
-                { text: messageText, sender: 'user', isError: false },
-                { text: botReply, sender: 'bot', isError: false }
-            ];
-            setPlanModFlowActive(true);
-            try {
-                const respPrompt = await fetch(`${apiEndpoints.getPlanModificationPrompt}?userId=${currentUserId}`);
-                if (!respPrompt.ok) {
-                    let errorText;
-                    try { errorText = (await respPrompt.text()) || `HTTP ${respPrompt.status}`; }
-                    catch { errorText = `HTTP ${respPrompt.status}`; }
-                    showToast(errorText, true);
-                } else {
-                    const dataPrompt = await respPrompt.json();
-                    if (dataPrompt && dataPrompt.promptOverride) chatPromptOverride = dataPrompt.promptOverride;
-                    if (dataPrompt && dataPrompt.model) chatModelOverride = dataPrompt.model;
-                }
-            } catch (err) {
-                console.warn('Failed to fetch plan modification prompt:', err);
-                showToast('Грешка при зареждане на промпта за промени', true);
-            }
-        }
 
     } catch (e) {
         const errorMsg = `Грешка при комуникация с асистента: ${e.message}`;
         displayChatMessage(errorMsg, 'bot', true); // from chat.js
         chatHistory.push({ text: errorMsg, sender: 'bot', isError: true });
-        if (planModFlowActive) planModRequestHistory.push({ text: errorMsg, sender: 'bot', isError: true });
     } finally {
         displayChatTypingIndicator(false); // from chat.js
         if(selectors.chatInput) { selectors.chatInput.disabled = false; selectors.chatInput.focus(); }
