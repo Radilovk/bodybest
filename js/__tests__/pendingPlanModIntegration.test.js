@@ -20,7 +20,7 @@ describe('processSingleUserPlan with pending modification', () => {
           }
           if (key === `${userId}_final_plan`) return Promise.resolve(null);
           if (key === `${userId}_current_status`) return Promise.resolve(JSON.stringify({ weight: 70 }));
-          if (key === `pending_plan_mod_${userId}`) return Promise.resolve(JSON.stringify({ request: 'без яйца' }));
+          if (key === `plan_mod_history_${userId}`) return Promise.resolve('[{"role":"user","parts":[{"text":"без яйца"}]}]');
           if (key.startsWith(`${userId}_log_`)) return Promise.resolve(null);
           return Promise.resolve(null);
         }),
@@ -57,6 +57,7 @@ describe('processSingleUserPlan with pending modification', () => {
     global.fetch = originalFetch;
 
     expect(sentPrompt).toContain('без яйца');
+    expect(env.USER_METADATA_KV.delete).toHaveBeenCalledWith(`plan_mod_history_${userId}`);
     expect(env.USER_METADATA_KV.delete).toHaveBeenCalledWith(`pending_plan_mod_${userId}`);
   });
 });
