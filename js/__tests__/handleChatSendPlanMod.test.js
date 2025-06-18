@@ -23,10 +23,12 @@ beforeEach(async () => {
     scrollToChatBottom: jest.fn(),
     setAutomatedChatPending: jest.fn()
   }));
+  const chatMessages = document.createElement('div');
   jest.unstable_mockModule('../uiElements.js', () => ({
     selectors: {
       chatInput: { value: 'hi', disabled: false, focus: jest.fn() },
-      chatSend: { disabled: false }
+      chatSend: { disabled: false },
+      chatMessages
     },
     initializeSelectors: jest.fn(),
     trackerInfoTexts: {},
@@ -73,10 +75,7 @@ beforeEach(async () => {
   app.setCurrentUserId('u1');
 });
 
-test('opens plan modification chat when marker detected', async () => {
+test('does not open plan modification chat without confirmation', async () => {
   await handleChatSend();
-  expect(openPlanModificationChatMock).toHaveBeenCalledWith('u1', 'hi');
-  const chatCall = global.fetch.mock.calls.find(c => c[0] === '/chat');
-  const body = JSON.parse(chatCall[1].body);
-  expect(body.source).toBeUndefined();
+  expect(openPlanModificationChatMock).not.toHaveBeenCalled();
 });

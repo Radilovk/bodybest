@@ -34,6 +34,21 @@ import {
 import { openPlanModificationChat } from './planModChat.js';
 export { openPlanModificationChat };
 
+function showPlanModificationConfirm(initialMessage) {
+    if (!selectors.chatMessages) return;
+    const wrapper = document.createElement('div');
+    const btn = document.createElement('button');
+    btn.textContent = 'Потвърди промяната';
+    btn.classList.add('plan-mod-confirm-btn');
+    btn.addEventListener('click', () => {
+        wrapper.remove();
+        openPlanModificationChat(currentUserId, initialMessage);
+    });
+    wrapper.appendChild(btn);
+    selectors.chatMessages.appendChild(wrapper);
+    scrollToChatBottom();
+}
+
 
 function normalizeText(input) {
     if (input === undefined || input === null) return '';
@@ -768,7 +783,7 @@ export async function handleChatSend() { // Exported for eventListeners.js
         const cleaned = stripPlanModSignature(botReply);
         if (cleaned !== botReply) {
             botReply = cleaned;
-            openPlanModificationChat(currentUserId, messageText);
+            showPlanModificationConfirm(messageText);
         } else {
             botReply = cleaned;
         }
