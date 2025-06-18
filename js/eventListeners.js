@@ -14,7 +14,8 @@ import {
     handleChatSend, handleChatInputKeypress, // from app.js / chat.js
     _handlePrevQuizQuestion, _handleNextQuizQuestion, _handleSubmitQuizAnswersClientSide, // from app.js
     _handleTriggerAdaptiveQuizClientSide, // from app.js
-    todaysMealCompletionStatus, activeTooltip, currentUserId
+    todaysMealCompletionStatus, activeTooltip, currentUserId,
+    setChatModelOverride, setChatPromptOverride
 } from './app.js';
 import {
     openPlanModificationChat,
@@ -132,6 +133,10 @@ export function setupStaticEventListeners() {
         if (event.target.classList.contains('modal') && event.target.classList.contains('visible')) {
             const modalId = event.target.id;
             closeModal(modalId);
+            if (modalId === 'planModChatModal') {
+                setChatModelOverride(null);
+                setChatPromptOverride(null);
+            }
             if (modalId === 'infoModal') acknowledgeAiUpdate();
         }
     });
@@ -141,6 +146,10 @@ export function setupStaticEventListeners() {
             if (visibleModal) {
                 const modalId = visibleModal.id;
                 closeModal(modalId);
+                if (modalId === 'planModChatModal') {
+                    setChatModelOverride(null);
+                    setChatPromptOverride(null);
+                }
                 if (modalId === 'infoModal') acknowledgeAiUpdate();
             }
             if (activeTooltip) handleTrackerTooltipHide(); // Call hide from uiHandlers
@@ -152,7 +161,11 @@ export function setupStaticEventListeners() {
     if (selectors.chatSend) selectors.chatSend.addEventListener('click', handleChatSend);
     if (selectors.chatInput) selectors.chatInput.addEventListener('keypress', handleChatInputKeypress);
 
-    if (selectors.planModChatClose) selectors.planModChatClose.addEventListener('click', () => closeModal('planModChatModal'));
+    if (selectors.planModChatClose) selectors.planModChatClose.addEventListener('click', () => {
+        setChatModelOverride(null);
+        setChatPromptOverride(null);
+        closeModal('planModChatModal');
+    });
     if (selectors.planModChatClear) selectors.planModChatClear.addEventListener('click', clearPlanModChat);
     if (selectors.planModChatSend) selectors.planModChatSend.addEventListener('click', handlePlanModChatSend);
     if (selectors.planModChatInput) selectors.planModChatInput.addEventListener('keypress', handlePlanModChatInputKeypress);
