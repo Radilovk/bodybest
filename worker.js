@@ -663,7 +663,7 @@ async function handleUpdateStatusRequest(request, env) {
 
 // ------------- START FUNCTION: handleChatRequest -------------
 async function handleChatRequest(request, env) {
-    const { userId, message, model, promptOverride, source } = await request.json();
+    const { userId, message, model, promptOverride, source, history } = await request.json();
     if (!userId || !message) return { success: false, message: 'Липсва userId или съобщение.', statusHint: 400 };
     try {
         const [ initialAnswersStr, finalPlanStr, planStatus, recipeDataStr, storedChatHistoryStr, currentStatusStr, ...logStringsForChat ] = await Promise.all([
@@ -681,7 +681,14 @@ async function handleChatRequest(request, env) {
              return { success: false, message: errMsg, statusHint: 404 };
         }
         const initialAnswers = safeParseJson(initialAnswersStr, {}); const finalPlan = safeParseJson(finalPlanStr, {});
-        let storedChatHistory = safeParseJson(storedChatHistoryStr, []); const currentStatus = safeParseJson(currentStatusStr, {});
+        let storedChatHistory = safeParseJson(storedChatHistoryStr, []);
+        if(source === 'planModChat' && Array.isArray(history)) {
+            storedChatHistory = history.map(h => ({
+                role: h.sender === 'user' ? 'user' : 'model',
+                parts: [{ text: h.text || '' }]
+            }));
+        }
+        const currentStatus = safeParseJson(currentStatusStr, {});
         const currentPrinciples = safeGet(finalPlan, 'principlesWeek2_4', 'Общи принципи.');
         if (Object.keys(initialAnswers).length === 0 || Object.keys(finalPlan).length === 0) {
             console.error(`CHAT_REQUEST_ERROR (${userId}): Critical data (initialAnswers or finalPlan) empty after parsing.`);
@@ -734,8 +741,9 @@ async function handleChatRequest(request, env) {
             '%%RECENT_ADHERENCE%%':recentLogs.length>0?`${recentLogs.map(l=>Object.values(l.data?.completedMealsStatus||{}).filter(v=>v===true).length).reduce((s,c)=>s+c,0)} изп. хран. за последните ${recentLogs.length} дни`:'N/A', 
             '%%TODAYS_MEALS_NAMES%%':todayMeals, 
             '%%TODAYS_COMPLETED_MEALS_KEYS%%':safeGet(recentLogs.find(l=>l.date===today.toISOString().split('T')[0]),'data.completedMealsStatus')?JSON.stringify(Object.keys(recentLogs.find(l=>l.date===today.toISOString().split('T')[0]).data.completedMealsStatus).filter(k=>recentLogs.find(l=>l.date===today.toISOString().split('T')[0]).data.completedMealsStatus[k]===true)):'Няма данни за днес', 
-            '%%HISTORY%%':historyPrompt||'Няма предишна история на чата.', 
-            '%%USER_MESSAGE%%':message, 
+            '%%HISTORY%%':historyPrompt||'Няма предишна история на чата.',
+            '%%USER_MESSAGE%%':message,
+            '%%USER_REQUEST%%':message,
             '%%RECENT_LOGS_SUMMARY%%':recentLogsSummary
         };
         const populatedPrompt = populatePrompt(chatPromptTpl,r);
