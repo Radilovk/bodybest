@@ -3,10 +3,12 @@ import { jest } from '@jest/globals';
 
 let app;
 let showToastMock;
+let closeModalMock;
 
 beforeEach(async () => {
   jest.resetModules();
   showToastMock = jest.fn();
+  closeModalMock = jest.fn();
   jest.unstable_mockModule('../uiHandlers.js', () => ({
     toggleMenu: jest.fn(),
     closeMenu: jest.fn(),
@@ -19,7 +21,7 @@ beforeEach(async () => {
     activateTab: jest.fn(),
     handleTabKeydown: jest.fn(),
     openModal: jest.fn(),
-    closeModal: jest.fn(),
+    closeModal: closeModalMock,
     openInfoModalWithDetails: jest.fn(),
     openMainIndexInfo: jest.fn(),
     toggleDailyNote: jest.fn(),
@@ -62,6 +64,11 @@ beforeEach(async () => {
 test('shows toast on fetch error', async () => {
   await app.openPlanModificationChat('u1');
   expect(showToastMock).toHaveBeenCalledWith('Грешка при зареждане на промпта за промени', true);
+});
+
+test('modal closes on fetch error', async () => {
+  await app.openPlanModificationChat('u1');
+  expect(closeModalMock).toHaveBeenCalledWith('planModChatModal');
 });
 
 test('shows toast on server error status', async () => {
