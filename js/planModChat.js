@@ -1,6 +1,6 @@
 import { selectors } from './uiElements.js';
 import { apiEndpoints } from './config.js';
-import { openModal, showToast, closeModal } from './uiHandlers.js';
+import { openModal, showToast } from './uiHandlers.js';
 import { escapeHtml } from './utils.js';
 import * as appState from './app.js';
 
@@ -8,7 +8,7 @@ const planModificationPrompt = 'Моля, опишете накратко жел
 
 export function clearPlanModChat() {
   if (selectors.planModChatMessages) selectors.planModChatMessages.innerHTML = '';
-  appState.planModChatHistory.length = 0;
+  appState.chatHistory.length = 0;
 }
 
 export function displayPlanModChatMessage(text, sender = 'bot', isError = false) {
@@ -51,16 +51,16 @@ export async function handlePlanModChatSend() {
   if (!messageText || !appState.currentUserId) return;
 
   displayPlanModChatMessage(messageText, 'user');
-  appState.planModChatHistory.push({ text: messageText, sender: 'user', isError: false });
+  appState.chatHistory.push({ text: messageText, sender: 'user', isError: false });
 
   selectors.planModChatInput.value = '';
   selectors.planModChatInput.disabled = true;
   selectors.planModChatSend.disabled = true;
   displayPlanModChatTypingIndicator(true);
   try {
-    const payload = { userId: appState.currentUserId, message: messageText, history: appState.planModChatHistory.slice(-10) };
-    if (appState.planModChatModelOverride) payload.model = appState.planModChatModelOverride;
-    if (appState.planModChatPromptOverride) payload.promptOverride = appState.planModChatPromptOverride;
+    const payload = { userId: appState.currentUserId, message: messageText, history: appState.chatHistory.slice(-10) };
+    if (appState.chatModelOverride) payload.model = appState.chatModelOverride;
+    if (appState.chatPromptOverride) payload.promptOverride = appState.chatPromptOverride;
     const response = await fetch(apiEndpoints.chat, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -73,17 +73,17 @@ export async function handlePlanModChatSend() {
     if (cleaned !== botReply) {
       botReply = cleaned;
       appState.pollPlanStatus();
-      appState.setPlanModChatModelOverride(null);
-      appState.setPlanModChatPromptOverride(null);
+      appState.setChatModelOverride(null);
+      appState.setChatPromptOverride(null);
     } else {
       botReply = cleaned;
     }
     displayPlanModChatMessage(botReply, 'bot');
-    appState.planModChatHistory.push({ text: botReply, sender: 'bot', isError: false });
+    appState.chatHistory.push({ text: botReply, sender: 'bot', isError: false });
   } catch (e) {
     const errorMsg = `Грешка при комуникация с асистента: ${e.message}`;
     displayPlanModChatMessage(errorMsg, 'bot', true);
-    appState.planModChatHistory.push({ text: errorMsg, sender: 'bot', isError: true });
+    appState.chatHistory.push({ text: errorMsg, sender: 'bot', isError: true });
   } finally {
     displayPlanModChatTypingIndicator(false);
     selectors.planModChatInput.disabled = false;
@@ -99,7 +99,7 @@ export function handlePlanModChatInputKeypress(e) {
   }
 }
 
-export async function openPlanModificationChat(userIdOverride = null, forceRefresh = false) {
+export async function openPlanModificationChat(userIdOverride = null) {
   const uid = userIdOverride || appState.currentUserId;
   if (!uid) {
     showToast('Моля, влезте първо.', true);
@@ -110,72 +110,21 @@ export async function openPlanModificationChat(userIdOverride = null, forceRefre
   displayPlanModChatTypingIndicator(true);
   let promptOverride = null;
   let modelFromPrompt = null;
-  let promptError = false;
-  const cached = sessionStorage.getItem('planModPrompt');
-  if (cached && !forceRefresh) {
-    try {
-      const data = JSON.parse(cached);
-      if (data.promptOverride) promptOverride = data.promptOverride;
-      if (data.model) modelFromPrompt = data.model;
-    } catch (e) {
-      console.warn('Invalid cached plan modification prompt:', e);
-      sessionStorage.removeItem('planModPrompt');
+  try {
+    const respPrompt = await fetch(`${apiEndpoints.getPlanModificationPrompt}?userId=${uid}`);
+    if (respPrompt.ok) {
+      const dataPrompt = await respPrompt.json();
+      if (dataPrompt && dataPrompt.prompt) promptOverride = dataPrompt.prompt;
+      if (dataPrompt && dataPrompt.model) modelFromPrompt = dataPrompt.model;
     }
-  }
-  if (!promptOverride && !modelFromPrompt || forceRefresh) {
-    try {
-      const respPrompt = await fetch(
-        `${apiEndpoints.getPlanModificationPrompt}?userId=${uid}`
-      );
-      if (!respPrompt.ok) {
-        let errorText;
-        try {
-          errorText = (await respPrompt.text()) || `HTTP ${respPrompt.status}`;
-        } catch {
-          errorText = `HTTP ${respPrompt.status}`;
-        }
-        showToast(errorText, true);
-        promptError = true;
-      } else {
-        const dataPrompt = await respPrompt.json();
-        if (dataPrompt && dataPrompt.promptOverride)
-          promptOverride = dataPrompt.promptOverride;
-        if (dataPrompt && dataPrompt.model) modelFromPrompt = dataPrompt.model;
-        try {
-          sessionStorage.setItem('planModPrompt', JSON.stringify({
-            promptOverride,
-            model: modelFromPrompt
-          }));
-        } catch (e) {
-          console.warn('Unable to store plan modification prompt:', e);
-        }
-      }
-    } catch (err) {
-      console.warn('Failed to fetch plan modification prompt:', err);
-      showToast('Грешка при зареждане на промпта за промени', true);
-      promptError = true;
-    }
+  } catch (err) {
+    console.warn('Failed to fetch plan modification prompt:', err);
+    showToast('Грешка при зареждане на промпта за промени', true);
   }
   displayPlanModChatTypingIndicator(false);
-  appState.setPlanModChatModelOverride(modelFromPrompt);
-  appState.setPlanModChatPromptOverride(promptOverride);
-  if (!promptError) {
-    const initialMsg = promptOverride || planModificationPrompt;
-    displayPlanModChatMessage(initialMsg, 'bot');
-    appState.planModChatHistory.push({ text: initialMsg, sender: 'bot', isError: false });
-  }
+  appState.setChatModelOverride(modelFromPrompt);
+  appState.setChatPromptOverride(promptOverride);
+  displayPlanModChatMessage(planModificationPrompt, 'bot');
+  appState.chatHistory.push({ text: planModificationPrompt, sender: 'bot', isError: false });
   if (selectors.planModChatInput) selectors.planModChatInput.focus();
-}
-
-export function closePlanModChat() {
-  appState.setPlanModChatModelOverride(null);
-  appState.setPlanModChatPromptOverride(null);
-  closeModal('planModChatModal');
-}
-
-export function closePlanModificationChat() {
-  closeModal('planModChatModal');
-  appState.setPlanModChatModelOverride(null);
-  appState.setPlanModChatPromptOverride(null);
-  if (selectors.planModificationBtn) selectors.planModificationBtn.focus();
 }
