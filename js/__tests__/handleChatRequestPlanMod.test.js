@@ -37,12 +37,24 @@ describe('handleChatRequest plan modification marker', () => {
     global.fetch && global.fetch.mockRestore();
   });
 
-  test('creates pending plan modification event', async () => {
+  test('does not create event without planModChat source', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ candidates: [{ content: { parts: [{ text: 'ok\n[PLAN_MODIFICATION_REQUEST] change' }] } }] })
     });
     const request = { json: async () => ({ userId: 'u1', message: 'm' }) };
+    const res = await handleChatRequest(request, { ...env });
+    expect(res.success).toBe(true);
+    const keys = env.USER_METADATA_KV.put.mock.calls.map(c => c[0]);
+    expect(keys.some(k => k.startsWith('event_planMod_u1_'))).toBe(false);
+  });
+
+  test('creates event when source is planModChat', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ candidates: [{ content: { parts: [{ text: 'ok\n[PLAN_MODIFICATION_REQUEST] change' }] } }] })
+    });
+    const request = { json: async () => ({ userId: 'u1', message: 'm', source: 'planModChat' }) };
     const res = await handleChatRequest(request, { ...env });
     expect(res.success).toBe(true);
     const keys = env.USER_METADATA_KV.put.mock.calls.map(c => c[0]);
