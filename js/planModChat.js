@@ -1,6 +1,6 @@
 import { selectors } from './uiElements.js';
 import { apiEndpoints } from './config.js';
-import { openModal, showToast } from './uiHandlers.js';
+import { openModal, showToast, closeModal } from './uiHandlers.js';
 import { escapeHtml } from './utils.js';
 import { currentUserId, setChatModelOverride, setChatPromptOverride, chatModelOverride, chatPromptOverride, stripPlanModSignature, pollPlanStatus } from './app.js';
 
@@ -109,6 +109,8 @@ export async function openPlanModificationChat(userIdOverride = null, initialMes
   }
   clearPlanModChat();
   openModal('planModChatModal');
+  if (selectors.planModChatInput) selectors.planModChatInput.disabled = true;
+  if (selectors.planModChatSend) selectors.planModChatSend.disabled = true;
   displayPlanModChatTypingIndicator(true);
   let promptOverride = null;
   let modelFromPrompt = null;
@@ -123,6 +125,8 @@ export async function openPlanModificationChat(userIdOverride = null, initialMes
         // ignore JSON parse errors
       }
       showToast(message, true);
+      closeModal('planModChatModal');
+      displayPlanModChatTypingIndicator(false);
       return;
     }
     const dataPrompt = await respPrompt.json();
@@ -137,6 +141,8 @@ export async function openPlanModificationChat(userIdOverride = null, initialMes
   setChatPromptOverride(promptOverride);
   displayPlanModChatMessage(planModificationPrompt, 'bot');
   planModChatHistory.push({ text: planModificationPrompt, sender: 'bot', isError: false });
+  if (selectors.planModChatInput) selectors.planModChatInput.disabled = false;
+  if (selectors.planModChatSend) selectors.planModChatSend.disabled = false;
 
   if (initialMessage) {
     displayPlanModChatMessage(initialMessage, 'user');
