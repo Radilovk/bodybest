@@ -6,7 +6,7 @@ import {
     setActiveTooltip // function from app.js to update activeTooltip state
 } from './app.js';
 import { trackerInfoTexts, detailedMetricInfoTexts, mainIndexInfoTexts } from './uiElements.js';
-import { capitalizeFirstLetter, safeGet } from './utils.js';
+import { capitalizeFirstLetter, safeGet, escapeHtml } from './utils.js';
 
 // Продължителност на анимацията при скриване/показване на модали
 const MODAL_TRANSITION_MS = 300;
@@ -182,8 +182,10 @@ export function openInfoModalWithDetails(key, type) {
             body += "\n\nСтойности:\n" + Object.values(metricInfo.levels).join("\n");
         }
     }
-    if (selectors.infoModalTitle) selectors.infoModalTitle.textContent = title;
-    if (selectors.infoModalBody) selectors.infoModalBody.innerHTML = String(body).replace(/\n/g, '<br>');
+    const escapedTitle = escapeHtml(title);
+    const escapedBody = escapeHtml(body).replace(/\n/g, '<br>');
+    if (selectors.infoModalTitle) selectors.infoModalTitle.innerHTML = escapedTitle;
+    if (selectors.infoModalBody) selectors.infoModalBody.innerHTML = escapedBody;
     openModal('infoModal');
 }
 
@@ -191,8 +193,10 @@ export function openMainIndexInfo(key) {
     const info = mainIndexInfoTexts[key] || {};
     const title = info.title || 'Информация';
     const body = info.text || 'Няма налична информация.';
-    if (selectors.infoModalTitle) selectors.infoModalTitle.textContent = title;
-    if (selectors.infoModalBody) selectors.infoModalBody.innerHTML = String(body).replace(/\n/g, '<br>');
+    const escapedTitle = escapeHtml(title);
+    const escapedBody = escapeHtml(body).replace(/\n/g, '<br>');
+    if (selectors.infoModalTitle) selectors.infoModalTitle.innerHTML = escapedTitle;
+    if (selectors.infoModalBody) selectors.infoModalBody.innerHTML = escapedBody;
     openModal('infoModal');
 }
 
