@@ -170,3 +170,10 @@ export function closePlanModChat() {
   appState.setPlanModChatPromptOverride(null);
   closeModal('planModChatModal');
 }
+
+export function closePlanModificationChat() {
+  closeModal('planModChatModal');
+  appState.setPlanModChatModelOverride(null);
+  appState.setPlanModChatPromptOverride(null);
+  if (selectors.planModificationBtn) selectors.planModificationBtn.focus();
+}
