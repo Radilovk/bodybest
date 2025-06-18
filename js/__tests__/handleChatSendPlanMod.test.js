@@ -3,6 +3,7 @@ import { jest } from '@jest/globals';
 
 let handleChatSend;
 let openPlanModificationChatMock;
+let chatMessages;
 
 beforeEach(async () => {
   jest.resetModules();
@@ -23,7 +24,7 @@ beforeEach(async () => {
     scrollToChatBottom: jest.fn(),
     setAutomatedChatPending: jest.fn()
   }));
-  const chatMessages = document.createElement('div');
+  chatMessages = document.createElement('div');
   jest.unstable_mockModule('../uiElements.js', () => ({
     selectors: {
       chatInput: { value: 'hi', disabled: false, focus: jest.fn() },
@@ -78,4 +79,14 @@ beforeEach(async () => {
 test('does not open plan modification chat without confirmation', async () => {
   await handleChatSend();
   expect(openPlanModificationChatMock).not.toHaveBeenCalled();
+});
+
+test('opens plan modification chat on confirmation click and removes wrapper', async () => {
+  await handleChatSend();
+  const btn = chatMessages.querySelector('.plan-mod-confirm-btn');
+  expect(btn).not.toBeNull();
+  const wrapper = btn.parentElement;
+  btn.dispatchEvent(new Event('click'));
+  expect(openPlanModificationChatMock).toHaveBeenCalledWith('u1', 'hi');
+  expect(chatMessages.contains(wrapper)).toBe(false);
 });
