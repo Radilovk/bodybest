@@ -2,9 +2,18 @@ import { selectors } from './uiElements.js';
 import { apiEndpoints } from './config.js';
 import { openModal, showToast, closeModal } from './uiHandlers.js';
 import { escapeHtml } from './utils.js';
-import { currentUserId, setChatModelOverride, setChatPromptOverride, chatModelOverride, chatPromptOverride, stripPlanModSignature, pollPlanStatus } from './app.js';
+import {
+  currentUserId,
+  setChatModelOverride,
+  setChatPromptOverride,
+  chatModelOverride,
+  chatPromptOverride,
+  stripPlanModSignature,
+  pollPlanStatus
+} from './app.js';
 
 export let planModChatHistory = [];
+let isSending = false;
 
 const planModificationPrompt = 'Моля, опишете накратко желаните от вас промени в плана.';
 
@@ -43,14 +52,13 @@ export function displayPlanModChatTypingIndicator(show) {
 }
 
 export function scrollToPlanModChatBottom() {
-  if (selectors.planModChatMessages)
+  if (selectors.planModChatMessages) {
     selectors.planModChatMessages.scrollTop = selectors.planModChatMessages.scrollHeight;
+  }
 }
 
-export async function handlePlanModChatSend() {
-  if (!selectors.planModChatInput || !selectors.planModChatSend) return;
-  const messageText = selectors.planModChatInput.value.trim();
-  if (!messageText || !currentUserId) return;
+async function sendPlanModChatMessage({ messageText, userId }) {
+  if (!messageText || !userId) return;
 
   displayPlanModChatMessage(messageText, 'user');
   planModChatHistory.push({ text: messageText, sender: 'user', isError: false });
@@ -59,8 +67,15 @@ export async function handlePlanModChatSend() {
   selectors.planModChatInput.disabled = true;
   selectors.planModChatSend.disabled = true;
   displayPlanModChatTypingIndicator(true);
+
+  isSending = true;
   try {
-    const payload = { userId: currentUserId, message: messageText, history: planModChatHistory.slice(-10), source: 'planModChat' };
+    const payload = {
+      userId,
+      message: messageText,
+      history: planModChatHistory.slice(-10),
+      source: 'planModChat'
+    };
     if (chatModelOverride) payload.model = chatModelOverride;
     if (chatPromptOverride) payload.promptOverride = chatPromptOverride;
     const response = await fetch(apiEndpoints.chat, {
@@ -80,7 +95,7 @@ export async function handlePlanModChatSend() {
     } else {
       botReply = cleaned;
     }
-    displayPlanModChatMessage(botReply, 'bot');
+    displayPlanModChatMessage(botReply || 'Няма отговор от асистента.', 'bot');
     planModChatHistory.push({ text: botReply, sender: 'bot', isError: false });
   } catch (e) {
     const errorMsg = `Грешка при комуникация с асистента: ${e.message}`;
@@ -91,7 +106,16 @@ export async function handlePlanModChatSend() {
     selectors.planModChatInput.disabled = false;
     selectors.planModChatInput.focus();
     selectors.planModChatSend.disabled = false;
+    isSending = false;
   }
+}
+
+export async function handlePlanModChatSend() {
+  if (isSending) return;
+  if (!selectors.planModChatInput || !selectors.planModChatSend) return;
+  const messageText = selectors.planModChatInput.value.trim();
+  if (!messageText || !currentUserId) return;
+  await sendPlanModChatMessage({ messageText, userId: currentUserId });
 }
 
 export function handlePlanModChatInputKeypress(e) {
@@ -145,43 +169,9 @@ export async function openPlanModificationChat(userIdOverride = null, initialMes
   if (selectors.planModChatSend) selectors.planModChatSend.disabled = false;
 
   if (initialMessage) {
-    displayPlanModChatMessage(initialMessage, 'user');
-    planModChatHistory.push({ text: initialMessage, sender: 'user', isError: false });
     selectors.planModChatInput && (selectors.planModChatInput.disabled = true);
     selectors.planModChatSend && (selectors.planModChatSend.disabled = true);
-    displayPlanModChatTypingIndicator(true);
-    try {
-      const payload = { userId: uid, message: initialMessage, history: planModChatHistory.slice(-10), source: 'planModChat' };
-      if (chatModelOverride) payload.model = chatModelOverride;
-      if (chatPromptOverride) payload.promptOverride = chatPromptOverride;
-      const response = await fetch(apiEndpoints.chat, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
-      let botReply = result.reply || '';
-      const cleaned = stripPlanModSignature(botReply);
-      if (cleaned !== botReply) {
-        botReply = cleaned;
-        pollPlanStatus();
-        setChatModelOverride(null);
-        setChatPromptOverride(null);
-      } else {
-        botReply = cleaned;
-      }
-      displayPlanModChatMessage(botReply, 'bot');
-      planModChatHistory.push({ text: botReply, sender: 'bot', isError: false });
-    } catch (err) {
-      const errorMsg = `Грешка при комуникация с асистента: ${err.message}`;
-      displayPlanModChatMessage(errorMsg, 'bot', true);
-      planModChatHistory.push({ text: errorMsg, sender: 'bot', isError: true });
-    } finally {
-      displayPlanModChatTypingIndicator(false);
-      selectors.planModChatInput && (selectors.planModChatInput.disabled = false);
-      selectors.planModChatSend && (selectors.planModChatSend.disabled = false);
-    }
+    await sendPlanModChatMessage({ messageText: initialMessage, userId: uid });
   }
 
   if (selectors.planModChatInput) selectors.planModChatInput.focus();
