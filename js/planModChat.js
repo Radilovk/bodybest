@@ -99,7 +99,7 @@ export function handlePlanModChatInputKeypress(e) {
   }
 }
 
-export async function openPlanModificationChat(userIdOverride = null) {
+export async function openPlanModificationChat(userIdOverride = null, forceRefresh = false) {
   const uid = userIdOverride || appState.currentUserId;
   if (!uid) {
     showToast('Моля, влезте първо.', true);
@@ -111,27 +111,48 @@ export async function openPlanModificationChat(userIdOverride = null) {
   let promptOverride = null;
   let modelFromPrompt = null;
   let promptError = false;
-  try {
-    const respPrompt = await fetch(apiEndpoints.getPlanModificationPrompt);
-    if (!respPrompt.ok) {
-      let errorText;
-      try {
-        errorText = (await respPrompt.text()) || `HTTP ${respPrompt.status}`;
-      } catch {
-        errorText = `HTTP ${respPrompt.status}`;
-      }
-      showToast(errorText, true);
-      promptError = true;
-    } else {
-      const dataPrompt = await respPrompt.json();
-      if (dataPrompt && dataPrompt.promptOverride)
-        promptOverride = dataPrompt.promptOverride;
-      if (dataPrompt && dataPrompt.model) modelFromPrompt = dataPrompt.model;
+  const cached = sessionStorage.getItem('planModPrompt');
+  if (cached && !forceRefresh) {
+    try {
+      const data = JSON.parse(cached);
+      if (data.promptOverride) promptOverride = data.promptOverride;
+      if (data.model) modelFromPrompt = data.model;
+    } catch (e) {
+      console.warn('Invalid cached plan modification prompt:', e);
+      sessionStorage.removeItem('planModPrompt');
     }
-  } catch (err) {
-    console.warn('Failed to fetch plan modification prompt:', err);
-    showToast('Грешка при зареждане на промпта за промени', true);
-    promptError = true;
+  }
+  if (!promptOverride && !modelFromPrompt || forceRefresh) {
+    try {
+      const respPrompt = await fetch(apiEndpoints.getPlanModificationPrompt);
+      if (!respPrompt.ok) {
+        let errorText;
+        try {
+          errorText = (await respPrompt.text()) || `HTTP ${respPrompt.status}`;
+        } catch {
+          errorText = `HTTP ${respPrompt.status}`;
+        }
+        showToast(errorText, true);
+        promptError = true;
+      } else {
+        const dataPrompt = await respPrompt.json();
+        if (dataPrompt && dataPrompt.promptOverride)
+          promptOverride = dataPrompt.promptOverride;
+        if (dataPrompt && dataPrompt.model) modelFromPrompt = dataPrompt.model;
+        try {
+          sessionStorage.setItem('planModPrompt', JSON.stringify({
+            promptOverride,
+            model: modelFromPrompt
+          }));
+        } catch (e) {
+          console.warn('Unable to store plan modification prompt:', e);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch plan modification prompt:', err);
+      showToast('Грешка при зареждане на промпта за промени', true);
+      promptError = true;
+    }
   }
   displayPlanModChatTypingIndicator(false);
   appState.setPlanModChatModelOverride(modelFromPrompt);
