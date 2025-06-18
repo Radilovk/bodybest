@@ -31,7 +31,8 @@ import {
     getSummaryFromLastCompletedQuiz, // For potential use in app.js
     getSummaryFromPreviousQuizzes // For potential use in app.js
 } from './adaptiveQuiz.js';
-export { openPlanModificationChat } from './planModChat.js';
+import { openPlanModificationChat } from './planModChat.js';
+export { openPlanModificationChat };
 
 
 function normalizeText(input) {
@@ -46,6 +47,7 @@ function normalizeText(input) {
 // ГЛОБАЛНИ ПРОМЕНЛИВИ ЗА СЪСТОЯНИЕТО НА ПРИЛОЖЕНИЕТО
 // ==========================================================================
 export let currentUserId = null;
+export function setCurrentUserId(val) { currentUserId = val; }
 export let fullDashboardData = {};
 let toastTimeoutApp; // Managed by app.js, uiHandlers.js has its own for its showToast
 export let chatHistory = [];
@@ -53,6 +55,9 @@ export let todaysMealCompletionStatus = {}; // Updated by populateUI and eventLi
 export let activeTooltip = null; // Managed by uiHandlers via setActiveTooltip
 export let chatModelOverride = null; // Optional model override for next chat message
 export let chatPromptOverride = null; // Optional prompt override for next chat message
+
+export function setChatModelOverride(val) { chatModelOverride = val; }
+export function setChatPromptOverride(val) { chatPromptOverride = val; }
 
 // Управление на интервал за проверка на статус на плана
 let planStatusInterval = null;
@@ -763,9 +768,7 @@ export async function handleChatSend() { // Exported for eventListeners.js
         const cleaned = stripPlanModSignature(botReply);
         if (cleaned !== botReply) {
             botReply = cleaned;
-            pollPlanStatus();
-            chatModelOverride = null; // reset after plan modification request
-            chatPromptOverride = null;
+            openPlanModificationChat(messageText);
         } else {
             botReply = cleaned;
         }
