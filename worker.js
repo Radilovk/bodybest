@@ -673,7 +673,7 @@ async function handleChatRequest(request, env) {
             ...Array.from({ length: 3 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return env.USER_METADATA_KV.get(`${userId}_log_${d.toISOString().split('T')[0]}`); })
         ]);
         const actualPlanStatus = planStatus || 'unknown';
-        if (actualPlanStatus !== 'ready' || !initialAnswersStr || !finalPlanStr) {
+        if ((actualPlanStatus !== 'ready' && actualPlanStatus !== 'collecting') || !initialAnswersStr || !finalPlanStr) {
              let errMsg = 'Данните, необходими за чат асистента, все още не са готови.';
              if (actualPlanStatus === 'pending' || actualPlanStatus === 'processing') errMsg = `Вашият план все още се генерира (статус: ${actualPlanStatus}). Моля, изчакайте преди да използвате чат асистента.`;
              else if (actualPlanStatus === 'error') errMsg = 'Възникна грешка при генерирането на Вашия план. Моля, свържете се с поддръжка.';
@@ -681,7 +681,12 @@ async function handleChatRequest(request, env) {
              return { success: false, message: errMsg, statusHint: 404 };
         }
         const initialAnswers = safeParseJson(initialAnswersStr, {}); const finalPlan = safeParseJson(finalPlanStr, {});
-        let storedChatHistory = safeParseJson(storedChatHistoryStr, []); const currentStatus = safeParseJson(currentStatusStr, {});
+        let storedChatHistory = safeParseJson(storedChatHistoryStr, []);
+        let planModHistory = [];
+        if (actualPlanStatus === 'collecting') {
+            planModHistory = await readPlanModHistory(userId, env);
+        }
+        const currentStatus = safeParseJson(currentStatusStr, {});
         const currentPrinciples = safeGet(finalPlan, 'principlesWeek2_4', 'Общи принципи.');
         if (Object.keys(initialAnswers).length === 0 || Object.keys(finalPlan).length === 0) {
             console.error(`CHAT_REQUEST_ERROR (${userId}): Critical data (initialAnswers or finalPlan) empty after parsing.`);
@@ -689,6 +694,10 @@ async function handleChatRequest(request, env) {
         }
         storedChatHistory.push({ role: 'user', parts: [{ text: message }] });
         if (storedChatHistory.length > MAX_CHAT_HISTORY_MESSAGES) storedChatHistory = storedChatHistory.slice(-MAX_CHAT_HISTORY_MESSAGES);
+        if (actualPlanStatus === 'collecting') {
+            planModHistory.push({ role: 'user', parts: [{ text: message }] });
+            if (planModHistory.length > MAX_CHAT_HISTORY_MESSAGES) planModHistory = planModHistory.slice(-MAX_CHAT_HISTORY_MESSAGES);
+        }
         
         const userName = initialAnswers.name || 'Потребител'; const userGoal = initialAnswers.goal || 'N/A';
         const userConditions = (Array.isArray(initialAnswers.medicalConditions) ? initialAnswers.medicalConditions.filter(c => c && c.toLowerCase() !== 'нямам').join(', ') : 'Няма') || 'Няма специфични';
@@ -757,9 +766,16 @@ async function handleChatRequest(request, env) {
         
         storedChatHistory.push({role:'model',parts:[{text:respToUser}]});
         if(storedChatHistory.length>MAX_CHAT_HISTORY_MESSAGES) storedChatHistory=storedChatHistory.slice(-MAX_CHAT_HISTORY_MESSAGES);
+        if(actualPlanStatus==='collecting'){
+            planModHistory.push({role:'model',parts:[{text:respToUser}]});
+            if(planModHistory.length>MAX_CHAT_HISTORY_MESSAGES) planModHistory=planModHistory.slice(-MAX_CHAT_HISTORY_MESSAGES);
+        }
         
         // Asynchronous save of chat history
         env.USER_METADATA_KV.put(`${userId}_chat_history`,JSON.stringify(storedChatHistory)).catch(err=>{console.error(`CHAT_ERROR (${userId}): Failed async chat history save:`,err);});
+        if(actualPlanStatus==='collecting'){
+            env.USER_METADATA_KV.put(`plan_mod_history_${userId}`,JSON.stringify(planModHistory)).catch(err=>{console.error(`CHAT_ERROR (${userId}): Failed async plan_mod history save:`,err);});
+        }
         
         console.log(`CHAT_REQUEST_SUCCESS (${userId}): Replied to user.`)
         return {success:true, reply:respToUser};
@@ -1225,6 +1241,11 @@ async function handleGetPlanModificationPrompt(request, env) {
         const promptTpl = await env.RESOURCES_KV.get('prompt_plan_modification');
         const model = await env.RESOURCES_KV.get('model_chat');
 
+        if (userId) {
+            await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'collecting', { metadata: { status: 'collecting' } });
+            await writePlanModHistory(userId, [], env);
+        }
+
         if (!promptTpl || !model) {
             console.error(`PLAN_MOD_PROMPT_ERROR${userId ? ` (${userId})` : ''}: Missing prompt or model.`);
             return { success: false, message: 'Липсва промпт или модел.', statusHint: 500 };
@@ -1265,18 +1286,17 @@ async function processSingleUserPlan(userId, env) {
         }
         console.log(`PROCESS_USER_PLAN (${userId}): Processing for email: ${initialAnswers.email || 'N/A'}`);
         const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, principlesWeek2_4: [], additionalGuidelines: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
-        const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, planModelName, unifiedPromptTemplate, pendingPlanModStr ] = await Promise.all([
+        const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, planModelName, unifiedPromptTemplate, planModHistoryStr ] = await Promise.all([
             env.RESOURCES_KV.get('question_definitions'), env.RESOURCES_KV.get('base_diet_model'),
             env.RESOURCES_KV.get('allowed_meal_combinations'), env.RESOURCES_KV.get('eating_psychology'),
             env.RESOURCES_KV.get('recipe_data'), env[GEMINI_API_KEY_SECRET_NAME],
             env.RESOURCES_KV.get('model_plan_generation'), env.RESOURCES_KV.get('prompt_unified_plan_generation_v2'),
-            env.USER_METADATA_KV.get(`pending_plan_mod_${userId}`)
+            env.USER_METADATA_KV.get(`plan_mod_history_${userId}`)
         ]);
-        const pendingPlanModData = safeParseJson(pendingPlanModStr, pendingPlanModStr);
         let pendingPlanModText = '';
-        if (pendingPlanModData) {
-            if (typeof pendingPlanModData === 'string') pendingPlanModText = pendingPlanModData;
-            else pendingPlanModText = JSON.stringify(pendingPlanModData);
+        const planModHistory = safeParseJson(planModHistoryStr, []);
+        if (Array.isArray(planModHistory) && planModHistory.length > 0) {
+            pendingPlanModText = planModHistory.map(e => `${e.role === 'model' ? 'АСИСТЕНТ' : 'ПОТРЕБИТЕЛ'}: ${e.parts?.[0]?.text || ''}`).join('\n');
         }
         if (!geminiApiKey) {
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): CRITICAL: Gemini API Key secret not found or empty.`);
@@ -1393,6 +1413,7 @@ async function processSingleUserPlan(userId, env) {
             await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'ready', { metadata: { status: 'ready' } });
             await env.USER_METADATA_KV.delete(`${userId}_processing_error`); // Изтриваме евентуална стара грешка
             await env.USER_METADATA_KV.delete(`pending_plan_mod_${userId}`);
+            await env.USER_METADATA_KV.delete(`plan_mod_history_${userId}`);
             await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
             const summary = createPlanUpdateSummary(planBuilder, previousPlan);
             await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summary));
@@ -1980,6 +2001,19 @@ const safeParseJson = (jsonString, defaultValue = null) => {
     }
 };
 // ------------- END FUNCTION: safeParseJson -------------
+
+// ------------- START FUNCTION: readPlanModHistory -------------
+async function readPlanModHistory(userId, env) {
+    const str = await env.USER_METADATA_KV.get(`plan_mod_history_${userId}`);
+    return safeParseJson(str, []);
+}
+// ------------- END FUNCTION: readPlanModHistory -------------
+
+// ------------- START FUNCTION: writePlanModHistory -------------
+async function writePlanModHistory(userId, historyArr, env) {
+    await env.USER_METADATA_KV.put(`plan_mod_history_${userId}`, JSON.stringify(historyArr || []));
+}
+// ------------- END FUNCTION: writePlanModHistory -------------
 
 // ------------- START FUNCTION: createFallbackPrincipleSummary -------------
 function createFallbackPrincipleSummary(principlesText) {
