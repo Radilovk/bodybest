@@ -58,7 +58,7 @@ export async function handlePlanModChatSend() {
   selectors.planModChatSend.disabled = true;
   displayPlanModChatTypingIndicator(true);
   try {
-    const payload = { userId: currentUserId, message: messageText, history: chatHistory.slice(-10) };
+    const payload = { userId: currentUserId, message: messageText, history: chatHistory.slice(-10), source: 'planModChat' };
     if (chatModelOverride) payload.model = chatModelOverride;
     if (chatPromptOverride) payload.promptOverride = chatPromptOverride;
     const response = await fetch(apiEndpoints.chat, {
@@ -134,7 +134,7 @@ export async function openPlanModificationChat(userIdOverride = null, initialMes
     selectors.planModChatSend && (selectors.planModChatSend.disabled = true);
     displayPlanModChatTypingIndicator(true);
     try {
-      const payload = { userId: uid, message: initialMessage, history: chatHistory.slice(-10) };
+      const payload = { userId: uid, message: initialMessage, history: chatHistory.slice(-10), source: 'planModChat' };
       if (chatModelOverride) payload.model = chatModelOverride;
       if (chatPromptOverride) payload.promptOverride = chatPromptOverride;
       const response = await fetch(apiEndpoints.chat, {

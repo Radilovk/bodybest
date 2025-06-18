@@ -663,7 +663,7 @@ async function handleUpdateStatusRequest(request, env) {
 
 // ------------- START FUNCTION: handleChatRequest -------------
 async function handleChatRequest(request, env) {
-    const { userId, message, model, promptOverride } = await request.json();
+    const { userId, message, model, promptOverride, source } = await request.json();
     if (!userId || !message) return { success: false, message: 'Липсва userId или съобщение.', statusHint: 400 };
     try {
         const [ initialAnswersStr, finalPlanStr, planStatus, recipeDataStr, storedChatHistoryStr, currentStatusStr, ...logStringsForChat ] = await Promise.all([
@@ -748,8 +748,10 @@ async function handleChatRequest(request, env) {
             console.log(`CHAT_INFO (${userId}): Plan modification signal detected: "${planModReq}"`);
             try{
                 const evaluation = await evaluatePlanChange(userId, { source: 'chat', request: planModReq }, env);
-                const evRes = await createUserEvent('planMod', userId, { description: planModReq, originalMessage: message, evaluation }, env);
-                if(evRes && evRes.message) respToUser += `\n\n${evRes.message}`;
+                if(source === 'planModChat') {
+                    const evRes = await createUserEvent('planMod', userId, { description: planModReq, originalMessage: message, evaluation }, env);
+                    if(evRes && evRes.message) respToUser += `\n\n${evRes.message}`;
+                }
             }catch(kvErr){
                 console.error(`CHAT_ERROR (${userId}): Failed save pending modification request:`,kvErr);
             }
