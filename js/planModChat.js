@@ -151,6 +151,8 @@ export async function openPlanModificationChat(userIdOverride = null, initialMes
       showToast(message, true);
       closeModal('planModChatModal');
       displayPlanModChatTypingIndicator(false);
+      setChatModelOverride(null);
+      setChatPromptOverride(null);
       return;
     }
     const dataPrompt = await respPrompt.json();
@@ -159,6 +161,11 @@ export async function openPlanModificationChat(userIdOverride = null, initialMes
   } catch (err) {
     console.warn('Failed to fetch plan modification prompt:', err);
     showToast('Грешка при зареждане на промпта за промени', true);
+    closeModal('planModChatModal');
+    displayPlanModChatTypingIndicator(false);
+    setChatModelOverride(null);
+    setChatPromptOverride(null);
+    return;
   }
   displayPlanModChatTypingIndicator(false);
   setChatModelOverride(modelFromPrompt);
