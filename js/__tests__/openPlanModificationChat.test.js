@@ -63,3 +63,13 @@ test('shows toast on fetch error', async () => {
   await app.openPlanModificationChat('u1');
   expect(showToastMock).toHaveBeenCalledWith('Грешка при зареждане на промпта за промени', true);
 });
+
+test('shows toast on server error status', async () => {
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: false,
+    status: 500,
+    json: async () => ({ message: 'srv' })
+  });
+  await app.openPlanModificationChat('u1');
+  expect(showToastMock).toHaveBeenCalledWith('srv', true);
+});
