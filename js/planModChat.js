@@ -112,11 +112,20 @@ export async function openPlanModificationChat(userIdOverride = null, initialMes
   let modelFromPrompt = null;
   try {
     const respPrompt = await fetch(`${apiEndpoints.getPlanModificationPrompt}?userId=${uid}`);
-    if (respPrompt.ok) {
-      const dataPrompt = await respPrompt.json();
-      if (dataPrompt && dataPrompt.prompt) promptOverride = dataPrompt.prompt;
-      if (dataPrompt && dataPrompt.model) modelFromPrompt = dataPrompt.model;
+    if (!respPrompt.ok) {
+      let message = 'Грешка при зареждане на промпта за промени';
+      try {
+        const data = await respPrompt.json();
+        if (data && data.message) message = data.message;
+      } catch (e) {
+        // ignore JSON parse errors
+      }
+      showToast(message, true);
+      return;
     }
+    const dataPrompt = await respPrompt.json();
+    if (dataPrompt && dataPrompt.prompt) promptOverride = dataPrompt.prompt;
+    if (dataPrompt && dataPrompt.model) modelFromPrompt = dataPrompt.model;
   } catch (err) {
     console.warn('Failed to fetch plan modification prompt:', err);
     showToast('Грешка при зареждане на промпта за промени', true);
