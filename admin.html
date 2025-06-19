@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <title>Администраторски панел</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <h1>Администраторски панел</h1>
+  <section id="clientsSection">
+    <h2>Клиенти</h2>
+    <ul id="clientsList"></ul>
+  </section>
+
+  <section id="clientDetails" class="hidden">
+    <h2 id="clientName">Клиент</h2>
+    <form id="profileForm">
+      <label>Име: <input name="name"></label><br>
+      <label>Възраст: <input type="number" name="age"></label><br>
+      <label>Ръст: <input type="number" name="height"></label><br>
+      <button type="submit">Запази</button>
+    </form>
+    <h3>Запитвания</h3>
+    <ul id="queriesList"></ul>
+    <textarea id="newQueryText" rows="3" cols="40"></textarea><br>
+    <button id="sendQuery">Изпрати запитване</button>
+  </section>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>
