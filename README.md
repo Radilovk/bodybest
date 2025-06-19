@@ -94,7 +94,21 @@ Create API documentation using Typedoc:
 ```bash
 npm run docs
 ```
+
 The output is placed in the `docs/` folder.
+
+### Стартиране на локален PHP сървър
+
+Някои администраторски функции, като `login.html` и `login.php`, изискват PHP
+сървър. Можете да стартирате вградения сървър на PHP от кореновата директория на
+проекта:
+
+```bash
+php -S localhost:8000
+```
+
+След това достъпете `http://localhost:8000/login.html` в браузъра, за да
+използвате страницата за вход.
 
 ## Deployment to Cloudflare
 
