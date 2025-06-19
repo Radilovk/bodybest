@@ -141,6 +141,8 @@ export default {
                 responseBody = await handleAcknowledgeAiUpdateRequest(request, env);
             } else if (method === 'POST' && path === '/api/recordFeedbackChat') {
                 responseBody = await handleRecordFeedbackChatRequest(request, env);
+            } else if (method === 'POST' && path === '/api/submitFeedback') {
+                responseBody = await handleSubmitFeedbackRequest(request, env);
             } else if (method === 'GET' && path === '/api/getAchievements') {
                 responseBody = await handleGetAchievementsRequest(request, env);
             } else if (method === 'POST' && path === '/api/generatePraise') {
@@ -1020,6 +1022,36 @@ async function handleRecordFeedbackChatRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleRecordFeedbackChatRequest -------------
+
+// ------------- START FUNCTION: handleSubmitFeedbackRequest -------------
+async function handleSubmitFeedbackRequest(request, env) {
+    let data = {};
+    try {
+        data = await request.json();
+    } catch (err) {
+        console.error('Error parsing feedback JSON:', err.message, err.stack);
+        return { success: false, message: 'Невалидни данни.', statusHint: 400 };
+    }
+    const userId = data.userId;
+    if (!userId) return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
+
+    const feedback = {
+        type: data.type ? String(data.type) : '',
+        message: data.message ? String(data.message) : '',
+        rating: (typeof data.rating === 'number' && !isNaN(data.rating)) ? data.rating : null,
+        timestamp: new Date().toISOString()
+    };
+
+    try {
+        const key = `feedback_${userId}_${Date.now()}`;
+        await env.USER_METADATA_KV.put(key, JSON.stringify(feedback));
+        return { success: true, message: 'Обратната връзка е записана.' };
+    } catch (error) {
+        console.error('Error in handleSubmitFeedbackRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при запис на обратната връзка.', statusHint: 500, userId };
+    }
+}
+// ------------- END FUNCTION: handleSubmitFeedbackRequest -------------
 
 // ------------- START FUNCTION: handleGetAchievementsRequest -------------
 async function handleGetAchievementsRequest(request, env) {
@@ -2934,4 +2966,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt };

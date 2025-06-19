@@ -21,6 +21,7 @@ export const apiEndpoints = {
     submitAdaptiveQuiz: `${workerBaseUrl}/api/submitAdaptiveQuiz`,
     acknowledgeAiUpdate: `${workerBaseUrl}/api/acknowledgeAiUpdate`,
     recordFeedbackChat: `${workerBaseUrl}/api/recordFeedbackChat`,
+    submitFeedback: `${workerBaseUrl}/api/submitFeedback`,
     forgotPassword: `${workerBaseUrl}/api/forgotPassword`,
     getAchievements: `${workerBaseUrl}/api/getAchievements`,
     generatePraise: `${workerBaseUrl}/api/generatePraise`,

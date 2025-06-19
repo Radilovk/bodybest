@@ -580,12 +580,24 @@ export async function handleFeedbackFormSubmit(event) { // Exported for eventLis
 
     if (isLocalDevelopment) console.log("Feedback to send:", feedbackData);
     showLoading(true, "Изпращане на обратна връзка...");
-    setTimeout(() => {
-        showLoading(false);
-        showToast("Благодарим за обратната връзка!", false);
+    try {
+        const response = await fetch(apiEndpoints.submitFeedback, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(feedbackData)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.success) {
+            throw new Error(result.message || `HTTP ${response.status}`);
+        }
+        showToast(result.message || "Благодарим за обратната връзка!", false);
         closeModal('feedbackModal');
         selectors.feedbackForm.reset();
-    }, 1500);
+    } catch (error) {
+        showToast(`Грешка при изпращане: ${error.message}`, true);
+    } finally {
+        showLoading(false);
+    }
 }
 
 
