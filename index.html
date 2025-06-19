@@ -65,7 +65,8 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { showMessage, hideMessage } from './js/messageUtils.js';
         // Селектори
         const loginSection = document.getElementById('login-section');
         const registerSection = document.getElementById('register-section');
@@ -92,20 +93,7 @@
         // URL за пренасочване след логин
         const dashboardUrl = 'code.html'; // Променено, ако code.html е в същата директория
 
-        // Функция за показване на съобщения
-        function showMessage(element, text, isError = true) {
-            element.textContent = text;
-            element.className = isError ? 'message error' : 'message success';
-            element.style.display = 'block';
-            // Скролиране до съобщението, ако е извън видимата област
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
 
-        // Функция за скриване на съобщения
-        function hideMessage(element) {
-             element.textContent = '';
-             element.style.display = 'none';
-        }
 
         // Превключване между формите
         showRegisterLink.addEventListener('click', () => {
