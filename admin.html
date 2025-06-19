@@ -7,8 +7,11 @@
 </head>
 <body>
   <h1>Администраторски панел</h1>
+  <p><a href="logout.php">Изход</a></p>
   <section id="clientsSection">
     <h2>Клиенти</h2>
+    <p id="clientsCount"></p>
+    <button id="showStats">Покажи статистика</button>
     <ul id="clientsList"></ul>
   </section>
 
@@ -24,6 +27,11 @@
     <ul id="queriesList"></ul>
     <textarea id="newQueryText" rows="3" cols="40"></textarea><br>
     <button id="sendQuery">Изпрати запитване</button>
+  </section>
+
+  <section id="statsSection" class="hidden">
+    <h2>Статистика</h2>
+    <pre id="statsOutput"></pre>
   </section>
 
   <script type="module" src="js/admin.js"></script>

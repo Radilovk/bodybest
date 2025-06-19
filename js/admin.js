@@ -1,11 +1,26 @@
 import { apiEndpoints } from './config.js';
 
+async function ensureLoggedIn() {
+    try {
+        const resp = await fetch('session_check.php');
+        const data = await resp.json();
+        if (!resp.ok || !data.success) {
+            window.location.href = 'login.html';
+        }
+    } catch (err) {
+        window.location.href = 'login.html';
+    }
+}
+
 const clientsList = document.getElementById('clientsList');
+const clientsCount = document.getElementById('clientsCount');
 const detailsSection = document.getElementById('clientDetails');
 const profileForm = document.getElementById('profileForm');
 const queriesList = document.getElementById('queriesList');
 const newQueryText = document.getElementById('newQueryText');
 const sendQueryBtn = document.getElementById('sendQuery');
+const statsOutput = document.getElementById('statsOutput');
+const showStatsBtn = document.getElementById('showStats');
 let currentUserId = null;
 
 async function loadClients() {
@@ -14,17 +29,50 @@ async function loadClients() {
         const data = await resp.json();
         if (resp.ok && data.success) {
             clientsList.innerHTML = '';
+            clientsCount.textContent = `Общ брой клиенти: ${data.clients.length}`;
             data.clients.forEach(c => {
                 const li = document.createElement('li');
                 const btn = document.createElement('button');
                 btn.textContent = `${c.name} (${c.userId})`;
                 btn.addEventListener('click', () => showClient(c.userId));
                 li.appendChild(btn);
+                const exportBtn = document.createElement('button');
+                exportBtn.textContent = 'CSV';
+                exportBtn.style.marginLeft = '5px';
+                exportBtn.addEventListener('click', () => exportProfileCsv(c.userId));
+                li.appendChild(exportBtn);
                 clientsList.appendChild(li);
             });
+            statsOutput.textContent = JSON.stringify({ clients: data.clients.length }, null, 2);
         }
     } catch (err) {
         console.error('Error loading clients:', err);
+    }
+}
+
+showStatsBtn.addEventListener('click', () => {
+    const sec = document.getElementById('statsSection');
+    sec.classList.toggle('hidden');
+});
+
+async function exportProfileCsv(userId) {
+    try {
+        const resp = await fetch(`${apiEndpoints.getProfile}?userId=${userId}`);
+        const data = await resp.json();
+        if (resp.ok && data.success) {
+            const rows = [ ['userId', 'name', 'age', 'height'],
+                [userId, data.name || '', data.age || '', data.height || ''] ];
+            const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${userId}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    } catch (err) {
+        console.error('Error exporting CSV:', err);
     }
 }
 
@@ -108,4 +156,7 @@ async function loadQueries() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', loadClients);
+document.addEventListener('DOMContentLoaded', async () => {
+    await ensureLoggedIn();
+    await loadClients();
+});
