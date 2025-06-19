@@ -9,14 +9,22 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $rawData = file_get_contents('php://input');
 $data = json_decode($rawData, true);
-if (!$data || !isset($data['password']) || !isset($data['username'])) {
-    echo json_encode(["success"=>false, "message"=>"Липсват данни за вход"]);
+if (!$data || !isset($data['password'])) {
+    echo json_encode(["success"=>false, "message"=>"No password provided"]);
     exit;
 }
 
-if ($data['username'] === 'admin' && $data['password'] === '6131') {
+// Очакваме хеш на паролата в променлива на средата
+$adminHash = getenv('ADMIN_PASS_HASH');
+if ($adminHash === false) {
+    error_log('ADMIN_PASS_HASH env not set');
+    echo json_encode(["success"=>false, "message"=>"Server configuration error"]);
+    exit;
+}
+
+if (password_verify($data['password'], $adminHash)) {
     $_SESSION['isAdmin'] = true;
-    echo json_encode(["success" => true, "message" => "Logged in"]);
+    echo json_encode(["success"=>true, "message"=>"Logged in"]);
 } else {
-    echo json_encode(["success" => false, "message" => "Невалидни данни"]);
+    echo json_encode(["success"=>false, "message"=>"Грешна парола"]);
 }
