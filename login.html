@@ -25,7 +25,8 @@
       margin-top: 0;
       text-align: center;
     }
-    input[type="password"] {
+    input[type="password"],
+    input[type="text"] {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
@@ -56,6 +57,7 @@
 <body>
 <div class="login-container">
   <h2>Администраторски Вход</h2>
+  <input type="text" id="adminUsername" placeholder="Потребителско име" />
   <input type="password" id="adminPassword" placeholder="Парола" />
   <button id="loginBtn">Влез</button>
   <div id="errorMsg">Грешна парола или грешка при заявката.</div>
@@ -63,11 +65,12 @@
 
 <script>
   document.getElementById('loginBtn').addEventListener('click', () => {
+    const user = document.getElementById('adminUsername').value;
     const pass = document.getElementById('adminPassword').value;
     fetch('login.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pass })
+      body: JSON.stringify({ username: user, password: pass })
     })
     .then(res => res.json())
     .then(data => {

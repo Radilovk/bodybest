@@ -197,16 +197,16 @@ These names are referenced in `worker.js` and must exist for the worker to funct
 The PHP helper scripts expect the following variables set in the server environment:
 
 - `STATIC_TOKEN` – shared secret token used for authentication in `file_manager_api.php`.
-- `ADMIN_PASS_HASH` – bcrypt hash of the admin password for `login.php`.
 - `CF_API_TOKEN` – token used by `save-questions.php` to update the Cloudflare KV store.
 
-Example of generating a hash:
+The admin panel по подразбиране използва фиксирани данни за вход – потребителско име `admin` и парола `6131`.
+Ако е зададенa променлива `ADMIN_PASS_HASH`, паролата се проверява по нейния bcrypt хеш.
+Може да се зададе и `ADMIN_USERNAME` за друго потребителско име.
+Пример за генериране на хеш:
 
 ```bash
 php -r "echo password_hash('yourPassword', PASSWORD_DEFAULT);"
 ```
-
-Set the output as the value for `ADMIN_PASS_HASH`.
 
 ### Chat Assistant
 
