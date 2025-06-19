@@ -24,7 +24,11 @@ const newQueryText = document.getElementById('newQueryText');
 const sendQueryBtn = document.getElementById('sendQuery');
 const statsOutput = document.getElementById('statsOutput');
 const showStatsBtn = document.getElementById('showStats');
+const initialAnswersPre = document.getElementById('initialAnswers');
+const planMenuPre = document.getElementById('planMenu');
+const exportPlanBtn = document.getElementById('exportPlan');
 let currentUserId = null;
+let currentPlanData = null;
 
 async function loadClients() {
     try {
@@ -92,6 +96,16 @@ async function showClient(userId) {
             profileForm.height.value = data.height || '';
             await loadQueries();
         }
+        const dashResp = await fetch(`${apiEndpoints.dashboard}?userId=${userId}`);
+        const dashData = await dashResp.json();
+        if (dashResp.ok && dashData.success) {
+            if (initialAnswersPre) initialAnswersPre.textContent = JSON.stringify(dashData.initialAnswers || {}, null, 2);
+            if (planMenuPre) {
+                const menu = dashData.planData?.week1Menu || {};
+                planMenuPre.textContent = JSON.stringify(menu, null, 2);
+            }
+            currentPlanData = dashData.planData || null;
+        }
     } catch (err) {
         console.error('Error loading profile:', err);
     }
@@ -140,6 +154,19 @@ sendQueryBtn.addEventListener('click', async () => {
         console.error('Error sending query:', err);
     }
 });
+
+if (exportPlanBtn) {
+    exportPlanBtn.addEventListener('click', () => {
+        if (!currentPlanData) return;
+        const blob = new Blob([JSON.stringify(currentPlanData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentUserId || 'plan'}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+}
 
 async function loadQueries() {
     if (!currentUserId) return;
