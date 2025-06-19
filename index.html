@@ -67,6 +67,7 @@
 
     <script type="module">
         import { showMessage, hideMessage } from './js/messageUtils.js';
+        import { workerBaseUrl, isLocalDevelopment } from './js/config.js';
         // Селектори
         const loginSection = document.getElementById('login-section');
         const registerSection = document.getElementById('register-section');
@@ -78,12 +79,7 @@
         const loginMessage = document.getElementById('login-message');
         const registerMessage = document.getElementById('register-message');
 
-        // Базов URL на Worker-а
-        const isLocalDev = window.location.hostname === 'localhost' ||
-                           window.location.hostname.includes('replit') ||
-                           window.location.hostname.includes('preview');
-        const workerBaseUrl = isLocalDev ? '/api' :
-            'https://openapichatbot.radilov-k.workers.dev';
+        // Базов URL на Worker-а е дефиниран в config.js
 
         // API Endpoints
         const loginEndpoint = `${workerBaseUrl}/api/login`;
