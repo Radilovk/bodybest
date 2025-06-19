@@ -35,24 +35,41 @@
     </form>
     <button id="regeneratePlan">Генерирай нов план</button>
     <button id="aiSummary">AI резюме</button>
-    <h3>Бележки</h3>
-    <textarea id="adminNotes" rows="3" cols="40"></textarea><br>
-    <label>Етикети: <input id="adminTags"></label>
-    <button id="saveNotes">Запази бележките</button>
-    <h3>Данни от въпросника</h3>
-    <pre id="initialAnswers"></pre>
-    <h3>Текущо меню</h3>
-    <pre id="planMenu"></pre>
-    <h3>Дневници</h3>
-    <pre id="dailyLogs"></pre>
-    <h3>Пълни данни</h3>
-    <pre id="dashboardData" class="json"></pre>
+    <details id="notesSection">
+      <summary>Бележки</summary>
+      <textarea id="adminNotes" rows="3" cols="40"></textarea><br>
+      <label>Етикети: <input id="adminTags"></label>
+      <button id="saveNotes">Запази бележките</button>
+    </details>
+
+    <details id="qaSection">
+      <summary>Данни от въпросника</summary>
+      <div id="initialAnswers"></div>
+    </details>
+
+    <details id="menuSection">
+      <summary>Текущо меню</summary>
+      <div id="planMenu"></div>
+    </details>
+
+    <details id="logsSection">
+      <summary>Дневници</summary>
+      <div id="dailyLogs"></div>
+    </details>
+
+    <details id="dashboardSection">
+      <summary>Пълни данни (JSON)</summary>
+      <pre id="dashboardData" class="json"></pre>
+    </details>
     <button id="exportData">Експортирай всички данни</button>
     <button id="exportPlan">Експортирай плана като JSON</button>
-    <h3>Запитвания</h3>
-    <ul id="queriesList"></ul>
-    <textarea id="newQueryText" rows="3" cols="40"></textarea><br>
-    <button id="sendQuery">Изпрати запитване</button>
+
+    <details id="queriesSection">
+      <summary>Запитвания</summary>
+      <ul id="queriesList"></ul>
+      <textarea id="newQueryText" rows="3" cols="40"></textarea><br>
+      <button id="sendQuery">Изпрати запитване</button>
+    </details>
   </main>
   </div>
 
