@@ -89,15 +89,7 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: user, password: pass })
     })
-    .then(res => {
-      const ct = res.headers.get('content-type') || '';
-      if (!ct.includes('application/json')) {
-        return res.text().then(() => {
-          throw new Error('invalid_json');
-        });
-      }
-      return res.json();
-    })
+    .then(res => res.json())
     .then(data => {
       if (data.success) {
         if (rememberChk.checked) {
@@ -114,11 +106,7 @@
     })
     .catch(err => {
       const errDiv = document.getElementById('errorMsg');
-      if (err.message === 'invalid_json') {
-        errDiv.textContent = 'Сървърът върна невалиден JSON. Уверете се, че login.php се изпълнява на PHP сървър.';
-      } else {
-        errDiv.textContent = 'Грешка при заявката: ' + err.message;
-      }
+      errDiv.textContent = 'Грешка при заявката: ' + err.message;
       errDiv.style.display = 'block';
     });
   });
