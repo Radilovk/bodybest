@@ -32,6 +32,38 @@ pre.json {
   color: #f8f8f2;
   white-space: pre-wrap;
 }
+
+details {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+details summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 5px;
+  background: #e9ecef;
+  border-radius: 4px;
+}
+details summary::after {
+  content: '\25BC';
+  float: right;
+}
+details[open] summary::after {
+  content: '\25B2';
+}
+.menu-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 5px;
+}
+.menu-table th, .menu-table td {
+  border: 1px solid #ddd;
+  padding: 4px;
+  text-align: left;
+}
+.menu-table th {
+  background: #f9f9f9;
+}
 @media (max-width: 768px) {
   .sidebar, .main-content {
     flex: 1 1 100%;

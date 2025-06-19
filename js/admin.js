@@ -42,6 +42,80 @@ let currentPlanData = null;
 let currentDashboardData = null;
 let allClients = [];
 
+function renderObjectAsList(obj) {
+    const dl = document.createElement('dl');
+    Object.entries(obj || {}).forEach(([key, val]) => {
+        const dt = document.createElement('dt');
+        dt.textContent = key;
+        const dd = document.createElement('dd');
+        dd.textContent = typeof val === 'object' ? JSON.stringify(val) : val;
+        dl.appendChild(dt);
+        dl.appendChild(dd);
+    });
+    return dl;
+}
+
+function capitalizeDay(day) {
+    const days = { monday: 'Понеделник', tuesday: 'Вторник', wednesday: 'Сряда',
+        thursday: 'Четвъртък', friday: 'Петък', saturday: 'Събота', sunday: 'Неделя' };
+    return days[day] || day;
+}
+
+function displayInitialAnswers(data) {
+    if (!initialAnswersPre) return;
+    initialAnswersPre.innerHTML = '';
+    if (!data || Object.keys(data).length === 0) {
+        initialAnswersPre.textContent = 'Няма данни';
+        return;
+    }
+    initialAnswersPre.appendChild(renderObjectAsList(data));
+}
+
+function displayPlanMenu(menu) {
+    if (!planMenuPre) return;
+    planMenuPre.innerHTML = '';
+    if (!menu || Object.keys(menu).length === 0) {
+        planMenuPre.textContent = 'Няма меню';
+        return;
+    }
+    const table = document.createElement('table');
+    table.className = 'menu-table';
+    table.innerHTML = '<thead><tr><th>Ден</th><th>Хранене</th><th>Продукти</th></tr></thead>';
+    const tbody = document.createElement('tbody');
+    Object.entries(menu).forEach(([day, meals]) => {
+        (meals || []).forEach(meal => {
+            const tr = document.createElement('tr');
+            const items = (meal.items || []).map(i => `${i.name}${i.grams ? ` (${i.grams})` : ''}`).join('<br>');
+            tr.innerHTML = `<td>${capitalizeDay(day)}</td><td>${meal.meal_name || ''}</td><td>${items}</td>`;
+            tbody.appendChild(tr);
+        });
+    });
+    table.appendChild(tbody);
+    planMenuPre.appendChild(table);
+}
+
+function displayDailyLogs(logs) {
+    if (!dailyLogsPre) return;
+    dailyLogsPre.innerHTML = '';
+    if (!Array.isArray(logs) || logs.length === 0) {
+        dailyLogsPre.textContent = 'Няма записани дневници';
+        return;
+    }
+    const table = document.createElement('table');
+    table.className = 'menu-table';
+    table.innerHTML = '<thead><tr><th>Дата</th><th>Тегло</th><th>Бележка</th></tr></thead>';
+    const tbody = document.createElement('tbody');
+    logs.forEach(l => {
+        const tr = document.createElement('tr');
+        const weight = l.data?.weight || '';
+        const note = l.data?.note || '';
+        tr.innerHTML = `<td>${l.date}</td><td>${weight}</td><td>${note}</td>`;
+        tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    dailyLogsPre.appendChild(table);
+}
+
 async function loadClients() {
     try {
         const resp = await fetch(apiEndpoints.listClients);
@@ -146,12 +220,10 @@ async function showClient(userId) {
         const dashResp = await fetch(`${apiEndpoints.dashboard}?userId=${userId}`);
         const dashData = await dashResp.json();
         if (dashResp.ok && dashData.success) {
-            if (initialAnswersPre) initialAnswersPre.textContent = JSON.stringify(dashData.initialAnswers || {}, null, 2);
-            if (planMenuPre) {
-                const menu = dashData.planData?.week1Menu || {};
-                planMenuPre.textContent = JSON.stringify(menu, null, 2);
-            }
-            if (dailyLogsPre) dailyLogsPre.textContent = JSON.stringify(dashData.dailyLogs || [], null, 2);
+            displayInitialAnswers(dashData.initialAnswers || {});
+            const menu = dashData.planData?.week1Menu || {};
+            displayPlanMenu(menu);
+            displayDailyLogs(dashData.dailyLogs || []);
             if (dashboardPre) dashboardPre.textContent = JSON.stringify(dashData, null, 2);
             if (notesField) notesField.value = dashData.currentStatus?.adminNotes || '';
             if (tagsField) tagsField.value = (dashData.currentStatus?.adminTags || []).join(',');
