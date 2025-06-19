@@ -151,12 +151,6 @@ export default {
                 responseBody = await handleGetPlanModificationPrompt(request, env);
             } else if (method === 'POST' && path === '/api/aiHelper') {
                 responseBody = await handleAiHelperRequest(request, env);
-            } else if (method === 'GET' && path === '/api/listClients') {
-                responseBody = await handleListClientsRequest(request, env);
-            } else if (method === 'POST' && path === '/api/addAdminQuery') {
-                responseBody = await handleAddAdminQueryRequest(request, env);
-            } else if (method === 'GET' && path === '/api/getAdminQueries') {
-                responseBody = await handleGetAdminQueriesRequest(request, env);
             } else {
                 responseBody = { success: false, error: 'Not Found', message: 'Ресурсът не е намерен.' };
                 responseStatus = 404;
@@ -1261,68 +1255,6 @@ async function handleAiHelperRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleAiHelperRequest -------------
-
-// ------------- START FUNCTION: handleListClientsRequest -------------
-async function handleListClientsRequest(request, env) {
-    try {
-        const list = await env.USER_METADATA_KV.list();
-        const ids = new Set();
-        for (const key of list.keys) {
-            const m = key.name.match(/^(.*)_initial_answers$/);
-            if (m) ids.add(m[1]);
-        }
-        const clients = [];
-        for (const id of ids) {
-            const ansStr = await env.USER_METADATA_KV.get(`${id}_initial_answers`);
-            if (!ansStr) continue;
-            const ans = safeParseJson(ansStr, {});
-            clients.push({ userId: id, name: ans.name || 'Клиент' });
-        }
-        return { success: true, clients };
-    } catch (error) {
-        console.error('Error in handleListClientsRequest:', error.message, error.stack);
-        return { success: false, message: 'Грешка при зареждане на клиентите.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleListClientsRequest -------------
-
-// ------------- START FUNCTION: handleAddAdminQueryRequest -------------
-async function handleAddAdminQueryRequest(request, env) {
-    try {
-        const { userId, message } = await request.json();
-        if (!userId || !message) return { success: false, message: 'Липсват данни.', statusHint: 400 };
-        const key = `${userId}_admin_queries`;
-        const existing = safeParseJson(await env.USER_METADATA_KV.get(key), []);
-        existing.push({ message, ts: Date.now(), read: false });
-        await env.USER_METADATA_KV.put(key, JSON.stringify(existing));
-        return { success: true };
-    } catch (error) {
-        console.error('Error in handleAddAdminQueryRequest:', error.message, error.stack);
-        return { success: false, message: 'Грешка при запис.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleAddAdminQueryRequest -------------
-
-// ------------- START FUNCTION: handleGetAdminQueriesRequest -------------
-async function handleGetAdminQueriesRequest(request, env) {
-    try {
-        const url = new URL(request.url);
-        const userId = url.searchParams.get('userId');
-        if (!userId) return { success: false, message: 'Липсва userId.', statusHint: 400 };
-        const key = `${userId}_admin_queries`;
-        const arr = safeParseJson(await env.USER_METADATA_KV.get(key), []);
-        const unread = arr.filter(q => !q.read);
-        if (unread.length > 0) {
-            arr.forEach(q => { q.read = true; });
-            await env.USER_METADATA_KV.put(key, JSON.stringify(arr));
-        }
-        return { success: true, queries: unread };
-    } catch (error) {
-        console.error('Error in handleGetAdminQueriesRequest:', error.message, error.stack);
-        return { success: false, message: 'Грешка при зареждане на запитванията.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleGetAdminQueriesRequest -------------
 
 // ------------- START FUNCTION: handleGetPlanModificationPrompt -------------
 async function handleGetPlanModificationPrompt(request, env) {
@@ -3033,4 +2965,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt };
