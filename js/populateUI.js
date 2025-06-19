@@ -3,7 +3,7 @@ import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElemen
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml } from './utils.js';
 import { generateId } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, planHasRecContent } from './app.js';
-import { showToast, openModal, closeModal } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
+import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 
 export function populateUI() {
     const data = fullDashboardData; // Access global state
