@@ -1,7 +1,6 @@
 // adaptiveQuiz.js - Логика за Адаптивен Въпросник
 import { selectors } from './uiElements.js';
-import { showLoading, showToast, openModal as genericOpenModal, closeModal as genericCloseModal } from './uiHandlers.js';
-import { apiEndpoints } from './config.js';
+import { showToast, openModal as genericOpenModal } from './uiHandlers.js';
 import { safeGet, safeParseFloat } from './utils.js';
 import {
     currentUserId,
@@ -12,9 +11,7 @@ import {
     setCurrentQuizData, // setter from app.js
     setUserQuizAnswers, // setter from app.js
     setCurrentQuestionIndex, // setter from app.js
-    loadDashboardData, // function from app.js
-    _generateAdaptiveQuizClientSide, // API call from app.js
-    _submitAdaptiveQuizClientSide // API call from app.js
+    _generateAdaptiveQuizClientSide // API call from app.js
 } from './app.js';
 
 export async function openAdaptiveQuizModal() {

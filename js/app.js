@@ -1,35 +1,27 @@
 // app.js - Основен Файл на Приложението
-import { isLocalDevelopment, workerBaseUrl, apiEndpoints, generateId } from './config.js';
-import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml } from './utils.js';
+import { isLocalDevelopment, apiEndpoints } from './config.js';
+import { safeParseFloat, escapeHtml } from './utils.js';
 import { selectors, initializeSelectors, loadInfoTexts } from './uiElements.js';
 import {
-    toggleMenu, closeMenu, handleOutsideMenuClick, handleMenuKeydown,
-    initializeTheme, applyTheme, toggleTheme, updateThemeButtonText,
-    activateTab, handleTabKeydown,
-    openModal, closeModal, openInfoModalWithDetails,
-    toggleDailyNote,
-    showTrackerTooltip, hideTrackerTooltip, handleTrackerTooltipShow, handleTrackerTooltipHide,
+    initializeTheme,
+    activateTab,
+    openModal, closeModal,
     showLoading, showToast, updateTabsOverflowIndicator
 } from './uiHandlers.js';
 import { populateUI } from './populateUI.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
 import { setupStaticEventListeners, setupDynamicEventListeners } from './eventListeners.js';
-import { handleLogout as performLogout } from './auth.js';
 import {
-    toggleChatWidget, closeChatWidget, clearChat,
     displayMessage as displayChatMessage,
     displayTypingIndicator as displayChatTypingIndicator, scrollToChatBottom,
     setAutomatedChatPending
 } from './chat.js';
-import { openExtraMealModal } from './extraMealForm.js';
 import { initializeAchievements } from './achievements.js';
 import {
     openAdaptiveQuizModal as _openAdaptiveQuizModal,
     renderCurrentQuizQuestion,
     showQuizValidationMessage,
-    hideQuizValidationMessage,
-    getSummaryFromLastCompletedQuiz, // For potential use in app.js
-    getSummaryFromPreviousQuizzes // For potential use in app.js
+    hideQuizValidationMessage
 } from './adaptiveQuiz.js';
 import { openPlanModificationChat } from './planModChat.js';
 export { openPlanModificationChat };
@@ -66,7 +58,6 @@ function normalizeText(input) {
 export let currentUserId = null;
 export function setCurrentUserId(val) { currentUserId = val; }
 export let fullDashboardData = {};
-let toastTimeoutApp; // Managed by app.js, uiHandlers.js has its own for its showToast
 export let chatHistory = [];
 export let todaysMealCompletionStatus = {}; // Updated by populateUI and eventListeners
 export let activeTooltip = null; // Managed by uiHandlers via setActiveTooltip
@@ -102,7 +93,6 @@ export function resetAppState() {
     currentQuizData = null;
     userQuizAnswers = {};
     currentQuestionIndex = 0;
-    // Не нулираме toastTimeoutApp, тъй като showToast управлява своя.
 }
 
 // Функция за създаване на тестови данни

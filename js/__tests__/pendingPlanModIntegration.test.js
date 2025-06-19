@@ -3,12 +3,7 @@ import * as mod from '../../worker.js';
 
 const userId = 'u1';
 
-// Mock date for iso function if needed
-function iso(daysAgo = 0) {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  return d.toISOString().split('T')[0];
-}
+// Removed unused iso helper
 
 describe('processSingleUserPlan with pending modification', () => {
   test('includes pending modification in prompt and clears key', async () => {

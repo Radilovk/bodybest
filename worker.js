@@ -134,7 +134,7 @@ export default {
             } else if (method === 'GET' && path === '/api/getAdaptiveQuiz') { // Запазено от v2.1
                 responseBody = await handleGetAdaptiveQuizRequest(request, env);
             } else if (method === 'POST' && path === '/api/submitAdaptiveQuiz') { // Запазено от v2.1, ще бъде прегледано за интеграция на AI summary
-                responseBody = await handleSubmitAdaptiveQuizRequest(request, env, ctx);
+                responseBody = await handleSubmitAdaptiveQuizRequest(request, env);
             } else if (method === 'POST' && path === '/api/triggerAdaptiveQuizTest') { // Запазено от v2.1
                 responseBody = await handleTriggerAdaptiveQuizTestRequest(request, env, ctx);
             } else if (method === 'POST' && path === '/api/acknowledgeAiUpdate') { // НОВ ендпойнт
@@ -635,20 +635,19 @@ async function handleLogRequest(request, env) {
 // ------------- START FUNCTION: handleUpdateStatusRequest -------------
 async function handleUpdateStatusRequest(request, env) {
      try {
-         const inputData = await request.json();
-         const userId = inputData.userId;
-         if (!userId) {
-             console.warn("UPDATE_STATUS_ERROR: Missing userId in input data.");
-             throw new Error("Липсва потребителско ID (userId).");
-         }
-         const statusKey = `${userId}_current_status`;
+        const inputData = await request.json();
+        const { userId, ...statusDataToSave } = inputData;
+        if (!userId) {
+            console.warn("UPDATE_STATUS_ERROR: Missing userId in input data.");
+            throw new Error("Липсва потребителско ID (userId).");
+        }
+        const statusKey = `${userId}_current_status`;
          let currentStatus = {};
          const existingStatusStr = await env.USER_METADATA_KV.get(statusKey);
          if (existingStatusStr) {
              currentStatus = safeParseJson(existingStatusStr, {});
          }
-         // Копираме всички подадени полета, освен userId
-         const { userId: _, ...statusDataToSave } = inputData;
+        // Копираме всички подадени полета, освен userId (вече отделен при деструктуриране)
          Object.assign(currentStatus, statusDataToSave);
          currentStatus.lastUpdated = new Date().toISOString();
 
@@ -668,9 +667,9 @@ async function handleChatRequest(request, env) {
     const { userId, message, model, promptOverride, source, history } = await request.json();
     if (!userId || !message) return { success: false, message: 'Липсва userId или съобщение.', statusHint: 400 };
     try {
-        const [ initialAnswersStr, finalPlanStr, planStatus, recipeDataStr, storedChatHistoryStr, currentStatusStr, ...logStringsForChat ] = await Promise.all([
+        const [ initialAnswersStr, finalPlanStr, planStatus, storedChatHistoryStr, currentStatusStr, ...logStringsForChat ] = await Promise.all([
             env.USER_METADATA_KV.get(`${userId}_initial_answers`), env.USER_METADATA_KV.get(`${userId}_final_plan`),
-            env.USER_METADATA_KV.get(`plan_status_${userId}`), env.RESOURCES_KV.get('recipe_data'),
+            env.USER_METADATA_KV.get(`plan_status_${userId}`),
             env.USER_METADATA_KV.get(`${userId}_chat_history`), env.USER_METADATA_KV.get(`${userId}_current_status`),
             ...Array.from({ length: 3 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return env.USER_METADATA_KV.get(`${userId}_log_${d.toISOString().split('T')[0]}`); })
         ]);
@@ -925,7 +924,7 @@ async function handleGetAdaptiveQuizRequest(request, env) {
 // ------------- END FUNCTION: handleGetAdaptiveQuizRequest -------------
 
 // ------------- START FUNCTION: handleSubmitAdaptiveQuizRequest -------------
-async function handleSubmitAdaptiveQuizRequest(request, env, ctx) {
+async function handleSubmitAdaptiveQuizRequest(request, env) {
     try {
         const { userId, answers, quizId } = await request.json();
         if (!userId || !answers || typeof answers !== 'object' || !quizId) {
