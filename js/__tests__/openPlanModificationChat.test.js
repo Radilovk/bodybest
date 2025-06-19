@@ -49,7 +49,8 @@ beforeEach(async () => {
     },
     initializeSelectors: jest.fn(),
     trackerInfoTexts: {},
-    detailedMetricInfoTexts: {}
+    detailedMetricInfoTexts: {},
+    loadInfoTexts: jest.fn(() => Promise.resolve())
   }));
   jest.unstable_mockModule('../config.js', () => ({
     isLocalDevelopment: false,

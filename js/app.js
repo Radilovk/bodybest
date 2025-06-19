@@ -1,7 +1,7 @@
 // app.js - Основен Файл на Приложението
 import { isLocalDevelopment, workerBaseUrl, apiEndpoints, generateId } from './config.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml } from './utils.js';
-import { selectors, initializeSelectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
+import { selectors, initializeSelectors, loadInfoTexts } from './uiElements.js';
 import {
     toggleMenu, closeMenu, handleOutsideMenuClick, handleMenuKeydown,
     initializeTheme, applyTheme, toggleTheme, updateThemeButtonText,
@@ -218,10 +218,11 @@ export { planHasRecContent };
  * Инициализира потребителския интерфейс и зарежда данните на таблото.
  * Извиква се при събитието DOMContentLoaded.
  */
-function initializeApp() {
+async function initializeApp() {
     try {
         if (isLocalDevelopment) console.log("initializeApp starting from app.js...");
         initializeSelectors();
+        await loadInfoTexts();
         if (!document.getElementById('planModInProgressIcon') && selectors.planModificationBtn) {
             const icon = document.createElement('svg');
             icon.id = 'planModInProgressIcon';
