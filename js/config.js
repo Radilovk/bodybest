@@ -29,7 +29,8 @@ export const apiEndpoints = {
     listClients: `${workerBaseUrl}/api/listClients`,
     addAdminQuery: `${workerBaseUrl}/api/addAdminQuery`,
     getAdminQueries: `${workerBaseUrl}/api/getAdminQueries`,
-    getPlanModificationPrompt: `${workerBaseUrl}/api/getPlanModificationPrompt`
+    getPlanModificationPrompt: `${workerBaseUrl}/api/getPlanModificationPrompt`,
+    updateStatus: `${workerBaseUrl}/api/updateStatus`
 };
 
 // Cloudflare Account ID за използване в чат асистента
