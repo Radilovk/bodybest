@@ -284,7 +284,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
     Object.keys(todaysMealCompletionStatus).forEach(key => delete todaysMealCompletionStatus[key]); // Clear previous
 
     try {
-        if (currentUserId.includes('test_user') || window.location.hostname.includes('replit')) {
+        if (currentUserId.includes('test_user') || isLocalDevelopment) {
             const data = createTestData();
             if (isLocalDevelopment) console.log("Using test data for development:", data);
             fullDashboardData = data;
@@ -597,7 +597,7 @@ export async function _generateAdaptiveQuizClientSide(userId, context = {}) { //
     if (isLocalDevelopment) console.log("generateAdaptiveQuizClientSide (app.js) called for user:", userId, "with context:", context);
     if (!userId) throw new Error("Липсва потребителско ID за генериране на въпросник.");
 
-    if (userId.includes('test_user') || window.location.hostname.includes('replit')) {
+    if (userId.includes('test_user') || isLocalDevelopment) {
         if (isLocalDevelopment) console.log("Generating test quiz data (app.js)");
         return {
             quizId: 'test_quiz_' + Date.now(),
@@ -638,7 +638,7 @@ export async function _submitAdaptiveQuizClientSide(userId, quizId, submittedAns
         throw new Error("Липсват необходими данни за подаване на въпросника.");
     }
 
-    if (userId.includes('test_user') || window.location.hostname.includes('replit')) {
+    if (userId.includes('test_user') || isLocalDevelopment) {
         if (isLocalDevelopment) console.log("Simulating quiz analysis for test user (app.js)");
         return {
             success: true,
