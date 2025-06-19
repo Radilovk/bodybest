@@ -200,8 +200,14 @@ The PHP helper scripts expect the following variables set in the server environm
 - `CF_API_TOKEN` – token used by `save-questions.php` to update the Cloudflare KV store.
 
 The admin panel по подразбиране използва фиксирани данни за вход – потребителско име `admin` и парола `6131`.
-Ако е зададенa променлива `ADMIN_PASS_HASH`, паролата се проверява по нейния bcrypt хеш.
+Ако е зададенa променлива `ADMIN_PASS_HASH`, паролата се проверява по нейния bcrypt хеш. Празни стойности на `ADMIN_PASS_HASH` или `ADMIN_USERNAME` се игнорират и се използват стандартните данни.
 Може да се зададе и `ADMIN_USERNAME` за друго потребителско име.
+Интерфейсът на страницата за вход позволява показване на паролата и опция
+"Запомни ме", която съхранява потребителското име в `localStorage`.
+Ако `login.php` липсва (напр. при статичен хостинг), скриптът в `login.html`
+ще валидира локално стандартните данни и ще запази сесията в `localStorage`.
+Файлът `logout.html` изчиства съхранената сесия и пренасочва обратно към
+екрана за вход.
 Пример за генериране на хеш:
 
 ```bash

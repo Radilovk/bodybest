@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <title>Изход</title>
+</head>
+<body>
+<script>
+  // Опитваме да информираме сървъра, ако съществува PHP скрипт
+  fetch('logout.php').catch(() => {});
+  localStorage.removeItem('adminSession');
+  window.location.href = 'login.html';
+</script>
+</body>
+</html>

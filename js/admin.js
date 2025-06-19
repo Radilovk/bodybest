@@ -1,6 +1,9 @@
 import { apiEndpoints } from './config.js';
 
 async function ensureLoggedIn() {
+    if (localStorage.getItem('adminSession') === 'true') {
+        return;
+    }
     try {
         const resp = await fetch('session_check.php');
         const data = await resp.json();
