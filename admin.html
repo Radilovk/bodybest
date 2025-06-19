@@ -8,7 +8,8 @@
 <body>
   <h1>Администраторски панел</h1>
   <p><a href="logout.html">Изход</a></p>
-  <section id="clientsSection">
+  <div class="layout">
+  <aside class="sidebar card" id="clientsSection">
     <h2>Клиенти</h2>
     <input id="clientSearch" placeholder="Търсене по име/ID">
     <select id="statusFilter">
@@ -20,9 +21,9 @@
     <p id="clientsCount"></p>
     <button id="showStats">Покажи статистика</button>
     <ul id="clientsList"></ul>
-  </section>
+  </aside>
 
-  <section id="clientDetails" class="hidden">
+  <main class="main-content card" id="clientDetails" class="hidden">
     <h2 id="clientName">Клиент</h2>
     <form id="profileForm">
       <label>Име: <input name="name"></label><br>
@@ -44,12 +45,16 @@
     <pre id="planMenu"></pre>
     <h3>Дневници</h3>
     <pre id="dailyLogs"></pre>
+    <h3>Пълни данни</h3>
+    <pre id="dashboardData" class="json"></pre>
+    <button id="exportData">Експортирай всички данни</button>
     <button id="exportPlan">Експортирай плана като JSON</button>
     <h3>Запитвания</h3>
     <ul id="queriesList"></ul>
     <textarea id="newQueryText" rows="3" cols="40"></textarea><br>
     <button id="sendQuery">Изпрати запитване</button>
-  </section>
+  </main>
+  </div>
 
   <section id="statsSection" class="hidden">
     <h2>Статистика</h2>

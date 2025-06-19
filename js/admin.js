@@ -35,8 +35,11 @@ const initialAnswersPre = document.getElementById('initialAnswers');
 const planMenuPre = document.getElementById('planMenu');
 const dailyLogsPre = document.getElementById('dailyLogs');
 const exportPlanBtn = document.getElementById('exportPlan');
+const dashboardPre = document.getElementById('dashboardData');
+const exportDataBtn = document.getElementById('exportData');
 let currentUserId = null;
 let currentPlanData = null;
+let currentDashboardData = null;
 let allClients = [];
 
 async function loadClients() {
@@ -149,10 +152,12 @@ async function showClient(userId) {
                 planMenuPre.textContent = JSON.stringify(menu, null, 2);
             }
             if (dailyLogsPre) dailyLogsPre.textContent = JSON.stringify(dashData.dailyLogs || [], null, 2);
+            if (dashboardPre) dashboardPre.textContent = JSON.stringify(dashData, null, 2);
             if (notesField) notesField.value = dashData.currentStatus?.adminNotes || '';
             if (tagsField) tagsField.value = (dashData.currentStatus?.adminTags || []).join(',');
             profileForm.weight.value = dashData.currentStatus?.weight || profileForm.weight.value;
             currentPlanData = dashData.planData || null;
+            currentDashboardData = dashData;
         }
     } catch (err) {
         console.error('Error loading profile:', err);
@@ -264,6 +269,19 @@ if (exportPlanBtn) {
         const a = document.createElement('a');
         a.href = url;
         a.download = `${currentUserId || 'plan'}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+}
+
+if (exportDataBtn) {
+    exportDataBtn.addEventListener('click', () => {
+        if (!currentDashboardData) return;
+        const blob = new Blob([JSON.stringify(currentDashboardData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentUserId || 'data'}.json`;
         a.click();
         URL.revokeObjectURL(url);
     });
