@@ -52,24 +52,6 @@ function normalizeText(input) {
     return String(input);
 }
 
-async function checkAdminQueries(userId) {
-    try {
-        const resp = await fetch(`${apiEndpoints.getAdminQueries}?userId=${userId}`);
-        const data = await resp.json();
-        if (resp.ok && data.success && Array.isArray(data.queries) && data.queries.length > 0) {
-            data.queries.forEach(q => {
-                displayChatMessage(`Администратор: ${escapeHtml(q.message)}`, 'bot');
-            });
-            if (!selectors.chatWidget?.classList.contains('visible')) {
-                if (selectors.chatFab) selectors.chatFab.classList.add('notification');
-                setAutomatedChatPending(true);
-            }
-        }
-    } catch (err) {
-        console.error('Error fetching admin queries:', err);
-    }
-}
-
 // ==========================================================================
 // ГЛОБАЛНИ ПРОМЕНЛИВИ ЗА СЪСТОЯНИЕТО НА ПРИЛОЖЕНИЕТО
 // ==========================================================================
@@ -304,7 +286,6 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
             populateUI();
             initializeAchievements(currentUserId);
             setupDynamicEventListeners();
-            await checkAdminQueries(currentUserId);
 
             const activeTabId = sessionStorage.getItem('activeTabId') || selectors.tabButtons[0]?.id;
             const activeTabButton = activeTabId ? document.getElementById(activeTabId) : (selectors.tabButtons && selectors.tabButtons[0]);
@@ -399,7 +380,6 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
 
         initializeAchievements(currentUserId);
         setupDynamicEventListeners();
-        await checkAdminQueries(currentUserId);
 
         const activeTabId = sessionStorage.getItem('activeTabId') || selectors.tabButtons[0]?.id;
         const activeTabButton = activeTabId ? document.getElementById(activeTabId) : (selectors.tabButtons && selectors.tabButtons[0]);
