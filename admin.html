@@ -10,6 +10,13 @@
   <p><a href="logout.html">Изход</a></p>
   <section id="clientsSection">
     <h2>Клиенти</h2>
+    <input id="clientSearch" placeholder="Търсене по име/ID">
+    <select id="statusFilter">
+      <option value="all">Всички</option>
+      <option value="pending">pending</option>
+      <option value="processing">processing</option>
+      <option value="ready">ready</option>
+    </select>
     <p id="clientsCount"></p>
     <button id="showStats">Покажи статистика</button>
     <ul id="clientsList"></ul>
@@ -21,12 +28,22 @@
       <label>Име: <input name="name"></label><br>
       <label>Възраст: <input type="number" name="age"></label><br>
       <label>Ръст: <input type="number" name="height"></label><br>
+      <label>Email: <input name="email" disabled></label><br>
+      <label>Тегло: <input type="number" name="weight"></label><br>
       <button type="submit">Запази</button>
     </form>
+    <button id="regeneratePlan">Генерирай нов план</button>
+    <button id="aiSummary">AI резюме</button>
+    <h3>Бележки</h3>
+    <textarea id="adminNotes" rows="3" cols="40"></textarea><br>
+    <label>Етикети: <input id="adminTags"></label>
+    <button id="saveNotes">Запази бележките</button>
     <h3>Данни от въпросника</h3>
     <pre id="initialAnswers"></pre>
     <h3>Текущо меню</h3>
     <pre id="planMenu"></pre>
+    <h3>Дневници</h3>
+    <pre id="dailyLogs"></pre>
     <button id="exportPlan">Експортирай плана като JSON</button>
     <h3>Запитвания</h3>
     <ul id="queriesList"></ul>
