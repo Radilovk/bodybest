@@ -35,7 +35,8 @@ beforeEach(async () => {
     selectors,
     initializeSelectors: jest.fn(),
     trackerInfoTexts: {},
-    detailedMetricInfoTexts: {}
+    detailedMetricInfoTexts: {},
+    loadInfoTexts: jest.fn(() => Promise.resolve())
   }));
   jest.unstable_mockModule('../uiHandlers.js', () => ({
     toggleMenu: jest.fn(),

@@ -16,7 +16,8 @@ describe('uiHandlers escapeHtml usage', () => {
       selectors,
       trackerInfoTexts: {},
       detailedMetricInfoTexts: {},
-      mainIndexInfoTexts: {}
+      mainIndexInfoTexts: {},
+      loadInfoTexts: jest.fn(() => Promise.resolve())
     }));
 
     jest.unstable_mockModule('../app.js', () => ({
@@ -46,7 +47,8 @@ describe('uiHandlers escapeHtml usage', () => {
       selectors,
       trackerInfoTexts: {},
       detailedMetricInfoTexts: {},
-      mainIndexInfoTexts: { m1: { title: 'Title <b>', text: 'Body <i>' } }
+      mainIndexInfoTexts: { m1: { title: 'Title <b>', text: 'Body <i>' } },
+      loadInfoTexts: jest.fn(() => Promise.resolve())
     }));
 
     jest.unstable_mockModule('../app.js', () => ({

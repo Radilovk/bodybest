@@ -38,6 +38,7 @@ beforeEach(async () => {
     initializeSelectors: jest.fn(),
     trackerInfoTexts: {},
     detailedMetricInfoTexts: {},
+    loadInfoTexts: jest.fn(() => Promise.resolve()),
   }));
   jest.unstable_mockModule('../chat.js', () => ({
     toggleChatWidget: jest.fn(),
