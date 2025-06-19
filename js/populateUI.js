@@ -39,10 +39,14 @@ function populateDashboardMainIndexes(currentAnalytics) {
         if(selectors.goalProgressMask) selectors.goalProgressMask.style.width = '100%';
         if(selectors.engagementProgressMask) selectors.engagementProgressMask.style.width = '100%';
         if(selectors.healthProgressMask) selectors.healthProgressMask.style.width = '100%';
+        if(selectors.goalProgressBar) selectors.goalProgressBar.setAttribute('aria-valuenow', '0');
+        if(selectors.engagementProgressBar) selectors.engagementProgressBar.setAttribute('aria-valuenow', '0');
+        if(selectors.healthProgressBar) selectors.healthProgressBar.setAttribute('aria-valuenow', '0');
         return;
     }
     const goalProgressPercent = safeGet(currentAnalytics, 'goalProgress', 0);
     if (selectors.goalProgressMask) selectors.goalProgressMask.style.width = `${100 - Math.max(0, Math.min(100, goalProgressPercent))}%`;
+    if (selectors.goalProgressBar) selectors.goalProgressBar.setAttribute('aria-valuenow', `${Math.round(goalProgressPercent)}`);
     if (selectors.goalProgressText) {
         const goal = safeGet(fullDashboardData.initialAnswers, 'goal', '').toLowerCase();
         const startWeight = safeParseFloat(safeGet(fullDashboardData.initialData, 'weight'));
@@ -58,9 +62,11 @@ function populateDashboardMainIndexes(currentAnalytics) {
     }
     const engagementScore = safeGet(currentAnalytics, 'engagementScore', 0);
     if (selectors.engagementProgressMask) selectors.engagementProgressMask.style.width = `${100 - Math.max(0, Math.min(100, engagementScore))}%`;
+    if (selectors.engagementProgressBar) selectors.engagementProgressBar.setAttribute('aria-valuenow', `${Math.round(engagementScore)}`);
     if (selectors.engagementProgressText) selectors.engagementProgressText.textContent = `${Math.round(engagementScore)}%`;
     const healthScore = safeGet(currentAnalytics, 'overallHealthScore', 0);
     if (selectors.healthProgressMask) selectors.healthProgressMask.style.width = `${100 - Math.max(0, Math.min(100, healthScore))}%`;
+    if (selectors.healthProgressBar) selectors.healthProgressBar.setAttribute('aria-valuenow', `${Math.round(healthScore)}`);
     if (selectors.healthProgressText) selectors.healthProgressText.textContent = `${Math.round(healthScore)}%`;
 }
 
