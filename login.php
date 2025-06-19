@@ -18,16 +18,16 @@ $username = trim($data['username']);
 $password = $data['password'];
 $envUser = getenv('ADMIN_USERNAME');
 $envHash = getenv('ADMIN_PASS_HASH');
-$expectedUser = ($envUser !== false && $envUser !== '') ? $envUser : 'admin';
+$expectedUser = $envUser !== false ? $envUser : 'admin';
 
 if ($username === $expectedUser) {
-    if ($envHash !== false && $envHash !== '' && password_verify($password, $envHash)) {
+    if ($envHash !== false && password_verify($password, $envHash)) {
         $_SESSION['isAdmin'] = true;
         session_regenerate_id(true);
         echo json_encode(["success" => true, "message" => "Logged in"]);
         exit;
     }
-    if (($envHash === false || $envHash === '') && $password === '6131') {
+    if ($envHash === false && $password === '6131') {
         $_SESSION['isAdmin'] = true;
         session_regenerate_id(true);
         echo json_encode(["success" => true, "message" => "Logged in"]);
