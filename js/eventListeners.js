@@ -220,6 +220,28 @@ export function setupStaticEventListeners() {
     });
 }
 
+export function initializeCollapsibleCards() {
+    const cards = document.querySelectorAll('#recs-panel .collapsible-card');
+    cards.forEach(card => {
+        const header = card.querySelector('h4');
+        const content = card.querySelector('.collapsible-content');
+        if (!header || !content) return;
+        header.setAttribute('tabindex', '0');
+        header.setAttribute('aria-expanded', 'false');
+        const toggle = () => {
+            const isOpen = card.classList.toggle('open');
+            header.setAttribute('aria-expanded', isOpen);
+        };
+        header.addEventListener('click', toggle);
+        header.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        });
+    });
+}
+
 export function setupDynamicEventListeners() {
     document.body.removeEventListener('click', handleDelegatedClicks);
     document.body.addEventListener('click', handleDelegatedClicks);
