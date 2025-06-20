@@ -242,6 +242,10 @@ php -r "echo password_hash('yourPassword', PASSWORD_DEFAULT);"
 5. Ако работникът е конфигуриран със секрет `WORKER_ADMIN_TOKEN`,
    заявките към `/api/setAiConfig` трябва да съдържат HTTP заглавка
    `Authorization: Bearer <токен>`.
+6. Можете да запазвате и зареждате комбинации от модели като "пресети".
+   Списъкът се зарежда чрез `/api/listAiPresets`, конкретен пресет – чрез
+   `/api/getAiPreset`, а нов пресет се създава с POST заявка към
+   `/api/saveAiPreset`.
 
 Администраторският скрипт `admin.js` добавя автоматично тази
 заглавка, ако в `localStorage` съществува ключ `adminToken`.
@@ -304,6 +308,9 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `POST /api/submitFeedback` – изпраща обратна връзка от клиента.
 - `GET /api/getAiConfig` – зарежда текущата AI конфигурация.
 - `POST /api/setAiConfig` – записва токени и модели в `RESOURCES_KV`.
+- `GET /api/listAiPresets` – връща имената на записаните AI конфигурации.
+- `GET /api/getAiPreset` – връща данните за конкретен пресет.
+- `POST /api/saveAiPreset` – съхранява нов пресет или обновява съществуващ.
 - **Дебъг логове** – при изпращане на заглавие `X-Debug: 1` към който и да е API
 ендпойнт, worker-ът записва в конзолата кратка информация за заявката.
 
