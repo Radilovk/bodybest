@@ -20,7 +20,6 @@ const clientsCount = document.getElementById('clientsCount');
 const clientSearch = document.getElementById('clientSearch');
 const statusFilter = document.getElementById('statusFilter');
 const detailsSection = document.getElementById('clientDetails');
-const profileForm = document.getElementById('profileForm');
 const regenBtn = document.getElementById('regeneratePlan');
 const aiSummaryBtn = document.getElementById('aiSummary');
 const notesField = document.getElementById('adminNotes');
@@ -153,7 +152,7 @@ function renderClients() {
     const filter = statusFilter.value;
     clientsList.innerHTML = '';
     const list = allClients.filter(c => {
-        const matchText = `${c.name} ${c.userId}`.toLowerCase();
+        const matchText = `${c.userId}`.toLowerCase();
         const matchesSearch = matchText.includes(search);
         const matchesStatus = filter === 'all' || c.status === filter;
         return matchesSearch && matchesStatus;
@@ -162,14 +161,9 @@ function renderClients() {
     list.forEach(c => {
         const li = document.createElement('li');
         const btn = document.createElement('button');
-        btn.textContent = `${c.name} (${c.userId}) - ${c.status}`;
+        btn.textContent = `${c.userId} - ${c.status}`;
         btn.addEventListener('click', () => showClient(c.userId));
         li.appendChild(btn);
-        const exportBtn = document.createElement('button');
-        exportBtn.textContent = 'CSV';
-        exportBtn.style.marginLeft = '5px';
-        exportBtn.addEventListener('click', () => exportProfileCsv(c.userId));
-        li.appendChild(exportBtn);
         clientsList.appendChild(li);
     });
 }
@@ -182,27 +176,6 @@ showStatsBtn.addEventListener('click', () => {
 if (clientSearch) clientSearch.addEventListener('input', renderClients);
 if (statusFilter) statusFilter.addEventListener('change', renderClients);
 
-async function exportProfileCsv(userId) {
-    try {
-        const resp = await fetch(`${apiEndpoints.getProfile}?userId=${userId}`);
-        const data = await resp.json();
-        if (resp.ok && data.success) {
-            const rows = [ ['userId', 'name', 'age', 'height'],
-                [userId, data.name || '', data.age || '', data.height || ''] ];
-            const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${userId}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-    } catch (err) {
-        console.error('Error exporting CSV:', err);
-    }
-}
-
 async function showClient(userId) {
     try {
         const resp = await fetch(`${apiEndpoints.getProfile}?userId=${userId}`);
@@ -210,14 +183,7 @@ async function showClient(userId) {
         if (resp.ok && data.success) {
             currentUserId = userId;
             detailsSection.classList.remove('hidden');
-            document.getElementById('clientName').textContent = data.name || 'Клиент';
-            profileForm.name.value = data.name || '';
-            profileForm.fullname.value = data.fullname || '';
-            profileForm.age.value = data.age || '';
-            profileForm.phone.value = data.phone || '';
-            profileForm.height.value = data.height || '';
-            profileForm.email.value = data.email || '';
-            profileForm.weight.value = data.weight || '';
+            document.getElementById('clientName').textContent = userId;
             await loadQueries();
             await loadFeedback();
         }
@@ -231,7 +197,6 @@ async function showClient(userId) {
             if (dashboardPre) dashboardPre.textContent = JSON.stringify(dashData, null, 2);
             if (notesField) notesField.value = dashData.currentStatus?.adminNotes || '';
             if (tagsField) tagsField.value = (dashData.currentStatus?.adminTags || []).join(',');
-            profileForm.weight.value = dashData.currentStatus?.weight || profileForm.weight.value;
             currentPlanData = dashData.planData || null;
             currentDashboardData = dashData;
         }
@@ -240,41 +205,6 @@ async function showClient(userId) {
     }
 }
 
-profileForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    if (!currentUserId) return;
-    const payload = {
-        userId: currentUserId,
-        name: profileForm.name.value,
-        fullname: profileForm.fullname.value,
-        age: parseInt(profileForm.age.value, 10) || null,
-        phone: profileForm.phone.value,
-        height: parseInt(profileForm.height.value, 10) || null,
-        email: profileForm.email.value || undefined
-    };
-    try {
-        const resp = await fetch(apiEndpoints.updateProfile, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        const data = await resp.json();
-        alert(data.message || (data.success ? 'Успешно записан профил.' : 'Грешка при запис.'));
-        const statusPayload = {
-            userId: currentUserId,
-            weight: parseFloat(profileForm.weight.value) || null,
-            adminNotes: notesField.value,
-            adminTags: (tagsField.value || '').split(',').map(t => t.trim()).filter(Boolean)
-        };
-        await fetch(apiEndpoints.updateStatus, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(statusPayload)
-        });
-    } catch (err) {
-        alert('Грешка при изпращане');
-    }
-});
 
 sendQueryBtn.addEventListener('click', async () => {
     if (!currentUserId) return;
