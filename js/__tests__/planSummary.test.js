@@ -49,4 +49,27 @@ describe('createPlanUpdateSummary', () => {
     const total = summary.changes.join(' ');
     expect(total).not.toContain('[object Object]');
   });
+
+  test('detects new dishes in week1Menu', () => {
+    const newPlan = {
+      week1Menu: {
+        monday: [
+          { meal_name: 'Закуска', items: [{ name: 'Овесена каша' }] },
+          { meal_name: 'Обяд', items: [{ name: 'Пиле' }] }
+        ]
+      }
+    };
+    const oldPlan = {
+      week1Menu: {
+        monday: [
+          { meal_name: 'Закуска', items: [{ name: 'Омлет' }] },
+          { meal_name: 'Обяд', items: [{ name: 'Пиле' }] }
+        ]
+      }
+    };
+    const summary = createPlanUpdateSummary(newPlan, oldPlan);
+    const joined = summary.changes.join(' ');
+    expect(joined).toContain('Понеделник');
+    expect(joined).toContain('Закуска');
+  });
 });

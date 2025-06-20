@@ -2157,6 +2157,32 @@ function createPlanUpdateSummary(newPlan, oldPlan = {}) {
         if (t) changes.push(t);
     });
 
+    // --- New logic: compare week1Menu between plans ---
+    const newMenu = safeGet(newPlan, 'week1Menu', {});
+    const oldMenu = safeGet(oldPlan, 'week1Menu', {});
+    if (newMenu && typeof newMenu === 'object') {
+        const dayMap = { monday: 'Понеделник', tuesday: 'Вторник', wednesday: 'Сряда', thursday: 'Четвъртък', friday: 'Петък', saturday: 'Събота', sunday: 'Неделя' };
+        const cap = s => (s && typeof s === 'string') ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+        const diffs = [];
+        for (const [dayKey, meals] of Object.entries(newMenu)) {
+            const newMeals = Array.isArray(meals) ? meals : [];
+            const oldMeals = Array.isArray(oldMenu?.[dayKey]) ? oldMenu[dayKey] : [];
+            const changedMeals = [];
+            newMeals.forEach((m, idx) => {
+                const oldM = oldMeals[idx] || {};
+                const newNames = Array.isArray(m?.items) ? m.items.map(it => it.name).join(', ') : '';
+                const oldNames = Array.isArray(oldM?.items) ? oldM.items.map(it => it.name).join(', ') : '';
+                if (!oldM.meal_name || m.meal_name !== oldM.meal_name || newNames !== oldNames) {
+                    if (m.meal_name) changedMeals.push(m.meal_name);
+                }
+            });
+            if (changedMeals.length > 0) {
+                diffs.push(`${dayMap[dayKey] || cap(dayKey)}: ${changedMeals.join(', ')}`);
+            }
+        }
+        if (diffs.length > 0) changes.push(...diffs.slice(0, 5));
+    }
+
     if (changes.length === 0) {
         changes.push('Няма съществени промени – планът е обновен без значителни разлики.');
     }
