@@ -389,7 +389,7 @@ if (profileForm) {
 async function loadQueries() {
     if (!currentUserId) return;
     try {
-        const resp = await fetch(`${apiEndpoints.getAdminQueries}?userId=${currentUserId}`);
+        const resp = await fetch(`${apiEndpoints.peekAdminQueries}?userId=${currentUserId}`);
         const data = await resp.json();
         queriesList.innerHTML = '';
         if (resp.ok && data.success) {
