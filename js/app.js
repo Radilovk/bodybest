@@ -459,6 +459,10 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
         console.error("Error loading/processing dashboard data:", error);
         showToast(`Грешка при зареждане: ${error.message}`, true, 7000);
         showPlanPendingState(`Възникна грешка: ${error.message}. Опитайте да презаредите страницата или <a href='index.html' style='color: var(--primary-color); text-decoration: underline;'>влезте отново</a>.`);
+        if (currentUserId) {
+            await checkAdminQueries(currentUserId);
+            startAdminQueriesPolling();
+        }
     } finally {
         showLoading(false);
     }
