@@ -4,12 +4,24 @@
   font-size: clamp(1.35rem, 3.2vw, 1.75rem); border-bottom: 2px solid var(--border-color);
   padding-bottom: var(--space-sm); margin-bottom: var(--space-lg);
 }
-.recommendation-section .card { 
-  margin-bottom: var(--space-lg); 
-  background-color: var(--metric-value-group-bg-initial); 
+.recommendation-section .card {
+  margin-bottom: var(--space-lg);
+  background-color: var(--metric-value-group-bg-initial);
   border: 1px solid var(--border-color);
   padding: var(--space-lg);
 }
+
+/* Уеднаквяване размера на картите в таб "Съвети" при сгънато състояние */
+#recs-panel .collapsible-card {
+  min-height: var(--tips-collapsed-height, 4.5rem);
+  transition: background-color 0.3s ease;
+}
+
+/* Цветови нюанси според контекста */
+#recs-panel .tip-card-success { background-color: var(--note-success-bg); }
+#recs-panel .tip-card-critical { background-color: var(--note-critical-bg); }
+#recs-panel .tip-card-info { background-color: var(--note-info-bg); }
+#recs-panel .tip-card-warning { background-color: var(--note-important-bg); }
 body.dark-theme .recommendation-section .card {
   background-color: var(--metric-value-group-bg-initial);
 }
