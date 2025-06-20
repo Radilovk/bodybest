@@ -159,6 +159,12 @@ export default {
                 responseBody = await handleGetAdminQueriesRequest(request, env);
             } else if (method === 'GET' && path === '/api/peekAdminQueries') {
                 responseBody = await handleGetAdminQueriesRequest(request, env, true);
+            } else if (method === 'POST' && path === '/api/addClientReply') {
+                responseBody = await handleAddClientReplyRequest(request, env);
+            } else if (method === 'GET' && path === '/api/getClientReplies') {
+                responseBody = await handleGetClientRepliesRequest(request, env);
+            } else if (method === 'GET' && path === '/api/peekClientReplies') {
+                responseBody = await handleGetClientRepliesRequest(request, env, true);
             } else if (method === 'GET' && path === '/api/getFeedbackMessages') {
                 responseBody = await handleGetFeedbackMessagesRequest(request, env);
             } else {
@@ -1352,6 +1358,44 @@ async function handleGetAdminQueriesRequest(request, env, peek = false) {
     }
 }
 // ------------- END FUNCTION: handleGetAdminQueriesRequest -------------
+
+// ------------- START FUNCTION: handleAddClientReplyRequest -------------
+async function handleAddClientReplyRequest(request, env) {
+    try {
+        const { userId, message } = await request.json();
+        if (!userId || !message) return { success: false, message: 'Липсват данни.', statusHint: 400 };
+        const key = `${userId}_client_replies`;
+        const existing = safeParseJson(await env.USER_METADATA_KV.get(key), []);
+        existing.push({ message, ts: Date.now(), read: false });
+        await env.USER_METADATA_KV.put(key, JSON.stringify(existing));
+        return { success: true };
+    } catch (error) {
+        console.error('Error in handleAddClientReplyRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при запис.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleAddClientReplyRequest -------------
+
+// ------------- START FUNCTION: handleGetClientRepliesRequest -------------
+async function handleGetClientRepliesRequest(request, env, peek = false) {
+    try {
+        const url = new URL(request.url);
+        const userId = url.searchParams.get('userId');
+        if (!userId) return { success: false, message: 'Липсва userId.', statusHint: 400 };
+        const key = `${userId}_client_replies`;
+        const arr = safeParseJson(await env.USER_METADATA_KV.get(key), []);
+        const unread = arr.filter(r => !r.read);
+        if (unread.length > 0 && !peek) {
+            arr.forEach(r => { r.read = true; });
+            await env.USER_METADATA_KV.put(key, JSON.stringify(arr));
+        }
+        return { success: true, replies: unread };
+    } catch (error) {
+        console.error('Error in handleGetClientRepliesRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при зареждане на отговорите.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleGetClientRepliesRequest -------------
 
 // ------------- START FUNCTION: handleGetFeedbackMessagesRequest -------------
 async function handleGetFeedbackMessagesRequest(request, env) {
@@ -3129,4 +3173,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
