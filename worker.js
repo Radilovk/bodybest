@@ -1763,7 +1763,7 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
     try {
         const [
             initialAnswersStr, finalPlanStr, currentStatusStr,
-            chatHistoryStr, principleAdjustmentPromptTpl, planModelName, geminiApiKey,
+            chatHistoryStr, principleAdjustmentPromptTpl, planModelName, geminiApiKey, openaiApiKey,
             ...logStringsForWeightCheck
         ] = await Promise.all([
             env.USER_METADATA_KV.get(`${userId}_initial_answers`),
