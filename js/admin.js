@@ -42,6 +42,13 @@ const profileForm = document.getElementById('profileForm');
 const profileName = document.getElementById('profileName');
 const profileEmail = document.getElementById('profileEmail');
 const profilePhone = document.getElementById('profilePhone');
+const aiConfigForm = document.getElementById('aiConfigForm');
+const planTokenInput = document.getElementById('planToken');
+const planModelInput = document.getElementById('planModel');
+const chatTokenInput = document.getElementById('chatToken');
+const chatModelInput = document.getElementById('chatModel');
+const modTokenInput = document.getElementById('modToken');
+const modModelInput = document.getElementById('modModel');
 const clientNameHeading = document.getElementById('clientName');
 const notificationDot = document.getElementById('notificationIndicator');
 let currentUserId = null;
@@ -443,9 +450,64 @@ async function loadClientReplies() {
     }
 }
 
+async function loadAiConfig() {
+    if (!aiConfigForm) return;
+    try {
+        const resp = await fetch(apiEndpoints.getAiConfig);
+        const data = await resp.json();
+        if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
+        planTokenInput.value = data.planToken || '';
+        planModelInput.value = data.planModel || '';
+        chatTokenInput.value = data.chatToken || '';
+        chatModelInput.value = data.chatModel || '';
+        modTokenInput.value = data.modToken || '';
+        modModelInput.value = data.modModel || '';
+    } catch (err) {
+        console.error('Error loading AI config:', err);
+        alert('Грешка при зареждане на AI конфигурацията.');
+    }
+}
+
+async function saveAiConfig() {
+    if (!aiConfigForm) return;
+    const payload = {
+        planToken: planTokenInput.value.trim(),
+        planModel: planModelInput.value.trim(),
+        chatToken: chatTokenInput.value.trim(),
+        chatModel: chatModelInput.value.trim(),
+        modToken: modTokenInput.value.trim(),
+        modModel: modModelInput.value.trim()
+    };
+    if (!payload.planToken || !payload.chatToken || !payload.modToken) {
+        alert('Моля, попълнете всички токени.');
+        return;
+    }
+    try {
+        const resp = await fetch(apiEndpoints.setAiConfig, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
+        alert('AI конфигурацията е записана.');
+    } catch (err) {
+        console.error('Error saving AI config:', err);
+        alert('Грешка при записване на AI конфигурацията.');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     await ensureLoggedIn();
     await loadClients();
     await checkForNotifications();
+    await loadAiConfig();
     setInterval(checkForNotifications, 60000);
 });
+
+if (aiConfigForm) {
+    aiConfigForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await saveAiConfig();
+    });
+}
