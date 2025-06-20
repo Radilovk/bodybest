@@ -179,12 +179,6 @@ export default {
                 responseBody = await handleGetAiConfig(request, env);
             } else if (method === 'POST' && path === '/api/setAiConfig') {
                 responseBody = await handleSetAiConfig(request, env);
-            } else if (method === 'GET' && path === '/api/listAiPresets') {
-                responseBody = await handleListAiPresets(request, env);
-            } else if (method === 'GET' && path === '/api/getAiPreset') {
-                responseBody = await handleGetAiPreset(request, env);
-            } else if (method === 'POST' && path === '/api/saveAiPreset') {
-                responseBody = await handleSaveAiPreset(request, env);
             } else if (method === 'GET' && path === '/api/getFeedbackMessages') {
                 responseBody = await handleGetFeedbackMessagesRequest(request, env);
             } else {
@@ -1518,64 +1512,6 @@ async function handleSetAiConfig(request, env) {
     }
 }
 // ------------- END FUNCTION: handleSetAiConfig -------------
-
-// ------------- START FUNCTION: handleListAiPresets -------------
-async function handleListAiPresets(request, env) {
-    try {
-        const { keys } = await env.RESOURCES_KV.list({ prefix: 'aiPreset_' });
-        const presets = keys.map(k => k.name.replace(/^aiPreset_/, ''));
-        return { success: true, presets };
-    } catch (error) {
-        console.error('Error in handleListAiPresets:', error.message, error.stack);
-        return { success: false, message: 'Грешка при зареждане на пресетите.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleListAiPresets -------------
-
-// ------------- START FUNCTION: handleGetAiPreset -------------
-async function handleGetAiPreset(request, env) {
-    try {
-        const url = new URL(request.url);
-        const name = url.searchParams.get('name');
-        if (!name) {
-            return { success: false, message: 'Липсва име.', statusHint: 400 };
-        }
-        const val = await env.RESOURCES_KV.get(`aiPreset_${name}`);
-        if (!val) {
-            return { success: false, message: 'Няма такъв пресет.', statusHint: 404 };
-        }
-        return { success: true, config: JSON.parse(val) };
-    } catch (error) {
-        console.error('Error in handleGetAiPreset:', error.message, error.stack);
-        return { success: false, message: 'Грешка при зареждане на пресета.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleGetAiPreset -------------
-
-// ------------- START FUNCTION: handleSaveAiPreset -------------
-async function handleSaveAiPreset(request, env) {
-    try {
-        const auth = request.headers.get('Authorization') || '';
-        const token = auth.replace(/^Bearer\s+/i, '').trim();
-        const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
-        if (!expected || token !== expected) {
-            return { success: false, message: 'Невалиден токен.', statusHint: 403 };
-        }
-
-        const body = await request.json();
-        const name = body.name && String(body.name).trim();
-        const cfg = body.config;
-        if (!name || !cfg || typeof cfg !== 'object') {
-            return { success: false, message: 'Липсват данни.', statusHint: 400 };
-        }
-        await env.RESOURCES_KV.put(`aiPreset_${name}`, JSON.stringify(cfg));
-        return { success: true };
-    } catch (error) {
-        console.error('Error in handleSaveAiPreset:', error.message, error.stack);
-        return { success: false, message: 'Грешка при запис на пресета.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleSaveAiPreset -------------
 
 
 // ------------- START BLOCK: PlanGenerationHeaderComment -------------
@@ -3385,4 +3321,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
