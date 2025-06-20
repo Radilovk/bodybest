@@ -224,7 +224,7 @@ export function setupStaticEventListeners() {
 }
 
 export function initializeCollapsibleCards() {
-    const cards = document.querySelectorAll('.collapsible-card');
+    const cards = document.querySelectorAll('#recs-panel .collapsible-card');
     cards.forEach(card => {
         const header = card.querySelector('h4');
         const content = card.querySelector('.collapsible-content');
