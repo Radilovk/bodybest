@@ -105,7 +105,11 @@ To set the token:
 1. Generate an API token with **Edit Cloudflare Workers** permissions.
 2. In your repository settings, create a GitHub secret named `CF_API_TOKEN` containing the token value.
 
-The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed. For the `USER_METADATA_KV` namespace the file expects the environment variables `USER_METADATA_KV_ID` and `USER_METADATA_KV_PREVIEW_ID`. Configure them as GitHub secrets so the workflow can substitute the correct IDs before publishing.
+The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed. For the `USER_METADATA_KV` namespace the file expects the environment variables `USER_METADATA_KV_ID` and `USER_METADATA_KV_PREVIEW_ID`. Configure them as GitHub secrets so the workflow can substitute the correct IDs before publishing. **Важно:** полето `compatibility_date` не може да сочи в бъдещето спрямо датата на деплой. Ако е зададена по-нова дата, Cloudflare ще откаже публикуването. Затова поддържайте стойност, която е днес или по-стара. Например:
+
+```toml
+compatibility_date = "2025-06-20"
+```
 You can verify this setup locally by running:
 
 ```bash
