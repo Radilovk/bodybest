@@ -1496,7 +1496,7 @@ async function handleSetAiConfig(request, env) {
         const auth = request.headers.get('Authorization') || '';
         const token = auth.replace(/^Bearer\s+/i, '').trim();
         const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
-        if (!expected || token !== expected) {
+        if (expected && token !== expected) {
             return { success: false, message: 'Невалиден токен.', statusHint: 403 };
         }
 
@@ -1558,7 +1558,7 @@ async function handleSaveAiPreset(request, env) {
         const auth = request.headers.get('Authorization') || '';
         const token = auth.replace(/^Bearer\s+/i, '').trim();
         const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
-        if (!expected || token !== expected) {
+        if (expected && token !== expected) {
             return { success: false, message: 'Невалиден токен.', statusHint: 403 };
         }
 
