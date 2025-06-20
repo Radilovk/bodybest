@@ -576,12 +576,13 @@ async function loadAiConfig() {
         const resp = await fetch(apiEndpoints.getAiConfig);
         const data = await resp.json();
         if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
-        planTokenInput.value = data.planToken || '';
-        planModelInput.value = data.planModel || '';
-        chatTokenInput.value = data.chatToken || '';
-        chatModelInput.value = data.chatModel || '';
-        modTokenInput.value = data.modToken || '';
-        modModelInput.value = data.modModel || '';
+        const cfg = data.config || {};
+        planTokenInput.value = cfg.token_plan_generation || '';
+        planModelInput.value = cfg.model_plan_generation || '';
+        chatTokenInput.value = cfg.token_chat || '';
+        chatModelInput.value = cfg.model_chat || '';
+        modTokenInput.value = cfg.token_principle_adjustment || '';
+        modModelInput.value = cfg.model_principle_adjustment || '';
     } catch (err) {
         console.error('Error loading AI config:', err);
         alert('Грешка при зареждане на AI конфигурацията.');
