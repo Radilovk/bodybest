@@ -251,7 +251,8 @@ php -r "echo password_hash('yourPassword', PASSWORD_DEFAULT);"
 
 Администраторският скрипт `admin.js` добавя автоматично тази
 заглавка, ако в `localStorage` съществува ключ `adminToken`.
-Може ръчно да запишете стойността му през конзолата:
+Стойността може да зададете от панела в полето „Admin Token“,
+което я записва в `localStorage`. Може и ръчно да я зададете през конзолата:
 
 ```javascript
 localStorage.setItem('adminToken', '<вашият токен>');

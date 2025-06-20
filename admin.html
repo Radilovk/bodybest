@@ -103,8 +103,10 @@
   <section id="aiConfigSection" class="card">
     <h2>AI конфигурация</h2>
     <form id="aiConfigForm">
-      <p class="note">Токените се задават като Worker secrets и не се
-        редактират от този панел.</p>
+      <p class="note">Токените за моделите се задават като Worker secrets и не се
+        редактират от този панел. Полето „Admin Token" се използва за
+        удостоверяване на заявките към API.</p>
+      <label>Admin Token: <input id="adminToken" type="text"></label>
       <fieldset>
         <legend>Генериране на план</legend>
         <label>Модел: <input id="planModel" type="text"></label>

@@ -47,6 +47,7 @@ const aiConfigForm = document.getElementById('aiConfigForm');
 const planModelInput = document.getElementById('planModel');
 const chatModelInput = document.getElementById('chatModel');
 const modModelInput = document.getElementById('modModel');
+const adminTokenInput = document.getElementById('adminToken');
 const presetSelect = document.getElementById('aiPresetSelect');
 const savePresetBtn = document.getElementById('savePreset');
 const applyPresetBtn = document.getElementById('applyPreset');
@@ -571,6 +572,11 @@ async function loadClientReplies(markRead = false) {
     }
 }
 
+function loadAdminToken() {
+    if (!adminTokenInput) return;
+    adminTokenInput.value = localStorage.getItem('adminToken') || '';
+}
+
 async function loadAiConfig() {
     if (!aiConfigForm) return;
     try {
@@ -597,7 +603,13 @@ async function saveAiConfig() {
         }
     };
     try {
-        const adminToken = localStorage.getItem('adminToken') || '';
+        let adminToken = '';
+        if (adminTokenInput) {
+            adminToken = adminTokenInput.value.trim();
+            localStorage.setItem('adminToken', adminToken);
+        } else {
+            adminToken = localStorage.getItem('adminToken') || '';
+        }
         const headers = { 'Content-Type': 'application/json' };
         if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
         const resp = await fetch(apiEndpoints.setAiConfig, {
@@ -705,6 +717,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadClients();
     await checkForNotifications();
     await loadNotifications();
+    loadAdminToken();
     await loadAiConfig();
     await loadAiPresets();
     setInterval(checkForNotifications, 60000);

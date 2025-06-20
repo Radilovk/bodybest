@@ -11,6 +11,7 @@ beforeEach(async () => {
       <input id="planModel" />
       <input id="chatModel" />
       <input id="modModel" />
+      <input id="adminToken" />
     </form>
     <button id="showStats"></button>
     <button id="sendQuery"></button>
@@ -31,6 +32,7 @@ beforeEach(async () => {
   }));
 
   await import('../admin.js');
+  document.getElementById('adminToken').value = 'newSecret';
 });
 
 afterEach(() => {
@@ -54,7 +56,7 @@ test('saveAiConfig sends updates payload with Authorization header', async () =>
   const [url, options] = global.fetch.mock.calls[0];
   expect(url).toBe('/api/setAiConfig');
   expect(options.method).toBe('POST');
-  expect(options.headers.Authorization).toBe('Bearer secret');
+  expect(options.headers.Authorization).toBe('Bearer newSecret');
   const body = JSON.parse(options.body);
   expect(body).toEqual({
     updates: {
@@ -63,4 +65,5 @@ test('saveAiConfig sends updates payload with Authorization header', async () =>
       model_principle_adjustment: 'mm'
     }
   });
+  expect(localStorage.getItem('adminToken')).toBe('newSecret');
 });
