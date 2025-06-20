@@ -675,17 +675,16 @@ export function handleAccordionToggle(event) {
 
 function populateProgressHistory(dailyLogs, initialData) {
     if (!selectors.progressHistoryCard) return;
-    selectors.progressHistoryCard.innerHTML = '';
+    const content = selectors.progressHistoryCard.querySelector('.collapsible-content');
+    if (!content) return;
+    content.innerHTML = '';
 
     const canvas = document.createElement('canvas');
     canvas.id = 'progressChart';
-    const chartContainer = document.createElement('div');
-    chartContainer.className = 'chart-container';
-    chartContainer.appendChild(canvas);
-    selectors.progressHistoryCard.appendChild(chartContainer);
+    content.appendChild(canvas);
 
     if (typeof Chart === 'undefined') {
-        selectors.progressHistoryCard.innerHTML = '<p class="placeholder">Библиотеката за графики (Chart.js) не е заредена. Историята на прогреса не може да бъде показана.</p>';
+        content.innerHTML = '<p class="placeholder">Библиотеката за графики (Chart.js) не е заредена. Историята на прогреса не може да бъде показана.</p>';
         console.warn("Chart.js is not loaded.");
         return;
     }
@@ -713,7 +712,7 @@ function populateProgressHistory(dailyLogs, initialData) {
     });
 
     if (labels.length < 2 && weightData.length < 2) {
-         selectors.progressHistoryCard.innerHTML = '<p class="placeholder">Няма достатъчно данни за показване на история на прогреса в теглото.</p>';
+         content.innerHTML = '<p class="placeholder">Няма достатъчно данни за показване на история на прогреса в теглото.</p>';
          return;
     }
 
