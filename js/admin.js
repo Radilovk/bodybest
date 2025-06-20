@@ -37,6 +37,11 @@ const dailyLogsPre = document.getElementById('dailyLogs');
 const exportPlanBtn = document.getElementById('exportPlan');
 const dashboardPre = document.getElementById('dashboardData');
 const exportDataBtn = document.getElementById('exportData');
+const profileForm = document.getElementById('profileForm');
+const profileName = document.getElementById('profileName');
+const profileEmail = document.getElementById('profileEmail');
+const profilePhone = document.getElementById('profilePhone');
+const clientNameHeading = document.getElementById('clientName');
 let currentUserId = null;
 let currentPlanData = null;
 let currentDashboardData = null;
@@ -152,7 +157,7 @@ function renderClients() {
     const filter = statusFilter.value;
     clientsList.innerHTML = '';
     const list = allClients.filter(c => {
-        const matchText = `${c.userId}`.toLowerCase();
+        const matchText = `${c.userId} ${c.name || ''} ${c.email || ''}`.toLowerCase();
         const matchesSearch = matchText.includes(search);
         const matchesStatus = filter === 'all' || c.status === filter;
         return matchesSearch && matchesStatus;
@@ -161,7 +166,7 @@ function renderClients() {
     list.forEach(c => {
         const li = document.createElement('li');
         const btn = document.createElement('button');
-        btn.textContent = `${c.userId} - ${c.status}`;
+        btn.textContent = `${c.name} (${c.userId}) - ${c.status}`;
         btn.addEventListener('click', () => showClient(c.userId));
         li.appendChild(btn);
         clientsList.appendChild(li);
@@ -183,7 +188,10 @@ async function showClient(userId) {
         if (resp.ok && data.success) {
             currentUserId = userId;
             detailsSection.classList.remove('hidden');
-            document.getElementById('clientName').textContent = userId;
+            clientNameHeading.textContent = data.name ? `${data.name} (${userId})` : userId;
+            if (profileName) profileName.value = data.name || '';
+            if (profileEmail) profileEmail.value = data.email || '';
+            if (profilePhone) profilePhone.value = data.phone || '';
             await loadQueries();
             await loadFeedback();
         }
@@ -292,6 +300,28 @@ if (exportDataBtn) {
         a.download = `${currentUserId || 'data'}.json`;
         a.click();
         URL.revokeObjectURL(url);
+    });
+}
+
+if (profileForm) {
+    profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentUserId) return;
+        try {
+            await fetch(apiEndpoints.updateProfile, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: currentUserId,
+                    name: profileName.value.trim(),
+                    email: profileEmail.value.trim(),
+                    phone: profilePhone.value.trim()
+                })
+            });
+            alert('Профилът е обновен.');
+        } catch (err) {
+            console.error('Error updating profile:', err);
+        }
     });
 }
 

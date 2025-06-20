@@ -1287,7 +1287,9 @@ async function handleListClientsRequest(request, env) {
             const ansStr = await env.USER_METADATA_KV.get(`${id}_initial_answers`);
             if (!ansStr) continue;
             const ans = safeParseJson(ansStr, {});
-            clients.push({ userId: id, name: ans.name || 'Клиент' });
+            const profileStr = await env.USER_METADATA_KV.get(`${id}_profile`);
+            const profile = profileStr ? safeParseJson(profileStr, {}) : {};
+            clients.push({ userId: id, name: ans.name || 'Клиент', email: profile.email || '' });
         }
         return { success: true, clients };
     } catch (error) {
