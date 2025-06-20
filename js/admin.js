@@ -47,10 +47,6 @@ const aiConfigForm = document.getElementById('aiConfigForm');
 const planModelInput = document.getElementById('planModel');
 const chatModelInput = document.getElementById('chatModel');
 const modModelInput = document.getElementById('modModel');
-const presetSelect = document.getElementById('aiPresetSelect');
-const savePresetBtn = document.getElementById('savePreset');
-const applyPresetBtn = document.getElementById('applyPreset');
-const presetNameInput = document.getElementById('presetName');
 const clientNameHeading = document.getElementById('clientName');
 const notificationsList = document.getElementById('notificationsList');
 const notificationsSection = document.getElementById('notificationsSection');
@@ -615,82 +611,12 @@ async function saveAiConfig() {
     }
 }
 
-async function loadAiPresets() {
-    if (!presetSelect) return;
-    try {
-        const resp = await fetch(apiEndpoints.listAiPresets);
-        const data = await resp.json();
-        if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
-        presetSelect.innerHTML = '<option value="">--Изберете--</option>';
-        (data.presets || []).forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            presetSelect.appendChild(opt);
-        });
-    } catch (err) {
-        console.error('Error loading presets:', err);
-    }
-}
-
-async function applySelectedPreset() {
-    const name = presetSelect?.value;
-    if (!name) return;
-    try {
-        const resp = await fetch(`${apiEndpoints.getAiPreset}?name=${encodeURIComponent(name)}`);
-        const data = await resp.json();
-        if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
-        const cfg = data.config || {};
-        planModelInput.value = cfg.planModel || cfg.model_plan_generation || '';
-        chatModelInput.value = cfg.chatModel || cfg.model_chat || '';
-        modModelInput.value = cfg.modModel || cfg.model_principle_adjustment || '';
-    } catch (err) {
-        console.error('Error applying preset:', err);
-        alert('Грешка при зареждане на пресета.');
-    }
-}
-
-async function saveCurrentPreset() {
-    const name = presetNameInput?.value.trim();
-    if (!name) {
-        alert('Въведете име за пресета.');
-        return;
-    }
-    const payload = {
-        name,
-        config: {
-            planModel: planModelInput.value.trim(),
-            chatModel: chatModelInput.value.trim(),
-            modModel: modModelInput.value.trim()
-        }
-    };
-    try {
-        const adminToken = localStorage.getItem('adminToken') || '';
-        const headers = { 'Content-Type': 'application/json' };
-        if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
-        const resp = await fetch(apiEndpoints.saveAiPreset, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(payload)
-        });
-        const data = await resp.json();
-        if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
-        presetNameInput.value = '';
-        alert('Пресетът е записан.');
-        await loadAiPresets();
-    } catch (err) {
-        console.error('Error saving preset:', err);
-        alert('Грешка при запис на пресета.');
-    }
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
     await ensureLoggedIn();
     await loadClients();
     await checkForNotifications();
     await loadNotifications();
     await loadAiConfig();
-    await loadAiPresets();
     setInterval(checkForNotifications, 60000);
     setInterval(loadNotifications, 60000);
 });
@@ -700,8 +626,6 @@ if (aiConfigForm) {
         e.preventDefault();
         await saveAiConfig();
     });
-    savePresetBtn?.addEventListener('click', saveCurrentPreset);
-    applyPresetBtn?.addEventListener('click', applySelectedPreset);
 }
 
 export {

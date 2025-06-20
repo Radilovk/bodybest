@@ -37,10 +37,7 @@ export const apiEndpoints = {
     getPlanModificationPrompt: `${workerBaseUrl}/api/getPlanModificationPrompt`,
     updateStatus: `${workerBaseUrl}/api/updateStatus`,
     getAiConfig: `${workerBaseUrl}/api/getAiConfig`,
-    setAiConfig: `${workerBaseUrl}/api/setAiConfig`,
-    listAiPresets: `${workerBaseUrl}/api/listAiPresets`,
-    getAiPreset: `${workerBaseUrl}/api/getAiPreset`,
-    saveAiPreset: `${workerBaseUrl}/api/saveAiPreset`
+    setAiConfig: `${workerBaseUrl}/api/setAiConfig`
 };
 
 // Cloudflare Account ID за използване в чат асистента
