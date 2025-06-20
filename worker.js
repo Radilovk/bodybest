@@ -1,4 +1,6 @@
-// Cloudflare Worker Script (index.js) - Версия 2.2 (Интегрирана, с подобрения по TODO, добавени адаптивни въпросници и log-extra-meal)
+// Cloudflare Worker Script (index.js) - Версия 2.3
+// Добавен е режим за дебъг чрез HTTP заглавие `X-Debug: 1`
+// Също така са запазени всички функционалности от предходните версии
 // Включва:
 // - Пълна логика за Адаптивен Въпросник: генериране, подаване, анализ на отговори. (Запазена и подобрена от v2.1)
 // - Актуализиран handlePrincipleAdjustment с по-детайлни данни от въпросник. (Запазено от v2.1)
@@ -77,6 +79,12 @@ export default {
         const url = new URL(request.url);
         const path = url.pathname;
         const method = request.method;
+
+        // Debug logging when header X-Debug: 1 е подаден
+        const debugEnabled = request.headers.get('X-Debug') === '1';
+        if (debugEnabled) {
+            console.log(`[DEBUG] ${method} ${path} @ ${new Date().toISOString()}`);
+        }
 
         const allowedOrigins = [
             'https://radilovk.github.io',
