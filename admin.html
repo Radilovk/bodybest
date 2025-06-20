@@ -20,12 +20,16 @@
   <div class="layout">
   <aside class="sidebar card" id="clientsSection">
     <h2>Клиенти</h2>
-    <input id="clientSearch" placeholder="Търсене по име/ID">
+    <input id="clientSearch" placeholder="Търсене по име">
     <select id="statusFilter">
       <option value="all">Всички</option>
       <option value="pending">pending</option>
       <option value="processing">processing</option>
       <option value="ready">ready</option>
+    </select>
+    <select id="sortOrder">
+      <option value="name">Сортирай по име</option>
+      <option value="date">Сортирай по дата</option>
     </select>
     <p id="clientsCount"></p>
     <button id="showStats">Покажи статистика</button>
@@ -75,17 +79,17 @@
     <button id="exportPlan">Експортирай плана като JSON</button>
 
     <details id="queriesSection">
-      <summary>Запитвания</summary>
+      <summary>Запитвания <span id="queriesDot" class="notification-dot hidden"></span></summary>
       <ul id="queriesList"></ul>
       <textarea id="newQueryText" rows="3" cols="40"></textarea><br>
       <button id="sendQuery">Изпрати запитване</button>
     </details>
     <details id="clientRepliesSection">
-      <summary>Отговори от клиента</summary>
+      <summary>Отговори от клиента <span id="repliesDot" class="notification-dot hidden"></span></summary>
       <ul id="clientRepliesList"></ul>
     </details>
     <details id="feedbackSection">
-      <summary>Обратна връзка</summary>
+      <summary>Обратна връзка <span id="feedbackDot" class="notification-dot hidden"></span></summary>
       <ul id="feedbackList"></ul>
     </details>
   </main>

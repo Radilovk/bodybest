@@ -1338,7 +1338,12 @@ async function handleListClientsRequest(request, env) {
             const ans = safeParseJson(ansStr, {});
             const profileStr = await env.USER_METADATA_KV.get(`${id}_profile`);
             const profile = profileStr ? safeParseJson(profileStr, {}) : {};
-            clients.push({ userId: id, name: ans.name || 'Клиент', email: profile.email || '' });
+            clients.push({
+                userId: id,
+                name: ans.name || 'Клиент',
+                email: profile.email || '',
+                registrationDate: ans.submissionDate || null
+            });
         }
         return { success: true, clients };
     } catch (error) {
