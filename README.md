@@ -280,6 +280,8 @@ Replace the placeholders with your own values and keep the token secret.
 - `POST /api/submitFeedback` – изпраща обратна връзка от клиента.
 - `GET /api/getAiConfig` – зарежда текущата AI конфигурация.
 - `POST /api/setAiConfig` – записва токени и модели в `RESOURCES_KV`.
+- **Дебъг логове** – при изпращане на заглавие `X-Debug: 1` към който и да е API
+ендпойнт, worker-ът записва в конзолата кратка информация за заявката.
 
 ### Промяна на плана
 
