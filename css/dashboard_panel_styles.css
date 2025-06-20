@@ -48,13 +48,12 @@
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
   justify-items: center;
-  margin-bottom: var(--space-sm);
+  margin: var(--space-sm) auto;
+  width: 80%;
 }
 
 #streakCard {
-t0bwx1-codex/сравняване-на-височината-на-контейнера
   min-height: 123px;
- main
 }
 .streak-day { width: 18px; height: 18px; border-radius: 50%; background: var(--border-color); }
 .streak-day.logged { background: var(--color-success); }
