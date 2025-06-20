@@ -148,13 +148,24 @@
   Admin
 </a>
 
-<script>
+<script type="module">
+  import { workerBaseUrl } from './js/config.js';
   /***** Глобални променливи *****/
   let rawQuestions = [];     // Суровият масив от questions.json (йерархичен)
   let flatPages = [];        // Плосък масив от всички въпроси (след рекурсивно сплескване)
   let currentPageIndex = 0;
   let totalPages = 0;
   const responses = {};
+  // Допустими диапазони за числовите въпроси
+  const numericRanges = {
+    age: { min: 10, max: 120 },
+    height: { min: 100, max: 250 },
+    weight: { min: 30, max: 300 },
+    lossKg: { min: 1, max: 100 },
+    q1745847247058: { min: 1, max: 300 },
+    q1745847190198: { min: 1, max: 300 },
+    q1745847315231: { min: 1, max: 300 }
+  };
 
   /***** Функция за рекурсивно сплескване на въпросите *****/
   function flattenQuestions(questions) {
@@ -193,22 +204,16 @@
     container.innerHTML = ""; // Изчистване на контейнера
 
     createStartPage();
-    flatPages = flattenQuestions(rawQuestions);
-
-    if (!flatPages.find(q => q.id === 'email')) {
-        console.error("Критична грешка: Въпрос с id 'email' не е намерен в questions.json. Той е задължителен за изпращане.");
-        // Показване на грешка на потребителя
-        container.innerHTML = `<div style="color: #e74c3c; text-align: center; padding: 20px;">Грешка в конфигурацията на въпросника (липсва поле за имейл). Моля, свържете се с администратор.</div>`;
-        return; // Прекратяване на изграждането
-    }
+    flatPages = flattenQuestions(rawQuestions).filter(q => q.id !== 'email');
 
     flatPages.forEach((q, idx) => {
       createQuestionPage(q, idx + 1);
     });
+    createRegistrationPage();
     createFinalPage();
     setupFinalPageListener(); // Настройваме listener-а след като финалната страница е създадена
 
-    totalPages = 1 + flatPages.length + 1; // Стартова + Въпроси + Финална
+    totalPages = 1 + flatPages.length + 2; // Стартова + Въпроси + Регистрация + Финална
     console.log("Общо страници (включително старт и финал):", totalPages);
 
     showPage(0); // Показваме стартовата страница
@@ -265,10 +270,12 @@
     pageDiv.id = 'page' + pageIndex;
     let html = `<div class="question-text">${question.text || 'Липсва текст на въпроса'}</div>`;
 
-    const isRequired = (question.id === 'email'); // Пример за задължително поле
+    const isRequired = false; // Може да се добавят задължителни полета при нужда
 
     if (['text','number','email'].includes(question.type)) {
-      html += `<input id="${question.id}" type="${question.type}" placeholder="" ${isRequired ? 'required' : ''} ${question.type === 'email' ? 'autocomplete="email"' : ''}>`;
+      const range = numericRanges[question.id];
+      const rangeAttrs = (question.type === 'number' && range) ? `min="${range.min}" max="${range.max}"` : '';
+      html += `<input id="${question.id}" type="${question.type}" placeholder="" ${rangeAttrs} ${isRequired ? 'required' : ''} ${question.type === 'email' ? 'autocomplete="email"' : ''}>`;
     } else if (question.type === 'textarea') {
       html += `<textarea id="${question.id}" rows="4" ${isRequired ? 'required' : ''}></textarea>`;
     } else if (question.type === 'select') {
@@ -335,11 +342,95 @@
     }
   }
 
+  /***** Създаване на страница за регистрация *****/
+  function createRegistrationPage() {
+    const container = document.getElementById('dynamicContainer');
+    if (!container) return;
+    const regIndex = flatPages.length + 1;
+    const pageDiv = document.createElement('div');
+    pageDiv.className = 'page';
+    pageDiv.id = 'page' + regIndex;
+    pageDiv.innerHTML = `
+      <h2>Регистрация</h2>
+      <form id="register-form-q" novalidate>
+        <div class="form-group">
+          <label for="register-email-q">Имейл:</label>
+          <input type="email" id="register-email-q" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="register-password-q">Парола (мин. 8 знака):</label>
+          <input type="password" id="register-password-q" required minlength="8">
+        </div>
+        <div class="form-group">
+          <label for="confirm-password-q">Потвърди Парола:</label>
+          <input type="password" id="confirm-password-q" required minlength="8">
+        </div>
+        <div id="register-message-q" class="message" role="alert"></div>
+        <div class="nav-buttons">
+          <button type="submit" id="regSubmitBtn">Регистрация</button>
+          <button type="button" id="regBackBtn">◀ Назад</button>
+        </div>
+      </form>
+    `;
+    container.appendChild(pageDiv);
+    const emailInput = pageDiv.querySelector('#register-email-q');
+    if (emailInput && responses.email) emailInput.value = responses.email;
+
+    pageDiv.querySelector('#regBackBtn').addEventListener('click', () => {
+      showPage(regIndex - 1);
+    });
+
+    pageDiv.querySelector('#register-form-q').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msgEl = pageDiv.querySelector('#register-message-q');
+      msgEl.style.display = 'none';
+      const email = emailInput.value.trim().toLowerCase();
+      const pass = pageDiv.querySelector('#register-password-q').value;
+      const confirm = pageDiv.querySelector('#confirm-password-q').value;
+      if (!email || !pass || !confirm) {
+        msgEl.textContent = 'Моля, попълнете всички полета.';
+        msgEl.className = 'message error';
+        msgEl.style.display = 'block';
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        msgEl.textContent = 'Невалиден имейл.';
+        msgEl.className = 'message error';
+        msgEl.style.display = 'block';
+        return;
+      }
+      if (pass.length < 8 || pass !== confirm) {
+        msgEl.textContent = 'Провери паролата.';
+        msgEl.className = 'message error';
+        msgEl.style.display = 'block';
+        return;
+      }
+      try {
+        const res = await fetch(`${workerBaseUrl}/api/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password: pass, confirm_password: confirm })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || 'Грешка при регистрация.');
+        responses.email = email; // обновяваме имейла ако е различен
+        msgEl.textContent = 'Регистрацията успешна!';
+        msgEl.className = 'message success';
+        msgEl.style.display = 'block';
+        showPage(regIndex + 1);
+      } catch (err) {
+        msgEl.textContent = err.message;
+        msgEl.className = 'message error';
+        msgEl.style.display = 'block';
+      }
+    });
+  }
+
   /***** Създаване на финална страница *****/
   function createFinalPage() {
     const container = document.getElementById('dynamicContainer');
     if (!container) return;
-    const finalIndex = flatPages.length + 1;
+    const finalIndex = flatPages.length + 2;
     const pageDiv = document.createElement('div');
     pageDiv.className = 'page';
     pageDiv.id = 'page' + finalIndex;
@@ -357,7 +448,7 @@
 
     // --- Функция за настройка на Event Listener-а на Финалната Страница ---
    function setupFinalPageListener() {
-        const finalIndex = flatPages.length + 1;
+        const finalIndex = flatPages.length + 2;
         const pageDiv = document.getElementById('page' + finalIndex);
         if (!pageDiv) {
             console.error("Финалната страница не е намерена при настройка на listener.");
@@ -394,7 +485,7 @@
         // Показваме съобщението за успех (този ред вече съществува преди фрагмента)
         // submitMessage.style.display = 'block';
 
-        const lastQuestionPageIndex = totalPages - 2; // Индекс на последната страница с въпрос
+        const lastQuestionPageIndex = totalPages - 3; // Индекс на последната страница с въпрос
 
         // Само ако има предишна страница с въпрос, към която да се върнем
         if (lastQuestionPageIndex >= 0) {
@@ -624,7 +715,7 @@
     const checkBoxes = document.querySelectorAll(`input[name="${qId}"][type="checkbox"]`);
 
     // --- Дефиниране на задължителните полета ---
-    const requiredFields = ['email']; // Добавете други ID-та тук, ако е нужно
+    const requiredFields = []; // Добавете други ID-та тук, ако е нужно
     const isRequired = requiredFields.includes(qId);
     // -------------------------------------------
 
@@ -635,8 +726,16 @@
             isValid = false; errorMessage = "Моля, попълнете това поле.";
         } else if (question.type === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
             isValid = false; errorMessage = "Моля, въведете валиден имейл адрес.";
-        } else if (question.type === 'number' && value && isNaN(Number(value))) {
-            isValid = false; errorMessage = "Моля, въведете число.";
+        } else if (question.type === 'number') {
+            const num = Number(value);
+            if (value && isNaN(num)) {
+                isValid = false; errorMessage = "Моля, въведете число.";
+            } else {
+                const range = numericRanges[qId];
+                if (range && (num < range.min || num > range.max)) {
+                    isValid = false; errorMessage = `Стойността трябва да е между ${range.min} и ${range.max}.`;
+                }
+            }
         }
     } else if (question.type === 'select') {
          if (element) value = element.value;
@@ -720,26 +819,6 @@
   const phpApiToken = window.FILE_API_TOKEN || "";
 
    // Преместваме ги извън функцията, за да са достъпни, ако е нужно
-   const questionMapping = {
-        name: "Име:", gender: "Пол:", age: "Възраст:", height: "Ръст (в см):", weight: "Тегло (в кг):",
-        email: "Имейл адрес:", goal: "Основна цел:", lossKg: "Желани килограми за отслабване:",
-        motivation: "Мотивация:", weightChange: "Рязко покачване на тегло:", weightChangeDetails: "Детайли за покачване:",
-        dietHistory: "Спазвана диета:", dietType: "Тип диета:", dietResult: "Резултат от диета:",
-        sleepHours: "Часове сън:", sleepInterrupt: "Прекъсвания на съня:", chronotype: "Хронотип:",
-        q1745878295708: "Ниво на активност:", stressLevel: "Ниво на стрес:", waterIntake: "Прием на вода:",
-        waterReplaceFreq: "Заместване на водата:", q1745891342178: "Заместващи напитки (Рядко):", q1745891468155: "Заместващи напитки (Понякога):", q1745891537884: "Заместващи напитки (Често):",
-        q1745891416176: "Други напитки (Рядко):", q1745891643967: "Други напитки (Понякога):", q1745891620471: "Други напитки (Често):",
-        overeatingFrequency: "Честота на преяждане:", foodCravings: "Нужда от храни:", foodCravingsDetails: "Кои храни (нужда):", q1745891797364: "Други храни (нужда):",
-        foodTriggers: "Ситуации за хранене:", q1745891178105: "Други ситуации:", nighteat: "Хранителни навици:", q1745891865984: "Други навици:",
-        compensationmethod: "Методи за компенсация:", q1745806296700: "Други методи за компенсация:", comparisson: "Сравнение с други:",
-        q1745805447648: "Хранене навън (честота):", q1745805721482: "Тип хранене навън:", alcoholFrequency: "Консумация на алкохол:",
-        medications: "Прием на лекарства/добавки:", q1745889856829: "Описание лекарства/добавки:",
-        physicalActivity: "Спортни занимания:", q1745877358368: "Видове активност:", q1745877861010: "Друг вид спорт:", q1745878063775: "Честота на активност (пъти/седм.):", q1745890775342: "Продължителност на активност:",
-        medicalConditions: "Медицинско състояние:", q1745804366749: "Друго мед. състояние:",
-        foodPreference: "Хранителни предпочитания/ограничения:", q1745806409218: "Други предпочитания/Не обичам:", q1745806494081: "Други предпочитания/Не обичам (алт):",
-        mainChallenge: "Най-голямо предизвикателство:", q1745892518511: "Допълнителна информация:",
-        submissionDate: "Дата на подаване:" // Добавяме и датата към мапинга
-    };
    // const order = [ /* ... вашият order - може да не е нужен, ако обхождаме всички отговори ... */ ];
 
   async function submitResponses() {
@@ -808,7 +887,7 @@
           for (const key in responses) {
                if (responses.hasOwnProperty(key)) {
                   const questionObj = flatPages.find(q => q.id === key);
-                  const questionText = (questionObj && questionObj.text) ? questionObj.text : (questionMapping[key] || key.replace(/_/g, ' ')); // По-добро резервно име
+                 const questionText = (questionObj && questionObj.text) ? questionObj.text : key.replace(/_/g, ' ');
                   const answerValue = responses[key];
                   // Форматиране на отговора
                    let answerText = '';
