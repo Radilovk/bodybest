@@ -32,6 +32,7 @@ const clientRepliesList = document.getElementById('clientRepliesList');
 const feedbackList = document.getElementById('feedbackList');
 const statsOutput = document.getElementById('statsOutput');
 const showStatsBtn = document.getElementById('showStats');
+const sortOrderSelect = document.getElementById('sortOrder');
 const initialAnswersPre = document.getElementById('initialAnswers');
 const planMenuPre = document.getElementById('planMenu');
 const dailyLogsPre = document.getElementById('dailyLogs');
@@ -53,16 +54,32 @@ const clientNameHeading = document.getElementById('clientName');
 const notificationsList = document.getElementById('notificationsList');
 const notificationsSection = document.getElementById('notificationsSection');
 const notificationDot = document.getElementById('notificationIndicator');
+const queriesDot = document.getElementById('queriesDot');
+const repliesDot = document.getElementById('repliesDot');
+const feedbackDot = document.getElementById('feedbackDot');
 let currentUserId = null;
 let currentPlanData = null;
 let currentDashboardData = null;
 let allClients = [];
 // set of userIds с непрочетени съобщения/обратна връзка
 const unreadClients = new Set();
+const unreadByClient = new Map();
 
 function showNotificationDot(show) {
     if (!notificationDot) return;
     notificationDot.classList.toggle('hidden', !show);
+}
+
+function toggleDot(dotElem, show) {
+    if (!dotElem) return;
+    dotElem.classList.toggle('hidden', !show);
+}
+
+function updateSectionDots(userId) {
+    const flags = unreadByClient.get(userId) || {};
+    toggleDot(queriesDot, !!flags.queries);
+    toggleDot(repliesDot, !!flags.replies);
+    toggleDot(feedbackDot, !!flags.feedback);
 }
 
 async function checkForNotifications() {
@@ -77,10 +94,12 @@ async function checkForNotifications() {
         const storedTs = Number(localStorage.getItem('lastFeedbackTs')) || 0;
         let latestTs = storedTs;
 
-        unreadClients.clear();
+    unreadClients.clear();
+    unreadByClient.clear();
 
         for (const c of clients) {
             let userHasNew = false;
+            const flags = { queries: false, replies: false, feedback: false };
             const [qResp, rResp, fResp] = await Promise.all([
                 fetch(`${apiEndpoints.peekAdminQueries}?userId=${c.userId}`),
                 fetch(`${apiEndpoints.peekClientReplies}?userId=${c.userId}`),
@@ -92,21 +111,25 @@ async function checkForNotifications() {
 
             if (qResp.ok && qData.success && Array.isArray(qData.queries) && qData.queries.length > 0) {
                 userHasNew = true;
+                flags.queries = true;
             }
             if (rResp.ok && rData.success && Array.isArray(rData.replies) && rData.replies.length > 0) {
                 userHasNew = true;
+                flags.replies = true;
             }
             if (fResp.ok && fData.success && Array.isArray(fData.feedback)) {
                 for (const f of fData.feedback) {
                     const ts = Date.parse(f.timestamp);
                     if (ts && ts > storedTs) {
                         userHasNew = true;
+                        flags.feedback = true;
                         if (ts > latestTs) latestTs = ts;
                     }
                 }
             }
             if (userHasNew) {
                 unreadClients.add(c.userId);
+                unreadByClient.set(c.userId, flags);
                 hasNew = true;
             }
         }
@@ -116,6 +139,7 @@ async function checkForNotifications() {
         }
         showNotificationDot(hasNew);
         renderClients();
+        if (currentUserId) updateSectionDots(currentUserId);
     } catch (err) {
         console.error('Error checking notifications:', err);
     }
@@ -229,6 +253,7 @@ async function loadClients() {
 function renderClients() {
     const search = (clientSearch.value || '').toLowerCase();
     const filter = statusFilter.value;
+    const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'name';
     clientsList.innerHTML = '';
     const list = allClients.filter(c => {
         const matchText = `${c.userId} ${c.name || ''} ${c.email || ''}`.toLowerCase();
@@ -236,11 +261,20 @@ function renderClients() {
         const matchesStatus = filter === 'all' || c.status === filter;
         return matchesSearch && matchesStatus;
     });
+    list.sort((a, b) => {
+        if (sortOrder === 'date') {
+            const aTs = a.registrationDate ? Date.parse(a.registrationDate) : 0;
+            const bTs = b.registrationDate ? Date.parse(b.registrationDate) : 0;
+            return aTs - bTs;
+        }
+        return (a.name || '').localeCompare(b.name || '');
+    });
     clientsCount.textContent = `Общ брой клиенти: ${list.length}`;
     list.forEach(c => {
         const li = document.createElement('li');
         const btn = document.createElement('button');
-        btn.textContent = `${c.name} (${c.userId}) - ${c.status}`;
+        const dateText = c.registrationDate ? ` - ${new Date(c.registrationDate).toLocaleDateString('bg-BG')}` : '';
+        btn.textContent = `${c.name}${dateText} - ${c.status}`;
         if (unreadClients.has(c.userId)) {
             const dot = document.createElement('span');
             dot.classList.add('notification-dot');
@@ -313,6 +347,7 @@ showStatsBtn.addEventListener('click', () => {
 
 if (clientSearch) clientSearch.addEventListener('input', renderClients);
 if (statusFilter) statusFilter.addEventListener('change', renderClients);
+if (sortOrderSelect) sortOrderSelect.addEventListener('change', renderClients);
 
 async function showClient(userId) {
     try {
@@ -321,7 +356,10 @@ async function showClient(userId) {
         if (resp.ok && data.success) {
             currentUserId = userId;
             detailsSection.classList.remove('hidden');
-            clientNameHeading.textContent = data.name ? `${data.name} (${userId})` : userId;
+            const clientInfo = allClients.find(c => c.userId === userId);
+            const regDate = clientInfo?.registrationDate ? new Date(clientInfo.registrationDate).toLocaleDateString('bg-BG') : '';
+            const name = clientInfo?.name || data.name || userId;
+            clientNameHeading.textContent = regDate ? `${name} - ${regDate}` : name;
             if (profileName) profileName.value = data.name || '';
             if (profileEmail) profileEmail.value = data.email || '';
             if (profilePhone) profilePhone.value = data.phone || '';
@@ -329,6 +367,8 @@ async function showClient(userId) {
             await loadFeedback();
             await loadClientReplies(true);
             unreadClients.delete(userId);
+            unreadByClient.delete(userId);
+            updateSectionDots(userId);
             renderClients();
         }
         const dashResp = await fetch(`${apiEndpoints.dashboard}?userId=${userId}`);
@@ -348,6 +388,7 @@ async function showClient(userId) {
         console.error('Error loading profile:', err);
     }
     await loadNotifications();
+    updateSectionDots(userId);
 }
 
 
