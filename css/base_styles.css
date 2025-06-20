@@ -254,6 +254,19 @@ button:disabled, .button:disabled {
 body.dark-theme .button-icon-only:hover { background-color: rgba(255,255,255,0.08); }
 .button-icon-only svg.icon { width: 1.5em; height: 1.5em; }
 
+.admin-reply-btn {
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  background-color: transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+.admin-reply-btn:hover {
+  background-color: var(--primary-color);
+  color: var(--text-color-on-primary);
+}
+
 .icon { display: inline-block; width: 1em; height: 1em; vertical-align: -0.125em; fill: currentColor; }
 .icon.spinner { animation: spin 1.5s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
