@@ -157,6 +157,8 @@ export default {
                 responseBody = await handleAddAdminQueryRequest(request, env);
             } else if (method === 'GET' && path === '/api/getAdminQueries') {
                 responseBody = await handleGetAdminQueriesRequest(request, env);
+            } else if (method === 'GET' && path === '/api/peekAdminQueries') {
+                responseBody = await handleGetAdminQueriesRequest(request, env, true);
             } else if (method === 'GET' && path === '/api/getFeedbackMessages') {
                 responseBody = await handleGetFeedbackMessagesRequest(request, env);
             } else {
@@ -1331,7 +1333,7 @@ async function handleAddAdminQueryRequest(request, env) {
 // ------------- END FUNCTION: handleAddAdminQueryRequest -------------
 
 // ------------- START FUNCTION: handleGetAdminQueriesRequest -------------
-async function handleGetAdminQueriesRequest(request, env) {
+async function handleGetAdminQueriesRequest(request, env, peek = false) {
     try {
         const url = new URL(request.url);
         const userId = url.searchParams.get('userId');
@@ -1339,7 +1341,7 @@ async function handleGetAdminQueriesRequest(request, env) {
         const key = `${userId}_admin_queries`;
         const arr = safeParseJson(await env.USER_METADATA_KV.get(key), []);
         const unread = arr.filter(q => !q.read);
-        if (unread.length > 0) {
+        if (unread.length > 0 && !peek) {
             arr.forEach(q => { q.read = true; });
             await env.USER_METADATA_KV.put(key, JSON.stringify(arr));
         }
