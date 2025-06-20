@@ -13,6 +13,7 @@
 const PHP_FILE_MANAGER_API_URL_SECRET_NAME = 'тут_ваш_php_api_url_secret_name';
 const PHP_API_STATIC_TOKEN_SECRET_NAME = 'тут_ваш_php_api_token_secret_name';
 const GEMINI_API_KEY_SECRET_NAME = 'GEMINI_API_KEY';
+const OPENAI_API_KEY_SECRET_NAME = 'OPENAI_API_KEY';
 const CF_AI_TOKEN_SECRET_NAME = 'CF_AI_TOKEN';
 const CF_ACCOUNT_ID_VAR_NAME = 'CF_ACCOUNT_ID';
 const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
@@ -742,10 +743,20 @@ async function handleChatRequest(request, env) {
         const chatModel = await env.RESOURCES_KV.get('model_chat');
         const modelToUse = model || chatModel;
         const geminiKey = env[GEMINI_API_KEY_SECRET_NAME];
+        const openaiKey = env[OPENAI_API_KEY_SECRET_NAME];
 
-        if(!geminiKey||!chatPromptTpl||!modelToUse) {
-            console.error(`CHAT_REQUEST_ERROR (${userId}): Missing Gemini key, chat prompt template, or chat model name.`);
+        if(!chatPromptTpl||!modelToUse) {
+            console.error(`CHAT_REQUEST_ERROR (${userId}): Missing chat prompt template or chat model name.`);
             return {success:false, message:'Грешка в конфигурацията на чат асистента. Моля, опитайте по-късно.', statusHint:500};
+        }
+        const provider = getModelProvider(modelToUse);
+        if(provider==='gemini' && !geminiKey) {
+            console.error(`CHAT_REQUEST_ERROR (${userId}): Gemini API key missing.`);
+            return {success:false,message:'Липсва конфигурация за AI модела.',statusHint:500};
+        }
+        if(provider==='openai' && !openaiKey) {
+            console.error(`CHAT_REQUEST_ERROR (${userId}): OpenAI API key missing.`);
+            return {success:false,message:'Липсва конфигурация за AI модела.',statusHint:500};
         }
 
         const r = {
@@ -769,9 +780,9 @@ async function handleChatRequest(request, env) {
             '%%RECENT_LOGS_SUMMARY%%':recentLogsSummary
         };
         const populatedPrompt = populatePrompt(chatPromptTpl,r);
-        const geminiRespRaw = await callGeminiAPI(populatedPrompt,geminiKey,{temperature:0.7,maxOutputTokens:800},[],modelToUse); // Increased tokens slightly
-        
-        let respToUser = geminiRespRaw.trim(); let planModReq=null; const sig='[PLAN_MODIFICATION_REQUEST]'; const sigIdx=respToUser.lastIndexOf(sig);
+        const aiRespRaw = await callModel(modelToUse, populatedPrompt, env, { temperature: 0.7, maxTokens: 800 });
+
+        let respToUser = aiRespRaw.trim(); let planModReq=null; const sig='[PLAN_MODIFICATION_REQUEST]'; const sigIdx=respToUser.lastIndexOf(sig);
         if(sigIdx!==-1){
             planModReq=respToUser.substring(sigIdx+sig.length).trim();
             respToUser=respToUser.substring(0,sigIdx).trim();
@@ -799,7 +810,8 @@ async function handleChatRequest(request, env) {
     } catch (error) {
         console.error(`Error in handleChatRequest for userId ${userId}:`,error.message, error.stack);
         let userMsg='Възникна грешка при обработка на Вашата заявка към чат асистента.';
-        if(error.message.includes("Gemini API Error")) userMsg=`Грешка от AI асистента: ${error.message.replace(/Gemini API Error \([^)]+\): /,'')}. Моля, опитайте с друга формулировка или по-късно.`;
+        if(error.message.includes("Gemini API Error") || error.message.includes("OpenAI API Error") || error.message.includes("CF AI error"))
+            userMsg=`Грешка от AI асистента: ${error.message.replace(/(Gemini|OpenAI) API Error \([^)]+\): /,'')}`;
         else if(error.message.includes("blocked")) userMsg='Отговорът от AI асистента беше блокиран поради съображения за безопасност. Моля, преформулирайте въпроса си.';
         else if(error instanceof ReferenceError) userMsg='Грешка: Вътрешен проблем с конфигурацията на асистента.';
         return {success:false,message:userMsg,statusHint:500};
@@ -1190,16 +1202,18 @@ async function handleGeneratePraiseRequest(request, env) {
 
         const promptTpl = await env.RESOURCES_KV.get('prompt_praise_generation');
         const geminiKey = env[GEMINI_API_KEY_SECRET_NAME];
+        const openaiKey = env[OPENAI_API_KEY_SECRET_NAME];
         const model = await env.RESOURCES_KV.get('model_chat') || await env.RESOURCES_KV.get('model_plan_generation');
 
         let title = 'Браво!';
         let message = 'Продължавай в същия дух!';
 
-        if (promptTpl && geminiKey && model) {
+        const providerForPraise = getModelProvider(model);
+        if (promptTpl && model && ((providerForPraise === 'gemini' && geminiKey) || (providerForPraise === 'openai' && openaiKey) || providerForPraise === 'cf')) {
             const replacements = createPraiseReplacements(initialAnswers, logs, avgMetric, mealAdh);
             const populated = populatePrompt(promptTpl, replacements);
             try {
-                const raw = await callGeminiAPI(populated, geminiKey, { temperature: 0.6, maxOutputTokens: 400 }, [], model);
+                const raw = await callModel(model, populated, env, { temperature: 0.6, maxTokens: 400 });
                 const cleaned = cleanGeminiJson(raw);
                 const parsed = safeParseJson(cleaned, null);
                 if (parsed && parsed.title && parsed.message) {
@@ -1512,10 +1526,10 @@ async function processSingleUserPlan(userId, env) {
         }
         console.log(`PROCESS_USER_PLAN (${userId}): Processing for email: ${initialAnswers.email || 'N/A'}`);
         const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, principlesWeek2_4: [], additionalGuidelines: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
-        const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, planModelName, unifiedPromptTemplate, pendingPlanModStr ] = await Promise.all([
+        const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, openaiApiKey, planModelName, unifiedPromptTemplate, pendingPlanModStr ] = await Promise.all([
             env.RESOURCES_KV.get('question_definitions'), env.RESOURCES_KV.get('base_diet_model'),
             env.RESOURCES_KV.get('allowed_meal_combinations'), env.RESOURCES_KV.get('eating_psychology'),
-            env.RESOURCES_KV.get('recipe_data'), env[GEMINI_API_KEY_SECRET_NAME],
+            env.RESOURCES_KV.get('recipe_data'), env[GEMINI_API_KEY_SECRET_NAME], env[OPENAI_API_KEY_SECRET_NAME],
             env.RESOURCES_KV.get('model_plan_generation'), env.RESOURCES_KV.get('prompt_unified_plan_generation_v2'),
             env.USER_METADATA_KV.get(`pending_plan_mod_${userId}`)
         ]);
@@ -1525,9 +1539,14 @@ async function processSingleUserPlan(userId, env) {
             if (typeof pendingPlanModData === 'string') pendingPlanModText = pendingPlanModData;
             else pendingPlanModText = JSON.stringify(pendingPlanModData);
         }
-        if (!geminiApiKey) {
+        const providerForPlan = getModelProvider(planModelName);
+        if (providerForPlan === 'gemini' && !geminiApiKey) {
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): CRITICAL: Gemini API Key secret not found or empty.`);
-            throw new Error("CRITICAL: Gemini API Key secret not found or empty.");
+            throw new Error('CRITICAL: Gemini API Key secret not found or empty.');
+        }
+        if (providerForPlan === 'openai' && !openaiApiKey) {
+            console.error(`PROCESS_USER_PLAN_ERROR (${userId}): CRITICAL: OpenAI API Key secret not found or empty.`);
+            throw new Error('CRITICAL: OpenAI API Key secret not found or empty.');
         }
         if (!planModelName) {
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): CRITICAL: Plan generation model name ('model_plan_generation') not found in RESOURCES_KV.`);
@@ -1580,7 +1599,7 @@ async function processSingleUserPlan(userId, env) {
 
         const formattedAnswersForPrompt = Object.entries(initialAnswers).filter(([qId]) => qId !== 'submissionDate' && qId !== 'email' && qId !== 'name').map(([qId, aVal]) => { const qText = questionTextMap.get(qId) || qId.replace(/_/g, ' '); let aText = ''; if (aVal === null || aVal === undefined || String(aVal).trim() === '') aText = '(няма отговор)'; else if (Array.isArray(aVal)) aText = aVal.length > 0 ? aVal.join(', ') : '(няма избран отговор)'; else aText = String(aVal); return `В: ${qText}\nО: ${aText}`; }).join('\n\n').trim();
         
-        console.log(`PROCESS_USER_PLAN (${userId}): Preparing for unified Gemini call.`);
+        console.log(`PROCESS_USER_PLAN (${userId}): Preparing for unified AI call.`);
 
         const replacements = {
             '%%FORMATTED_ANSWERS%%': formattedAnswersForPrompt, '%%USER_ID%%': userId, '%%USER_NAME%%': safeGet(initialAnswers, 'name', 'Потребител'),
@@ -1606,14 +1625,14 @@ async function processSingleUserPlan(userId, env) {
         if (pendingPlanModText) {
             finalPrompt += `\n\n[PLAN_MODIFICATION]\n${pendingPlanModText}`;
         }
-        let generatedPlanObject = null; let rawResponseFromGemini = "";
+        let generatedPlanObject = null; let rawAiResponse = "";
         try {
-            console.log(`PROCESS_USER_PLAN (${userId}): Calling Gemini for unified plan. Prompt length: ${finalPrompt.length}`);
-            rawResponseFromGemini = await callGeminiAPI(finalPrompt, geminiApiKey, { temperature: 0.1, maxOutputTokens: 20000 }, [], planModelName); // maxOutputTokens: 8192 for gemini-pro, check model limits
-            const cleanedJson = cleanGeminiJson(rawResponseFromGemini);
+            console.log(`PROCESS_USER_PLAN (${userId}): Calling model ${planModelName} for unified plan. Prompt length: ${finalPrompt.length}`);
+            rawAiResponse = await callModel(planModelName, finalPrompt, env, { temperature: 0.1, maxTokens: 20000 });
+            const cleanedJson = cleanGeminiJson(rawAiResponse);
             generatedPlanObject = safeParseJson(cleanedJson);
             if (!generatedPlanObject || !generatedPlanObject.profileSummary || !generatedPlanObject.week1Menu || !generatedPlanObject.principlesWeek2_4 || !generatedPlanObject.detailedTargets) {
-                 console.error(`PROCESS_USER_PLAN_ERROR (${userId}): Unified plan generation returned an invalid or incomplete JSON structure. Original response (start): ${rawResponseFromGemini.substring(0,300)}`);
+                console.error(`PROCESS_USER_PLAN_ERROR (${userId}): Unified plan generation returned an invalid or incomplete JSON structure. Original response (start): ${rawAiResponse.substring(0,300)}`);
                 throw new Error("Unified plan generation returned an invalid or incomplete JSON structure.");
             }
             console.log(`PROCESS_USER_PLAN (${userId}): Unified plan JSON parsed successfully.`);
@@ -1621,9 +1640,9 @@ async function processSingleUserPlan(userId, env) {
             Object.assign(planBuilder, restOfGeneratedPlan);
             if (generationMetadata && Array.isArray(generationMetadata.errors)) planBuilder.generationMetadata.errors.push(...generationMetadata.errors);
         } catch (e) {
-            const errorMsg = `Unified Plan Generation Error for ${userId}: ${e.message}. Raw response (start): ${rawResponseFromGemini.substring(0, 500)}...`;
+            const errorMsg = `Unified Plan Generation Error for ${userId}: ${e.message}. Raw response (start): ${rawAiResponse.substring(0, 500)}...`;
             console.error(errorMsg);
-            await env.USER_METADATA_KV.put(`${userId}_last_plan_raw_error`, rawResponseFromGemini.substring(0, 300));
+            await env.USER_METADATA_KV.put(`${userId}_last_plan_raw_error`, rawAiResponse.substring(0, 300));
             planBuilder.generationMetadata.errors.push(errorMsg);
         }
         
@@ -1677,13 +1696,17 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
             env.RESOURCES_KV.get('prompt_principle_adjustment'),
             env.RESOURCES_KV.get('model_plan_generation'), // Or specific model for adjustment
             env[GEMINI_API_KEY_SECRET_NAME],
+            env[OPENAI_API_KEY_SECRET_NAME],
             ...Array.from({ length: 14 }, (_, i) => { // Fetch logs for the last 14 days
                 const date = new Date(); date.setDate(date.getDate() - i);
                 return env.USER_METADATA_KV.get(`${userId}_log_${date.toISOString().split('T')[0]}`);
             })
         ]);
 
-        if (!initialAnswersStr || !finalPlanStr || !principleAdjustmentPromptTpl || !planModelName || !geminiApiKey) {
+        const providerForAdjustment = getModelProvider(planModelName);
+        if (!initialAnswersStr || !finalPlanStr || !principleAdjustmentPromptTpl || !planModelName ||
+            (providerForAdjustment === 'gemini' && !geminiApiKey) ||
+            (providerForAdjustment === 'openai' && !openaiApiKey)) {
             console.error(`PRINCIPLE_ADJUST_ERROR (${userId}): Missing prerequisites (initialAnswers, finalPlan, prompt, model, or API key).`);
             return null;
         }
@@ -1819,8 +1842,8 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
         const populatedPrompt = populatePrompt(principleAdjustmentPromptTpl, replacements);
         const modelForAdjustment = await env.RESOURCES_KV.get('model_principle_adjustment') || planModelName; // Specific model or fallback
         
-        console.log(`PRINCIPLE_ADJUST (${userId}): Calling Gemini (${modelForAdjustment}) for principle adjustment. Prompt length: ${populatedPrompt.length}`);
-        const updatedPrinciplesTextRaw = await callGeminiAPI(populatedPrompt, geminiApiKey, { temperature: 0.55, maxOutputTokens: 1500 }, [], modelForAdjustment);
+        console.log(`PRINCIPLE_ADJUST (${userId}): Calling model ${modelForAdjustment} for principle adjustment. Prompt length: ${populatedPrompt.length}`);
+        const updatedPrinciplesTextRaw = await callModel(modelForAdjustment, populatedPrompt, env, { temperature: 0.55, maxTokens: 1500 });
         const updatedPrinciplesText = cleanGeminiJson(updatedPrinciplesTextRaw); // Добавено почистване
 
         // Опитваме се да парснем отговора, ако очакваме JSON структура с принципи и резюме
@@ -1863,7 +1886,7 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
             }
             return principlesToSave;
         } else {
-            console.warn(`PRINCIPLE_ADJUST_WARN (${userId}): Gemini returned empty or very short response for principles. Skipping save. Raw response: ${updatedPrinciplesTextRaw.substring(0,200)}`);
+            console.warn(`PRINCIPLE_ADJUST_WARN (${userId}): AI model returned empty or very short response for principles. Skipping save. Raw response: ${updatedPrinciplesTextRaw.substring(0,200)}`);
             return null;
         }
     } catch (error) {
@@ -2014,10 +2037,14 @@ async function generateAndStoreAdaptiveQuiz(userId, initialAnswers, env) {
     let rawQuizResponse = "";
     try {
         const geminiApiKey = env[GEMINI_API_KEY_SECRET_NAME];
+        const openaiApiKey = env[OPENAI_API_KEY_SECRET_NAME];
         const quizPromptTemplate = await env.RESOURCES_KV.get('prompt_adaptive_quiz_generation');
         const quizModelName = await env.RESOURCES_KV.get('model_adaptive_quiz') || await env.RESOURCES_KV.get('model_chat'); // Fallback model
 
-        if (!geminiApiKey || !quizPromptTemplate || !quizModelName) {
+        const providerForQuiz = getModelProvider(quizModelName);
+        if (!quizPromptTemplate || !quizModelName ||
+            (providerForQuiz === 'gemini' && !geminiApiKey) ||
+            (providerForQuiz === 'openai' && !openaiApiKey)) {
             console.error(`[ADAPT_QUIZ_GEN_ERROR] Missing prerequisites for ${userId} (API key, prompt, or model).`);
             await env.USER_METADATA_KV.put(`${userId}_adaptive_quiz_error`, "Грешка в конфигурацията за генериране на въпросник.");
             return;
@@ -2093,8 +2120,8 @@ async function generateAndStoreAdaptiveQuiz(userId, initialAnswers, env) {
         };
         const populatedQuizPrompt = populatePrompt(quizPromptTemplate, replacements);
 
-        console.log(`[ADAPT_QUIZ_GEN] Calling Gemini (${quizModelName}) for user ${userId}. Prompt length: ${populatedQuizPrompt.length}`);
-        rawQuizResponse = await callGeminiAPI(populatedQuizPrompt, geminiApiKey, { temperature: 0.7, maxOutputTokens: 2500 }, [], quizModelName);
+        console.log(`[ADAPT_QUIZ_GEN] Calling model ${quizModelName} for user ${userId}. Prompt length: ${populatedQuizPrompt.length}`);
+        rawQuizResponse = await callModel(quizModelName, populatedQuizPrompt, env, { temperature: 0.7, maxTokens: 2500 });
         
         const cleanedQuizJson = cleanGeminiJson(rawQuizResponse);
         let parsedQuizArray = safeParseJson(cleanedQuizJson, []);
@@ -2663,6 +2690,61 @@ async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettin
 }
 // ------------- END FUNCTION: callGeminiAPI -------------
 
+// ------------- START FUNCTION: callOpenAiAPI -------------
+async function callOpenAiAPI(prompt, apiKey, model, options = {}) {
+    if (!model) {
+        throw new Error('OpenAI model name is missing.');
+    }
+    const url = 'https://api.openai.com/v1/chat/completions';
+    const body = {
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        ...(options.temperature !== undefined && { temperature: options.temperature }),
+        ...(options.max_tokens !== undefined && { max_tokens: options.max_tokens })
+    };
+    const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+        const msg = data?.error?.message || `HTTP ${resp.status}`;
+        throw new Error(`OpenAI API Error (${model}): ${msg}`);
+    }
+    const text = data?.choices?.[0]?.message?.content;
+    if (text === undefined || text === null) {
+        throw new Error(`OpenAI API Error (${model}): No content in response.`);
+    }
+    return text;
+}
+// ------------- END FUNCTION: callOpenAiAPI -------------
+
+function getModelProvider(model) {
+    if (!model) return 'gemini';
+    if (model.startsWith('@cf/')) return 'cf';
+    if (model.startsWith('gpt-')) return 'openai';
+    return 'gemini';
+}
+
+async function callModel(model, prompt, env, { temperature = 0.7, maxTokens = 800 } = {}) {
+    const provider = getModelProvider(model);
+    if (provider === 'cf') {
+        return callCfAi(model, { messages: [{ role: 'user', content: prompt }], stream: false }, env);
+    }
+    if (provider === 'openai') {
+        const key = env[OPENAI_API_KEY_SECRET_NAME];
+        if (!key) throw new Error('Missing OpenAI API key.');
+        return callOpenAiAPI(prompt, key, model, { temperature, max_tokens: maxTokens });
+    }
+    const key = env[GEMINI_API_KEY_SECRET_NAME];
+    if (!key) throw new Error('Missing Gemini API key.');
+    return callGeminiAPI(prompt, key, { temperature, maxOutputTokens: maxTokens }, [], model);
+}
+
 // ------------- START FUNCTION: callCfAi -------------
 async function callCfAi(model, payload, env) {
     const accountId = env[CF_ACCOUNT_ID_VAR_NAME] || env.accountId || env.ACCOUNT_ID;
@@ -2972,9 +3054,12 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
     try {
         const promptTemplateTextual = await env.RESOURCES_KV.get('prompt_analytics_textual_summary');
         const geminiApiKeyForAnalysis = env[GEMINI_API_KEY_SECRET_NAME];
+        const openaiApiKeyForAnalysis = env[OPENAI_API_KEY_SECRET_NAME];
         const analysisModelForText = await env.RESOURCES_KV.get('model_chat') || await env.RESOURCES_KV.get('model_plan_generation'); // Use a suitable model
 
-        if (promptTemplateTextual && geminiApiKeyForAnalysis && analysisModelForText) {
+        const providerForAnalysis = getModelProvider(analysisModelForText);
+        if (promptTemplateTextual && analysisModelForText &&
+            ((providerForAnalysis === 'gemini' && geminiApiKeyForAnalysis) || (providerForAnalysis === 'openai' && openaiApiKeyForAnalysis) || providerForAnalysis === 'cf')) {
             const sleepMetric = detailedAnalyticsMetrics.find(m => m.key === 'sleep_quality');
             const calmnessMetric = detailedAnalyticsMetrics.find(m => m.key === 'stress_level');
             const energyMetric = detailedAnalyticsMetrics.find(m => m.key === 'energy_level');
@@ -2999,7 +3084,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
                 '%%CURRENT_LOG_CONSISTENCY_PERCENT%%': consistencyMetric?.currentValueText ?? 'N/A'
             };
             const populatedTextualPrompt = populatePrompt(promptTemplateTextual, replacementsForTextual);
-            textualAnalysisSummary = await callGeminiAPI(populatedTextualPrompt, geminiApiKeyForAnalysis, {temperature:0.6, maxOutputTokens:400}, [], analysisModelForText);
+            textualAnalysisSummary = await callModel(analysisModelForText, populatedTextualPrompt, env, { temperature: 0.6, maxTokens: 400 });
             textualAnalysisSummary = cleanGeminiJson(textualAnalysisSummary.replace(/```json\n?|\n?```/g, '').trim()); // Ensure it's clean text
         } else {
             console.warn(`ANALYTICS_CALC_WARN (${userLogId}): Cannot generate textual analysis due to missing KV resources (prompt, API key, or model).`);
