@@ -65,6 +65,7 @@
   --menu-bg: rgba(255, 255, 255, 0.95);
   --menu-blur: 10px;
   --menu-overlay-bg: rgba(0, 0, 0, 0.5);
+  --menu-hover-bg: color-mix(in srgb, var(--primary-color) 12%, transparent);
 
   --fab-bg: var(--primary-color); --fab-icon: #fff;
 
@@ -136,6 +137,7 @@ body.dark-theme {
 
   --menu-bg: rgba(30, 30, 50, 0.9);
   --menu-overlay-bg: rgba(0, 0, 0, 0.65);
+  --menu-hover-bg: color-mix(in srgb, var(--primary-color) 35%, transparent);
 
   --fab-bg: var(--primary-color); --fab-icon: #1A1A2E;
 
