@@ -15,6 +15,7 @@ const PHP_API_STATIC_TOKEN_SECRET_NAME = 'тут_ваш_php_api_token_secret_nam
 const GEMINI_API_KEY_SECRET_NAME = 'GEMINI_API_KEY';
 const CF_AI_TOKEN_SECRET_NAME = 'CF_AI_TOKEN';
 const CF_ACCOUNT_ID_VAR_NAME = 'CF_ACCOUNT_ID';
+const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
 
 const GEMINI_API_URL_BASE = `https://generativelanguage.googleapis.com/v1beta/models/`;
 // Очаквани Bindings: RESOURCES_KV, USER_METADATA_KV
@@ -165,6 +166,10 @@ export default {
                 responseBody = await handleGetClientRepliesRequest(request, env);
             } else if (method === 'GET' && path === '/api/peekClientReplies') {
                 responseBody = await handleGetClientRepliesRequest(request, env, true);
+            } else if (method === 'GET' && path === '/api/getAiConfig') {
+                responseBody = await handleGetAiConfig(request, env);
+            } else if (method === 'POST' && path === '/api/setAiConfig') {
+                responseBody = await handleSetAiConfig(request, env);
             } else if (method === 'GET' && path === '/api/getFeedbackMessages') {
                 responseBody = await handleGetFeedbackMessagesRequest(request, env);
             } else {
@@ -1435,6 +1440,51 @@ async function handleGetPlanModificationPrompt(request, env) {
     }
 }
 // ------------- END FUNCTION: handleGetPlanModificationPrompt -------------
+
+// ------------- START FUNCTION: handleGetAiConfig -------------
+async function handleGetAiConfig(request, env) {
+    try {
+        const list = await env.RESOURCES_KV.list();
+        const config = {};
+        for (const { name } of list.keys) {
+            config[name] = await env.RESOURCES_KV.get(name);
+        }
+        return { success: true, config };
+    } catch (error) {
+        console.error('Error in handleGetAiConfig:', error.message, error.stack);
+        return { success: false, message: 'Грешка при зареждане на настройките.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleGetAiConfig -------------
+
+// ------------- START FUNCTION: handleSetAiConfig -------------
+async function handleSetAiConfig(request, env) {
+    try {
+        const auth = request.headers.get('Authorization') || '';
+        const token = auth.replace(/^Bearer\s+/i, '').trim();
+        const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
+        if (!expected || token !== expected) {
+            return { success: false, message: 'Невалиден токен.', statusHint: 403 };
+        }
+
+        const body = await request.json();
+        let updates = body.updates;
+        if (!updates && body.key) {
+            updates = { [body.key]: body.value || '' };
+        }
+        if (!updates || typeof updates !== 'object') {
+            return { success: false, message: 'Липсват данни.', statusHint: 400 };
+        }
+        for (const [key, value] of Object.entries(updates)) {
+            await env.RESOURCES_KV.put(key, String(value));
+        }
+        return { success: true };
+    } catch (error) {
+        console.error('Error in handleSetAiConfig:', error.message, error.stack);
+        return { success: false, message: 'Грешка при запис на настройките.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleSetAiConfig -------------
 
 
 // ------------- START BLOCK: PlanGenerationHeaderComment -------------
@@ -3173,4 +3223,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
