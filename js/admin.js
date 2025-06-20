@@ -140,7 +140,12 @@ async function loadClients() {
                 pending: withStatus.filter(c => c.status === 'pending').length,
                 processing: withStatus.filter(c => c.status === 'processing').length
             };
-            statsOutput.textContent = JSON.stringify(stats, null, 2);
+            statsOutput.innerHTML = `<ul>
+                <li>Общо: ${stats.clients}</li>
+                <li>Готови: ${stats.ready}</li>
+                <li>В изработка: ${stats.processing}</li>
+                <li>Чакат: ${stats.pending}</li>
+            </ul>`;
         }
     } catch (err) {
         console.error('Error loading clients:', err);
@@ -152,7 +157,7 @@ function renderClients() {
     const filter = statusFilter.value;
     clientsList.innerHTML = '';
     const list = allClients.filter(c => {
-        const matchText = `${c.userId}`.toLowerCase();
+        const matchText = `${c.userId} ${c.name || ''} ${c.email || ''}`.toLowerCase();
         const matchesSearch = matchText.includes(search);
         const matchesStatus = filter === 'all' || c.status === filter;
         return matchesSearch && matchesStatus;
@@ -161,7 +166,9 @@ function renderClients() {
     list.forEach(c => {
         const li = document.createElement('li');
         const btn = document.createElement('button');
-        btn.textContent = `${c.userId} - ${c.status}`;
+        btn.classList.add(`status-${c.status}`);
+        btn.textContent = `${c.name || c.userId} (${c.userId})`;
+        btn.title = c.email || '';
         btn.addEventListener('click', () => showClient(c.userId));
         li.appendChild(btn);
         clientsList.appendChild(li);
@@ -180,10 +187,12 @@ async function showClient(userId) {
     try {
         const resp = await fetch(`${apiEndpoints.getProfile}?userId=${userId}`);
         const data = await resp.json();
+        currentUserId = userId;
+        detailsSection.classList.remove('hidden');
+        document.getElementById('clientName').textContent = (resp.ok && data.success && data.name) ? data.name : userId;
+        const emailEl = document.getElementById('clientEmail');
+        if (emailEl) emailEl.textContent = (resp.ok && data.success && data.email) ? data.email : '';
         if (resp.ok && data.success) {
-            currentUserId = userId;
-            detailsSection.classList.remove('hidden');
-            document.getElementById('clientName').textContent = userId;
             await loadQueries();
             await loadFeedback();
         }

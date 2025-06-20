@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Администраторски панел</title>
+  <link rel="stylesheet" href="css/base_styles.css">
   <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
@@ -25,6 +26,7 @@
 
   <main class="main-content card" id="clientDetails" class="hidden">
     <h2 id="clientName">Клиент</h2>
+    <p id="clientEmail"></p>
     <!-- Формата за лични данни е премахната -->
     <button id="regeneratePlan">Генерирай нов план</button>
     <button id="aiSummary">AI резюме</button>
@@ -72,7 +74,7 @@
 
   <section id="statsSection" class="hidden">
     <h2>Статистика</h2>
-    <pre id="statsOutput"></pre>
+    <div id="statsOutput"></div>
   </section>
 
   <script type="module" src="js/admin.js"></script>
