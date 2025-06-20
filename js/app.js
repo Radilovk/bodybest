@@ -124,6 +124,7 @@ export function setChatPromptOverride(val) { chatPromptOverride = val; }
 // Управление на интервал за проверка на статус на плана
 let planStatusInterval = null;
 let planStatusTimeout = null;
+let adminQueriesInterval = null; // Интервал за проверка на администраторски съобщения
 
 // Променливи за адаптивния въпросник - управлявани от app.js
 export let currentQuizData = null;
@@ -342,6 +343,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
             initializeAchievements(currentUserId);
             setupDynamicEventListeners();
             await checkAdminQueries(currentUserId);
+            startAdminQueriesPolling();
 
             const activeTabId = sessionStorage.getItem('activeTabId') || selectors.tabButtons[0]?.id;
             const activeTabButton = activeTabId ? document.getElementById(activeTabId) : (selectors.tabButtons && selectors.tabButtons[0]);
@@ -437,6 +439,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
         initializeAchievements(currentUserId);
         setupDynamicEventListeners();
         await checkAdminQueries(currentUserId);
+        startAdminQueriesPolling();
 
         const activeTabId = sessionStorage.getItem('activeTabId') || selectors.tabButtons[0]?.id;
         const activeTabButton = activeTabId ? document.getElementById(activeTabId) : (selectors.tabButtons && selectors.tabButtons[0]);
@@ -490,6 +493,22 @@ export function stopPlanStatusPolling() {
     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.add('hidden');
     if (selectors.planModificationBtn) selectors.planModificationBtn.classList.remove('hidden');
     if (selectors.chatFab) selectors.chatFab.classList.remove('planmod-processing');
+}
+
+export function startAdminQueriesPolling(intervalMs = 60000) {
+    if (adminQueriesInterval) {
+        clearInterval(adminQueriesInterval);
+    }
+    adminQueriesInterval = setInterval(() => {
+        if (currentUserId) checkAdminQueries(currentUserId);
+    }, intervalMs);
+}
+
+export function stopAdminQueriesPolling() {
+    if (adminQueriesInterval) {
+        clearInterval(adminQueriesInterval);
+        adminQueriesInterval = null;
+    }
 }
 
 export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
