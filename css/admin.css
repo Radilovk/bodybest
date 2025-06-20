@@ -1,7 +1,10 @@
 body { font-family: Arial, sans-serif; padding: 20px; background: #f0f2f5; }
 .hidden { display: none; }
 #clientsList li { margin-bottom: 5px; }
-#clientsList button + button { margin-left: 5px; }
+#clientsList button {
+  width: 100%;
+  text-align: left;
+}
 #clientSearch { margin-right: 5px; }
 #statusFilter { margin-left: 5px; }
 #adminNotes { width: 100%; }
