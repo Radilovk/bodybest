@@ -37,7 +37,7 @@ beforeEach(async () => {
     planModChatClear: null,
     planModChatSend: null,
     planModChatInput: null,
-    feedbackFab: null,
+    menuFeedbackBtn: null,
     feedbackForm: null,
     prevQuestionBtn: null,
     nextQuestionBtn: null,

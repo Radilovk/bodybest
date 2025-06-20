@@ -2,7 +2,7 @@
 import { selectors } from './uiElements.js';
 import {
     toggleMenu, closeMenu, handleOutsideMenuClick, handleMenuKeydown,
-    toggleTheme, activateTab, handleTabKeydown, closeModal,
+    toggleTheme, activateTab, handleTabKeydown, closeModal, openModal,
     openInfoModalWithDetails, toggleDailyNote, openMainIndexInfo,
     handleTrackerTooltipShow, handleTrackerTooltipHide, showToast
 } from './uiHandlers.js';
@@ -61,6 +61,10 @@ export function setupStaticEventListeners() {
     document.addEventListener('click', handleOutsideMenuClick);
     if (selectors.mainMenu) selectors.mainMenu.addEventListener('keydown', handleMenuKeydown);
     if (selectors.themeToggleMenu) selectors.themeToggleMenu.addEventListener('click', toggleTheme);
+    if (selectors.menuFeedbackBtn) selectors.menuFeedbackBtn.addEventListener('click', () => {
+        openModal('feedbackModal');
+        closeMenu();
+    });
     if (selectors.logoutButton) selectors.logoutButton.addEventListener('click', handleLogout);
     if (selectors.tabsContainer && selectors.tabButtons && selectors.tabButtons.length > 0) {
         selectors.tabButtons.forEach(button => {
@@ -170,7 +174,6 @@ export function setupStaticEventListeners() {
     if (selectors.planModChatSend) selectors.planModChatSend.addEventListener('click', handlePlanModChatSend);
     if (selectors.planModChatInput) selectors.planModChatInput.addEventListener('keypress', handlePlanModChatInputKeypress);
 
-    if (selectors.feedbackFab) selectors.feedbackFab.addEventListener('click', () => openModal('feedbackModal')); // openModal from uiHandlers
     if (selectors.feedbackForm) selectors.feedbackForm.addEventListener('submit', handleFeedbackFormSubmit);
 
     const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
