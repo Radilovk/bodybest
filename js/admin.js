@@ -57,6 +57,8 @@ let currentUserId = null;
 let currentPlanData = null;
 let currentDashboardData = null;
 let allClients = [];
+// set of userIds с непрочетени съобщения/обратна връзка
+const unreadClients = new Set();
 
 function showNotificationDot(show) {
     if (!notificationDot) return;
@@ -72,30 +74,40 @@ async function checkForNotifications() {
 
         const clients = data.clients || [];
         let hasNew = false;
-        let storedTs = Number(localStorage.getItem('lastFeedbackTs')) || 0;
+        const storedTs = Number(localStorage.getItem('lastFeedbackTs')) || 0;
         let latestTs = storedTs;
 
+        unreadClients.clear();
+
         for (const c of clients) {
-            const qResp = await fetch(`${apiEndpoints.peekAdminQueries}?userId=${c.userId}`);
-            const qData = await qResp.json();
+            let userHasNew = false;
+            const [qResp, rResp, fResp] = await Promise.all([
+                fetch(`${apiEndpoints.peekAdminQueries}?userId=${c.userId}`),
+                fetch(`${apiEndpoints.peekClientReplies}?userId=${c.userId}`),
+                fetch(`${apiEndpoints.getFeedbackMessages}?userId=${c.userId}`)
+            ]);
+            const qData = await qResp.json().catch(() => ({}));
+            const rData = await rResp.json().catch(() => ({}));
+            const fData = await fResp.json().catch(() => ({}));
+
             if (qResp.ok && qData.success && Array.isArray(qData.queries) && qData.queries.length > 0) {
-                hasNew = true;
+                userHasNew = true;
             }
-            const rResp = await fetch(`${apiEndpoints.peekClientReplies}?userId=${c.userId}`);
-            const rData = await rResp.json();
             if (rResp.ok && rData.success && Array.isArray(rData.replies) && rData.replies.length > 0) {
-                hasNew = true;
+                userHasNew = true;
             }
-            const fResp = await fetch(`${apiEndpoints.getFeedbackMessages}?userId=${c.userId}`);
-            const fData = await fResp.json();
             if (fResp.ok && fData.success && Array.isArray(fData.feedback)) {
                 for (const f of fData.feedback) {
                     const ts = Date.parse(f.timestamp);
                     if (ts && ts > storedTs) {
-                        hasNew = true;
+                        userHasNew = true;
                         if (ts > latestTs) latestTs = ts;
                     }
                 }
+            }
+            if (userHasNew) {
+                unreadClients.add(c.userId);
+                hasNew = true;
             }
         }
 
@@ -103,6 +115,7 @@ async function checkForNotifications() {
             localStorage.setItem('lastFeedbackTs', String(latestTs));
         }
         showNotificationDot(hasNew);
+        renderClients();
     } catch (err) {
         console.error('Error checking notifications:', err);
     }
@@ -228,6 +241,11 @@ function renderClients() {
         const li = document.createElement('li');
         const btn = document.createElement('button');
         btn.textContent = `${c.name} (${c.userId}) - ${c.status}`;
+        if (unreadClients.has(c.userId)) {
+            const dot = document.createElement('span');
+            dot.classList.add('notification-dot');
+            btn.appendChild(dot);
+        }
         btn.addEventListener('click', () => showClient(c.userId));
         li.appendChild(btn);
         clientsList.appendChild(li);
@@ -310,6 +328,8 @@ async function showClient(userId) {
             await loadQueries(true);
             await loadFeedback();
             await loadClientReplies(true);
+            unreadClients.delete(userId);
+            renderClients();
         }
         const dashResp = await fetch(`${apiEndpoints.dashboard}?userId=${userId}`);
         const dashData = await dashResp.json();
