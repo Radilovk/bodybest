@@ -269,6 +269,18 @@ curl https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/me
 ```
 
 Replace the placeholders with your own values and keep the token secret.
+
+### Промяна на началното съобщение в чата
+
+Текстът, който се показва при първо отваряне на чата, се намира в `js/config.js`
+под формата на променлива `initialBotMessage`. Можете да редактирате този файл
+или временно да презапишете стойността чрез конзолата:
+
+```javascript
+localStorage.setItem('initialBotMessage', 'Добре дошли!');
+```
+
+След презареждане на страницата чатът ще използва новото съобщение.
 ## Допълнителни функции
 - **Извънредно хранене** – бутонът "Добави извънредно хранене" в `code.html` отваря модалната форма `extra-meal-entry-form.html`. Логиката в `js/extraMealForm.js` изпраща данните към `/api/log-extra-meal` в `worker.js`.
 - **Изследвания** – POST заявки към `/api/uploadTestResult` и `/api/uploadIrisDiag` записват данни за проведени тестове или ирисова диагностика в KV и създават събитие за автоматична адаптация на плана.
