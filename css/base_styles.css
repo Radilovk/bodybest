@@ -85,6 +85,7 @@
   --note-important-bg: #fffde7; --note-important-text: #f57f17; --note-important-border: #ff8f00;
   --note-info-bg: #e3f2fd; --note-info-text: #0d47a1; --note-info-border: #1976d2;
   --note-success-bg: #e8f5e9; --note-success-text: #1b5e20; --note-success-border: #2e7d32;
+  --supplement-card-bg: #e7f7ce;
 
   --primary-rgb: 58, 80, 107;
   --header-height: 60px;
@@ -155,6 +156,7 @@ body.dark-theme {
   --note-important-bg: rgba(255, 143, 0, 0.2); --note-important-text: #ffcc80; --note-important-border: #ff8f00;
   --note-info-bg: rgba(25, 118, 210, 0.2); --note-info-text: #90caf9; --note-info-border: #1976d2;
   --note-success-bg: rgba(46, 125, 50, 0.2); --note-success-text: #a5d6a7; --note-success-border: #2e7d32;
+  --supplement-card-bg: rgba(91, 192, 190, 0.25);
 
   --primary-rgb: 91, 192, 190;
 
