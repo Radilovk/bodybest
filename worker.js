@@ -1114,6 +1114,14 @@ async function handleGeneratePraiseRequest(request, env) {
         const initialAnswersStr = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
         const initialAnswers = safeParseJson(initialAnswersStr, {});
 
+        const [finalPlanStr, currentStatusStr, lastSnapshotStr] = await Promise.all([
+            env.USER_METADATA_KV.get(`${userId}_final_plan`),
+            env.USER_METADATA_KV.get(`${userId}_current_status`),
+            env.USER_METADATA_KV.get(`${userId}_last_praise_analytics`)
+        ]);
+        const finalPlan = safeParseJson(finalPlanStr, {});
+        const currentStatus = safeParseJson(currentStatusStr, {});
+
         const logKeys = [];
         const today = new Date();
         for (let i = 0; i < PRAISE_INTERVAL_DAYS; i++) {
@@ -1125,6 +1133,30 @@ async function handleGeneratePraiseRequest(request, env) {
             if (ls) { const d = new Date(today); d.setDate(today.getDate() - idx); return { date: d.toISOString().split('T')[0], data: safeParseJson(ls, {}) }; }
             return null;
         }).filter(Boolean);
+
+        const analyticsLogKeys = [];
+        for (let i = 0; i < USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS; i++) {
+            const d = new Date(today); d.setDate(today.getDate() - i);
+            analyticsLogKeys.push(`${userId}_log_${d.toISOString().split('T')[0]}`);
+        }
+        const analyticsLogStrings = await Promise.all(analyticsLogKeys.map(k => env.USER_METADATA_KV.get(k)));
+        const analyticsLogs = analyticsLogStrings.map((ls, idx) => {
+            if (ls) { const d = new Date(today); d.setDate(today.getDate() - idx); return { date: d.toISOString().split('T')[0], data: safeParseJson(ls, {}) }; }
+            return null;
+        }).filter(entry => entry && Object.keys(entry.data).length > 0);
+
+        const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, analyticsLogs, currentStatus, env);
+        const bmiMetric = analyticsData.detailed.find(m => m.key === 'bmi_status');
+        const currentSnapshot = {
+            goalProgress: analyticsData.current.goalProgress,
+            overallHealthScore: analyticsData.current.overallHealthScore,
+            bmi: bmiMetric?.currentValueNumeric ?? null
+        };
+        const prevSnapshot = safeParseJson(lastSnapshotStr, null);
+        if (!currentSnapshot.bmi || currentSnapshot.bmi < 18.5 || currentSnapshot.bmi > 25 ||
+            (prevSnapshot && ((currentSnapshot.goalProgress - (prevSnapshot.goalProgress || 0)) + (currentSnapshot.overallHealthScore - (prevSnapshot.overallHealthScore || 0)) <= 0))) {
+            return { success: false, message: 'No significant progress' };
+        }
 
         const avgMetric = (key) => {
             let sum = 0, count = 0;
@@ -1191,6 +1223,7 @@ async function handleGeneratePraiseRequest(request, env) {
         if (achievements.length > 7) achievements.shift();
         await env.USER_METADATA_KV.put(`${userId}_achievements`, JSON.stringify(achievements));
         await env.USER_METADATA_KV.put(`${userId}_last_praise_ts`, now.toString());
+        await env.USER_METADATA_KV.put(`${userId}_last_praise_analytics`, JSON.stringify(currentSnapshot));
 
         return { success: true, title, message };
     } catch (error) {
