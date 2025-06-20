@@ -52,5 +52,6 @@ describe('handleAiHelperRequest', () => {
     const request = { json: async () => ({ userId: 'u1' }) };
     const res = await handleAiHelperRequest(request, env);
     expect(res.success).toBe(false);
+    expect(res.message).toMatch('bad');
   });
 });

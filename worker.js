@@ -1323,7 +1323,7 @@ async function handleAiHelperRequest(request, env) {
         return { success: true, aiResponse: aiResp };
     } catch (error) {
         console.error('Error in handleAiHelperRequest:', error.message, error.stack);
-        return { success: false, message: 'Грешка при извикване на Cloudflare AI.', statusHint: 500 };
+        return { success: false, message: `Грешка от Cloudflare AI: ${error.message}`, statusHint: 500 };
     }
 }
 // ------------- END FUNCTION: handleAiHelperRequest -------------
