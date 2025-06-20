@@ -22,7 +22,12 @@ let currentUserId = null;
 
 export async function initializeAchievements(userId) {
     currentUserId = userId || null;
-    achievements = JSON.parse(localStorage.getItem('achievements') || '[]');
+    const storedId = localStorage.getItem('achievements_user_id');
+    if (storedId && storedId !== currentUserId) {
+        localStorage.removeItem(`achievements_${storedId}`);
+    }
+    if (currentUserId) localStorage.setItem('achievements_user_id', currentUserId);
+    achievements = JSON.parse(localStorage.getItem(`achievements_${currentUserId}`) || '[]');
     if (currentUserId) {
         try {
             const res = await fetch(`${apiEndpoints.getAchievements}?userId=${currentUserId}`);
@@ -43,7 +48,8 @@ export async function initializeAchievements(userId) {
 }
 
 function saveAchievements() {
-    localStorage.setItem('achievements', JSON.stringify(achievements));
+    if (!currentUserId) return;
+    localStorage.setItem(`achievements_${currentUserId}`, JSON.stringify(achievements));
 }
 
 function renderAchievements(newIndex = -1) {
