@@ -36,6 +36,24 @@
   to { opacity: 1; max-height: 1000px; padding-top: var(--space-lg); padding-bottom: var(--space-lg); }
 }
 
+.collapsible-card h4 {
+  cursor: pointer;
+  position: relative;
+  padding-right: 1.2em;
+}
+.collapsible-card h4::after {
+  content: '\25B6';
+  position: absolute;
+  right: 0;
+  top: 0.2em;
+  transition: transform 0.3s ease;
+}
+.collapsible-card.open h4::after {
+  transform: rotate(90deg);
+}
+.collapsible-card .collapsible-content { display: none; }
+.collapsible-card.open .collapsible-content { display: block; }
+
 /* ==========================================================================
    7. МОДАЛНИ ПРОЗОРЦИ, TOAST, ЧАТ, FABs
    ========================================================================== */

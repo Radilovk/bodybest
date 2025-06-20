@@ -10,7 +10,7 @@ import {
 } from './uiHandlers.js';
 import { populateUI } from './populateUI.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
-import { setupStaticEventListeners, setupDynamicEventListeners } from './eventListeners.js';
+import { setupStaticEventListeners, setupDynamicEventListeners, initializeCollapsibleCards } from './eventListeners.js';
 import {
     displayMessage as displayChatMessage,
     displayTypingIndicator as displayChatTypingIndicator, scrollToChatBottom,
@@ -260,6 +260,7 @@ async function initializeApp() {
             return;
         }
         setupStaticEventListeners(); // from eventListeners.js
+        initializeCollapsibleCards();
         initializeTheme(); // from uiHandlers.js
         loadDashboardData();
         if (isLocalDevelopment) console.log("initializeApp finished successfully.");

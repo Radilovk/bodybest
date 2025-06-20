@@ -294,36 +294,44 @@
                     <h2>💡 Препоръки</h2>
                     <div class="recommendation-section">
                         <h3>🍎 Основи на Храненето</h3>
-                        <div id="recFoodAllowedCard" class="card">
+                        <div id="recFoodAllowedCard" class="card collapsible-card">
                             <h4>✅ Препоръчителни Храни</h4>
-                            <div id="recFoodAllowedContent">
-                                <p class="placeholder">Зареждане...</p>
-                            </div>
-                            <div class="info-note note-base hidden" data-condition-type="medical" data-condition-value="хипотиреоидизъм">
-                                <svg class="icon prefix-icon"><use href="#icon-info"></use></svg>
-                                <span><strong>Забележка (Хипотиреоидизъм):</strong> Обърнете внимание на храни, богати на селен, цинк и йод. Избягвайте сурови кръстоцветни в големи количества.</span>
-                            </div>
-                        </div>
-                        <div id="recFoodLimitCard" class="card">
-                            <h4>❌ Храни за Внимание/Ограничаване</h4>
-                            <div id="recFoodLimitContent">
-                                <div id="userAllergiesNote" class="critical-note note-base hidden">
-                                    <svg class="icon prefix-icon"><use href="#icon-warning-triangle"></use></svg>
-                                    <span><strong>Ваши специфични алергени/непоносимости:</strong> <span id="userAllergiesList">Липсват данни</span></span>
+                            <div class="collapsible-content">
+                                <div id="recFoodAllowedContent">
+                                    <p class="placeholder">Зареждане...</p>
                                 </div>
-                                <p class="placeholder">Зареждане на общи препоръки...</p>
+                                <div class="info-note note-base hidden" data-condition-type="medical" data-condition-value="хипотиреоидизъм">
+                                    <svg class="icon prefix-icon"><use href="#icon-info"></use></svg>
+                                    <span><strong>Забележка (Хипотиреоидизъм):</strong> Обърнете внимание на храни, богати на селен, цинк и йод. Избягвайте сурови кръстоцветни в големи количества.</span>
+                                </div>
                             </div>
                         </div>
-                        <div id="recHydrationCard" class="card">
+                        <div id="recFoodLimitCard" class="card collapsible-card">
+                            <h4>❌ Храни за Внимание/Ограничаване</h4>
+                            <div class="collapsible-content">
+                                <div id="recFoodLimitContent">
+                                    <div id="userAllergiesNote" class="critical-note note-base hidden">
+                                        <svg class="icon prefix-icon"><use href="#icon-warning-triangle"></use></svg>
+                                        <span><strong>Ваши специфични алергени/непоносимости:</strong> <span id="userAllergiesList">Липсват данни</span></span>
+                                    </div>
+                                    <p class="placeholder">Зареждане на общи препоръки...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="recHydrationCard" class="card collapsible-card">
                             <h4>💧 Хидратация и Напитки</h4>
-                            <div id="recHydrationContent">
-                                <p class="placeholder">Зареждане...</p>
+                            <div class="collapsible-content">
+                                <div id="recHydrationContent">
+                                    <p class="placeholder">Зареждане...</p>
+                                </div>
                             </div>
                         </div>
-                        <div id="recCookingMethodsCard" class="card">
+                        <div id="recCookingMethodsCard" class="card collapsible-card">
                             <h4>🍳 Методи на Готвене</h4>
-                            <div id="recCookingMethodsContent">
-                                <p class="placeholder">Зареждане...</p>
+                            <div class="collapsible-content">
+                                <div id="recCookingMethodsContent">
+                                    <p class="placeholder">Зареждане...</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -335,13 +343,16 @@
                     </div>
                     <div class="recommendation-section">
                         <h3>💊 Хранителни Добавки</h3>
-                        <div id="recSupplementsCard" class="card">
-                            <div id="recSupplementsContent">
-                                <p class="placeholder">Зареждане...</p>
-                            </div>
-                            <div class="important-note note-base">
-                                <svg class="icon prefix-icon"><use href="#icon-info"></use></svg>
-                                <span><strong>Важно:</strong> Винаги се консултирайте с лекар преди прием на нови хранителни добавки, особено ако имате съществуващи заболявания или приемате медикаменти.</span>
+                        <div id="recSupplementsCard" class="card collapsible-card">
+                            <h4>Хранителни Добавки</h4>
+                            <div class="collapsible-content">
+                                <div id="recSupplementsContent">
+                                    <p class="placeholder">Зареждане...</p>
+                                </div>
+                                <div class="important-note note-base">
+                                    <svg class="icon prefix-icon"><use href="#icon-info"></use></svg>
+                                    <span><strong>Важно:</strong> Винаги се консултирайте с лекар преди прием на нови хранителни добавки, особено ако имате съществуващи заболявания или приемате медикаменти.</span>
+                                </div>
                             </div>
                         </div>
                     </div>

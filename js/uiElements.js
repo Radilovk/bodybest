@@ -24,6 +24,8 @@ export function initializeSelectors() {
         recFoodAllowedContent: 'recFoodAllowedContent', recFoodLimitContent: 'recFoodLimitContent', userAllergiesNote: 'userAllergiesNote',
         userAllergiesList: 'userAllergiesList', recHydrationContent: 'recHydrationContent', recCookingMethodsContent: 'recCookingMethodsContent',
         recStrategiesContent: 'recStrategiesContent', recSupplementsContent: 'recSupplementsContent',
+        recFoodAllowedCard: 'recFoodAllowedCard', recFoodLimitCard: 'recFoodLimitCard',
+        recHydrationCard: 'recHydrationCard', recCookingMethodsCard: 'recCookingMethodsCard', recSupplementsCard: 'recSupplementsCard',
         welcomeScreenModal: 'welcomeScreenModal', extraMealEntryModal: 'extraMealEntryModal', extraMealFormContainer: 'extraMealFormContainer',
         adaptiveQuizModal: 'adaptiveQuizWrapper',
         adaptiveQuizContainer: 'adaptiveQuizWrapper',
@@ -66,7 +68,9 @@ export function initializeSelectors() {
                 'planModChatModal', 'planModChatMessages', 'planModChatInput',
                 'planModChatSend', 'planModChatClose', 'planModChatClear',
                 'streakGrid', 'streakCount', 'analyticsCardsContainer',
-                'goalCard', 'engagementCard', 'healthCard', 'streakCard'
+                'goalCard', 'engagementCard', 'healthCard', 'streakCard',
+                'recFoodAllowedCard', 'recFoodLimitCard', 'recHydrationCard',
+                'recCookingMethodsCard', 'recSupplementsCard'
             ];
             if (!optionalOrDynamic.includes(key) && key !== 'adaptiveQuizModal' && key !== 'adaptiveQuizContainer') {
                 console.warn(`HTML element not found: ${key} (selector: '${selectorValue}')`);
