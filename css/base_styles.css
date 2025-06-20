@@ -87,8 +87,9 @@
   --note-success-bg: #e8f5e9; --note-success-text: #1b5e20; --note-success-border: #2e7d32;
 
   --primary-rgb: 58, 80, 107;
-  --header-height: 60px; 
+  --header-height: 60px;
   --tabs-height: 65px;
+  --tips-collapsed-height: 4.5rem;
 
   --metric-value-group-bg-initial: color-mix(in srgb, var(--surface-background) 95%, var(--border-color-soft));
   --metric-value-group-bg-expected: color-mix(in srgb, var(--surface-background) 95%, var(--accent-color) 20%);
