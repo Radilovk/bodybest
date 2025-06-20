@@ -591,9 +591,9 @@ async function saveAiConfig() {
     if (!aiConfigForm) return;
     const payload = {
         updates: {
-            planModel: planModelInput.value.trim(),
-            chatModel: chatModelInput.value.trim(),
-            modModel: modModelInput.value.trim()
+            model_plan_generation: planModelInput.value.trim(),
+            model_chat: chatModelInput.value.trim(),
+            model_principle_adjustment: modModelInput.value.trim()
         }
     };
     try {
@@ -667,9 +667,9 @@ async function saveCurrentPreset() {
     const payload = {
         name,
         config: {
-            planModel: planModelInput.value.trim(),
-            chatModel: chatModelInput.value.trim(),
-            modModel: modModelInput.value.trim()
+            model_plan_generation: planModelInput.value.trim(),
+            model_chat: chatModelInput.value.trim(),
+            model_principle_adjustment: modModelInput.value.trim()
         }
     };
     try {
