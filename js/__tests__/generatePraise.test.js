@@ -68,4 +68,13 @@ describe('handleGeneratePraiseRequest analytics gating', () => {
     const achCalls = env.USER_METADATA_KV.put.mock.calls.filter(c => c[0] === 'u1_achievements');
     expect(achCalls.length).toBe(0);
   });
+
+test('praise replacements include sleep quality key', () => {
+  const initialAnswers = { name: 'A', age: 30, goal: 'fit', mainChallenge: '' };
+  const logs = [];
+  const avgMetric = key => (key === 'sleep_quality' ? 4 : 0);
+  const mealAdh = () => 80;
+  const replacements = worker.createPraiseReplacements(initialAnswers, logs, avgMetric, mealAdh);
+  expect(replacements).toHaveProperty('%%средно_качество_сън_за_периода%%');
+});
 });
