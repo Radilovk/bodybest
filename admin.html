@@ -2,7 +2,12 @@
 <html lang="bg">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Администраторски панел</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base_styles.css">
+  <link rel="stylesheet" href="css/layout_styles.css">
+  <link rel="stylesheet" href="css/components_styles.css">
   <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
@@ -25,7 +30,15 @@
 
   <main class="main-content card" id="clientDetails" class="hidden">
     <h2 id="clientName">Клиент</h2>
-    <!-- Формата за лични данни е премахната -->
+    <details id="profileSection">
+      <summary>Лични данни</summary>
+      <form id="profileForm">
+        <label>Име: <input id="profileName" type="text"></label><br>
+        <label>Имейл: <input id="profileEmail" type="email"></label><br>
+        <label>Телефон: <input id="profilePhone" type="tel"></label><br>
+        <button type="submit">Запази профила</button>
+      </form>
+    </details>
     <button id="regeneratePlan">Генерирай нов план</button>
     <button id="aiSummary">AI резюме</button>
     <details id="notesSection">
