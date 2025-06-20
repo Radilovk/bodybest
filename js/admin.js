@@ -549,7 +549,7 @@ async function loadAiConfig() {
 
 async function saveAiConfig() {
     if (!aiConfigForm) return;
-    const payload = {
+    const updates = {
         planToken: planTokenInput.value.trim(),
         planModel: planModelInput.value.trim(),
         chatToken: chatTokenInput.value.trim(),
@@ -557,15 +557,18 @@ async function saveAiConfig() {
         modToken: modTokenInput.value.trim(),
         modModel: modModelInput.value.trim()
     };
-    if (!payload.planToken || !payload.chatToken || !payload.modToken) {
+    if (!updates.planToken || !updates.chatToken || !updates.modToken) {
         alert('Моля, попълнете всички токени.');
         return;
     }
     try {
+        const adminToken = window.WORKER_ADMIN_TOKEN || '';
+        const headers = { 'Content-Type': 'application/json' };
+        if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
         const resp = await fetch(apiEndpoints.setAiConfig, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            headers,
+            body: JSON.stringify({ updates })
         });
         const data = await resp.json();
         if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
