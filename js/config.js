@@ -35,7 +35,9 @@ export const apiEndpoints = {
     peekClientReplies: `${workerBaseUrl}/api/peekClientReplies`,
     getFeedbackMessages: `${workerBaseUrl}/api/getFeedbackMessages`,
     getPlanModificationPrompt: `${workerBaseUrl}/api/getPlanModificationPrompt`,
-    updateStatus: `${workerBaseUrl}/api/updateStatus`
+    updateStatus: `${workerBaseUrl}/api/updateStatus`,
+    getAiConfig: `${workerBaseUrl}/api/getAiConfig`,
+    setAiConfig: `${workerBaseUrl}/api/setAiConfig`
 };
 
 // Cloudflare Account ID за използване в чат асистента
