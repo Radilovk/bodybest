@@ -1183,26 +1183,7 @@ async function handleGeneratePraiseRequest(request, env) {
         let message = 'Продължавай в същия дух!';
 
         if (promptTpl && geminiKey && model) {
-            const replacements = {
-                '%%име%%': initialAnswers.name || 'Клиент',
-                '%%възраст%%': initialAnswers.age || 'N/A',
-                '%%формулировка_на_целта%%': initialAnswers.goal || 'N/A',
-                '%%извлечени_от_въпросника_ключови_моменти_като_mainChallenge_стрес_ниво_мотивационни_проблеми_или_синтезиран_кратък_психо_портрет_ако_има%%': initialAnswers.mainChallenge || '',
-                '%%брой_попълнени_дни%%': logs.length,
-                '%%общо_дни_в_периода%%': PRAISE_INTERVAL_DAYS,
-                '%%средна_енергия_за_периода%%': avgMetric('energy'),
-                '%%средна_енергия_предходен_период%%': 'N/A',
-                '%%средно_настроение_за_периода%%': avgMetric('mood'),
-                '%%средно_настроение_предходен_период%%': 'N/A',
-                '%%средна_хидратация_за_периода%%': avgMetric('hydration'),
-                '%%процент_придържане_към_хран_план_за_периода%%': mealAdh(),
-                '%%процент_придържане_предходен_период%%': 'N/A',
-                '%%средно_качество_сън_за_периода%%': avgMetric('sleep_quality'),
-                '%%цитат1_от_бележка_или_чат%%': logs[0]?.data?.note || '',
-                '%%цитат2_от_бележка_или_чат%%': logs[1]?.data?.note || '',
-                '%%заглавие_постижение_N-1%%': '',
-                '%%заглавие_постижение_N-2%%': ''
-            };
+            const replacements = createPraiseReplacements(initialAnswers, logs, avgMetric, mealAdh);
             const populated = populatePrompt(promptTpl, replacements);
             try {
                 const raw = await callGeminiAPI(populated, geminiKey, { temperature: 0.6, maxOutputTokens: 400 }, [], model);
@@ -3054,6 +3035,31 @@ async function sendTxtBackupToPhp(userId, answers, env) {
 }
 // ------------- END FUNCTION: sendTxtBackupToPhp -------------
 
+// ------------- START FUNCTION: createPraiseReplacements -------------
+function createPraiseReplacements(initialAnswers, logs, avgMetric, mealAdh) {
+    return {
+        '%%име%%': initialAnswers.name || 'Клиент',
+        '%%възраст%%': initialAnswers.age || 'N/A',
+        '%%формулировка_на_целта%%': initialAnswers.goal || 'N/A',
+        '%%извлечени_от_въпросника_ключови_моменти_като_mainChallenge_стрес_ниво_мотивационни_проблеми_или_синтезиран_кратък_психо_портрет_ако_има%%': initialAnswers.mainChallenge || '',
+        '%%брой_попълнени_дни%%': logs.length,
+        '%%общо_дни_в_периода%%': PRAISE_INTERVAL_DAYS,
+        '%%средна_енергия_за_периода%%': avgMetric('energy'),
+        '%%средна_енергия_предходен_период%%': 'N/A',
+        '%%средно_настроение_за_периода%%': avgMetric('mood'),
+        '%%средно_настроение_предходен_период%%': 'N/A',
+        '%%средна_хидратация_за_периода%%': avgMetric('hydration'),
+        '%%процент_придържане_към_хран_план_за_периода%%': mealAdh(),
+        '%%процент_придържане_предходен_период%%': 'N/A',
+        '%%средно_качество_сън_за_периода%%': avgMetric('sleep_quality'),
+        '%%цитат1_от_бележка_или_чат%%': logs[0]?.data?.note || '',
+        '%%цитат2_от_бележка_или_чат%%': logs[1]?.data?.note || '',
+        '%%заглавие_постижение_N-1%%': '',
+        '%%заглавие_постижение_N-2%%': ''
+    };
+}
+// ------------- END FUNCTION: createPraiseReplacements -------------
+
 
 // ------------- START FUNCTION: shouldTriggerAutomatedFeedbackChat -------------
 function shouldTriggerAutomatedFeedbackChat(lastUpdateTs, lastChatTs, currentTime = Date.now()) {
@@ -3121,4 +3127,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
