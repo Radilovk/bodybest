@@ -62,8 +62,8 @@ header h1 { color: var(--text-color-on-primary); margin: 0; font-size: clamp(1.3
   color: var(--text-color-primary);
 }
 #main-menu.menu-open { transform: translateX(0); }
-#main-menu ul { display: flex; flex-direction: column; gap: var(--space-xs); }
-#main-menu ul a, #main-menu ul button {
+#main-menu nav { display: flex; flex-direction: column; gap: var(--space-xs); }
+#main-menu nav a, #main-menu nav button {
   display: flex; align-items: center; gap: var(--space-md);
   padding: var(--space-sm) var(--space-md); color: var(--text-color-primary);
   text-decoration: none; font-size: 1.05rem; font-weight: 500;
@@ -77,13 +77,13 @@ header h1 { color: var(--text-color-on-primary); margin: 0; font-size: clamp(1.3
   margin-right: 0.1em; 
   transition: transform 0.2s ease-in-out;
 }
-#main-menu ul a:hover, #main-menu ul button:hover {
+#main-menu nav a:hover, #main-menu nav button:hover {
   background-color: var(--menu-hover-bg);
   color: var(--primary-color);
   border-color: var(--primary-color);
 }
-#main-menu ul a:hover .menu-icon,
-#main-menu ul button:hover .menu-icon {
+#main-menu nav a:hover .menu-icon, 
+#main-menu nav button:hover .menu-icon {
   transform: scale(1.1) rotate(-5deg);
 }
 #main-menu .menu-close {

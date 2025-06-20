@@ -212,9 +212,7 @@ async function showClient(userId) {
             detailsSection.classList.remove('hidden');
             document.getElementById('clientName').textContent = data.name || 'Клиент';
             profileForm.name.value = data.name || '';
-            profileForm.fullname.value = data.fullname || '';
             profileForm.age.value = data.age || '';
-            profileForm.phone.value = data.phone || '';
             profileForm.height.value = data.height || '';
             profileForm.email.value = data.email || '';
             profileForm.weight.value = data.weight || '';
@@ -246,9 +244,7 @@ profileForm.addEventListener('submit', async e => {
     const payload = {
         userId: currentUserId,
         name: profileForm.name.value,
-        fullname: profileForm.fullname.value,
         age: parseInt(profileForm.age.value, 10) || null,
-        phone: profileForm.phone.value,
         height: parseInt(profileForm.height.value, 10) || null,
         email: profileForm.email.value || undefined
     };

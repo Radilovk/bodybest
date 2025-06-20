@@ -20,13 +20,9 @@ if (form) {
       const data = await res.json();
 
       form.name.value = safeGet(data, 'name', '');
-      form.fullname.value = safeGet(data, 'fullname', '');
 
       const age = safeParseFloat(safeGet(data, 'age'));
       if (age !== null && age !== undefined) form.age.value = age;
-
-      form.phone.value = safeGet(data, 'phone', '');
-      form.email.value = safeGet(data, 'email', '');
 
       const height = safeParseFloat(safeGet(data, 'height'));
       if (height !== null && height !== undefined) form.height.value = height;
@@ -43,10 +39,7 @@ if (form) {
 
     const data = {
       name: form.name.value.trim(),
-      fullname: form.fullname.value.trim(),
       age: safeParseFloat(form.age.value),
-      phone: form.phone.value.trim(),
-      email: form.email.value.trim(),
       height: safeParseFloat(form.height.value),
     };
 
