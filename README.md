@@ -110,6 +110,13 @@ The worker configuration is stored in `wrangler.toml`. Update `account_id` with 
 ```toml
 compatibility_date = "2025-06-20"
 ```
+Препоръчително е периодично (например веднъж годишно) да обновявате тази дата до последна валидна стойност, за да се възползва worker-ът от новите възможности на Cloudflare.
+
+Пример за промяна в `wrangler.toml`:
+
+```toml
+compatibility_date = "2026-01-15"
+```
 You can verify this setup locally by running:
 
 ```bash
