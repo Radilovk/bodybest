@@ -303,7 +303,8 @@ if (aiSummaryBtn) {
             body: JSON.stringify({ userId: currentUserId })
         });
         const data = await resp.json();
-        alert(data.aiResponse?.result || 'Няма данни');
+        const summary = data.aiResponse?.result || data.aiResponse;
+        alert(summary || 'Няма данни');
     });
 }
 
