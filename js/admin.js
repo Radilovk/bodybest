@@ -592,3 +592,13 @@ if (aiConfigForm) {
         await saveAiConfig();
     });
 }
+
+export {
+    allClients,
+    loadClients,
+    renderClients,
+    showNotificationDot,
+    checkForNotifications,
+    showClient,
+    unreadClients
+};
