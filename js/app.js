@@ -58,7 +58,23 @@ async function checkAdminQueries(userId) {
         const data = await resp.json();
         if (resp.ok && data.success && Array.isArray(data.queries) && data.queries.length > 0) {
             data.queries.forEach(q => {
-                displayChatMessage(`Администратор: ${escapeHtml(q.message)}`, 'bot');
+                if (!selectors.chatMessages) return;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'message bot';
+                const span = document.createElement('span');
+                span.innerHTML = `Администратор: ${escapeHtml(q.message)}`;
+                wrapper.appendChild(span);
+                const btn = document.createElement('button');
+                btn.textContent = 'Отговори';
+                btn.className = 'admin-reply-btn';
+                btn.addEventListener('click', () => {
+                    const msg = window.prompt('Вашият отговор до администратора:');
+                    if (msg) sendReplyToAdmin(msg);
+                });
+                wrapper.appendChild(document.createElement('br'));
+                wrapper.appendChild(btn);
+                selectors.chatMessages.appendChild(wrapper);
+                chatHistory.push({ text: `Администратор: ${q.message}`, sender: 'bot', isError: false });
             });
             if (!selectors.chatWidget?.classList.contains('visible')) {
                 if (selectors.chatFab) selectors.chatFab.classList.add('notification');
@@ -67,6 +83,26 @@ async function checkAdminQueries(userId) {
         }
     } catch (err) {
         console.error('Error fetching admin queries:', err);
+    }
+}
+
+async function sendReplyToAdmin(msg) {
+    if (!currentUserId) return;
+    try {
+        const resp = await fetch(apiEndpoints.addClientReply, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUserId, message: msg })
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.success) {
+            displayChatMessage('Грешка при изпращане на отговора.', 'bot', true);
+        } else {
+            displayChatMessage(`Вие: ${escapeHtml(msg)}`, 'user');
+        }
+    } catch (err) {
+        console.error('Error sending admin reply:', err);
+        displayChatMessage('Грешка при изпращане на отговора.', 'bot', true);
     }
 }
 

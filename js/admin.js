@@ -28,6 +28,7 @@ const saveNotesBtn = document.getElementById('saveNotes');
 const queriesList = document.getElementById('queriesList');
 const newQueryText = document.getElementById('newQueryText');
 const sendQueryBtn = document.getElementById('sendQuery');
+const clientRepliesList = document.getElementById('clientRepliesList');
 const feedbackList = document.getElementById('feedbackList');
 const statsOutput = document.getElementById('statsOutput');
 const showStatsBtn = document.getElementById('showStats');
@@ -69,6 +70,11 @@ async function checkForNotifications() {
             const qResp = await fetch(`${apiEndpoints.peekAdminQueries}?userId=${c.userId}`);
             const qData = await qResp.json();
             if (qResp.ok && qData.success && Array.isArray(qData.queries) && qData.queries.length > 0) {
+                hasNew = true;
+            }
+            const rResp = await fetch(`${apiEndpoints.peekClientReplies}?userId=${c.userId}`);
+            const rData = await rResp.json();
+            if (rResp.ok && rData.success && Array.isArray(rData.replies) && rData.replies.length > 0) {
                 hasNew = true;
             }
             const fResp = await fetch(`${apiEndpoints.getFeedbackMessages}?userId=${c.userId}`);
@@ -240,6 +246,7 @@ async function showClient(userId) {
             if (profilePhone) profilePhone.value = data.phone || '';
             await loadQueries();
             await loadFeedback();
+            await loadClientReplies();
         }
         const dashResp = await fetch(`${apiEndpoints.dashboard}?userId=${userId}`);
         const dashData = await dashResp.json();
@@ -413,6 +420,26 @@ async function loadFeedback() {
         }
     } catch (err) {
         console.error('Error loading feedback:', err);
+    }
+}
+
+async function loadClientReplies() {
+    if (!currentUserId) return;
+    try {
+        const resp = await fetch(`${apiEndpoints.getClientReplies}?userId=${currentUserId}`);
+        const data = await resp.json();
+        if (clientRepliesList) clientRepliesList.innerHTML = '';
+        if (resp.ok && data.success) {
+            data.replies.forEach(r => {
+                const li = document.createElement('li');
+                const date = new Date(r.ts || r.timestamp).toLocaleDateString('bg-BG');
+                li.textContent = `${date}: ${r.message}`;
+                clientRepliesList?.appendChild(li);
+            });
+            await checkForNotifications();
+        }
+    } catch (err) {
+        console.error('Error loading client replies:', err);
     }
 }
 

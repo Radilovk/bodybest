@@ -30,6 +30,9 @@ export const apiEndpoints = {
     addAdminQuery: `${workerBaseUrl}/api/addAdminQuery`,
     getAdminQueries: `${workerBaseUrl}/api/getAdminQueries`,
     peekAdminQueries: `${workerBaseUrl}/api/peekAdminQueries`,
+    addClientReply: `${workerBaseUrl}/api/addClientReply`,
+    getClientReplies: `${workerBaseUrl}/api/getClientReplies`,
+    peekClientReplies: `${workerBaseUrl}/api/peekClientReplies`,
     getFeedbackMessages: `${workerBaseUrl}/api/getFeedbackMessages`,
     getPlanModificationPrompt: `${workerBaseUrl}/api/getPlanModificationPrompt`,
     updateStatus: `${workerBaseUrl}/api/updateStatus`
