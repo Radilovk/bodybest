@@ -46,10 +46,13 @@ body.dark-theme .recommendation-section .card {
 #recFoodAllowedContent ul:first-of-type strong { margin-top: 0; }
 
 /* --- 6.5. Нови секции: История на прогреса --- */
-#progressHistoryCard .chart-container {
+#progressHistoryCard .collapsible-content {
     /* Стандартна височина като останалите index-card карти */
     min-height: 100px;
     position: relative;
     padding: var(--space-sm);
+}
+#progressHistoryCard:not(.open) .collapsible-content {
+    display: none;
 }
 /* #motivationalMessageCard - Премахнато */
