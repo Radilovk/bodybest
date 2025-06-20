@@ -3,7 +3,7 @@ import { selectors } from './uiElements.js';
 import { openModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
 
-const medalEmojis = ['🥇', '🥈', '🥉', '🏆', '🎖️', '🏅'];
+const medalEmojis = ['🥇', '🥈', '🥉', '🏆', '🎖️', '🏅', '🏵️', '🎊', '🔥', '💯', '🎯', '🎉', '🚀', '✨'];
 
 // Анимирано показване на емоджи в модала за постижение
 function showAchievementEmoji(emoji) {
@@ -61,7 +61,7 @@ function renderAchievements(newIndex = -1) {
 }
 
 export function createAchievement(title, message) {
-    const emoji = medalEmojis[achievements.length % medalEmojis.length];
+    const emoji = medalEmojis[Math.floor(Math.random() * medalEmojis.length)];
     achievements.push({ date: Date.now(), title, message, emoji });
     if (achievements.length > 7) achievements.shift();
     saveAchievements();
