@@ -58,9 +58,9 @@ test('saveAiConfig sends updates payload with Authorization header', async () =>
   const body = JSON.parse(options.body);
   expect(body).toEqual({
     updates: {
-      planModel: 'pm',
-      chatModel: 'cm',
-      modModel: 'mm'
+      model_plan_generation: 'pm',
+      model_chat: 'cm',
+      model_principle_adjustment: 'mm'
     }
   });
 });

@@ -16,11 +16,11 @@ test('save preset and retrieve it', async () => {
   const env = { RESOURCES_KV: kv, WORKER_ADMIN_TOKEN: 'secret' };
   const reqSave = {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
-    json: async () => ({ name: 'test', config: { planModel: 'm1' } })
+    json: async () => ({ name: 'test', config: { model_plan_generation: 'm1' } })
   };
   const saveRes = await handleSaveAiPreset(reqSave, env);
   expect(saveRes.success).toBe(true);
-  expect(kv._store['aiPreset_test']).toBe(JSON.stringify({ planModel: 'm1' }));
+  expect(kv._store['aiPreset_test']).toBe(JSON.stringify({ model_plan_generation: 'm1' }));
 
   const listRes = await handleListAiPresets({}, env);
   expect(listRes.success).toBe(true);
@@ -28,5 +28,5 @@ test('save preset and retrieve it', async () => {
 
   const getRes = await handleGetAiPreset({ url: 'https://x/api/getAiPreset?name=test' }, env);
   expect(getRes.success).toBe(true);
-  expect(getRes.config.planModel).toBe('m1');
+  expect(getRes.config.model_plan_generation).toBe('m1');
 });
