@@ -86,3 +86,11 @@ details[open] summary::after {
     max-width: 100%;
   }
 }
+
+#notificationsSection {
+  margin-top: 20px;
+}
+#notificationsList li {
+  cursor: pointer;
+  margin-bottom: 5px;
+}

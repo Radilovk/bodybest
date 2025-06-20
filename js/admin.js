@@ -50,6 +50,8 @@ const chatModelInput = document.getElementById('chatModel');
 const modTokenInput = document.getElementById('modToken');
 const modModelInput = document.getElementById('modModel');
 const clientNameHeading = document.getElementById('clientName');
+const notificationsList = document.getElementById('notificationsList');
+const notificationsSection = document.getElementById('notificationsSection');
 const notificationDot = document.getElementById('notificationIndicator');
 let currentUserId = null;
 let currentPlanData = null;
@@ -232,6 +234,60 @@ function renderClients() {
     });
 }
 
+async function loadNotifications() {
+    if (!notificationsList || !notificationsSection) return;
+    notificationsList.innerHTML = '';
+    try {
+        const resp = await fetch(apiEndpoints.listClients);
+        const data = await resp.json();
+        if (!resp.ok || !data.success) return;
+        const storedTs = Number(localStorage.getItem('lastFeedbackTs')) || 0;
+        const items = [];
+        for (const c of data.clients) {
+            const [qResp, rResp, fResp] = await Promise.all([
+                fetch(`${apiEndpoints.peekAdminQueries}?userId=${c.userId}`),
+                fetch(`${apiEndpoints.peekClientReplies}?userId=${c.userId}`),
+                fetch(`${apiEndpoints.getFeedbackMessages}?userId=${c.userId}`)
+            ]);
+            const qData = await qResp.json().catch(() => ({}));
+            const rData = await rResp.json().catch(() => ({}));
+            const fData = await fResp.json().catch(() => ({}));
+            if (qResp.ok && qData.success) {
+                (qData.queries || []).forEach(q => {
+                    items.push({ userId: c.userId, name: c.name, text: q.message });
+                });
+            }
+            if (rResp.ok && rData.success) {
+                (rData.replies || []).forEach(r => {
+                    items.push({ userId: c.userId, name: c.name, text: r.message });
+                });
+            }
+            if (fResp.ok && fData.success) {
+                (fData.feedback || []).forEach(f => {
+                    const ts = Date.parse(f.timestamp);
+                    if (!ts || ts > storedTs) {
+                        items.push({ userId: c.userId, name: c.name, text: f.message });
+                    }
+                });
+            }
+        }
+        items.forEach(it => {
+            const li = document.createElement('li');
+            li.textContent = `${it.name || it.userId}: ${it.text}`;
+            li.addEventListener('click', () => showClient(it.userId));
+            notificationsList.appendChild(li);
+        });
+        if (items.length === 0) {
+            const li = document.createElement('li');
+            li.textContent = 'Няма нови известия.';
+            notificationsList.appendChild(li);
+        }
+        notificationsSection.classList.toggle('hidden', items.length === 0);
+    } catch (err) {
+        console.error('Error loading notifications:', err);
+    }
+}
+
 showStatsBtn.addEventListener('click', () => {
     const sec = document.getElementById('statsSection');
     sec.classList.toggle('hidden');
@@ -251,9 +307,9 @@ async function showClient(userId) {
             if (profileName) profileName.value = data.name || '';
             if (profileEmail) profileEmail.value = data.email || '';
             if (profilePhone) profilePhone.value = data.phone || '';
-            await loadQueries();
+            await loadQueries(true);
             await loadFeedback();
-            await loadClientReplies();
+            await loadClientReplies(true);
         }
         const dashResp = await fetch(`${apiEndpoints.dashboard}?userId=${userId}`);
         const dashData = await dashResp.json();
@@ -271,6 +327,7 @@ async function showClient(userId) {
     } catch (err) {
         console.error('Error loading profile:', err);
     }
+    await loadNotifications();
 }
 
 
@@ -386,10 +443,11 @@ if (profileForm) {
     });
 }
 
-async function loadQueries() {
+async function loadQueries(markRead = false) {
     if (!currentUserId) return;
     try {
-        const resp = await fetch(`${apiEndpoints.peekAdminQueries}?userId=${currentUserId}`);
+        const endpoint = markRead ? apiEndpoints.getAdminQueries : apiEndpoints.peekAdminQueries;
+        const resp = await fetch(`${endpoint}?userId=${currentUserId}`);
         const data = await resp.json();
         queriesList.innerHTML = '';
         if (resp.ok && data.success) {
@@ -430,10 +488,11 @@ async function loadFeedback() {
     }
 }
 
-async function loadClientReplies() {
+async function loadClientReplies(markRead = false) {
     if (!currentUserId) return;
     try {
-        const resp = await fetch(`${apiEndpoints.getClientReplies}?userId=${currentUserId}`);
+        const endpoint = markRead ? apiEndpoints.getClientReplies : apiEndpoints.peekClientReplies;
+        const resp = await fetch(`${endpoint}?userId=${currentUserId}`);
         const data = await resp.json();
         if (clientRepliesList) clientRepliesList.innerHTML = '';
         if (resp.ok && data.success) {
@@ -501,8 +560,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     await ensureLoggedIn();
     await loadClients();
     await checkForNotifications();
+    await loadNotifications();
     await loadAiConfig();
     setInterval(checkForNotifications, 60000);
+    setInterval(loadNotifications, 60000);
 });
 
 if (aiConfigForm) {
