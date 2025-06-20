@@ -8,11 +8,8 @@ beforeEach(async () => {
 
   document.body.innerHTML = `
     <form id="aiConfigForm">
-      <input id="planToken" />
       <input id="planModel" />
-      <input id="chatToken" />
       <input id="chatModel" />
-      <input id="modToken" />
       <input id="modModel" />
     </form>
     <button id="showStats"></button>
@@ -47,11 +44,8 @@ test('saveAiConfig sends updates payload with Authorization header', async () =>
     .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) })
     .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, config: {} }) });
 
-  document.getElementById('planToken').value = 'pt';
   document.getElementById('planModel').value = 'pm';
-  document.getElementById('chatToken').value = 'ct';
   document.getElementById('chatModel').value = 'cm';
-  document.getElementById('modToken').value = 'mt';
   document.getElementById('modModel').value = 'mm';
 
   await submitHandler(new Event('submit'));
@@ -64,11 +58,8 @@ test('saveAiConfig sends updates payload with Authorization header', async () =>
   const body = JSON.parse(options.body);
   expect(body).toEqual({
     updates: {
-      planToken: 'pt',
       planModel: 'pm',
-      chatToken: 'ct',
       chatModel: 'cm',
-      modToken: 'mt',
       modModel: 'mm'
     }
   });
