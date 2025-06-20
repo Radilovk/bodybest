@@ -29,6 +29,7 @@ const saveNotesBtn = document.getElementById('saveNotes');
 const queriesList = document.getElementById('queriesList');
 const newQueryText = document.getElementById('newQueryText');
 const sendQueryBtn = document.getElementById('sendQuery');
+const feedbackList = document.getElementById('feedbackList');
 const statsOutput = document.getElementById('statsOutput');
 const showStatsBtn = document.getElementById('showStats');
 const initialAnswersPre = document.getElementById('initialAnswers');
@@ -216,6 +217,7 @@ async function showClient(userId) {
             profileForm.email.value = data.email || '';
             profileForm.weight.value = data.weight || '';
             await loadQueries();
+            await loadFeedback();
         }
         const dashResp = await fetch(`${apiEndpoints.dashboard}?userId=${userId}`);
         const dashData = await dashResp.json();
@@ -374,6 +376,26 @@ async function loadQueries() {
         }
     } catch (err) {
         console.error('Error loading queries:', err);
+    }
+}
+
+async function loadFeedback() {
+    if (!currentUserId) return;
+    try {
+        const resp = await fetch(`${apiEndpoints.getFeedbackMessages}?userId=${currentUserId}`);
+        const data = await resp.json();
+        feedbackList.innerHTML = '';
+        if (resp.ok && data.success) {
+            data.feedback.forEach(f => {
+                const li = document.createElement('li');
+                const date = new Date(f.timestamp).toLocaleDateString('bg-BG');
+                const rating = f.rating ? ` (${f.rating})` : '';
+                li.textContent = `${date}: ${f.message}${rating}`;
+                feedbackList.appendChild(li);
+            });
+        }
+    } catch (err) {
+        console.error('Error loading feedback:', err);
     }
 }
 

@@ -157,6 +157,8 @@ export default {
                 responseBody = await handleAddAdminQueryRequest(request, env);
             } else if (method === 'GET' && path === '/api/getAdminQueries') {
                 responseBody = await handleGetAdminQueriesRequest(request, env);
+            } else if (method === 'GET' && path === '/api/getFeedbackMessages') {
+                responseBody = await handleGetFeedbackMessagesRequest(request, env);
             } else {
                 responseBody = { success: false, error: 'Not Found', message: 'Ресурсът не е намерен.' };
                 responseStatus = 404;
@@ -1050,6 +1052,12 @@ async function handleSubmitFeedbackRequest(request, env) {
     try {
         const key = `feedback_${userId}_${Date.now()}`;
         await env.USER_METADATA_KV.put(key, JSON.stringify(feedback));
+
+        const listKey = `${userId}_feedback_messages`;
+        const existing = safeParseJson(await env.USER_METADATA_KV.get(listKey), []);
+        existing.push(feedback);
+        await env.USER_METADATA_KV.put(listKey, JSON.stringify(existing));
+
         return { success: true, message: 'Обратната връзка е записана.' };
     } catch (error) {
         console.error('Error in handleSubmitFeedbackRequest:', error.message, error.stack);
@@ -1323,6 +1331,22 @@ async function handleGetAdminQueriesRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleGetAdminQueriesRequest -------------
+
+// ------------- START FUNCTION: handleGetFeedbackMessagesRequest -------------
+async function handleGetFeedbackMessagesRequest(request, env) {
+    try {
+        const url = new URL(request.url);
+        const userId = url.searchParams.get('userId');
+        if (!userId) return { success: false, message: 'Липсва userId.', statusHint: 400 };
+        const key = `${userId}_feedback_messages`;
+        const arr = safeParseJson(await env.USER_METADATA_KV.get(key), []);
+        return { success: true, feedback: arr };
+    } catch (error) {
+        console.error('Error in handleGetFeedbackMessagesRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при зареждане на обратната връзка.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleGetFeedbackMessagesRequest -------------
 
 // ------------- START FUNCTION: handleGetPlanModificationPrompt -------------
 async function handleGetPlanModificationPrompt(request, env) {
@@ -3033,4 +3057,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt };
