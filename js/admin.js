@@ -44,11 +44,8 @@ const profileName = document.getElementById('profileName');
 const profileEmail = document.getElementById('profileEmail');
 const profilePhone = document.getElementById('profilePhone');
 const aiConfigForm = document.getElementById('aiConfigForm');
-const planTokenInput = document.getElementById('planToken');
 const planModelInput = document.getElementById('planModel');
-const chatTokenInput = document.getElementById('chatToken');
 const chatModelInput = document.getElementById('chatModel');
-const modTokenInput = document.getElementById('modToken');
 const modModelInput = document.getElementById('modModel');
 const clientNameHeading = document.getElementById('clientName');
 const notificationsList = document.getElementById('notificationsList');
@@ -577,11 +574,8 @@ async function loadAiConfig() {
         const data = await resp.json();
         if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
         const cfg = data.config || {};
-        planTokenInput.value = cfg.token_plan_generation || '';
         planModelInput.value = cfg.model_plan_generation || '';
-        chatTokenInput.value = cfg.token_chat || '';
         chatModelInput.value = cfg.model_chat || '';
-        modTokenInput.value = cfg.token_principle_adjustment || '';
         modModelInput.value = cfg.model_principle_adjustment || '';
     } catch (err) {
         console.error('Error loading AI config:', err);
@@ -593,18 +587,11 @@ async function saveAiConfig() {
     if (!aiConfigForm) return;
     const payload = {
         updates: {
-            planToken: planTokenInput.value.trim(),
             planModel: planModelInput.value.trim(),
-            chatToken: chatTokenInput.value.trim(),
             chatModel: chatModelInput.value.trim(),
-            modToken: modTokenInput.value.trim(),
             modModel: modModelInput.value.trim()
         }
     };
-    if (!payload.updates.planToken || !payload.updates.chatToken || !payload.updates.modToken) {
-        alert('Моля, попълнете всички токени.');
-        return;
-    }
     try {
         const adminToken = localStorage.getItem('adminToken') || '';
         const headers = { 'Content-Type': 'application/json' };
