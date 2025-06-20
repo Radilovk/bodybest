@@ -148,7 +148,8 @@
   Admin
 </a>
 
-<script>
+<script type="module">
+  import { workerBaseUrl } from './js/config.js';
   /***** Глобални променливи *****/
   let rawQuestions = [];     // Суровият масив от questions.json (йерархичен)
   let flatPages = [];        // Плосък масив от всички въпроси (след рекурсивно сплескване)
@@ -203,14 +204,7 @@
     container.innerHTML = ""; // Изчистване на контейнера
 
     createStartPage();
-    flatPages = flattenQuestions(rawQuestions);
-
-    if (!flatPages.find(q => q.id === 'email')) {
-        console.error("Критична грешка: Въпрос с id 'email' не е намерен в questions.json. Той е задължителен за изпращане.");
-        // Показване на грешка на потребителя
-        container.innerHTML = `<div style="color: #e74c3c; text-align: center; padding: 20px;">Грешка в конфигурацията на въпросника (липсва поле за имейл). Моля, свържете се с администратор.</div>`;
-        return; // Прекратяване на изграждането
-    }
+    flatPages = flattenQuestions(rawQuestions).filter(q => q.id !== 'email');
 
     flatPages.forEach((q, idx) => {
       createQuestionPage(q, idx + 1);
@@ -276,7 +270,7 @@
     pageDiv.id = 'page' + pageIndex;
     let html = `<div class="question-text">${question.text || 'Липсва текст на въпроса'}</div>`;
 
-    const isRequired = (question.id === 'email'); // Пример за задължително поле
+    const isRequired = false; // Може да се добавят задължителни полета при нужда
 
     if (['text','number','email'].includes(question.type)) {
       const range = numericRanges[question.id];
@@ -721,7 +715,7 @@
     const checkBoxes = document.querySelectorAll(`input[name="${qId}"][type="checkbox"]`);
 
     // --- Дефиниране на задължителните полета ---
-    const requiredFields = ['email']; // Добавете други ID-та тук, ако е нужно
+    const requiredFields = []; // Добавете други ID-та тук, ако е нужно
     const isRequired = requiredFields.includes(qId);
     // -------------------------------------------
 
