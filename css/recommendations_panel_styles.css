@@ -47,7 +47,8 @@ body.dark-theme .recommendation-section .card {
 
 /* --- 6.5. Нови секции: История на прогреса --- */
 #progressHistoryCard .chart-container {
-    min-height: 250px; 
+    /* Стандартна височина като останалите index-card карти */
+    min-height: 100px;
     position: relative;
     padding: var(--space-sm);
 }
