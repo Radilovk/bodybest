@@ -42,10 +42,56 @@ const profileName = document.getElementById('profileName');
 const profileEmail = document.getElementById('profileEmail');
 const profilePhone = document.getElementById('profilePhone');
 const clientNameHeading = document.getElementById('clientName');
+const notificationDot = document.getElementById('notificationIndicator');
 let currentUserId = null;
 let currentPlanData = null;
 let currentDashboardData = null;
 let allClients = [];
+
+function showNotificationDot(show) {
+    if (!notificationDot) return;
+    notificationDot.classList.toggle('hidden', !show);
+}
+
+async function checkForNotifications() {
+    if (!notificationDot) return;
+    try {
+        const resp = await fetch(apiEndpoints.listClients);
+        const data = await resp.json();
+        if (!resp.ok || !data.success) return;
+
+        const clients = data.clients || [];
+        let hasNew = false;
+        let storedTs = Number(localStorage.getItem('lastFeedbackTs')) || 0;
+        let latestTs = storedTs;
+
+        for (const c of clients) {
+            const qResp = await fetch(`${apiEndpoints.peekAdminQueries}?userId=${c.userId}`);
+            const qData = await qResp.json();
+            if (qResp.ok && qData.success && Array.isArray(qData.queries) && qData.queries.length > 0) {
+                hasNew = true;
+            }
+            const fResp = await fetch(`${apiEndpoints.getFeedbackMessages}?userId=${c.userId}`);
+            const fData = await fResp.json();
+            if (fResp.ok && fData.success && Array.isArray(fData.feedback)) {
+                for (const f of fData.feedback) {
+                    const ts = Date.parse(f.timestamp);
+                    if (ts && ts > storedTs) {
+                        hasNew = true;
+                        if (ts > latestTs) latestTs = ts;
+                    }
+                }
+            }
+        }
+
+        if (latestTs > storedTs) {
+            localStorage.setItem('lastFeedbackTs', String(latestTs));
+        }
+        showNotificationDot(hasNew);
+    } catch (err) {
+        console.error('Error checking notifications:', err);
+    }
+}
 
 function renderObjectAsList(obj) {
     const dl = document.createElement('dl');
@@ -337,6 +383,7 @@ async function loadQueries() {
                 li.textContent = q.message;
                 queriesList.appendChild(li);
             });
+            await checkForNotifications();
         }
     } catch (err) {
         console.error('Error loading queries:', err);
@@ -350,13 +397,18 @@ async function loadFeedback() {
         const data = await resp.json();
         feedbackList.innerHTML = '';
         if (resp.ok && data.success) {
+            let latestTs = Number(localStorage.getItem('lastFeedbackTs')) || 0;
             data.feedback.forEach(f => {
                 const li = document.createElement('li');
                 const date = new Date(f.timestamp).toLocaleDateString('bg-BG');
                 const rating = f.rating ? ` (${f.rating})` : '';
                 li.textContent = `${date}: ${f.message}${rating}`;
                 feedbackList.appendChild(li);
+                const ts = Date.parse(f.timestamp);
+                if (ts && ts > latestTs) latestTs = ts;
             });
+            localStorage.setItem('lastFeedbackTs', String(latestTs));
+            await checkForNotifications();
         }
     } catch (err) {
         console.error('Error loading feedback:', err);
@@ -366,4 +418,6 @@ async function loadFeedback() {
 document.addEventListener('DOMContentLoaded', async () => {
     await ensureLoggedIn();
     await loadClients();
+    await checkForNotifications();
+    setInterval(checkForNotifications, 60000);
 });

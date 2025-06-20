@@ -4,6 +4,15 @@ body {
   background: var(--bg-color) var(--bg-gradient);
 }
 .hidden { display: none; }
+#notificationIndicator.notification-dot,
+.notification-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--color-danger);
+}
 #clientsList li { margin-bottom: 5px; }
 #clientsList button {
   width: 100%;
