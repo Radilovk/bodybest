@@ -606,12 +606,20 @@ async function saveAiConfig() {
             body: JSON.stringify(payload)
         });
         const data = await resp.json();
-        if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
+        if (!resp.ok || !data.success) {
+            const error = new Error(data.message || 'Error');
+            error.status = resp.status;
+            throw error;
+        }
         alert('AI конфигурацията е записана.');
         await loadAiConfig();
     } catch (err) {
-        console.error('Error saving AI config:', err);
-        alert('Грешка при записване на AI конфигурацията.');
+        console.error('Error saving AI config:', err, 'Status:', err.status);
+        if (err.message && err.message.includes('Невалиден токен')) {
+            alert('Невалиден токен. Моля, въведете правилния токен и проверете секретa на Worker-а.');
+        } else {
+            alert('Грешка при записване на AI конфигурацията.');
+        }
     }
 }
 
@@ -674,13 +682,21 @@ async function saveCurrentPreset() {
             body: JSON.stringify(payload)
         });
         const data = await resp.json();
-        if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
+        if (!resp.ok || !data.success) {
+            const error = new Error(data.message || 'Error');
+            error.status = resp.status;
+            throw error;
+        }
         presetNameInput.value = '';
         alert('Пресетът е записан.');
         await loadAiPresets();
     } catch (err) {
-        console.error('Error saving preset:', err);
-        alert('Грешка при запис на пресета.');
+        console.error('Error saving preset:', err, 'Status:', err.status);
+        if (err.message && err.message.includes('Невалиден токен')) {
+            alert('Невалиден токен. Моля, въведете правилния токен и проверете секретa на Worker-а.');
+        } else {
+            alert('Грешка при запис на пресета.');
+        }
     }
 }
 
