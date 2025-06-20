@@ -2,7 +2,7 @@
 // chat.js - Логика за Чат
 import { selectors } from './uiElements.js';
 import { chatHistory, currentUserId } from './app.js'; // Access chatHistory and userId
-import { apiEndpoints } from './config.js';
+import { apiEndpoints, initialBotMessage } from './config.js';
 import { escapeHtml } from './utils.js';
 
 export let automatedChatPending = false;
@@ -25,7 +25,6 @@ export function toggleChatWidget(skipInit = false) {
         if(selectors.chatInput) selectors.chatInput.focus();
         if (selectors.chatMessages) {
             if (!skipInit && chatHistory.length === 0 && selectors.chatMessages.children.length === 0) {
-                 const initialBotMessage = "Здравейте! Аз съм вашият виртуален асистент MyBody.Best. Как мога да ви помогна днес?";
                  displayMessage(initialBotMessage, 'bot');
                  chatHistory.push({ text: initialBotMessage, sender: 'bot', isError: false });
             } else if (selectors.chatMessages.children.length === 0 && chatHistory.length > 0) {

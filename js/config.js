@@ -44,3 +44,10 @@ export const apiEndpoints = {
 export const cloudflareAccountId = window.CF_ACCOUNT_ID || 'c2015f4060e04bc3c414f78a9946668e';
 
 export const generateId = (prefix = 'id') => `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
+
+// Първоначално съобщение в чата. Може да се презапише чрез sessionStorage или
+// localStorage с ключ "initialBotMessage".
+export const initialBotMessage =
+    (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('initialBotMessage')) ||
+    (typeof localStorage !== 'undefined' && localStorage.getItem('initialBotMessage')) ||
+    'Здравейте! Аз съм вашият виртуален асистент MyBody.Best. Как мога да ви помогна днес?';
