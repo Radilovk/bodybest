@@ -592,26 +592,32 @@ async function loadAiConfig() {
 async function saveAiConfig() {
     if (!aiConfigForm) return;
     const payload = {
-        planToken: planTokenInput.value.trim(),
-        planModel: planModelInput.value.trim(),
-        chatToken: chatTokenInput.value.trim(),
-        chatModel: chatModelInput.value.trim(),
-        modToken: modTokenInput.value.trim(),
-        modModel: modModelInput.value.trim()
+        updates: {
+            planToken: planTokenInput.value.trim(),
+            planModel: planModelInput.value.trim(),
+            chatToken: chatTokenInput.value.trim(),
+            chatModel: chatModelInput.value.trim(),
+            modToken: modTokenInput.value.trim(),
+            modModel: modModelInput.value.trim()
+        }
     };
-    if (!payload.planToken || !payload.chatToken || !payload.modToken) {
+    if (!payload.updates.planToken || !payload.updates.chatToken || !payload.updates.modToken) {
         alert('Моля, попълнете всички токени.');
         return;
     }
     try {
+        const adminToken = localStorage.getItem('adminToken') || '';
+        const headers = { 'Content-Type': 'application/json' };
+        if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
         const resp = await fetch(apiEndpoints.setAiConfig, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify(payload)
         });
         const data = await resp.json();
         if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
         alert('AI конфигурацията е записана.');
+        await loadAiConfig();
     } catch (err) {
         console.error('Error saving AI config:', err);
         alert('Грешка при записване на AI конфигурацията.');
