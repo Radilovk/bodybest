@@ -885,10 +885,7 @@ async function handleUpdateProfileRequest(request, env) {
         if (!userId) return { success: false, message: "Липсва ID на потребител.", statusHint: 400 };
         const profile = {
             name: data.name ? String(data.name).trim() : "",
-            fullname: data.fullname ? String(data.fullname).trim() : "",
             age: (typeof data.age === "number" && !isNaN(data.age)) ? data.age : null,
-            phone: data.phone ? String(data.phone).trim() : "",
-            email: data.email ? String(data.email).trim().toLowerCase() : "",
             height: (typeof data.height === "number" && !isNaN(data.height)) ? data.height : null
         };
         await env.USER_METADATA_KV.put(`${userId}_profile`, JSON.stringify(profile));
