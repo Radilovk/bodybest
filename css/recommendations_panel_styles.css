@@ -22,6 +22,7 @@
 #recs-panel .tip-card-critical { background-color: var(--note-critical-bg); }
 #recs-panel .tip-card-info { background-color: var(--note-info-bg); }
 #recs-panel .tip-card-warning { background-color: var(--note-important-bg); }
+#recSupplementsCard { background-color: var(--supplement-card-bg); }
 body.dark-theme .recommendation-section .card {
   background-color: var(--metric-value-group-bg-initial);
 }
