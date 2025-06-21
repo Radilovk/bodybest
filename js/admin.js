@@ -532,9 +532,15 @@ if (tagFilterSelect) tagFilterSelect.addEventListener('change', renderClients);
 
 async function showClient(userId) {
     try {
-        const resp = await fetch(`${apiEndpoints.getProfile}?userId=${userId}`);
-        const data = await resp.json();
-        if (resp.ok && data.success) {
+        const [profileResp, dashResp] = await Promise.all([
+            fetch(`${apiEndpoints.getProfile}?userId=${userId}`),
+            fetch(`${apiEndpoints.dashboard}?userId=${userId}`)
+        ]);
+        const [data, dashData] = await Promise.all([
+            profileResp.json(),
+            dashResp.json()
+        ]);
+        if (profileResp.ok && data.success) {
             currentUserId = userId;
             detailsSection.classList.remove('hidden');
             resetTabs();
@@ -545,16 +551,16 @@ async function showClient(userId) {
             if (profileName) profileName.value = data.name || '';
             if (profileEmail) profileEmail.value = data.email || '';
             if (profilePhone) profilePhone.value = data.phone || '';
-            await loadQueries(true);
-            await loadFeedback();
-            await loadClientReplies(true);
+            await Promise.all([
+                loadQueries(true),
+                loadFeedback(),
+                loadClientReplies(true)
+            ]);
             unreadClients.delete(userId);
             unreadByClient.delete(userId);
             updateSectionDots(userId);
             renderClients();
         }
-        const dashResp = await fetch(`${apiEndpoints.dashboard}?userId=${userId}`);
-        const dashData = await dashResp.json();
         if (dashResp.ok && dashData.success) {
             displayInitialAnswers(dashData.initialAnswers || {});
             const menu = dashData.planData?.week1Menu || {};
