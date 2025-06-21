@@ -158,13 +158,35 @@ async function checkForNotifications() {
     }
 }
 
+function renderValue(val) {
+    if (Array.isArray(val)) {
+        const ul = document.createElement('ul');
+        val.forEach(item => {
+            const li = document.createElement('li');
+            if (item && typeof item === 'object') {
+                li.appendChild(renderValue(item));
+            } else {
+                li.textContent = item;
+            }
+            ul.appendChild(li);
+        });
+        return ul;
+    }
+    if (val && typeof val === 'object') {
+        return renderObjectAsList(val);
+    }
+    const span = document.createElement('span');
+    span.textContent = val;
+    return span;
+}
+
 function renderObjectAsList(obj) {
     const dl = document.createElement('dl');
     Object.entries(obj || {}).forEach(([key, val]) => {
         const dt = document.createElement('dt');
         dt.textContent = key;
         const dd = document.createElement('dd');
-        dd.textContent = typeof val === 'object' ? JSON.stringify(val) : val;
+        dd.appendChild(renderValue(val));
         dl.appendChild(dt);
         dl.appendChild(dd);
     });
