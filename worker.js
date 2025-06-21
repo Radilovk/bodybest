@@ -90,11 +90,15 @@ export default {
             'https://radilovk.github.io',
             'https://radilov-k.github.io',
             'http://localhost:5173',
-            'http://localhost:3000'
+            'http://localhost:3000',
+            'null' // за отваряне през file://
         ];
         const requestOrigin = request.headers.get('Origin');
+        const originToSend = requestOrigin === null
+            ? 'null'
+            : allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0];
         const corsHeaders = {
-            'Access-Control-Allow-Origin': allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
+            'Access-Control-Allow-Origin': originToSend,
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
             'Access-Control-Max-Age': '86400',
