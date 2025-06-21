@@ -38,6 +38,7 @@ const initialAnswersPre = document.getElementById('initialAnswers');
 const planMenuPre = document.getElementById('planMenu');
 const dailyLogsPre = document.getElementById('dailyLogs');
 const exportPlanBtn = document.getElementById('exportPlan');
+const openFullProfileLink = document.getElementById('openFullProfile');
 const dashboardPre = document.getElementById('dashboardData');
 const dashboardSummaryDiv = document.getElementById('dashboardSummary');
 const exportDataBtn = document.getElementById('exportData');
@@ -573,6 +574,7 @@ async function showClient(userId) {
             if (profileName) profileName.value = data.name || '';
             if (profileEmail) profileEmail.value = data.email || '';
             if (profilePhone) profilePhone.value = data.phone || '';
+            if (openFullProfileLink) openFullProfileLink.href = `clientProfile.html?userId=${encodeURIComponent(userId)}`;
             await Promise.all([
                 loadQueries(true),
                 loadFeedback(),
