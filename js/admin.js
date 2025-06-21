@@ -519,6 +519,8 @@ if (toggleWeightChartBtn) {
 if (closeProfileBtn) {
     closeProfileBtn.addEventListener('click', () => {
         detailsSection.classList.add('hidden');
+        resetTabs();
+        sessionStorage.removeItem('activeTabId');
         currentUserId = null;
     });
 }
