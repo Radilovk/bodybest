@@ -541,7 +541,12 @@ if (toggleWeightChartBtn) {
 
 if (toggleFullProfileBtn) {
     toggleFullProfileBtn.addEventListener('click', () => {
-        fullProfileFrame?.classList.toggle('hidden');
+        const isHidden = fullProfileFrame?.classList.toggle('hidden');
+        if (isHidden) {
+            toggleFullProfileBtn.textContent = 'Покажи пълен профил';
+        } else {
+            toggleFullProfileBtn.textContent = 'Скрий пълен профил';
+        }
     });
 }
 
@@ -560,6 +565,8 @@ if (sortOrderSelect) sortOrderSelect.addEventListener('change', renderClients);
 if (tagFilterSelect) tagFilterSelect.addEventListener('change', renderClients);
 
 async function showClient(userId) {
+    if (fullProfileFrame) fullProfileFrame.classList.add('hidden');
+    if (toggleFullProfileBtn) toggleFullProfileBtn.textContent = 'Покажи пълен профил';
     try {
         const [profileResp, dashResp] = await Promise.all([
             fetch(`${apiEndpoints.getProfile}?userId=${userId}`),
