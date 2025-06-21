@@ -200,9 +200,13 @@ function capitalizeDay(day) {
     return days[day] || day;
 }
 
-function displayInitialAnswers(data) {
+function displayInitialAnswers(data, isError = false) {
     if (!initialAnswersPre) return;
     initialAnswersPre.innerHTML = '';
+    if (isError) {
+        initialAnswersPre.textContent = 'Грешка при зареждане';
+        return;
+    }
     if (!data || Object.keys(data).length === 0) {
         initialAnswersPre.textContent = 'Няма данни';
         return;
@@ -210,9 +214,13 @@ function displayInitialAnswers(data) {
     initialAnswersPre.appendChild(renderObjectAsList(data));
 }
 
-function displayPlanMenu(menu) {
+function displayPlanMenu(menu, isError = false) {
     if (!planMenuPre) return;
     planMenuPre.innerHTML = '';
+    if (isError) {
+        planMenuPre.textContent = 'Грешка при зареждане';
+        return;
+    }
     if (!menu || Object.keys(menu).length === 0) {
         planMenuPre.textContent = 'Няма меню';
         return;
@@ -233,9 +241,13 @@ function displayPlanMenu(menu) {
     planMenuPre.appendChild(table);
 }
 
-function displayDailyLogs(logs) {
+function displayDailyLogs(logs, isError = false) {
     if (!dailyLogsPre) return;
     dailyLogsPre.innerHTML = '';
+    if (isError) {
+        dailyLogsPre.textContent = 'Грешка при зареждане';
+        return;
+    }
     if (!Array.isArray(logs) || logs.length === 0) {
         dailyLogsPre.textContent = 'Няма записани дневници';
         return;
@@ -537,9 +549,10 @@ async function showClient(userId) {
             fetch(`${apiEndpoints.dashboard}?userId=${userId}`)
         ]);
         const [data, dashData] = await Promise.all([
-            profileResp.json(),
-            dashResp.json()
+            profileResp.json().catch(() => ({})),
+            dashResp.json().catch(() => ({}))
         ]);
+        let hasError = false;
         if (profileResp.ok && data.success) {
             currentUserId = userId;
             detailsSection.classList.remove('hidden');
@@ -560,12 +573,14 @@ async function showClient(userId) {
             unreadByClient.delete(userId);
             updateSectionDots(userId);
             renderClients();
+        } else {
+            hasError = true;
         }
         if (dashResp.ok && dashData.success) {
-            displayInitialAnswers(dashData.initialAnswers || {});
+            displayInitialAnswers(dashData.initialAnswers || {}, false);
             const menu = dashData.planData?.week1Menu || {};
-            displayPlanMenu(menu);
-            displayDailyLogs(dashData.dailyLogs || []);
+            displayPlanMenu(menu, false);
+            displayDailyLogs(dashData.dailyLogs || [], false);
             displayDashboardSummary(dashData);
             if (dashboardPre) dashboardPre.textContent = JSON.stringify(dashData, null, 2);
             if (notesField) notesField.value = dashData.currentStatus?.adminNotes || '';
@@ -579,9 +594,18 @@ async function showClient(userId) {
                 updateTagFilterOptions();
                 renderClients();
             }
+        } else {
+            displayInitialAnswers(null, true);
+            displayPlanMenu(null, true);
+            displayDailyLogs(null, true);
+            hasError = true;
+        }
+        if (hasError) {
+            alert('Грешка при зареждане на данните за клиента');
         }
     } catch (err) {
         console.error('Error loading profile:', err);
+        alert('Грешка при зареждане на данните за клиента');
     }
     await loadNotifications();
     updateSectionDots(userId);
