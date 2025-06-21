@@ -106,7 +106,7 @@ async function checkForNotifications() {
         const data = await resp.json();
         if (!resp.ok || !data.success) return;
 
-        const clients = data.clients || [];
+        const clients = Array.isArray(data.clients) ? data.clients : [];
         let hasNew = false;
         const storedTs = Number(localStorage.getItem('lastFeedbackTs')) || 0;
         let latestTs = storedTs;
@@ -339,8 +339,9 @@ async function loadClients() {
         const resp = await fetch(apiEndpoints.listClients);
         const data = await resp.json();
         if (resp.ok && data.success) {
+            const clientsArr = Array.isArray(data.clients) ? data.clients : [];
             const withStatus = await Promise.all(
-                data.clients.map(async c => {
+                clientsArr.map(async c => {
                     try {
                         const dResp = await fetch(`${apiEndpoints.dashboard}?userId=${c.userId}`);
                         const dData = await dResp.json();
@@ -525,7 +526,8 @@ async function loadNotifications() {
         if (!resp.ok || !data.success) return;
         const storedTs = Number(localStorage.getItem('lastFeedbackTs')) || 0;
         const items = [];
-        for (const c of data.clients) {
+        const clients = Array.isArray(data.clients) ? data.clients : [];
+        for (const c of clients) {
             const [qResp, rResp, fResp] = await Promise.all([
                 fetch(`${apiEndpoints.peekAdminQueries}?userId=${c.userId}`),
                 fetch(`${apiEndpoints.peekClientReplies}?userId=${c.userId}`),
