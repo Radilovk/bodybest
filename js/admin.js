@@ -583,12 +583,14 @@ if (toggleWeightChartBtn) {
 
 if (toggleFullProfileBtn) {
     toggleFullProfileBtn.addEventListener('click', () => {
-        const isHidden = fullProfileFrame?.classList.toggle('hidden');
-        if (isHidden) {
-            toggleFullProfileBtn.textContent = 'Покажи пълен профил';
-        } else {
-            toggleFullProfileBtn.textContent = 'Скрий пълен профил';
+        if (currentUserId && fullProfileFrame && !fullProfileFrame.src) {
+            fullProfileFrame.src = `clientProfile.html?userId=${encodeURIComponent(currentUserId)}`;
         }
+        if (currentUserId && openFullProfileLink) {
+            openFullProfileLink.href = `clientProfile.html?userId=${encodeURIComponent(currentUserId)}`;
+        }
+        const isHidden = fullProfileFrame?.classList.toggle('hidden');
+        toggleFullProfileBtn.textContent = isHidden ? 'Покажи пълен профил' : 'Скрий пълен профил';
     });
 }
 

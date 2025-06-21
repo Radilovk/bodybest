@@ -11,55 +11,47 @@
 <body>
   <div class="container container-main">
     <header class="header mb-3">
-      <h1 id="userName">Клиент</h1>
-      <p>Статус на план: <span id="planStatus"></span></p>
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1><i class="fas fa-user-circle me-2"></i><span id="userName">Клиент</span></h1>
+          <p><i class="fas fa-id-card me-2"></i>Потребителски профил</p>
+        </div>
+        <div class="text-end">
+          <p class="mb-1"><i class="fas fa-weight me-2"></i><strong>Текущо тегло:</strong> <span id="currentWeightHeader"></span></p>
+          <p class="mb-1"><i class="fas fa-ruler-vertical me-2"></i><strong>Височина:</strong> <span id="userHeightHeader"></span></p>
+          <p class="mb-0"><i class="fas fa-bullseye me-2"></i><strong>Основна цел:</strong> <span id="userGoalHeader"></span></p>
+        </div>
+      </div>
+      <p class="mt-2">Статус на план: <span id="planStatus"></span></p>
     </header>
 
     <ul class="nav nav-tabs" id="profileTabs" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">Профил</button>
+        <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">
+          <i class="fas fa-info-circle me-2"></i>Основна информация
+        </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="plan-tab" data-bs-toggle="tab" data-bs-target="#plan" type="button" role="tab">План</button>
+        <button class="nav-link" id="plan-tab" data-bs-toggle="tab" data-bs-target="#plan" type="button" role="tab">
+          <i class="fas fa-utensils me-2"></i>Хранителен план
+        </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs" type="button" role="tab">Дневници</button>
+        <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs" type="button" role="tab">
+          <i class="fas fa-clipboard-list me-2"></i>Дневни записи
+        </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">Данни</button>
+        <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+          <i class="fas fa-chart-line me-2"></i>Анализ на прогреса
+        </button>
       </li>
     </ul>
 
     <div class="tab-content pt-3">
       <div class="tab-pane fade show active" id="profile" role="tabpanel">
         <div class="row">
-          <div class="col-md-6">
-            <p>Пълно име: <span id="userFullName"></span></p>
-            <p>Пол: <span id="userGender"></span></p>
-            <p>Възраст: <span id="userAge"></span></p>
-            <p>Имейл: <span id="userEmail"></span></p>
-            <p>Височина: <span id="userHeight"></span></p>
-            <p>Основна цел: <span id="userGoal"></span></p>
-            <p>Ниво на мотивация: <span id="motivationLevel"></span></p>
-            <p>Медицински състояния: <span id="medicalConditions"></span></p>
-            <p>Стрес: <span id="stressLevel"></span></p>
-            <p>Лекарства: <span id="medications"></span></p>
-            <p>Прием на вода: <span id="waterIntake"></span></p>
-            <p>Предпочитания: <span id="foodPreferences"></span></p>
-            <p>Честота на преяждане: <span id="overeatingFrequency"></span></p>
-            <p>Желания за храна: <span id="foodCravings"></span></p>
-            <p>Тригери за храна: <span id="foodTriggers"></span></p>
-            <p>Консумация на алкохол: <span id="alcoholFrequency"></span></p>
-            <p>Хранителни навици: <span id="eatingHabits"></span></p>
-            <p>Целеви BMI: <span id="targetBmi"></span></p>
-            <p>Продължителност на съня: <span id="sleepHours"></span></p>
-            <p>Събуждания по време на сън: <span id="sleepInterruptions"></span></p>
-            <p>Хронотип: <span id="chronotype"></span></p>
-            <p>Ниво на активност: <span id="activityLevel"></span></p>
-            <p>Физическа активност: <span id="physicalActivity"></span></p>
-            <p>Височина (стойност): <span id="heightValue"></span></p>
-            <p>Основна цел (план): <span id="mainGoal"></span></p>
-          </div>
+          <div class="col-md-6" id="profileInfo"></div>
           <div class="col-md-6">
             <form id="profileForm">
               <div class="mb-2">
@@ -114,12 +106,10 @@
       </div>
 
       <div class="tab-pane fade" id="dashboard" role="tabpanel">
-        <p>Текущо тегло: <span id="currentWeight"></span></p>
-        <p>BMI: <span id="bmiValue"></span></p>
-        <p>Калории: <span id="caloriesValue"></span></p>
-        <p>Протеини: <span id="proteinValue"></span> (<span id="proteinPercent"></span>)</p>
-        <p>Въглехидрати: <span id="carbsValue"></span> (<span id="carbsPercent"></span>)</p>
-        <p>Мазнини: <span id="fatValue"></span> (<span id="fatPercent"></span>)</p>
+        <div class="row mb-4" id="macroCards"></div>
+        <div class="card mb-4">
+          <div class="card-body p-0" id="dashboardInfo"></div>
+        </div>
         <div class="mb-2">
           <div class="progress">
             <div id="goalProgressBar" class="progress-bar" role="progressbar"></div>
@@ -138,11 +128,6 @@
           </div>
           <small>Здравословен индекс: <span id="healthScore"></span></small>
         </div>
-        <p>Средно тегло: <span id="avgWeight"></span></p>
-        <p>Средна енергия: <span id="avgEnergy"></span></p>
-        <p>Среден сън: <span id="avgSleep"></span></p>
-        <p id="weightPeriod"></p>
-        <p>Текуща серия: <span id="currentStreak"></span></p>
         <div id="streakCalendar" class="d-flex flex-wrap gap-1"></div>
       </div>
     </div>
