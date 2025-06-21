@@ -464,6 +464,13 @@ function resetTabs() {
     });
 }
 
+function openDetailsSections() {
+    const detailElems = document.querySelectorAll('#clientDetails details');
+    detailElems.forEach(d => {
+        d.open = true;
+    });
+}
+
 async function loadNotifications() {
     if (!notificationsList || !notificationsSection) return;
     notificationsList.innerHTML = '';
@@ -558,6 +565,7 @@ async function showClient(userId) {
             currentUserId = userId;
             detailsSection.classList.remove('hidden');
             resetTabs();
+            openDetailsSections();
             const clientInfo = allClients.find(c => c.userId === userId);
             const regDate = clientInfo?.registrationDate ? new Date(clientInfo.registrationDate).toLocaleDateString('bg-BG') : '';
             const name = clientInfo?.name || data.name || userId;
