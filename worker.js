@@ -86,13 +86,19 @@ export default {
             console.log(`[DEBUG] ${method} ${path} @ ${new Date().toISOString()}`);
         }
 
-        const allowedOrigins = [
+        const defaultAllowedOrigins = [
             'https://radilovk.github.io',
             'https://radilov-k.github.io',
             'http://localhost:5173',
             'http://localhost:3000',
             'null' // за отваряне през file://
         ];
+        const allowedOrigins = Array.from(new Set(
+            (env.ALLOWED_ORIGINS
+                ? env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
+                : [])
+                .concat(defaultAllowedOrigins)
+        ));
         const requestOrigin = request.headers.get('Origin');
         const originToSend = requestOrigin === null
             ? 'null'
