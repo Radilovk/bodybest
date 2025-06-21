@@ -58,27 +58,34 @@ function fillProfile(data) {
   setText('userGoalHeader', data.mainGoal);
   setText('userHeightHeader', data.height, ' см');
 
-  const container = $('profileInfo');
-  if (!container) return;
-  container.innerHTML = '';
-  const fields = {
+  const demographics = {
     fullname: data.fullname,
     gender: data.gender,
     age: data.age,
-    email: data.email,
-    height: data.height ? `${data.height} см` : undefined,
+    email: data.email
+  };
+  const physical = {
+    height: data.height ? `${data.height} см` : undefined
+  };
+  const goals = {
     mainGoal: data.mainGoal,
     motivationLevel: data.motivationLevel,
-    targetBmi: data.targetBmi,
+    targetBmi: data.targetBmi
+  };
+  const sleep = {
     sleepHours: data.sleepHours,
     sleepInterruptions: data.sleepInterruptions,
     chronotype: data.chronotype,
     activityLevel: data.activityLevel,
-    physicalActivity: data.physicalActivity,
+    physicalActivity: data.physicalActivity
+  };
+  const health = {
     medicalConditions: Array.isArray(data.medicalConditions) ? data.medicalConditions.join(', ') : data.medicalConditions,
     stressLevel: data.stressLevel,
     medications: data.medications,
-    waterIntake: data.waterIntake,
+    waterIntake: data.waterIntake
+  };
+  const food = {
     foodPreferences: data.foodPreferences,
     overeatingFrequency: data.overeatingFrequency,
     foodCravings: data.foodCravings,
@@ -86,21 +93,34 @@ function fillProfile(data) {
     alcoholFrequency: data.alcoholFrequency,
     eatingHabits: data.eatingHabits
   };
-  const card = document.createElement('div');
-  card.className = 'card';
-  const body = document.createElement('div');
-  body.className = 'card-body p-0';
-  Object.entries(fields).forEach(([k, v]) => {
-    body.appendChild(createInfoItem(labelMap[k] || k, v));
+  const sections = {
+    demographics: demographics,
+    physical: physical,
+    goals: goals,
+    sleep: sleep,
+    health: health,
+    food: food
+  };
+  Object.entries(sections).forEach(([key, obj]) => {
+    const el = $(`${key}Info`);
+    if (!el) return;
+    el.innerHTML = '';
+    Object.entries(obj).forEach(([k, v]) => {
+      el.appendChild(createInfoItem(labelMap[k] || k, v));
+    });
   });
-  card.appendChild(body);
-  container.appendChild(card);
 }
 
 function fillDashboard(data) {
   const curW = data.currentStatus?.weight;
   setText('currentWeightHeader', curW, ' кг');
   setText('planStatus', data.planStatus);
+  setText('planStatusBadge', data.planStatus);
+  const badge = $('planStatusBadge');
+  if (badge) {
+    badge.classList.remove('bg-success', 'bg-warning');
+    badge.classList.add(data.planStatus === 'ready' ? 'bg-success' : 'bg-warning');
+  }
 
   const macrosContainer = $('macroCards');
   if (macrosContainer) {
@@ -329,6 +349,12 @@ async function savePlan() {
     if (resp.ok && data.success) {
       alert('Планът е записан.');
       setText('planStatus', 'ready');
+      setText('planStatusBadge', 'ready');
+      const badge = $('planStatusBadge');
+      if (badge) {
+        badge.classList.remove('bg-warning');
+        badge.classList.add('bg-success');
+      }
     } else {
       alert(data.message || 'Грешка при запис.');
     }

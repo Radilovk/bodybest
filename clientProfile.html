@@ -51,7 +51,32 @@
     <div class="tab-content pt-3">
       <div class="tab-pane fade show active" id="profile" role="tabpanel">
         <div class="row">
-          <div class="col-md-6" id="profileInfo"></div>
+          <div class="col-md-6" id="profileInfo">
+            <div class="card mb-3">
+              <div class="card-header"><i class="fas fa-user me-2"></i>Демографски данни</div>
+              <div class="card-body p-0" id="demographicsInfo"></div>
+            </div>
+            <div class="card mb-3">
+              <div class="card-header"><i class="fas fa-weight me-2"></i>Физически характеристики</div>
+              <div class="card-body p-0" id="physicalInfo"></div>
+            </div>
+            <div class="card mb-3">
+              <div class="card-header"><i class="fas fa-bullseye me-2"></i>Цели и мотивация</div>
+              <div class="card-body p-0" id="goalsInfo"></div>
+            </div>
+            <div class="card mb-3">
+              <div class="card-header"><i class="fas fa-bed me-2"></i>Сън и активност</div>
+              <div class="card-body p-0" id="sleepInfo"></div>
+            </div>
+            <div class="card mb-3">
+              <div class="card-header"><i class="fas fa-notes-medical me-2"></i>Здравословни особености</div>
+              <div class="card-body p-0" id="healthInfo"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><i class="fas fa-utensils me-2"></i>Хранителни модели</div>
+              <div class="card-body p-0" id="foodInfo"></div>
+            </div>
+          </div>
           <div class="col-md-6">
             <form id="profileForm">
               <div class="mb-2">
@@ -91,6 +116,10 @@
       </div>
 
       <div class="tab-pane fade" id="plan" role="tabpanel">
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>Статус на плана:
+          <span id="planStatusBadge" class="badge bg-warning"></span>
+        </div>
         <div id="planMenu"></div>
         <textarea id="planJson" class="form-control" rows="10" hidden></textarea>
         <button id="savePlanBtn" type="button" class="btn btn-primary mt-2">Запази план</button>
