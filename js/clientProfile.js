@@ -170,7 +170,7 @@ function fillDashboard(data) {
   const weightVals = logs.map(l => parseFloat(l.data?.weight)).filter(v => !isNaN(v));
   const energyVals = logs.map(l => parseFloat(l.data?.energy)).filter(v => !isNaN(v));
   const sleepVals = logs.map(l => parseFloat(l.data?.sleep)).filter(v => !isNaN(v));
-  const infoContainer = $('dashboardInfo');
+  const infoContainer = $('analyticsInfo');
   if (infoContainer) {
     infoContainer.innerHTML = '';
     const fields = {
