@@ -27,6 +27,9 @@
       <option value="processing">processing</option>
       <option value="ready">ready</option>
     </select>
+    <select id="tagFilter">
+      <option value="all">Всички етикети</option>
+    </select>
     <select id="sortOrder">
       <option value="name">Сортирай по име</option>
       <option value="date">Сортирай по дата</option>
@@ -38,6 +41,15 @@
 
   <main id="clientDetails" class="main-content card hidden">
     <h2 id="clientName">Клиент</h2>
+    <nav id="clientTabs" class="tabs styled-tabs" role="tablist">
+      <button class="tab-btn" role="tab" aria-selected="true" data-target="profileTab">Профил</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-target="notesTab">Бележки</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-target="qaTab">Въпросник</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-target="menuTab">Меню</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-target="logsTab">Дневници</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-target="dashboardTab">Данни</button>
+    </nav>
+    <section id="profileTab" class="client-tab active-tab-content" role="tabpanel">
     <details id="profileSection">
       <summary>Лични данни</summary>
       <form id="profileForm">
@@ -49,28 +61,34 @@
     </details>
     <button id="regeneratePlan">Генерирай нов план</button>
     <button id="aiSummary">AI резюме</button>
+    </section>
+    <section id="notesTab" class="client-tab" role="tabpanel" aria-hidden="true">
     <details id="notesSection">
       <summary>Бележки</summary>
       <textarea id="adminNotes" rows="3" cols="40"></textarea><br>
       <label>Етикети: <input id="adminTags"></label>
       <button id="saveNotes">Запази бележките</button>
     </details>
-
+    </section>
+    <section id="qaTab" class="client-tab" role="tabpanel" aria-hidden="true">
     <details id="qaSection">
       <summary>Данни от въпросника</summary>
       <div id="initialAnswers"></div>
     </details>
-
+    </section>
+    <section id="menuTab" class="client-tab" role="tabpanel" aria-hidden="true">
     <details id="menuSection">
       <summary>Текущо меню</summary>
       <div id="planMenu"></div>
     </details>
-
+    </section>
+    <section id="logsTab" class="client-tab" role="tabpanel" aria-hidden="true">
     <details id="logsSection">
       <summary>Дневници</summary>
       <div id="dailyLogs"></div>
     </details>
-
+    </section>
+    <section id="dashboardTab" class="client-tab" role="tabpanel" aria-hidden="true">
     <details id="dashboardSection">
       <summary>Пълни данни</summary>
       <div id="dashboardSummary"></div>
@@ -81,6 +99,8 @@
     </details>
     <button id="exportData">Експортирай всички данни</button>
     <button id="exportPlan">Експортирай плана като JSON</button>
+    <button id="exportCsv">Експортирай дневниците CSV</button>
+    </section>
 
     <details id="queriesSection">
       <summary>Запитвания <span id="queriesDot" class="notification-dot hidden"></span></summary>
@@ -102,6 +122,7 @@
   <section id="statsSection" class="hidden">
     <h2>Статистика</h2>
     <pre id="statsOutput"></pre>
+    <canvas id="statusChart" width="300" height="200"></canvas>
   </section>
 
   <details id="aiConfigSection" class="card">
@@ -135,6 +156,7 @@
     </form>
   </details>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module" src="js/admin.js"></script>
 </body>
 </html>
