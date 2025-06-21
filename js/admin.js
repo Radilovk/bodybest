@@ -574,7 +574,7 @@ async function showClient(userId) {
             if (profileName) profileName.value = data.name || '';
             if (profileEmail) profileEmail.value = data.email || '';
             if (profilePhone) profilePhone.value = data.phone || '';
-            if (openFullProfileLink) openFullProfileLink.href = `clientProfile.html?userId=${encodeURIComponent(userId)}`;
+            if (openFullProfileLink) openFullProfileLink.href = `Userdata.html?userId=${encodeURIComponent(userId)}`;
             await Promise.all([
                 loadQueries(true),
                 loadFeedback(),

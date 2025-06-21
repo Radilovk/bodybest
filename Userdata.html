@@ -423,6 +423,18 @@
                     </div>
                 </div>
             </div>
+            <div class="mt-4">
+                <h3 class="section-title"><i class="fas fa-edit me-2"></i>Редакция</h3>
+                <form id="profileEditForm" class="row g-2">
+                    <div class="col-md-4"><input id="nameInput" class="form-control" placeholder="Име"></div>
+                    <div class="col-md-4"><input id="fullnameInput" class="form-control" placeholder="Пълно име"></div>
+                    <div class="col-md-2"><input id="ageInput" type="number" class="form-control" placeholder="Възраст"></div>
+                    <div class="col-md-2"><input id="heightInput" type="number" class="form-control" placeholder="Височина"></div>
+                    <div class="col-md-4"><input id="emailInput" type="email" class="form-control" placeholder="Имейл"></div>
+                    <div class="col-md-4"><input id="phoneInput" class="form-control" placeholder="Телефон"></div>
+                    <div class="col-12"><button type="button" id="saveProfileBtn" class="btn btn-primary">Запази профила</button></div>
+                </form>
+            </div>
 
             <!-- Хранителен план -->
             <div class="tab-pane fade" id="plan" role="tabpanel">
@@ -474,6 +486,11 @@
                 
                 <div class="row" id="principlesSection">
                     <!-- Принципите ще бъдат генерирани тук -->
+                </div>
+                <div class="mt-4">
+                    <h3 class="section-title"><i class="fas fa-edit me-2"></i>Редакция</h3>
+                    <textarea id="planJson" class="form-control" rows="10"></textarea>
+                    <button type="button" id="savePlanBtn" class="btn btn-primary mt-2">Запази плана</button>
                 </div>
             </div>
 
@@ -619,6 +636,7 @@
         //   document.getElementById('userName').textContent = data.userName;
         //   // ... и т.н.
         // }
-    </script>
+</script>
+    <script type="module" src="js/clientProfile.js"></script>
 </body>
 </html>
