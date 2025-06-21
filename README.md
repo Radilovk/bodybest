@@ -98,7 +98,7 @@ The output is placed in the `docs/` folder.
 
 ## Deployment to Cloudflare
 
-A GitHub Action workflow at `.github/workflows/deploy.yml` automatically publishes the worker when you push to `main`. It runs `wrangler publish` using the secret `CF_API_TOKEN` for authentication.
+A GitHub Action workflow at `.github/workflows/deploy.yml` automatically publishes the worker when you push to `main` or open a pull request that modifies `worker.js`. It runs `wrangler publish` using the secret `CF_API_TOKEN` for authentication.
 
 To set the token:
 
