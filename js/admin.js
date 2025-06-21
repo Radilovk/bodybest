@@ -59,6 +59,7 @@ const testPlanBtn = document.getElementById('testPlanModel');
 const testChatBtn = document.getElementById('testChatModel');
 const testModBtn = document.getElementById('testModModel');
 const clientNameHeading = document.getElementById('clientName');
+const closeProfileBtn = document.getElementById('closeProfile');
 const notificationsList = document.getElementById('notificationsList');
 const notificationsSection = document.getElementById('notificationsSection');
 const notificationDot = document.getElementById('notificationIndicator');
@@ -428,10 +429,26 @@ function setupTabs() {
     const activate = (btn) => {
         const target = btn.getAttribute('data-target');
         buttons.forEach(b => b.setAttribute('aria-selected', b === btn ? 'true' : 'false'));
-        panels.forEach(p => p.classList.toggle('active-tab-content', p.id === target));
+        panels.forEach(p => {
+            const active = p.id === target;
+            p.classList.toggle('active-tab-content', active);
+            p.setAttribute('aria-hidden', active ? 'false' : 'true');
+        });
     };
     buttons.forEach(b => b.addEventListener('click', () => activate(b)));
     activate(buttons[0]);
+}
+
+function resetTabs() {
+    const buttons = document.querySelectorAll('#clientTabs .tab-btn');
+    const panels = document.querySelectorAll('.client-tab');
+    if (buttons.length === 0) return;
+    buttons.forEach((b, idx) => b.setAttribute('aria-selected', idx === 0 ? 'true' : 'false'));
+    panels.forEach((p, idx) => {
+        const active = idx === 0;
+        p.classList.toggle('active-tab-content', active);
+        p.setAttribute('aria-hidden', active ? 'false' : 'true');
+    });
 }
 
 async function loadNotifications() {
@@ -499,6 +516,13 @@ if (toggleWeightChartBtn) {
     });
 }
 
+if (closeProfileBtn) {
+    closeProfileBtn.addEventListener('click', () => {
+        detailsSection.classList.add('hidden');
+        currentUserId = null;
+    });
+}
+
 if (clientSearch) clientSearch.addEventListener('input', renderClients);
 if (statusFilter) statusFilter.addEventListener('change', renderClients);
 if (sortOrderSelect) sortOrderSelect.addEventListener('change', renderClients);
@@ -511,6 +535,7 @@ async function showClient(userId) {
         if (resp.ok && data.success) {
             currentUserId = userId;
             detailsSection.classList.remove('hidden');
+            resetTabs();
             const clientInfo = allClients.find(c => c.userId === userId);
             const regDate = clientInfo?.registrationDate ? new Date(clientInfo.registrationDate).toLocaleDateString('bg-BG') : '';
             const name = clientInfo?.name || data.name || userId;
