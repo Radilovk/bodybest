@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Профил на клиент</title>
+  <link rel="stylesheet" href="css/clientProfile.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="container container-main">
+    <header class="header mb-3">
+      <h1 id="userName">Клиент</h1>
+      <p>Статус на план: <span id="planStatus"></span></p>
+    </header>
+
+    <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">Профил</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="plan-tab" data-bs-toggle="tab" data-bs-target="#plan" type="button" role="tab">План</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs" type="button" role="tab">Дневници</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">Данни</button>
+      </li>
+    </ul>
+
+    <div class="tab-content pt-3">
+      <div class="tab-pane fade show active" id="profile" role="tabpanel">
+        <div class="row">
+          <div class="col-md-6">
+            <p>Пълно име: <span id="userFullName"></span></p>
+            <p>Пол: <span id="userGender"></span></p>
+            <p>Възраст: <span id="userAge"></span></p>
+            <p>Имейл: <span id="userEmail"></span></p>
+            <p>Височина: <span id="userHeight"></span></p>
+            <p>Основна цел: <span id="userGoal"></span></p>
+            <p>Ниво на мотивация: <span id="motivationLevel"></span></p>
+            <p>Медицински състояния: <span id="medicalConditions"></span></p>
+            <p>Стрес: <span id="stressLevel"></span></p>
+            <p>Лекарства: <span id="medications"></span></p>
+            <p>Прием на вода: <span id="waterIntake"></span></p>
+            <p>Предпочитания: <span id="foodPreferences"></span></p>
+          </div>
+          <div class="col-md-6">
+            <form id="profileForm">
+              <div class="mb-2">
+                <label for="nameInput" class="form-label">Име</label>
+                <input id="nameInput" type="text" class="form-control">
+              </div>
+              <div class="mb-2">
+                <label for="fullnameInput" class="form-label">Имена</label>
+                <input id="fullnameInput" type="text" class="form-control">
+              </div>
+              <div class="mb-2">
+                <label for="ageInput" class="form-label">Възраст</label>
+                <input id="ageInput" type="number" class="form-control">
+              </div>
+              <div class="mb-2">
+                <label for="phoneInput" class="form-label">Телефон</label>
+                <input id="phoneInput" type="tel" class="form-control">
+              </div>
+              <div class="mb-2">
+                <label for="emailInput" class="form-label">Имейл</label>
+                <input id="emailInput" type="email" class="form-control">
+              </div>
+              <div class="mb-3">
+                <label for="heightInput" class="form-label">Височина (см)</label>
+                <input id="heightInput" type="number" class="form-control">
+              </div>
+              <button id="saveProfileBtn" type="button" class="btn btn-primary">Запази профила</button>
+            </form>
+          </div>
+        </div>
+        <div class="mt-3">
+          <h4>Бележки</h4>
+          <p id="adminNotes"></p>
+          <ul id="adminTags" class="list-inline"></ul>
+        </div>
+        <div class="mt-3" id="initialAnswersContainer"></div>
+      </div>
+
+      <div class="tab-pane fade" id="plan" role="tabpanel">
+        <textarea id="planJson" class="form-control" rows="10"></textarea>
+        <button id="savePlanBtn" type="button" class="btn btn-primary mt-2">Запази план</button>
+      </div>
+
+      <div class="tab-pane fade" id="logs" role="tabpanel">
+        <table class="table">
+          <thead>
+            <tr><th>Дата</th><th>Тегло</th><th>Настроение</th><th>Енергия</th><th>Спокойствие</th><th>Хидратация</th><th>Сън</th><th>Хранения</th></tr>
+          </thead>
+          <tbody id="logsTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="tab-pane fade" id="dashboard" role="tabpanel">
+        <p>Текущо тегло: <span id="currentWeight"></span></p>
+        <p>BMI: <span id="bmiValue"></span></p>
+        <p>Калории: <span id="caloriesValue"></span></p>
+        <p>Протеини: <span id="proteinValue"></span> (<span id="proteinPercent"></span>)</p>
+        <p>Въглехидрати: <span id="carbsValue"></span> (<span id="carbsPercent"></span>)</p>
+        <p>Мазнини: <span id="fatValue"></span> (<span id="fatPercent"></span>)</p>
+        <div class="mb-2">
+          <div class="progress">
+            <div id="goalProgressBar" class="progress-bar" role="progressbar"></div>
+          </div>
+          <small>Напредък към целта: <span id="goalProgress"></span></small>
+        </div>
+        <div class="mb-2">
+          <div class="progress">
+            <div id="engagementBar" class="progress-bar" role="progressbar"></div>
+          </div>
+          <small>Ангажираност: <span id="engagementScore"></span></small>
+        </div>
+        <div class="mb-2">
+          <div class="progress">
+            <div id="healthBar" class="progress-bar" role="progressbar"></div>
+          </div>
+          <small>Здравословен индекс: <span id="healthScore"></span></small>
+        </div>
+        <p>Средно тегло: <span id="avgWeight"></span></p>
+        <p>Средна енергия: <span id="avgEnergy"></span></p>
+        <p>Среден сън: <span id="avgSleep"></span></p>
+        <p id="weightPeriod"></p>
+        <p>Текуща серия: <span id="currentStreak"></span></p>
+        <div id="streakCalendar" class="d-flex flex-wrap gap-1"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/clientProfile.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
