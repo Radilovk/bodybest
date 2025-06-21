@@ -39,6 +39,8 @@ const planMenuPre = document.getElementById('planMenu');
 const dailyLogsPre = document.getElementById('dailyLogs');
 const exportPlanBtn = document.getElementById('exportPlan');
 const openFullProfileLink = document.getElementById('openFullProfile');
+const toggleFullProfileBtn = document.getElementById('toggleFullProfile');
+const fullProfileFrame = document.getElementById('fullProfileFrame');
 const dashboardPre = document.getElementById('dashboardData');
 const dashboardSummaryDiv = document.getElementById('dashboardSummary');
 const exportDataBtn = document.getElementById('exportData');
@@ -537,6 +539,12 @@ if (toggleWeightChartBtn) {
     });
 }
 
+if (toggleFullProfileBtn) {
+    toggleFullProfileBtn.addEventListener('click', () => {
+        fullProfileFrame?.classList.toggle('hidden');
+    });
+}
+
 if (closeProfileBtn) {
     closeProfileBtn.addEventListener('click', () => {
         detailsSection.classList.add('hidden');
@@ -575,6 +583,7 @@ async function showClient(userId) {
             if (profileEmail) profileEmail.value = data.email || '';
             if (profilePhone) profilePhone.value = data.phone || '';
             if (openFullProfileLink) openFullProfileLink.href = `Userdata.html?userId=${encodeURIComponent(userId)}`;
+            if (fullProfileFrame) fullProfileFrame.src = `Userdata.html?userId=${encodeURIComponent(userId)}`;
             await Promise.all([
                 loadQueries(true),
                 loadFeedback(),
