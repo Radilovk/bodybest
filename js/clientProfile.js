@@ -1,5 +1,6 @@
 import { apiEndpoints } from './config.js';
 import { jsonrepair } from 'https://cdn.jsdelivr.net/npm/jsonrepair/+esm';
+import { labelMap } from './labelMap.js';
 
 function $(id) {
   return document.getElementById(id);
@@ -159,7 +160,7 @@ function renderObjectAsList(obj) {
   const dl = document.createElement('dl');
   Object.entries(obj || {}).forEach(([key, val]) => {
     const dt = document.createElement('dt');
-    dt.textContent = key;
+    dt.textContent = labelMap[key] || key;
     const dd = document.createElement('dd');
     dd.appendChild(renderValue(val));
     dl.appendChild(dt);
