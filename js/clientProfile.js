@@ -28,7 +28,11 @@ async function loadData() {
     const profileData = await profileRes.json();
     const dashData = await dashRes.json();
     if (profileRes.ok && profileData.success) fillProfile(profileData);
-    if (dashRes.ok && dashData.success) fillDashboard(dashData);
+    if (dashRes.ok && dashData.success) {
+      fillDashboard(dashData);
+      fillAdminNotes(dashData.currentStatus);
+      fillInitialAnswers(dashData.initialAnswers);
+    }
   } catch (err) {
     console.error('Load error', err);
   }
@@ -131,6 +135,70 @@ function fillDashboard(data) {
       streakCal.appendChild(d);
     });
   }
+}
+
+function renderValue(val) {
+  if (Array.isArray(val)) {
+    const ul = document.createElement('ul');
+    val.forEach(item => {
+      const li = document.createElement('li');
+      li.appendChild(renderValue(item));
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+  if (val && typeof val === 'object') {
+    return renderObjectAsList(val);
+  }
+  const span = document.createElement('span');
+  span.textContent = val;
+  return span;
+}
+
+function renderObjectAsList(obj) {
+  const dl = document.createElement('dl');
+  Object.entries(obj || {}).forEach(([key, val]) => {
+    const dt = document.createElement('dt');
+    dt.textContent = key;
+    const dd = document.createElement('dd');
+    dd.appendChild(renderValue(val));
+    dl.appendChild(dt);
+    dl.appendChild(dd);
+  });
+  return dl;
+}
+
+function fillAdminNotes(status) {
+  if (!status) return;
+  const notesEl = $('adminNotes');
+  if (notesEl) notesEl.textContent = status.adminNotes || '--';
+  const tagsEl = $('adminTags');
+  if (tagsEl) {
+    tagsEl.innerHTML = '';
+    const tags = Array.isArray(status.adminTags) ? status.adminTags : [];
+    if (tags.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = '--';
+      tagsEl.appendChild(li);
+    } else {
+      tags.forEach(t => {
+        const li = document.createElement('li');
+        li.textContent = t;
+        tagsEl.appendChild(li);
+      });
+    }
+  }
+}
+
+function fillInitialAnswers(ans) {
+  const container = $('initialAnswersContainer');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!ans || Object.keys(ans).length === 0) {
+    container.textContent = 'Няма данни';
+    return;
+  }
+  container.appendChild(renderObjectAsList(ans));
 }
 
 async function savePlan() {

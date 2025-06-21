@@ -45,6 +45,16 @@
                     <i class="fas fa-chart-line me-2"></i>Анализ на прогреса
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes" type="button" role="tab">
+                    <i class="fas fa-sticky-note me-2"></i>Бележки
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="initial-answers-tab" data-bs-toggle="tab" data-bs-target="#initial-answers" type="button" role="tab">
+                    <i class="fas fa-question-circle me-2"></i>Въпросник
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content" id="profileTabContent">
@@ -399,6 +409,23 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div class="tab-pane fade" id="notes" role="tabpanel">
+                <h3 class="section-title"><i class="fas fa-sticky-note me-2"></i>Бележки и етикети</h3>
+                <div class="mb-3">
+                    <strong>Бележки:</strong>
+                    <p id="adminNotes" class="border rounded p-2">--</p>
+                </div>
+                <div>
+                    <strong>Етикети:</strong>
+                    <ul id="adminTags" class="list-unstyled"></ul>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="initial-answers" role="tabpanel">
+                <h3 class="section-title"><i class="fas fa-question-circle me-2"></i>Отговори от първоначалния въпросник</h3>
+                <div id="initialAnswersContainer"></div>
             </div>
         </div>
     </div>

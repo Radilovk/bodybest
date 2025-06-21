@@ -210,9 +210,22 @@ body {
   .info-item {
       flex-direction: column;
   }
-  
+
   .info-label {
       min-width: 100%;
       margin-bottom: 5px;
   }
+}
+
+#adminTags li {
+  display: inline-block;
+  margin-right: 5px;
+  padding: 2px 8px;
+  background: var(--secondary-color);
+  color: #fff;
+  border-radius: 12px;
+}
+
+#adminNotes {
+  white-space: pre-line;
 }
