@@ -230,13 +230,37 @@ function displayPlanMenu(menu, isError = false) {
     }
     const table = document.createElement('table');
     table.className = 'menu-table';
-    table.innerHTML = '<thead><tr><th>Ден</th><th>Хранене</th><th>Продукти</th></tr></thead>';
+
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    ['Ден', 'Хранене', 'Продукти'].forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
     const tbody = document.createElement('tbody');
     Object.entries(menu).forEach(([day, meals]) => {
         (meals || []).forEach(meal => {
             const tr = document.createElement('tr');
-            const items = (meal.items || []).map(i => `${i.name}${i.grams ? ` (${i.grams})` : ''}`).join('<br>');
-            tr.innerHTML = `<td>${capitalizeDay(day)}</td><td>${meal.meal_name || ''}</td><td>${items}</td>`;
+            const dayTd = document.createElement('td');
+            dayTd.textContent = capitalizeDay(day);
+            const mealTd = document.createElement('td');
+            mealTd.textContent = meal.meal_name || '';
+            const itemsTd = document.createElement('td');
+            (meal.items || []).forEach((i, idx, arr) => {
+                const span = document.createElement('span');
+                span.textContent = `${i.name}${i.grams ? ` (${i.grams})` : ''}`;
+                itemsTd.appendChild(span);
+                if (idx < arr.length - 1) {
+                    itemsTd.appendChild(document.createElement('br'));
+                }
+            });
+            tr.appendChild(dayTd);
+            tr.appendChild(mealTd);
+            tr.appendChild(itemsTd);
             tbody.appendChild(tr);
         });
     });
@@ -257,13 +281,31 @@ function displayDailyLogs(logs, isError = false) {
     }
     const table = document.createElement('table');
     table.className = 'menu-table';
-    table.innerHTML = '<thead><tr><th>Дата</th><th>Тегло</th><th>Бележка</th></tr></thead>';
+
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    ['Дата', 'Тегло', 'Бележка'].forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
     const tbody = document.createElement('tbody');
     logs.forEach(l => {
         const tr = document.createElement('tr');
         const weight = l.data?.weight || '';
         const note = l.data?.note || '';
-        tr.innerHTML = `<td>${l.date}</td><td>${weight}</td><td>${note}</td>`;
+        const dateTd = document.createElement('td');
+        dateTd.textContent = l.date;
+        const weightTd = document.createElement('td');
+        weightTd.textContent = weight;
+        const noteTd = document.createElement('td');
+        noteTd.textContent = note;
+        tr.appendChild(dateTd);
+        tr.appendChild(weightTd);
+        tr.appendChild(noteTd);
         tbody.appendChild(tr);
     });
     table.appendChild(tbody);
