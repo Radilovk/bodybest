@@ -5,7 +5,7 @@ const originalFetch = global.fetch;
 
 describe('callCfAi', () => {
   const model = 'test-model';
-  const payload = { msg: 'hi' };
+  const payload = { msg: 'hi', temperature: 0.5, max_tokens: 10 };
   const env = { CF_ACCOUNT_ID: 'acc', CF_AI_TOKEN: 'token' };
 
   afterEach(() => {
