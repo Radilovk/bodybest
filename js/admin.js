@@ -52,6 +52,9 @@ const presetSelect = document.getElementById('aiPresetSelect');
 const savePresetBtn = document.getElementById('savePreset');
 const applyPresetBtn = document.getElementById('applyPreset');
 const presetNameInput = document.getElementById('presetName');
+const testPlanBtn = document.getElementById('testPlanModel');
+const testChatBtn = document.getElementById('testChatModel');
+const testModBtn = document.getElementById('testModModel');
 const clientNameHeading = document.getElementById('clientName');
 const notificationsList = document.getElementById('notificationsList');
 const notificationsSection = document.getElementById('notificationsSection');
@@ -712,6 +715,32 @@ async function saveCurrentPreset() {
     }
 }
 
+async function testAiModel(modelName) {
+    if (!modelName) {
+        alert('Моля, въведете име на модел.');
+        return;
+    }
+    try {
+        const adminToken = adminTokenInput ? adminTokenInput.value.trim() : (localStorage.getItem('adminToken') || '');
+        const headers = { 'Content-Type': 'application/json' };
+        if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+        const resp = await fetch(apiEndpoints.testAiModel, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ model: modelName })
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.success) {
+            alert(data.message || 'Неуспешен тест.');
+        } else {
+            alert('Връзката е успешна.');
+        }
+    } catch (err) {
+        console.error('Error testing AI model:', err);
+        alert('Грешка при тестване на модела.');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     await ensureLoggedIn();
     await loadClients();
@@ -731,6 +760,9 @@ if (aiConfigForm) {
     });
     savePresetBtn?.addEventListener('click', saveCurrentPreset);
     applyPresetBtn?.addEventListener('click', applySelectedPreset);
+    testPlanBtn?.addEventListener('click', () => testAiModel(planModelInput.value.trim()));
+    testChatBtn?.addEventListener('click', () => testAiModel(chatModelInput.value.trim()));
+    testModBtn?.addEventListener('click', () => testAiModel(modModelInput.value.trim()));
 }
 
 export {

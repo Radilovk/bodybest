@@ -185,6 +185,8 @@ export default {
                 responseBody = await handleGetAiPreset(request, env);
             } else if (method === 'POST' && path === '/api/saveAiPreset') {
                 responseBody = await handleSaveAiPreset(request, env);
+            } else if (method === 'POST' && path === '/api/testAiModel') {
+                responseBody = await handleTestAiModelRequest(request, env);
             } else if (method === 'GET' && path === '/api/getFeedbackMessages') {
                 responseBody = await handleGetFeedbackMessagesRequest(request, env);
             } else {
@@ -1576,6 +1578,28 @@ async function handleSaveAiPreset(request, env) {
     }
 }
 // ------------- END FUNCTION: handleSaveAiPreset -------------
+
+// ------------- START FUNCTION: handleTestAiModelRequest -------------
+async function handleTestAiModelRequest(request, env) {
+    try {
+        const auth = request.headers.get('Authorization') || '';
+        const token = auth.replace(/^Bearer\s+/i, '').trim();
+        const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
+        if (expected && token !== expected) {
+            return { success: false, message: 'Невалиден токен.', statusHint: 403 };
+        }
+        const { model } = await request.json();
+        if (!model) {
+            return { success: false, message: 'Липсва модел.', statusHint: 400 };
+        }
+        await callModel(model, 'Здравей', env, { temperature: 0, maxTokens: 5 });
+        return { success: true };
+    } catch (error) {
+        console.error('Error in handleTestAiModelRequest:', error.message, error.stack);
+        return { success: false, message: error.message || 'Грешка при комуникацията.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleTestAiModelRequest -------------
 
 
 // ------------- START BLOCK: PlanGenerationHeaderComment -------------
@@ -3385,4 +3409,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, callCfAi, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
