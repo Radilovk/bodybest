@@ -38,6 +38,7 @@ const planMenuPre = document.getElementById('planMenu');
 const dailyLogsPre = document.getElementById('dailyLogs');
 const exportPlanBtn = document.getElementById('exportPlan');
 const dashboardPre = document.getElementById('dashboardData');
+const dashboardSummaryDiv = document.getElementById('dashboardSummary');
 const exportDataBtn = document.getElementById('exportData');
 const profileForm = document.getElementById('profileForm');
 const profileName = document.getElementById('profileName');
@@ -224,6 +225,27 @@ function displayDailyLogs(logs) {
     dailyLogsPre.appendChild(table);
 }
 
+function displayDashboardSummary(data) {
+    if (!dashboardSummaryDiv) return;
+    dashboardSummaryDiv.innerHTML = '';
+    if (!data) {
+        dashboardSummaryDiv.textContent = 'Няма данни';
+        return;
+    }
+    const profileSec = document.createElement('section');
+    profileSec.innerHTML = '<h3>Профил</h3>';
+    profileSec.appendChild(renderObjectAsList(data.initialAnswers || {}));
+    const statusSec = document.createElement('section');
+    statusSec.innerHTML = '<h3>Текущ статус</h3>';
+    statusSec.appendChild(renderObjectAsList(data.currentStatus || {}));
+    const analyticsSec = document.createElement('section');
+    analyticsSec.innerHTML = '<h3>Анализ</h3>';
+    analyticsSec.appendChild(renderObjectAsList(data.analytics || {}));
+    dashboardSummaryDiv.appendChild(profileSec);
+    dashboardSummaryDiv.appendChild(statusSec);
+    dashboardSummaryDiv.appendChild(analyticsSec);
+}
+
 async function loadClients() {
     try {
         const resp = await fetch(apiEndpoints.listClients);
@@ -383,6 +405,7 @@ async function showClient(userId) {
             const menu = dashData.planData?.week1Menu || {};
             displayPlanMenu(menu);
             displayDailyLogs(dashData.dailyLogs || []);
+            displayDashboardSummary(dashData);
             if (dashboardPre) dashboardPre.textContent = JSON.stringify(dashData, null, 2);
             if (notesField) notesField.value = dashData.currentStatus?.adminNotes || '';
             if (tagsField) tagsField.value = (dashData.currentStatus?.adminTags || []).join(',');

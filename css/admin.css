@@ -94,3 +94,37 @@ details[open] summary::after {
   cursor: pointer;
   margin-bottom: 5px;
 }
+
+#aiConfigForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#aiConfigForm fieldset {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+#aiConfigForm input[type="text"] {
+  width: 100%;
+  max-width: 300px;
+}
+.preset-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+#dashboardSummary section {
+  margin-bottom: 10px;
+}
+#dashboardSummary dl {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 4px 8px;
+}
+#dashboardSummary dt {
+  font-weight: 600;
+}
+#dashboardSummary dd {
+  margin: 0;
+}
