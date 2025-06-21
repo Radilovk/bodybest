@@ -1,5 +1,5 @@
 import { apiEndpoints } from './config.js';
-import { jsonrepair } from 'jsonrepair';
+import { jsonrepair } from 'https://cdn.jsdelivr.net/npm/jsonrepair/+esm';
 
 function $(id) {
   return document.getElementById(id);
