@@ -1,4 +1,5 @@
 import { apiEndpoints } from './config.js';
+import { jsonrepair } from 'jsonrepair';
 
 function $(id) {
   return document.getElementById(id);
@@ -136,7 +137,13 @@ async function savePlan() {
   const userId = getUserId();
   if (!userId) return;
   try {
-    const json = JSON.parse($('planJson').value);
+    const text = $('planJson').value;
+    if (text.length > 20000) {
+      alert('Планът е твърде голям (максимум 20 000 символа).');
+      return;
+    }
+    const repaired = jsonrepair(text);
+    const json = JSON.parse(repaired);
     const resp = await fetch(apiEndpoints.updatePlanData, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -145,6 +152,7 @@ async function savePlan() {
     const data = await resp.json();
     if (resp.ok && data.success) {
       alert('Планът е записан.');
+      setText('planStatus', 'ready');
     } else {
       alert(data.message || 'Грешка при запис.');
     }
