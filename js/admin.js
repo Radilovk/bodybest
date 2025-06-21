@@ -319,7 +319,7 @@ async function loadClients() {
                 pending: withStatus.filter(c => c.status === 'pending').length,
                 processing: withStatus.filter(c => c.status === 'processing').length
             };
-            statsOutput.textContent = JSON.stringify(stats, null, 2);
+            if (statsOutput) statsOutput.textContent = JSON.stringify(stats, null, 2);
             updateStatusChart(stats);
         }
     } catch (err) {
@@ -332,7 +332,7 @@ function renderClients() {
     const filter = statusFilter.value;
     const tagFilter = tagFilterSelect ? tagFilterSelect.value : 'all';
     const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'name';
-    clientsList.innerHTML = '';
+    if (clientsList) clientsList.innerHTML = '';
     const list = allClients.filter(c => {
         const matchText = `${c.userId} ${c.name || ''} ${c.email || ''}`.toLowerCase();
         const matchesSearch = matchText.includes(search);
@@ -348,7 +348,7 @@ function renderClients() {
         }
         return (a.name || '').localeCompare(b.name || '');
     });
-    clientsCount.textContent = `Общ брой клиенти: ${list.length}`;
+    if (clientsCount) clientsCount.textContent = `Общ брой клиенти: ${list.length}`;
     list.forEach(c => {
         const li = document.createElement('li');
         const btn = document.createElement('button');
@@ -372,7 +372,7 @@ function renderClients() {
         }
         btn.addEventListener('click', () => showClient(c.userId));
         li.appendChild(btn);
-        clientsList.appendChild(li);
+        clientsList?.appendChild(li);
     });
 }
 
@@ -749,12 +749,12 @@ async function loadQueries(markRead = false) {
         const endpoint = markRead ? apiEndpoints.getAdminQueries : apiEndpoints.peekAdminQueries;
         const resp = await fetch(`${endpoint}?userId=${currentUserId}`);
         const data = await resp.json();
-        queriesList.innerHTML = '';
+        if (queriesList) queriesList.innerHTML = '';
         if (resp.ok && data.success) {
             data.queries.forEach(q => {
                 const li = document.createElement('li');
                 li.textContent = q.message;
-                queriesList.appendChild(li);
+                queriesList?.appendChild(li);
             });
             await checkForNotifications();
         }
@@ -768,7 +768,7 @@ async function loadFeedback() {
     try {
         const resp = await fetch(`${apiEndpoints.getFeedbackMessages}?userId=${currentUserId}`);
         const data = await resp.json();
-        feedbackList.innerHTML = '';
+        if (feedbackList) feedbackList.innerHTML = '';
         if (resp.ok && data.success) {
             let latestTs = Number(localStorage.getItem('lastFeedbackTs')) || 0;
             data.feedback.forEach(f => {
@@ -776,7 +776,7 @@ async function loadFeedback() {
                 const date = new Date(f.timestamp).toLocaleDateString('bg-BG');
                 const rating = f.rating ? ` (${f.rating})` : '';
                 li.textContent = `${date}: ${f.message}${rating}`;
-                feedbackList.appendChild(li);
+                feedbackList?.appendChild(li);
                 const ts = Date.parse(f.timestamp);
                 if (ts && ts > latestTs) latestTs = ts;
             });
