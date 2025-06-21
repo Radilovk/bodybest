@@ -53,17 +53,17 @@ export default {
     const messages = data.messages || [];
     const model = data.model || env.MODEL;
 
-    if (!env.ACCOUNT_ID || !env.AI_TOKEN || !model) {
-      return new Response(JSON.stringify({ error: 'Missing Worker secrets' }), {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
-    }
+    if (!env.CF_ACCOUNT_ID || !env.CF_AI_TOKEN || !model) {
+        return new Response(JSON.stringify({ error: 'Missing Worker secrets' }), {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      }
 
-    const cfEndpoint = `https://api.cloudflare.com/client/v4/accounts/${env.ACCOUNT_ID}/ai/run/${model}`;
+    const cfEndpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/run/${model}`;
 
     const payload = { messages };
     if (data.file) {
@@ -78,12 +78,12 @@ export default {
 
     let response;
     try {
-      response = await fetch(cfEndpoint, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${env.AI_TOKEN}`,
-          'Content-Type': 'application/json'
-        },
+        response = await fetch(cfEndpoint, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.CF_AI_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
         body: JSON.stringify(payload)
       });
     } catch (err) {
