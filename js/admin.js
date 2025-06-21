@@ -945,17 +945,23 @@ async function testAiModel(modelName) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await ensureLoggedIn();
-    await loadClients();
-    await checkForNotifications();
-    await loadNotifications();
-    loadAdminToken();
-    await loadAiConfig();
-    await loadAiPresets();
+document.addEventListener('DOMContentLoaded', () => {
+    // Инициализира табовете веднага
     setupTabs();
-    setInterval(checkForNotifications, 60000);
-    setInterval(loadNotifications, 60000);
+
+    // Стартира асинхронните операции в отделен IIFE,
+    // за да не блокират работата на интерфейса
+    (async () => {
+        await ensureLoggedIn();
+        await loadClients();
+        await checkForNotifications();
+        await loadNotifications();
+        loadAdminToken();
+        await loadAiConfig();
+        await loadAiPresets();
+        setInterval(checkForNotifications, 60000);
+        setInterval(loadNotifications, 60000);
+    })();
 });
 
 if (aiConfigForm) {
