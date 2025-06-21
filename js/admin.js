@@ -324,6 +324,7 @@ async function loadClients() {
         }
     } catch (err) {
         console.error('Error loading clients:', err);
+        alert('Грешка при зареждане на клиентите. Проверете връзката с API.');
     }
 }
 
