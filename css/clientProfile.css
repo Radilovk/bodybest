@@ -229,3 +229,18 @@ body {
 #adminNotes {
   white-space: pre-line;
 }
+
+.menu-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 5px;
+}
+.menu-table th,
+.menu-table td {
+  border: 1px solid #ddd;
+  padding: 4px;
+  text-align: left;
+}
+.menu-table th {
+  background: #f9f9f9;
+}

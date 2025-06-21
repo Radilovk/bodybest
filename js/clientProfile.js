@@ -87,6 +87,7 @@ function fillDashboard(data) {
   if (macros.fat_percent) setText('fatPercent', `${macros.fat_percent}%`);
 
   $('planJson').value = JSON.stringify(data.planData || {}, null, 2);
+  displayPlanMenu(data.planData?.week1Menu || {}, false);
 
   const logs = Array.isArray(data.dailyLogs) ? data.dailyLogs : [];
   const tbody = $('logsTableBody');
@@ -167,6 +168,71 @@ function renderObjectAsList(obj) {
     dl.appendChild(dd);
   });
   return dl;
+}
+
+function capitalizeDay(day) {
+  const days = {
+    monday: 'Понеделник',
+    tuesday: 'Вторник',
+    wednesday: 'Сряда',
+    thursday: 'Четвъртък',
+    friday: 'Петък',
+    saturday: 'Събота',
+    sunday: 'Неделя'
+  };
+  return days[day] || day;
+}
+
+function displayPlanMenu(menu, isError = false) {
+  const container = $('planMenu');
+  if (!container) return;
+  container.innerHTML = '';
+  if (isError) {
+    container.textContent = 'Грешка при зареждане';
+    return;
+  }
+  if (!menu || Object.keys(menu).length === 0) {
+    container.textContent = 'Няма меню';
+    return;
+  }
+  const table = document.createElement('table');
+  table.className = 'menu-table';
+
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  ['Ден', 'Хранене', 'Продукти'].forEach(text => {
+    const th = document.createElement('th');
+    th.textContent = text;
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  Object.entries(menu).forEach(([day, meals]) => {
+    (meals || []).forEach(meal => {
+      const tr = document.createElement('tr');
+      const dayTd = document.createElement('td');
+      dayTd.textContent = capitalizeDay(day);
+      const mealTd = document.createElement('td');
+      mealTd.textContent = meal.meal_name || '';
+      const itemsTd = document.createElement('td');
+      (meal.items || []).forEach((i, idx, arr) => {
+        const span = document.createElement('span');
+        span.textContent = `${i.name}${i.grams ? ` (${i.grams})` : ''}`;
+        itemsTd.appendChild(span);
+        if (idx < arr.length - 1) {
+          itemsTd.appendChild(document.createElement('br'));
+        }
+      });
+      tr.appendChild(dayTd);
+      tr.appendChild(mealTd);
+      tr.appendChild(itemsTd);
+      tbody.appendChild(tr);
+    });
+  });
+  table.appendChild(tbody);
+  container.appendChild(table);
 }
 
 function fillAdminNotes(status) {
