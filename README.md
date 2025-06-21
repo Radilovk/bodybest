@@ -206,6 +206,24 @@ Optionally set `CF_ACCOUNT_ID` via `wrangler secret put` if it differs from the 
 
 These names are referenced in `worker.js` and must exist for the worker to function.
 
+### Allowed Origins
+
+The worker supports a custom list of allowed origins for CORS via the
+`ALLOWED_ORIGINS` environment variable. Provide a comma-separated list of
+domains from which the application (for example the admin panel) will be
+loaded. If the variable is not set, the default list includes
+`https://radilovk.github.io`, `https://radilov-k.github.io`,
+`http://localhost:5173`, `http://localhost:3000` and `null`.
+
+Add the variable in `wrangler.toml`:
+
+```toml
+[vars]
+ALLOWED_ORIGINS = "https://admin.example.com,https://myapp.example.com"
+```
+
+This list is combined with the defaults when building the CORS headers.
+
 ### PHP API Environment Variables
 
 The PHP helper scripts expect the following variables set in the server environment:
