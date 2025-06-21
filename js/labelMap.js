@@ -39,6 +39,13 @@ export const labelMap = {
   mainChallenge: 'Основно предизвикателство',
   q1745892518511: 'Допълнителна информация',
   targetBmi: 'Целеви BMI',
-  eatingHabits: 'Хранителни навици'
+  eatingHabits: 'Хранителни навици',
+  currentWeight: 'Текущо тегло',
+  bmiValue: 'Стойност на BMI',
+  avgWeight: 'Средно тегло',
+  avgEnergy: 'Средна енергия',
+  avgSleep: 'Средна продължителност на съня',
+  weightPeriod: 'Период на теглото',
+  currentStreak: 'Текуща серия'
 };
 
