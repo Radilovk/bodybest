@@ -3,23 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Потребителски профил</title>
+    <title>Потребителски профил: Камен Радилов</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/clientProfile.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            padding-top: 20px;
+        }
+        
+        .container-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: "";
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+        
+        .header h1 {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+        
+        .nav-tabs .nav-link {
+            font-weight: 600;
+            color: var(--primary-color);
+            border: none;
+            padding: 12px 20px;
+            transition: all 0.3s;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--secondary-color);
+            border-bottom: 3px solid var(--secondary-color);
+            background: transparent;
+        }
+        
+        .nav-tabs .nav-link:hover:not(.active) {
+            color: var(--secondary-color);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .tab-content {
+            padding: 25px 0;
+        }
+        
+        .section-title {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background: linear-gradient(to right, var(--light-color), white);
+            font-weight: 600;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .info-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            min-width: 220px;
+            color: var(--primary-color);
+        }
+        
+        .info-value {
+            flex: 1;
+        }
+        
+        .progress {
+            height: 20px;
+            border-radius: 10px;
+            margin-bottom: 5px;
+        }
+        
+        .metric-card {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            height: 100%;
+        }
+        
+        .metric-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .metric-subtitle {
+            color: #777;
+            font-size: 14px;
+        }
+        
+        .day-menu {
+            margin-bottom: 25px;
+            padding: 15px;
+            border-left: 4px solid var(--secondary-color);
+            background: rgba(52, 152, 219, 0.05);
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .meal-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+        
+        .meal-item {
+            margin-bottom: 5px;
+            padding-left: 15px;
+            position: relative;
+        }
+        
+        .meal-item::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--secondary-color);
+        }
+        
+        .badge-custom {
+            background: var(--secondary-color);
+            font-weight: normal;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-ready {
+            background-color: var(--success-color);
+        }
+        
+        .status-pending {
+            background-color: var(--warning-color);
+        }
+        
+        @media (max-width: 768px) {
+            .info-item {
+                flex-direction: column;
+            }
+            
+            .info-label {
+                min-width: 100%;
+                margin-bottom: 5px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container container-main">
         <div class="header">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h1><i class="fas fa-user-circle me-2"></i><span id="userName">Име на потребителя</span></h1>
+                    <h1><i class="fas fa-user-circle me-2"></i>Камен Радилов</h1>
                     <p><i class="fas fa-id-card me-2"></i>Потребителски профил</p>
                 </div>
                 <div class="text-end">
-                    <p class="mb-1"><i class="fas fa-weight me-2"></i><strong>Текущо тегло:</strong> <span id="currentWeight">-- кг</span></p>
-                    <p class="mb-1"><i class="fas fa-ruler-vertical me-2"></i><strong>Височина:</strong> <span id="userHeight">-- см</span></p>
-                    <p class="mb-0"><i class="fas fa-bullseye me-2"></i><strong>Основна цел:</strong> <span id="userGoal">--</span></p>
+                    <p class="mb-1"><i class="fas fa-weight me-2"></i><strong>Текущо тегло:</strong> 85 кг</p>
+                    <p class="mb-1"><i class="fas fa-ruler-vertical me-2"></i><strong>Височина:</strong> 189 см</p>
+                    <p class="mb-0"><i class="fas fa-bullseye me-2"></i><strong>Основна цел:</strong> Подобряване на здравето</p>
                 </div>
             </div>
         </div>
@@ -45,16 +264,6 @@
                     <i class="fas fa-chart-line me-2"></i>Анализ на прогреса
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes" type="button" role="tab">
-                    <i class="fas fa-sticky-note me-2"></i>Бележки
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="initial-answers-tab" data-bs-toggle="tab" data-bs-target="#initial-answers" type="button" role="tab">
-                    <i class="fas fa-question-circle me-2"></i>Въпросник
-                </button>
-            </li>
         </ul>
 
         <div class="tab-content" id="profileTabContent">
@@ -67,19 +276,19 @@
                     <div class="card-body p-0">
                         <div class="info-item">
                             <div class="info-label">Име:</div>
-                            <div class="info-value" id="userFullName">--</div>
+                            <div class="info-value">Камен Радилов</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Пол:</div>
-                            <div class="info-value" id="userGender">--</div>
+                            <div class="info-value">Мъж</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Възраст:</div>
-                            <div class="info-value" id="userAge">--</div>
+                            <div class="info-value">35 години</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Имейл:</div>
-                            <div class="info-value" id="userEmail">--</div>
+                            <div class="info-value">kiko@abv.bg</div>
                         </div>
                     </div>
                 </div>
@@ -91,15 +300,15 @@
                             <div class="card-body p-0">
                                 <div class="info-item">
                                     <div class="info-label">Височина:</div>
-                                    <div class="info-value" id="heightValue">--</div>
+                                    <div class="info-value">189 см</div>
                                 </div>
                                 <div class="info-item">
                                     <div class="info-label">Текущо тегло:</div>
-                                    <div class="info-value" id="weightValue">--</div>
+                                    <div class="info-value">85 кг</div>
                                 </div>
                                 <div class="info-item">
                                     <div class="info-label">ИТМ (BMI):</div>
-                                    <div class="info-value" id="bmiValue">--</div>
+                                    <div class="info-value">23.8 (Нормално тегло)</div>
                                 </div>
                             </div>
                         </div>
@@ -111,15 +320,17 @@
                             <div class="card-body p-0">
                                 <div class="info-item">
                                     <div class="info-label">Основна цел:</div>
-                                    <div class="info-value" id="mainGoal">--</div>
+                                    <div class="info-value">Подобряване на здравето</div>
                                 </div>
                                 <div class="info-item">
                                     <div class="info-label">Ниво на мотивация:</div>
-                                    <div class="info-value" id="motivationLevel">--</div>
+                                    <div class="info-value">
+                                        ★★★★☆ (4 от 5)
+                                    </div>
                                 </div>
                                 <div class="info-item">
                                     <div class="info-label">Целево ИТМ:</div>
-                                    <div class="info-value" id="targetBmi">--</div>
+                                    <div class="info-value">25.0 (Наднормено тегло)</div>
                                 </div>
                             </div>
                         </div>
@@ -135,23 +346,23 @@
                             <div class="card-body p-0">
                                 <div class="info-item">
                                     <div class="info-label">Продължителност на съня:</div>
-                                    <div class="info-value" id="sleepHours">--</div>
+                                    <div class="info-value">&lt;5 часа</div>
                                 </div>
                                 <div class="info-item">
                                     <div class="info-label">Прекъсвания на съня:</div>
-                                    <div class="info-value" id="sleepInterruptions">--</div>
+                                    <div class="info-value">Да</div>
                                 </div>
                                 <div class="info-item">
                                     <div class="info-label">Хронотип:</div>
-                                    <div class="info-value" id="chronotype">--</div>
+                                    <div class="info-value">Вечерен</div>
                                 </div>
                                 <div class="info-item">
                                     <div class="info-label">Ниво на активност:</div>
-                                    <div class="info-value" id="activityLevel">--</div>
+                                    <div class="info-value">Средно</div>
                                 </div>
                                 <div class="info-item">
                                     <div class="info-label">Физическа активност:</div>
-                                    <div class="info-value" id="physicalActivity">--</div>
+                                    <div class="info-value">Да (5 пъти седмично)</div>
                                 </div>
                             </div>
                         </div>
@@ -163,23 +374,23 @@
                             <div class="card-body p-0">
                                 <div class="info-item">
                                     <div class="info-label">Медицински състояния:</div>
-                                    <div class="info-value" id="medicalConditions">--</div>
+                                    <div class="info-value">Лактозна непоносимост</div>
                                 </div>
                                 <div class="info-item">
                                     <div class="info-label">Ниво на стрес:</div>
-                                    <div class="info-value" id="stressLevel">--</div>
+                                    <div class="info-value">Ниско</div>
                                 </div>
                                 <div class="info-item">
                                     <div class="info-label">Хапчета/медикаменти:</div>
-                                    <div class="info-value" id="medications">--</div>
+                                    <div class="info-value">Не</div>
                                 </div>
                                 <div class="info-item">
                                     <div class="info-label">Прием на вода:</div>
-                                    <div class="info-value" id="waterIntake">--</div>
+                                    <div class="info-value">1-1.5л дневно</div>
                                 </div>
                                 <div class="info-item">
                                     <div class="info-label">Хранителни предпочитания:</div>
-                                    <div class="info-value" id="foodPreferences">--</div>
+                                    <div class="info-value">Не обича риба, вегетариански</div>
                                 </div>
                             </div>
                         </div>
@@ -193,45 +404,33 @@
                     <div class="card-body p-0">
                         <div class="info-item">
                             <div class="info-label">Честота на преяждане:</div>
-                            <div class="info-value" id="overeatingFrequency">--</div>
+                            <div class="info-value">Често</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Пристрастяване към храна:</div>
-                            <div class="info-value" id="foodCravings">--</div>
+                            <div class="info-value">Не</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Тригери за хранене:</div>
-                            <div class="info-value" id="foodTriggers">--</div>
+                            <div class="info-value">Скука, Друго</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Честота на алкохол:</div>
-                            <div class="info-value" id="alcoholFrequency">--</div>
+                            <div class="info-value">Често (3-5 пъти седмично)</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Навици при хранене:</div>
-                            <div class="info-value" id="eatingHabits">--</div>
+                            <div class="info-value">Хапвам на крак каквото и когато мога</div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="mt-4">
-                <h3 class="section-title"><i class="fas fa-edit me-2"></i>Редакция</h3>
-                <form id="profileEditForm" class="row g-2">
-                    <div class="col-md-4"><input id="nameInput" class="form-control" placeholder="Име"></div>
-                    <div class="col-md-4"><input id="fullnameInput" class="form-control" placeholder="Пълно име"></div>
-                    <div class="col-md-2"><input id="ageInput" type="number" class="form-control" placeholder="Възраст"></div>
-                    <div class="col-md-2"><input id="heightInput" type="number" class="form-control" placeholder="Височина"></div>
-                    <div class="col-md-4"><input id="emailInput" type="email" class="form-control" placeholder="Имейл"></div>
-                    <div class="col-md-4"><input id="phoneInput" class="form-control" placeholder="Телефон"></div>
-                    <div class="col-12"><button type="button" id="saveProfileBtn" class="btn btn-primary">Запази профила</button></div>
-                </form>
             </div>
 
             <!-- Хранителен план -->
             <div class="tab-pane fade" id="plan" role="tabpanel">
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>Статус на плана: 
-                    <span class="badge bg-warning" id="planStatus">Статус</span>
+                    <span class="badge bg-warning">В процес на обработка</span>
                 </div>
                 
                 <h3 class="section-title"><i class="fas fa-calculator me-2"></i>Калории и макроелементи</h3>
@@ -240,48 +439,190 @@
                     <div class="col-md-3 mb-3">
                         <div class="metric-card">
                             <div class="metric-title">Калории</div>
-                            <div class="metric-value" id="caloriesValue">--</div>
+                            <div class="metric-value">1800</div>
                             <div class="metric-subtitle">kcal дневно</div>
                         </div>
                     </div>
                     <div class="col-md-3 mb-3">
                         <div class="metric-card">
                             <div class="metric-title">Протеини</div>
-                            <div class="metric-value" id="proteinValue">--</div>
-                            <div class="metric-subtitle" id="proteinPercent">--</div>
+                            <div class="metric-value">113g</div>
+                            <div class="metric-subtitle">25% от калориите</div>
                         </div>
                     </div>
                     <div class="col-md-3 mb-3">
                         <div class="metric-card">
                             <div class="metric-title">Въглехидрати</div>
-                            <div class="metric-value" id="carbsValue">--</div>
-                            <div class="metric-subtitle" id="carbsPercent">--</div>
+                            <div class="metric-value">203g</div>
+                            <div class="metric-subtitle">45% от калориите</div>
                         </div>
                     </div>
                     <div class="col-md-3 mb-3">
                         <div class="metric-card">
                             <div class="metric-title">Мазнини</div>
-                            <div class="metric-value" id="fatValue">--</div>
-                            <div class="metric-subtitle" id="fatPercent">--</div>
+                            <div class="metric-value">60g</div>
+                            <div class="metric-subtitle">30% от калориите</div>
                         </div>
                     </div>
                 </div>
                 
                 <h3 class="section-title"><i class="fas fa-calendar-alt me-2"></i>Седмично меню</h3>
                 
-                <div class="row" id="weeklyMenu">
-                    <!-- Седмичното меню ще бъде генерирано тук -->
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="day-menu">
+                            <h5 class="meal-title">Понеделник</h5>
+                            <div class="meal-title"><i class="fas fa-sun me-2"></i>Закуска</div>
+                            <div class="meal-item">Протеинов шейк - 250 мл (бадемово мляко), 25 г (растителен протеин на прах), 150 г (боровинки), 1 с.л. (фъстъчено масло)</div>
+                            
+                            <div class="meal-title mt-3"><i class="fas fa-utensils me-2"></i>Обяд</div>
+                            <div class="meal-item">Боб или леща - 300 гр</div>
+                            <div class="meal-item">Пълнозърнест хляб - 1 филия</div>
+                            <div class="meal-item">Зелена салата - 100 гр</div>
+                            
+                            <div class="meal-title mt-3"><i class="fas fa-moon me-2"></i>Вечеря</div>
+                            <div class="meal-item">Салата с пресни зеленчуци - 350 гр</div>
+                            <div class="meal-item">Тофу, печено - 200 гр</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-4">
+                        <div class="day-menu">
+                            <h5 class="meal-title">Вторник</h5>
+                            <div class="meal-title"><i class="fas fa-sun me-2"></i>Закуска</div>
+                            <div class="meal-item">Яйца със зеленчуци - 2 бр. (яйца), 100 гр (зеленчуци)</div>
+                            
+                            <div class="meal-title mt-3"><i class="fas fa-utensils me-2"></i>Обяд</div>
+                            <div class="meal-item">Крем-супа от зеленчуци - 250 мл</div>
+                            <div class="meal-item">Сирене - 40 гр (растителен кашкавал)</div>
+                            <div class="meal-item">Кротони или пълнозърнест хляб - 1 филия</div>
+                            
+                            <div class="meal-title mt-3"><i class="fas fa-moon me-2"></i>Вечеря</div>
+                            <div class="meal-item">Салата с пресни зеленчуци - 350 гр</div>
+                            <div class="meal-item">Леща - 200 гр</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-4">
+                        <div class="day-menu">
+                            <h5 class="meal-title">Сряда</h5>
+                            <div class="meal-title"><i class="fas fa-sun me-2"></i>Закуска</div>
+                            <div class="meal-item">Смути - 250 мл (бадемово мляко), 15 г (чиа семена), 150 гр (банан)</div>
+                            
+                            <div class="meal-title mt-3"><i class="fas fa-utensils me-2"></i>Обяд</div>
+                            <div class="meal-item">Пълнозърнеста паста - 200 гр</div>
+                            <div class="meal-item">Доматен сос, гъби - 100 гр</div>
+                            <div class="meal-item">Зелена салата - 100 гр</div>
+                            
+                            <div class="meal-title mt-3"><i class="fas fa-moon me-2"></i>Вечеря</div>
+                            <div class="meal-item">Салата с пресни зеленчуци - 350 гр</div>
+                            <div class="meal-item">Нахут, печен - 200 гр</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-4">
+                        <div class="day-menu">
+                            <h5 class="meal-title">Четвъртък</h5>
+                            <div class="meal-title"><i class="fas fa-sun me-2"></i>Закуска</div>
+                            <div class="meal-item">Здравословни палачинки - 40 г (овесено брашно), 100 гр (ягоди)</div>
+                            
+                            <div class="meal-title mt-3"><i class="fas fa-utensils me-2"></i>Обяд</div>
+                            <div class="meal-item">Постен грах с картофи - 300 гр</div>
+                            <div class="meal-item">Салата от пресни зеленчуци - 200 гр</div>
+                            
+                            <div class="meal-title mt-3"><i class="fas fa-moon me-2"></i>Вечеря</div>
+                            <div class="meal-item">Салата с пресни зеленчуци - 350 гр</div>
+                            <div class="meal-item">Киноа - 200 гр</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-4">
+                        <div class="day-menu">
+                            <h5 class="meal-title">Петък</h5>
+                            <div class="meal-title"><i class="fas fa-sun me-2"></i>Закуска</div>
+                            <div class="meal-item">Тортила сандвич - 1 бр. (пълнозърнеста тортила), 75 гр (тофу), 20 г (авокадова паста), 50 гр (зеленчуци)</div>
+                            
+                            <div class="meal-title mt-3"><i class="fas fa-utensils me-2"></i>Обяд</div>
+                            <div class="meal-item">Омлет или бъркани яйца със сирене - 120 гр</div>
+                            <div class="meal-item">Салата с пресни зеленчуци - 200 гр</div>
+                            <div class="meal-item">Пълнозърнест хляб - 1 филия</div>
+                            
+                            <div class="meal-title mt-3"><i class="fas fa-moon me-2"></i>Вечеря</div>
+                            <div class="meal-item">Салата с пресни зеленчуци - 350 гр</div>
+                            <div class="meal-item">Вегетариански бургер (домашно приготвен) - 1 бр.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-4">
+                        <div class="day-menu">
+                            <h5 class="meal-title">Събота</h5>
+                            <div class="meal-title"><i class="fas fa-sun me-2"></i>Закуска</div>
+                            <div class="meal-item">Протеинов шейк - 250 мл (бадемово мляко), 25 г (растителен протеин на прах), 150 г (ягоди), 1 с.л. (фъстъчено масло)</div>
+                            
+                            <div class="meal-title mt-3"><i class="fas fa-utensils me-2"></i>Обяд</div>
+                            <div class="meal-item">Гръцка мусака с тиквички - 200 гр</div>
+                            <div class="meal-item">Зелена салата - 100 гр</div>
+                            
+                            <div class="meal-title mt-3"><i class="fas fa-moon me-2"></i>Вечеря</div>
+                            <div class="meal-item">Веган пица (домашно приготвена) - 1/4 от пицата</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-4">
+                        <div class="day-menu">
+                            <h5 class="meal-title">Неделя</h5>
+                            <div class="meal-title"><i class="fas fa-sun me-2"></i>Закуска</div>
+                            <div class="meal-item">Яйца със зеленчуци - 2 бр. (яйца), 100 гр (зеленчуци)</div>
+                            
+                            <div class="meal-title mt-3"><i class="fas fa-utensils me-2"></i>Обяд</div>
+                            <div class="meal-item">Пилешка супа (вегетарианска версия с тофу) - 300 мл</div>
+                            <div class="meal-item">Салата от пресни зеленчуци - 100 гр</div>
+                            <div class="meal-item">Пълнозърнест хляб - 1 филия</div>
+                            
+                            <div class="meal-title mt-3"><i class="fas fa-moon me-2"></i>Вечеря</div>
+                            <div class="meal-item">Веган торта - 1 малко парче (100 гр)</div>
+                        </div>
+                    </div>
                 </div>
                 
                 <h3 class="section-title"><i class="fas fa-lightbulb me-2"></i>Принципи и насоки</h3>
                 
-                <div class="row" id="principlesSection">
-                    <!-- Принципите ще бъдат генерирани тук -->
-                </div>
-                <div class="mt-4">
-                    <h3 class="section-title"><i class="fas fa-edit me-2"></i>Редакция</h3>
-                    <textarea id="planJson" class="form-control" rows="10"></textarea>
-                    <button type="button" id="savePlanBtn" class="btn btn-primary mt-2">Запази плана</button>
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header"><i class="fas fa-seedling me-2"></i>Принцип 1: Разнообразие от растителни храни</div>
+                            <div class="card-body">
+                                Включвайте различни плодове, зеленчуци, бобови култури и пълнозърнести храни всеки ден. Това осигурява широк спектър от витамини, минерали и фибри, важни за здравето.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header"><i class="fas fa-brain me-2"></i>Принцип 2: Осъзнато хранене</div>
+                            <div class="card-body">
+                                Обръщайте внимание на сигналите на тялото си за глад и ситост. Хранете се бавно и се наслаждавайте на всяка хапка. Избягвайте разсейващи фактори като телевизия или телефон по време на хранене.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header"><i class="fas fa-balance-scale me-2"></i>Принцип 3: Планирана гъвкавост</div>
+                            <div class="card-body">
+                                Включвайте умерено любими храни, като веган торта, в плана си. Не се лишавайте напълно, но контролирайте порциите и честотата. Например, 1-2 пъти седмично в малки количества.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header"><i class="fas fa-allergies me-2"></i>Принцип 4: Адаптиране към лактозна непоносимост</div>
+                            <div class="card-body">
+                                Винаги избирайте алтернативи без лактоза, като растителни млека и сирена. Четете етикетите внимателно, за да избегнете скрити източници на лактоза.
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -303,8 +644,47 @@
                                 <th>Завършени хранения</th>
                             </tr>
                         </thead>
-                        <tbody id="logsTableBody">
-                            <!-- Редовете ще бъдат генерирани тук -->
+                        <tbody>
+                            <tr>
+                                <td>20.06.2025</td>
+                                <td>115</td>
+                                <td>★★★☆☆ (3)</td>
+                                <td>★★★☆☆ (3)</td>
+                                <td>★★★☆☆ (3)</td>
+                                <td>★★★☆☆ (3)</td>
+                                <td>★★★☆☆ (3)</td>
+                                <td>0</td>
+                            </tr>
+                            <tr>
+                                <td>18.06.2025</td>
+                                <td>85</td>
+                                <td>★★★★★ (5)</td>
+                                <td>★★★☆☆ (3)</td>
+                                <td>★★★★★ (5)</td>
+                                <td>★★★★★ (5)</td>
+                                <td>★★★☆☆ (3)</td>
+                                <td>3</td>
+                            </tr>
+                            <tr>
+                                <td>16.06.2025</td>
+                                <td>85</td>
+                                <td>★★★★★ (5)</td>
+                                <td>★☆☆☆☆ (1)</td>
+                                <td>★★★★★ (5)</td>
+                                <td>★★☆☆☆ (2)</td>
+                                <td>★★★☆☆ (3)</td>
+                                <td>4</td>
+                            </tr>
+                            <tr>
+                                <td>14.06.2025</td>
+                                <td>85</td>
+                                <td>★★★★★ (5)</td>
+                                <td>★★☆☆☆ (2)</td>
+                                <td>★★★★★ (5)</td>
+                                <td>★★★☆☆ (3)</td>
+                                <td>★★★★★ (5)</td>
+                                <td>4</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -315,21 +695,21 @@
                     <div class="col-md-4 mb-4">
                         <div class="metric-card">
                             <div class="metric-title">Средно тегло</div>
-                            <div class="metric-value" id="avgWeight">--</div>
-                            <div class="metric-subtitle" id="weightPeriod">--</div>
+                            <div class="metric-value">92.5 кг</div>
+                            <div class="metric-subtitle">За периода 14.06-20.06</div>
                         </div>
                     </div>
                     <div class="col-md-4 mb-4">
                         <div class="metric-card">
                             <div class="metric-title">Средно ниво на енергия</div>
-                            <div class="metric-value" id="avgEnergy">--</div>
+                            <div class="metric-value">2.25</div>
                             <div class="metric-subtitle">(1-5 скала)</div>
                         </div>
                     </div>
                     <div class="col-md-4 mb-4">
                         <div class="metric-card">
                             <div class="metric-title">Средно качество на съня</div>
-                            <div class="metric-value" id="avgSleep">--</div>
+                            <div class="metric-value">3.5</div>
                             <div class="metric-subtitle">(1-5 скала)</div>
                         </div>
                     </div>
@@ -344,27 +724,27 @@
                     <div class="col-md-4 mb-3">
                         <div class="metric-card">
                             <div class="metric-title">Прогрес към целта</div>
-                            <div class="metric-value" id="goalProgress">--</div>
+                            <div class="metric-value">55%</div>
                             <div class="progress mt-3">
-                                <div class="progress-bar bg-success" id="goalProgressBar" role="progressbar" style="width: 0%"></div>
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 55%"></div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <div class="metric-card">
                             <div class="metric-title">Активност</div>
-                            <div class="metric-value" id="engagementScore">--</div>
+                            <div class="metric-value">33%</div>
                             <div class="progress mt-3">
-                                <div class="progress-bar bg-info" id="engagementBar" role="progressbar" style="width: 0%"></div>
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 33%"></div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <div class="metric-card">
                             <div class="metric-title">Общо здраве</div>
-                            <div class="metric-value" id="healthScore">--</div>
+                            <div class="metric-value">55%</div>
                             <div class="progress mt-3">
-                                <div class="progress-bar bg-primary" id="healthBar" role="progressbar" style="width: 0%"></div>
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 55%"></div>
                             </div>
                         </div>
                     </div>
@@ -383,8 +763,84 @@
                                 <th>Прогрес</th>
                             </tr>
                         </thead>
-                        <tbody id="analyticsTableBody">
-                            <!-- Редовете ще бъдат генерирани тук -->
+                        <tbody>
+                            <tr>
+                                <td>Качество на Съня</td>
+                                <td>&lt;5 ч., с прекъсвания</td>
+                                <td>7-8 часа непрекъснат сън</td>
+                                <td>Добро (3.5/5)</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar" style="width: 70%">70%</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Ниво на Спокойствие</td>
+                                <td>Ниско ниво на стрес</td>
+                                <td>Намаляване на стреса</td>
+                                <td>Много ниско (4.5/5)</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" style="width: 90%">90%</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Ниво на Енергия</td>
+                                <td>N/A</td>
+                                <td>4/5 или 5/5</td>
+                                <td>Задоволително (2.3/5)</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" style="width: 46%">46%</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Хидратация</td>
+                                <td>1-1.5л</td>
+                                <td>2-2.5 литра вода</td>
+                                <td>Добро (3.3/5)</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar" style="width: 66%">66%</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>BMI (ИТМ)</td>
+                                <td>23.8 (Нормално тегло)</td>
+                                <td>25.0 (Наднормено тегло)</td>
+                                <td>32.2 (Затлъстяване I степен)</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-danger" style="width: 20%">20%</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Придържане към Хранения</td>
+                                <td>N/A</td>
+                                <td>&gt; 85%</td>
+                                <td>29%</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-danger" style="width: 29%">29%</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Редовност на Дневника</td>
+                                <td>N/A</td>
+                                <td>&gt; 80%</td>
+                                <td>43%</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" style="width: 43%">43%</div>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -400,32 +856,42 @@
                                 <span class="badge bg-light text-dark ms-2">Липсващ запис</span>
                             </div>
                             <div>
-                                <strong>Текуща последователност:</strong> <span class="badge bg-info" id="currentStreak">0 дни</span>
+                                <strong>Текуща последователност:</strong> <span class="badge bg-info">0 дни</span>
                             </div>
                         </div>
                         
-                        <div class="d-flex justify-content-around" id="streakCalendar">
-                            <!-- Календарът ще бъде генериран тук -->
+                        <div class="d-flex justify-content-around">
+                            <div class="text-center">
+                                <div>15.06</div>
+                                <div class="mt-2"><span class="badge bg-light text-dark">●</span></div>
+                            </div>
+                            <div class="text-center">
+                                <div>16.06</div>
+                                <div class="mt-2"><span class="badge bg-success">●</span></div>
+                            </div>
+                            <div class="text-center">
+                                <div>17.06</div>
+                                <div class="mt-2"><span class="badge bg-light text-dark">●</span></div>
+                            </div>
+                            <div class="text-center">
+                                <div>18.06</div>
+                                <div class="mt-2"><span class="badge bg-success">●</span></div>
+                            </div>
+                            <div class="text-center">
+                                <div>19.06</div>
+                                <div class="mt-2"><span class="badge bg-light text-dark">●</span></div>
+                            </div>
+                            <div class="text-center">
+                                <div>20.06</div>
+                                <div class="mt-2"><span class="badge bg-success">●</span></div>
+                            </div>
+                            <div class="text-center">
+                                <div>21.06</div>
+                                <div class="mt-2"><span class="badge bg-light text-dark">●</span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="tab-pane fade" id="notes" role="tabpanel">
-                <h3 class="section-title"><i class="fas fa-sticky-note me-2"></i>Бележки и етикети</h3>
-                <div class="mb-3">
-                    <strong>Бележки:</strong>
-                    <p id="adminNotes" class="border rounded p-2">--</p>
-                </div>
-                <div>
-                    <strong>Етикети:</strong>
-                    <ul id="adminTags" class="list-unstyled"></ul>
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="initial-answers" role="tabpanel">
-                <h3 class="section-title"><i class="fas fa-question-circle me-2"></i>Отговори от първоначалния въпросник</h3>
-                <div id="initialAnswersContainer"></div>
             </div>
         </div>
     </div>
@@ -437,14 +903,6 @@
             var firstTab = new bootstrap.Tab(document.getElementById('basic-tab'));
             firstTab.show();
         });
-        
-        // Функция за зареждане на данни може да бъде добавена тук
-        // Пример: 
-        // function loadUserData(data) {
-        //   document.getElementById('userName').textContent = data.userName;
-        //   // ... и т.н.
-        // }
-</script>
-    <script type="module" src="js/clientProfile.js"></script>
+    </script>
 </body>
-</html>
+                                            </html>
