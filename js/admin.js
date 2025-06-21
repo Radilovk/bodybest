@@ -19,6 +19,7 @@ const clientsList = document.getElementById('clientsList');
 const clientsCount = document.getElementById('clientsCount');
 const clientSearch = document.getElementById('clientSearch');
 const statusFilter = document.getElementById('statusFilter');
+const tagFilterSelect = document.getElementById('tagFilter');
 const detailsSection = document.getElementById('clientDetails');
 const regenBtn = document.getElementById('regeneratePlan');
 const aiSummaryBtn = document.getElementById('aiSummary');
@@ -40,6 +41,7 @@ const exportPlanBtn = document.getElementById('exportPlan');
 const dashboardPre = document.getElementById('dashboardData');
 const dashboardSummaryDiv = document.getElementById('dashboardSummary');
 const exportDataBtn = document.getElementById('exportData');
+const exportCsvBtn = document.getElementById('exportCsv');
 const profileForm = document.getElementById('profileForm');
 const profileName = document.getElementById('profileName');
 const profileEmail = document.getElementById('profileEmail');
@@ -63,6 +65,11 @@ const notificationDot = document.getElementById('notificationIndicator');
 const queriesDot = document.getElementById('queriesDot');
 const repliesDot = document.getElementById('repliesDot');
 const feedbackDot = document.getElementById('feedbackDot');
+const statusChartCanvas = document.getElementById('statusChart');
+const weightChartCanvas = document.getElementById('weightChart');
+const toggleWeightChartBtn = document.getElementById('toggleWeightChart');
+let statusChart = null;
+let weightChart = null;
 let currentUserId = null;
 let currentPlanData = null;
 let currentDashboardData = null;
@@ -223,6 +230,7 @@ function displayDailyLogs(logs) {
     });
     table.appendChild(tbody);
     dailyLogsPre.appendChild(table);
+    updateWeightChart(logs);
 }
 
 function displayDashboardSummary(data) {
@@ -254,15 +262,21 @@ async function loadClients() {
             const withStatus = await Promise.all(
                 data.clients.map(async c => {
                     try {
-                        const sResp = await fetch(`${apiEndpoints.planStatus}?userId=${c.userId}`);
-                        const sData = await sResp.json();
-                        return { ...c, status: sData.planStatus || 'unknown' };
+                        const dResp = await fetch(`${apiEndpoints.dashboard}?userId=${c.userId}`);
+                        const dData = await dResp.json();
+                        return {
+                            ...c,
+                            status: dData.planStatus || 'unknown',
+                            tags: dData.currentStatus?.adminTags || [],
+                            lastUpdated: dData.currentStatus?.lastUpdated || ''
+                        };
                     } catch {
-                        return { ...c, status: 'unknown' };
+                        return { ...c, status: 'unknown', tags: [] };
                     }
                 })
             );
             allClients = withStatus;
+            updateTagFilterOptions();
             renderClients();
             const stats = {
                 clients: withStatus.length,
@@ -271,6 +285,7 @@ async function loadClients() {
                 processing: withStatus.filter(c => c.status === 'processing').length
             };
             statsOutput.textContent = JSON.stringify(stats, null, 2);
+            updateStatusChart(stats);
         }
     } catch (err) {
         console.error('Error loading clients:', err);
@@ -280,13 +295,15 @@ async function loadClients() {
 function renderClients() {
     const search = (clientSearch.value || '').toLowerCase();
     const filter = statusFilter.value;
+    const tagFilter = tagFilterSelect ? tagFilterSelect.value : 'all';
     const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'name';
     clientsList.innerHTML = '';
     const list = allClients.filter(c => {
         const matchText = `${c.userId} ${c.name || ''} ${c.email || ''}`.toLowerCase();
         const matchesSearch = matchText.includes(search);
         const matchesStatus = filter === 'all' || c.status === filter;
-        return matchesSearch && matchesStatus;
+        const matchesTag = tagFilter === 'all' || (c.tags || []).includes(tagFilter);
+        return matchesSearch && matchesStatus && matchesTag;
     });
     list.sort((a, b) => {
         if (sortOrder === 'date') {
@@ -301,7 +318,18 @@ function renderClients() {
         const li = document.createElement('li');
         const btn = document.createElement('button');
         const dateText = c.registrationDate ? ` - ${new Date(c.registrationDate).toLocaleDateString('bg-BG')}` : '';
-        btn.textContent = `${c.name}${dateText} - ${c.status}`;
+        const lastText = c.lastUpdated ? ` (обновено ${new Date(c.lastUpdated).toLocaleDateString('bg-BG')})` : '';
+        btn.textContent = `${c.name}${dateText}${lastText}`;
+        const statusEl = document.createElement('span');
+        statusEl.className = `status-badge status-${c.status}`;
+        statusEl.textContent = c.status;
+        btn.appendChild(statusEl);
+        (c.tags || []).forEach(t => {
+            const tagEl = document.createElement('span');
+            tagEl.className = 'tag-badge';
+            tagEl.textContent = t;
+            btn.appendChild(tagEl);
+        });
         if (unreadClients.has(c.userId)) {
             const dot = document.createElement('span');
             dot.classList.add('notification-dot');
@@ -311,6 +339,77 @@ function renderClients() {
         li.appendChild(btn);
         clientsList.appendChild(li);
     });
+}
+
+function updateTagFilterOptions() {
+    if (!tagFilterSelect) return;
+    const tags = new Set();
+    allClients.forEach(c => (c.tags || []).forEach(t => tags.add(t)));
+    const current = tagFilterSelect.value;
+    tagFilterSelect.innerHTML = '<option value="all">Всички етикети</option>';
+    Array.from(tags).sort().forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        tagFilterSelect.appendChild(opt);
+    });
+    if (current && Array.from(tags).includes(current)) tagFilterSelect.value = current;
+}
+
+function updateStatusChart(stats) {
+    if (!statusChartCanvas || typeof Chart === 'undefined') return;
+    if (statusChart) statusChart.destroy();
+    const ctx = statusChartCanvas.getContext('2d');
+    statusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['ready', 'processing', 'pending'],
+            datasets: [{
+                data: [stats.ready, stats.processing, stats.pending],
+                backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+            }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } } }
+    });
+}
+
+function updateWeightChart(logs) {
+    if (!weightChartCanvas || typeof Chart === 'undefined') return;
+    const weights = logs
+        .filter(l => l.data && l.data.weight)
+        .map(l => ({ date: l.date, weight: Number(l.data.weight) }));
+    if (weights.length === 0) {
+        if (weightChart) weightChart.destroy();
+        return;
+    }
+    const ctx = weightChartCanvas.getContext('2d');
+    if (weightChart) weightChart.destroy();
+    weightChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: weights.map(w => w.date),
+            datasets: [{
+                label: 'Тегло',
+                data: weights.map(w => w.weight),
+                borderColor: '#007bff',
+                fill: false
+            }]
+        },
+        options: { plugins: { legend: { display: false } } }
+    });
+}
+
+function setupTabs() {
+    const buttons = document.querySelectorAll('#clientTabs .tab-btn');
+    const panels = document.querySelectorAll('.client-tab');
+    if (buttons.length === 0) return;
+    const activate = (btn) => {
+        const target = btn.getAttribute('data-target');
+        buttons.forEach(b => b.setAttribute('aria-selected', b === btn ? 'true' : 'false'));
+        panels.forEach(p => p.classList.toggle('active-tab-content', p.id === target));
+    };
+    buttons.forEach(b => b.addEventListener('click', () => activate(b)));
+    activate(buttons[0]);
 }
 
 async function loadNotifications() {
@@ -372,9 +471,16 @@ showStatsBtn.addEventListener('click', () => {
     sec.classList.toggle('hidden');
 });
 
+if (toggleWeightChartBtn) {
+    toggleWeightChartBtn.addEventListener('click', () => {
+        weightChartCanvas?.classList.toggle('hidden');
+    });
+}
+
 if (clientSearch) clientSearch.addEventListener('input', renderClients);
 if (statusFilter) statusFilter.addEventListener('change', renderClients);
 if (sortOrderSelect) sortOrderSelect.addEventListener('change', renderClients);
+if (tagFilterSelect) tagFilterSelect.addEventListener('change', renderClients);
 
 async function showClient(userId) {
     try {
@@ -411,6 +517,13 @@ async function showClient(userId) {
             if (tagsField) tagsField.value = (dashData.currentStatus?.adminTags || []).join(',');
             currentPlanData = dashData.planData || null;
             currentDashboardData = dashData;
+            const clientInfo = allClients.find(c => c.userId === userId);
+            if (clientInfo) {
+                clientInfo.tags = dashData.currentStatus?.adminTags || [];
+                clientInfo.lastUpdated = dashData.currentStatus?.lastUpdated || '';
+                updateTagFilterOptions();
+                renderClients();
+            }
         }
     } catch (err) {
         console.error('Error loading profile:', err);
@@ -505,6 +618,25 @@ if (exportDataBtn) {
         const a = document.createElement('a');
         a.href = url;
         a.download = `${currentUserId || 'data'}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+}
+
+if (exportCsvBtn) {
+    exportCsvBtn.addEventListener('click', () => {
+        if (!currentDashboardData) return;
+        const logs = currentDashboardData.dailyLogs || [];
+        let csv = 'Дата,Тегло,Бележка\n';
+        logs.forEach(l => {
+            const note = (l.data?.note || '').replace(/\n/g, ' ');
+            csv += `${l.date},${l.data?.weight || ''},${note}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentUserId || 'logs'}.csv`;
         a.click();
         URL.revokeObjectURL(url);
     });
@@ -772,6 +904,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadAdminToken();
     await loadAiConfig();
     await loadAiPresets();
+    setupTabs();
     setInterval(checkForNotifications, 60000);
     setInterval(loadNotifications, 60000);
 });

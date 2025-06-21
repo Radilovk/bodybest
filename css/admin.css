@@ -128,3 +128,40 @@ details[open] summary::after {
 #dashboardSummary dd {
   margin: 0;
 }
+
+.status-badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 0.75rem;
+  margin-left: 4px;
+}
+.status-ready { background-color: #28a745; }
+.status-processing { background-color: #ffc107; }
+.status-pending { background-color: #dc3545; }
+
+.tag-badge {
+  display: inline-block;
+  background-color: #6c757d;
+  color: #fff;
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 0.7rem;
+  margin-left: 3px;
+}
+
+#clientTabs {
+  margin-bottom: 10px;
+}
+.client-tab { display: none; }
+.client-tab.active-tab-content { display: block; }
+
+.help-text {
+  font-size: 0.8rem;
+  color: #555;
+  margin-top: 4px;
+}
+
+#weightChart {
+  margin-top: 10px;
+}
