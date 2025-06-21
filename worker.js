@@ -145,6 +145,8 @@ export default {
                 responseBody = await handleGetProfileRequest(request, env);
             } else if (method === 'POST' && path === '/api/updateProfile') {
                 responseBody = await handleUpdateProfileRequest(request, env);
+            } else if (method === 'POST' && path === '/api/updatePlanData') {
+                responseBody = await handleUpdatePlanRequest(request, env);
             } else if (method === 'POST' && path === '/api/requestPasswordReset') {
                 responseBody = { success: false, message: 'Функцията "Забравена парола" е в разработка.' };
                 responseStatus = 501;
@@ -951,6 +953,27 @@ async function handleUpdateProfileRequest(request, env) {
 }
 }
 // ------------- END FUNCTION: handleUpdateProfileRequest -------------
+
+// ------------- START FUNCTION: handleUpdatePlanRequest -------------
+async function handleUpdatePlanRequest(request, env) {
+    try {
+        const data = await request.json();
+        const userId = data.userId;
+        const planData = data.planData;
+        if (!userId) return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
+        if (!planData || typeof planData !== 'object') {
+            return { success: false, message: 'Невалидни данни за плана.', statusHint: 400 };
+        }
+        await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(planData));
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'ready', { metadata: { status: 'ready' } });
+        return { success: true, message: 'Планът е обновен успешно' };
+    } catch (error) {
+        console.error('Error in handleUpdatePlanRequest:', error.message, error.stack);
+        const uid = (await request.json().catch(() => ({}))).userId || 'unknown_user';
+        return { success: false, message: 'Грешка при запис на плана.', statusHint: 500, userId: uid };
+    }
+}
+// ------------- END FUNCTION: handleUpdatePlanRequest -------------
 
 // ------------- START FUNCTION: handleGetAdaptiveQuizRequest -------------
 async function handleGetAdaptiveQuizRequest(request, env) {
@@ -3428,4 +3451,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, callCfAi, callModel, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, callCfAi, callModel, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
