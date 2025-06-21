@@ -184,3 +184,10 @@ details[open] summary::after {
 #weightChart {
   margin-top: 10px;
 }
+
+.profile-frame {
+  width: 100%;
+  height: 80vh;
+  border: none;
+  margin-top: 10px;
+}
