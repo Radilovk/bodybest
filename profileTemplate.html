@@ -1,0 +1,152 @@
+  <div class="container container-main">
+    <header class="header mb-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1><i class="fas fa-user-circle me-2"></i><span id="userName">Клиент</span></h1>
+          <p><i class="fas fa-id-card me-2"></i>Потребителски профил</p>
+        </div>
+        <div class="text-end">
+          <p class="mb-1"><i class="fas fa-weight me-2"></i><strong>Текущо тегло:</strong> <span id="currentWeightHeader"></span></p>
+          <p class="mb-1"><i class="fas fa-ruler-vertical me-2"></i><strong>Височина:</strong> <span id="userHeightHeader"></span></p>
+          <p class="mb-0"><i class="fas fa-bullseye me-2"></i><strong>Основна цел:</strong> <span id="userGoalHeader"></span></p>
+        </div>
+      </div>
+      <p class="mt-2">Статус на план: <span id="planStatus"></span></p>
+    </header>
+
+    <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">
+          <i class="fas fa-info-circle me-2"></i>Основна информация
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="plan-tab" data-bs-toggle="tab" data-bs-target="#plan" type="button" role="tab">
+          <i class="fas fa-utensils me-2"></i>Хранителен план
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs" type="button" role="tab">
+          <i class="fas fa-clipboard-list me-2"></i>Дневни записи
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">
+          <i class="fas fa-chart-line me-2"></i>Анализ на прогреса
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content pt-3">
+      <div class="tab-pane fade show active" id="profile" role="tabpanel">
+        <div class="row">
+          <div class="col-md-6" id="profileInfo">
+            <div class="card mb-3">
+              <div class="card-header"><i class="fas fa-user me-2"></i>Демографски данни</div>
+              <div class="card-body p-0" id="demographicsInfo"></div>
+            </div>
+            <div class="card mb-3">
+              <div class="card-header"><i class="fas fa-weight me-2"></i>Физически характеристики</div>
+              <div class="card-body p-0" id="physicalInfo"></div>
+            </div>
+            <div class="card mb-3">
+              <div class="card-header"><i class="fas fa-bullseye me-2"></i>Цели и мотивация</div>
+              <div class="card-body p-0" id="goalsInfo"></div>
+            </div>
+            <div class="card mb-3">
+              <div class="card-header"><i class="fas fa-bed me-2"></i>Сън и активност</div>
+              <div class="card-body p-0" id="sleepInfo"></div>
+            </div>
+            <div class="card mb-3">
+              <div class="card-header"><i class="fas fa-notes-medical me-2"></i>Здравословни особености</div>
+              <div class="card-body p-0" id="healthInfo"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><i class="fas fa-utensils me-2"></i>Хранителни модели</div>
+              <div class="card-body p-0" id="foodInfo"></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <form id="profileForm">
+              <div class="mb-2">
+                <label for="nameInput" class="form-label">Име</label>
+                <input id="nameInput" type="text" class="form-control">
+              </div>
+              <div class="mb-2">
+                <label for="fullnameInput" class="form-label">Имена</label>
+                <input id="fullnameInput" type="text" class="form-control">
+              </div>
+              <div class="mb-2">
+                <label for="ageInput" class="form-label">Възраст</label>
+                <input id="ageInput" type="number" class="form-control">
+              </div>
+              <div class="mb-2">
+                <label for="phoneInput" class="form-label">Телефон</label>
+                <input id="phoneInput" type="tel" class="form-control">
+              </div>
+              <div class="mb-2">
+                <label for="emailInput" class="form-label">Имейл</label>
+                <input id="emailInput" type="email" class="form-control">
+              </div>
+              <div class="mb-3">
+                <label for="heightInput" class="form-label">Височина (см)</label>
+                <input id="heightInput" type="number" class="form-control">
+              </div>
+              <button id="saveProfileBtn" type="button" class="btn btn-primary">Запази профила</button>
+            </form>
+          </div>
+        </div>
+        <div class="mt-3">
+          <h4>Бележки</h4>
+          <p id="adminNotes"></p>
+          <ul id="adminTags" class="list-inline"></ul>
+        </div>
+        <div class="mt-3" id="initialAnswersContainer"></div>
+      </div>
+
+      <div class="tab-pane fade" id="plan" role="tabpanel">
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>Статус на плана:
+          <span id="planStatusBadge" class="badge bg-warning"></span>
+        </div>
+        <div id="planMenu"></div>
+        <textarea id="planJson" class="form-control" rows="10" hidden></textarea>
+        <button id="savePlanBtn" type="button" class="btn btn-primary mt-2">Запази план</button>
+      </div>
+
+      <div class="tab-pane fade" id="logs" role="tabpanel">
+        <table class="table">
+          <thead>
+            <tr><th>Дата</th><th>Тегло</th><th>Настроение</th><th>Енергия</th><th>Спокойствие</th><th>Хидратация</th><th>Сън</th><th>Хранения</th></tr>
+          </thead>
+          <tbody id="logsTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="tab-pane fade" id="analytics" role="tabpanel">
+        <div class="row mb-4" id="macroCards"></div>
+        <div class="card mb-4">
+          <div class="card-body p-0" id="analyticsInfo"></div>
+        </div>
+        <div class="mb-2">
+          <div class="progress">
+            <div id="goalProgressBar" class="progress-bar" role="progressbar"></div>
+          </div>
+          <small>Напредък към целта: <span id="goalProgress"></span></small>
+        </div>
+        <div class="mb-2">
+          <div class="progress">
+            <div id="engagementBar" class="progress-bar" role="progressbar"></div>
+          </div>
+          <small>Ангажираност: <span id="engagementScore"></span></small>
+        </div>
+        <div class="mb-2">
+          <div class="progress">
+            <div id="healthBar" class="progress-bar" role="progressbar"></div>
+          </div>
+          <small>Здравословен индекс: <span id="healthScore"></span></small>
+        </div>
+        <div id="streakCalendar" class="d-flex flex-wrap gap-1"></div>
+      </div>
+    </div>
+  </div>

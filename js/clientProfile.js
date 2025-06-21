@@ -388,8 +388,8 @@ async function saveProfile() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+export function initClientProfile() {
   loadData();
   $('savePlanBtn').addEventListener('click', savePlan);
   $('saveProfileBtn').addEventListener('click', saveProfile);
-});
+}
