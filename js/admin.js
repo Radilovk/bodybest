@@ -203,7 +203,11 @@ function capitalizeDay(day) {
 function displayInitialAnswers(data) {
     if (!initialAnswersPre) return;
     initialAnswersPre.innerHTML = '';
-    if (!data || Object.keys(data).length === 0) {
+    if (!data || data.error) {
+        initialAnswersPre.textContent = 'Грешка при зареждане';
+        return;
+    }
+    if (Object.keys(data).length === 0) {
         initialAnswersPre.textContent = 'Няма данни';
         return;
     }
@@ -213,7 +217,11 @@ function displayInitialAnswers(data) {
 function displayPlanMenu(menu) {
     if (!planMenuPre) return;
     planMenuPre.innerHTML = '';
-    if (!menu || Object.keys(menu).length === 0) {
+    if (!menu || menu.error) {
+        planMenuPre.textContent = 'Грешка при зареждане';
+        return;
+    }
+    if (Object.keys(menu).length === 0) {
         planMenuPre.textContent = 'Няма меню';
         return;
     }
@@ -236,7 +244,11 @@ function displayPlanMenu(menu) {
 function displayDailyLogs(logs) {
     if (!dailyLogsPre) return;
     dailyLogsPre.innerHTML = '';
-    if (!Array.isArray(logs) || logs.length === 0) {
+    if (!Array.isArray(logs)) {
+        dailyLogsPre.textContent = 'Грешка при зареждане';
+        return;
+    }
+    if (logs.length === 0) {
         dailyLogsPre.textContent = 'Няма записани дневници';
         return;
     }
@@ -534,6 +546,10 @@ async function showClient(userId) {
     try {
         const resp = await fetch(`${apiEndpoints.getProfile}?userId=${userId}`);
         const data = await resp.json();
+        if (!resp.ok || !data.success) {
+            alert('Грешка при зареждане на данните за клиента');
+            return;
+        }
         if (resp.ok && data.success) {
             currentUserId = userId;
             detailsSection.classList.remove('hidden');
@@ -555,7 +571,12 @@ async function showClient(userId) {
         }
         const dashResp = await fetch(`${apiEndpoints.dashboard}?userId=${userId}`);
         const dashData = await dashResp.json();
-        if (dashResp.ok && dashData.success) {
+        if (!dashResp.ok || !dashData.success) {
+            alert('Грешка при зареждане на данните за клиента');
+            displayInitialAnswers({ error: true });
+            displayPlanMenu({ error: true });
+            displayDailyLogs({ error: true });
+        } else {
             displayInitialAnswers(dashData.initialAnswers || {});
             const menu = dashData.planData?.week1Menu || {};
             displayPlanMenu(menu);
@@ -576,6 +597,7 @@ async function showClient(userId) {
         }
     } catch (err) {
         console.error('Error loading profile:', err);
+        alert('Грешка при зареждане на данните за клиента');
     }
     await loadNotifications();
     updateSectionDots(userId);
