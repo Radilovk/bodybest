@@ -822,7 +822,8 @@ async function loadQueries(markRead = false) {
         const data = await resp.json();
         if (queriesList) queriesList.innerHTML = '';
         if (resp.ok && data.success) {
-            data.queries.forEach(q => {
+            const list = Array.isArray(data.queries) ? data.queries : [];
+            list.forEach(q => {
                 const li = document.createElement('li');
                 li.textContent = q.message;
                 queriesList?.appendChild(li);
@@ -842,7 +843,8 @@ async function loadFeedback() {
         if (feedbackList) feedbackList.innerHTML = '';
         if (resp.ok && data.success) {
             let latestTs = Number(localStorage.getItem('lastFeedbackTs')) || 0;
-            data.feedback.forEach(f => {
+            const list = Array.isArray(data.feedback) ? data.feedback : [];
+            list.forEach(f => {
                 const li = document.createElement('li');
                 const date = new Date(f.timestamp).toLocaleDateString('bg-BG');
                 const rating = f.rating ? ` (${f.rating})` : '';
@@ -867,7 +869,8 @@ async function loadClientReplies(markRead = false) {
         const data = await resp.json();
         if (clientRepliesList) clientRepliesList.innerHTML = '';
         if (resp.ok && data.success) {
-            data.replies.forEach(r => {
+            const list = Array.isArray(data.replies) ? data.replies : [];
+            list.forEach(r => {
                 const li = document.createElement('li');
                 const date = new Date(r.ts || r.timestamp).toLocaleDateString('bg-BG');
                 li.textContent = `${date}: ${r.message}`;
