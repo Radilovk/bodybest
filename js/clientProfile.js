@@ -13,6 +13,20 @@ function setText(id, value, suffix = '') {
   el.textContent = suffix && val !== '--' ? `${val}${suffix}` : val;
 }
 
+function createInfoItem(label, value) {
+  const div = document.createElement('div');
+  div.className = 'info-item';
+  const l = document.createElement('div');
+  l.className = 'info-label';
+  l.textContent = label;
+  const v = document.createElement('div');
+  v.className = 'info-value';
+  v.textContent = value ?? '--';
+  div.appendChild(l);
+  div.appendChild(v);
+  return div;
+}
+
 function getUserId() {
   const params = new URLSearchParams(window.location.search);
   return params.get('userId');
@@ -41,50 +55,73 @@ async function loadData() {
 
 function fillProfile(data) {
   setText('userName', data.name);
-  setText('userFullName', data.fullname);
-  setText('userGender', data.gender);
-  if ('age' in data) setText('userAge', data.age);
-  setText('userEmail', data.email);
-  if ('height' in data) {
-    setText('userHeight', data.height, ' см');
-    setText('heightValue', data.height, ' см');
-  }
-  setText('userGoal', data.mainGoal);
-  setText('mainGoal', data.mainGoal);
-  setText('motivationLevel', data.motivationLevel);
-  setText('targetBmi', data.targetBmi);
-  setText('sleepHours', data.sleepHours);
-  setText('sleepInterruptions', data.sleepInterruptions);
-  setText('chronotype', data.chronotype);
-  setText('activityLevel', data.activityLevel);
-  setText('physicalActivity', data.physicalActivity);
-  setText('medicalConditions', Array.isArray(data.medicalConditions) ? data.medicalConditions.join(', ') : data.medicalConditions);
-  setText('stressLevel', data.stressLevel);
-  setText('medications', data.medications);
-  setText('waterIntake', data.waterIntake);
-  setText('foodPreferences', data.foodPreferences);
-  setText('overeatingFrequency', data.overeatingFrequency);
-  setText('foodCravings', data.foodCravings);
-  setText('foodTriggers', data.foodTriggers);
-  setText('alcoholFrequency', data.alcoholFrequency);
-  setText('eatingHabits', data.eatingHabits);
+  setText('userGoalHeader', data.mainGoal);
+  setText('userHeightHeader', data.height, ' см');
+
+  const container = $('profileInfo');
+  if (!container) return;
+  container.innerHTML = '';
+  const fields = {
+    fullname: data.fullname,
+    gender: data.gender,
+    age: data.age,
+    email: data.email,
+    height: data.height ? `${data.height} см` : undefined,
+    mainGoal: data.mainGoal,
+    motivationLevel: data.motivationLevel,
+    targetBmi: data.targetBmi,
+    sleepHours: data.sleepHours,
+    sleepInterruptions: data.sleepInterruptions,
+    chronotype: data.chronotype,
+    activityLevel: data.activityLevel,
+    physicalActivity: data.physicalActivity,
+    medicalConditions: Array.isArray(data.medicalConditions) ? data.medicalConditions.join(', ') : data.medicalConditions,
+    stressLevel: data.stressLevel,
+    medications: data.medications,
+    waterIntake: data.waterIntake,
+    foodPreferences: data.foodPreferences,
+    overeatingFrequency: data.overeatingFrequency,
+    foodCravings: data.foodCravings,
+    foodTriggers: data.foodTriggers,
+    alcoholFrequency: data.alcoholFrequency,
+    eatingHabits: data.eatingHabits
+  };
+  const card = document.createElement('div');
+  card.className = 'card';
+  const body = document.createElement('div');
+  body.className = 'card-body p-0';
+  Object.entries(fields).forEach(([k, v]) => {
+    body.appendChild(createInfoItem(labelMap[k] || k, v));
+  });
+  card.appendChild(body);
+  container.appendChild(card);
 }
 
 function fillDashboard(data) {
   const curW = data.currentStatus?.weight;
-  setText('currentWeight', curW, ' кг');
-  setText('weightValue', curW, ' кг');
-  setText('bmiValue', data.currentStatus?.bmi);
+  setText('currentWeightHeader', curW, ' кг');
   setText('planStatus', data.planStatus);
 
-  const macros = data.planData?.caloriesMacros || {};
-  setText('caloriesValue', macros.calories);
-  setText('proteinValue', macros.protein_grams);
-  setText('carbsValue', macros.carbs_grams);
-  setText('fatValue', macros.fat_grams);
-  if (macros.protein_percent) setText('proteinPercent', `${macros.protein_percent}%`);
-  if (macros.carbs_percent) setText('carbsPercent', `${macros.carbs_percent}%`);
-  if (macros.fat_percent) setText('fatPercent', `${macros.fat_percent}%`);
+  const macrosContainer = $('macroCards');
+  if (macrosContainer) {
+    macrosContainer.innerHTML = '';
+    const macros = data.planData?.caloriesMacros || {};
+    const list = [
+      { l: 'Калории', v: macros.calories, s: 'kcal дневно' },
+      { l: 'Протеини', v: macros.protein_grams, s: macros.protein_percent ? `${macros.protein_percent}% от калориите` : '' },
+      { l: 'Въглехидрати', v: macros.carbs_grams, s: macros.carbs_percent ? `${macros.carbs_percent}% от калориите` : '' },
+      { l: 'Мазнини', v: macros.fat_grams, s: macros.fat_percent ? `${macros.fat_percent}% от калориите` : '' }
+    ];
+    list.forEach(item => {
+      const col = document.createElement('div');
+      col.className = 'col-md-3 mb-3';
+      const card = document.createElement('div');
+      card.className = 'metric-card';
+      card.innerHTML = `<div class="metric-title">${item.l}</div><div class="metric-value">${item.v ?? '--'}</div><div class="metric-subtitle">${item.s}</div>`;
+      col.appendChild(card);
+      macrosContainer.appendChild(col);
+    });
+  }
 
   $('planJson').value = JSON.stringify(data.planData || {}, null, 2);
   displayPlanMenu(data.planData?.week1Menu || {}, false);
@@ -113,10 +150,22 @@ function fillDashboard(data) {
   const weightVals = logs.map(l => parseFloat(l.data?.weight)).filter(v => !isNaN(v));
   const energyVals = logs.map(l => parseFloat(l.data?.energy)).filter(v => !isNaN(v));
   const sleepVals = logs.map(l => parseFloat(l.data?.sleep)).filter(v => !isNaN(v));
-  setText('avgWeight', weightVals.length ? avg(weightVals).toFixed(1) + ' кг' : null);
-  setText('avgEnergy', energyVals.length ? avg(energyVals).toFixed(1) : null);
-  setText('avgSleep', sleepVals.length ? avg(sleepVals).toFixed(1) : null);
-  setText('weightPeriod', weightVals.length ? `от ${logs.length} дни` : '--');
+  const infoContainer = $('dashboardInfo');
+  if (infoContainer) {
+    infoContainer.innerHTML = '';
+    const fields = {
+      currentWeight: curW ? `${curW} кг` : undefined,
+      bmiValue: data.currentStatus?.bmi,
+      avgWeight: weightVals.length ? `${avg(weightVals).toFixed(1)} кг` : undefined,
+      avgEnergy: energyVals.length ? avg(energyVals).toFixed(1) : undefined,
+      avgSleep: sleepVals.length ? avg(sleepVals).toFixed(1) : undefined,
+      weightPeriod: weightVals.length ? `от ${logs.length} дни` : undefined,
+      currentStreak: `${data.analytics?.streak?.currentCount || 0} дни`
+    };
+    Object.entries(fields).forEach(([k, v]) => {
+      infoContainer.appendChild(createInfoItem(labelMap[k] || k, v));
+    });
+  }
 
   const cur = data.analytics?.current || {};
   setText('goalProgress', `${cur.goalProgress || 0}%`);
@@ -127,7 +176,6 @@ function fillDashboard(data) {
   if ($('healthBar')) $('healthBar').style.width = `${cur.overallHealthScore || 0}%`;
 
   const streak = data.analytics?.streak || { currentCount: 0, dailyStatusArray: [] };
-  setText('currentStreak', `${streak.currentCount} дни`);
   const streakCal = $('streakCalendar');
   if (streakCal) {
     streakCal.innerHTML = '';
@@ -195,44 +243,37 @@ function displayPlanMenu(menu, isError = false) {
     container.textContent = 'Няма меню';
     return;
   }
-  const table = document.createElement('table');
-  table.className = 'menu-table';
-
-  const thead = document.createElement('thead');
-  const headRow = document.createElement('tr');
-  ['Ден', 'Хранене', 'Продукти'].forEach(text => {
-    const th = document.createElement('th');
-    th.textContent = text;
-    headRow.appendChild(th);
-  });
-  thead.appendChild(headRow);
-  table.appendChild(thead);
-
-  const tbody = document.createElement('tbody');
+  const row = document.createElement('div');
+  row.className = 'row';
   Object.entries(menu).forEach(([day, meals]) => {
+    const col = document.createElement('div');
+    col.className = 'col-md-4 mb-4';
+    const box = document.createElement('div');
+    box.className = 'day-menu';
+    const dayTitle = document.createElement('h5');
+    dayTitle.className = 'meal-title';
+    dayTitle.textContent = capitalizeDay(day);
+    box.appendChild(dayTitle);
     (meals || []).forEach(meal => {
-      const tr = document.createElement('tr');
-      const dayTd = document.createElement('td');
-      dayTd.textContent = capitalizeDay(day);
-      const mealTd = document.createElement('td');
-      mealTd.textContent = meal.meal_name || '';
-      const itemsTd = document.createElement('td');
-      (meal.items || []).forEach((i, idx, arr) => {
-        const span = document.createElement('span');
-        span.textContent = `${i.name}${i.grams ? ` (${i.grams})` : ''}`;
-        itemsTd.appendChild(span);
-        if (idx < arr.length - 1) {
-          itemsTd.appendChild(document.createElement('br'));
-        }
+      const mealTitle = document.createElement('div');
+      mealTitle.className = 'meal-title mt-3';
+      let icon = 'fa-utensils';
+      const name = (meal.meal_name || '').toLowerCase();
+      if (name.includes('закуска')) icon = 'fa-sun';
+      else if (name.includes('вечеря')) icon = 'fa-moon';
+      mealTitle.innerHTML = `<i class="fas ${icon} me-2"></i>${meal.meal_name || ''}`;
+      box.appendChild(mealTitle);
+      (meal.items || []).forEach(i => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'meal-item';
+        itemDiv.textContent = `${i.name}${i.grams ? ` - ${i.grams}` : ''}`;
+        box.appendChild(itemDiv);
       });
-      tr.appendChild(dayTd);
-      tr.appendChild(mealTd);
-      tr.appendChild(itemsTd);
-      tbody.appendChild(tr);
     });
+    col.appendChild(box);
+    row.appendChild(col);
   });
-  table.appendChild(tbody);
-  container.appendChild(table);
+  container.appendChild(row);
 }
 
 function fillAdminNotes(status) {
