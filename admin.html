@@ -72,8 +72,12 @@
     </details>
 
     <details id="dashboardSection">
-      <summary>Пълни данни (JSON)</summary>
-      <pre id="dashboardData" class="json"></pre>
+      <summary>Пълни данни</summary>
+      <div id="dashboardSummary"></div>
+      <details>
+        <summary>JSON</summary>
+        <pre id="dashboardData" class="json"></pre>
+      </details>
     </details>
     <button id="exportData">Експортирай всички данни</button>
     <button id="exportPlan">Експортирай плана като JSON</button>
@@ -100,8 +104,8 @@
     <pre id="statsOutput"></pre>
   </section>
 
-  <section id="aiConfigSection" class="card">
-    <h2>AI конфигурация</h2>
+  <details id="aiConfigSection" class="card">
+    <summary>AI конфигурация</summary>
     <form id="aiConfigForm">
       <p class="note">Токените за моделите се задават като Worker secrets и не се
         редактират от този панел. Полето „Admin Token" се използва за
@@ -129,7 +133,7 @@
       </div>
       <button type="submit">Запази</button>
     </form>
-  </section>
+  </details>
 
   <script type="module" src="js/admin.js"></script>
 </body>
