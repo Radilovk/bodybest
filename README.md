@@ -301,6 +301,23 @@ curl https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/me
 
 Replace the placeholders with your own values and keep the token secret.
 
+In addition to text messages you can upload an image for automatic analysis.
+Open `assistant.html`, choose a file and it will be sent to `/api/analyzeImage`
+with `multipart/form-data` (field name `image`). The worker forwards the image
+to the configured vision model and returns a JSON summary describing the
+detected objects or text.
+
+Example `curl` request:
+
+```bash
+curl -X POST https://<your-domain>/api/analyzeImage \
+  -H "Authorization: Bearer <WORKER_ADMIN_TOKEN>" \
+  -F image=@/path/to/photo.jpg
+```
+
+For Cloudflare models set `CF_AI_TOKEN`. When using Gemini Vision provide
+`GEMINI_API_KEY`. Without these secrets the endpoint will respond with an error.
+
 ### Промяна на началното съобщение в чата
 
 Текстът, който се показва при първо отваряне на чата, се намира в `js/config.js`
