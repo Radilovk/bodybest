@@ -1,5 +1,5 @@
 import { apiEndpoints } from './config.js';
-import { labelMap } from './labelMap.js';
+import { labelMap, statusMap } from './labelMap.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -317,6 +317,44 @@ function displayDailyLogs(logs, isError = false) {
     updateWeightChart(logs);
 }
 
+function renderAnalyticsCurrent(cur) {
+    const dl = document.createElement('dl');
+    const fields = {
+        goalProgress: cur.goalProgress != null ? `${cur.goalProgress}%` : '--',
+        engagementScore: cur.engagementScore != null ? `${cur.engagementScore}%` : '--',
+        overallHealthScore: cur.overallHealthScore != null ? `${cur.overallHealthScore}%` : '--'
+    };
+    Object.entries(fields).forEach(([k, v]) => {
+        const dt = document.createElement('dt');
+        dt.textContent = labelMap[k] || k;
+        const dd = document.createElement('dd');
+        dd.textContent = v;
+        dl.appendChild(dt);
+        dl.appendChild(dd);
+    });
+    return dl;
+}
+
+function renderDetailedMetrics(metrics) {
+    const table = document.createElement('table');
+    table.className = 'menu-table';
+    const thead = document.createElement('thead');
+    thead.innerHTML = '<tr><th>Показател</th><th>Начална</th><th>Целева</th><th>Текуща</th></tr>';
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    metrics.forEach(m => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${m.label || ''}</td>
+            <td>${m.initialValueText ?? ''}</td>
+            <td>${m.expectedValueText ?? ''}</td>
+            <td>${m.currentValueText ?? ''}</td>`;
+        tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    return table;
+}
+
 function displayDashboardSummary(data) {
     if (!profileSummaryDiv || !statusSummaryDiv || !analyticsSummaryDiv) return;
 
@@ -338,9 +376,26 @@ function displayDashboardSummary(data) {
     statusSummaryDiv.appendChild(
         renderObjectAsList(data.currentStatus || {})
     );
-    analyticsSummaryDiv.appendChild(
-        renderObjectAsList(data.analytics || {})
-    );
+
+    const analytics = data.analytics;
+    if (!analytics) {
+        analyticsSummaryDiv.textContent = 'Няма данни';
+        return;
+    }
+    analyticsSummaryDiv.appendChild(renderAnalyticsCurrent(analytics.current || {}));
+    if (analytics.textualAnalysis) {
+        const p = document.createElement('p');
+        p.textContent = analytics.textualAnalysis;
+        analyticsSummaryDiv.appendChild(p);
+    }
+    if (Array.isArray(analytics.detailed) && analytics.detailed.length > 0) {
+        analyticsSummaryDiv.appendChild(renderDetailedMetrics(analytics.detailed));
+    }
+    if (analytics.streak) {
+        const p = document.createElement('p');
+        p.textContent = `${labelMap.streak || 'streak'}: ${analytics.streak.currentCount || 0} дни`;
+        analyticsSummaryDiv.appendChild(p);
+    }
 }
 
 async function loadClients() {
@@ -414,7 +469,7 @@ function renderClients() {
         btn.textContent = `${c.name}${dateText}${lastText}`;
         const statusEl = document.createElement('span');
         statusEl.className = `status-badge status-${c.status}`;
-        statusEl.textContent = c.status;
+        statusEl.textContent = statusMap[c.status] || c.status;
         btn.appendChild(statusEl);
         (c.tags || []).forEach(t => {
             const tagEl = document.createElement('span');
@@ -456,7 +511,7 @@ function updateStatusChart(stats) {
     statusChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['ready', 'processing', 'pending'],
+            labels: [statusMap.ready, statusMap.processing, statusMap.pending],
             datasets: [{
                 data: [stats.ready, stats.processing, stats.pending],
                 backgroundColor: ['#28a745', '#ffc107', '#dc3545']
