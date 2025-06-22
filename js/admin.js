@@ -42,6 +42,7 @@ const openFullProfileLink = document.getElementById('openFullProfile');
 const toggleFullProfileBtn = document.getElementById('toggleFullProfile');
 const fullProfileFrame = document.getElementById('fullProfileFrame');
 const dashboardPre = document.getElementById('dashboardData');
+const copyDashboardJsonBtn = document.getElementById('copyDashboardJson');
 const dashboardSummaryDiv = document.getElementById('dashboardSummary');
 const exportDataBtn = document.getElementById('exportData');
 const exportCsvBtn = document.getElementById('exportCsv');
@@ -655,7 +656,11 @@ async function showClient(userId) {
             displayPlanMenu(menu, false);
             displayDailyLogs(dashData.dailyLogs || [], false);
             displayDashboardSummary(dashData);
-            if (dashboardPre) dashboardPre.textContent = JSON.stringify(dashData, null, 2);
+            if (dashboardPre) {
+                dashboardPre.textContent = JSON.stringify(dashData, null, 2);
+                dashboardPre.classList.remove('hidden');
+            }
+            if (copyDashboardJsonBtn) copyDashboardJsonBtn.classList.remove('hidden');
             if (notesField) notesField.value = dashData.currentStatus?.adminNotes || '';
             if (tagsField) tagsField.value = (dashData.currentStatus?.adminTags || []).join(',');
             currentPlanData = dashData.planData || null;
@@ -671,6 +676,11 @@ async function showClient(userId) {
             displayInitialAnswers(null, true);
             displayPlanMenu(null, true);
             displayDailyLogs(null, true);
+            if (dashboardPre) {
+                dashboardPre.textContent = '';
+                dashboardPre.classList.add('hidden');
+            }
+            if (copyDashboardJsonBtn) copyDashboardJsonBtn.classList.add('hidden');
             hasError = true;
         }
         if (hasError) {
@@ -798,6 +808,14 @@ if (exportCsvBtn) {
         a.download = `${currentUserId || 'logs'}.csv`;
         a.click();
         URL.revokeObjectURL(url);
+    });
+}
+
+if (copyDashboardJsonBtn) {
+    copyDashboardJsonBtn.addEventListener('click', () => {
+        if (dashboardPre && dashboardPre.textContent) {
+            navigator.clipboard.writeText(dashboardPre.textContent).catch(() => alert('Неуспешно копиране'));
+        }
     });
 }
 

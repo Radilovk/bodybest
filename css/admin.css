@@ -191,3 +191,8 @@ details[open] summary::after {
   border: none;
   margin-top: 10px;
 }
+
+.button-small {
+  font-size: 0.8rem;
+  padding: var(--space-xs) var(--space-sm);
+}
