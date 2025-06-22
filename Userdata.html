@@ -527,32 +527,6 @@
                 </div>
             </div>
 
-            <!-- Лични данни -->
-            <div class="card">
-                <div class="card-header" data-toggle="card">
-                    <h2><i class="fas fa-id-card"></i> Лични Данни</h2>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="card-body">
-                    <div id="personal-info">
-                        <!-- Личните данни ще се зареждат тук -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Отговори от въпросника -->
-            <div class="card">
-                <div class="card-header" data-toggle="card">
-                    <h2><i class="fas fa-question-circle"></i> Отговори от въпросника</h2>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="card-body">
-                    <div id="questionnaire-info">
-                        <!-- Отговорите ще се зареждат тук -->
-                    </div>
-                </div>
-            </div>
-
             <!-- Калории и макронутриенти -->
             <div class="card">
                 <div class="card-header" data-toggle="card">
@@ -758,55 +732,11 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Пълен JSON -->
-            <div class="card">
-                <div class="card-header" data-toggle="card">
-                    <h2><i class="fas fa-code"></i> Пълен JSON</h2>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="card-body">
-                    <pre id="full-json" style="white-space: pre-wrap"></pre>
-                </div>
-            </div>
         </div>
     </div>
 
     <script type="module">
         import { apiEndpoints } from './js/config.js';
-        import { labelMap } from './js/labelMap.js';
-
-        function renderValue(val) {
-            if (Array.isArray(val)) {
-                const ul = document.createElement('ul');
-                val.forEach(v => {
-                    const li = document.createElement('li');
-                    li.appendChild(renderValue(v));
-                    ul.appendChild(li);
-                });
-                return ul;
-            }
-            if (val && typeof val === 'object') {
-                return renderObjectAsList(val);
-            }
-            const span = document.createElement('span');
-            span.textContent = val;
-            return span;
-        }
-
-        function renderObjectAsList(obj = {}) {
-            const dl = document.createElement('dl');
-            Object.entries(obj).forEach(([key, value]) => {
-                const dt = document.createElement('dt');
-                dt.textContent = labelMap[key] || key;
-                const dd = document.createElement('dd');
-                dd.appendChild(renderValue(value));
-                dl.appendChild(dt);
-                dl.appendChild(dd);
-            });
-            return dl;
-        }
-
         document.addEventListener('DOMContentLoaded', async function() {
             const params = new URLSearchParams(window.location.search);
             const userId = params.get('userId');
@@ -815,8 +745,8 @@
                 try {
                     const resp = await fetch(`${apiEndpoints.dashboard}?userId=${encodeURIComponent(userId)}`);
                     const data = await resp.json();
-                    if (resp.ok && data.success) {
-                        initialJson = JSON.stringify(data, null, 2);
+                    if (resp.ok && data.success && data.planData) {
+                        initialJson = JSON.stringify(data.planData, null, 2);
                         document.getElementById('json-input').value = initialJson;
                     }
                 } catch (err) {
@@ -825,7 +755,7 @@
             }
             try {
                 const profileData = JSON.parse(initialJson);
-                renderProfile(profileData.planData || profileData);
+                renderProfile(profileData);
             } catch (e) {
                 console.error('Грешка при парсване на JSON:', e);
             }
@@ -881,7 +811,7 @@
                 const jsonInput = document.getElementById('json-input').value;
                 try {
                     const profileData = JSON.parse(jsonInput);
-                    renderProfile(profileData.planData || profileData);
+                    renderProfile(profileData);
                 } catch (e) {
                     alert('Невалиден JSON формат! Моля, проверете данните.');
                     console.error('Грешка при парсване на JSON:', e);
@@ -890,35 +820,10 @@
             
             // Функция за визуализация на профила
             function renderProfile(data) {
-                document.getElementById('full-json').textContent = JSON.stringify(data, null, 2);
-
                 // Обобщение на профила
                 if (data.profileSummary) {
-                    document.getElementById('profile-summary').innerHTML =
+                    document.getElementById('profile-summary').innerHTML = 
                         `<p>${data.profileSummary}</p>`;
-                }
-
-                // Лични данни
-                const personalKeys = ['name','fullname','age','gender','email','phone','height','weight','goal','mainGoal','motivation','motivationLevel'];
-                const personalInfo = {};
-                personalKeys.forEach(k => {
-                    if (data[k] !== undefined) personalInfo[k] = data[k];
-                });
-                if (data.personalInfo && typeof data.personalInfo === 'object') {
-                    Object.assign(personalInfo, data.personalInfo);
-                }
-                if (Object.keys(personalInfo).length) {
-                    const cont = document.getElementById('personal-info');
-                    cont.innerHTML = '';
-                    cont.appendChild(renderObjectAsList(personalInfo));
-                }
-
-                // Отговори от въпросника
-                const qa = data.questionnaireAnswers || data.initialAnswers;
-                if (qa && typeof qa === 'object') {
-                    const qaCont = document.getElementById('questionnaire-info');
-                    qaCont.innerHTML = '';
-                    qaCont.appendChild(renderObjectAsList(qa));
                 }
                 
                 // Калории и макронутриенти
@@ -994,32 +899,17 @@
                     });
                 }
                 
-                // Хидратация, готвене и добавки
-                if (data.hydrationCookingSupplements) {
-                    const hcs = data.hydrationCookingSupplements;
-                    if (hcs.hydration_recommendations) {
-                        const hydration = hcs.hydration_recommendations;
-                        document.getElementById('hydration-liters').textContent = hydration.daily_liters;
-
-                        let tipsHtml = '<ul>';
-                        hydration.tips.forEach(tip => {
-                            tipsHtml += `<li><i class="fas fa-check-circle"></i> ${tip}</li>`;
-                        });
-                        tipsHtml += '</ul>';
-                        document.getElementById('hydration-tips').innerHTML = tipsHtml;
-                    }
-                    if (Array.isArray(hcs.cooking_methods)) {
-                        let cHtml = '<ul>';
-                        hcs.cooking_methods.forEach(m => { cHtml += `<li>${m}</li>`; });
-                        cHtml += '</ul>';
-                        document.getElementById('cooking-methods').innerHTML = cHtml;
-                    }
-                    if (Array.isArray(hcs.supplements)) {
-                        let sHtml = '<ul>';
-                        hcs.supplements.forEach(s => { sHtml += `<li>${s}</li>`; });
-                        sHtml += '</ul>';
-                        document.getElementById('supplements-list').innerHTML = sHtml;
-                    }
+                // Хидратация
+                if (data.hydrationCookingSupplements && data.hydrationCookingSupplements.hydration_recommendations) {
+                    const hydration = data.hydrationCookingSupplements.hydration_recommendations;
+                    document.getElementById('hydration-liters').textContent = hydration.daily_liters;
+                    
+                    let tipsHtml = '<ul>';
+                    hydration.tips.forEach(tip => {
+                        tipsHtml += `<li><i class="fas fa-check-circle"></i> ${tip}</li>`;
+                    });
+                    tipsHtml += '</ul>';
+                    document.getElementById('hydration-tips').innerHTML = tipsHtml;
                 }
                 
                 // Разрешени и забранени храни
@@ -1052,7 +942,7 @@
                 // Психологически насоки
                 if (data.psychologicalGuidance) {
                     const guidance = data.psychologicalGuidance;
-
+                    
                     // Стратегии за справяне
                     let strategiesHtml = '<ul>';
                     if (guidance.coping_strategies) {
@@ -1062,13 +952,6 @@
                     }
                     strategiesHtml += '</ul>';
                     document.getElementById('coping-strategies').innerHTML = strategiesHtml;
-
-                    if (Array.isArray(guidance.motivational_messages)) {
-                        let motHtml = '<ul>';
-                        guidance.motivational_messages.forEach(m => { motHtml += `<li>${m}</li>`; });
-                        motHtml += '</ul>';
-                        document.getElementById('motivational-messages').innerHTML = motHtml;
-                    }
                 }
                 
                 // Подробни цели
