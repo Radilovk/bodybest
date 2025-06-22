@@ -21,7 +21,8 @@ function createInfoItem(label, value) {
   l.textContent = label;
   const v = document.createElement('div');
   v.className = 'info-value';
-  v.textContent = value ?? '--';
+  v.textContent =
+    value !== undefined && value !== null && value !== '' ? value : '--';
   div.appendChild(l);
   div.appendChild(v);
   return div;
@@ -62,6 +63,7 @@ function fillProfile(data) {
     fullname: data.fullname,
     gender: data.gender,
     age: data.age,
+    phone: data.phone,
     email: data.email
   };
   const physical = {
