@@ -433,22 +433,22 @@ function fillAdminNotes(status) {
   if (!status) return;
   const notesEl = $('adminNotes');
   if (notesEl) notesEl.textContent = status.adminNotes || '--';
-  const tagsEl = $('adminTags');
-  if (tagsEl) {
-    tagsEl.innerHTML = '';
-    const tags = Array.isArray(status.adminTags) ? status.adminTags : [];
-    if (tags.length === 0) {
-      const li = document.createElement('li');
-      li.textContent = '--';
-      tagsEl.appendChild(li);
-    } else {
-      tags.forEach(t => {
+    const tagsEl = $('adminTags');
+    if (tagsEl) {
+      tagsEl.innerHTML = '';
+      const uniqueTags = new Set(Array.isArray(status.adminTags) ? status.adminTags : []);
+      if (uniqueTags.size === 0) {
         const li = document.createElement('li');
-        li.textContent = t;
+        li.textContent = '--';
         tagsEl.appendChild(li);
-      });
+      } else {
+        uniqueTags.forEach(t => {
+          const li = document.createElement('li');
+          li.textContent = t;
+          tagsEl.appendChild(li);
+        });
+      }
     }
-  }
 }
 
 function fillInitialAnswers(ans) {
