@@ -241,9 +241,16 @@ body.dark-theme .chat-messages .message.bot { color: #e0e0e0; }
   max-height: 90px; overflow-y: auto;
 }
 #chat-send {
-  background-color: var(--primary-color); color: var(--fab-icon); 
+  background-color: var(--primary-color); color: var(--fab-icon);
   border-radius: var(--radius-round); width: 44px; height: 44px;
   flex-shrink: 0; padding: 0;
 }
-#chat-send svg { width: 20px; height: 20px; } 
+#chat-send svg { width: 20px; height: 20px; }
 #chat-send:hover { background-color: var(--secondary-color); }
+#chat-upload {
+  background-color: var(--primary-color); color: var(--fab-icon);
+  border-radius: var(--radius-round); width: 44px; height: 44px;
+  flex-shrink: 0; padding: 0;
+}
+#chat-upload svg { width: 20px; height: 20px; }
+#chat-upload:hover { background-color: var(--secondary-color); }

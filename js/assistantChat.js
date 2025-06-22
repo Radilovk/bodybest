@@ -44,6 +44,39 @@ function hideTyping() {
     }
 }
 
+function openImageDialog() {
+    document.getElementById('chat-image')?.click();
+}
+
+function sendImage(file) {
+    const userId = document.getElementById('userId').value.trim();
+    if (!userId || !file) return;
+    addMessage('Изпратено изображение', 'user');
+    chatHistory.push({ text: '[image]', sender: 'user', isError: false });
+    saveHistory();
+    showTyping();
+    const formData = new FormData();
+    formData.append('userId', userId);
+    formData.append('image', file);
+    fetch(apiEndpoints.analyzeImage, { method: 'POST', body: formData })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+            const text = data.result || data.message || 'Грешка';
+            addMessage(text, 'bot', !ok || !data.success);
+            chatHistory.push({ text, sender: 'bot', isError: !ok || !data.success });
+            saveHistory();
+        })
+        .catch(() => {
+            addMessage('Грешка при изпращане на изображението.', 'bot', true);
+            chatHistory.push({ text: 'Грешка при изпращане на изображението.', sender: 'bot', isError: true });
+            saveHistory();
+        })
+        .finally(() => {
+            hideTyping();
+            document.getElementById('chat-image').value = '';
+        });
+}
+
 async function sendMessage() {
     const userIdEl = document.getElementById('userId');
     const inputEl = document.getElementById('chat-input');
@@ -113,4 +146,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     });
     document.getElementById('chat-clear').addEventListener('click', clearChat);
+    document.getElementById('chat-upload').addEventListener('click', openImageDialog);
+    document.getElementById('chat-image').addEventListener('change', e => {
+        if (e.target.files[0]) sendImage(e.target.files[0]);
+    });
 });

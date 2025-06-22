@@ -1,7 +1,7 @@
 
 // chat.js - Логика за Чат
 import { selectors } from './uiElements.js';
-import { chatHistory, currentUserId } from './app.js'; // Access chatHistory and userId
+import { chatHistory, currentUserId, handleChatImageUpload } from './app.js'; // Access chatHistory and userId
 import { apiEndpoints, initialBotMessage } from './config.js';
 import { escapeHtml } from './utils.js';
 
@@ -75,5 +75,14 @@ export function displayTypingIndicator(show) {
 }
 
 export function scrollToChatBottom() { if (selectors.chatMessages) selectors.chatMessages.scrollTop = selectors.chatMessages.scrollHeight; }
+
+export function openChatImageDialog() {
+    selectors.chatImageInput?.click();
+}
+
+export function handleChatImageSelected() {
+    const file = selectors.chatImageInput?.files[0];
+    if (file) handleChatImageUpload(file);
+}
 
 // handleChatSend and handleChatInputKeypress remain in app.js as they modify chatHistory and call API

@@ -24,6 +24,7 @@ import {
     handlePlanModChatInputKeypress
 } from './planModChat.js';
 import { toggleChatWidget, closeChatWidget, clearChat } from './chat.js';
+import * as chatUpload from './chat.js';
 import { computeSwipeTargetIndex } from './swipeUtils.js';
 import { handleAchievementClick } from './achievements.js';
 
@@ -164,6 +165,8 @@ export function setupStaticEventListeners() {
     if (selectors.chatClear) selectors.chatClear.addEventListener('click', clearChat);
     if (selectors.chatSend) selectors.chatSend.addEventListener('click', handleChatSend);
     if (selectors.chatInput) selectors.chatInput.addEventListener('keypress', handleChatInputKeypress);
+    if (selectors.chatUploadBtn) selectors.chatUploadBtn.addEventListener('click', chatUpload.openChatImageDialog);
+    if (selectors.chatImageInput) selectors.chatImageInput.addEventListener('change', chatUpload.handleChatImageSelected);
 
     if (selectors.planModChatClose) selectors.planModChatClose.addEventListener('click', () => {
         setChatModelOverride(null);
