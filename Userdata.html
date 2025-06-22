@@ -36,7 +36,7 @@
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1100px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -116,6 +116,7 @@
             overflow: hidden;
             padding: 0 25px;
             transition: max-height 0.3s ease, padding 0.3s ease;
+            overflow-y: auto;
         }
 
         .card-body.open {
@@ -127,6 +128,8 @@
             flex-wrap: wrap;
             border-bottom: 2px solid var(--light-gray);
             margin-bottom: 20px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .tab {
@@ -137,6 +140,7 @@
             border: none;
             border-bottom: 3px solid transparent;
             transition: var(--transition);
+            white-space: nowrap;
         }
         
         .tab.active {
@@ -216,6 +220,7 @@
             background: white;
             border-radius: 0 0 var(--border-radius) var(--border-radius);
             transition: max-height 0.3s ease, padding 0.3s ease;
+            overflow-y: auto;
         }
 
         .accordion-item.active .accordion-body {
@@ -284,6 +289,21 @@
             border-radius: 6px;
             display: flex;
             align-items: center;
+        }
+
+        .menu-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        .menu-table th,
+        .menu-table td {
+            border: 1px solid #ddd;
+            padding: 4px;
+            text-align: left;
+        }
+        .menu-table th {
+            background: #f9f9f9;
         }
         
         .food-item i {
@@ -387,6 +407,11 @@
                 font-size: 0.9rem;
             }
         }
+
+        @media (max-width: 480px) {
+            .tabs { flex-wrap: nowrap; }
+            .tab { flex: 0 0 auto; }
+        }
         
         .loading-container {
             text-align: center;
@@ -402,18 +427,25 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
         }
-        
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
+
         .json-input-container {
             background: white;
             padding: 20px;
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
             margin-bottom: 30px;
+        }
+
+        pre#full-json {
+            overflow-x: auto;
+            background: var(--light);
+            padding: 10px;
+            border-radius: var(--border-radius);
         }
         
         textarea {
