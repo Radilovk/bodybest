@@ -19,9 +19,12 @@ beforeEach(async () => {
     <input id="phoneInput">
     <input id="emailInput">
     <input id="heightInput">
+    <span id="userName"></span>
+    <span id="userGoalHeader"></span>
+    <span id="userHeightHeader"></span>
+    <div id="demographicsInfo"></div>
     <div id="adminNotes"></div>
     <ul id="adminTags"></ul>
-    <div id="initialAnswersContainer"></div>
     <textarea id="planJson"></textarea>
     <button id="savePlanBtn"></button>
     <button id="saveProfileBtn"></button>
@@ -33,7 +36,7 @@ beforeEach(async () => {
     .replace("https://cdn.jsdelivr.net/npm/jsonrepair/+esm", jsonrepairMockPath)
     .replace('./config.js', '../config.js')
     .replace('./labelMap.js', '../labelMap.js')
-    + '\nexport { fillProfile, fillAdminNotes, fillInitialAnswers };';
+    + '\nexport { fillProfile, fillAdminNotes };';
   const tempPath = path.join(path.dirname(jsonrepairMockPath), 'clientProfile.patched.js');
   await fs.promises.writeFile(tempPath, patched);
   mod = await import(pathToFileURL(tempPath) + '?' + Date.now());
@@ -92,15 +95,14 @@ test('fillProfile populates form inputs', async () => {
   expect(document.getElementById('heightInput').value).toBe('180');
 });
 
-test('admin notes and questionnaire answers render correctly', async () => {
+test('admin notes render and initial answers fill blanks', async () => {
   jest.unstable_mockModule('../labelMap.js', () => ({ labelMap: {} }));
   mod.fillAdminNotes({ adminNotes: 'Бележки', adminTags: ['t1', 't2'] });
-  mod.fillInitialAnswers({ sleep: 'Добре', nested: { foo: 'bar' } });
+  mod.fillProfile({ age: 25 }, { name: 'Init', fullname: 'Init Name' });
   expect(document.getElementById('adminNotes').textContent).toBe('Бележки');
   const tagTexts = Array.from(document.querySelectorAll('#adminTags li')).map(li => li.textContent);
   expect(tagTexts).toEqual(['t1', 't2']);
-  const dl = document.querySelector('#initialAnswersContainer dl');
-  expect(dl).not.toBeNull();
-  expect(dl.querySelector('dt').textContent).toBe('sleep');
-  expect(dl.querySelector('dd').textContent).toContain('Добре');
+  expect(document.getElementById('nameInput').value).toBe('Init');
+  expect(document.getElementById('userName').textContent).toBe('Init');
+  expect(document.getElementById('demographicsInfo').textContent).toContain('Init Name');
 });
