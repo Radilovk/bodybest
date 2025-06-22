@@ -588,7 +588,11 @@
     "sleep_quality_target_text": "Подобряване на качеството на съня до степен, в която се чувствате отпочинали и енергични сутрин. Целете се към 7-8 часа непрекъснат сън на нощ.",
     "stress_level_target_text": "Намаляване на нивата на стрес чрез редовни упражнения, техники за релаксация и достатъчно сън.",
     "energy_level_target_text": "Повишаване на нивата на енергия чрез балансирано хранене, редовни упражнения и достатъчно сън.",
-    "hydration_target_text": "Пийте 2-2.5 литра вода на ден, за да поддържате тялото си хидратирано и да подобрите енергийните нива."
+    "hydration_target_text": "Пийте 2-2.5 литра вода на ден, за да поддържате тялото си хидратирано и да подобрите енергийните нива.",
+    "bmi_target_numeric": 22.5,
+    "bmi_target_category_text": "Нормално тегло",
+    "meal_adherence_target_percent": 90,
+    "log_consistency_target_percent": 80
   }
 }</textarea>
             <button id="load-btn" class="btn"><i class="fas fa-sync-alt"></i> Зареди Профил</button>
@@ -836,6 +840,21 @@
                         <div class="target-card">
                             <h4><i class="fas fa-tint"></i> Хидратация</h4>
                             <p id="hydration-target"></p>
+                        </div>
+
+                        <div class="target-card">
+                            <h4><i class="fas fa-weight-scale"></i> БМИ цел</h4>
+                            <p id="bmi-target"></p>
+                        </div>
+
+                        <div class="target-card">
+                            <h4><i class="fas fa-utensils"></i> Придържане към храненето</h4>
+                            <p id="meal-adherence-target"></p>
+                        </div>
+
+                        <div class="target-card">
+                            <h4><i class="fas fa-clipboard-list"></i> Редовност на дневника</h4>
+                            <p id="log-consistency-target"></p>
                         </div>
                     </div>
                 </div>
@@ -1238,24 +1257,36 @@
                 }
                 
                 // Подробни цели
-                if (plan.detailedTargets) {
-                    const targets = plan.detailedTargets;
-                    if (targets.sleep_quality_target_text) {
-                        document.getElementById('sleep-target').textContent = targets.sleep_quality_target_text;
+                const targets = plan.detailedTargets || {};
+                const targetFields = [
+                    { key: 'sleep_quality_target_text', id: 'sleep-target' },
+                    { key: 'stress_level_target_text', id: 'stress-target' },
+                    { key: 'energy_level_target_text', id: 'energy-target' },
+                    { key: 'hydration_target_text', id: 'hydration-target' },
+                    {
+                        key: 'bmi_target_numeric',
+                        id: 'bmi-target',
+                        format: v => `${v}${targets.bmi_target_category_text ? ` (${targets.bmi_target_category_text})` : ''}`
+                    },
+                    {
+                        key: 'meal_adherence_target_percent',
+                        id: 'meal-adherence-target',
+                        format: v => `${v}%`
+                    },
+                    {
+                        key: 'log_consistency_target_percent',
+                        id: 'log-consistency-target',
+                        format: v => `${v}%`
                     }
-                    if (targets.stress_level_target_text) {
-                        document.getElementById('stress-target').textContent = targets.stress_level_target_text;
-                    }
-                    if (targets.energy_level_target_text) {
-                        document.getElementById('energy-target').textContent = targets.energy_level_target_text;
-                    }
-                    if (targets.hydration_target_text) {
-                        document.getElementById('hydration-target').textContent = targets.hydration_target_text;
-                    }
-                } else {
-                    ['sleep-target','stress-target','energy-target','hydration-target']
-                        .forEach(id => { document.getElementById(id).textContent = 'Няма данни'; });
-                }
+                ];
+                targetFields.forEach(({ key, id, format }) => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    const val = targets[key];
+                    el.textContent = val !== undefined && val !== null && val !== ''
+                        ? (format ? format(val) : val)
+                        : 'Няма данни';
+                });
 
                 // Допълнителни насоки
                 const extra = document.getElementById('extra-guidelines');
