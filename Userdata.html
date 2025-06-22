@@ -443,9 +443,16 @@
 
         pre#full-json {
             overflow-x: auto;
+            overflow-y: auto;
+            max-height: 400px;
             background: var(--light);
             padding: 10px;
             border-radius: var(--border-radius);
+        }
+
+        #error-message {
+            color: red;
+            margin-bottom: 10px;
         }
         
         textarea {
@@ -585,6 +592,7 @@
   }
 }</textarea>
             <button id="load-btn" class="btn"><i class="fas fa-sync-alt"></i> Зареди Профил</button>
+            <div id="error-message"></div>
         </div>
 
         <div id="profile-container">
@@ -974,6 +982,8 @@
             const params = new URLSearchParams(window.location.search);
             const userId = params.get('userId');
             let initialJson = document.getElementById('json-input').value;
+            const errorEl = document.getElementById('error-message');
+            errorEl.textContent = '';
             if (userId) {
                 try {
                     const resp = await fetch(`${apiEndpoints.dashboard}?userId=${encodeURIComponent(userId)}`);
@@ -981,9 +991,11 @@
                     if (resp.ok && data.success) {
                         initialJson = JSON.stringify(data, null, 2);
                         document.getElementById('json-input').value = initialJson;
+                        errorEl.textContent = '';
                     }
                 } catch (err) {
                     console.error('Грешка при зареждане на данните:', err);
+                    errorEl.textContent = 'Грешка при зареждане на данните';
                 }
             }
             try {
@@ -1020,9 +1032,11 @@
                     renderProfile(profileData);
                     setupCardToggles();
                     setupAccordions();
+                    errorEl.textContent = '';
                 } catch (e) {
                     alert('Невалиден JSON формат! Моля, проверете данните.');
                     console.error('Грешка при парсване на JSON:', e);
+                    errorEl.textContent = 'Невалиден JSON формат';
                 }
             });
             
@@ -1034,24 +1048,30 @@
                 const answers = allData.initialAnswers || allData.questionnaireAnswers || {};
 
                 // Обобщение на профила
+                const summaryEl = document.getElementById('profile-summary');
                 if (plan.profileSummary) {
-                    document.getElementById('profile-summary').innerHTML =
-                        `<p>${plan.profileSummary}</p>`;
+                    summaryEl.innerHTML = `<p>${plan.profileSummary}</p>`;
+                } else {
+                    summaryEl.textContent = 'Няма данни';
                 }
 
                 // Лични данни
                 const personalInfo = plan.personalInfo || {};
+                const persCont = document.getElementById('personal-info');
+                persCont.innerHTML = '';
                 if (Object.keys(personalInfo).length) {
-                    const cont = document.getElementById('personal-info');
-                    cont.innerHTML = '';
-                    cont.appendChild(renderObjectAsList(personalInfo));
+                    persCont.appendChild(renderObjectAsList(personalInfo));
+                } else {
+                    persCont.textContent = 'Няма данни';
                 }
 
                 // Отговори от въпросника
-                if (answers && typeof answers === 'object') {
-                    const qaCont = document.getElementById('questionnaire-info');
-                    qaCont.innerHTML = '';
+                const qaCont = document.getElementById('questionnaire-info');
+                qaCont.innerHTML = '';
+                if (answers && typeof answers === 'object' && Object.keys(answers).length) {
                     qaCont.appendChild(renderObjectAsList(answers));
+                } else {
+                    qaCont.textContent = 'Няма данни';
                 }
 
                 // Калории и макронутриенти
@@ -1064,6 +1084,9 @@
                     document.getElementById('carbs-grams').textContent = `${macros.carbs_grams}g`;
                     document.getElementById('fat-value').textContent = `${macros.fat_percent}%`;
                     document.getElementById('fat-grams').textContent = `${macros.fat_grams}g`;
+                } else {
+                    ['calories-value','protein-value','protein-grams','carbs-value','carbs-grams','fat-value','fat-grams']
+                        .forEach(id => { document.getElementById(id).textContent = 'Няма данни'; });
                 }
                 
                 // Седмично меню
@@ -1095,9 +1118,17 @@
                             dayContainer.innerHTML = '<p>Няма данни за този ден.</p>';
                         }
                     });
+                } else {
+                    ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
+                        .forEach(day => {
+                            const el = document.getElementById(day);
+                            if (el) el.innerHTML = '<p>Няма данни за този ден.</p>';
+                        });
                 }
                 
                 // Принципи за седмици 2-4
+                const principlesCont = document.getElementById('principles-container');
+                principlesCont.innerHTML = '';
                 if (plan.principlesWeek2_4) {
                     let principlesHtml = '';
                     plan.principlesWeek2_4.forEach(principle => {
@@ -1111,8 +1142,10 @@
                             </div>
                         </div>`;
                     });
-                    document.getElementById('principles-container').innerHTML = principlesHtml;
+                    principlesCont.innerHTML = principlesHtml;
                     setupAccordions();
+                } else {
+                    principlesCont.textContent = 'Няма данни';
                 }
                 
                 // Хидратация, готвене и добавки
@@ -1141,13 +1174,15 @@
                         sHtml += '</ul>';
                         document.getElementById('supplements-list').innerHTML = sHtml;
                     }
+                } else {
+                    ['hydration-liters','hydration-tips','cooking-methods','supplements-list']
+                        .forEach(id => { document.getElementById(id).textContent = 'Няма данни'; });
                 }
                 
                 // Разрешени и забранени храни
                 if (plan.allowedForbiddenFoods) {
                     const foods = plan.allowedForbiddenFoods;
-                    
-                    // Разрешени храни
+
                     let allowedHtml = '';
                     if (foods.main_allowed_foods) {
                         foods.main_allowed_foods.forEach(food => {
@@ -1156,9 +1191,7 @@
                             </div>`;
                         });
                     }
-                    document.getElementById('allowed-foods').innerHTML = allowedHtml;
-                    
-                    // Забранени храни
+
                     let forbiddenHtml = '';
                     if (foods.main_forbidden_foods) {
                         foods.main_forbidden_foods.forEach(food => {
@@ -1167,7 +1200,12 @@
                             </div>`;
                         });
                     }
-                    document.getElementById('forbidden-foods').innerHTML = forbiddenHtml;
+
+                    document.getElementById('allowed-foods').innerHTML = allowedHtml || 'Няма данни';
+                    document.getElementById('forbidden-foods').innerHTML = forbiddenHtml || 'Няма данни';
+                } else {
+                    document.getElementById('allowed-foods').textContent = 'Няма данни';
+                    document.getElementById('forbidden-foods').textContent = 'Няма данни';
                 }
                 
                 // Психологически насоки
@@ -1188,8 +1226,11 @@
                         let motHtml = '<ul>';
                         guidance.motivational_messages.forEach(m => { motHtml += `<li>${m}</li>`; });
                         motHtml += '</ul>';
-                        document.getElementById('motivational-messages').innerHTML = motHtml;
-                    }
+                    document.getElementById('motivational-messages').innerHTML = motHtml;
+                } else {
+                    document.getElementById('coping-strategies').textContent = 'Няма данни';
+                    document.getElementById('motivational-messages').textContent = 'Няма данни';
+                }
                 }
                 
                 // Подробни цели
@@ -1207,12 +1248,15 @@
                     if (targets.hydration_target_text) {
                         document.getElementById('hydration-target').textContent = targets.hydration_target_text;
                     }
+                } else {
+                    ['sleep-target','stress-target','energy-target','hydration-target']
+                        .forEach(id => { document.getElementById(id).textContent = 'Няма данни'; });
                 }
 
                 // Допълнителни насоки
+                const extra = document.getElementById('extra-guidelines');
+                extra.innerHTML = '';
                 if (plan.additionalGuidelines) {
-                    const extra = document.getElementById('extra-guidelines');
-                    extra.innerHTML = '';
                     const g = plan.additionalGuidelines;
                     if (Array.isArray(g)) {
                         g.forEach(item => {
@@ -1236,27 +1280,31 @@
                     } else if (typeof g === 'object') {
                         extra.appendChild(renderObjectAsList(g));
                     }
+                } else {
+                    extra.textContent = 'Няма данни';
                 }
 
                 // Аналитика
+                const analyticsCont = document.getElementById('analytics-info');
+                analyticsCont.innerHTML = '';
                 if (allData.analytics) {
-                    const cont = document.getElementById('analytics-info');
-                    cont.innerHTML = '';
                     const a = allData.analytics;
-                    if (a.current) cont.appendChild(renderObjectAsList(a.current));
+                    if (a.current) analyticsCont.appendChild(renderObjectAsList(a.current));
                     if (a.textualAnalysis) {
                         const p = document.createElement('p');
                         p.textContent = a.textualAnalysis;
-                        cont.appendChild(p);
+                        analyticsCont.appendChild(p);
                     }
                     if (Array.isArray(a.detailed) && a.detailed.length) {
-                        cont.appendChild(renderDetailedMetrics(a.detailed));
+                        analyticsCont.appendChild(renderDetailedMetrics(a.detailed));
                     }
                     if (a.streak) {
                         const p = document.createElement('p');
                         p.textContent = `${labelMap.streak || 'streak'}: ${a.streak.currentCount || 0} дни`;
-                        cont.appendChild(p);
+                        analyticsCont.appendChild(p);
                     }
+                } else {
+                    analyticsCont.textContent = 'Няма данни';
                 }
 
                 // Системна информация
@@ -1266,10 +1314,12 @@
                 });
                 if (allData.currentStatus) sysInfo.currentStatus = allData.currentStatus;
                 if (plan.generationMetadata) sysInfo.generationMetadata = plan.generationMetadata;
+                const sysCont = document.getElementById('system-info');
+                sysCont.innerHTML = '';
                 if (Object.keys(sysInfo).length) {
-                    const cont = document.getElementById('system-info');
-                    cont.innerHTML = '';
-                    cont.appendChild(renderObjectAsList(sysInfo));
+                    sysCont.appendChild(renderObjectAsList(sysInfo));
+                } else {
+                    sysCont.textContent = 'Няма данни';
                 }
             }
         });
