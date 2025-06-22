@@ -40,6 +40,7 @@ const planMenuPre = document.getElementById('planMenu');
 const dailyLogsPre = document.getElementById('dailyLogs');
 const exportPlanBtn = document.getElementById('exportPlan');
 const openFullProfileLink = document.getElementById('openFullProfile');
+const openUserDataLink = document.getElementById('openUserData');
 const fullProfileFrame = document.getElementById('fullProfileFrame');
 const dashboardPre = document.getElementById('dashboardData');
 const copyDashboardJsonBtn = document.getElementById('copyDashboardJson');
@@ -702,6 +703,7 @@ async function showClient(userId) {
             if (profileEmail) profileEmail.value = data.email || '';
             if (profilePhone) profilePhone.value = data.phone || '';
             if (openFullProfileLink) openFullProfileLink.href = `clientProfile.html?userId=${encodeURIComponent(userId)}`;
+            if (openUserDataLink) openUserDataLink.href = `Userdata.html?userId=${encodeURIComponent(userId)}`;
             if (fullProfileFrame) fullProfileFrame.src = `clientProfile.html?userId=${encodeURIComponent(userId)}`;
             await Promise.all([
                 loadQueries(true),

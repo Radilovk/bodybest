@@ -735,10 +735,24 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Зареждане на първоначалния JSON
-            const initialJson = document.getElementById('json-input').value;
+    <script type="module">
+        import { apiEndpoints } from './js/config.js';
+        document.addEventListener('DOMContentLoaded', async function() {
+            const params = new URLSearchParams(window.location.search);
+            const userId = params.get('userId');
+            let initialJson = document.getElementById('json-input').value;
+            if (userId) {
+                try {
+                    const resp = await fetch(`${apiEndpoints.dashboard}?userId=${encodeURIComponent(userId)}`);
+                    const data = await resp.json();
+                    if (resp.ok && data.success && data.planData) {
+                        initialJson = JSON.stringify(data.planData, null, 2);
+                        document.getElementById('json-input').value = initialJson;
+                    }
+                } catch (err) {
+                    console.error('Грешка при зареждане на данните:', err);
+                }
+            }
             try {
                 const profileData = JSON.parse(initialJson);
                 renderProfile(profileData);
