@@ -974,6 +974,10 @@
                 header.addEventListener('click', () => {
                     const active = item.classList.toggle('active');
                     body.style.maxHeight = active ? body.scrollHeight + 'px' : 0;
+                    const cardBody = item.closest('.card-body');
+                    if (cardBody && cardBody.classList.contains('open')) {
+                        cardBody.style.maxHeight = cardBody.scrollHeight + 'px';
+                    }
                 });
             });
         }
@@ -1157,26 +1161,40 @@
                     const hcs = plan.hydrationCookingSupplements;
                     if (hcs.hydration_recommendations) {
                         const hydration = hcs.hydration_recommendations;
-                        document.getElementById('hydration-liters').textContent = hydration.daily_liters;
+                        document.getElementById('hydration-liters').textContent = hydration.daily_liters || 'Няма данни';
 
-                        let tipsHtml = '<ul>';
-                        hydration.tips.forEach(tip => {
-                            tipsHtml += `<li><i class="fas fa-check-circle"></i> ${tip}</li>`;
-                        });
-                        tipsHtml += '</ul>';
+                        let tipsHtml = '';
+                        if (Array.isArray(hydration.tips) && hydration.tips.length) {
+                            tipsHtml = '<ul>';
+                            hydration.tips.forEach(tip => {
+                                tipsHtml += `<li><i class="fas fa-check-circle"></i> ${tip}</li>`;
+                            });
+                            tipsHtml += '</ul>';
+                        } else {
+                            tipsHtml = 'Няма данни';
+                        }
                         document.getElementById('hydration-tips').innerHTML = tipsHtml;
+                    } else {
+                        document.getElementById('hydration-liters').textContent = 'Няма данни';
+                        document.getElementById('hydration-tips').textContent = 'Няма данни';
                     }
-                    if (Array.isArray(hcs.cooking_methods)) {
+
+                    if (Array.isArray(hcs.cooking_methods) && hcs.cooking_methods.length) {
                         let cHtml = '<ul>';
                         hcs.cooking_methods.forEach(m => { cHtml += `<li>${m}</li>`; });
                         cHtml += '</ul>';
                         document.getElementById('cooking-methods').innerHTML = cHtml;
+                    } else {
+                        document.getElementById('cooking-methods').textContent = 'Няма данни';
                     }
-                    if (Array.isArray(hcs.supplements)) {
+
+                    if (Array.isArray(hcs.supplements) && hcs.supplements.length) {
                         let sHtml = '<ul>';
                         hcs.supplements.forEach(s => { sHtml += `<li>${s}</li>`; });
                         sHtml += '</ul>';
                         document.getElementById('supplements-list').innerHTML = sHtml;
+                    } else {
+                        document.getElementById('supplements-list').textContent = 'Няма данни';
                     }
                 } else {
                     ['hydration-liters','hydration-tips','cooking-methods','supplements-list']
