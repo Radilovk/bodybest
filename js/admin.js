@@ -1,5 +1,5 @@
 import { apiEndpoints } from './config.js';
-import { labelMap } from './labelMap.js';
+import { labelMap, statusMap } from './labelMap.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -414,7 +414,7 @@ function renderClients() {
         btn.textContent = `${c.name}${dateText}${lastText}`;
         const statusEl = document.createElement('span');
         statusEl.className = `status-badge status-${c.status}`;
-        statusEl.textContent = c.status;
+        statusEl.textContent = statusMap[c.status] || c.status;
         btn.appendChild(statusEl);
         (c.tags || []).forEach(t => {
             const tagEl = document.createElement('span');
@@ -456,7 +456,7 @@ function updateStatusChart(stats) {
     statusChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['ready', 'processing', 'pending'],
+            labels: [statusMap.ready, statusMap.processing, statusMap.pending],
             datasets: [{
                 data: [stats.ready, stats.processing, stats.pending],
                 backgroundColor: ['#28a745', '#ffc107', '#dc3545']

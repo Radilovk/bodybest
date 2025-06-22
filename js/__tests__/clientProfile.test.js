@@ -79,7 +79,7 @@ afterEach(() => {
 });
 
 test('fillProfile populates form inputs', async () => {
-  jest.unstable_mockModule('../labelMap.js', () => ({ labelMap: {} }));
+  jest.unstable_mockModule('../labelMap.js', () => ({ labelMap: {}, statusMap: {} }));
   mod.fillProfile({
     name: 'Ivan',
     fullname: 'Ivan Ivanov',
@@ -97,7 +97,7 @@ test('fillProfile populates form inputs', async () => {
 });
 
 test('admin notes render and initial answers fill blanks', async () => {
-  jest.unstable_mockModule('../labelMap.js', () => ({ labelMap: {} }));
+  jest.unstable_mockModule('../labelMap.js', () => ({ labelMap: {}, statusMap: {} }));
   mod.fillAdminNotes({ adminNotes: 'Бележки', adminTags: ['t1', 't2'] });
   mod.fillProfile({ age: 25 }, { name: 'Init', fullname: 'Init Name' });
   expect(document.getElementById('adminNotes').textContent).toBe('Бележки');
