@@ -52,57 +52,65 @@ async function loadData() {
     ]);
     const profileData = await profileRes.json();
     const dashData = await dashRes.json();
-    if (profileRes.ok && profileData.success) fillProfile(profileData);
+    if (profileRes.ok && profileData.success) {
+      fillProfile(profileData, dashData.initialAnswers);
+    }
     if (dashRes.ok && dashData.success) {
       fillDashboard(dashData);
       fillAdminNotes(dashData.currentStatus);
-      fillInitialAnswers(dashData.initialAnswers);
     }
   } catch (err) {
     console.error('Load error', err);
   }
 }
 
-function fillProfile(data) {
-  setText('userName', data.name);
-  setText('userGoalHeader', data.mainGoal);
-  setText('userHeightHeader', data.height, ' см');
+function fillProfile(data, initialAnswers = {}) {
+  const getVal = key => {
+    const v = data?.[key];
+    return v !== undefined && v !== null && v !== '' ? v : initialAnswers?.[key];
+  };
+
+  setText('userName', getVal('name'));
+  setText('userGoalHeader', getVal('mainGoal'));
+  setText('userHeightHeader', getVal('height'), ' см');
 
   const demographics = {
-    fullname: data.fullname,
-    gender: data.gender,
-    age: data.age,
-    phone: data.phone,
-    email: data.email
+    fullname: getVal('fullname'),
+    gender: getVal('gender'),
+    age: getVal('age'),
+    phone: getVal('phone'),
+    email: getVal('email')
   };
+  const heightVal = getVal('height');
   const physical = {
-    height: data.height ? `${data.height} см` : undefined
+    height: heightVal ? `${heightVal} см` : undefined
   };
   const goals = {
-    mainGoal: data.mainGoal,
-    motivationLevel: data.motivationLevel,
-    targetBmi: data.targetBmi
+    mainGoal: getVal('mainGoal'),
+    motivationLevel: getVal('motivationLevel'),
+    targetBmi: getVal('targetBmi')
   };
   const sleep = {
-    sleepHours: data.sleepHours,
-    sleepInterruptions: data.sleepInterruptions,
-    chronotype: data.chronotype,
-    activityLevel: data.activityLevel,
-    physicalActivity: data.physicalActivity
+    sleepHours: getVal('sleepHours'),
+    sleepInterruptions: getVal('sleepInterruptions'),
+    chronotype: getVal('chronotype'),
+    activityLevel: getVal('activityLevel'),
+    physicalActivity: getVal('physicalActivity')
   };
+  const mc = getVal('medicalConditions');
   const health = {
-    medicalConditions: Array.isArray(data.medicalConditions) ? data.medicalConditions.join(', ') : data.medicalConditions,
-    stressLevel: data.stressLevel,
-    medications: data.medications,
-    waterIntake: data.waterIntake
+    medicalConditions: Array.isArray(mc) ? mc.join(', ') : mc,
+    stressLevel: getVal('stressLevel'),
+    medications: getVal('medications'),
+    waterIntake: getVal('waterIntake')
   };
   const food = {
-    foodPreferences: data.foodPreferences,
-    overeatingFrequency: data.overeatingFrequency,
-    foodCravings: data.foodCravings,
-    foodTriggers: data.foodTriggers,
-    alcoholFrequency: data.alcoholFrequency,
-    eatingHabits: data.eatingHabits
+    foodPreferences: getVal('foodPreferences'),
+    overeatingFrequency: getVal('overeatingFrequency'),
+    foodCravings: getVal('foodCravings'),
+    foodTriggers: getVal('foodTriggers'),
+    alcoholFrequency: getVal('alcoholFrequency'),
+    eatingHabits: getVal('eatingHabits')
   };
   const sections = {
     demographics: demographics,
@@ -122,12 +130,12 @@ function fillProfile(data) {
   });
 
   // Populate edit fields if present
-  if ($('nameInput')) $('nameInput').value = data.name || '';
-  if ($('fullnameInput')) $('fullnameInput').value = data.fullname || '';
-  if ($('ageInput')) $('ageInput').value = data.age ?? '';
-  if ($('phoneInput')) $('phoneInput').value = data.phone || '';
-  if ($('emailInput')) $('emailInput').value = data.email || '';
-  if ($('heightInput')) $('heightInput').value = data.height ?? '';
+  if ($('nameInput')) $('nameInput').value = getVal('name') || '';
+  if ($('fullnameInput')) $('fullnameInput').value = getVal('fullname') || '';
+  if ($('ageInput')) $('ageInput').value = getVal('age') ?? '';
+  if ($('phoneInput')) $('phoneInput').value = getVal('phone') || '';
+  if ($('emailInput')) $('emailInput').value = getVal('email') || '';
+  if ($('heightInput')) $('heightInput').value = getVal('height') ?? '';
 }
 
 function fillDashboard(data) {
@@ -502,16 +510,6 @@ function fillAdminNotes(status) {
     }
 }
 
-function fillInitialAnswers(ans) {
-  const container = $('initialAnswersContainer');
-  if (!container) return;
-  container.innerHTML = '';
-  if (!ans || Object.keys(ans).length === 0) {
-    container.textContent = 'Няма данни';
-    return;
-  }
-  container.appendChild(renderObjectAsList(ans));
-}
 
 async function savePlan() {
   const userId = getUserId();
