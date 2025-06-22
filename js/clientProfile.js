@@ -1,5 +1,14 @@
 import { apiEndpoints } from './config.js';
-import { jsonrepair } from 'https://cdn.jsdelivr.net/npm/jsonrepair/+esm';
+let jsonrepairFn = null;
+async function getJsonrepair() {
+  if (jsonrepairFn) return jsonrepairFn;
+  try {
+    ({ jsonrepair: jsonrepairFn } = await import('https://cdn.jsdelivr.net/npm/jsonrepair/+esm'));
+  } catch {
+    ({ jsonrepair: jsonrepairFn } = await import('jsonrepair'));
+  }
+  return jsonrepairFn;
+}
 import { labelMap } from './labelMap.js';
 
 function $(id) {
@@ -155,6 +164,11 @@ function fillDashboard(data) {
 
   $('planJson').value = JSON.stringify(data.planData || {}, null, 2);
   displayPlanMenu(data.planData?.week1Menu || {}, false);
+  fillAllowedFoods(data.planData?.allowedForbiddenFoods);
+  fillForbiddenFoods(data.planData?.allowedForbiddenFoods);
+  fillPrinciples(data.planData);
+  fillHydration(data.planData?.hydrationCookingSupplements?.hydration_recommendations);
+  fillCookingMethods(data.planData?.hydrationCookingSupplements?.cooking_methods);
 
   const logs = Array.isArray(data.dailyLogs) ? data.dailyLogs : [];
   const tbody = $('logsTableBody');
@@ -306,6 +320,115 @@ function displayPlanMenu(menu, isError = false) {
   container.appendChild(row);
 }
 
+function fillAllowedFoods(aff) {
+  const el = $('allowedFoodsContainer');
+  if (!el) return;
+  el.innerHTML = '';
+  if (!aff) {
+    el.textContent = 'Няма данни';
+    return;
+  }
+  const parts = [];
+  const main = aff.main_allowed_foods;
+  if (Array.isArray(main) && main.length > 0) {
+    parts.push('<ul>' + main.map(f => `<li>${f}</li>`).join('') + '</ul>');
+  } else if (main && typeof main === 'object') {
+    Object.entries(main).forEach(([cat, foods]) => {
+      if (Array.isArray(foods) && foods.length > 0) {
+        const title = cat.replace(/_/g, ' ');
+        parts.push(`<p><strong>${title}</strong></p><ul>${foods.map(f => `<li>${f}</li>`).join('')}</ul>`);
+      }
+    });
+  }
+  if (Array.isArray(aff.detailed_allowed_suggestions) && aff.detailed_allowed_suggestions.length > 0) {
+    parts.push('<p><strong>Допълнителни предложения:</strong></p><ul>' + aff.detailed_allowed_suggestions.map(s => `<li>${s}</li>`).join('') + '</ul>');
+  }
+  el.innerHTML = parts.join('') || 'Няма данни';
+}
+
+function fillForbiddenFoods(aff) {
+  const el = $('forbiddenFoodsContainer');
+  if (!el) return;
+  el.innerHTML = '';
+  if (!aff) {
+    el.textContent = 'Няма данни';
+    return;
+  }
+  const parts = [];
+  if (Array.isArray(aff.main_forbidden_foods) && aff.main_forbidden_foods.length > 0) {
+    parts.push('<ul>' + aff.main_forbidden_foods.map(f => `<li>${f}</li>`).join('') + '</ul>');
+  }
+  if (Array.isArray(aff.detailed_limit_suggestions) && aff.detailed_limit_suggestions.length > 0) {
+    parts.push('<p><strong>За ограничаване:</strong></p><ul>' + aff.detailed_limit_suggestions.map(s => `<li>${s}</li>`).join('') + '</ul>');
+  }
+  if (Array.isArray(aff.dressing_flavoring_ideas) && aff.dressing_flavoring_ideas.length > 0) {
+    parts.push(`<p><strong>Идеи за овкусяване:</strong> ${aff.dressing_flavoring_ideas.join(', ')}</p>`);
+  }
+  el.innerHTML = parts.join('') || 'Няма данни';
+}
+
+function fillPrinciples(plan) {
+  const el = $('principlesSection');
+  if (!el) return;
+  el.innerHTML = '';
+  let data = plan?.principlesWeek2_4;
+  if (!data || (Array.isArray(data) && data.length === 0)) {
+    el.textContent = 'Няма данни';
+    return;
+  }
+  if (typeof data === 'string') {
+    data = data.split('\n').map(s => s.trim()).filter(Boolean);
+  }
+  if (!Array.isArray(data)) data = [data];
+  data.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'principle-item';
+    if (typeof item === 'string') {
+      div.textContent = item;
+    } else if (item && typeof item === 'object') {
+      const title = document.createElement('strong');
+      title.textContent = item.title || '';
+      const p = document.createElement('p');
+      p.innerHTML = (item.content || '').replace(/\n/g, '<br>');
+      div.appendChild(title);
+      div.appendChild(document.createElement('br'));
+      div.appendChild(p);
+    }
+    el.appendChild(div);
+  });
+}
+
+function fillHydration(hydr) {
+  const el = $('hydrationContainer');
+  if (!el) return;
+  el.innerHTML = '';
+  if (!hydr) {
+    el.textContent = 'Няма данни';
+    return;
+  }
+  const parts = [];
+  if (hydr.daily_liters) parts.push(`<p><strong>Дневно количество:</strong> ${hydr.daily_liters}</p>`);
+  if (Array.isArray(hydr.tips) && hydr.tips.length > 0) parts.push('<ul>' + hydr.tips.map(t => `<li>${t}</li>`).join('') + '</ul>');
+  if (Array.isArray(hydr.suitable_drinks) && hydr.suitable_drinks.length > 0) parts.push(`<p><strong>Подходящи:</strong> ${hydr.suitable_drinks.join(', ')}</p>`);
+  if (Array.isArray(hydr.unsuitable_drinks) && hydr.unsuitable_drinks.length > 0) parts.push(`<p><strong>Неподходящи:</strong> ${hydr.unsuitable_drinks.join(', ')}</p>`);
+  el.innerHTML = parts.join('') || 'Няма данни';
+}
+
+function fillCookingMethods(cook) {
+  const el = $('cookingMethodsContainer');
+  if (!el) return;
+  el.innerHTML = '';
+  if (!cook) {
+    el.textContent = 'Няма данни';
+    return;
+  }
+  const parts = [];
+  if (Array.isArray(cook.recommended) && cook.recommended.length > 0) parts.push(`<p><strong>Препоръчителни:</strong> ${cook.recommended.join(', ')}</p>`);
+  if (Array.isArray(cook.limit_or_avoid) && cook.limit_or_avoid.length > 0) parts.push(`<p><strong>Избягвайте:</strong> ${cook.limit_or_avoid.join(', ')}</p>`);
+  if (cook.fat_usage_tip) parts.push(`<p><strong>Мазнина:</strong> ${cook.fat_usage_tip}</p>`);
+  el.innerHTML = parts.join('') || 'Няма данни';
+}
+
 function fillAdminNotes(status) {
   if (!status) return;
   const notesEl = $('adminNotes');
@@ -348,6 +471,7 @@ async function savePlan() {
       alert('Планът е твърде голям (максимум 20 000 символа).');
       return;
     }
+    const jsonrepair = await getJsonrepair();
     const repaired = jsonrepair(text);
     const json = JSON.parse(repaired);
     const resp = await fetch(apiEndpoints.updatePlanData, {
@@ -403,3 +527,11 @@ export function initClientProfile() {
   $('savePlanBtn').addEventListener('click', savePlan);
   $('saveProfileBtn').addEventListener('click', saveProfile);
 }
+
+export {
+  fillAllowedFoods,
+  fillForbiddenFoods,
+  fillPrinciples,
+  fillHydration,
+  fillCookingMethods
+};
