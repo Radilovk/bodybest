@@ -1,7 +1,6 @@
 // Development-only setup for profileTemplate.html
 // Import required functions
 import { initClientProfile } from './js/clientProfile.js';
-import { jsonrepair } from 'https://cdn.jsdelivr.net/npm/jsonrepair/+esm';
 
 // Initialize the profile with mock data
 document.addEventListener('DOMContentLoaded', () => {
