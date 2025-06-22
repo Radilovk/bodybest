@@ -68,6 +68,18 @@ export const labelMap = {
   avgEnergy: 'Средна енергия',
   avgSleep: 'Средна продължителност на съня',
   weightPeriod: 'Период на теглото',
-  currentStreak: 'Текуща серия'
+  currentStreak: 'Текуща серия',
+  planStatus: 'Статус на плана',
+  bmi: 'BMI',
+  adminNotes: 'Бележки от администратор',
+  adminTags: 'Етикети',
+  lastUpdated: 'Последна промяна',
+  current: 'Текущи данни',
+  detailed: 'Детайлни метрики',
+  textualAnalysis: 'Текстов анализ',
+  streak: 'Поредица',
+  goalProgress: 'Напредък към целта',
+  engagementScore: 'Ангажираност',
+  overallHealthScore: 'Общ здравен индекс'
 };
 
