@@ -6,6 +6,8 @@
     <title>Шаблон за Здравен Профил</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="css/base_styles.css" rel="stylesheet">
+    <link href="css/components_styles.css" rel="stylesheet">
     <style>
         :root {
             --primary: #4361ee;
@@ -154,6 +156,22 @@
         
         .tab-content.active {
             display: block;
+        }
+
+        dl {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px 16px;
+            margin-bottom: 15px;
+        }
+
+        dt {
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        dd {
+            margin: 0;
         }
         
         @keyframes fadeIn {
@@ -990,7 +1008,7 @@
                 }
 
                 // Лични данни
-                const personalInfo = { ...(plan.personalInfo || {}), ...answers };
+                const personalInfo = plan.personalInfo || {};
                 if (Object.keys(personalInfo).length) {
                     const cont = document.getElementById('personal-info');
                     cont.innerHTML = '';
@@ -1018,30 +1036,33 @@
                 
                 // Седмично меню
                 if (plan.week1Menu) {
-                    for (const day in plan.week1Menu) {
+                    const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+                    days.forEach(day => {
                         const dayContainer = document.getElementById(day);
-                        if (dayContainer) {
+                        if (!dayContainer) return;
+                        const meals = plan.week1Menu[day];
+                        if (Array.isArray(meals) && meals.length) {
                             let html = '';
-                            plan.week1Menu[day].forEach(meal => {
+                            meals.forEach(meal => {
                                 html += `<div class="meal-item">
                                     <div class="meal-title">
                                         <i class="fas fa-utensil-spoon"></i> ${meal.meal_name}
                                         <span class="badge badge-primary">${meal.recipeKey}</span>
                                     </div>
                                     <div class="item-list">`;
-                                
                                 meal.items.forEach(item => {
                                     html += `<div class="item">
                                         <span class="item-name">${item.name}</span>
                                         <span class="item-grams">${item.grams}</span>
                                     </div>`;
                                 });
-                                
                                 html += `</div></div>`;
                             });
                             dayContainer.innerHTML = html;
+                        } else {
+                            dayContainer.innerHTML = '<p>Няма данни за този ден.</p>';
                         }
-                    }
+                    });
                 }
                 
                 // Принципи за седмици 2-4
