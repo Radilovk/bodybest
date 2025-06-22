@@ -109,6 +109,14 @@ function fillProfile(data) {
       el.appendChild(createInfoItem(labelMap[k] || k, v));
     });
   });
+
+  // Populate edit fields if present
+  if ($('nameInput')) $('nameInput').value = data.name || '';
+  if ($('fullnameInput')) $('fullnameInput').value = data.fullname || '';
+  if ($('ageInput')) $('ageInput').value = data.age ?? '';
+  if ($('phoneInput')) $('phoneInput').value = data.phone || '';
+  if ($('emailInput')) $('emailInput').value = data.email || '';
+  if ($('heightInput')) $('heightInput').value = data.height ?? '';
 }
 
 function fillDashboard(data) {
