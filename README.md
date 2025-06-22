@@ -98,14 +98,14 @@ The output is placed in the `docs/` folder.
 
 ## Deployment to Cloudflare
 
-A GitHub Action workflow at `.github/workflows/deploy.yml` automatically publishes the worker when you push to `main` or open a pull request that modifies `worker.js`. It runs `wrangler publish` using the secret `CF_API_TOKEN` for authentication.
+A GitHub Action workflow at `.github/workflows/deploy.yml` automatically deploys the worker when you push to `main` or open a pull request that modifies `worker.js`. It runs `wrangler deploy` using the secret `CF_API_TOKEN` for authentication.
 
 To set the token:
 
 1. Generate an API token with **Edit Cloudflare Workers** permissions.
 2. In your repository settings, create a GitHub secret named `CF_API_TOKEN` containing the token value.
 
-The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed. For the `USER_METADATA_KV` namespace the file expects the environment variables `USER_METADATA_KV_ID` and `USER_METADATA_KV_PREVIEW_ID`. Configure them as GitHub secrets so the workflow can substitute the correct IDs before publishing. **Важно:** полето `compatibility_date` не може да сочи в бъдещето спрямо датата на деплой. Ако е зададена по-нова дата, Cloudflare ще откаже публикуването. Затова поддържайте стойност, която е днес или по-стара. Например:
+The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed. For the `USER_METADATA_KV` namespace the file expects the environment variables `USER_METADATA_KV_ID` and `USER_METADATA_KV_PREVIEW_ID`. Configure them as GitHub secrets so the workflow can substitute the correct IDs before deployment. **Важно:** полето `compatibility_date` не може да сочи в бъдещето спрямо датата на деплой. Ако е зададена по-нова дата, Cloudflare ще откаже деплойването. Затова поддържайте стойност, която е днес или по-стара. Например:
 
 ```toml
 compatibility_date = "2025-06-20"
@@ -398,8 +398,8 @@ Cloudflare позволява изпълнение на работници по 
 crons = ["0 */1 * * *"]
 ```
 
-Файлът `wrangler.toml` се използва от GitHub Actions и от `wrangler publish`,
-затова добавеният блок ще приложи същия график и при автоматичното публикуване.
+Файлът `wrangler.toml` се използва от GitHub Actions и от `wrangler deploy`,
+затова добавеният блок ще приложи същия график и при автоматичното деплойване.
 
 ## License
 
