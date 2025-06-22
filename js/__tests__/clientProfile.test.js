@@ -1,0 +1,106 @@
+/** @jest-environment jsdom */
+import { jest } from '@jest/globals';
+import fs from 'fs';
+import path from 'path';
+import { pathToFileURL } from 'url';
+
+const jsonrepairMockPath = new URL('../testHelpers/jsonrepairMock.js', import.meta.url).pathname;
+
+let mod;
+
+const originalFetch = global.fetch;
+
+beforeEach(async () => {
+  jest.resetModules();
+  document.body.innerHTML = `
+    <input id="nameInput">
+    <input id="fullnameInput">
+    <input id="ageInput">
+    <input id="phoneInput">
+    <input id="emailInput">
+    <input id="heightInput">
+    <div id="adminNotes"></div>
+    <ul id="adminTags"></ul>
+    <div id="initialAnswersContainer"></div>
+    <textarea id="planJson"></textarea>
+    <button id="savePlanBtn"></button>
+    <button id="saveProfileBtn"></button>
+  `;
+  window.history.pushState({}, '', '/?userId=1');
+
+  const src = await fs.promises.readFile(new URL('../clientProfile.js', import.meta.url), 'utf8');
+  const patched = src
+    .replace("https://cdn.jsdelivr.net/npm/jsonrepair/+esm", jsonrepairMockPath)
+    .replace('./config.js', '../config.js')
+    .replace('./labelMap.js', '../labelMap.js')
+    + '\nexport { fillProfile, fillAdminNotes, fillInitialAnswers };';
+  const tempPath = path.join(path.dirname(jsonrepairMockPath), 'clientProfile.patched.js');
+  await fs.promises.writeFile(tempPath, patched);
+  mod = await import(pathToFileURL(tempPath) + '?' + Date.now());
+
+  global.fetch = jest.fn(url => {
+    if (url.includes('getProfile')) {
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          success: true,
+          name: 'Ivan',
+          fullname: 'Ivan Ivanov',
+          age: 30,
+          phone: '0888',
+          email: 'ivan@example.com',
+          height: 180
+        })
+      });
+    }
+    if (url.includes('dashboard')) {
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          success: true,
+          currentStatus: { adminNotes: 'Бележки', adminTags: ['t1', 't2'] },
+          initialAnswers: { sleep: 'Добре', nested: { foo: 'bar' } },
+          planData: {}
+        })
+      });
+    }
+    return Promise.resolve({ ok: true, json: async () => ({}) });
+  });
+});
+
+afterEach(() => {
+  global.fetch = originalFetch;
+  const tempPath = path.join(path.dirname(jsonrepairMockPath), 'clientProfile.patched.js');
+  if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+});
+
+test('fillProfile populates form inputs', async () => {
+  jest.unstable_mockModule('../labelMap.js', () => ({ labelMap: {} }));
+  mod.fillProfile({
+    name: 'Ivan',
+    fullname: 'Ivan Ivanov',
+    age: 30,
+    phone: '0888',
+    email: 'ivan@example.com',
+    height: 180
+  });
+  expect(document.getElementById('nameInput').value).toBe('Ivan');
+  expect(document.getElementById('fullnameInput').value).toBe('Ivan Ivanov');
+  expect(document.getElementById('ageInput').value).toBe('30');
+  expect(document.getElementById('phoneInput').value).toBe('0888');
+  expect(document.getElementById('emailInput').value).toBe('ivan@example.com');
+  expect(document.getElementById('heightInput').value).toBe('180');
+});
+
+test('admin notes and questionnaire answers render correctly', async () => {
+  jest.unstable_mockModule('../labelMap.js', () => ({ labelMap: {} }));
+  mod.fillAdminNotes({ adminNotes: 'Бележки', adminTags: ['t1', 't2'] });
+  mod.fillInitialAnswers({ sleep: 'Добре', nested: { foo: 'bar' } });
+  expect(document.getElementById('adminNotes').textContent).toBe('Бележки');
+  const tagTexts = Array.from(document.querySelectorAll('#adminTags li')).map(li => li.textContent);
+  expect(tagTexts).toEqual(['t1', 't2']);
+  const dl = document.querySelector('#initialAnswersContainer dl');
+  expect(dl).not.toBeNull();
+  expect(dl.querySelector('dt').textContent).toBe('sleep');
+  expect(dl.querySelector('dd').textContent).toContain('Добре');
+});
