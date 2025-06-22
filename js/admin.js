@@ -42,7 +42,9 @@ const openFullProfileLink = document.getElementById('openFullProfile');
 const fullProfileFrame = document.getElementById('fullProfileFrame');
 const dashboardPre = document.getElementById('dashboardData');
 const copyDashboardJsonBtn = document.getElementById('copyDashboardJson');
-const dashboardSummaryDiv = document.getElementById('dashboardSummary');
+const profileSummaryDiv = document.getElementById('profileSummary');
+const statusSummaryDiv = document.getElementById('statusSummary');
+const analyticsSummaryDiv = document.getElementById('analyticsSummary');
 const exportDataBtn = document.getElementById('exportData');
 const exportCsvBtn = document.getElementById('exportCsv');
 const generatePraiseBtn = document.getElementById('generatePraise');
@@ -315,24 +317,19 @@ function displayDailyLogs(logs, isError = false) {
 }
 
 function displayDashboardSummary(data) {
-    if (!dashboardSummaryDiv) return;
-    dashboardSummaryDiv.innerHTML = '';
+    if (!profileSummaryDiv || !statusSummaryDiv || !analyticsSummaryDiv) return;
+    profileSummaryDiv.innerHTML = '';
+    statusSummaryDiv.innerHTML = '';
+    analyticsSummaryDiv.innerHTML = '';
     if (!data) {
-        dashboardSummaryDiv.textContent = 'Няма данни';
+        profileSummaryDiv.textContent = 'Няма данни';
+        statusSummaryDiv.textContent = 'Няма данни';
+        analyticsSummaryDiv.textContent = 'Няма данни';
         return;
     }
-    const profileSec = document.createElement('section');
-    profileSec.innerHTML = '<h3>Профил</h3>';
-    profileSec.appendChild(renderObjectAsList(data.initialAnswers || {}));
-    const statusSec = document.createElement('section');
-    statusSec.innerHTML = '<h3>Текущ статус</h3>';
-    statusSec.appendChild(renderObjectAsList(data.currentStatus || {}));
-    const analyticsSec = document.createElement('section');
-    analyticsSec.innerHTML = '<h3>Анализ</h3>';
-    analyticsSec.appendChild(renderObjectAsList(data.analytics || {}));
-    dashboardSummaryDiv.appendChild(profileSec);
-    dashboardSummaryDiv.appendChild(statusSec);
-    dashboardSummaryDiv.appendChild(analyticsSec);
+    profileSummaryDiv.appendChild(renderObjectAsList(data.initialAnswers || {}));
+    statusSummaryDiv.appendChild(renderObjectAsList(data.currentStatus || {}));
+    analyticsSummaryDiv.appendChild(renderObjectAsList(data.analytics || {}));
 }
 
 async function loadClients() {

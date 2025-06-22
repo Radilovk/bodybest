@@ -95,20 +95,28 @@
     </details>
     </section>
     <section id="dashboardTab" class="client-tab" role="tabpanel" aria-hidden="true">
-    <details id="dashboardSection">
-      <summary>Пълни данни</summary>
-      <div id="dashboardSummary"></div>
+      <details id="profileSummarySection">
+        <summary>Профил</summary>
+        <div id="profileSummary"></div>
+      </details>
+      <details id="statusSummarySection">
+        <summary>Текущ статус</summary>
+        <div id="statusSummary"></div>
+      </details>
+      <details id="analyticsSummarySection">
+        <summary>Анализ</summary>
+        <div id="analyticsSummary"></div>
+      </details>
       <details>
         <summary>JSON</summary>
         <button id="copyDashboardJson" class="button button-small hidden" type="button">Копирай JSON</button>
         <pre id="dashboardData" class="json"></pre>
       </details>
-    </details>
-    <button id="exportData">Експортирай всички данни</button>
-    <button id="exportPlan">Експортирай плана като JSON</button>
-    <button id="exportCsv">Експортирай дневниците CSV</button>
-    <button id="generatePraise">Генерирай похвала</button>
-    <p class="help-text">Експортираните файлове се запазват локално.</p>
+      <button id="exportData">Експортирай всички данни</button>
+      <button id="exportPlan">Експортирай плана като JSON</button>
+      <button id="exportCsv">Експортирай дневниците CSV</button>
+      <button id="generatePraise">Генерирай похвала</button>
+      <p class="help-text">Експортираните файлове се запазват локално.</p>
     </section>
 
     <details id="queriesSection">
