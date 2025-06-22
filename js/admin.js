@@ -45,6 +45,7 @@ const copyDashboardJsonBtn = document.getElementById('copyDashboardJson');
 const dashboardSummaryDiv = document.getElementById('dashboardSummary');
 const exportDataBtn = document.getElementById('exportData');
 const exportCsvBtn = document.getElementById('exportCsv');
+const generatePraiseBtn = document.getElementById('generatePraise');
 const profileForm = document.getElementById('profileForm');
 const profileName = document.getElementById('profileName');
 const profileEmail = document.getElementById('profileEmail');
@@ -729,6 +730,32 @@ if (aiSummaryBtn) {
         const summary = data.aiResponse?.result || data.aiResponse;
         alert(summary || 'Няма данни');
     });
+}
+
+async function generatePraise() {
+    if (!currentUserId) return;
+    try {
+        const resp = await fetch(apiEndpoints.generatePraise, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUserId })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.success) {
+            const title = data.title || 'Похвала';
+            const msg = data.message || '';
+            alert(`${title}\n${msg}`.trim());
+        } else {
+            alert('Неуспешно генериране на похвала.');
+        }
+    } catch (err) {
+        console.error('Error generating praise:', err);
+        alert('Грешка при генериране на похвала.');
+    }
+}
+
+if (generatePraiseBtn) {
+    generatePraiseBtn.addEventListener('click', generatePraise);
 }
 
 if (saveNotesBtn) {
