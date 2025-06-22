@@ -83,3 +83,11 @@ export const labelMap = {
   overallHealthScore: 'Общ здравен индекс'
 };
 
+export const statusMap = {
+  ready: 'Готов',
+  processing: 'В процес',
+  pending: 'Изчакване',
+  error: 'Грешка',
+  unknown: 'Неизвестно'
+};
+

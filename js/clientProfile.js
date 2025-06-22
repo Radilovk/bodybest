@@ -1,5 +1,5 @@
 import { apiEndpoints } from './config.js';
-import { labelMap } from './labelMap.js';
+import { labelMap, statusMap } from './labelMap.js';
 import { initPlanEditor, gatherPlanFormData } from './planEditor.js';
 
 function $(id) {
@@ -140,8 +140,8 @@ function fillProfile(data, initialAnswers = {}) {
 function fillDashboard(data) {
   const curW = data.currentStatus?.weight;
   setText('currentWeightHeader', curW, ' кг');
-  setText('planStatus', data.planStatus);
-  setText('planStatusBadge', data.planStatus);
+  setText('planStatus', statusMap[data.planStatus] || data.planStatus);
+  setText('planStatusBadge', statusMap[data.planStatus] || data.planStatus);
   const badge = $('planStatusBadge');
   if (badge) {
     badge.classList.remove('bg-success', 'bg-warning');
@@ -542,8 +542,8 @@ async function savePlan() {
     if (resp.ok && data.success) {
       alert('Планът е записан.');
       $('planJson').value = JSON.stringify(json, null, 2);
-      setText('planStatus', 'ready');
-      setText('planStatusBadge', 'ready');
+      setText('planStatus', statusMap.ready);
+      setText('planStatusBadge', statusMap.ready);
       const badge = $('planStatusBadge');
       if (badge) {
         badge.classList.remove('bg-warning');
