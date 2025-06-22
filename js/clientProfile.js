@@ -1,15 +1,6 @@
 import { apiEndpoints } from './config.js';
-let jsonrepairFn = null;
-async function getJsonrepair() {
-  if (jsonrepairFn) return jsonrepairFn;
-  try {
-    ({ jsonrepair: jsonrepairFn } = await import('https://cdn.jsdelivr.net/npm/jsonrepair/+esm'));
-  } catch {
-    ({ jsonrepair: jsonrepairFn } = await import('jsonrepair'));
-  }
-  return jsonrepairFn;
-}
 import { labelMap } from './labelMap.js';
+import { initPlanEditor, gatherPlanFormData } from './planEditor.js';
 
 function $(id) {
   return document.getElementById(id);
@@ -177,6 +168,7 @@ function fillDashboard(data) {
   fillPrinciples(data.planData);
   fillHydration(data.planData?.hydrationCookingSupplements?.hydration_recommendations);
   fillCookingMethods(data.planData?.hydrationCookingSupplements?.cooking_methods);
+  initPlanEditor(data.planData || {});
 
   const logs = Array.isArray(data.dailyLogs) ? data.dailyLogs : [];
   const tbody = $('logsTableBody');
@@ -515,14 +507,7 @@ async function savePlan() {
   const userId = getUserId();
   if (!userId) return;
   try {
-    const text = $('planJson').value;
-    if (text.length > 20000) {
-      alert('Планът е твърде голям (максимум 20 000 символа).');
-      return;
-    }
-    const jsonrepair = await getJsonrepair();
-    const repaired = jsonrepair(text);
-    const json = JSON.parse(repaired);
+    const json = gatherPlanFormData();
     const resp = await fetch(apiEndpoints.updatePlanData, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -531,6 +516,7 @@ async function savePlan() {
     const data = await resp.json();
     if (resp.ok && data.success) {
       alert('Планът е записан.');
+      $('planJson').value = JSON.stringify(json, null, 2);
       setText('planStatus', 'ready');
       setText('planStatusBadge', 'ready');
       const badge = $('planStatusBadge');
@@ -538,11 +524,15 @@ async function savePlan() {
         badge.classList.remove('bg-warning');
         badge.classList.add('bg-success');
       }
+      displayPlanMenu(json.week1Menu || {}, false);
+      fillAllowedFoods(json.allowedForbiddenFoods);
+      fillForbiddenFoods(json.allowedForbiddenFoods);
+      fillPrinciples(json);
     } else {
       alert(data.message || 'Грешка при запис.');
     }
   } catch (err) {
-    alert('Невалиден JSON.');
+    alert('Грешка при запис.');
   }
 }
 

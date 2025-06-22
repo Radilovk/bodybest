@@ -11,6 +11,7 @@ beforeEach(() => {
     <div id="cookingMethodsContainer"></div>
   `;
   jest.unstable_mockModule('https://cdn.jsdelivr.net/npm/jsonrepair/+esm', () => ({ jsonrepair: jest.fn() }), { virtual: true });
+  jest.unstable_mockModule('../planEditor.js', () => ({ initPlanEditor: jest.fn(), gatherPlanFormData: jest.fn(() => ({})) }));
 });
 
 test('fillAllowedFoods renders items', async () => {

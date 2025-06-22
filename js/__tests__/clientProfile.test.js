@@ -36,6 +36,7 @@ beforeEach(async () => {
     .replace("https://cdn.jsdelivr.net/npm/jsonrepair/+esm", jsonrepairMockPath)
     .replace('./config.js', '../config.js')
     .replace('./labelMap.js', '../labelMap.js')
+    .replace('./planEditor.js', '../planEditor.js')
     + '\nexport { fillProfile, fillAdminNotes };';
   const tempPath = path.join(path.dirname(jsonrepairMockPath), 'clientProfile.patched.js');
   await fs.promises.writeFile(tempPath, patched);
