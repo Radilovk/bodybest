@@ -1,4 +1,5 @@
 import { apiEndpoints } from './config.js';
+import { labelMap } from './labelMap.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -189,7 +190,7 @@ function renderObjectAsList(obj) {
     const dl = document.createElement('dl');
     Object.entries(obj || {}).forEach(([key, val]) => {
         const dt = document.createElement('dt');
-        dt.textContent = key;
+        dt.textContent = labelMap[key] || key;
         const dd = document.createElement('dd');
         dd.appendChild(renderValue(val));
         dl.appendChild(dt);
