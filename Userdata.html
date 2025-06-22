@@ -1167,10 +1167,28 @@
                         document.getElementById('hydration-tips').innerHTML = tipsHtml;
                     }
                     if (Array.isArray(hcs.cooking_methods)) {
+                        // legacy array of cooking methods
                         let cHtml = '<ul>';
                         hcs.cooking_methods.forEach(m => { cHtml += `<li>${m}</li>`; });
                         cHtml += '</ul>';
                         document.getElementById('cooking-methods').innerHTML = cHtml;
+                    } else if (hcs.cooking_methods && typeof hcs.cooking_methods === 'object') {
+                        const cm = hcs.cooking_methods;
+                        let cHtml = '';
+                        if (Array.isArray(cm.recommended) && cm.recommended.length) {
+                            cHtml += '<p><strong>Препоръчителни:</strong></p><ul>';
+                            cm.recommended.forEach(m => { cHtml += `<li>${m}</li>`; });
+                            cHtml += '</ul>';
+                        }
+                        if (Array.isArray(cm.limit_or_avoid) && cm.limit_or_avoid.length) {
+                            cHtml += '<p><strong>За ограничаване/избягване:</strong></p><ul>';
+                            cm.limit_or_avoid.forEach(m => { cHtml += `<li>${m}</li>`; });
+                            cHtml += '</ul>';
+                        }
+                        if (cm.fat_usage_tip) {
+                            cHtml += `<p><em>${cm.fat_usage_tip}</em></p>`;
+                        }
+                        document.getElementById('cooking-methods').innerHTML = cHtml || 'Няма данни';
                     }
                     if (Array.isArray(hcs.supplements)) {
                         let sHtml = '<ul>';
