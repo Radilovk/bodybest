@@ -992,6 +992,8 @@
                         initialJson = JSON.stringify(data, null, 2);
                         document.getElementById('json-input').value = initialJson;
                         errorEl.textContent = '';
+                    } else {
+                        errorEl.textContent = 'Грешка при зареждане на данните';
                     }
                 } catch (err) {
                     console.error('Грешка при зареждане на данните:', err);
