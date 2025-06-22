@@ -1003,6 +1003,8 @@
                 renderProfile(profileData);
             } catch (e) {
                 console.error('Грешка при парсване на JSON:', e);
+                errorEl.textContent = 'Невалиден JSON формат';
+                document.getElementById('profile-container').innerHTML = '';
             }
             
             // Табове за менюто
