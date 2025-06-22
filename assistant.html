@@ -14,6 +14,9 @@
     <symbol id="icon-send" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
         <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
     </symbol>
+    <symbol id="icon-upload" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v13m0 0l-5-5m5 5l5-5M3 16v5h18v-5" />
+    </symbol>
 </svg>
 <div id="chat-widget" class="chat-widget visible" role="log" aria-live="polite">
     <div class="chat-header">
@@ -26,6 +29,10 @@
         <input type="text" id="userId" placeholder="Вашият ID" style="max-width:120px;">
         <small id="id-note" style="margin-left:0.5rem;">ID се попълва автоматично (Cloudflare Account ID) и се запазва за текущата сесия.</small>
         <textarea id="chat-input" placeholder="Вашето съобщение..." rows="2"></textarea>
+        <input type="file" id="chat-image" accept="image/*" hidden>
+        <button id="chat-upload" aria-label="Качи изображение">
+            <svg class="icon"><use href="#icon-upload"></use></svg>
+        </button>
         <button id="chat-send" aria-label="Изпрати съобщение">
             <svg class="icon"><use href="#icon-send"></use></svg>
         </button>

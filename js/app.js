@@ -886,6 +886,36 @@ export async function handleChatSend() { // Exported for eventListeners.js
         if(selectors.chatSend) selectors.chatSend.disabled = false;
     }
 }
+
+export async function handleChatImageUpload(file) { // Exported for chat.js
+    if (!file || !currentUserId) return;
+
+    displayChatMessage('Изпратено изображение', 'user');
+    chatHistory.push({ text: '[image]', sender: 'user', isError: false });
+
+    selectors.chatUploadBtn?.setAttribute('disabled', 'true');
+    displayChatTypingIndicator(true);
+
+    const formData = new FormData();
+    formData.append('userId', currentUserId);
+    formData.append('image', file);
+    try {
+        const response = await fetch(apiEndpoints.analyzeImage, { method: 'POST', body: formData });
+        const result = await response.json();
+        const text = result.result || result.message || 'Грешка';
+        const isError = !response.ok || !result.success;
+        displayChatMessage(text, 'bot', isError);
+        chatHistory.push({ text, sender: 'bot', isError });
+    } catch (e) {
+        const msg = `Грешка при изпращане на изображението: ${e.message}`;
+        displayChatMessage(msg, 'bot', true);
+        chatHistory.push({ text: msg, sender: 'bot', isError: true });
+    } finally {
+        displayChatTypingIndicator(false);
+        selectors.chatUploadBtn?.removeAttribute('disabled');
+        if (selectors.chatImageInput) selectors.chatImageInput.value = '';
+    }
+}
 export function handleChatInputKeypress(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleChatSend();}} // Exported for eventListeners
 
 // ==========================================================================

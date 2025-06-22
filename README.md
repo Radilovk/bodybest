@@ -289,6 +289,7 @@ localStorage.setItem('adminToken', '<вашият токен>');
 The standalone page `assistant.html` allows you to send direct commands to the worker.
 Open the file in a browser, enter your message and it will call the `/api/chat` endpoint.
 The Cloudflare account ID is filled automatically from `config.js`.
+Use the small image button next to the send icon to upload a picture. The file is sent to `/api/analyzeImage` and the analysis appears as a bot reply.
 
 Example test request with `curl`:
 
@@ -336,6 +337,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `GET /api/getAiPreset` – връща данните за конкретен пресет.
 - `POST /api/saveAiPreset` – съхранява нов пресет или обновява съществуващ.
 - `POST /api/testAiModel` – проверява връзката с конкретен AI модел.
+- `POST /api/analyzeImage` – анализира качено изображение и връща резултат.
 
   ```bash
   curl -X POST https://<your-domain>/api/testAiModel \

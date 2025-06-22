@@ -47,7 +47,8 @@ export function initializeSelectors() {
         tooltipTracker: 'tooltip-tracker',
         toast: 'toast', chatFab: 'chat-fab', chatWidget: 'chat-widget', chatClose: 'chat-close',
         chatClear: 'chat-clear',
-        chatMessages: 'chat-messages', chatInput: 'chat-input', chatSend: 'chat-send'
+        chatMessages: 'chat-messages', chatInput: 'chat-input', chatSend: 'chat-send',
+        chatImageInput: 'chat-image', chatUploadBtn: 'chat-upload'
     };
     let missingCriticalCount = 0;
     const criticalSelectors = ['appWrapper', 'loadingOverlay', 'tabsContainer', 'dailyTracker', 'mainMenu', 'dailyMealList', 'saveLogBtn'];
