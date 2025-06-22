@@ -21,15 +21,18 @@ describe('handleAnalyzeImageRequest', () => {
       json: async () => ({ result: { response: 'ok' } })
     });
     const env = { CF_ACCOUNT_ID: 'acc', CF_AI_TOKEN: 'token' };
-    const request = { json: async () => ({ userId: 'u1', imageUrl: 'img' }) };
+    const request = { json: async () => ({ userId: 'u1', imageData: 'imgdata' }) };
     const res = await handleAnalyzeImageRequest(request, env);
     expect(res.success).toBe(true);
     expect(res.aiResponse).toBe('ok');
     const expectedUrl =
-      'https://api.cloudflare.com/client/v4/accounts/acc/ai/run/@cf/analysis-image';
+      'https://api.cloudflare.com/client/v4/accounts/acc/ai/run/@cf/stabilityai/clip';
     expect(global.fetch).toHaveBeenCalledWith(
       expectedUrl,
-      expect.objectContaining({ method: 'POST' })
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ image: 'imgdata' })
+      })
     );
   });
 });

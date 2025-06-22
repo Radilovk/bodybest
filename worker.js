@@ -1368,13 +1368,13 @@ async function handleAiHelperRequest(request, env) {
 // ------------- START FUNCTION: handleAnalyzeImageRequest -------------
 async function handleAnalyzeImageRequest(request, env) {
     try {
-        const { userId, imageUrl } = await request.json();
-        if (!userId || !imageUrl) {
-            return { success: false, message: 'Липсва imageUrl или userId.', statusHint: 400 };
+        const { userId, imageData } = await request.json();
+        if (!userId || !imageData) {
+            return { success: false, message: 'Липсват imageData или userId.', statusHint: 400 };
         }
         const aiResp = await callCfAi(
-            '@cf/analysis-image',
-            { imageUrl },
+            '@cf/stabilityai/clip',
+            { image: imageData },
             env
         );
         return { success: true, aiResponse: aiResp };
