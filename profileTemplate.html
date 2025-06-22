@@ -797,66 +797,9 @@
     <!-- Импортиране на необходимите JavaScript файлове -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module">
-        // Импортиране на необходимите функции от js директорията
-        import { initClientProfile } from './js/clientProfile.js';
-        import { jsonrepair } from 'https://cdn.jsdelivr.net/npm/jsonrepair/+esm';
-        
-        // Инициализация на потребителския профил
-        document.addEventListener('DOMContentLoaded', function() {
-            // Симулиране на URL параметри за тестване
-            const mockUrlParams = new URLSearchParams('?userId=b92b2d6c-53ea-4572-b8b6-e67d3161ce6d');
-            window.URLSearchParams = function() { return mockUrlParams; };
-            
-            // Симулиране на конфигурация за тестване
-            window.apiEndpoints = {
-                getProfile: 'https://example.com/api/profile',
-                dashboard: 'https://example.com/api/dashboard',
-                updatePlanData: 'https://example.com/api/update-plan',
-                updateProfile: 'https://example.com/api/update-profile'
-            };
-            
-            // Симулиране на labelMap за тестване
-            window.labelMap = {
-                name: "Име",
-                fullname: "Пълно име",
-                gender: "Пол",
-                age: "Възраст",
-                email: "Имейл",
-                height: "Височина",
-                mainGoal: "Основна цел",
-                motivationLevel: "Ниво на мотивация",
-                targetBmi: "Целево ИТМ",
-                sleepHours: "Продължителност на съня",
-                sleepInterruptions: "Прекъсвания на съня",
-                chronotype: "Хронотип",
-                activityLevel: "Ниво на активност",
-                physicalActivity: "Физическа активност",
-                medicalConditions: "Медицински състояния",
-                stressLevel: "Ниво на стрес",
-                medications: "Хапчета/медикаменти",
-                waterIntake: "Прием на вода",
-                foodPreferences: "Хранителни предпочитания",
-                overeatingFrequency: "Честота на преяждане",
-                foodCravings: "Пристрастяване към храна",
-                foodTriggers: "Тригери за хранене",
-                alcoholFrequency: "Честота на алкохол",
-                eatingHabits: "Навици при хранене",
-                currentWeight: "Текущо тегло",
-                bmiValue: "ИТМ (BMI)",
-                avgWeight: "Средно тегло",
-                avgEnergy: "Средно ниво на енергия",
-                avgSleep: "Средно качество на съня",
-                weightPeriod: "Период",
-                currentStreak: "Текуща последователност"
-            };
-            
-            // Инициализиране на потребителския профил
-            initClientProfile();
-            
-            // Активиране на първия таб
-            const firstTab = new bootstrap.Tab(document.getElementById('basic-tab'));
-            firstTab.show();
-        });
-    </script>
+  if (import.meta.env.DEV) {
+    import("./profileTemplate.dev.js");
+  }
+</script>
 </body>
 </html>
