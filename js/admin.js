@@ -742,7 +742,14 @@ if (saveNotesBtn) {
             body: JSON.stringify({
                 userId: currentUserId,
                 adminNotes: notesField.value,
-                adminTags: (tagsField.value || '').split(',').map(t => t.trim()).filter(Boolean)
+                adminTags: Array.from(
+                    new Set(
+                        (tagsField.value || '')
+                            .split(',')
+                            .map(t => t.trim())
+                            .filter(Boolean)
+                    )
+                )
             })
         });
         alert('Бележките са записани');
