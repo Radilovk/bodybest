@@ -80,7 +80,14 @@ export const labelMap = {
   streak: 'Поредица',
   goalProgress: 'Напредък към целта',
   engagementScore: 'Ангажираност',
-  overallHealthScore: 'Общ здравен индекс'
+  overallHealthScore: 'Общ здравен индекс',
+  calories: 'Калории',
+  protein_grams: 'Протеини (g)',
+  carbs_grams: 'Въглехидрати (g)',
+  fat_grams: 'Мазнини (g)',
+  protein_percent: 'Протеини (%)',
+  carbs_percent: 'Въглехидрати (%)',
+  fat_percent: 'Мазнини (%)'
 };
 
 export const statusMap = {

@@ -47,6 +47,7 @@ const copyDashboardJsonBtn = document.getElementById('copyDashboardJson');
 const profileSummaryDiv = document.getElementById('profileSummary');
 const statusSummaryDiv = document.getElementById('statusSummary');
 const analyticsSummaryDiv = document.getElementById('analyticsSummary');
+const planSummaryDiv = document.getElementById('planSummary');
 const exportDataBtn = document.getElementById('exportData');
 const exportCsvBtn = document.getElementById('exportCsv');
 const generatePraiseBtn = document.getElementById('generatePraise');
@@ -370,17 +371,19 @@ function renderDetailedMetrics(metrics) {
 }
 
 function displayDashboardSummary(data) {
-    if (!profileSummaryDiv || !statusSummaryDiv || !analyticsSummaryDiv) return;
+    if (!profileSummaryDiv || !statusSummaryDiv || !analyticsSummaryDiv || !planSummaryDiv) return;
 
     profileSummaryDiv.innerHTML = '';
     statusSummaryDiv.innerHTML = '';
     analyticsSummaryDiv.innerHTML = '';
+    planSummaryDiv.innerHTML = '';
 
     if (!data) {
         const msg = 'Няма данни';
         profileSummaryDiv.textContent = msg;
         statusSummaryDiv.textContent = msg;
         analyticsSummaryDiv.textContent = msg;
+        planSummaryDiv.textContent = msg;
         return;
     }
 
@@ -409,6 +412,15 @@ function displayDashboardSummary(data) {
         const p = document.createElement('p');
         p.textContent = `${labelMap.streak || 'streak'}: ${analytics.streak.currentCount || 0} дни`;
         analyticsSummaryDiv.appendChild(p);
+    }
+
+    if (data.planData?.caloriesMacros) {
+        planSummaryDiv.appendChild(renderObjectAsList(data.planData.caloriesMacros));
+    }
+    if (data.planData?.profileSummary) {
+        const p = document.createElement('p');
+        p.textContent = data.planData.profileSummary;
+        planSummaryDiv.appendChild(p);
     }
 }
 
