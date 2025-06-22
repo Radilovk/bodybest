@@ -42,6 +42,12 @@ function getUserId() {
   return params.get('userId');
 }
 
+function replaceEmptyPlaceholders() {
+  document.querySelectorAll('.empty-placeholder').forEach(el => {
+    el.textContent = 'Няма данни';
+  });
+}
+
 async function loadData() {
   const userId = getUserId();
   if (!userId) return;
@@ -61,6 +67,8 @@ async function loadData() {
     }
   } catch (err) {
     console.error('Load error', err);
+  } finally {
+    replaceEmptyPlaceholders();
   }
 }
 
@@ -182,20 +190,30 @@ function fillDashboard(data) {
   const tbody = $('logsTableBody');
   if (tbody) {
     tbody.innerHTML = '';
-    logs.forEach(l => {
+    if (logs.length === 0) {
       const tr = document.createElement('tr');
-      const mealsDone = l.data?.completedMealsStatus ? Object.values(l.data.completedMealsStatus).filter(Boolean).length : 0;
-      tr.innerHTML = `
-        <td>${l.date}</td>
-        <td>${l.data?.weight ?? ''}</td>
-        <td>${l.data?.mood ?? ''}</td>
-        <td>${l.data?.energy ?? ''}</td>
-        <td>${l.data?.calmness ?? ''}</td>
-        <td>${l.data?.hydration ?? ''}</td>
-        <td>${l.data?.sleep ?? ''}</td>
-        <td>${mealsDone}</td>`;
+      const td = document.createElement('td');
+      td.colSpan = 8;
+      td.className = 'text-center';
+      td.textContent = 'Няма данни';
+      tr.appendChild(td);
       tbody.appendChild(tr);
-    });
+    } else {
+      logs.forEach(l => {
+        const tr = document.createElement('tr');
+        const mealsDone = l.data?.completedMealsStatus ? Object.values(l.data.completedMealsStatus).filter(Boolean).length : 0;
+        tr.innerHTML = `
+          <td>${l.date}</td>
+          <td>${l.data?.weight ?? ''}</td>
+          <td>${l.data?.mood ?? ''}</td>
+          <td>${l.data?.energy ?? ''}</td>
+          <td>${l.data?.calmness ?? ''}</td>
+          <td>${l.data?.hydration ?? ''}</td>
+          <td>${l.data?.sleep ?? ''}</td>
+          <td>${mealsDone}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
   }
 
   const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
@@ -231,11 +249,18 @@ function fillDashboard(data) {
   const streakCal = $('streakCalendar');
   if (streakCal) {
     streakCal.innerHTML = '';
-    streak.dailyStatusArray.forEach(day => {
-      const d = document.createElement('div');
-      d.className = day.logged ? 'streak-day logged' : 'streak-day';
-      streakCal.appendChild(d);
-    });
+    if (streak.dailyStatusArray.length === 0) {
+      const div = document.createElement('div');
+      div.className = 'text-center w-100';
+      div.textContent = 'Няма данни';
+      streakCal.appendChild(div);
+    } else {
+      streak.dailyStatusArray.forEach(day => {
+        const d = document.createElement('div');
+        d.className = day.logged ? 'streak-day logged' : 'streak-day';
+        streakCal.appendChild(d);
+      });
+    }
   }
 }
 
