@@ -128,8 +128,14 @@ details[open] summary::after {
   gap: 8px;
   align-items: center;
 }
-#dashboardSummary section {
+#dashboardSummary .accordion-container {
   margin-bottom: 10px;
+}
+#dashboardSummary details.accordion-container > .accordion-content {
+  display: none;
+}
+#dashboardSummary details.accordion-container[open] > .accordion-content {
+  display: block;
 }
 #dashboardSummary dl {
   display: grid;

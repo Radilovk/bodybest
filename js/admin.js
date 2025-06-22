@@ -322,15 +322,25 @@ function displayDashboardSummary(data) {
         dashboardSummaryDiv.textContent = 'Няма данни';
         return;
     }
-    const profileSec = document.createElement('section');
-    profileSec.innerHTML = '<h3>Профил</h3>';
-    profileSec.appendChild(renderObjectAsList(data.initialAnswers || {}));
-    const statusSec = document.createElement('section');
-    statusSec.innerHTML = '<h3>Текущ статус</h3>';
-    statusSec.appendChild(renderObjectAsList(data.currentStatus || {}));
-    const analyticsSec = document.createElement('section');
-    analyticsSec.innerHTML = '<h3>Анализ</h3>';
-    analyticsSec.appendChild(renderObjectAsList(data.analytics || {}));
+
+    function createAccordion(title, contentObj) {
+        const details = document.createElement('details');
+        details.className = 'accordion-container';
+        const summary = document.createElement('summary');
+        summary.className = 'accordion-header';
+        summary.textContent = title;
+        const content = document.createElement('div');
+        content.className = 'accordion-content';
+        content.appendChild(renderObjectAsList(contentObj || {}));
+        details.appendChild(summary);
+        details.appendChild(content);
+        return details;
+    }
+
+    const profileSec = createAccordion('Профил', data.initialAnswers);
+    const statusSec = createAccordion('Текущ статус', data.currentStatus);
+    const analyticsSec = createAccordion('Анализ', data.analytics);
+
     dashboardSummaryDiv.appendChild(profileSec);
     dashboardSummaryDiv.appendChild(statusSec);
     dashboardSummaryDiv.appendChild(analyticsSec);
