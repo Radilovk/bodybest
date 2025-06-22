@@ -730,6 +730,24 @@
                             <label for="planJson" class="form-label">JSON на плана:</label>
                             <textarea class="form-control json-editor" id="planJson" rows="15">{"message": "Данните ще се заредят автоматично"}</textarea>
                         </div>
+                        <div id="planEditorForms" class="mb-3">
+                            <h6>Меню по дни</h6>
+                            <div class="table-responsive">
+                                <table class="table" id="menuEditTable"></table>
+                            </div>
+                            <div class="mt-3">
+                                <label for="allowedFoodsInput" class="form-label">Позволени храни</label>
+                                <textarea id="allowedFoodsInput" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="mt-3">
+                                <label for="forbiddenFoodsInput" class="form-label">Забранени храни</label>
+                                <textarea id="forbiddenFoodsInput" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="mt-3">
+                                <label for="principlesInput" class="form-label">Принципи</label>
+                                <textarea id="principlesInput" class="form-control" rows="4"></textarea>
+                            </div>
+                        </div>
                         <button class="btn btn-primary" id="savePlanBtn">
                             <i class="fas fa-save me-2"></i>Запази плана
                         </button>
