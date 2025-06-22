@@ -1209,11 +1209,22 @@
                         }
                         document.getElementById('cooking-methods').innerHTML = cHtml || 'Няма данни';
                     }
-                    if (Array.isArray(hcs.supplements)) {
+                    const suppCont = document.getElementById('supplements-list');
+                    if (Array.isArray(hcs.supplement_suggestions) && hcs.supplement_suggestions.length > 0) {
+                        let sHtml = '<ul>';
+                        hcs.supplement_suggestions.forEach(s => {
+                            sHtml += `<li><strong>${s.supplement_name || '?'}</strong>${s.reasoning ? ` - ${s.reasoning}` : ''}` +
+                                     `${s.caution ? `<br><em>${s.caution}</em>` : ''}</li>`;
+                        });
+                        sHtml += '</ul>';
+                        suppCont.innerHTML = sHtml;
+                    } else if (Array.isArray(hcs.supplements) && hcs.supplements.length > 0) {
                         let sHtml = '<ul>';
                         hcs.supplements.forEach(s => { sHtml += `<li>${s}</li>`; });
                         sHtml += '</ul>';
-                        document.getElementById('supplements-list').innerHTML = sHtml;
+                        suppCont.innerHTML = sHtml;
+                    } else {
+                        suppCont.textContent = 'Няма данни';
                     }
                 } else {
                     ['hydration-liters','hydration-tips','cooking-methods','supplements-list']
