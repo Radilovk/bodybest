@@ -198,6 +198,30 @@ details[open] summary::after {
   margin-top: 10px;
 }
 
+/* Аналитични индекси с прогрес барове */
+#analyticsSummary .progress-bar-container {
+  width: 100%;
+  margin-top: 4px;
+}
+#analyticsSummary .progress-bar {
+  background: var(--progress-gradient);
+  border-radius: var(--progress-bar-radius);
+  position: relative;
+  height: var(--progress-bar-height);
+  overflow: hidden;
+}
+#analyticsSummary .progress-mask {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: auto;
+  background: var(--progress-bar-bg-empty);
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  border-radius: 0;
+}
+
 .button-small {
   font-size: 0.8rem;
   padding: var(--space-xs) var(--space-sm);
