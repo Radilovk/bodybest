@@ -377,14 +377,15 @@ async function loadClients() {
 function renderClients() {
     const search = (clientSearch.value || '').toLowerCase();
     const filter = statusFilter.value;
-    const tagFilter = tagFilterSelect ? tagFilterSelect.value : 'all';
+    const tagFilterValues = tagFilterSelect ? Array.from(tagFilterSelect.selectedOptions).map(o => o.value) : [];
     const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'name';
     if (clientsList) clientsList.innerHTML = '';
     const list = allClients.filter(c => {
         const matchText = `${c.userId} ${c.name || ''} ${c.email || ''}`.toLowerCase();
         const matchesSearch = matchText.includes(search);
         const matchesStatus = filter === 'all' || c.status === filter;
-        const matchesTag = tagFilter === 'all' || (c.tags || []).includes(tagFilter);
+        const selectedTags = tagFilterValues.filter(t => t !== 'all');
+        const matchesTag = selectedTags.length === 0 || selectedTags.every(t => (c.tags || []).includes(t));
         return matchesSearch && matchesStatus && matchesTag;
     });
     list.sort((a, b) => {
@@ -427,15 +428,16 @@ function updateTagFilterOptions() {
     if (!tagFilterSelect) return;
     const tags = new Set();
     allClients.forEach(c => (c.tags || []).forEach(t => tags.add(t)));
-    const current = tagFilterSelect.value;
+    const current = Array.from(tagFilterSelect.selectedOptions).map(o => o.value);
     tagFilterSelect.innerHTML = '<option value="all">Всички етикети</option>';
     Array.from(tags).sort().forEach(t => {
         const opt = document.createElement('option');
         opt.value = t;
         opt.textContent = t;
+        if (current.includes(t)) opt.selected = true;
         tagFilterSelect.appendChild(opt);
     });
-    if (current && Array.from(tags).includes(current)) tagFilterSelect.value = current;
+    if (current.includes('all')) tagFilterSelect.querySelector('option[value="all"]').selected = true;
 }
 
 function updateStatusChart(stats) {
