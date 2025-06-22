@@ -1113,12 +1113,28 @@
                 }
                 
                 // Седмично меню
-                if (plan.week1Menu) {
-                    const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-                    days.forEach(day => {
-                        const dayContainer = document.getElementById(day);
+                const weekMenu = plan.week1Menu || plan.weekMenu;
+                if (weekMenu) {
+                    const dayMap = {
+                        monday: 'monday',
+                        tuesday: 'tuesday',
+                        wednesday: 'wednesday',
+                        thursday: 'thursday',
+                        friday: 'friday',
+                        saturday: 'saturday',
+                        sunday: 'sunday',
+                        'понеделник': 'monday',
+                        'вторник': 'tuesday',
+                        'сряда': 'wednesday',
+                        'четвъртък': 'thursday',
+                        'петък': 'friday',
+                        'събота': 'saturday',
+                        'неделя': 'sunday'
+                    };
+                    Object.entries(dayMap).forEach(([key, id]) => {
+                        const dayContainer = document.getElementById(id);
                         if (!dayContainer) return;
-                        const meals = plan.week1Menu[day];
+                        const meals = weekMenu[key] || weekMenu[id];
                         if (Array.isArray(meals) && meals.length) {
                             let html = '';
                             meals.forEach(meal => {

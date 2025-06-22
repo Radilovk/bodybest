@@ -87,7 +87,21 @@ export const labelMap = {
   fat_grams: 'Мазнини (g)',
   protein_percent: 'Протеини (%)',
   carbs_percent: 'Въглехидрати (%)',
-  fat_percent: 'Мазнини (%)'
+  fat_percent: 'Мазнини (%)',
+  monday: 'Понеделник',
+  tuesday: 'Вторник',
+  wednesday: 'Сряда',
+  thursday: 'Четвъртък',
+  friday: 'Петък',
+  saturday: 'Събота',
+  sunday: 'Неделя',
+  'понеделник': 'Понеделник',
+  'вторник': 'Вторник',
+  'сряда': 'Сряда',
+  'четвъртък': 'Четвъртък',
+  'петък': 'Петък',
+  'събота': 'Събота',
+  'неделя': 'Неделя'
 };
 
 export const statusMap = {
