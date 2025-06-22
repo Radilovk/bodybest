@@ -1216,25 +1216,38 @@
                 if (plan.psychologicalGuidance) {
                     const guidance = plan.psychologicalGuidance;
 
-                    // Стратегии за справяне
-                    let strategiesHtml = '<ul>';
-                    if (guidance.coping_strategies) {
-                        guidance.coping_strategies.forEach(strategy => {
-                            strategiesHtml += `<li>${strategy}</li>`;
-                        });
+                    // Стратегии за справяне и изграждане на навици
+                    let strategiesHtml = '';
+                    if ((Array.isArray(guidance.coping_strategies) && guidance.coping_strategies.length) || guidance.habit_building_tip) {
+                        strategiesHtml = '<ul>';
+                        if (Array.isArray(guidance.coping_strategies)) {
+                            guidance.coping_strategies.forEach(strategy => {
+                                strategiesHtml += `<li>${strategy}</li>`;
+                            });
+                        }
+                        if (guidance.habit_building_tip) {
+                            strategiesHtml += `<li>${guidance.habit_building_tip}</li>`;
+                        }
+                        strategiesHtml += '</ul>';
                     }
-                    strategiesHtml += '</ul>';
-                    document.getElementById('coping-strategies').innerHTML = strategiesHtml;
+                    document.getElementById('coping-strategies').innerHTML = strategiesHtml || 'Няма данни';
 
-                    if (Array.isArray(guidance.motivational_messages)) {
-                        let motHtml = '<ul>';
-                        guidance.motivational_messages.forEach(m => { motHtml += `<li>${m}</li>`; });
+                    // Мотивационни съобщения и напомняне за самосъстрадание
+                    let motHtml = '';
+                    if ((Array.isArray(guidance.motivational_messages) && guidance.motivational_messages.length) || guidance.self_compassion_reminder) {
+                        motHtml = '<ul>';
+                        if (Array.isArray(guidance.motivational_messages)) {
+                            guidance.motivational_messages.forEach(m => { motHtml += `<li>${m}</li>`; });
+                        }
+                        if (guidance.self_compassion_reminder) {
+                            motHtml += `<li>${guidance.self_compassion_reminder}</li>`;
+                        }
                         motHtml += '</ul>';
-                    document.getElementById('motivational-messages').innerHTML = motHtml;
+                    }
+                    document.getElementById('motivational-messages').innerHTML = motHtml || 'Няма данни';
                 } else {
                     document.getElementById('coping-strategies').textContent = 'Няма данни';
                     document.getElementById('motivational-messages').textContent = 'Няма данни';
-                }
                 }
                 
                 // Подробни цели
