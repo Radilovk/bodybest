@@ -202,3 +202,34 @@ details[open] summary::after {
   font-size: 0.8rem;
   padding: var(--space-xs) var(--space-sm);
 }
+
+/* Accordion enhancements for admin panel */
+.accordion-container {
+  background-color: var(--surface-background);
+  border: 1px solid var(--border-color-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+}
+
+.accordion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  font-weight: 600;
+  color: var(--primary-color);
+  background-color: color-mix(in srgb, var(--surface-background) 97%, var(--primary-color) 3%);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color-soft);
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.accordion-header:hover {
+  background-color: color-mix(in srgb, var(--surface-background) 92%, var(--primary-color) 8%);
+}
+
+.accordion-header.open {
+  box-shadow: inset 0 -2px 0 var(--primary-color);
+}
