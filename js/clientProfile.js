@@ -328,22 +328,47 @@ function fillAllowedFoods(aff) {
     el.textContent = 'Няма данни';
     return;
   }
-  const parts = [];
+
+  const createList = items => {
+    const ul = document.createElement('ul');
+    items.forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      ul.appendChild(li);
+    });
+    return ul;
+  };
+
+  const frag = document.createDocumentFragment();
   const main = aff.main_allowed_foods;
   if (Array.isArray(main) && main.length > 0) {
-    parts.push('<ul>' + main.map(f => `<li>${f}</li>`).join('') + '</ul>');
+    frag.appendChild(createList(main));
   } else if (main && typeof main === 'object') {
     Object.entries(main).forEach(([cat, foods]) => {
       if (Array.isArray(foods) && foods.length > 0) {
-        const title = cat.replace(/_/g, ' ');
-        parts.push(`<p><strong>${title}</strong></p><ul>${foods.map(f => `<li>${f}</li>`).join('')}</ul>`);
+        const p = document.createElement('p');
+        const strong = document.createElement('strong');
+        strong.textContent = cat.replace(/_/g, ' ');
+        p.appendChild(strong);
+        frag.appendChild(p);
+        frag.appendChild(createList(foods));
       }
     });
   }
   if (Array.isArray(aff.detailed_allowed_suggestions) && aff.detailed_allowed_suggestions.length > 0) {
-    parts.push('<p><strong>Допълнителни предложения:</strong></p><ul>' + aff.detailed_allowed_suggestions.map(s => `<li>${s}</li>`).join('') + '</ul>');
+    const p = document.createElement('p');
+    const strong = document.createElement('strong');
+    strong.textContent = 'Допълнителни предложения:';
+    p.appendChild(strong);
+    frag.appendChild(p);
+    frag.appendChild(createList(aff.detailed_allowed_suggestions));
   }
-  el.innerHTML = parts.join('') || 'Няма данни';
+
+  if (frag.childNodes.length === 0) {
+    el.textContent = 'Няма данни';
+  } else {
+    el.appendChild(frag);
+  }
 }
 
 function fillForbiddenFoods(aff) {
@@ -354,17 +379,43 @@ function fillForbiddenFoods(aff) {
     el.textContent = 'Няма данни';
     return;
   }
-  const parts = [];
+
+  const createList = items => {
+    const ul = document.createElement('ul');
+    items.forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      ul.appendChild(li);
+    });
+    return ul;
+  };
+
+  const frag = document.createDocumentFragment();
   if (Array.isArray(aff.main_forbidden_foods) && aff.main_forbidden_foods.length > 0) {
-    parts.push('<ul>' + aff.main_forbidden_foods.map(f => `<li>${f}</li>`).join('') + '</ul>');
+    frag.appendChild(createList(aff.main_forbidden_foods));
   }
   if (Array.isArray(aff.detailed_limit_suggestions) && aff.detailed_limit_suggestions.length > 0) {
-    parts.push('<p><strong>За ограничаване:</strong></p><ul>' + aff.detailed_limit_suggestions.map(s => `<li>${s}</li>`).join('') + '</ul>');
+    const p = document.createElement('p');
+    const strong = document.createElement('strong');
+    strong.textContent = 'За ограничаване:';
+    p.appendChild(strong);
+    frag.appendChild(p);
+    frag.appendChild(createList(aff.detailed_limit_suggestions));
   }
   if (Array.isArray(aff.dressing_flavoring_ideas) && aff.dressing_flavoring_ideas.length > 0) {
-    parts.push(`<p><strong>Идеи за овкусяване:</strong> ${aff.dressing_flavoring_ideas.join(', ')}</p>`);
+    const p = document.createElement('p');
+    const strong = document.createElement('strong');
+    strong.textContent = 'Идеи за овкусяване:';
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(` ${aff.dressing_flavoring_ideas.join(', ')}`));
+    frag.appendChild(p);
   }
-  el.innerHTML = parts.join('') || 'Няма данни';
+
+  if (frag.childNodes.length === 0) {
+    el.textContent = 'Няма данни';
+  } else {
+    el.appendChild(frag);
+  }
 }
 
 function fillPrinciples(plan) {
