@@ -56,9 +56,12 @@
   .note-base { flex-direction: column; gap: var(--space-xs); align-items: flex-start;}
   .note-base .icon.prefix-icon { margin-bottom: var(--space-xs); } 
 
-  .detailed-metric-item .metric-item-values { 
-      padding-left: 0; 
-      grid-template-columns: 1fr; 
+  .detailed-metric-item .metric-item-values {
+      padding-left: 0;
+      grid-template-columns: 1fr;
+  }
+  #dashboardSummary dl {
+    grid-template-columns: 1fr;
   }
   .detailed-metric-item .metric-label { font-size: 1.05em; }
   .detailed-metric-item .value-current { font-size: 1em; }
@@ -158,6 +161,10 @@
   #toast { width: calc(100% - 2 * var(--space-md)); }
   td { padding-left: 40%; }
   td::before { width: 35%; }
+
+  #dashboardSummary dl {
+    grid-template-columns: 1fr;
+  }
 
   nav.tabs.styled-tabs .tab-btn { padding: 0.4rem 0.2rem; } 
   nav.tabs.styled-tabs .tab-btn .tab-icon { font-size: 1.1em; }
