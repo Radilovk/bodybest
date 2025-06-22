@@ -27,6 +27,7 @@ export const apiEndpoints = {
     getAchievements: `${workerBaseUrl}/api/getAchievements`,
     generatePraise: `${workerBaseUrl}/api/generatePraise`,
     aiHelper: `${workerBaseUrl}/api/aiHelper`,
+    analyzeImage: `${workerBaseUrl}/api/analyzeImage`,
     listClients: `${workerBaseUrl}/api/listClients`,
     addAdminQuery: `${workerBaseUrl}/api/addAdminQuery`,
     getAdminQueries: `${workerBaseUrl}/api/getAdminQueries`,
