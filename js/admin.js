@@ -320,15 +320,28 @@ function displayDailyLogs(logs, isError = false) {
 function renderAnalyticsCurrent(cur) {
     const dl = document.createElement('dl');
     const fields = {
-        goalProgress: cur.goalProgress != null ? `${cur.goalProgress}%` : '--',
-        engagementScore: cur.engagementScore != null ? `${cur.engagementScore}%` : '--',
-        overallHealthScore: cur.overallHealthScore != null ? `${cur.overallHealthScore}%` : '--'
+        goalProgress: cur.goalProgress,
+        engagementScore: cur.engagementScore,
+        overallHealthScore: cur.overallHealthScore
     };
-    Object.entries(fields).forEach(([k, v]) => {
+    Object.entries(fields).forEach(([k, val]) => {
         const dt = document.createElement('dt');
         dt.textContent = labelMap[k] || k;
         const dd = document.createElement('dd');
-        dd.textContent = v;
+        const pct = typeof val === 'number' ? Math.round(val) : null;
+        dd.textContent = pct != null ? `${pct}%` : 'Няма данни';
+        if (pct != null) {
+            const pbContainer = document.createElement('div');
+            pbContainer.className = 'progress-bar-container';
+            const pb = document.createElement('div');
+            pb.className = 'progress-bar';
+            const mask = document.createElement('div');
+            mask.className = 'progress-mask';
+            mask.style.width = `${100 - pct}%`;
+            pb.appendChild(mask);
+            pbContainer.appendChild(pb);
+            dd.appendChild(pbContainer);
+        }
         dl.appendChild(dt);
         dl.appendChild(dd);
     });
