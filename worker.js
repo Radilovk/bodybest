@@ -173,6 +173,8 @@ export default {
                 responseBody = await handleGetPlanModificationPrompt(request, env);
             } else if (method === 'POST' && path === '/api/aiHelper') {
                 responseBody = await handleAiHelperRequest(request, env);
+            } else if (method === 'POST' && path === '/api/analyzeImage') {
+                responseBody = await handleAnalyzeImageRequest(request, env);
             } else if (method === 'GET' && path === '/api/listClients') {
                 responseBody = await handleListClientsRequest(request, env);
             } else if (method === 'POST' && path === '/api/addAdminQuery') {
@@ -1362,6 +1364,26 @@ async function handleAiHelperRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleAiHelperRequest -------------
+
+// ------------- START FUNCTION: handleAnalyzeImageRequest -------------
+async function handleAnalyzeImageRequest(request, env) {
+    try {
+        const { userId, imageUrl } = await request.json();
+        if (!userId || !imageUrl) {
+            return { success: false, message: 'Липсва imageUrl или userId.', statusHint: 400 };
+        }
+        const aiResp = await callCfAi(
+            '@cf/analysis-image',
+            { imageUrl },
+            env
+        );
+        return { success: true, aiResponse: aiResp };
+    } catch (error) {
+        console.error('Error in handleAnalyzeImageRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при анализа на изображението.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleAnalyzeImageRequest -------------
 
 // ------------- START FUNCTION: handleListClientsRequest -------------
 async function handleListClientsRequest(request, env) {
@@ -3451,4 +3473,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, callCfAi, callModel, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, callCfAi, callModel, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
