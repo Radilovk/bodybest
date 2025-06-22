@@ -43,7 +43,9 @@ const openFullProfileLink = document.getElementById('openFullProfile');
 const fullProfileFrame = document.getElementById('fullProfileFrame');
 const dashboardPre = document.getElementById('dashboardData');
 const copyDashboardJsonBtn = document.getElementById('copyDashboardJson');
-const dashboardSummaryDiv = document.getElementById('dashboardSummary');
+const profileSummaryDiv = document.getElementById('profileSummary');
+const statusSummaryDiv = document.getElementById('statusSummary');
+const analyticsSummaryDiv = document.getElementById('analyticsSummary');
 const exportDataBtn = document.getElementById('exportData');
 const exportCsvBtn = document.getElementById('exportCsv');
 const generatePraiseBtn = document.getElementById('generatePraise');
@@ -316,34 +318,29 @@ function displayDailyLogs(logs, isError = false) {
 }
 
 function displayDashboardSummary(data) {
-    if (!dashboardSummaryDiv) return;
-    dashboardSummaryDiv.innerHTML = '';
+    if (!profileSummaryDiv || !statusSummaryDiv || !analyticsSummaryDiv) return;
+
+    profileSummaryDiv.innerHTML = '';
+    statusSummaryDiv.innerHTML = '';
+    analyticsSummaryDiv.innerHTML = '';
+
     if (!data) {
-        dashboardSummaryDiv.textContent = 'Няма данни';
+        const msg = 'Няма данни';
+        profileSummaryDiv.textContent = msg;
+        statusSummaryDiv.textContent = msg;
+        analyticsSummaryDiv.textContent = msg;
         return;
     }
 
-    function createAccordion(title, contentObj) {
-        const details = document.createElement('details');
-        details.className = 'accordion-container';
-        const summary = document.createElement('summary');
-        summary.className = 'accordion-header';
-        summary.textContent = title;
-        const content = document.createElement('div');
-        content.className = 'accordion-content';
-        content.appendChild(renderObjectAsList(contentObj || {}));
-        details.appendChild(summary);
-        details.appendChild(content);
-        return details;
-    }
-
-    const profileSec = createAccordion('Профил', data.initialAnswers);
-    const statusSec = createAccordion('Текущ статус', data.currentStatus);
-    const analyticsSec = createAccordion('Анализ', data.analytics);
-
-    dashboardSummaryDiv.appendChild(profileSec);
-    dashboardSummaryDiv.appendChild(statusSec);
-    dashboardSummaryDiv.appendChild(analyticsSec);
+    profileSummaryDiv.appendChild(
+        renderObjectAsList(data.initialAnswers || {})
+    );
+    statusSummaryDiv.appendChild(
+        renderObjectAsList(data.currentStatus || {})
+    );
+    analyticsSummaryDiv.appendChild(
+        renderObjectAsList(data.analytics || {})
+    );
 }
 
 async function loadClients() {
