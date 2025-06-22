@@ -527,32 +527,6 @@
                 </div>
             </div>
 
-            <!-- Лични данни -->
-            <div class="card">
-                <div class="card-header" data-toggle="card">
-                    <h2><i class="fas fa-id-card"></i> Лични Данни</h2>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="card-body">
-                    <div id="personal-info">
-                        <!-- Личните данни ще се зареждат тук -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Отговори от въпросника -->
-            <div class="card">
-                <div class="card-header" data-toggle="card">
-                    <h2><i class="fas fa-question-circle"></i> Отговори от въпросника</h2>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="card-body">
-                    <div id="questionnaire-info">
-                        <!-- Отговорите ще се зареждат тук -->
-                    </div>
-                </div>
-            </div>
-
             <!-- Калории и макронутриенти -->
             <div class="card">
                 <div class="card-header" data-toggle="card">
@@ -758,110 +732,11 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Допълнителни насоки -->
-            <div class="card">
-                <div class="card-header" data-toggle="card">
-                    <h2><i class="fas fa-list-ul"></i> Допълнителни Насоки</h2>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="card-body">
-                    <div id="extra-guidelines">
-                        <!-- Допълнителни насоки -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Аналитика -->
-            <div class="card">
-                <div class="card-header" data-toggle="card">
-                    <h2><i class="fas fa-chart-line"></i> Аналитика</h2>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="card-body">
-                    <div id="analytics-info">
-                        <!-- Аналитични данни -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Системна информация -->
-            <div class="card">
-                <div class="card-header" data-toggle="card">
-                    <h2><i class="fas fa-info-circle"></i> Системна Информация</h2>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="card-body">
-                    <div id="system-info">
-                        <!-- Статус и системни данни -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Пълен JSON -->
-            <div class="card">
-                <div class="card-header" data-toggle="card">
-                    <h2><i class="fas fa-code"></i> Пълен JSON</h2>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="card-body">
-                    <pre id="full-json" style="white-space: pre-wrap"></pre>
-                </div>
-            </div>
         </div>
     </div>
 
     <script type="module">
         import { apiEndpoints } from './js/config.js';
-        import { labelMap } from './js/labelMap.js';
-
-        function renderValue(val) {
-            if (Array.isArray(val)) {
-                const ul = document.createElement('ul');
-                val.forEach(v => {
-                    const li = document.createElement('li');
-                    li.appendChild(renderValue(v));
-                    ul.appendChild(li);
-                });
-                return ul;
-            }
-            if (val && typeof val === 'object') {
-                return renderObjectAsList(val);
-            }
-            const span = document.createElement('span');
-            span.textContent = val;
-            return span;
-        }
-
-        function renderObjectAsList(obj = {}) {
-            const dl = document.createElement('dl');
-            Object.entries(obj).forEach(([key, value]) => {
-                const dt = document.createElement('dt');
-                dt.textContent = labelMap[key] || key;
-                const dd = document.createElement('dd');
-                dd.appendChild(renderValue(value));
-                dl.appendChild(dt);
-                dl.appendChild(dd);
-            });
-            return dl;
-        }
-
-        function renderDetailedMetrics(metrics = []) {
-            const table = document.createElement('table');
-            table.className = 'menu-table';
-            const thead = document.createElement('thead');
-            thead.innerHTML = '<tr><th>Показател</th><th>Начална</th><th>Целева</th><th>Текуща</th></tr>';
-            table.appendChild(thead);
-            const tbody = document.createElement('tbody');
-            metrics.forEach(m => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${m.label || ''}</td><td>${m.initialValueText ?? ''}</td><td>${m.expectedValueText ?? ''}</td><td>${m.currentValueText ?? ''}</td>`;
-                tbody.appendChild(tr);
-            });
-            table.appendChild(tbody);
-            return table;
-        }
-
         document.addEventListener('DOMContentLoaded', async function() {
             const params = new URLSearchParams(window.location.search);
             const userId = params.get('userId');
@@ -870,8 +745,8 @@
                 try {
                     const resp = await fetch(`${apiEndpoints.dashboard}?userId=${encodeURIComponent(userId)}`);
                     const data = await resp.json();
-                    if (resp.ok && data.success) {
-                        initialJson = JSON.stringify(data, null, 2);
+                    if (resp.ok && data.success && data.planData) {
+                        initialJson = JSON.stringify(data.planData, null, 2);
                         document.getElementById('json-input').value = initialJson;
                     }
                 } catch (err) {
@@ -944,36 +819,16 @@
             });
             
             // Функция за визуализация на профила
-            function renderProfile(allData) {
-                document.getElementById('full-json').textContent = JSON.stringify(allData, null, 2);
-
-                const plan = allData.planData || allData;
-                const answers = allData.initialAnswers || allData.questionnaireAnswers || {};
-
+            function renderProfile(data) {
                 // Обобщение на профила
-                if (plan.profileSummary) {
-                    document.getElementById('profile-summary').innerHTML =
-                        `<p>${plan.profileSummary}</p>`;
+                if (data.profileSummary) {
+                    document.getElementById('profile-summary').innerHTML = 
+                        `<p>${data.profileSummary}</p>`;
                 }
-
-                // Лични данни
-                const personalInfo = { ...(plan.personalInfo || {}), ...answers };
-                if (Object.keys(personalInfo).length) {
-                    const cont = document.getElementById('personal-info');
-                    cont.innerHTML = '';
-                    cont.appendChild(renderObjectAsList(personalInfo));
-                }
-
-                // Отговори от въпросника
-                if (answers && typeof answers === 'object') {
-                    const qaCont = document.getElementById('questionnaire-info');
-                    qaCont.innerHTML = '';
-                    qaCont.appendChild(renderObjectAsList(answers));
-                }
-
+                
                 // Калории и макронутриенти
-                if (plan.caloriesMacros) {
-                    const macros = plan.caloriesMacros;
+                if (data.caloriesMacros) {
+                    const macros = data.caloriesMacros;
                     document.getElementById('calories-value').textContent = macros.calories;
                     document.getElementById('protein-value').textContent = `${macros.protein_percent}%`;
                     document.getElementById('protein-grams').textContent = `${macros.protein_grams}g`;
@@ -984,12 +839,12 @@
                 }
                 
                 // Седмично меню
-                if (plan.week1Menu) {
-                    for (const day in plan.week1Menu) {
+                if (data.week1Menu) {
+                    for (const day in data.week1Menu) {
                         const dayContainer = document.getElementById(day);
                         if (dayContainer) {
                             let html = '';
-                            plan.week1Menu[day].forEach(meal => {
+                            data.week1Menu[day].forEach(meal => {
                                 html += `<div class="meal-item">
                                     <div class="meal-title">
                                         <i class="fas fa-utensil-spoon"></i> ${meal.meal_name}
@@ -1012,9 +867,9 @@
                 }
                 
                 // Принципи за седмици 2-4
-                if (plan.principlesWeek2_4) {
+                if (data.principlesWeek2_4) {
                     let principlesHtml = '';
-                    plan.principlesWeek2_4.forEach(principle => {
+                    data.principlesWeek2_4.forEach(principle => {
                         principlesHtml += `<div class="accordion-item">
                             <div class="accordion-header">
                                 ${principle.title}
@@ -1044,37 +899,22 @@
                     });
                 }
                 
-                // Хидратация, готвене и добавки
-                if (plan.hydrationCookingSupplements) {
-                    const hcs = plan.hydrationCookingSupplements;
-                    if (hcs.hydration_recommendations) {
-                        const hydration = hcs.hydration_recommendations;
-                        document.getElementById('hydration-liters').textContent = hydration.daily_liters;
-
-                        let tipsHtml = '<ul>';
-                        hydration.tips.forEach(tip => {
-                            tipsHtml += `<li><i class="fas fa-check-circle"></i> ${tip}</li>`;
-                        });
-                        tipsHtml += '</ul>';
-                        document.getElementById('hydration-tips').innerHTML = tipsHtml;
-                    }
-                    if (Array.isArray(hcs.cooking_methods)) {
-                        let cHtml = '<ul>';
-                        hcs.cooking_methods.forEach(m => { cHtml += `<li>${m}</li>`; });
-                        cHtml += '</ul>';
-                        document.getElementById('cooking-methods').innerHTML = cHtml;
-                    }
-                    if (Array.isArray(hcs.supplements)) {
-                        let sHtml = '<ul>';
-                        hcs.supplements.forEach(s => { sHtml += `<li>${s}</li>`; });
-                        sHtml += '</ul>';
-                        document.getElementById('supplements-list').innerHTML = sHtml;
-                    }
+                // Хидратация
+                if (data.hydrationCookingSupplements && data.hydrationCookingSupplements.hydration_recommendations) {
+                    const hydration = data.hydrationCookingSupplements.hydration_recommendations;
+                    document.getElementById('hydration-liters').textContent = hydration.daily_liters;
+                    
+                    let tipsHtml = '<ul>';
+                    hydration.tips.forEach(tip => {
+                        tipsHtml += `<li><i class="fas fa-check-circle"></i> ${tip}</li>`;
+                    });
+                    tipsHtml += '</ul>';
+                    document.getElementById('hydration-tips').innerHTML = tipsHtml;
                 }
                 
                 // Разрешени и забранени храни
-                if (plan.allowedForbiddenFoods) {
-                    const foods = plan.allowedForbiddenFoods;
+                if (data.allowedForbiddenFoods) {
+                    const foods = data.allowedForbiddenFoods;
                     
                     // Разрешени храни
                     let allowedHtml = '';
@@ -1100,9 +940,9 @@
                 }
                 
                 // Психологически насоки
-                if (plan.psychologicalGuidance) {
-                    const guidance = plan.psychologicalGuidance;
-
+                if (data.psychologicalGuidance) {
+                    const guidance = data.psychologicalGuidance;
+                    
                     // Стратегии за справяне
                     let strategiesHtml = '<ul>';
                     if (guidance.coping_strategies) {
@@ -1112,18 +952,11 @@
                     }
                     strategiesHtml += '</ul>';
                     document.getElementById('coping-strategies').innerHTML = strategiesHtml;
-
-                    if (Array.isArray(guidance.motivational_messages)) {
-                        let motHtml = '<ul>';
-                        guidance.motivational_messages.forEach(m => { motHtml += `<li>${m}</li>`; });
-                        motHtml += '</ul>';
-                        document.getElementById('motivational-messages').innerHTML = motHtml;
-                    }
                 }
                 
                 // Подробни цели
-                if (plan.detailedTargets) {
-                    const targets = plan.detailedTargets;
+                if (data.detailedTargets) {
+                    const targets = data.detailedTargets;
                     if (targets.sleep_quality_target_text) {
                         document.getElementById('sleep-target').textContent = targets.sleep_quality_target_text;
                     }
@@ -1136,69 +969,6 @@
                     if (targets.hydration_target_text) {
                         document.getElementById('hydration-target').textContent = targets.hydration_target_text;
                     }
-                }
-
-                // Допълнителни насоки
-                if (plan.additionalGuidelines) {
-                    const extra = document.getElementById('extra-guidelines');
-                    extra.innerHTML = '';
-                    const g = plan.additionalGuidelines;
-                    if (Array.isArray(g)) {
-                        g.forEach(item => {
-                            if (typeof item === 'string') {
-                                const p = document.createElement('p');
-                                p.textContent = item;
-                                extra.appendChild(p);
-                            } else if (item && typeof item === 'object') {
-                                const div = document.createElement('div');
-                                if (item.title) div.innerHTML = `<strong>${item.title}</strong>`;
-                                if (item.content) {
-                                    const p = document.createElement('p');
-                                    p.textContent = item.content;
-                                    div.appendChild(p);
-                                }
-                                extra.appendChild(div);
-                            }
-                        });
-                    } else if (typeof g === 'string') {
-                        extra.textContent = g;
-                    } else if (typeof g === 'object') {
-                        extra.appendChild(renderObjectAsList(g));
-                    }
-                }
-
-                // Аналитика
-                if (allData.analytics) {
-                    const cont = document.getElementById('analytics-info');
-                    cont.innerHTML = '';
-                    const a = allData.analytics;
-                    if (a.current) cont.appendChild(renderObjectAsList(a.current));
-                    if (a.textualAnalysis) {
-                        const p = document.createElement('p');
-                        p.textContent = a.textualAnalysis;
-                        cont.appendChild(p);
-                    }
-                    if (Array.isArray(a.detailed) && a.detailed.length) {
-                        cont.appendChild(renderDetailedMetrics(a.detailed));
-                    }
-                    if (a.streak) {
-                        const p = document.createElement('p');
-                        p.textContent = `${labelMap.streak || 'streak'}: ${a.streak.currentCount || 0} дни`;
-                        cont.appendChild(p);
-                    }
-                }
-
-                // Системна информация
-                const sysInfo = {};
-                ['userId','planStatus','message','showAdaptiveQuiz','isFirstLoginWithReadyPlan'].forEach(k => {
-                    if (allData[k] !== undefined) sysInfo[k] = allData[k];
-                });
-                if (allData.currentStatus) sysInfo.currentStatus = allData.currentStatus;
-                if (plan.generationMetadata) sysInfo.generationMetadata = plan.generationMetadata;
-                if (Object.keys(sysInfo).length) {
-                    const cont = document.getElementById('system-info');
-                    cont.innerHTML = '';
-                    cont.appendChild(renderObjectAsList(sysInfo));
                 }
             }
         });
