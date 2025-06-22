@@ -39,7 +39,6 @@ const planMenuPre = document.getElementById('planMenu');
 const dailyLogsPre = document.getElementById('dailyLogs');
 const exportPlanBtn = document.getElementById('exportPlan');
 const openFullProfileLink = document.getElementById('openFullProfile');
-const toggleFullProfileBtn = document.getElementById('toggleFullProfile');
 const fullProfileFrame = document.getElementById('fullProfileFrame');
 const dashboardPre = document.getElementById('dashboardData');
 const copyDashboardJsonBtn = document.getElementById('copyDashboardJson');
@@ -584,18 +583,6 @@ if (toggleWeightChartBtn) {
     });
 }
 
-if (toggleFullProfileBtn) {
-    toggleFullProfileBtn.addEventListener('click', () => {
-        if (currentUserId && fullProfileFrame && !fullProfileFrame.src) {
-            fullProfileFrame.src = `clientProfile.html?userId=${encodeURIComponent(currentUserId)}`;
-        }
-        if (currentUserId && openFullProfileLink) {
-            openFullProfileLink.href = `clientProfile.html?userId=${encodeURIComponent(currentUserId)}`;
-        }
-        const isHidden = fullProfileFrame?.classList.toggle('hidden');
-        toggleFullProfileBtn.textContent = isHidden ? 'Покажи пълен профил' : 'Скрий пълен профил';
-    });
-}
 
 if (closeProfileBtn) {
     closeProfileBtn.addEventListener('click', () => {
@@ -612,8 +599,7 @@ if (sortOrderSelect) sortOrderSelect.addEventListener('change', renderClients);
 if (tagFilterSelect) tagFilterSelect.addEventListener('change', renderClients);
 
 async function showClient(userId) {
-    if (fullProfileFrame) fullProfileFrame.classList.add('hidden');
-    if (toggleFullProfileBtn) toggleFullProfileBtn.textContent = 'Покажи пълен профил';
+    if (fullProfileFrame) fullProfileFrame.classList.remove('hidden');
     try {
         const [profileResp, dashResp] = await Promise.all([
             fetch(`${apiEndpoints.getProfile}?userId=${userId}`),
