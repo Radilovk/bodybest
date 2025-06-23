@@ -113,6 +113,26 @@
     input[type="checkbox"] {
       margin-right: 6px;
     }
+    .message {
+      padding: 0.8rem;
+      border-radius: 0.5rem;
+      margin-top: 15px;
+      font-size: 0.9rem;
+      display: none;
+      border: 1px solid transparent;
+      text-align: left;
+      word-wrap: break-word;
+    }
+    .message.error {
+      color: #e74c3c;
+      background-color: rgba(231, 76, 60, 0.1);
+      border-color: #e74c3c;
+    }
+    .message.success {
+      color: #2ecc71;
+      background-color: rgba(46, 204, 113, 0.1);
+      border-color: #2ecc71;
+    }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
@@ -157,6 +177,7 @@
 <script type="module">
   import { workerBaseUrl } from './js/config.js';
   import { setupRegistration } from "./js/register.js";
+  import { showMessage, hideMessage } from "./js/messageUtils.js";
   /***** Глобални променливи *****/
   let rawQuestions = [];     // Суровият масив от questions.json (йерархичен)
   let flatPages = [];        // Плосък масив от всички въпроси (след рекурсивно сплескване)
@@ -457,18 +478,14 @@
         submitBtn.addEventListener('click', async () => {
             submitBtn.disabled = true;
             submitBtn.textContent = 'Изпращане...';
-            submitMessage.textContent = '';
-            submitMessage.className = 'message'; // Изчистваме класовете за грешка/успех
-            submitMessage.style.display = 'none'; // Скриваме го първоначално
+            hideMessage(submitMessage);
 
             try {
                 console.log("Submit button clicked, calling submitResponses...");
                 const result = await submitResponses(); // Извикваме обновената функция
 
                 console.log("submitResponses finished successfully.", result);
-                submitMessage.textContent = result.message || "Отговорите са изпратени успешно за обработка!"; // Използваме съобщението от Worker-а, ако има
-                submitMessage.className = 'message success'; // Зелено за успех
-                submitMessage.style.display = 'block';
+                showMessage(submitMessage, result.message || "Отговорите са изпратени успешно за обработка!", false);
                 submitBtn.style.display = "none";
                         // --- НАЧАЛО НА ФРАГМЕНТА ЗА ДОБАВЯНЕ ---
         // Показваме съобщението за успех (този ред вече съществува преди фрагмента)
@@ -492,9 +509,7 @@
                 console.log("Динамичен бутон 'Редактирай последен' натиснат.");
                 // 1. Скриваме съобщението за успех
                 if (submitMessage) {
-                    submitMessage.style.display = 'none';
-                    submitMessage.textContent = '';
-                    submitMessage.className = 'message';
+                    hideMessage(submitMessage);
                 }
                 // 2. Премахваме самия бутон "Редактирай"
                 backToEditBtn.remove();
@@ -535,9 +550,7 @@
 
             } catch (error) {
                 console.error("Error caught in submitBtn listener:", error);
-                submitMessage.textContent = `Грешка: ${error.message || 'Неуспешно изпращане.'}`;
-                submitMessage.className = 'message error'; // Червено за грешка
-                submitMessage.style.display = 'block';
+                showMessage(submitMessage, `Грешка: ${error.message || 'Неуспешно изпращане.'}`, true);
                 submitBtn.disabled = false; // Активираме бутона отново
                 submitBtn.textContent = 'Опитай отново';
             }
