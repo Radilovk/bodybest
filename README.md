@@ -292,10 +292,12 @@ Open the file in a browser, enter your message and it will call the `/api/chat` 
 The Cloudflare account ID is filled automatically from `config.js`.
 Use the small image button next to the send icon to upload a picture. The file is sent to `/api/analyzeImage` and the analysis appears as a bot reply.
 
+Some models require the conversation to start with `{"prompt":"agree"}` so you accept the license terms.
+
 Example test request with `curl`:
 
 ```bash
-curl https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/meta/llama-2-7b-chat-fp16 \
+curl https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/meta/llama-3.2-11b-instruct \
   -H "Authorization: Bearer <CF_AI_TOKEN>" \
   -H "Content-Type: application/json" \
   --data '{"messages":[{"role":"user","content":"Здравей"}]}'
