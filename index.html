@@ -67,6 +67,7 @@
 
     <script type="module">
         import { showMessage, hideMessage } from './js/messageUtils.js';
+        import { setupRegistration } from './js/register.js';
         import { workerBaseUrl, isLocalDevelopment } from './js/config.js';
         // Селектори
         const loginSection = document.getElementById('login-section');
@@ -173,69 +174,13 @@
                 loginButton.textContent = originalButtonText;
             }
         });
-
-        // Обработка на РЕГИСТРАЦИОННАТА формата
-        registerForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            hideMessage(registerMessage);
-            const registerButton = registerForm.querySelector('button[type="submit"]');
-            const originalButtonText = registerButton.textContent;
-            registerButton.disabled = true;
-            registerButton.textContent = 'Обработка...';
-
-            const emailInput = document.getElementById('register-email');
-            const passwordInput = document.getElementById('register-password');
-            const confirmPasswordInput = document.getElementById('confirm-password');
-            const email = emailInput.value.trim().toLowerCase(); // Винаги с малки букви
-            const password = passwordInput.value;
-            const confirmPassword = confirmPasswordInput.value;
-
-            // Клиентска валидация
-            if (!email || !password || !confirmPassword) {
-                 showMessage(registerMessage, 'Моля, попълнете всички полета.', true);
-                 registerButton.disabled = false; registerButton.textContent = originalButtonText; return;
-             }
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                showMessage(registerMessage, 'Моля, въведете валиден имейл адрес.', true);
-                 registerButton.disabled = false; registerButton.textContent = originalButtonText; return;
-            }
-             if (password.length < 8) {
-                 showMessage(registerMessage, 'Паролата трябва да е поне 8 знака.', true);
-                 registerButton.disabled = false; registerButton.textContent = originalButtonText; return;
-             }
-            if (password !== confirmPassword) {
-                showMessage(registerMessage, 'Паролите не съвпадат.', true);
-                 registerButton.disabled = false; registerButton.textContent = originalButtonText; return;
-            }
-
-            try {
-                const response = await fetch(registerEndpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, confirm_password: confirmPassword })
-                });
-                const data = await response.json();
-
-                if (!response.ok || !data.success) {
-                    throw new Error(data.message || 'Грешка при регистрацията. Моля, опитайте отново.');
-                }
-
-                // УСПЕШНА РЕГИСТРАЦИЯ
-                showMessage(registerMessage, 'Регистрацията успешна! Пренасочване към формата за вход...', false);
-                registerForm.reset();
-                 setTimeout(() => {
-                     showLoginLink.click(); // Превключваме към логин формата
-                     hideMessage(registerMessage); // Скриваме съобщението за успех след превключване
-                 }, 2500); // Изчакваме 2.5 секунди преди превключване
-
-            } catch (error) {
-                console.error('Registration failed:', error);
-                showMessage(registerMessage, error.message, true);
-                 registerButton.disabled = false;
-                 registerButton.textContent = originalButtonText;
-            }
+        setupRegistration("#register-form", "#register-message");
+        document.getElementById("register-form").addEventListener("registrationSuccess", () => {
+            setTimeout(() => {
+                document.getElementById("show-login").click();
+                hideMessage(document.getElementById("register-message"));
+            }, 2500);
         });
-
     </script>
 </body>
 </html>

@@ -150,6 +150,7 @@
 
 <script type="module">
   import { workerBaseUrl } from './js/config.js';
+  import { setupRegistration } from "./js/register.js";
   /***** Глобални променливи *****/
   let rawQuestions = [];     // Суровият масив от questions.json (йерархичен)
   let flatPages = [];        // Плосък масив от всички въпроси (след рекурсивно сплескване)
@@ -379,51 +380,12 @@
     pageDiv.querySelector('#regBackBtn').addEventListener('click', () => {
       showPage(regIndex - 1);
     });
-
-    pageDiv.querySelector('#register-form-q').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const msgEl = pageDiv.querySelector('#register-message-q');
-      msgEl.style.display = 'none';
-      const email = emailInput.value.trim().toLowerCase();
-      const pass = pageDiv.querySelector('#register-password-q').value;
-      const confirm = pageDiv.querySelector('#confirm-password-q').value;
-      if (!email || !pass || !confirm) {
-        msgEl.textContent = 'Моля, попълнете всички полета.';
-        msgEl.className = 'message error';
-        msgEl.style.display = 'block';
-        return;
-      }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        msgEl.textContent = 'Невалиден имейл.';
-        msgEl.className = 'message error';
-        msgEl.style.display = 'block';
-        return;
-      }
-      if (pass.length < 8 || pass !== confirm) {
-        msgEl.textContent = 'Провери паролата.';
-        msgEl.className = 'message error';
-        msgEl.style.display = 'block';
-        return;
-      }
-      try {
-        const res = await fetch(`${workerBaseUrl}/api/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password: pass, confirm_password: confirm })
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.message || 'Грешка при регистрация.');
-        responses.email = email; // обновяваме имейла ако е различен
-        msgEl.textContent = 'Регистрацията успешна!';
-        msgEl.className = 'message success';
-        msgEl.style.display = 'block';
-        showPage(regIndex + 1);
-      } catch (err) {
-        msgEl.textContent = err.message;
-        msgEl.className = 'message error';
-        msgEl.style.display = 'block';
-      }
+    setupRegistration("#register-form-q", "#register-message-q");
+    pageDiv.querySelector("#register-form-q").addEventListener("registrationSuccess", () => {
+      responses.email = emailInput.value.trim().toLowerCase();
+      showPage(regIndex + 1);
     });
+
   }
 
   /***** Създаване на финална страница *****/
