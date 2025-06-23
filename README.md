@@ -292,7 +292,17 @@ Open the file in a browser, enter your message and it will call the `/api/chat` 
 The Cloudflare account ID is filled automatically from `config.js`.
 Use the small image button next to the send icon to upload a picture. The file is sent to `/api/analyzeImage` and the analysis appears as a bot reply.
 
-Some models require the conversation to start with `{"prompt":"agree"}` so you accept the license terms.
+Some models require a short license confirmation before you can send other messages. Start the conversation with:
+
+```json
+{
+  "messages": [
+    { "role": "user", "content": "agree" }
+  ]
+}
+```
+
+After this step you can send regular prompts and images to the model.
 
 Example test request with `curl`:
 
