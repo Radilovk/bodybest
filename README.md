@@ -255,7 +255,8 @@ php -r "echo password_hash('yourPassword', PASSWORD_DEFAULT);"
 1. Влезте в `admin.html` с администраторски акаунт.
 2. Придвижете се до секцията „AI конфигурация“.
 3. Попълнете полетата за `Model` за генериране на план,
-   за чат и за модификация на план.
+   за чат, за модификация на план и за анализ на изображения
+   (`model_image_analysis`).
 4. Натиснете **Запази** – данните се изпращат към `/api/setAiConfig`.
    При зареждане на страницата същите стойности се четат чрез `/api/getAiConfig`.
 5. Ако работникът е конфигуриран със секрет `WORKER_ADMIN_TOKEN`,
@@ -270,6 +271,17 @@ php -r "echo password_hash('yourPassword', PASSWORD_DEFAULT);"
 7. До всяко поле за модел има бутон **Тествай**. С него се изпраща кратка заявка
    към `/api/testAiModel`, която проверява връзката с избрания AI модел и
    показва грешка при проблем с комуникацията.
+
+   Пример: за да използвате Cloudflare LLaVA за анализ на изображения,
+   въведете `@cf/llava-hf/llava-v1.6b` в полето *Model Image Analysis*.
+   Това записва стойността като KV ключ `model_image_analysis` и позволява
+   използването на LLaVA при заявки към `/api/analyzeImage`.
+
+   Същото може да се зададе и през CLI:
+
+   ```bash
+   wrangler kv key put model_image_analysis "@cf/llava-hf/llava-v1.6b" --binding=RESOURCES_KV
+   ```
 
 Администраторският скрипт `admin.js` добавя автоматично тази
 заглавка, ако в `localStorage` съществува ключ `adminToken`.
@@ -344,10 +356,11 @@ In addition to text messages you can upload an image for automatic analysis.
 Open `assistant.html`, choose a file and it will be converted to a Base64 string
 and sent to `/api/analyzeImage` as JSON with fields `userId`, `imageData`,
 `mimeType` and an optional `prompt` describing what you want to see.
-The worker forwards the image data to the configured vision model and returns a
-JSON summary describing the detected objects or text.
+The worker forwards the image data together with your text prompt to the
+configured vision model and returns a JSON summary describing the detected
+objects or text.
 
-Example `curl` request:
+Example `curl` request sending both image and text:
 
 ```bash
 curl -X POST https://<your-domain>/api/analyzeImage \
