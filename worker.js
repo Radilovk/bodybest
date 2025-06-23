@@ -1416,6 +1416,7 @@ async function handleAnalyzeImageRequest(request, env) {
                 imageData,
                 mimeType || 'image/jpeg',
                 key,
+                prompt,
                 { temperature: 0.2, maxOutputTokens: 200 },
                 modelName
             );
@@ -2894,17 +2895,26 @@ async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettin
 // ------------- END FUNCTION: callGeminiAPI -------------
 
 // ------------- START FUNCTION: callGeminiVisionAPI -------------
-async function callGeminiVisionAPI(imageData, mimeType, apiKey, generationConfig = {}, model) {
+async function callGeminiVisionAPI(
+    imageData,
+    mimeType,
+    apiKey,
+    prompt = 'Опиши съдържанието на това изображение.',
+    generationConfig = {},
+    model
+) {
     if (!model) {
         console.error('GEMINI_VISION_CALL_ERROR: Model name is missing!');
         throw new Error('Gemini model name is missing.');
     }
     const apiUrl = `${GEMINI_API_URL_BASE}${model}:generateContent?key=${apiKey}`;
     const requestBody = {
-        contents: [{ parts: [
-            { inlineData: { mimeType, data: imageData } },
-            { text: 'Опиши съдържанието на това изображение.' }
-        ] }],
+        contents: [{
+            parts: [
+                { inlineData: { mimeType, data: imageData } },
+                { text: prompt || 'Опиши съдържанието на това изображение.' }
+            ]
+        }],
         ...(Object.keys(generationConfig).length > 0 && { generationConfig })
     };
 
