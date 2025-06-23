@@ -1368,7 +1368,7 @@ async function handleAiHelperRequest(request, env) {
 // ------------- START FUNCTION: handleAnalyzeImageRequest -------------
 async function handleAnalyzeImageRequest(request, env) {
     try {
-        const { userId, imageData } = await request.json();
+        const { userId, imageData, mimeType } = await request.json();
         if (!userId || !imageData) {
             return { success: false, message: 'Липсват imageData или userId.', statusHint: 400 };
         }
@@ -1380,6 +1380,16 @@ async function handleAnalyzeImageRequest(request, env) {
         let aiResp;
         if (provider === 'cf') {
             aiResp = await callCfAi(modelName, { image: imageData }, env);
+        } else if (provider === 'gemini') {
+            const key = env[GEMINI_API_KEY_SECRET_NAME];
+            if (!key) throw new Error('Missing Gemini API key.');
+            aiResp = await callGeminiVisionAPI(
+                imageData,
+                mimeType || 'image/jpeg',
+                key,
+                { temperature: 0.2, maxOutputTokens: 200 },
+                modelName
+            );
         } else {
             const prompt = `Опиши съдържанието на това изображение: ${imageData}`;
             aiResp = await callModel(modelName, prompt, env, { temperature: 0.2, maxTokens: 200 });
@@ -2854,6 +2864,54 @@ async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettin
 }
 // ------------- END FUNCTION: callGeminiAPI -------------
 
+// ------------- START FUNCTION: callGeminiVisionAPI -------------
+async function callGeminiVisionAPI(imageData, mimeType, apiKey, generationConfig = {}, model) {
+    if (!model) {
+        console.error('GEMINI_VISION_CALL_ERROR: Model name is missing!');
+        throw new Error('Gemini model name is missing.');
+    }
+    const apiUrl = `${GEMINI_API_URL_BASE}${model}:generateContent?key=${apiKey}`;
+    const requestBody = {
+        contents: [{ parts: [
+            { inlineData: { mimeType, data: imageData } },
+            { text: 'Опиши съдържанието на това изображение.' }
+        ] }],
+        ...(Object.keys(generationConfig).length > 0 && { generationConfig })
+    };
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            const errDet = data?.error;
+            const msg = errDet?.message || `HTTP Error ${response.status}`;
+            const stat = errDet?.status || `HTTP_${response.status}`;
+            console.error(`Gemini API Error (${model} - Status ${stat}): ${msg}`, JSON.stringify(errDet || data, null, 2));
+            throw new Error(`Gemini API Error (${model} - ${stat}): ${msg}`);
+        }
+
+        const cand = data?.candidates?.[0];
+        const txtContent = cand?.content?.parts?.[0]?.text;
+        if (txtContent !== undefined && txtContent !== null) {
+            return txtContent;
+        }
+        console.error(`Gemini vision response missing text for model ${model}.`, JSON.stringify(data, null, 2));
+        throw new Error(`Gemini API Error (Model: ${model}): Missing text response.`);
+    } catch (error) {
+        if (!error.message.includes(`Model: ${model}`)) {
+            error.message = `[Gemini Vision Call Error - Model: ${model}] ${error.message}`;
+        }
+        console.error(`Error during Gemini vision API call (${model}):`, error.message, error.stack ? error.stack.substring(0, 500) : 'No stack');
+        throw error;
+    }
+}
+// ------------- END FUNCTION: callGeminiVisionAPI -------------
+
 // ------------- START FUNCTION: callOpenAiAPI -------------
 async function callOpenAiAPI(prompt, apiKey, model, options = {}) {
     if (!model) {
@@ -3481,4 +3539,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, callCfAi, callModel, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };

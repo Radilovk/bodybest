@@ -76,7 +76,7 @@ async function sendImage(file) {
         const res = await fetch(apiEndpoints.analyzeImage, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, imageData })
+            body: JSON.stringify({ userId, imageData, mimeType: file.type })
         });
         const data = await res.json();
         if (handleModelAgreement(data)) {
