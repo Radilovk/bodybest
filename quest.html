@@ -133,6 +133,23 @@
       background-color: rgba(46, 204, 113, 0.1);
       border-color: #2ecc71;
     }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .form-group input {
+      width: 100%;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .animate-success {
+      animation: popIn 0.6s ease-out;
+    }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
@@ -183,6 +200,7 @@
   let flatPages = [];        // Плосък масив от всички въпроси (след рекурсивно сплескване)
   let currentPageIndex = 0;
   let totalPages = 0;
+  let registrationPageIndex = 0;
   const responses = {};
   // Допустими диапазони за числовите въпроси
   const numericRanges = {
@@ -201,7 +219,9 @@
     questions.forEach(q => {
       let qCopy = Object.assign({}, q);
       delete qCopy.children;
-      output.push(qCopy);
+      if (qCopy.type !== 'section') {
+        output.push(qCopy);
+      }
       if (q.children && Array.isArray(q.children)) {
         // Ако children е масив (за по-прости случаи)
         output = output.concat(flattenQuestions(q.children));
@@ -232,7 +252,7 @@
     container.innerHTML = ""; // Изчистване на контейнера
 
     createStartPage();
-    flatPages = flattenQuestions(rawQuestions).filter(q => q.id !== 'email');
+    flatPages = flattenQuestions(rawQuestions).filter(q => q.id !== 'email' && q.type !== 'section');
 
     flatPages.forEach((q, idx) => {
       createQuestionPage(q, idx + 1);
@@ -272,12 +292,10 @@
       </h1>
       <div class="nav-buttons">
         <button type="button" id="startBtn">Започни</button>
-        <button type="button" id="clearProgressBtn" style="background-color:#e74c3c; color:#1e1e1e;">Изчисти прогрес</button>
       </div>
     `;
     container.appendChild(pageDiv);
     const startBtn = pageDiv.querySelector('#startBtn');
-    const clearBtn = pageDiv.querySelector('#clearProgressBtn');
     if (startBtn) {
         startBtn.addEventListener('click', () => {
           console.log("Бутон 'Започни' е натиснат.");
@@ -285,12 +303,6 @@
         });
     } else {
         console.error("Start button not found on start page.");
-    }
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-          clearProgress();
-          location.reload();
-        });
     }
   }
 
@@ -393,6 +405,7 @@
     const container = document.getElementById('dynamicContainer');
     if (!container) return;
     const regIndex = flatPages.length + 1;
+    registrationPageIndex = regIndex;
     const pageDiv = document.createElement('div');
     pageDiv.className = 'page';
     pageDiv.id = 'page' + regIndex;
@@ -446,6 +459,7 @@
       <p>Натиснете бутона, за да изпратите вашите отговори за обработка.</p>
       <div class="nav-buttons" style="justify-content: center;">
         <button id="submitBtn" type="button">Изпрати</button>
+        <button id="finalBackBtn" type="button">◀ Назад</button>
         <button id="restartBtn" type="button">Отначало</button>
       </div>
        <div id="submit-message" class="message" style="margin-top: 15px; text-align: center; font-weight: bold; word-wrap: break-word;"></div> <!-- Добавен message клас -->
@@ -463,9 +477,10 @@
         }
         const submitBtn = pageDiv.querySelector('#submitBtn');
         const restartBtn = pageDiv.querySelector('#restartBtn');
+        const backBtn = pageDiv.querySelector('#finalBackBtn');
         const submitMessage = pageDiv.querySelector('#submit-message');
 
-        if (!submitBtn || !restartBtn || !submitMessage) {
+        if (!submitBtn || !restartBtn || !backBtn || !submitMessage) {
              console.error("Един или повече елементи липсват на финалната страница.");
              return;
         }
@@ -473,6 +488,10 @@
         restartBtn.addEventListener('click', () => {
             clearProgress();
             location.reload();
+        });
+
+        backBtn.addEventListener('click', () => {
+            showPage(registrationPageIndex);
         });
 
         submitBtn.addEventListener('click', async () => {
@@ -495,9 +514,9 @@
 
         // Само ако има предишна страница с въпрос, към която да се върнем
         if (lastQuestionPageIndex >= 0) {
-            // Създаваме бутона "Редактирай" динамично
+            // Създаваме бутона "Назад" динамично
             const backToEditBtn = document.createElement('button');
-            backToEditBtn.textContent = '◀ Редактирай последен';
+            backToEditBtn.textContent = '◀ Назад';
             backToEditBtn.type = 'button';
             backToEditBtn.style.marginTop = '15px'; // Малко отстояние
             backToEditBtn.style.backgroundColor = '#f39c12'; // Оранжев цвят
@@ -506,12 +525,12 @@
 
             // Добавяме му функционалност при клик
             backToEditBtn.onclick = () => {
-                console.log("Динамичен бутон 'Редактирай последен' натиснат.");
+                console.log("Динамичен бутон 'Назад' натиснат.");
                 // 1. Скриваме съобщението за успех
                 if (submitMessage) {
                     hideMessage(submitMessage);
                 }
-                // 2. Премахваме самия бутон "Редактирай"
+                // 2. Премахваме самия бутон "Назад"
                 backToEditBtn.remove();
 
                 // 3. Показваме отново оригиналния Submit бутон, готов за ново изпращане
@@ -769,7 +788,7 @@
     const checkBoxes = document.querySelectorAll(`input[name="${qId}"][type="checkbox"]`);
 
     // --- Дефиниране на задължителните полета ---
-    const requiredFields = []; // Добавете други ID-та тук, ако е нужно
+    const requiredFields = ['name','gender','age','height','weight','goal','motivation'];
     const isRequired = requiredFields.includes(qId);
     // -------------------------------------------
 
@@ -885,13 +904,15 @@
       console.log("Current responses object:", JSON.stringify(responses, null, 2));
 
       // --- Валидация на имейл ПРЕДИ изпращане ---
-       const userEmail = responses.email ? String(responses.email).trim() : null; // Уверяваме се, че е стринг
-       if (!userEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
-           console.error("Validation Error: Invalid or missing email.", responses.email);
-           // Изтриваме датата, ако ще хвърляме грешка
-           delete responses.submissionDate;
-           throw new Error("Имейлът е задължителен и трябва да е валиден, за да изпратите отговорите.");
-       }
+      const userEmail = responses.email ? String(responses.email).trim() : null; // Уверяваме се, че е стринг
+      if (!userEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
+          console.error("Validation Error: Invalid or missing email.", responses.email);
+          delete responses.submissionDate;
+          const msgEl = document.getElementById('register-message-q');
+          if (msgEl) showMessage(msgEl, 'Моля, въведете валиден имейл адрес.', true);
+          showPage(registrationPageIndex);
+          throw new Error('Невалиден имейл');
+      }
        console.log("Email validation passed:", userEmail);
        // ------------------------------------------
 
