@@ -1368,7 +1368,7 @@ async function handleAiHelperRequest(request, env) {
 // ------------- START FUNCTION: handleAnalyzeImageRequest -------------
 async function handleAnalyzeImageRequest(request, env) {
     try {
-        const { userId, imageData, mimeType } = await request.json();
+        const { userId, imageData, mimeType, prompt } = await request.json();
         if (!userId || !imageData) {
             return { success: false, message: 'Липсват imageData или userId.', statusHint: 400 };
         }
@@ -1379,7 +1379,24 @@ async function handleAnalyzeImageRequest(request, env) {
 
         let aiResp;
         if (provider === 'cf') {
-            aiResp = await callCfAi(modelName, { image: imageData }, env);
+            if (prompt) {
+                aiResp = await callCfAi(
+                    modelName,
+                    {
+                        messages: [{
+                            role: 'user',
+                            content: [
+                                { type: 'image_url', image_url: { url: `data:${mimeType || 'image/jpeg'};base64,${imageData}` } },
+                                { type: 'text', text: prompt }
+                            ]
+                        }],
+                        stream: false
+                    },
+                    env
+                );
+            } else {
+                aiResp = await callCfAi(modelName, { image: imageData }, env);
+            }
         } else if (provider === 'gemini') {
             const key = env[GEMINI_API_KEY_SECRET_NAME];
             if (!key) throw new Error('Missing Gemini API key.');
@@ -1388,11 +1405,12 @@ async function handleAnalyzeImageRequest(request, env) {
                 mimeType || 'image/jpeg',
                 key,
                 { temperature: 0.2, maxOutputTokens: 200 },
-                modelName
+                modelName,
+                prompt
             );
         } else {
-            const prompt = `Опиши съдържанието на това изображение: ${imageData}`;
-            aiResp = await callModel(modelName, prompt, env, { temperature: 0.2, maxTokens: 200 });
+            const textPrompt = prompt ? `${prompt}: ${imageData}` : `Опиши съдържанието на това изображение: ${imageData}`;
+            aiResp = await callModel(modelName, textPrompt, env, { temperature: 0.2, maxTokens: 200 });
         }
 
         return { success: true, aiResponse: aiResp };
@@ -2865,7 +2883,7 @@ async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettin
 // ------------- END FUNCTION: callGeminiAPI -------------
 
 // ------------- START FUNCTION: callGeminiVisionAPI -------------
-async function callGeminiVisionAPI(imageData, mimeType, apiKey, generationConfig = {}, model) {
+async function callGeminiVisionAPI(imageData, mimeType, apiKey, generationConfig = {}, model, prompt = 'Опиши съдържанието на това изображение.') {
     if (!model) {
         console.error('GEMINI_VISION_CALL_ERROR: Model name is missing!');
         throw new Error('Gemini model name is missing.');
@@ -2874,7 +2892,7 @@ async function callGeminiVisionAPI(imageData, mimeType, apiKey, generationConfig
     const requestBody = {
         contents: [{ parts: [
             { inlineData: { mimeType, data: imageData } },
-            { text: 'Опиши съдържанието на това изображение.' }
+            { text: prompt }
         ] }],
         ...(Object.keys(generationConfig).length > 0 && { generationConfig })
     };

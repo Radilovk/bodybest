@@ -255,7 +255,8 @@ php -r "echo password_hash('yourPassword', PASSWORD_DEFAULT);"
 1. Влезте в `admin.html` с администраторски акаунт.
 2. Придвижете се до секцията „AI конфигурация“.
 3. Попълнете полетата за `Model` за генериране на план,
-   за чат и за модификация на план.
+   за чат, за модификация на план и за анализ на изображения (`model_image_analysis`).
+   Например можете да зададете LLaVA модел като `@cf/lykon/llava-v1-5-7b`.
 4. Натиснете **Запази** – данните се изпращат към `/api/setAiConfig`.
    При зареждане на страницата същите стойности се четат чрез `/api/getAiConfig`.
 5. Ако работникът е конфигуриран със секрет `WORKER_ADMIN_TOKEN`,
@@ -342,10 +343,10 @@ Replace the placeholders with your own values and keep the token secret.
 
 In addition to text messages you can upload an image for automatic analysis.
 Open `assistant.html`, choose a file and it will be converted to a Base64 string
-and sent to `/api/analyzeImage` as JSON with fields `userId`, `imageData` and
-`mimeType`.
-The worker forwards the image data to the configured vision model and returns a
-JSON summary describing the detected objects or text.
+and sent to `/api/analyzeImage` as JSON с полетата `userId`, `imageData`,
+`mimeType` и по желание `prompt` за допълнително текстово указание.
+Worker-ът предава данните към конфигурирания визион модел и връща
+JSON резюме с откритите обекти или текст.
 
 Example `curl` request:
 
@@ -353,7 +354,7 @@ Example `curl` request:
 curl -X POST https://<your-domain>/api/analyzeImage \
   -H "Authorization: Bearer <WORKER_ADMIN_TOKEN>" \
   -H "Content-Type: application/json" \
-  --data '{"userId":"123","imageData":"<base64>","mimeType":"image/jpeg"}'
+  --data '{"userId":"123","imageData":"<base64>","mimeType":"image/jpeg","prompt":"Опиши детайлно"}'
 ```
 
 For Cloudflare models set `CF_AI_TOKEN`. When using Gemini Vision provide
