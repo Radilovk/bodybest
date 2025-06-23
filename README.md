@@ -75,6 +75,17 @@ npm config delete https-proxy
 `loglevel=error` и е включен в репозиторито.
 Тези стъпки намаляват предупрежденията и потенциално ускоряват старта на
 тестовете.
+### Registration Module Example
+
+Include the common registration logic by importing `setupRegistration`:
+
+```html
+<script type="module">
+  import { setupRegistration } from "./js/register.js";
+  setupRegistration("#register-form", "#register-message");
+</script>
+```
+
 
 ### Отстраняване на проблеми
 
