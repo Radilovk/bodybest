@@ -171,6 +171,7 @@ node scripts/repair-log.js <userId> <YYYY-MM-DD>
 | `model_chat` | Модел за чат асистента |
 | `model_plan_generation` | Модел за първоначално генериране на план |
 | `model_principle_adjustment` | Модел за корекция на принципите |
+| `model_image_analysis` | Модел за анализ на изображения |
 | `prompt_adaptive_quiz_generation` | Шаблон за създаване на адаптивен въпросник |
 | `prompt_analytics_textual_summary` | Шаблон за текстов анализ на прогреса |
 | `prompt_analyze_quiz_and_suggest_changes` | Шаблон за анализ на отговорите и предложения за промяна |

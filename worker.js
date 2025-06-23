@@ -1372,11 +1372,19 @@ async function handleAnalyzeImageRequest(request, env) {
         if (!userId || !imageData) {
             return { success: false, message: 'Липсват imageData или userId.', statusHint: 400 };
         }
-        const aiResp = await callCfAi(
-            '@cf/stabilityai/clip',
-            { image: imageData },
-            env
-        );
+
+        const modelFromKv = await env.RESOURCES_KV.get('model_image_analysis');
+        const modelName = modelFromKv || '@cf/stabilityai/clip';
+        const provider = getModelProvider(modelName);
+
+        let aiResp;
+        if (provider === 'cf') {
+            aiResp = await callCfAi(modelName, { image: imageData }, env);
+        } else {
+            const prompt = `Опиши съдържанието на това изображение: ${imageData}`;
+            aiResp = await callModel(modelName, prompt, env, { temperature: 0.2, maxTokens: 200 });
+        }
+
         return { success: true, aiResponse: aiResp };
     } catch (error) {
         console.error('Error in handleAnalyzeImageRequest:', error.message, error.stack);

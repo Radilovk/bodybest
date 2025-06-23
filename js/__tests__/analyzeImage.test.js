@@ -20,7 +20,7 @@ describe('handleAnalyzeImageRequest', () => {
       ok: true,
       json: async () => ({ result: { response: 'ok' } })
     });
-    const env = { CF_ACCOUNT_ID: 'acc', CF_AI_TOKEN: 'token' };
+    const env = { CF_ACCOUNT_ID: 'acc', CF_AI_TOKEN: 'token', RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) } };
     const request = { json: async () => ({ userId: 'u1', imageData: 'imgdata' }) };
     const res = await handleAnalyzeImageRequest(request, env);
     expect(res.success).toBe(true);
@@ -34,5 +34,21 @@ describe('handleAnalyzeImageRequest', () => {
         body: JSON.stringify({ image: 'imgdata' })
       })
     );
+  });
+
+  test('uses model from KV when provided', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ result: { response: 'ok' } })
+    });
+    const env = {
+      CF_ACCOUNT_ID: 'acc',
+      CF_AI_TOKEN: 'token',
+      RESOURCES_KV: { get: jest.fn().mockResolvedValue('@cf/custom') }
+    };
+    const request = { json: async () => ({ userId: 'u1', imageData: 'img' }) };
+    await handleAnalyzeImageRequest(request, env);
+    const url = global.fetch.mock.calls[0][0];
+    expect(url).toContain('@cf/custom');
   });
 });
