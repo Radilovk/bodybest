@@ -24,7 +24,7 @@ describe('handleAnalyzeImageRequest', () => {
     const request = { json: async () => ({ userId: 'u1', imageData: 'imgdata', mimeType: 'image/png', prompt: 'hi' }) };
     const res = await handleAnalyzeImageRequest(request, env);
     expect(res.success).toBe(true);
-    expect(res.aiResponse).toBe('ok');
+    expect(res.result).toBe('ok');
     const expectedUrl =
       'https://api.cloudflare.com/client/v4/accounts/acc/ai/run/@cf/stabilityai/clip';
     expect(global.fetch).toHaveBeenCalledWith(
@@ -65,7 +65,7 @@ describe('handleAnalyzeImageRequest', () => {
     const request = { json: async () => ({ userId: 'u1', imageData: 'img', mimeType: 'image/png' }) };
     const res = await handleAnalyzeImageRequest(request, env);
     expect(res.success).toBe(true);
-    expect(res.aiResponse).toBe('ok');
+    expect(res.result).toBe('ok');
     const body = JSON.parse(global.fetch.mock.calls[0][1].body);
     expect(body.contents[0].parts[0].inlineData.data).toBe('img');
     expect(body.contents[0].parts[0].inlineData.mimeType).toBe('image/png');

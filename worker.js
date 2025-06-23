@@ -1424,7 +1424,7 @@ async function handleAnalyzeImageRequest(request, env) {
             aiResp = await callModel(modelName, textPrompt, env, { temperature: 0.2, maxTokens: 200 });
         }
 
-        return { success: true, aiResponse: aiResp };
+        return { success: true, result: aiResp };
     } catch (error) {
         console.error('Error in handleAnalyzeImageRequest:', error.message, error.stack);
         return { success: false, message: 'Грешка при анализа на изображението.', statusHint: 500 };
