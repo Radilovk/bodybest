@@ -2822,7 +2822,7 @@ async function verifyPassword(password, storedSaltAndHash) {
 
 // ------------- START FUNCTION: callGeminiAPI -------------
 async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettings = [], model) {
-    if(!model) {
+    if (!model) {
         console.error("GEMINI_API_CALL_ERROR: Model name is missing!");
         throw new Error("Gemini model name is missing.");
     }
@@ -2833,64 +2833,77 @@ async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettin
         ...(safetySettings.length > 0 && { safetySettings })
     };
 
-    // console.log(`Calling Gemini API (${model}). Prompt length: ${prompt.length}. Config: ${JSON.stringify(generationConfig)}`);
-    try {
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
-        const data = await response.json();
+    const delays = [500, 1000, 2000];
+    let lastErr;
+    for (let attempt = 0; attempt < delays.length; attempt++) {
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+            const data = await response.json();
 
-        if (!response.ok) {
             const errDet = data?.error;
             const msg = errDet?.message || `HTTP Error ${response.status}`;
             const stat = errDet?.status || `HTTP_${response.status}`;
-            console.error(`Gemini API Error (${model} - Status ${stat}): ${msg}`, JSON.stringify(errDet || data, null, 2));
-            throw new Error(`Gemini API Error (${model} - ${stat}): ${msg}`);
-        }
+            const overloaded = !response.ok &&
+                (response.status === 429 || response.status === 503 || /overload/i.test(msg) || stat === 429 || stat === 503);
 
-        const cand = data?.candidates?.[0];
-        if (!cand) {
-            const blockR = data?.promptFeedback?.blockReason;
-            if (blockR) {
-                console.error(`Gemini API prompt blocked for model ${model}. Reason: ${blockR}`, JSON.stringify(data.promptFeedback, null, 2));
-                throw new Error(`AI assistant blocked prompt (Model: ${model}, Reason: ${blockR}).`);
-            } else {
-                console.error(`Gemini API Error for model ${model}: No candidates in response. Full response:`, JSON.stringify(data, null, 2));
-                throw new Error(`Gemini API Error (Model: ${model}): No candidates found in response.`);
+            if (!response.ok) {
+                if (overloaded && attempt < delays.length - 1) {
+                    await new Promise(r => setTimeout(r, delays[attempt]));
+                    continue;
+                }
+                console.error(`Gemini API Error (${model} - Status ${stat}): ${msg}`, JSON.stringify(errDet || data, null, 2));
+                throw new Error(`Gemini API Error (${model} - ${stat}): ${msg}`);
             }
-        }
 
-        if (cand.finishReason === 'SAFETY') {
-            const safetyInfo = cand.safetyRatings?.map(r => `${r.category}: ${r.probability}`).join(', ') || 'N/A';
-            console.error(`Gemini API content blocked by safety settings for model ${model}. Ratings: [${safetyInfo}]`, JSON.stringify(cand, null, 2));
-            throw new Error(`AI response blocked by safety settings (Model: ${model}, Ratings: ${safetyInfo}).`);
-        }
-        
-        const txtContent = cand?.content?.parts?.[0]?.text;
-        if (txtContent !== undefined && txtContent !== null) {
-            // console.log(`Gemini API Call OK (${model}). Response length: ${txtContent.length}`);
-            return txtContent;
-        } else if (cand.finishReason && cand.finishReason !== 'STOP' && cand.finishReason !== 'MAX_TOKENS') { // MAX_TOKENS is a valid finish reason that might not have text if the model just filled tokens.
-            console.warn(`Gemini API call for model ${model} finished with reason: ${cand.finishReason}, but no text content found.`);
-            return ""; // Return empty string if finished for other reasons without text
-        } else if (cand.finishReason === 'MAX_TOKENS' && (txtContent === undefined || txtContent === null)) {
-            console.warn(`Gemini API call for model ${model} finished due to MAX_TOKENS and no text content was produced or it was empty.`);
-            return "";
-        }
-         else { // Should ideally not happen if finishReason is STOP.
+            const cand = data?.candidates?.[0];
+            if (!cand) {
+                const blockR = data?.promptFeedback?.blockReason;
+                if (blockR) {
+                    console.error(`Gemini API prompt blocked for model ${model}. Reason: ${blockR}`, JSON.stringify(data.promptFeedback, null, 2));
+                    throw new Error(`AI assistant blocked prompt (Model: ${model}, Reason: ${blockR}).`);
+                } else {
+                    console.error(`Gemini API Error for model ${model}: No candidates in response. Full response:`, JSON.stringify(data, null, 2));
+                    throw new Error(`Gemini API Error (Model: ${model}): No candidates found in response.`);
+                }
+            }
+
+            if (cand.finishReason === 'SAFETY') {
+                const safetyInfo = cand.safetyRatings?.map(r => `${r.category}: ${r.probability}`).join(', ') || 'N/A';
+                console.error(`Gemini API content blocked by safety settings for model ${model}. Ratings: [${safetyInfo}]`, JSON.stringify(cand, null, 2));
+                throw new Error(`AI response blocked by safety settings (Model: ${model}, Ratings: ${safetyInfo}).`);
+            }
+
+            const txtContent = cand?.content?.parts?.[0]?.text;
+            if (txtContent !== undefined && txtContent !== null) {
+                return txtContent;
+            } else if (cand.finishReason && cand.finishReason !== 'STOP' && cand.finishReason !== 'MAX_TOKENS') { // MAX_TOKENS is a valid finish reason that might not have text if the model just filled tokens.
+                console.warn(`Gemini API call for model ${model} finished with reason: ${cand.finishReason}, but no text content found.`);
+                return ""; // Return empty string if finished for other reasons without text
+            } else if (cand.finishReason === 'MAX_TOKENS' && (txtContent === undefined || txtContent === null)) {
+                console.warn(`Gemini API call for model ${model} finished due to MAX_TOKENS and no text content was produced or it was empty.`);
+                return "";
+            }
             console.error(`Gemini API Error for model ${model}: Text content missing from successful candidate. FinishReason: '${cand.finishReason || 'N/A'}'. Full candidate:`, JSON.stringify(cand, null, 2));
             throw new Error(`Gemini API Error (Model: ${model}): Unexpected response structure or missing text content from candidate.`);
+        } catch (error) {
+            const overloaded = /overload/i.test(error.message);
+            if (overloaded && attempt < delays.length - 1) {
+                lastErr = error;
+                await new Promise(r => setTimeout(r, delays[attempt]));
+                continue;
+            }
+            if (!error.message.includes(`Model: ${model}`)) {
+                error.message = `[Gemini Call Error - Model: ${model}] ${error.message}`;
+            }
+            console.error(`Error during Gemini API call (${model}):`, error.message, error.stack ? error.stack.substring(0, 500) : "No stack");
+            throw error;
         }
-    } catch (error) {
-        // Ensure the model name is part of the re-thrown error for better context
-        if (!error.message.includes(`Model: ${model}`)) {
-             error.message = `[Gemini Call Error - Model: ${model}] ${error.message}`;
-        }
-        console.error(`Error during Gemini API call (${model}):`, error.message, error.stack ? error.stack.substring(0, 500) : "No stack");
-        throw error;
     }
+    if (lastErr) throw lastErr;
 }
 // ------------- END FUNCTION: callGeminiAPI -------------
 
@@ -2918,36 +2931,54 @@ async function callGeminiVisionAPI(
         ...(Object.keys(generationConfig).length > 0 && { generationConfig })
     };
 
-    try {
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
-        const data = await response.json();
+    const delays = [500, 1000, 2000];
+    let lastErr;
+    for (let attempt = 0; attempt < delays.length; attempt++) {
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+            const data = await response.json();
 
-        if (!response.ok) {
             const errDet = data?.error;
             const msg = errDet?.message || `HTTP Error ${response.status}`;
             const stat = errDet?.status || `HTTP_${response.status}`;
-            console.error(`Gemini API Error (${model} - Status ${stat}): ${msg}`, JSON.stringify(errDet || data, null, 2));
-            throw new Error(`Gemini API Error (${model} - ${stat}): ${msg}`);
-        }
+            const overloaded = !response.ok &&
+                (response.status === 429 || response.status === 503 || /overload/i.test(msg) || stat === 429 || stat === 503);
 
-        const cand = data?.candidates?.[0];
-        const txtContent = cand?.content?.parts?.[0]?.text;
-        if (txtContent !== undefined && txtContent !== null) {
-            return txtContent;
+            if (!response.ok) {
+                if (overloaded && attempt < delays.length - 1) {
+                    await new Promise(r => setTimeout(r, delays[attempt]));
+                    continue;
+                }
+                console.error(`Gemini API Error (${model} - Status ${stat}): ${msg}`, JSON.stringify(errDet || data, null, 2));
+                throw new Error(`Gemini API Error (${model} - ${stat}): ${msg}`);
+            }
+
+            const cand = data?.candidates?.[0];
+            const txtContent = cand?.content?.parts?.[0]?.text;
+            if (txtContent !== undefined && txtContent !== null) {
+                return txtContent;
+            }
+            console.error(`Gemini vision response missing text for model ${model}.`, JSON.stringify(data, null, 2));
+            throw new Error(`Gemini API Error (Model: ${model}): Missing text response.`);
+        } catch (error) {
+            const overloaded = /overload/i.test(error.message);
+            if (overloaded && attempt < delays.length - 1) {
+                lastErr = error;
+                await new Promise(r => setTimeout(r, delays[attempt]));
+                continue;
+            }
+            if (!error.message.includes(`Model: ${model}`)) {
+                error.message = `[Gemini Vision Call Error - Model: ${model}] ${error.message}`;
+            }
+            console.error(`Error during Gemini vision API call (${model}):`, error.message, error.stack ? error.stack.substring(0, 500) : 'No stack');
+            throw error;
         }
-        console.error(`Gemini vision response missing text for model ${model}.`, JSON.stringify(data, null, 2));
-        throw new Error(`Gemini API Error (Model: ${model}): Missing text response.`);
-    } catch (error) {
-        if (!error.message.includes(`Model: ${model}`)) {
-            error.message = `[Gemini Vision Call Error - Model: ${model}] ${error.message}`;
-        }
-        console.error(`Error during Gemini vision API call (${model}):`, error.message, error.stack ? error.stack.substring(0, 500) : 'No stack');
-        throw error;
     }
+    if (lastErr) throw lastErr;
 }
 // ------------- END FUNCTION: callGeminiVisionAPI -------------
 
