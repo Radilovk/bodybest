@@ -34,6 +34,12 @@
       margin-bottom: 8px;
       display: block;
     }
+    .section-title {
+      font-size: 22px;
+      text-align: center;
+      color: #4fc3a1;
+      margin-bottom: 20px;
+    }
     h1, h2 {
       text-align: center;
       color: #80cbc4;
@@ -269,11 +275,18 @@
     const pageDiv = document.createElement('div');
     pageDiv.className = 'page';
     pageDiv.id = 'page' + pageIndex;
-    let html = `<div class="question-text">${question.text || 'Липсва текст на въпроса'}</div>`;
+    let html = '';
+    if (question.type === 'section') {
+      html += `<div class="section-title">${question.sectionTitle || question.text || ''}</div>`;
+    } else {
+      html += `<div class="question-text">${question.text || 'Липсва текст на въпроса'}</div>`;
+    }
 
     const isRequired = false; // Може да се добавят задължителни полета при нужда
 
-    if (['text','number','email'].includes(question.type)) {
+    if (question.type === 'section') {
+      // няма входни полета
+    } else if (['text','number','email'].includes(question.type)) {
       const range = numericRanges[question.id];
       const rangeAttrs = (question.type === 'number' && range) ? `min="${range.min}" max="${range.max}"` : '';
       html += `<input id="${question.id}" type="${question.type}" placeholder="" ${rangeAttrs} ${isRequired ? 'required' : ''} ${question.type === 'email' ? 'autocomplete="email"' : ''}>`;
@@ -299,7 +312,7 @@
                    <input name="${question.id}" type="checkbox" value="${optionValue}"> ${optionValue}
                  </label>`;
       });
-    } else {
+    } else if (question.type !== 'section') {
         console.warn(`Unsupported question type: ${question.type} for question ID: ${question.id}`);
         html += `<p style="color: red;">Грешка: Неподдържан тип въпрос.</p>`;
     }
@@ -321,10 +334,12 @@
     const nextBtn = pageDiv.querySelector(`#nextBtn${pageIndex}`);
     if (nextBtn) {
         nextBtn.addEventListener('click', () => {
-          if (!validateAnswer(question)) {
+          if (question.type !== 'section' && !validateAnswer(question)) {
             return;
           }
-          saveAnswer(question);
+          if (question.type !== 'section') {
+            saveAnswer(question);
+          }
           console.log(`Преминаване от страница ${pageIndex} към ${pageIndex + 1}`);
           showPage(pageIndex + 1);
         });
@@ -336,8 +351,9 @@
     if (prevBtn) {
         prevBtn.addEventListener('click', () => {
            console.log(`Връщане от страница ${pageIndex} към ${pageIndex - 1}`);
-           // Презапазване на текущия отговор преди връщане назад
-           saveAnswer(question);
+           if (question.type !== 'section') {
+             saveAnswer(question);
+           }
            showPage(pageIndex - 1);
         });
     }
