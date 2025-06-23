@@ -304,6 +304,31 @@ Some models require a short license confirmation before you can send other messa
 
 After this step you can send regular prompts and images to the model.
 
+For multi-modal requests combining an image with text, use the following
+structure:
+
+```json
+{
+  "messages": [
+    { "role": "user", "content": "agree" },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "image_url",
+          "image_url": { "url": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD..." }
+        },
+        {
+          "type": "text",
+          "text": "Опиши подробно какво има на изображението. Ако има медицински детайли, анализирай ги."
+        }
+      ]
+    }
+  ]
+}
+```
+
+
 Example test request with `curl`:
 
 ```bash
