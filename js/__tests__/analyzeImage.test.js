@@ -69,6 +69,22 @@ describe('handleAnalyzeImageRequest', () => {
     const body = JSON.parse(global.fetch.mock.calls[0][1].body);
     expect(body.contents[0].parts[0].inlineData.data).toBe('img');
     expect(body.contents[0].parts[0].inlineData.mimeType).toBe('image/png');
+    expect(body.contents[0].parts[1].text).toBe('Опиши съдържанието на това изображение.');
+  });
+
+  test('passes user prompt to Gemini vision API', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ candidates: [{ content: { parts: [{ text: 'ok' }] } }] })
+    });
+    const env = {
+      GEMINI_API_KEY: 'k',
+      RESOURCES_KV: { get: jest.fn().mockResolvedValue('gemini-pro-vision') }
+    };
+    const request = { json: async () => ({ userId: 'u1', imageData: 'img', mimeType: 'image/png', prompt: 'details' }) };
+    await handleAnalyzeImageRequest(request, env);
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.contents[0].parts[1].text).toBe('details');
   });
 
   test('sends prompt-image payload for llava models', async () => {
