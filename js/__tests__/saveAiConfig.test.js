@@ -11,6 +11,7 @@ beforeEach(async () => {
       <input id="planModel" />
       <input id="chatModel" />
       <input id="modModel" />
+      <input id="imageModel" />
       <input id="adminToken" />
     </form>
     <button id="showStats"></button>
@@ -49,6 +50,7 @@ test('saveAiConfig sends updates payload with Authorization header', async () =>
   document.getElementById('planModel').value = 'pm';
   document.getElementById('chatModel').value = 'cm';
   document.getElementById('modModel').value = 'mm';
+  document.getElementById('imageModel').value = 'im';
 
   await submitHandler(new Event('submit'));
 
@@ -62,7 +64,8 @@ test('saveAiConfig sends updates payload with Authorization header', async () =>
     updates: {
       model_plan_generation: 'pm',
       model_chat: 'cm',
-      model_principle_adjustment: 'mm'
+      model_principle_adjustment: 'mm',
+      model_image_analysis: 'im'
     }
   });
   expect(localStorage.getItem('adminToken')).toBe('newSecret');

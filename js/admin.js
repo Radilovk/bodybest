@@ -59,6 +59,7 @@ const aiConfigForm = document.getElementById('aiConfigForm');
 const planModelInput = document.getElementById('planModel');
 const chatModelInput = document.getElementById('chatModel');
 const modModelInput = document.getElementById('modModel');
+const imageModelInput = document.getElementById('imageModel');
 const adminTokenInput = document.getElementById('adminToken');
 const presetSelect = document.getElementById('aiPresetSelect');
 const savePresetBtn = document.getElementById('savePreset');
@@ -67,6 +68,7 @@ const presetNameInput = document.getElementById('presetName');
 const testPlanBtn = document.getElementById('testPlanModel');
 const testChatBtn = document.getElementById('testChatModel');
 const testModBtn = document.getElementById('testModModel');
+const testImageBtn = document.getElementById('testImageModel');
 const clientNameHeading = document.getElementById('clientName');
 const closeProfileBtn = document.getElementById('closeProfile');
 const notificationsList = document.getElementById('notificationsList');
@@ -1030,6 +1032,7 @@ async function loadAiConfig() {
         planModelInput.value = cfg.model_plan_generation || '';
         chatModelInput.value = cfg.model_chat || '';
         modModelInput.value = cfg.model_principle_adjustment || '';
+        if (imageModelInput) imageModelInput.value = cfg.model_image_analysis || '';
     } catch (err) {
         console.error('Error loading AI config:', err);
         alert('Грешка при зареждане на AI конфигурацията.');
@@ -1042,7 +1045,8 @@ async function saveAiConfig() {
         updates: {
             model_plan_generation: planModelInput.value.trim(),
             model_chat: chatModelInput.value.trim(),
-            model_principle_adjustment: modModelInput.value.trim()
+            model_principle_adjustment: modModelInput.value.trim(),
+            model_image_analysis: imageModelInput ? imageModelInput.value.trim() : ''
         }
     };
     try {
@@ -1107,6 +1111,7 @@ async function applySelectedPreset() {
         planModelInput.value = cfg.planModel || cfg.model_plan_generation || '';
         chatModelInput.value = cfg.chatModel || cfg.model_chat || '';
         modModelInput.value = cfg.modModel || cfg.model_principle_adjustment || '';
+        if (imageModelInput) imageModelInput.value = cfg.imageModel || cfg.model_image_analysis || '';
     } catch (err) {
         console.error('Error applying preset:', err);
         alert('Грешка при зареждане на пресета.');
@@ -1124,7 +1129,8 @@ async function saveCurrentPreset() {
         config: {
             model_plan_generation: planModelInput.value.trim(),
             model_chat: chatModelInput.value.trim(),
-            model_principle_adjustment: modModelInput.value.trim()
+            model_principle_adjustment: modModelInput.value.trim(),
+            model_image_analysis: imageModelInput ? imageModelInput.value.trim() : ''
         }
     };
     try {
@@ -1210,6 +1216,7 @@ if (aiConfigForm) {
     testPlanBtn?.addEventListener('click', () => testAiModel(planModelInput.value.trim()));
     testChatBtn?.addEventListener('click', () => testAiModel(chatModelInput.value.trim()));
     testModBtn?.addEventListener('click', () => testAiModel(modModelInput.value.trim()));
+    testImageBtn?.addEventListener('click', () => testAiModel(imageModelInput.value.trim()));
 }
 
 export {
