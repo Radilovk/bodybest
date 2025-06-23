@@ -1380,7 +1380,18 @@ async function handleAnalyzeImageRequest(request, env) {
         const defaultText = 'Опиши съдържанието на това изображение.';
         let aiResp;
         if (provider === 'cf') {
-            if (modelName.startsWith('@cf/')) {
+            const promptImageNeeded =
+                modelName.includes('llava-1.5') || modelName.endsWith('-hf');
+            if (promptImageNeeded) {
+                aiResp = await callCfAi(
+                    modelName,
+                    {
+                        prompt: prompt || defaultText,
+                        image: `data:${mimeType || 'image/jpeg'};base64,${imageData}`
+                    },
+                    env
+                );
+            } else if (modelName.startsWith('@cf/')) {
                 const msgContent = [
                     {
                         type: 'image_url',

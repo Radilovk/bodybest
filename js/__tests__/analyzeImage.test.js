@@ -70,4 +70,23 @@ describe('handleAnalyzeImageRequest', () => {
     expect(body.contents[0].parts[0].inlineData.data).toBe('img');
     expect(body.contents[0].parts[0].inlineData.mimeType).toBe('image/png');
   });
+
+  test('sends prompt-image payload for llava models', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ result: { response: 'ok' } })
+    });
+    const env = {
+      CF_ACCOUNT_ID: 'acc',
+      CF_AI_TOKEN: 'token',
+      RESOURCES_KV: { get: jest.fn().mockResolvedValue('@cf/llava-hf/llava-1.5-7b-hf') }
+    };
+    const request = { json: async () => ({ userId: 'u1', imageData: 'img', mimeType: 'image/png', prompt: 'desc' }) };
+    await handleAnalyzeImageRequest(request, env);
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body).toEqual({
+      prompt: 'desc',
+      image: 'data:image/png;base64,img'
+    });
+  });
 });
