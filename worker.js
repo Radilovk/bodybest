@@ -1373,11 +1373,16 @@ async function handleAnalyzeImageRequest(request, env) {
             return { success: false, message: 'Липсват imageData или userId.', statusHint: 400 };
         }
 
-        const modelFromKv = await env.RESOURCES_KV.get('model_image_analysis');
+        const modelFromKv = env.RESOURCES_KV ? await env.RESOURCES_KV.get('model_image_analysis') : null;
+        let kvPrompt = null;
+        if (env.RESOURCES_KV) {
+            const raw = await env.RESOURCES_KV.get('prompt_image_analysis');
+            kvPrompt = raw && raw !== modelFromKv ? raw : null;
+        }
+        const finalPrompt = prompt || kvPrompt || 'Опиши съдържанието на това изображение.';
         const modelName = modelFromKv || '@cf/stabilityai/clip';
         const provider = getModelProvider(modelName);
 
-        const defaultText = 'Опиши съдържанието на това изображение.';
         let aiResp;
         if (provider === 'cf') {
             const promptImageNeeded =
@@ -1386,7 +1391,7 @@ async function handleAnalyzeImageRequest(request, env) {
                 aiResp = await callCfAi(
                     modelName,
                     {
-                        prompt: prompt || defaultText,
+                        prompt: finalPrompt,
                         image: `data:${mimeType || 'image/jpeg'};base64,${imageData}`
                     },
                     env
@@ -1399,7 +1404,7 @@ async function handleAnalyzeImageRequest(request, env) {
                             url: `data:${mimeType || 'image/jpeg'};base64,${imageData}`
                         }
                     },
-                    { type: 'text', text: prompt || defaultText }
+                    { type: 'text', text: finalPrompt }
                 ];
                 aiResp = await callCfAi(
                     modelName,
@@ -1416,12 +1421,12 @@ async function handleAnalyzeImageRequest(request, env) {
                 imageData,
                 mimeType || 'image/jpeg',
                 key,
-                prompt,
+                finalPrompt,
                 { temperature: 0.2, maxOutputTokens: 200 },
                 modelName
             );
         } else {
-            const textPrompt = prompt || `Опиши съдържанието на това изображение: ${imageData}`;
+            const textPrompt = finalPrompt || `Опиши съдържанието на това изображение: ${imageData}`;
             aiResp = await callModel(modelName, textPrompt, env, { temperature: 0.2, maxTokens: 200 });
         }
 

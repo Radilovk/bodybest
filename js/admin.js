@@ -60,6 +60,22 @@ const planModelInput = document.getElementById('planModel');
 const chatModelInput = document.getElementById('chatModel');
 const modModelInput = document.getElementById('modModel');
 const imageModelInput = document.getElementById('imageModel');
+const planPromptInput = document.getElementById('planPrompt');
+const planTokensInput = document.getElementById('planTokens');
+const planTemperatureInput = document.getElementById('planTemperature');
+const chatPromptInput = document.getElementById('chatPrompt');
+const chatTokensInput = document.getElementById('chatTokens');
+const chatTemperatureInput = document.getElementById('chatTemperature');
+const modPromptInput = document.getElementById('modPrompt');
+const modTokensInput = document.getElementById('modTokens');
+const modTemperatureInput = document.getElementById('modTemperature');
+const imageTokensInput = document.getElementById('imageTokens');
+const imageTemperatureInput = document.getElementById('imageTemperature');
+const imagePromptInput = document.getElementById('imagePrompt');
+const planHints = document.getElementById('planHints');
+const chatHints = document.getElementById('chatHints');
+const modHints = document.getElementById('modHints');
+const imageHints = document.getElementById('imageHints');
 const adminTokenInput = document.getElementById('adminToken');
 const presetSelect = document.getElementById('aiPresetSelect');
 const savePresetBtn = document.getElementById('savePreset');
@@ -89,6 +105,21 @@ let allClients = [];
 // set of userIds с непрочетени съобщения/обратна връзка
 const unreadClients = new Set();
 const unreadByClient = new Map();
+
+const modelHints = {
+    '@cf/llava-hf/llava-v1.6b': { tokens: 'до 4096', temperature: 'препоръчително 0.2' },
+    '@cf/stabilityai/clip': { tokens: 'до 77', temperature: 'препоръчително 0.2' },
+    'gpt-3.5-turbo': { tokens: 'до 4096', temperature: 'по подразбиране 0.7' },
+    'gemini-pro': { tokens: 'до 2048', temperature: 'по подразбиране 0.2' }
+};
+
+function updateHints(modelInput, descElem) {
+    const hints = modelHints[modelInput.value.trim()] || {};
+    const parts = [];
+    if (hints.tokens) parts.push(`Token limit: ${hints.tokens}`);
+    if (hints.temperature) parts.push(`Temperature: ${hints.temperature}`);
+    descElem.textContent = parts.join(' • ');
+}
 
 function showNotificationDot(show) {
     if (!notificationDot) return;
@@ -1033,6 +1064,22 @@ async function loadAiConfig() {
         chatModelInput.value = cfg.model_chat || '';
         modModelInput.value = cfg.model_principle_adjustment || '';
         if (imageModelInput) imageModelInput.value = cfg.model_image_analysis || '';
+        if (imagePromptInput) imagePromptInput.value = cfg.prompt_image_analysis || '';
+        if (planPromptInput) planPromptInput.value = cfg.prompt_unified_plan_generation_v2 || '';
+        if (planTokensInput) planTokensInput.value = cfg.plan_token_limit || '';
+        if (planTemperatureInput) planTemperatureInput.value = cfg.plan_temperature || '';
+        if (chatPromptInput) chatPromptInput.value = cfg.prompt_chat || '';
+        if (chatTokensInput) chatTokensInput.value = cfg.chat_token_limit || '';
+        if (chatTemperatureInput) chatTemperatureInput.value = cfg.chat_temperature || '';
+        if (modPromptInput) modPromptInput.value = cfg.prompt_plan_modification || '';
+        if (modTokensInput) modTokensInput.value = cfg.mod_token_limit || '';
+        if (modTemperatureInput) modTemperatureInput.value = cfg.mod_temperature || '';
+        if (imageTokensInput) imageTokensInput.value = cfg.image_token_limit || '';
+        if (imageTemperatureInput) imageTemperatureInput.value = cfg.image_temperature || '';
+        updateHints(planModelInput, planHints);
+        updateHints(chatModelInput, chatHints);
+        updateHints(modModelInput, modHints);
+        updateHints(imageModelInput, imageHints);
     } catch (err) {
         console.error('Error loading AI config:', err);
         alert('Грешка при зареждане на AI конфигурацията.');
@@ -1046,7 +1093,19 @@ async function saveAiConfig() {
             model_plan_generation: planModelInput.value.trim(),
             model_chat: chatModelInput.value.trim(),
             model_principle_adjustment: modModelInput.value.trim(),
-            model_image_analysis: imageModelInput ? imageModelInput.value.trim() : ''
+            model_image_analysis: imageModelInput ? imageModelInput.value.trim() : '',
+            prompt_image_analysis: imagePromptInput ? imagePromptInput.value.trim() : '',
+            prompt_unified_plan_generation_v2: planPromptInput ? planPromptInput.value.trim() : '',
+            plan_token_limit: planTokensInput ? planTokensInput.value.trim() : '',
+            plan_temperature: planTemperatureInput ? planTemperatureInput.value.trim() : '',
+            prompt_chat: chatPromptInput ? chatPromptInput.value.trim() : '',
+            chat_token_limit: chatTokensInput ? chatTokensInput.value.trim() : '',
+            chat_temperature: chatTemperatureInput ? chatTemperatureInput.value.trim() : '',
+            prompt_plan_modification: modPromptInput ? modPromptInput.value.trim() : '',
+            mod_token_limit: modTokensInput ? modTokensInput.value.trim() : '',
+            mod_temperature: modTemperatureInput ? modTemperatureInput.value.trim() : '',
+            image_token_limit: imageTokensInput ? imageTokensInput.value.trim() : '',
+            image_temperature: imageTemperatureInput ? imageTemperatureInput.value.trim() : ''
         }
     };
     try {
@@ -1112,6 +1171,22 @@ async function applySelectedPreset() {
         chatModelInput.value = cfg.chatModel || cfg.model_chat || '';
         modModelInput.value = cfg.modModel || cfg.model_principle_adjustment || '';
         if (imageModelInput) imageModelInput.value = cfg.imageModel || cfg.model_image_analysis || '';
+        if (imagePromptInput) imagePromptInput.value = cfg.imagePrompt || cfg.prompt_image_analysis || '';
+        if (planPromptInput) planPromptInput.value = cfg.planPrompt || cfg.prompt_unified_plan_generation_v2 || '';
+        if (planTokensInput) planTokensInput.value = cfg.planTokens || cfg.plan_token_limit || '';
+        if (planTemperatureInput) planTemperatureInput.value = cfg.planTemperature || cfg.plan_temperature || '';
+        if (chatPromptInput) chatPromptInput.value = cfg.chatPrompt || cfg.prompt_chat || '';
+        if (chatTokensInput) chatTokensInput.value = cfg.chatTokens || cfg.chat_token_limit || '';
+        if (chatTemperatureInput) chatTemperatureInput.value = cfg.chatTemperature || cfg.chat_temperature || '';
+        if (modPromptInput) modPromptInput.value = cfg.modPrompt || cfg.prompt_plan_modification || '';
+        if (modTokensInput) modTokensInput.value = cfg.modTokens || cfg.mod_token_limit || '';
+        if (modTemperatureInput) modTemperatureInput.value = cfg.modTemperature || cfg.mod_temperature || '';
+        if (imageTokensInput) imageTokensInput.value = cfg.imageTokens || cfg.image_token_limit || '';
+        if (imageTemperatureInput) imageTemperatureInput.value = cfg.imageTemperature || cfg.image_temperature || '';
+        updateHints(planModelInput, planHints);
+        updateHints(chatModelInput, chatHints);
+        updateHints(modModelInput, modHints);
+        updateHints(imageModelInput, imageHints);
     } catch (err) {
         console.error('Error applying preset:', err);
         alert('Грешка при зареждане на пресета.');
@@ -1130,7 +1205,19 @@ async function saveCurrentPreset() {
             model_plan_generation: planModelInput.value.trim(),
             model_chat: chatModelInput.value.trim(),
             model_principle_adjustment: modModelInput.value.trim(),
-            model_image_analysis: imageModelInput ? imageModelInput.value.trim() : ''
+            model_image_analysis: imageModelInput ? imageModelInput.value.trim() : '',
+            prompt_image_analysis: imagePromptInput ? imagePromptInput.value.trim() : '',
+            prompt_unified_plan_generation_v2: planPromptInput ? planPromptInput.value.trim() : '',
+            plan_token_limit: planTokensInput ? planTokensInput.value.trim() : '',
+            plan_temperature: planTemperatureInput ? planTemperatureInput.value.trim() : '',
+            prompt_chat: chatPromptInput ? chatPromptInput.value.trim() : '',
+            chat_token_limit: chatTokensInput ? chatTokensInput.value.trim() : '',
+            chat_temperature: chatTemperatureInput ? chatTemperatureInput.value.trim() : '',
+            prompt_plan_modification: modPromptInput ? modPromptInput.value.trim() : '',
+            mod_token_limit: modTokensInput ? modTokensInput.value.trim() : '',
+            mod_temperature: modTemperatureInput ? modTemperatureInput.value.trim() : '',
+            image_token_limit: imageTokensInput ? imageTokensInput.value.trim() : '',
+            image_temperature: imageTemperatureInput ? imageTemperatureInput.value.trim() : ''
         }
     };
     try {
@@ -1217,6 +1304,10 @@ if (aiConfigForm) {
     testChatBtn?.addEventListener('click', () => testAiModel(chatModelInput.value.trim()));
     testModBtn?.addEventListener('click', () => testAiModel(modModelInput.value.trim()));
     testImageBtn?.addEventListener('click', () => testAiModel(imageModelInput.value.trim()));
+    planModelInput?.addEventListener('input', () => updateHints(planModelInput, planHints));
+    chatModelInput?.addEventListener('input', () => updateHints(chatModelInput, chatHints));
+    modModelInput?.addEventListener('input', () => updateHints(modModelInput, modHints));
+    imageModelInput?.addEventListener('input', () => updateHints(imageModelInput, imageHints));
 }
 
 export {

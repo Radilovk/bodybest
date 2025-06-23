@@ -159,18 +159,34 @@
       <fieldset>
         <legend>Генериране на план</legend>
         <label>Модел: <input id="planModel" type="text"> <button type="button" id="testPlanModel">Тествай</button></label>
+        <label>Промпт:<br><textarea id="planPrompt" rows="3"></textarea></label>
+        <label>Token limit: <input id="planTokens" type="number" min="1"></label>
+        <label>Temperature: <input id="planTemperature" type="number" min="0" max="1" step="0.1"></label>
+        <small id="planHints" class="text-muted"></small>
       </fieldset>
       <fieldset>
         <legend>Чат</legend>
         <label>Модел: <input id="chatModel" type="text"> <button type="button" id="testChatModel">Тествай</button></label>
+        <label>Промпт:<br><textarea id="chatPrompt" rows="2"></textarea></label>
+        <label>Token limit: <input id="chatTokens" type="number" min="1"></label>
+        <label>Temperature: <input id="chatTemperature" type="number" min="0" max="1" step="0.1"></label>
+        <small id="chatHints" class="text-muted"></small>
       </fieldset>
       <fieldset>
         <legend>Модификация на плана</legend>
         <label>Модел: <input id="modModel" type="text"> <button type="button" id="testModModel">Тествай</button></label>
+        <label>Промпт:<br><textarea id="modPrompt" rows="2"></textarea></label>
+        <label>Token limit: <input id="modTokens" type="number" min="1"></label>
+        <label>Temperature: <input id="modTemperature" type="number" min="0" max="1" step="0.1"></label>
+        <small id="modHints" class="text-muted"></small>
       </fieldset>
       <fieldset>
         <legend>Анализ на изображение</legend>
         <label>Модел: <input id="imageModel" type="text"> <button type="button" id="testImageModel">Тествай</button></label>
+        <label>Промпт:<br><textarea id="imagePrompt" rows="2" required></textarea></label>
+        <label>Token limit: <input id="imageTokens" type="number" min="1"></label>
+        <label>Temperature: <input id="imageTemperature" type="number" min="0" max="1" step="0.1"></label>
+        <small id="imageHints" class="text-muted"></small>
       </fieldset>
       <div class="preset-controls">
         <label>Запазени настройки:
