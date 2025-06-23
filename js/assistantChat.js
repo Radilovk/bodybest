@@ -64,10 +64,17 @@ async function sendImage(file) {
             body: JSON.stringify({ userId, imageData })
         });
         const data = await res.json();
-        const text = data.result || data.message || 'Грешка';
-        addMessage(text, 'bot', !res.ok || !data.success);
-        chatHistory.push({ text, sender: 'bot', isError: !res.ok || !data.success });
-        saveHistory();
+        if (data.message && data.message.includes('Model Agreement') && !sessionStorage.getItem('modelAgreement')) {
+            const warn = 'Моделът изисква потвърждение. Изпратете `agree` като първо съобщение.';
+            addMessage(warn, 'bot', true);
+            chatHistory.push({ text: warn, sender: 'bot', isError: true });
+            saveHistory();
+        } else {
+            const text = data.result || data.message || 'Грешка';
+            addMessage(text, 'bot', !res.ok || !data.success);
+            chatHistory.push({ text, sender: 'bot', isError: !res.ok || !data.success });
+            saveHistory();
+        }
     } catch (e) {
         addMessage('Грешка при изпращане на изображението.', 'bot', true);
         chatHistory.push({ text: 'Грешка при изпращане на изображението.', sender: 'bot', isError: true });
@@ -84,6 +91,9 @@ async function sendMessage() {
     const userId = userIdEl.value.trim();
     const message = inputEl.value.trim();
     if (!userId || !message) return;
+    if (message.toLowerCase() === 'agree') {
+        sessionStorage.setItem('modelAgreement', 'true');
+    }
 
     addMessage(message, 'user');
     chatHistory.push({ text: message, sender: 'user', isError: false });
@@ -99,7 +109,12 @@ async function sendMessage() {
             body: JSON.stringify({ userId, message, history: chatHistory.slice(-10) })
         });
         const data = await res.json();
-        if (res.ok && data.success) {
+        if (data.message && data.message.includes('Model Agreement') && !sessionStorage.getItem('modelAgreement')) {
+            const warn = 'Моделът изисква потвърждение. Изпратете `agree` като първо съобщение.';
+            addMessage(warn, 'bot', true);
+            chatHistory.push({ text: warn, sender: 'bot', isError: true });
+            saveHistory();
+        } else if (res.ok && data.success) {
             addMessage(data.reply, 'bot');
             chatHistory.push({ text: data.reply, sender: 'bot', isError: false });
             saveHistory();
@@ -152,3 +167,5 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.files[0]) sendImage(e.target.files[0]);
     });
 });
+
+export { sendMessage, sendImage, clearChat };
