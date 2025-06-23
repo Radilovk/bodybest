@@ -342,8 +342,8 @@ Replace the placeholders with your own values and keep the token secret.
 
 In addition to text messages you can upload an image for automatic analysis.
 Open `assistant.html`, choose a file and it will be converted to a Base64 string
-and sent to `/api/analyzeImage` as JSON with fields `userId`, `imageData` and
-`mimeType`.
+and sent to `/api/analyzeImage` as JSON with fields `userId`, `imageData`,
+`mimeType` and an optional `prompt` describing what you want to see.
 The worker forwards the image data to the configured vision model and returns a
 JSON summary describing the detected objects or text.
 
@@ -353,11 +353,20 @@ Example `curl` request:
 curl -X POST https://<your-domain>/api/analyzeImage \
   -H "Authorization: Bearer <WORKER_ADMIN_TOKEN>" \
   -H "Content-Type: application/json" \
-  --data '{"userId":"123","imageData":"<base64>","mimeType":"image/jpeg"}'
+  --data '{"userId":"123","imageData":"<base64>","mimeType":"image/jpeg","prompt":"Намери текст"}'
 ```
 
 For Cloudflare models set `CF_AI_TOKEN`. When using Gemini Vision provide
 `GEMINI_API_KEY`. Without these secrets the endpoint will respond with an error.
+
+Example with the Cloudflare LLaVA model (KV key `model_image_analysis=@cf/llava-hf/llava-v1.6b`):
+
+```bash
+curl -X POST https://<your-domain>/api/analyzeImage \
+  -H "Authorization: Bearer <WORKER_ADMIN_TOKEN>" \
+  -H "Content-Type: application/json" \
+  --data '{"userId":"123","imageData":"<base64>","mimeType":"image/png","prompt":"Опиши подробно"}'
+```
 
 ### Промяна на началното съобщение в чата
 

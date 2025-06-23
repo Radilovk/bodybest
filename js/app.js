@@ -898,10 +898,11 @@ export async function handleChatImageUpload(file) { // Exported for chat.js
 
     try {
         const imageData = await fileToBase64(file);
+        const prompt = selectors.chatInput?.value.trim() || '';
         const response = await fetch(apiEndpoints.analyzeImage, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUserId, imageData, mimeType: file.type })
+            body: JSON.stringify({ userId: currentUserId, imageData, mimeType: file.type, prompt })
         });
         const result = await response.json();
         const text = result.result || result.message || 'Грешка';
