@@ -250,11 +250,13 @@
         </span>
       </h1>
       <div class="nav-buttons">
-        <button type="button" id="startBtn">Започни</button> <!-- Добавен type="button" -->
+        <button type="button" id="startBtn">Започни</button>
+        <button type="button" id="clearProgressBtn" style="background-color:#e74c3c; color:#1e1e1e;">Изчисти прогрес</button>
       </div>
     `;
     container.appendChild(pageDiv);
     const startBtn = pageDiv.querySelector('#startBtn');
+    const clearBtn = pageDiv.querySelector('#clearProgressBtn');
     if (startBtn) {
         startBtn.addEventListener('click', () => {
           console.log("Бутон 'Започни' е натиснат.");
@@ -262,6 +264,12 @@
         });
     } else {
         console.error("Start button not found on start page.");
+    }
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          clearProgress();
+          location.reload();
+        });
     }
   }
 
@@ -441,7 +449,10 @@
              return;
         }
 
-        restartBtn.addEventListener('click', () => { location.reload(); });
+        restartBtn.addEventListener('click', () => {
+            clearProgress();
+            location.reload();
+        });
 
         submitBtn.addEventListener('click', async () => {
             submitBtn.disabled = true;
@@ -648,15 +659,67 @@
     progressBar.style.width = Math.max(0, Math.min(100, percent)) + '%'; // Гарантираме 0-100
   }
 
+  /***** Съхраняване и зареждане на прогреса чрез localStorage *****/
+  function saveProgress() {
+    try {
+      localStorage.setItem('questResponses', JSON.stringify(responses));
+      localStorage.setItem('questCurrentPage', String(currentPageIndex));
+    } catch (e) {
+      console.warn('Неуспешно записване в localStorage:', e);
+    }
+  }
+
+  function loadProgress() {
+    try {
+      const savedResponses = localStorage.getItem('questResponses');
+      const savedPage = localStorage.getItem('questCurrentPage');
+      if (savedResponses) Object.assign(responses, JSON.parse(savedResponses));
+      if (savedPage !== null) {
+        const idx = parseInt(savedPage, 10);
+        if (!Number.isNaN(idx)) currentPageIndex = idx;
+      }
+    } catch (e) {
+      console.warn('Неуспешно зареждане от localStorage:', e);
+    }
+  }
+
+  function applySavedResponses() {
+    for (const [qId, answer] of Object.entries(responses)) {
+      const question = flatPages.find(q => q.id === qId);
+      if (!question) continue;
+      if (['text', 'number', 'email', 'textarea'].includes(question.type)) {
+        const el = document.getElementById(qId);
+        if (el) el.value = answer;
+      } else if (question.type === 'select') {
+        const el = document.getElementById(qId);
+        if (el) el.value = answer;
+      } else if (question.type === 'radio') {
+        const radio = document.querySelector(`input[name="${qId}"][value="${answer}"]`);
+        if (radio) radio.checked = true;
+      } else if (question.type === 'checkbox' && Array.isArray(answer)) {
+        answer.forEach(val => {
+          const chk = document.querySelector(`input[name="${qId}"][value="${val}"]`);
+          if (chk) chk.checked = true;
+        });
+      }
+    }
+  }
+
+  function clearProgress() {
+    localStorage.removeItem('questResponses');
+    localStorage.removeItem('questCurrentPage');
+    for (const key in responses) delete responses[key];
+    currentPageIndex = 0;
+  }
+
   /***** Функция за запазване на отговор за даден въпрос *****/
   function saveAnswer(question) {
       if (!question || !question.id) {
-          // console.warn("Опит за запазване на отговор за невалиден въпрос.");
           return;
       }
-    const qId = question.id;
-    let answer;
-    const element = document.getElementById(qId);
+      const qId = question.id;
+      let answer;
+      const element = document.getElementById(qId);
 
     if (['text', 'number', 'email', 'textarea'].includes(question.type)) {
       if (element) answer = element.value.trim();
@@ -672,12 +735,12 @@
     }
 
     // Запазваме отговора
-     if (answer !== undefined) { // Запазваме дори null или празен масив
+    if (answer !== undefined) { // Запазваме дори null или празен масив
         responses[qId] = answer;
-         // console.log(`Запазен отговор за ${qId}:`, answer);
-     } else {
-         console.warn(`Не е намерен контрол или стойност за въпрос с ID: ${qId}`);
-     }
+        saveProgress();
+    } else {
+        console.warn(`Не е намерен контрол или стойност за въпрос с ID: ${qId}`);
+    }
   }
 
   /***** Функция за валидиране на отговора *****/
@@ -939,7 +1002,10 @@
             throw new Error("questions.json е празен или невалиден масив.");
          }
          rawQuestions = data;
-         buildDynamicPages(); // Извикваме ИЗЦЯЛО изграждането СЛЕД успешен fetch
+         buildDynamicPages();
+         loadProgress();
+         applySavedResponses();
+         showPage(currentPageIndex);
        })
        .catch(err => {
            console.error('Грешка при зареждане или обработка на questions.json:', err);
