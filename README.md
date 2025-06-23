@@ -280,8 +280,19 @@ php -r "echo password_hash('yourPassword', PASSWORD_DEFAULT);"
    Същото може да се зададе и през CLI:
 
    ```bash
-   wrangler kv key put model_image_analysis "@cf/llava-hf/llava-v1.6b" --binding=RESOURCES_KV
-   ```
+wrangler kv key put model_image_analysis "@cf/llava-hf/llava-v1.6b" --binding=RESOURCES_KV
+```
+
+> **Note**: При по-старите LLaVA модели, например `@cf/llava-hf/llava-1.5-7b-hf`,
+> Cloudflare очаква полетата `prompt` и `image` (data URL) вместо `messages`.
+> Пример за директно извикване през `env.AI.run`:
+
+```javascript
+const result = await env.AI.run('@cf/llava-hf/llava-1.5-7b-hf', {
+  prompt: 'Опиши какво виждаш',
+  image: `data:image/png;base64,${base64}`
+});
+```
 
 Администраторският скрипт `admin.js` добавя автоматично тази
 заглавка, ако в `localStorage` съществува ключ `adminToken`.
