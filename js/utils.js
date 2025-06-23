@@ -47,3 +47,20 @@ export const escapeHtml = (text) => {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 };
+
+/**
+ * Преобразува File обект към base64 низ без data префикс.
+ * @param {File} file - Изображението за конвертиране.
+ * @returns {Promise<string>} Обещание с base64 съдържанието.
+ */
+export function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = reader.result || '';
+            resolve(result.split(',')[1] || '');
+        };
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+    });
+}
