@@ -8,10 +8,10 @@
  */
 export function showMessage(element, text, isError = true) {
     element.textContent = text;
-    element.className = isError ? 'message error' : 'message success';
+    element.className = isError ? 'message error' : 'message success animate-success';
     element.style.display = 'block';
     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
+    }
 
 /**
  * Скрива съобщението в дадения елемент.
@@ -20,4 +20,5 @@ export function showMessage(element, text, isError = true) {
 export function hideMessage(element) {
     element.textContent = '';
     element.style.display = 'none';
+    element.className = 'message';
 }
