@@ -1,6 +1,6 @@
 // app.js - Основен Файл на Приложението
 import { isLocalDevelopment, apiEndpoints } from './config.js';
-import { safeParseFloat, escapeHtml } from './utils.js';
+import { safeParseFloat, escapeHtml, fileToBase64 } from './utils.js';
 import { selectors, initializeSelectors, loadInfoTexts } from './uiElements.js';
 import {
     initializeTheme,
@@ -896,11 +896,13 @@ export async function handleChatImageUpload(file) { // Exported for chat.js
     selectors.chatUploadBtn?.setAttribute('disabled', 'true');
     displayChatTypingIndicator(true);
 
-    const formData = new FormData();
-    formData.append('userId', currentUserId);
-    formData.append('image', file);
     try {
-        const response = await fetch(apiEndpoints.analyzeImage, { method: 'POST', body: formData });
+        const imageData = await fileToBase64(file);
+        const response = await fetch(apiEndpoints.analyzeImage, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUserId, imageData })
+        });
         const result = await response.json();
         const text = result.result || result.message || 'Грешка';
         const isError = !response.ok || !result.success;

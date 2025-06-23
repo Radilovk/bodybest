@@ -1,4 +1,5 @@
 import { apiEndpoints, cloudflareAccountId } from './config.js';
+import { fileToBase64 } from './utils.js';
 
 const chatEndpoint = apiEndpoints.chat;
 const chatHistory = [];
@@ -48,33 +49,33 @@ function openImageDialog() {
     document.getElementById('chat-image')?.click();
 }
 
-function sendImage(file) {
+async function sendImage(file) {
     const userId = document.getElementById('userId').value.trim();
     if (!userId || !file) return;
     addMessage('Изпратено изображение', 'user');
     chatHistory.push({ text: '[image]', sender: 'user', isError: false });
     saveHistory();
     showTyping();
-    const formData = new FormData();
-    formData.append('userId', userId);
-    formData.append('image', file);
-    fetch(apiEndpoints.analyzeImage, { method: 'POST', body: formData })
-        .then(res => res.json().then(data => ({ ok: res.ok, data })))
-        .then(({ ok, data }) => {
-            const text = data.result || data.message || 'Грешка';
-            addMessage(text, 'bot', !ok || !data.success);
-            chatHistory.push({ text, sender: 'bot', isError: !ok || !data.success });
-            saveHistory();
-        })
-        .catch(() => {
-            addMessage('Грешка при изпращане на изображението.', 'bot', true);
-            chatHistory.push({ text: 'Грешка при изпращане на изображението.', sender: 'bot', isError: true });
-            saveHistory();
-        })
-        .finally(() => {
-            hideTyping();
-            document.getElementById('chat-image').value = '';
+    try {
+        const imageData = await fileToBase64(file);
+        const res = await fetch(apiEndpoints.analyzeImage, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, imageData })
         });
+        const data = await res.json();
+        const text = data.result || data.message || 'Грешка';
+        addMessage(text, 'bot', !res.ok || !data.success);
+        chatHistory.push({ text, sender: 'bot', isError: !res.ok || !data.success });
+        saveHistory();
+    } catch (e) {
+        addMessage('Грешка при изпращане на изображението.', 'bot', true);
+        chatHistory.push({ text: 'Грешка при изпращане на изображението.', sender: 'bot', isError: true });
+        saveHistory();
+    } finally {
+        hideTyping();
+        document.getElementById('chat-image').value = '';
+    }
 }
 
 async function sendMessage() {
