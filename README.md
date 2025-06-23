@@ -317,7 +317,8 @@ Replace the placeholders with your own values and keep the token secret.
 
 In addition to text messages you can upload an image for automatic analysis.
 Open `assistant.html`, choose a file and it will be converted to a Base64 string
-and sent to `/api/analyzeImage` as JSON with fields `userId` and `imageData`.
+and sent to `/api/analyzeImage` as JSON with fields `userId`, `imageData` and
+`mimeType`.
 The worker forwards the image data to the configured vision model and returns a
 JSON summary describing the detected objects or text.
 
@@ -327,7 +328,7 @@ Example `curl` request:
 curl -X POST https://<your-domain>/api/analyzeImage \
   -H "Authorization: Bearer <WORKER_ADMIN_TOKEN>" \
   -H "Content-Type: application/json" \
-  --data '{"userId":"123","imageData":"<base64>"}'
+  --data '{"userId":"123","imageData":"<base64>","mimeType":"image/jpeg"}'
 ```
 
 For Cloudflare models set `CF_AI_TOKEN`. When using Gemini Vision provide
