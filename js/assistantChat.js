@@ -73,10 +73,11 @@ async function sendImage(file) {
     showTyping();
     try {
         const imageData = await fileToBase64(file);
+        const prompt = document.getElementById('chat-input').value.trim();
         const res = await fetch(apiEndpoints.analyzeImage, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, imageData, mimeType: file.type })
+            body: JSON.stringify({ userId, imageData, mimeType: file.type, prompt })
         });
         const data = await res.json();
         if (handleModelAgreement(data)) {

@@ -1368,7 +1368,7 @@ async function handleAiHelperRequest(request, env) {
 // ------------- START FUNCTION: handleAnalyzeImageRequest -------------
 async function handleAnalyzeImageRequest(request, env) {
     try {
-        const { userId, imageData, mimeType } = await request.json();
+        const { userId, imageData, mimeType, prompt } = await request.json();
         if (!userId || !imageData) {
             return { success: false, message: 'Липсват imageData или userId.', statusHint: 400 };
         }
@@ -1377,9 +1377,27 @@ async function handleAnalyzeImageRequest(request, env) {
         const modelName = modelFromKv || '@cf/stabilityai/clip';
         const provider = getModelProvider(modelName);
 
+        const defaultText = 'Опиши съдържанието на това изображение.';
         let aiResp;
         if (provider === 'cf') {
-            aiResp = await callCfAi(modelName, { image: imageData }, env);
+            if (modelName.startsWith('@cf/')) {
+                const msgContent = [
+                    {
+                        type: 'image_url',
+                        image_url: {
+                            url: `data:${mimeType || 'image/jpeg'};base64,${imageData}`
+                        }
+                    },
+                    { type: 'text', text: prompt || defaultText }
+                ];
+                aiResp = await callCfAi(
+                    modelName,
+                    { messages: [{ role: 'user', content: msgContent }], stream: false },
+                    env
+                );
+            } else {
+                aiResp = await callCfAi(modelName, { image: imageData }, env);
+            }
         } else if (provider === 'gemini') {
             const key = env[GEMINI_API_KEY_SECRET_NAME];
             if (!key) throw new Error('Missing Gemini API key.');
@@ -1391,8 +1409,8 @@ async function handleAnalyzeImageRequest(request, env) {
                 modelName
             );
         } else {
-            const prompt = `Опиши съдържанието на това изображение: ${imageData}`;
-            aiResp = await callModel(modelName, prompt, env, { temperature: 0.2, maxTokens: 200 });
+            const textPrompt = prompt || `Опиши съдържанието на това изображение: ${imageData}`;
+            aiResp = await callModel(modelName, textPrompt, env, { temperature: 0.2, maxTokens: 200 });
         }
 
         return { success: true, aiResponse: aiResp };

@@ -21,7 +21,7 @@ describe('handleAnalyzeImageRequest', () => {
       json: async () => ({ result: { response: 'ok' } })
     });
     const env = { CF_ACCOUNT_ID: 'acc', CF_AI_TOKEN: 'token', RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) } };
-    const request = { json: async () => ({ userId: 'u1', imageData: 'imgdata', mimeType: 'image/png' }) };
+    const request = { json: async () => ({ userId: 'u1', imageData: 'imgdata', mimeType: 'image/png', prompt: 'hi' }) };
     const res = await handleAnalyzeImageRequest(request, env);
     expect(res.success).toBe(true);
     expect(res.aiResponse).toBe('ok');
@@ -29,11 +29,12 @@ describe('handleAnalyzeImageRequest', () => {
       'https://api.cloudflare.com/client/v4/accounts/acc/ai/run/@cf/stabilityai/clip';
     expect(global.fetch).toHaveBeenCalledWith(
       expectedUrl,
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({ image: 'imgdata' })
-      })
+      expect.objectContaining({ method: 'POST' })
     );
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.messages[0].content[0].image_url.url)
+      .toBe('data:image/png;base64,imgdata');
+    expect(body.messages[0].content[1].text).toBe('hi');
   });
 
   test('uses model from KV when provided', async () => {
@@ -46,7 +47,7 @@ describe('handleAnalyzeImageRequest', () => {
       CF_AI_TOKEN: 'token',
       RESOURCES_KV: { get: jest.fn().mockResolvedValue('@cf/custom') }
     };
-    const request = { json: async () => ({ userId: 'u1', imageData: 'img', mimeType: 'image/png' }) };
+    const request = { json: async () => ({ userId: 'u1', imageData: 'img', mimeType: 'image/png', prompt: 'desc' }) };
     await handleAnalyzeImageRequest(request, env);
     const url = global.fetch.mock.calls[0][0];
     expect(url).toContain('@cf/custom');
