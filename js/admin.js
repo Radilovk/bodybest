@@ -1050,7 +1050,14 @@ async function loadClientReplies(markRead = false) {
 
 function loadAdminToken() {
     if (!adminTokenInput) return;
-    adminTokenInput.value = localStorage.getItem('adminToken') || '';
+    const stored = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
+    if (stored) {
+        adminTokenInput.value = stored;
+        sessionStorage.setItem('adminToken', stored);
+        localStorage.removeItem('adminToken');
+    } else {
+        adminTokenInput.value = '';
+    }
 }
 
 async function loadAiConfig() {
@@ -1112,9 +1119,10 @@ async function saveAiConfig() {
         let adminToken = '';
         if (adminTokenInput) {
             adminToken = adminTokenInput.value.trim();
-            localStorage.setItem('adminToken', adminToken);
+            sessionStorage.setItem('adminToken', adminToken);
+            localStorage.removeItem('adminToken');
         } else {
-            adminToken = localStorage.getItem('adminToken') || '';
+            adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
         }
         const headers = { 'Content-Type': 'application/json' };
         if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
@@ -1221,7 +1229,7 @@ async function saveCurrentPreset() {
         }
     };
     try {
-        const adminToken = localStorage.getItem('adminToken') || '';
+        const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
         const headers = { 'Content-Type': 'application/json' };
         if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
         const resp = await fetch(apiEndpoints.saveAiPreset, {
@@ -1254,7 +1262,7 @@ async function testAiModel(modelName) {
         return;
     }
     try {
-        const adminToken = adminTokenInput ? adminTokenInput.value.trim() : (localStorage.getItem('adminToken') || '');
+        const adminToken = adminTokenInput ? adminTokenInput.value.trim() : (sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '');
         const headers = { 'Content-Type': 'application/json' };
         if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
         const resp = await fetch(apiEndpoints.testAiModel, {
