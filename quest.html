@@ -799,8 +799,6 @@
         if (element) value = element.value.trim();
         if (isRequired && !value) {
             isValid = false; errorMessage = "Моля, попълнете това поле.";
-        } else if (question.type === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-            isValid = false; errorMessage = "Моля, въведете валиден имейл адрес.";
         } else if (question.type === 'number') {
             const num = Number(value);
             if (value && isNaN(num)) {
@@ -910,17 +908,7 @@
       let userEmail = responses.email || (emailInputEl ? emailInputEl.value : '');
       userEmail = String(userEmail).trim().toLowerCase();
 
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
-          console.error("Validation Error: Invalid or missing email.", responses.email);
-          delete responses.submissionDate;
-          const msgEl = document.getElementById('register-message-q');
-          if (msgEl) showMessage(msgEl, 'Моля, въведете валиден имейл адрес.', true);
-          showPage(registrationPageIndex);
-          throw new Error('Невалиден имейл');
-      }
-
       responses.email = userEmail;
-      console.log("Email validation passed:", userEmail);
        // ------------------------------------------
 
        // --- Изпращане към Worker (Критична част) ---
