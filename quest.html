@@ -441,6 +441,7 @@
     setupRegistration("#register-form-q", "#register-message-q");
     pageDiv.querySelector("#register-form-q").addEventListener("registrationSuccess", () => {
       responses.email = emailInput.value.trim().toLowerCase();
+      saveProgress();
       showPage(regIndex + 1);
     });
 
