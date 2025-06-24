@@ -67,7 +67,20 @@ function openImageDialog() {
 async function sendImage(file) {
     const userId = document.getElementById('userId').value.trim();
     if (!userId || !file) return;
-    addMessage('Изпратено изображение', 'user');
+    const msgContainer = document.createElement('div');
+    msgContainer.className = 'message user image';
+    const imgEl = document.createElement('img');
+    imgEl.src = (typeof URL !== 'undefined' && URL.createObjectURL)
+        ? URL.createObjectURL(file)
+        : '';
+    imgEl.alt = 'Изображение за изпращане';
+    const statusEl = document.createElement('span');
+    statusEl.className = 'upload-status';
+    statusEl.textContent = 'Изпращане...';
+    msgContainer.appendChild(imgEl);
+    msgContainer.appendChild(statusEl);
+    document.getElementById('chat-messages').appendChild(msgContainer);
+    scrollChatToBottom();
     chatHistory.push({ text: '[image]', sender: 'user', isError: false });
     saveHistory();
     showTyping();
@@ -81,14 +94,17 @@ async function sendImage(file) {
         });
         const data = await res.json();
         if (handleModelAgreement(data)) {
+            statusEl.textContent = 'Изпратено';
             return;
         } else {
+            statusEl.textContent = 'Изпратено';
             const text = data.result || data.message || 'Грешка';
             addMessage(text, 'bot', !res.ok || !data.success);
             chatHistory.push({ text, sender: 'bot', isError: !res.ok || !data.success });
             saveHistory();
         }
     } catch (e) {
+        statusEl.textContent = 'Грешка';
         addMessage('Грешка при изпращане на изображението.', 'bot', true);
         chatHistory.push({ text: 'Грешка при изпращане на изображението.', sender: 'bot', isError: true });
         saveHistory();

@@ -17,11 +17,16 @@
     <symbol id="icon-upload" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v13m0 0l-5-5m5 5l5-5M3 16v5h18v-5" />
     </symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4h8v2m-6 4v8m-4-8v8m8-8v8M6 6v12a2 2 0 002 2h8a2 2 0 002-2V6" />
+    </symbol>
 </svg>
 <div id="chat-widget" class="chat-widget visible" role="log" aria-live="polite">
     <div class="chat-header">
         <h4>💬 Cloudflare Асистент</h4>
-        <button id="chat-clear" class="chat-clear-btn" aria-label="Изчисти чата">🗑</button>
+        <button id="chat-clear" class="chat-clear-btn" aria-label="Изчисти чата">
+            <svg class="icon"><use href="#icon-trash"></use></svg>
+        </button>
     </div>
     <p style="margin:0.5rem 1rem;">Тук можете директно да давате инструкции към AI worker-а, който управлява целия бекенд.</p>
     <div id="chat-messages" class="chat-messages"></div>
