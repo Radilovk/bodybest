@@ -10,6 +10,7 @@
 // - Имплементиран нов ендпойнт /api/acknowledgeAiUpdate.
 // - Попълнени липсващи части от предходни версии.
 // - Запазени всички предходни функционалности.
+import { sendWelcomeEmail } from './mailer.js';
 
 // ------------- START BLOCK: GlobalConstantsAndBindings -------------
 const PHP_FILE_MANAGER_API_URL_SECRET_NAME = 'тут_ваш_php_api_url_secret_name';
@@ -201,6 +202,12 @@ export default {
                 responseBody = await handleSaveAiPreset(request, env);
             } else if (method === 'POST' && path === '/api/testAiModel') {
                 responseBody = await handleTestAiModelRequest(request, env);
+            } else if (method === 'GET' && path === '/api/getEmailTemplate') {
+                responseBody = await handleGetEmailTemplate(request, env);
+            } else if (method === 'POST' && path === '/api/setEmailTemplate') {
+                responseBody = await handleSetEmailTemplate(request, env);
+            } else if (method === 'POST' && path === '/api/sendTestEmail') {
+                responseBody = await handleSendTestEmail(request, env);
             } else if (method === 'GET' && path === '/api/getFeedbackMessages') {
                 responseBody = await handleGetFeedbackMessagesRequest(request, env);
             } else {
@@ -1708,6 +1715,49 @@ async function handleTestAiModelRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleTestAiModelRequest -------------
+
+// ------------- START FUNCTION: handleGetEmailTemplate -------------
+async function handleGetEmailTemplate(request, env) {
+    try {
+        const template = await env.RESOURCES_KV.get('registration_email_html') || '';
+        return { success: true, template };
+    } catch (error) {
+        console.error('Error in handleGetEmailTemplate:', error.message, error.stack);
+        return { success: false, message: 'Грешка при зареждане на шаблона.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleGetEmailTemplate -------------
+
+// ------------- START FUNCTION: handleSetEmailTemplate -------------
+async function handleSetEmailTemplate(request, env) {
+    try {
+        const { html } = await request.json();
+        if (typeof html !== 'string') {
+            return { success: false, message: 'Липсва HTML.', statusHint: 400 };
+        }
+        await env.RESOURCES_KV.put('registration_email_html', html);
+        return { success: true };
+    } catch (error) {
+        console.error('Error in handleSetEmailTemplate:', error.message, error.stack);
+        return { success: false, message: 'Грешка при запис на шаблона.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleSetEmailTemplate -------------
+
+// ------------- START FUNCTION: handleSendTestEmail -------------
+async function handleSendTestEmail(request, env) {
+    try {
+        const { to } = await request.json();
+        if (!to) return { success: false, message: 'Липсва имейл.', statusHint: 400 };
+        const template = await env.RESOURCES_KV.get('registration_email_html') || '';
+        await sendWelcomeEmail(to, 'Тест', template);
+        return { success: true };
+    } catch (error) {
+        console.error('Error in handleSendTestEmail:', error.message, error.stack);
+        return { success: false, message: 'Грешка при изпращане.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleSendTestEmail -------------
 
 
 // ------------- START BLOCK: PlanGenerationHeaderComment -------------
@@ -3614,4 +3664,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleGetEmailTemplate, handleSetEmailTemplate, handleSendTestEmail, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
