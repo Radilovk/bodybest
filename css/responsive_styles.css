@@ -235,3 +235,9 @@
   }
   */
 }
+
+@media (min-width: 1200px) {
+  .main-indexes {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
