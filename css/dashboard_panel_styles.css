@@ -3,8 +3,11 @@
    ========================================================================== */
 /* --- 6.1. Начално Табло (Dashboard Panel) --- */
 .main-indexes {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--space-lg); margin-bottom: var(--space-lg);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-lg);
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-lg);
 }
 .index-card {
     display: flex;
@@ -305,13 +308,13 @@ body.dark-theme .detailed-metric-item .value-current {
 
 
 .tracker { margin: var(--space-md) 0; padding-top: var(--space-md); border-top: 1px dashed var(--border-color-soft); }
-.tracker .metric-rating { 
-  margin-bottom: var(--space-lg); 
-  position: relative; 
-  display: flex; 
-  flex-wrap: wrap; 
-  align-items: center; 
-  gap: var(--space-sm); 
+.tracker .metric-rating {
+  margin-bottom: var(--space-lg);
+  position: relative;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-sm);
 }
 .tracker .metric-rating label { 
   display: flex; align-items: center; 
