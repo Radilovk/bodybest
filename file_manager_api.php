@@ -14,9 +14,22 @@ if ($envToken === false) {
 define('STATIC_TOKEN', $envToken); // API ключ за удостоверяване
 
 // Задаване на CORS заглавки
-header("Access-Control-Allow-Origin: *"); // Може да се ограничи до твоя Worker или домейни
+$defaultAllowedOrigins = [
+    'https://radilovk.github.io',
+    'https://radilov-k.github.io',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'null'
+];
+$envOrigins = getenv('ALLOWED_ORIGINS');
+$allowedOrigins = $envOrigins ? array_filter(array_map('trim', explode(',', $envOrigins))) : [];
+$allowedOrigins = array_unique(array_merge($allowedOrigins, $defaultAllowedOrigins));
+$requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? 'null';
+$originToSend = in_array($requestOrigin, $allowedOrigins, true) ? $requestOrigin : $allowedOrigins[0];
+header("Access-Control-Allow-Origin: $originToSend");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Vary: Origin");
 header("Content-Type: application/json");
 
 // Създаване на директорията за качване, ако не съществува (Остава без промяна)
