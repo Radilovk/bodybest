@@ -107,6 +107,14 @@ npm run docs
 ```
 The output is placed in the `docs/` folder.
 
+### Template Loading
+
+Client pages sometimes fetch HTML snippets at runtime. Templates such as
+`profileTemplate.html` and `extra-meal-entry-form.html` must reside in the same
+origin as the application. The helper `loadTemplateInto(url, containerId)`
+rejects cross-origin URLs and sanitizes the response before inserting it into
+the page.
+
 ## Deployment to Cloudflare
 
 A GitHub Action workflow at `.github/workflows/deploy.yml` automatically deploys the worker when you push to `main` or open a pull request that modifies `worker.js`. It runs `wrangler deploy` using the secret `CF_API_TOKEN` for authentication.
