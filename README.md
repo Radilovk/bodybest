@@ -221,7 +221,7 @@ These names are referenced in `worker.js` and must exist for the worker to funct
 
 ### Allowed Origins
 
-The worker supports a custom list of allowed origins for CORS via the
+The worker and PHP scripts support a custom list of allowed origins for CORS via the
 `ALLOWED_ORIGINS` environment variable. Provide a comma-separated list of
 domains from which the application (for example the admin panel) will be
 loaded. If the variable is not set, the default list includes
@@ -243,6 +243,9 @@ The PHP helper scripts expect the following variables set in the server environm
 
 - `STATIC_TOKEN` – shared secret token used for authentication in `file_manager_api.php`.
 - `CF_API_TOKEN` – token used by `save-questions.php` to update the Cloudflare KV store.
+- `ALLOWED_ORIGINS` – optional comma-separated list of origins allowed to
+  access the PHP scripts and `worker-backend.js`. Defaults match the worker
+  configuration when not provided.
 
 The admin panel по подразбиране използва фиксирани данни за вход – потребителско име `admin` и парола `6131`.
 Ако е зададенa променлива `ADMIN_PASS_HASH`, паролата се проверява по нейния bcrypt хеш. Празни стойности на `ADMIN_PASS_HASH` или `ADMIN_USERNAME` се игнорират и се използват стандартните данни.

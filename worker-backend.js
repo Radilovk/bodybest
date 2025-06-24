@@ -1,5 +1,28 @@
 export default {
   async fetch(request, env) {
+    const defaultAllowedOrigins = [
+      'https://radilovk.github.io',
+      'https://radilov-k.github.io',
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'null'
+    ];
+    const allowedOrigins = Array.from(new Set(
+      (env.ALLOWED_ORIGINS
+        ? env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
+        : [])
+        .concat(defaultAllowedOrigins)
+    ));
+    const requestOrigin = request.headers.get('Origin');
+    const originToSend = requestOrigin === null
+      ? 'null'
+      : allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0];
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': originToSend,
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+      'Vary': 'Origin'
+    };
     const { pathname } = new URL(request.url);
 
     if (pathname === '/settings') {
@@ -8,7 +31,7 @@ export default {
         return new Response(JSON.stringify(data || {}), {
           headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
+            ...corsHeaders
           }
         });
       }
@@ -21,9 +44,7 @@ export default {
         }
         await env.SETTINGS.put('chat', JSON.stringify(body));
         return new Response('OK', {
-          headers: {
-            'Access-Control-Allow-Origin': '*'
-          }
+          headers: corsHeaders
         });
       }
       return new Response('Method Not Allowed', { status: 405 });
@@ -31,11 +52,7 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         status: 204,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Authorization, Content-Type'
-        }
+        headers: corsHeaders
       });
     }
 
@@ -58,7 +75,7 @@ export default {
           status: 500,
           headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
+            ...corsHeaders
           }
         });
       }
@@ -91,7 +108,7 @@ export default {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
+          ...corsHeaders
         }
       });
     }
@@ -101,7 +118,7 @@ export default {
       status: response.status,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        ...corsHeaders
       }
     });
   }

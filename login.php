@@ -1,7 +1,21 @@
 <?php
 session_start();
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
+// Configure allowed origins
+$defaultAllowedOrigins = [
+    'https://radilovk.github.io',
+    'https://radilov-k.github.io',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'null'
+];
+$envOrigins = getenv('ALLOWED_ORIGINS');
+$allowedOrigins = $envOrigins ? array_filter(array_map('trim', explode(',', $envOrigins))) : [];
+$allowedOrigins = array_unique(array_merge($allowedOrigins, $defaultAllowedOrigins));
+$requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? 'null';
+$originToSend = in_array($requestOrigin, $allowedOrigins, true) ? $requestOrigin : $allowedOrigins[0];
+header('Access-Control-Allow-Origin: ' . $originToSend);
+header('Vary: Origin');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(["success"=>false, "message"=>"Only POST allowed"]);
