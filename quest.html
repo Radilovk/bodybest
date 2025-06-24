@@ -99,6 +99,7 @@
     input[type="text"],
     input[type="number"],
     input[type="email"],
+    input[type="password"],
     textarea,
     select {
       width: 93%;
@@ -905,8 +906,11 @@
       console.log("Current responses object:", JSON.stringify(responses, null, 2));
 
       // --- Валидация на имейл ПРЕДИ изпращане ---
-      const userEmail = responses.email ? String(responses.email).trim() : null; // Уверяваме се, че е стринг
-      if (!userEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
+      const emailInputEl = document.getElementById('register-email-q');
+      let userEmail = responses.email || (emailInputEl ? emailInputEl.value : '');
+      userEmail = String(userEmail).trim().toLowerCase();
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
           console.error("Validation Error: Invalid or missing email.", responses.email);
           delete responses.submissionDate;
           const msgEl = document.getElementById('register-message-q');
@@ -914,7 +918,9 @@
           showPage(registrationPageIndex);
           throw new Error('Невалиден имейл');
       }
-       console.log("Email validation passed:", userEmail);
+
+      responses.email = userEmail;
+      console.log("Email validation passed:", userEmail);
        // ------------------------------------------
 
        // --- Изпращане към Worker (Критична част) ---
