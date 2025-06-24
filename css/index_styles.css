@@ -90,9 +90,17 @@
          .questionnaire-link p { font-size: 0.9rem; } /* По-малък текст */
 
          /* Responsive */
-         @media (max-width: 480px) {
-             h1 { font-size: 1.6rem; } h2 { font-size: 1.2rem; }
-             .card { padding: var(--space); }
-             .button { font-size: 0.9rem; padding: 0.7rem 1.2rem;}
-             input[type="email"], input[type="password"] { padding: 0.7rem; }
-         }
+        @media (max-width: 480px) {
+            h1 { font-size: 1.6rem; } h2 { font-size: 1.2rem; }
+            .card { padding: var(--space); }
+            .button { font-size: 0.9rem; padding: 0.7rem 1.2rem;}
+            input[type="email"], input[type="password"] { padding: 0.7rem; }
+        }
+
+        /* Desktop enhancements */
+        @media (min-width: 769px) {
+            .landing-container { max-width: 600px; }
+            .card { padding: calc(var(--space) * 2); }
+            .button { width: auto; padding: 0.8rem 2rem; }
+            .questionnaire-link { text-align: center; }
+        }
