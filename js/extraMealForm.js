@@ -3,6 +3,7 @@ import { selectors } from './uiElements.js';
 import { showLoading, showToast, openModal as genericOpenModal, closeModal as genericCloseModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
 import { currentUserId } from './app.js'; // Accessing currentUserId from app.js
+import { sanitizeHTML } from './htmlSanitizer.js';
 
 let extraMealFormLoaded = false;
 let commonFoods = [];
@@ -283,9 +284,15 @@ export async function openExtraMealModal() {
     if (!extraMealFormLoaded) {
         formContainer.innerHTML = `<div class="placeholder-form-loading"><svg class="icon spinner" style="width:30px;height:30px;"><use href="#icon-spinner"/></svg><p>Зареждане...</p></div>`;
         try {
-            const response = await fetch('extra-meal-entry-form.html');
+            const templateUrl = 'extra-meal-entry-form.html';
+            const resolved = new URL(templateUrl, window.location.href);
+            if (resolved.origin !== window.location.origin) {
+                throw new Error('Cross-origin template load blocked.');
+            }
+            const response = await fetch(resolved);
             if (!response.ok) throw new Error(`Грешка зареждане форма: ${response.status}`);
-            formContainer.innerHTML = await response.text();
+            const raw = await response.text();
+            formContainer.innerHTML = sanitizeHTML(raw);
             initializeExtraMealFormLogic(formContainer);
             extraMealFormLoaded = true;
             genericOpenModal('extraMealEntryModal');
