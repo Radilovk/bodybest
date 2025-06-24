@@ -313,12 +313,12 @@ const result = await env.AI.run('@cf/llava-hf/llava-1.5-7b-hf', {
 ```
 
 Администраторският скрипт `admin.js` добавя автоматично тази
-заглавка, ако в `localStorage` съществува ключ `adminToken`.
+заглавка, ако в `sessionStorage` съществува ключ `adminToken`.
 Стойността може да зададете от панела в полето „Admin Token“,
-което я записва в `localStorage`. Може и ръчно да я зададете през конзолата:
+което я записва в `sessionStorage`. Може и ръчно да я зададете през конзолата:
 
 ```javascript
-localStorage.setItem('adminToken', '<вашият токен>');
+sessionStorage.setItem('adminToken', '<вашият токен>');
 ```
 
 Токените за моделите вече се задават единствено като *worker secrets*.

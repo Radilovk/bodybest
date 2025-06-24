@@ -29,8 +29,8 @@ beforeEach(async () => {
     <button id="showStats"></button>
     <button id="sendQuery"></button>
   `;
-  localStorage.clear();
-  localStorage.setItem('adminToken', 'secret');
+  sessionStorage.clear();
+  sessionStorage.setItem('adminToken', 'secret');
 
   const form = document.getElementById('aiConfigForm');
   form.addEventListener = (evt, handler) => {
@@ -50,7 +50,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   global.fetch && global.fetch.mockRestore();
-  localStorage.clear();
+  sessionStorage.clear();
 });
 
 test('saveAiConfig sends updates payload with Authorization header', async () => {
@@ -104,5 +104,5 @@ test('saveAiConfig sends updates payload with Authorization header', async () =>
       image_temperature: '0.4'
     }
   });
-  expect(localStorage.getItem('adminToken')).toBe('newSecret');
+  expect(sessionStorage.getItem('adminToken')).toBe('newSecret');
 });
