@@ -219,6 +219,13 @@ body.dark-theme .chat-messages .message.user { color: #e0e0e0; }
   border-bottom-left-radius: var(--radius-sm); color: var(--text-color-primary);
 }
 body.dark-theme .chat-messages .message.bot { color: #e0e0e0; }
+.chat-messages .message.image {
+  display: flex; flex-direction: column; padding: var(--space-sm);
+}
+.chat-messages .message.image img {
+  max-width: 150px; border-radius: var(--radius-md); margin-bottom: var(--space-xs);
+}
+.chat-messages .upload-status { font-size: 0.85rem; color: var(--text-color-muted); }
 .chat-messages .message.error {
   background-color: var(--color-danger-bg); color: var(--color-danger);
   border: 1px solid var(--color-danger); align-self: center; max-width: 95%;
