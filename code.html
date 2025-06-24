@@ -1,44 +1,172 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="bg">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MyBody.Best - Вашето Персонално Табло</title>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
 
     <!-- Коригирани CSS Връзки -->
-    <link href="css/base_styles.css" rel="stylesheet">
-    <link href="css/layout_styles.css" rel="stylesheet">
-    <link href="css/components_styles.css" rel="stylesheet">
-    <link href="css/dashboard_panel_styles.css" rel="stylesheet">
-    <link href="css/profile_panel_styles.css" rel="stylesheet">
-    <link href="css/week_plan_panel_styles.css" rel="stylesheet">
-    <link href="css/recommendations_panel_styles.css" rel="stylesheet">
-    <link href="css/adaptive_quiz_styles.css" rel="stylesheet">
-    <link href="css/extra_meal_form_styles.css" rel="stylesheet">
-    <link href="css/plan_mod_chat_styles.css" rel="stylesheet">
-    <link href="css/responsive_styles.css" rel="stylesheet">
+    <link href="css/base_styles.css" rel="stylesheet" />
+    <link href="css/layout_styles.css" rel="stylesheet" />
+    <link href="css/components_styles.css" rel="stylesheet" />
+    <link href="css/dashboard_panel_styles.css" rel="stylesheet" />
+    <link href="css/profile_panel_styles.css" rel="stylesheet" />
+    <link href="css/week_plan_panel_styles.css" rel="stylesheet" />
+    <link href="css/recommendations_panel_styles.css" rel="stylesheet" />
+    <link href="css/adaptive_quiz_styles.css" rel="stylesheet" />
+    <link href="css/extra_meal_form_styles.css" rel="stylesheet" />
+    <link href="css/plan_mod_chat_styles.css" rel="stylesheet" />
+    <link href="css/responsive_styles.css" rel="stylesheet" />
     <!-- Chart.js - зарежда се в края на body за по-добра производителност -->
-</head>
-<body>
-
+  </head>
+  <body>
     <!-- ======================================================================= -->
     <!-- ========================= SVG ICONS DEFINITION ======================== -->
     <!-- ======================================================================= -->
-    <svg style="position:absolute; width:0; height:0;" aria-hidden="true">
-        <symbol id="icon-info" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z" fill="currentColor"></path></symbol>
-        <symbol id="icon-check" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" fill="currentColor"></path></symbol>
-        <symbol id="icon-warning-triangle" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L1 21h22M12 6l7.55 13H4.45M11 10v4h2v-4m-2 6v2h2v-2" fill="currentColor"></path></symbol>
-        <symbol id="icon-menu-burger" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5"> <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path> </symbol>
-        <symbol id="icon-close" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5"> <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path> </symbol>
-        <symbol id="icon-send" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></symbol>
-        <symbol id="icon-upload" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v13m0 0l-5-5m5 5l5-5M3 16v5h18v-5"/></symbol>
-        <symbol id="icon-spinner" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path></symbol>
-        <symbol id="icon-chevron-right" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5"> <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path> </symbol>
-        <symbol id="icon-feedback" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 12H5.17L4 15.17V4h16v10zm-6-5.41L14.59 8 12 10.59 9.41 8 8 9.41 10.59 12 8 14.59 9.41 16 12 13.41 14.59 16 16 14.59 13.41 12 16 9.41z"/></symbol>
-        <symbol id="icon-chart-line" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z" /></symbol>
-        <symbol id="icon-lightbulb" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M12,2A7,7 0 0,0 5,9C5,11.38 6.19,13.47 8,14.74V17A1,1 0 0,0 9,18H15A1,1 0 0,0 16,17V14.74C17.81,13.47 19,11.38 19,9A7,7 0 0,0 12,2M9,21A1,1 0 0,0 10,22H14A1,1 0 0,0 15,21V20H9V21Z" /></symbol>
+    <svg style="position: absolute; width: 0; height: 0" aria-hidden="true">
+      <symbol
+        id="icon-info"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"
+          fill="currentColor"
+        ></path>
+      </symbol>
+      <symbol
+        id="icon-check"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"
+          fill="currentColor"
+        ></path>
+      </symbol>
+      <symbol
+        id="icon-warning-triangle"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 2L1 21h22M12 6l7.55 13H4.45M11 10v4h2v-4m-2 6v2h2v-2"
+          fill="currentColor"
+        ></path>
+      </symbol>
+      <symbol
+        id="icon-menu-burger"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+        ></path>
+      </symbol>
+      <symbol
+        id="icon-close"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M6 18L18 6M6 6l12 12"
+        ></path>
+      </symbol>
+      <symbol
+        id="icon-send"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="currentColor"
+      >
+        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+      </symbol>
+      <symbol
+        id="icon-upload"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 3v13m0 0l-5-5m5 5l5-5M3 16v5h18v-5"
+        />
+      </symbol>
+      <symbol
+        id="icon-spinner"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+        ></path>
+      </symbol>
+      <symbol
+        id="icon-chevron-right"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M8.25 4.5l7.5 7.5-7.5 7.5"
+        ></path>
+      </symbol>
+      <symbol
+        id="icon-feedback"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="currentColor"
+      >
+        <path
+          d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 12H5.17L4 15.17V4h16v10zm-6-5.41L14.59 8 12 10.59 9.41 8 8 9.41 10.59 12 8 14.59 9.41 16 12 13.41 14.59 16 16 14.59 13.41 12 16 9.41z"
+        />
+      </symbol>
+      <symbol
+        id="icon-chart-line"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="currentColor"
+      >
+        <path
+          d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"
+        />
+      </symbol>
+      <symbol
+        id="icon-lightbulb"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="currentColor"
+      >
+        <path
+          d="M12,2A7,7 0 0,0 5,9C5,11.38 6.19,13.47 8,14.74V17A1,1 0 0,0 9,18H15A1,1 0 0,0 16,17V14.74C17.81,13.47 19,11.38 19,9A7,7 0 0,0 12,2M9,21A1,1 0 0,0 10,22H14A1,1 0 0,0 15,21V20H9V21Z"
+        />
+      </symbol>
     </svg>
     <!-- ======================= END SVG ICONS DEFINITION ====================== -->
 
@@ -46,8 +174,12 @@
     <!-- ========================== LOADING OVERLAY ============================ -->
     <!-- ======================================================================= -->
     <div id="loadingOverlay" class="loading-overlay hidden">
-        <svg class="icon spinner" style="width: 50px; height: 50px;"><use href="#icon-spinner"></use></svg>
-        <span id="loadingOverlayText" style="margin-left: 15px;">Зареждане...</span>
+      <svg class="icon spinner" style="width: 50px; height: 50px">
+        <use href="#icon-spinner"></use>
+      </svg>
+      <span id="loadingOverlayText" style="margin-left: 15px"
+        >Зареждане...</span
+      >
     </div>
     <!-- ======================= END LOADING OVERLAY =========================== -->
 
@@ -55,609 +187,1102 @@
     <!-- =================== PLAN GENERATION PENDING STATE ===================== -->
     <!-- ======================================================================= -->
     <div id="planPendingState" class="pending-state-container hidden">
-        <svg class="icon spinner" style="width: 60px; height: 60px; margin-bottom: 1rem;"><use href="#icon-spinner"></use></svg>
-        <h2>Вашият план се генерира...</h2>
-        <p>Благодарим ви за попълнения въпросник! Вашият персонализиран план MyBody.Best се генерира.</p>
-        <p>Моля, проверете отново по-късно. Ще бъдете уведомени (ако сте позволили известия) или опитайте да презаредите страницата след известно време.</p>
+      <svg
+        class="icon spinner"
+        style="width: 60px; height: 60px; margin-bottom: 1rem"
+      >
+        <use href="#icon-spinner"></use>
+      </svg>
+      <h2>Вашият план се генерира...</h2>
+      <p>
+        Благодарим ви за попълнения въпросник! Вашият персонализиран план
+        MyBody.Best се генерира.
+      </p>
+      <p>
+        Моля, проверете отново по-късно. Ще бъдете уведомени (ако сте позволили
+        известия) или опитайте да презаредите страницата след известно време.
+      </p>
     </div>
     <!-- ================= END PLAN GENERATION PENDING STATE =================== -->
 
     <!-- ======================================================================= -->
     <!-- ============================ APP WRAPPER ============================== -->
     <!-- ======================================================================= -->
-    <div id="appWrapper" style="display: none;">
+    <div id="appWrapper" style="display: none">
+      <!-- ========================== HEADER & MAIN MENU ========================= -->
+      <header>
+        <h1 id="headerTitle">Вашето Табло</h1>
+        <button
+          id="menu-toggle"
+          aria-label="Отваряне на менюто"
+          aria-expanded="false"
+          aria-controls="main-menu"
+        >
+          <svg class="icon"><use href="#icon-menu-burger"></use></svg>
+        </button>
+      </header>
 
-        <!-- ========================== HEADER & MAIN MENU ========================= -->
-        <header>
-            <h1 id="headerTitle">Вашето Табло</h1>
-            <button id="menu-toggle" aria-label="Отваряне на менюто" aria-expanded="false" aria-controls="main-menu">
-                <svg class="icon"><use href="#icon-menu-burger"></use></svg>
+      <div id="menu-overlay" class="menu-overlay"></div>
+
+      <nav
+        id="main-menu"
+        role="dialog"
+        aria-labelledby="menu-heading"
+        aria-modal="true"
+      >
+        <button class="menu-close" aria-label="Затваряне на менюто">
+          <svg class="icon"><use href="#icon-close"></use></svg>
+        </button>
+        <h2 id="menu-heading" class="visually-hidden">Главно меню</h2>
+        <ul>
+          <li>
+            <button id="theme-toggle-menu" aria-label="Смяна на тема">
+              <span class="menu-icon" aria-hidden="true">🌙</span>
+              <span class="theme-text">Смени Тема</span>
             </button>
-        </header>
-
-        <div id="menu-overlay" class="menu-overlay"></div>
-
-        <nav id="main-menu" role="dialog" aria-labelledby="menu-heading" aria-modal="true">
-            <button class="menu-close" aria-label="Затваряне на менюто">
-                <svg class="icon"><use href="#icon-close"></use></svg>
+          </li>
+          <li>
+            <a href="#contact" id="menu-contact-link">
+              <span class="menu-icon" aria-hidden="true">📧</span>Контакт
+            </a>
+          </li>
+          <li>
+            <a href="#personalization" id="menu-personalization-link">
+              <span class="menu-icon" aria-hidden="true">⚙️</span
+              >Индивидуализация
+            </a>
+          </li>
+          <li>
+            <button id="menu-feedback-btn" aria-label="Обратна връзка">
+              <span class="menu-icon" aria-hidden="true">📝</span>Обратна връзка
             </button>
-            <h2 id="menu-heading" class="visually-hidden">Главно меню</h2>
-            <ul>
-                <li>
-                    <button id="theme-toggle-menu" aria-label="Смяна на тема">
-                        <span class="menu-icon" aria-hidden="true">🌙</span>
-                        <span class="theme-text">Смени Тема</span>
-                    </button>
-                </li>
-                <li>
-                    <a href="#contact" id="menu-contact-link">
-                        <span class="menu-icon" aria-hidden="true">📧</span>Контакт
-                    </a>
-                </li>
-                <li>
-                    <a href="#personalization" id="menu-personalization-link">
-                        <span class="menu-icon" aria-hidden="true">⚙️</span>Индивидуализация
-                    </a>
-                </li>
-                <li>
-                    <button id="menu-feedback-btn" aria-label="Обратна връзка">
-                        <span class="menu-icon" aria-hidden="true">📝</span>Обратна връзка
-                    </button>
-                </li>
-                <li>
-                    <a href="profile-edit.html" id="menu-profile-edit-link">
-                        <span class="menu-icon" aria-hidden="true">✏️</span>Редакция на профил
-                    </a>
-                </li>
-                <li>
-                    <a href="faq.html" id="menu-help-link">
-                        <span class="menu-icon" aria-hidden="true">❓</span>Помощ
-                    </a>
-                </li>
-                <li>
-                    <a href="about.html" id="menu-about-link">
-                        <span class="menu-icon" aria-hidden="true">ℹ️</span>За нас
-                    </a>
-                </li>
-            </ul>
-            <div class="menu-footer">
-                <button id="logoutButton">
-                    <span class="menu-icon" aria-hidden="true">🚪</span>Изход
-                </button>
+          </li>
+          <li>
+            <a href="profile-edit.html" id="menu-profile-edit-link">
+              <span class="menu-icon" aria-hidden="true">✏️</span>Редакция на
+              профил
+            </a>
+          </li>
+          <li>
+            <a href="faq.html" id="menu-help-link">
+              <span class="menu-icon" aria-hidden="true">❓</span>Помощ
+            </a>
+          </li>
+          <li>
+            <a href="about.html" id="menu-about-link">
+              <span class="menu-icon" aria-hidden="true">ℹ️</span>За нас
+            </a>
+          </li>
+        </ul>
+        <div class="menu-footer">
+          <button id="logoutButton">
+            <span class="menu-icon" aria-hidden="true">🚪</span>Изход
+          </button>
+        </div>
+      </nav>
+      <!-- ======================= END HEADER & MAIN MENU ====================== -->
+
+      <!-- ========================== TABS NAVIGATION ========================== -->
+      <nav
+        class="tabs styled-tabs"
+        role="tablist"
+        aria-label="Основна навигация"
+      >
+        <button
+          id="dash-tab"
+          class="tab-btn"
+          role="tab"
+          aria-selected="true"
+          aria-controls="dash-panel"
+        >
+          <span class="tab-icon">📊</span> <span class="tab-label">Табло</span>
+        </button>
+        <button
+          id="profile-tab"
+          class="tab-btn"
+          role="tab"
+          aria-selected="false"
+          aria-controls="profile-panel"
+        >
+          <span class="tab-icon">👤</span> <span class="tab-label">Профил</span>
+        </button>
+        <button
+          id="week-tab"
+          class="tab-btn"
+          role="tab"
+          aria-selected="false"
+          aria-controls="week-panel"
+        >
+          <span class="tab-icon">📅</span> <span class="tab-label">План</span>
+        </button>
+        <button
+          id="recs-tab"
+          class="tab-btn"
+          role="tab"
+          aria-selected="false"
+          aria-controls="recs-panel"
+        >
+          <span class="tab-icon">💡</span> <span class="tab-label">Съвети</span>
+        </button>
+      </nav>
+      <!-- ======================= END TABS NAVIGATION ========================= -->
+
+      <main>
+        <!-- ======================================================================= -->
+        <!-- ========================== DASHBOARD PANEL ============================ -->
+        <!-- ======================================================================= -->
+        <section
+          id="dash-panel"
+          class="tab-content active-tab-content"
+          role="tabpanel"
+          aria-labelledby="dash-tab"
+        >
+          <div class="container">
+            <!-- Основни Индекси -->
+            <div class="main-indexes">
+              <div class="card index-card" id="goalCard">
+                <h4>🎯 Напредък към Цел</h4>
+                <div class="progress-bar-container">
+                  <div
+                    id="goalProgressBar"
+                    class="progress-bar"
+                    role="progressbar"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                  >
+                    <div id="goalProgressMask" class="progress-mask"></div>
+                  </div>
+                </div>
+                <p id="goalProgressText" class="index-value">Изчисляване...</p>
+              </div>
+              <div class="card index-card" id="engagementCard">
+                <h4>🔗 Ангажираност</h4>
+                <div class="progress-bar-container">
+                  <div
+                    id="engagementProgressBar"
+                    class="progress-bar"
+                    role="progressbar"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                  >
+                    <div
+                      id="engagementProgressMask"
+                      class="progress-mask"
+                    ></div>
+                  </div>
+                </div>
+                <p id="engagementProgressText" class="index-value">
+                  Изчисляване...
+                </p>
+              </div>
+              <div class="card index-card" id="healthCard">
+                <h4>❤️ Отношение към здравето</h4>
+                <div class="progress-bar-container">
+                  <div
+                    id="healthProgressBar"
+                    class="progress-bar"
+                    role="progressbar"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                  >
+                    <div id="healthProgressMask" class="progress-mask"></div>
+                  </div>
+                </div>
+                <p id="healthProgressText" class="index-value">
+                  Изчисляване...
+                </p>
+              </div>
+              <div class="card index-card" id="streakCard">
+                <h4>🏅 Моите успехи</h4>
+                <div id="streakGrid" class="streak-grid"></div>
+                <p id="streakCount" class="index-value">0</p>
+              </div>
+              <div class="card index-card" id="progressHistoryCard">
+                <h4>
+                  <svg
+                    class="icon"
+                    style="width: 1em; height: 1em; margin-right: 0.3em"
+                  >
+                    <use href="#icon-chart-line"></use>
+                  </svg>
+                  История на Напредъка
+                </h4>
+                <div class="chart-container">
+                  <p class="placeholder">
+                    Зареждане на историята на напредъка...
+                  </p>
+                </div>
+              </div>
             </div>
-        </nav>
-        <!-- ======================= END HEADER & MAIN MENU ====================== -->
+            <!-- Край Основни Индекси -->
 
-        <!-- ========================== TABS NAVIGATION ========================== -->
-        <nav class="tabs styled-tabs" role="tablist" aria-label="Основна навигация">
-            <button id="dash-tab" class="tab-btn" role="tab" aria-selected="true" aria-controls="dash-panel">
-                <span class="tab-icon">📊</span> <span class="tab-label">Табло</span>
-            </button>
-            <button id="profile-tab" class="tab-btn" role="tab" aria-selected="false" aria-controls="profile-panel">
-                <span class="tab-icon">👤</span> <span class="tab-label">Профил</span>
-            </button>
-            <button id="week-tab" class="tab-btn" role="tab" aria-selected="false" aria-controls="week-panel">
-                <span class="tab-icon">📅</span> <span class="tab-label">План</span>
-            </button>
-            <button id="recs-tab" class="tab-btn" role="tab" aria-selected="false" aria-controls="recs-panel">
-                <span class="tab-icon">💡</span> <span class="tab-label">Съвети</span>
-            </button>
-        </nav>
-        <!-- ======================= END TABS NAVIGATION ========================= -->
-
-        <main>
-            <!-- ======================================================================= -->
-            <!-- ========================== DASHBOARD PANEL ============================ -->
-            <!-- ======================================================================= -->
-            <section id="dash-panel" class="tab-content active-tab-content" role="tabpanel" aria-labelledby="dash-tab">
-                <div class="container">
-                    <!-- Основни Индекси -->
-                    <div class="main-indexes">
-                        <div class="card index-card" id="goalCard">
-                            <h4>🎯 Напредък към Цел</h4>
-                            <div class="progress-bar-container">
-                                <div id="goalProgressBar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
-                                    <div id="goalProgressMask" class="progress-mask"></div>
-                                </div>
-                            </div>
-                            <p id="goalProgressText" class="index-value">Изчисляване...</p>
-                        </div>
-                        <div class="card index-card" id="engagementCard">
-                            <h4>🔗 Ангажираност</h4>
-                            <div class="progress-bar-container">
-                                <div id="engagementProgressBar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
-                                    <div id="engagementProgressMask" class="progress-mask"></div>
-                                </div>
-                            </div>
-                            <p id="engagementProgressText" class="index-value">Изчисляване...</p>
-                        </div>
-                        <div class="card index-card" id="healthCard">
-                            <h4>❤️ Отношение към здравето</h4>
-                            <div class="progress-bar-container">
-                                <div id="healthProgressBar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
-                                    <div id="healthProgressMask" class="progress-mask"></div>
-                                </div>
-                            </div>
-                            <p id="healthProgressText" class="index-value">Изчисляване...</p>
-                        </div>
-                        <div class="card index-card" id="streakCard">
-                            <h4>🏅 Моите успехи</h4>
-                            <div id="streakGrid" class="streak-grid"></div>
-                            <p id="streakCount" class="index-value">0</p>
-                        </div>
-                        <div class="card index-card" id="progressHistoryCard">
-                            <h4><svg class="icon" style="width: 1em; height: 1em; margin-right: 0.3em;"><use href="#icon-chart-line"></use></svg> История на Напредъка</h4>
-                            <div class="chart-container">
-                                <p class="placeholder">Зареждане на историята на напредъка...</p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Край Основни Индекси -->
-
-                    <!-- Акордеон за детайлни показатели -->
-                    <div id="detailedAnalyticsAccordion" class="card accordion-container">
-                        <div class="accordion-header" role="button" tabindex="0" aria-expanded="false" aria-controls="detailedAnalyticsContent">
-                            <span>📊 Детайлни Показатели и Анализ</span>
-                            <svg class="icon arrow"><use href="#icon-chevron-right"></use></svg>
-                        </div>
-                        <div id="detailedAnalyticsContent" class="accordion-content" role="region">
-                            <div id="dashboardTextualAnalysis" style="margin-bottom: var(--space-lg);">
-                                <p class="placeholder">Генериране на текстов анализ...</p>
-                            </div>
-                            <div id="analyticsCardsContainer" class="analytics-cards-grid">
-                                <p class="placeholder">Зареждане на детайлните показатели...</p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Край Акордеон детайлни показатели -->
-
-
-                    <!-- Дневен План -->
-                    <div class="card">
-                        <h3 id="dailyPlanTitle">🍽️ Дневен План (Зареждане...)</h3>
-                        <ul id="dailyMealList" class="meal-list">
-                            <li class="placeholder">Зареждане на храненията...</li>
-                        </ul>
-                    </div>
-                    <!-- Край Дневен План -->
-
-                    <!-- Дневен Лог (с интегрирано тегло) -->
-                    <div class="card">
-                        <h4>📋 Дневен лог <span id="dailyLogDate" class="text-muted" style="font-weight:normal; font-size:0.9em;"></span></h4>
-
-                        <div id="dailyTracker" class="tracker">
-                            <div class="placeholder">Зареждане на тракера...</div>
-                        </div>
-
-                        <button id="openExtraMealModalBtn" class="button-secondary" style="margin-bottom: 0.5rem; width: 100%;">🍽️ Добави извънредно хранене</button>
-                        <button id="add-note-btn" class="button-secondary" aria-label="Добавяне или скриване на бележка за деня"></button>
-                        <textarea id="daily-note" class="hidden" placeholder="Вашите бележки за деня..." rows="3" aria-label="Бележки за деня"></textarea>
-                        <button id="saveLogBtn" class="button-primary" style="margin-top: 1rem;">Запази Дневен Лог</button>
-                    </div>
-                    <!-- Край Дневен Лог -->
+            <!-- Акордеон за детайлни показатели -->
+            <div
+              id="detailedAnalyticsAccordion"
+              class="card accordion-container"
+            >
+              <div
+                class="accordion-header"
+                role="button"
+                tabindex="0"
+                aria-expanded="false"
+                aria-controls="detailedAnalyticsContent"
+              >
+                <span>📊 Детайлни Показатели и Анализ</span>
+                <svg class="icon arrow">
+                  <use href="#icon-chevron-right"></use>
+                </svg>
+              </div>
+              <div
+                id="detailedAnalyticsContent"
+                class="accordion-content"
+                role="region"
+              >
+                <div
+                  id="dashboardTextualAnalysis"
+                  style="margin-bottom: var(--space-lg)"
+                >
+                  <p class="placeholder">Генериране на текстов анализ...</p>
                 </div>
-            </section>
-            <!-- ======================= END DASHBOARD PANEL ========================= -->
-
-            <!-- ======================================================================= -->
-            <!-- ========================== MY PROFILE PANEL =========================== -->
-            <!-- ======================================================================= -->
-            <section id="profile-panel" class="tab-content" role="tabpanel" aria-labelledby="profile-tab">
-                <div class="container">
-                    <h2>👤 Моят Профил и Цели</h2>
-                    <div class="card">
-                        <h3>👤 Лични Данни</h3>
-                        <ul id="profilePersonalData" class="profile-data-list">
-                            <li class="placeholder">Зареждане на лични данни...</li>
-                        </ul>
-                    </div>
-                    <div class="card">
-                        <h3>🎯 Основни Цели</h3>
-                        <ul id="profileGoals" class="profile-data-list">
-                            <li class="placeholder">Зареждане на целите...</li>
-                        </ul>
-                    </div>
-                    <div class="card">
-                        <h3>📋 Ключови Съображения от Въпросника</h3>
-                        <div id="profileConsiderations">
-                            <p class="placeholder">Зареждане на съображенията...</p>
-                        </div>
-                    </div>
-                    <div class="card" style="margin-top: var(--space-lg);">
-                        <h3>⚙️ Инструменти за Индивидуализация</h3>
-                        <button id="planModificationBtn" class="button-secondary" style="width:100%;">Въведи промени</button>
-                    </div>
-                    <div class="card" style="margin-top: var(--space-lg);">
-                        <a href="profile-edit.html" class="button" style="width:100%;">Редактирай Профила</a>
-                    </div>
+                <div id="analyticsCardsContainer" class="analytics-cards-grid">
+                  <p class="placeholder">
+                    Зареждане на детайлните показатели...
+                  </p>
                 </div>
-            </section>
-            <!-- ======================= END MY PROFILE PANEL ======================== -->
+              </div>
+            </div>
+            <!-- Край Акордеон детайлни показатели -->
 
-            <!-- ======================================================================= -->
-            <!-- ======================== WEEKLY PLAN PANEL ========================== -->
-            <!-- ======================================================================= -->
-            <section id="week-panel" class="tab-content" role="tabpanel" aria-labelledby="week-tab">
-                <div class="container">
-                    <h2>📅 Седмичен План</h2>
-                    <div class="table-wrapper">
-                        <table id="weeklyPlanTable" aria-label="Седмичен хранителен план">
-                            <thead>
-                                <tr>
-                                    <th>Ден</th>
-                                    <th>Закуска</th>
-                                    <th>Междинно 1</th>
-                                    <th>Обяд</th>
-                                    <th>Междинно 2</th>
-                                    <th>Вечеря</th>
-                                </tr>
-                            </thead>
-                            <tbody id="weeklyPlanTbody">
-                                <tr class="placeholder-row"><td colspan="6">Зареждане на седмичния план...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>  <!-- затваря .table-wrapper -->
-                </div>  <!-- затваря .container на week-panel -->
-            </section> <!-- затваря week-panel -->
+            <!-- Дневен План -->
+            <div class="card">
+              <h3 id="dailyPlanTitle">🍽️ Дневен План (Зареждане...)</h3>
+              <ul id="dailyMealList" class="meal-list">
+                <li class="placeholder">Зареждане на храненията...</li>
+              </ul>
+            </div>
+            <!-- Край Дневен План -->
 
-            <!-- ======================================================================= -->
-            <!-- ===================== RECOMMENDATIONS PANEL ========================= -->
-            <!-- ======================================================================= -->
-            <section id="recs-panel" class="tab-content" role="tabpanel" aria-labelledby="recs-tab">
-                <div class="container">
-                    <h2>💡 Препоръки</h2>
-                    <div class="recommendation-section">
-                        <h3>🍎 Основи на Храненето</h3>
-                        <div id="recFoodAllowedCard" class="card collapsible-card tip-card-success">
-                            <h4>✅ Препоръчителни Храни</h4>
-                            <div class="collapsible-content">
-                                <div id="recFoodAllowedContent">
-                                    <p class="placeholder">Зареждане...</p>
-                                </div>
-                                <div class="info-note note-base hidden" data-condition-type="medical" data-condition-value="хипотиреоидизъм">
-                                    <svg class="icon prefix-icon"><use href="#icon-info"></use></svg>
-                                    <span><strong>Забележка (Хипотиреоидизъм):</strong> Обърнете внимание на храни, богати на селен, цинк и йод. Избягвайте сурови кръстоцветни в големи количества.</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="recFoodLimitCard" class="card collapsible-card tip-card-critical">
-                            <h4>❌ Храни за ограничаване</h4>
-                            <div class="collapsible-content">
-                                <div id="recFoodLimitContent">
-                                    <div id="userAllergiesNote" class="critical-note note-base hidden">
-                                        <svg class="icon prefix-icon"><use href="#icon-warning-triangle"></use></svg>
-                                        <span><strong>Ваши специфични алергени/непоносимости:</strong> <span id="userAllergiesList">Липсват данни</span></span>
-                                    </div>
-                                    <p class="placeholder">Зареждане на общи препоръки...</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="recHydrationCard" class="card collapsible-card tip-card-info">
-                            <h4>💧 Хидратация и Напитки</h4>
-                            <div class="collapsible-content">
-                                <div id="recHydrationContent">
-                                    <p class="placeholder">Зареждане...</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="recCookingMethodsCard" class="card collapsible-card tip-card-info">
-                            <h4>🍳 Методи на Готвене</h4>
-                            <div class="collapsible-content">
-                                <div id="recCookingMethodsContent">
-                                    <p class="placeholder">Зареждане...</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="recommendation-section">
-                        <h3>🧠 Поведенчески Стратегии и Нагласа</h3>
-                        <div id="recStrategiesContent" class="accordion-group">
-                            <div class="card placeholder"><p>Зареждане на стратегии...</p></div>
-                        </div>
-                    </div>
-                    <div class="recommendation-section">
-                        <h3>💊 Хранителни Добавки</h3>
-                        <div id="recSupplementsCard" class="card collapsible-card tip-card-supplement">
-                            <h4>Хранителни Добавки</h4>
-                            <div class="collapsible-content">
-                                <div id="recSupplementsContent">
-                                    <p class="placeholder">Зареждане...</p>
-                                </div>
-                                <div class="important-note note-base">
-                                    <svg class="icon prefix-icon"><use href="#icon-info"></use></svg>
-                                    <span><strong>Важно:</strong> Винаги се консултирайте с лекар преди прием на нови хранителни добавки, особено ако имате съществуващи заболявания или приемате медикаменти.</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="recommendation-section">
-                        <h3>📖 Допълнителни насоки</h3>
-                        <div id="additionalGuidelines" class="accordion-group">
-                            <div class="card placeholder"><p>Зареждане на насоки...</p></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <!-- =================== END RECOMMENDATIONS PANEL ===================== -->
-        </main>
-        <!-- ======================= END MAIN CONTENT ============================ -->
+            <!-- Дневен Лог (с интегрирано тегло) -->
+            <div class="card">
+              <h4>
+                📋 Дневен лог
+                <span
+                  id="dailyLogDate"
+                  class="text-muted"
+                  style="font-weight: normal; font-size: 0.9em"
+                ></span>
+              </h4>
+
+              <div id="dailyTracker" class="tracker">
+                <div class="placeholder">Зареждане на тракера...</div>
+              </div>
+
+              <button
+                id="openExtraMealModalBtn"
+                class="button-secondary"
+                style="margin-bottom: 0.5rem; width: 100%"
+              >
+                🍽️ Добави извънредно хранене
+              </button>
+              <button
+                id="add-note-btn"
+                class="button-secondary"
+                aria-label="Добавяне или скриване на бележка за деня"
+              ></button>
+              <textarea
+                id="daily-note"
+                class="hidden"
+                placeholder="Вашите бележки за деня..."
+                rows="3"
+                aria-label="Бележки за деня"
+              ></textarea>
+              <button
+                id="saveLogBtn"
+                class="button-primary"
+                style="margin-top: 1rem"
+              >
+                Запази Дневен Лог
+              </button>
+            </div>
+            <!-- Край Дневен Лог -->
+          </div>
+        </section>
+        <!-- ======================= END DASHBOARD PANEL ========================= -->
 
         <!-- ======================================================================= -->
-        <!-- ========================== MODAL WINDOWS ============================== -->
+        <!-- ========================== MY PROFILE PANEL =========================== -->
         <!-- ======================================================================= -->
-        <!-- Welcome Screen Modal -->
-        <div id="welcomeScreenModal" class="modal" role="dialog" aria-labelledby="welcomeModalTitle" aria-modal="true" aria-hidden="true">
-            <div class="modal-content">
-                <button class="close-button" data-modal-close="welcomeScreenModal" aria-label="Затвори прозореца">
-                    <svg class="icon" style="width: 1.2em; height: 1.2em;"><use href="#icon-close"></use></svg>
-                </button>
-                <h3 id="welcomeModalTitle" style="text-align:center;">Добре дошли в MyBody.Best!</h3>
-                <div id="welcomeModalBody">
-                    <p style="text-align:center; font-size:1.5rem; margin-bottom:1rem;">🎉</p>
-                    <p>Вашият персонализиран план е готов! Разгледайте секциите, за да се запознаете с него.</p>
-                    <p>Не забравяйте да попълвате дневния си лог и да следите напредъка си. Успех!</p>
-                </div>
-                <button class="button-primary modal-close-btn" data-modal-close="welcomeScreenModal" style="margin-top: 1.5rem;">Разбрах, да започваме!</button>
+        <section
+          id="profile-panel"
+          class="tab-content"
+          role="tabpanel"
+          aria-labelledby="profile-tab"
+        >
+          <div class="container">
+            <h2>👤 Моят Профил и Цели</h2>
+            <div class="card">
+              <h3>👤 Лични Данни</h3>
+              <ul id="profilePersonalData" class="profile-data-list">
+                <li class="placeholder">Зареждане на лични данни...</li>
+              </ul>
             </div>
-        </div>
-
-        <!-- Extra Meal Entry Modal -->
-        <div id="extraMealEntryModal" class="modal" aria-labelledby="extraMealModalTitle" aria-modal="true" aria-hidden="true">
-            <div class="modal-content">
-                <div id="extraMealFormContainer">
-                    <div class="placeholder-form-loading" style="text-align: center; padding: 2rem;">
-                        <svg class="icon spinner" style="width: 30px; height: 30px;"><use href="#icon-spinner"></use></svg>
-                        <p>Зареждане на формата...</p>
-                    </div>
-                </div>
+            <div class="card">
+              <h3>🎯 Основни Цели</h3>
+              <ul id="profileGoals" class="profile-data-list">
+                <li class="placeholder">Зареждане на целите...</li>
+              </ul>
             </div>
-        </div>
-
-        <!-- Generic Info Modal -->
-        <div id="infoModal" class="modal" role="dialog" aria-labelledby="infoModalTitle" aria-modal="true" aria-hidden="true">
-            <div class="modal-content">
-                <button class="close-button" data-modal-close="infoModal" aria-label="Затвори прозореца">
-                    <svg class="icon" style="width: 1.2em; height: 1.2em;"><use href="#icon-close"></use></svg>
-                </button>
-                <h4 id="infoModalTitle" style="text-align:center;">Информация</h4>
-                <div id="infoModalBody" style="white-space: pre-wrap; text-align: left;">...</div>
-                <button class="button-primary modal-close-btn" data-modal-close="infoModal">Затвори</button>
+            <div class="card">
+              <h3>📋 Ключови Съображения от Въпросника</h3>
+              <div id="profileConsiderations">
+                <p class="placeholder">Зареждане на съображенията...</p>
+              </div>
             </div>
-        </div>
-
-
-        <!-- Achievement Modal -->
-        <div id="achievementModal" class="modal" role="dialog" aria-labelledby="achievementModalTitle" aria-modal="true" aria-hidden="true">
-            <div class="modal-content">
-                <button class="close-button" data-modal-close="achievementModal" aria-label="Затвори прозореца">
-                    <svg class="icon" style="width: 1.2em; height: 1.2em;"><use href="#icon-close"></use></svg>
-                </button>
-                <div id="achievementModalEmoji" class="achievement-emoji" aria-hidden="true"></div>
-                <h3 id="achievementModalTitle" style="text-align:center;">Поздравления!</h3>
-                <div id="achievementModalBody" style="white-space: pre-wrap; text-align: left;"></div>
-                <button class="button-primary modal-close-btn" data-modal-close="achievementModal" style="margin-top: 1.5rem;">Разбрах</button>
+            <div class="card" style="margin-top: var(--space-lg)">
+              <h3>⚙️ Инструменти за Индивидуализация</h3>
+              <button
+                id="planModificationBtn"
+                class="button-secondary"
+                style="width: 100%"
+              >
+                Въведи промени
+              </button>
             </div>
-        </div>
+            <div class="card" style="margin-top: var(--space-lg)">
+              <a href="profile-edit.html" class="button" style="width: 100%"
+                >Редактирай Профила</a
+              >
+            </div>
+          </div>
+        </section>
+        <!-- ======================= END MY PROFILE PANEL ======================== -->
 
-        <!-- Адаптивен Въпросник Modal - АКТУАЛИЗИРАНА СТРУКТУРА за "Hybrid" дизайн -->
-        <div id="adaptiveQuizWrapper" class="modal aq-wrapper-hybrid" role="dialog" aria-labelledby="adaptiveQuizGeneralTitle" aria-modal="true" aria-hidden="true">
-            <div class="modal-content aq-modal-content">
-                <!-- Бутон за затваряне -->
-                <button class="aq-close-btn-hybrid" aria-label="Затваряне" data-modal-close="adaptiveQuizWrapper" type="button">
-                    <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
+        <!-- ======================================================================= -->
+        <!-- ======================== WEEKLY PLAN PANEL ========================== -->
+        <!-- ======================================================================= -->
+        <section
+          id="week-panel"
+          class="tab-content"
+          role="tabpanel"
+          aria-labelledby="week-tab"
+        >
+          <div class="container">
+            <h2>📅 Седмичен План</h2>
+            <div class="table-wrapper">
+              <table id="weeklyPlanTable" aria-label="Седмичен хранителен план">
+                <thead>
+                  <tr>
+                    <th>Ден</th>
+                    <th>Закуска</th>
+                    <th>Междинно 1</th>
+                    <th>Обяд</th>
+                    <th>Междинно 2</th>
+                    <th>Вечеря</th>
+                  </tr>
+                </thead>
+                <tbody id="weeklyPlanTbody">
+                  <tr class="placeholder-row">
+                    <td colspan="6">Зареждане на седмичния план...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- затваря .table-wrapper -->
+          </div>
+          <!-- затваря .container на week-panel -->
+        </section>
+        <!-- затваря week-panel -->
+
+        <!-- ======================================================================= -->
+        <!-- ===================== RECOMMENDATIONS PANEL ========================= -->
+        <!-- ======================================================================= -->
+        <section
+          id="recs-panel"
+          class="tab-content"
+          role="tabpanel"
+          aria-labelledby="recs-tab"
+        >
+          <div class="container">
+            <h2>💡 Препоръки</h2>
+            <div class="recommendation-section">
+              <h3>🍎 Основи на Храненето</h3>
+              <div
+                id="recFoodAllowedCard"
+                class="card collapsible-card tip-card-success"
+              >
+                <h4>✅ Препоръчителни Храни</h4>
+                <div class="collapsible-content">
+                  <div id="recFoodAllowedContent">
+                    <p class="placeholder">Зареждане...</p>
+                  </div>
+                  <div
+                    class="info-note note-base hidden"
+                    data-condition-type="medical"
+                    data-condition-value="хипотиреоидизъм"
+                  >
+                    <svg class="icon prefix-icon">
+                      <use href="#icon-info"></use>
                     </svg>
-                </button>
-
-                <!-- Хедър на въпросника -->
-                <div class="aq-header-hybrid">
-                    <div class="aq-title-section">
-                        <h3 id="adaptiveQuizGeneralTitle" class="aq-main-title-hybrid">Вашият Персонален Чек-ин</h3>
-                        <p id="adaptiveQuizGeneralDescription" class="aq-subtitle-hybrid">Няколко бързи въпроса за по-добър напредък в програмата</p>
+                    <span
+                      ><strong>Забележка (Хипотиреоидизъм):</strong> Обърнете
+                      внимание на храни, богати на селен, цинк и йод. Избягвайте
+                      сурови кръстоцветни в големи количества.</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <div
+                id="recFoodLimitCard"
+                class="card collapsible-card tip-card-critical"
+              >
+                <h4>❌ Храни за ограничаване</h4>
+                <div class="collapsible-content">
+                  <div id="recFoodLimitContent">
+                    <div
+                      id="userAllergiesNote"
+                      class="critical-note note-base hidden"
+                    >
+                      <svg class="icon prefix-icon">
+                        <use href="#icon-warning-triangle"></use>
+                      </svg>
+                      <span
+                        ><strong
+                          >Ваши специфични алергени/непоносимости:</strong
+                        >
+                        <span id="userAllergiesList">Липсват данни</span></span
+                      >
                     </div>
-                    <div class="aq-progress-section">
-                        <div class="aq-progress-info">
-                            <span class="aq-progress-text">Прогрес</span>
-                            <span class="aq-progress-counter">
-                                <span id="currentQuestionNumber">1</span> от <span id="totalQuestionsNumber">5</span>
-                            </span>
-                        </div>
-                        <div class="aq-progress-bar-container-hybrid">
-                            <div class="aq-progress-bar-hybrid" id="quizProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="adaptiveQuizGeneralTitle"></div>
-                        </div>
-                    </div>
+                    <p class="placeholder">Зареждане на общи препоръки...</p>
+                  </div>
                 </div>
-
-                <!-- Контейнер за въпросите -->
-                <div id="quizQuestionContainer" class="aq-question-container-hybrid">
-                    <!-- Темплейт за въпрос -->
-                    <template id="questionTemplate">
-                        <div class="aq-question-card-hybrid">
-                            <div class="aq-question-header">
-                                <div class="aq-question-indicator">
-                                    <span class="aq-question-icon">❓</span>
-                                    <span class="aq-card-question-number-hybrid">
-                                        Въпрос <span class="current-q-num">1</span> от <span class="total-q-num">5</span>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="aq-question-content">
-                                <h4 class="question-text">Текст на въпроса...</h4>
-                                <div class="question-input-area" role="group">
-                                    <!-- Динамично съдържание ще се генерира тук -->
-                                </div>
-                            </div>
-                            <div class="question-validation-message hidden" role="alert" aria-live="polite">
-                                <svg class="icon validation-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                                </svg>
-                                <span class="validation-text">Моля, отговорете на този въпрос</span>
-                            </div>
-                        </div>
-                    </template>
+              </div>
+              <div
+                id="recHydrationCard"
+                class="card collapsible-card tip-card-info"
+              >
+                <h4>💧 Хидратация и Напитки</h4>
+                <div class="collapsible-content">
+                  <div id="recHydrationContent">
+                    <p class="placeholder">Зареждане...</p>
+                  </div>
                 </div>
-
-                <!-- Навигационни бутони -->
-                <div class="aq-navigation-hybrid">
-                    <button id="prevQuestionBtn" class="aq-nav-btn-hybrid aq-btn-secondary hidden" type="button">
-                        <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="15,18 9,12 15,6"></polyline>
-                        </svg>
-                        <span>Назад</span>
-                    </button>
-                    <button id="nextQuestionBtn" class="aq-nav-btn-hybrid aq-btn-primary" type="button">
-                        <span>Напред</span>
-                        <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="9,18 15,12 9,6"></polyline>
-                        </svg>
-                    </button>
-                    <button id="submitQuizBtn" class="aq-nav-btn-hybrid aq-btn-primary hidden" type="button">
-                        <span>Изпрати</span>
-                        <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="20,6 9,17 4,12"></polyline>
-                        </svg>
-                    </button>
+              </div>
+              <div
+                id="recCookingMethodsCard"
+                class="card collapsible-card tip-card-info"
+              >
+                <h4>🍳 Методи на Готвене</h4>
+                <div class="collapsible-content">
+                  <div id="recCookingMethodsContent">
+                    <p class="placeholder">Зареждане...</p>
+                  </div>
                 </div>
-
-                <!-- Състояния за зареждане и грешка -->
-                <div id="quizLoadingIndicator" class="aq-state-overlay-hybrid hidden">
-                    <div class="aq-loading-content">
-                        <div class="aq-spinner-hybrid"></div>
-                        <h4>Подготвяме Вашия чек-ин...</h4>
-                        <p>Моля, изчакайте докато генерираме персонализирани въпроси за Вас.</p>
-                    </div>
-                </div>
-                <div id="quizErrorState" class="aq-state-overlay-hybrid hidden">
-                    <div class="aq-error-content">
-                        <div class="aq-error-icon">
-                            <svg class="icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="8" x2="12" y2="12"></line>
-                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                            </svg>
-                        </div>
-                        <h4>Възникна грешка</h4>
-                        <p>Не успяхме да заредим въпросника. Моля, опитайте отново по-късно.</p>
-                        <button id="closeQuizErrorBtn" class="aq-nav-btn-hybrid aq-btn-secondary" type="button" data-modal-close="adaptiveQuizWrapper">
-                            Затвори
-                        </button>
-                    </div>
-                </div>
+              </div>
             </div>
+            <div class="recommendation-section">
+              <h3>🧠 Поведенчески Стратегии и Нагласа</h3>
+              <div id="recStrategiesContent" class="accordion-group">
+                <div class="card placeholder">
+                  <p>Зареждане на стратегии...</p>
+                </div>
+              </div>
+            </div>
+            <div class="recommendation-section">
+              <h3>💊 Хранителни Добавки</h3>
+              <div
+                id="recSupplementsCard"
+                class="card collapsible-card tip-card-supplement"
+              >
+                <h4>Хранителни Добавки</h4>
+                <div class="collapsible-content">
+                  <div id="recSupplementsContent">
+                    <p class="placeholder">Зареждане...</p>
+                  </div>
+                  <div class="important-note note-base">
+                    <svg class="icon prefix-icon">
+                      <use href="#icon-info"></use>
+                    </svg>
+                    <span
+                      ><strong>Важно:</strong> Винаги се консултирайте с лекар
+                      преди прием на нови хранителни добавки, особено ако имате
+                      съществуващи заболявания или приемате медикаменти.</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="recommendation-section">
+              <h3>📖 Допълнителни насоки</h3>
+              <div id="additionalGuidelines" class="accordion-group">
+                <div class="card placeholder">
+                  <p>Зареждане на насоки...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- =================== END RECOMMENDATIONS PANEL ===================== -->
+      </main>
+      <!-- ======================= END MAIN CONTENT ============================ -->
+
+      <!-- ======================================================================= -->
+      <!-- ========================== MODAL WINDOWS ============================== -->
+      <!-- ======================================================================= -->
+      <!-- Welcome Screen Modal -->
+      <div
+        id="welcomeScreenModal"
+        class="modal"
+        role="dialog"
+        aria-labelledby="welcomeModalTitle"
+        aria-modal="true"
+        aria-hidden="true"
+      >
+        <div class="modal-content">
+          <button
+            class="close-button"
+            data-modal-close="welcomeScreenModal"
+            aria-label="Затвори прозореца"
+          >
+            <svg class="icon" style="width: 1.2em; height: 1.2em">
+              <use href="#icon-close"></use>
+            </svg>
+          </button>
+          <h3 id="welcomeModalTitle" style="text-align: center">
+            Добре дошли в MyBody.Best!
+          </h3>
+          <div id="welcomeModalBody">
+            <p
+              style="text-align: center; font-size: 1.5rem; margin-bottom: 1rem"
+            >
+              🎉
+            </p>
+            <p>
+              Вашият персонализиран план е готов! Разгледайте секциите, за да се
+              запознаете с него.
+            </p>
+            <p>
+              Не забравяйте да попълвате дневния си лог и да следите напредъка
+              си. Успех!
+            </p>
+          </div>
+          <button
+            class="button-primary modal-close-btn"
+            data-modal-close="welcomeScreenModal"
+            style="margin-top: 1.5rem"
+          >
+            Разбрах, да започваме!
+          </button>
         </div>
+      </div>
 
-        <!-- Feedback Modal -->
-        <div id="feedbackModal" class="modal" role="dialog" aria-labelledby="feedbackModalTitle" aria-modal="true" aria-hidden="true">
-            <div class="modal-content">
-                <button class="close-button" data-modal-close="feedbackModal" aria-label="Затвори прозореца">
-                    <svg class="icon" style="width: 1.2em; height: 1.2em;"><use href="#icon-close"></use></svg>
-                </button>
-                <h3 id="feedbackModalTitle" style="text-align:center;">Обратна Връзка</h3>
-                <form id="feedbackForm" aria-labelledby="feedbackModalTitle">
-                    <div>
-                        <label for="feedbackType">Тип на обратната връзка:</label>
-                        <select id="feedbackType" name="feedbackType" required autocomplete="off">
-                            <option value="general">Общо</option>
-                            <option value="bug">Грешка</option>
-                            <option value="suggestion">Предложение</option>
-                            <option value="compliment">Похвала</option>
-                        </select>
-                    </div>
-                    <div style="margin-top: var(--space-md);">
-                        <label for="feedbackMessage">Вашето съобщение:</label>
-                        <textarea id="feedbackMessage" name="feedbackMessage" rows="4" required placeholder="Опишете тук..." aria-label="Текст на обратната връзка"></textarea>
-                    </div>
-                    <div style="margin-top: var(--space-md);">
-                        <label for="feedbackRating">Оценка (по желание):</label>
-                        <select id="feedbackRating" name="feedbackRating" aria-label="Оценка на услугата" autocomplete="off">
-                            <option value="">Без оценка</option>
-                            <option value="5">⭐⭐⭐⭐⭐ (Отлично)</option>
-                            <option value="4">⭐⭐⭐⭐ (Много добре)</option>
-                            <option value="3">⭐⭐⭐ (Добре)</option>
-                            <option value="2">⭐⭐ (Задоволително)</option>
-                            <option value="1">⭐ (Лошо)</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="button-primary" style="margin-top: var(--space-lg); width:100%;">Изпрати</button>
-                </form>
+      <!-- Extra Meal Entry Modal -->
+      <div
+        id="extraMealEntryModal"
+        class="modal"
+        aria-labelledby="extraMealModalTitle"
+        aria-modal="true"
+        aria-hidden="true"
+      >
+        <div class="modal-content">
+          <div id="extraMealFormContainer">
+            <div
+              class="placeholder-form-loading"
+              style="text-align: center; padding: 2rem"
+            >
+              <svg class="icon spinner" style="width: 30px; height: 30px">
+                <use href="#icon-spinner"></use>
+              </svg>
+              <p>Зареждане на формата...</p>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Plan Modification Chat Modal -->
-        <div id="planModChatModal" class="modal" role="dialog" aria-labelledby="planModChatTitle" aria-modal="true" aria-hidden="true">
-            <div class="modal-content plan-mod-chat-content">
-                <div class="plan-mod-chat-header">
-                    <h4 id="planModChatTitle">💬 Промяна на план</h4>
-                    <div class="chat-actions">
-                        <button id="planModChatClear" class="plan-mod-chat-clear" aria-label="Изчисти чата">🗑</button>
-                        <button id="planModChatClose" class="plan-mod-chat-close" aria-label="Затвори чата">
-                            <svg class="icon"><use href="#icon-close"></use></svg>
-                        </button>
-                    </div>
-                </div>
-                <div id="planModChatMessages" class="plan-mod-chat-messages"></div>
-                <div class="plan-mod-chat-input-area">
-                    <textarea id="planModChatInput" placeholder="Вашето съобщение..." rows="2" aria-label="Поле за въвеждане на съобщение"></textarea>
-                    <button id="planModChatSend" aria-label="Изпрати съобщение">
-                        <svg class="icon"><use href="#icon-send"></use></svg>
-                    </button>
-                </div>
-            </div>
+      <!-- Generic Info Modal -->
+      <div
+        id="infoModal"
+        class="modal"
+        role="dialog"
+        aria-labelledby="infoModalTitle"
+        aria-modal="true"
+        aria-hidden="true"
+      >
+        <div class="modal-content">
+          <button
+            class="close-button"
+            data-modal-close="infoModal"
+            aria-label="Затвори прозореца"
+          >
+            <svg class="icon" style="width: 1.2em; height: 1.2em">
+              <use href="#icon-close"></use>
+            </svg>
+          </button>
+          <h4 id="infoModalTitle" style="text-align: center">Информация</h4>
+          <div
+            id="infoModalBody"
+            style="white-space: pre-wrap; text-align: left"
+          >
+            ...
+          </div>
+          <button
+            class="button-primary modal-close-btn"
+            data-modal-close="infoModal"
+          >
+            Затвори
+          </button>
         </div>
-        <!-- ======================= END MODAL WINDOWS =========================== -->
+      </div>
 
-        <!-- ======================================================================= -->
-        <!-- ========================= TOAST NOTIFICATION ========================== -->
-        <!-- ======================================================================= -->
-        <div id="toast" role="alert" aria-live="assertive"></div>
-        <!-- ======================= END TOAST NOTIFICATION ======================== -->
-
-        <!-- ======================================================================= -->
-        <!-- ========================= FLOATING ACTION BUTTONS ===================== -->
-        <!-- ======================================================================= -->
-        <button id="chat-fab" aria-label="Чат с асистент" aria-expanded="false" aria-controls="chat-widget">💬</button>
-        <!-- ======================= END FLOATING ACTION BUTTONS =================== -->
-
-        <!-- ======================================================================= -->
-        <!-- ========================== CHAT ASSISTANT ============================= -->
-        <!-- ======================================================================= -->
-        <div id="chat-widget" class="chat-widget" role="log" aria-live="polite">
-            <div class="chat-header">
-                <h4>💬 Чат с Асистент</h4>
-                <div class="chat-actions">
-                    <button id="chat-clear" class="chat-clear-btn" aria-label="Изчисти чата">🗑</button>
-                    <button id="chat-close" class="chat-close-btn" aria-label="Затвори чата">
-                        <svg class="icon"><use href="#icon-close"></use></svg>
-                    </button>
-                </div>
-            </div>
-            <div id="chat-messages" class="chat-messages">
-                <!-- Messages will be added here by JS -->
-            </div>
-            <div class="chat-input-area">
-                <textarea id="chat-input" placeholder="Вашето съобщение..." rows="2" aria-label="Поле за въвеждане на съобщение в чата"></textarea>
-                <input type="file" id="chat-image" accept="image/*" hidden>
-                <button id="chat-upload" aria-label="Качи изображение">
-                    <svg class="icon"><use href="#icon-upload"></use></svg>
-                </button>
-                <button id="chat-send" aria-label="Изпрати съобщение">
-                    <svg class="icon"><use href="#icon-send"></use></svg>
-                </button>
-            </div>
+      <!-- Achievement Modal -->
+      <div
+        id="achievementModal"
+        class="modal"
+        role="dialog"
+        aria-labelledby="achievementModalTitle"
+        aria-modal="true"
+        aria-hidden="true"
+      >
+        <div class="modal-content">
+          <button
+            class="close-button"
+            data-modal-close="achievementModal"
+            aria-label="Затвори прозореца"
+          >
+            <svg class="icon" style="width: 1.2em; height: 1.2em">
+              <use href="#icon-close"></use>
+            </svg>
+          </button>
+          <div
+            id="achievementModalEmoji"
+            class="achievement-emoji"
+            aria-hidden="true"
+          ></div>
+          <h3 id="achievementModalTitle" style="text-align: center">
+            Поздравления!
+          </h3>
+          <div
+            id="achievementModalBody"
+            style="white-space: pre-wrap; text-align: left"
+          ></div>
+          <button
+            class="button-primary modal-close-btn"
+            data-modal-close="achievementModal"
+            style="margin-top: 1.5rem"
+          >
+            Разбрах
+          </button>
         </div>
-        <!-- ======================= END CHAT ASSISTANT ========================== -->
+      </div>
 
-        <!-- Tooltip for Tracker (initially hidden) -->
-        <div id="tooltip-tracker" class="tooltip-tracker" role="tooltip" aria-hidden="true"></div>
+      <!-- Адаптивен Въпросник Modal - АКТУАЛИЗИРАНА СТРУКТУРА за "Hybrid" дизайн -->
+      <div
+        id="adaptiveQuizWrapper"
+        class="modal aq-wrapper-hybrid"
+        role="dialog"
+        aria-labelledby="adaptiveQuizGeneralTitle"
+        aria-modal="true"
+        aria-hidden="true"
+      >
+        <div class="modal-content aq-modal-content">
+          <!-- Бутон за затваряне -->
+          <button
+            class="aq-close-btn-hybrid"
+            aria-label="Затваряне"
+            data-modal-close="adaptiveQuizWrapper"
+            type="button"
+          >
+            <svg
+              class="icon"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
 
-    </div> <!-- End #appWrapper -->
+          <!-- Хедър на въпросника -->
+          <div class="aq-header-hybrid">
+            <div class="aq-title-section">
+              <h3 id="adaptiveQuizGeneralTitle" class="aq-main-title-hybrid">
+                Вашият Персонален Чек-ин
+              </h3>
+              <p id="adaptiveQuizGeneralDescription" class="aq-subtitle-hybrid">
+                Няколко бързи въпроса за по-добър напредък в програмата
+              </p>
+            </div>
+            <div class="aq-progress-section">
+              <div class="aq-progress-info">
+                <span class="aq-progress-text">Прогрес</span>
+                <span class="aq-progress-counter">
+                  <span id="currentQuestionNumber">1</span> от
+                  <span id="totalQuestionsNumber">5</span>
+                </span>
+              </div>
+              <div class="aq-progress-bar-container-hybrid">
+                <div
+                  class="aq-progress-bar-hybrid"
+                  id="quizProgressBar"
+                  role="progressbar"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                  aria-labelledby="adaptiveQuizGeneralTitle"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Контейнер за въпросите -->
+          <div id="quizQuestionContainer" class="aq-question-container-hybrid">
+            <!-- Темплейт за въпрос -->
+            <template id="questionTemplate">
+              <div class="aq-question-card-hybrid">
+                <div class="aq-question-header">
+                  <div class="aq-question-indicator">
+                    <span class="aq-question-icon">❓</span>
+                    <span class="aq-card-question-number-hybrid">
+                      Въпрос <span class="current-q-num">1</span> от
+                      <span class="total-q-num">5</span>
+                    </span>
+                  </div>
+                </div>
+                <div class="aq-question-content">
+                  <h4 class="question-text">Текст на въпроса...</h4>
+                  <div class="question-input-area" role="group">
+                    <!-- Динамично съдържание ще се генерира тук -->
+                  </div>
+                </div>
+                <div
+                  class="question-validation-message hidden"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  <svg
+                    class="icon validation-icon"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                  <span class="validation-text"
+                    >Моля, отговорете на този въпрос</span
+                  >
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Навигационни бутони -->
+          <div class="aq-navigation-hybrid">
+            <button
+              id="prevQuestionBtn"
+              class="aq-nav-btn-hybrid aq-btn-secondary hidden"
+              type="button"
+            >
+              <svg
+                class="icon"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="15,18 9,12 15,6"></polyline>
+              </svg>
+              <span>Назад</span>
+            </button>
+            <button
+              id="nextQuestionBtn"
+              class="aq-nav-btn-hybrid aq-btn-primary"
+              type="button"
+            >
+              <span>Напред</span>
+              <svg
+                class="icon"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="9,18 15,12 9,6"></polyline>
+              </svg>
+            </button>
+            <button
+              id="submitQuizBtn"
+              class="aq-nav-btn-hybrid aq-btn-primary hidden"
+              type="button"
+            >
+              <span>Изпрати</span>
+              <svg
+                class="icon"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="20,6 9,17 4,12"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Състояния за зареждане и грешка -->
+          <div id="quizLoadingIndicator" class="aq-state-overlay-hybrid hidden">
+            <div class="aq-loading-content">
+              <div class="aq-spinner-hybrid"></div>
+              <h4>Подготвяме Вашия чек-ин...</h4>
+              <p>
+                Моля, изчакайте докато генерираме персонализирани въпроси за
+                Вас.
+              </p>
+            </div>
+          </div>
+          <div id="quizErrorState" class="aq-state-overlay-hybrid hidden">
+            <div class="aq-error-content">
+              <div class="aq-error-icon">
+                <svg
+                  class="icon"
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              <h4>Възникна грешка</h4>
+              <p>
+                Не успяхме да заредим въпросника. Моля, опитайте отново
+                по-късно.
+              </p>
+              <button
+                id="closeQuizErrorBtn"
+                class="aq-nav-btn-hybrid aq-btn-secondary"
+                type="button"
+                data-modal-close="adaptiveQuizWrapper"
+              >
+                Затвори
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feedback Modal -->
+      <div
+        id="feedbackModal"
+        class="modal"
+        role="dialog"
+        aria-labelledby="feedbackModalTitle"
+        aria-modal="true"
+        aria-hidden="true"
+      >
+        <div class="modal-content">
+          <button
+            class="close-button"
+            data-modal-close="feedbackModal"
+            aria-label="Затвори прозореца"
+          >
+            <svg class="icon" style="width: 1.2em; height: 1.2em">
+              <use href="#icon-close"></use>
+            </svg>
+          </button>
+          <h3 id="feedbackModalTitle" style="text-align: center">
+            Обратна Връзка
+          </h3>
+          <form id="feedbackForm" aria-labelledby="feedbackModalTitle">
+            <div>
+              <label for="feedbackType">Тип на обратната връзка:</label>
+              <select
+                id="feedbackType"
+                name="feedbackType"
+                required
+                autocomplete="off"
+              >
+                <option value="general">Общо</option>
+                <option value="bug">Грешка</option>
+                <option value="suggestion">Предложение</option>
+                <option value="compliment">Похвала</option>
+              </select>
+            </div>
+            <div style="margin-top: var(--space-md)">
+              <label for="feedbackMessage">Вашето съобщение:</label>
+              <textarea
+                id="feedbackMessage"
+                name="feedbackMessage"
+                rows="4"
+                required
+                placeholder="Опишете тук..."
+                aria-label="Текст на обратната връзка"
+              ></textarea>
+            </div>
+            <div style="margin-top: var(--space-md)">
+              <label for="feedbackRating">Оценка (по желание):</label>
+              <select
+                id="feedbackRating"
+                name="feedbackRating"
+                aria-label="Оценка на услугата"
+                autocomplete="off"
+              >
+                <option value="">Без оценка</option>
+                <option value="5">⭐⭐⭐⭐⭐ (Отлично)</option>
+                <option value="4">⭐⭐⭐⭐ (Много добре)</option>
+                <option value="3">⭐⭐⭐ (Добре)</option>
+                <option value="2">⭐⭐ (Задоволително)</option>
+                <option value="1">⭐ (Лошо)</option>
+              </select>
+            </div>
+            <button
+              type="submit"
+              class="button-primary"
+              style="margin-top: var(--space-lg); width: 100%"
+            >
+              Изпрати
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Plan Modification Chat Modal -->
+      <div
+        id="planModChatModal"
+        class="modal"
+        role="dialog"
+        aria-labelledby="planModChatTitle"
+        aria-modal="true"
+        aria-hidden="true"
+      >
+        <div class="modal-content plan-mod-chat-content">
+          <div class="plan-mod-chat-header">
+            <h4 id="planModChatTitle">💬 Промяна на план</h4>
+            <div class="chat-actions">
+              <button
+                id="planModChatClear"
+                class="plan-mod-chat-clear"
+                aria-label="Изчисти чата"
+              >
+                🗑
+              </button>
+              <button
+                id="planModChatClose"
+                class="plan-mod-chat-close"
+                aria-label="Затвори чата"
+              >
+                <svg class="icon"><use href="#icon-close"></use></svg>
+              </button>
+            </div>
+          </div>
+          <div id="planModChatMessages" class="plan-mod-chat-messages"></div>
+          <div class="plan-mod-chat-input-area">
+            <textarea
+              id="planModChatInput"
+              placeholder="Вашето съобщение..."
+              rows="2"
+              aria-label="Поле за въвеждане на съобщение"
+            ></textarea>
+            <button id="planModChatSend" aria-label="Изпрати съобщение">
+              <svg class="icon"><use href="#icon-send"></use></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- ======================= END MODAL WINDOWS =========================== -->
+
+      <!-- ======================================================================= -->
+      <!-- ========================= TOAST NOTIFICATION ========================== -->
+      <!-- ======================================================================= -->
+      <div id="toast" role="alert" aria-live="assertive"></div>
+      <!-- ======================= END TOAST NOTIFICATION ======================== -->
+
+      <!-- ======================================================================= -->
+      <!-- ========================= FLOATING ACTION BUTTONS ===================== -->
+      <!-- ======================================================================= -->
+      <button
+        id="chat-fab"
+        aria-label="Чат с асистент"
+        aria-expanded="false"
+        aria-controls="chat-widget"
+      >
+        💬
+      </button>
+      <!-- ======================= END FLOATING ACTION BUTTONS =================== -->
+
+      <!-- ======================================================================= -->
+      <!-- ========================== CHAT ASSISTANT ============================= -->
+      <!-- ======================================================================= -->
+      <div id="chat-widget" class="chat-widget" role="log" aria-live="polite">
+        <div class="chat-header">
+          <h4>💬 Чат с Асистент</h4>
+          <div class="chat-actions">
+            <button
+              id="chat-clear"
+              class="chat-clear-btn"
+              aria-label="Изчисти чата"
+            >
+              🗑
+            </button>
+            <button
+              id="chat-close"
+              class="chat-close-btn"
+              aria-label="Затвори чата"
+            >
+              <svg class="icon"><use href="#icon-close"></use></svg>
+            </button>
+          </div>
+        </div>
+        <div id="chat-messages" class="chat-messages">
+          <!-- Messages will be added here by JS -->
+        </div>
+        <div class="chat-input-area">
+          <textarea
+            id="chat-input"
+            placeholder="Вашето съобщение..."
+            rows="2"
+            aria-label="Поле за въвеждане на съобщение в чата"
+          ></textarea>
+          <input type="file" id="chat-image" accept="image/*" hidden />
+          <button id="chat-upload" aria-label="Качи изображение">
+            <svg class="icon"><use href="#icon-upload"></use></svg>
+          </button>
+          <button id="chat-send" aria-label="Изпрати съобщение">
+            <svg class="icon"><use href="#icon-send"></use></svg>
+          </button>
+        </div>
+      </div>
+      <!-- ======================= END CHAT ASSISTANT ========================== -->
+
+      <!-- Tooltip for Tracker (initially hidden) -->
+      <div
+        id="tooltip-tracker"
+        class="tooltip-tracker"
+        role="tooltip"
+        aria-hidden="true"
+      ></div>
+    </div>
+    <!-- End #appWrapper -->
 
     <!-- Коригирана JavaScript Връзка -->
     <script type="module" src="js/app.js" defer></script>
     <script type="module" src="js/planModChat.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-</body>
+  </body>
 </html>

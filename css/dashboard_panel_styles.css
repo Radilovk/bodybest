@@ -21,9 +21,9 @@
   justify-content: center; gap: var(--space-xs);
   margin-top: var(--space-xs); 
 }
-.index-card .progress-bar-container { 
-    width: 80%; 
-    margin: var(--space-sm) auto; 
+.index-card .progress-bar-container {
+  width: 100%;
+  margin: var(--space-sm) auto;
 }
 .progress-bar {
   background: var(--progress-gradient); border-radius: var(--progress-bar-radius);
