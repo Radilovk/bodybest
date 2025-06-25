@@ -88,6 +88,10 @@ const testImageBtn = document.getElementById('testImageModel');
 const emailSettingsForm = document.getElementById('emailSettingsForm');
 const welcomeEmailSubjectInput = document.getElementById('welcomeEmailSubject');
 const welcomeEmailBodyInput = document.getElementById('welcomeEmailBody');
+const testEmailForm = document.getElementById('testEmailForm');
+const testEmailToInput = document.getElementById('testEmailTo');
+const testEmailSubjectInput = document.getElementById('testEmailSubject');
+const testEmailBodyInput = document.getElementById('testEmailBody');
 const clientNameHeading = document.getElementById('clientName');
 const closeProfileBtn = document.getElementById('closeProfile');
 const notificationsList = document.getElementById('notificationsList');
@@ -1195,6 +1199,29 @@ async function saveEmailSettings() {
     }
 }
 
+async function sendTestEmail() {
+    if (!testEmailForm) return;
+    const to = testEmailToInput ? testEmailToInput.value.trim() : '';
+    const subject = testEmailSubjectInput ? testEmailSubjectInput.value.trim() : '';
+    const body = testEmailBodyInput ? testEmailBodyInput.value.trim() : '';
+    try {
+        const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
+        const headers = { 'Content-Type': 'application/json' };
+        if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+        const resp = await fetch(apiEndpoints.sendTestEmail, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ to, subject, body })
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
+        alert('Имейлът е изпратен успешно.');
+    } catch (err) {
+        console.error('Error sending test email:', err);
+        alert(err.message || 'Грешка при изпращане на имейла.');
+    }
+}
+
 async function loadAiPresets() {
     if (!presetSelect) return;
     try {
@@ -1372,6 +1399,13 @@ if (emailSettingsForm) {
     });
 }
 
+if (testEmailForm) {
+    testEmailForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await sendTestEmail();
+    });
+}
+
 export {
     allClients,
     loadClients,
@@ -1379,5 +1413,6 @@ export {
     showNotificationDot,
     checkForNotifications,
     showClient,
-    unreadClients
+    unreadClients,
+    sendTestEmail
 };
