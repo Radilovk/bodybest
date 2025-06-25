@@ -112,6 +112,14 @@ try again.
 
 След успешната инсталация можете отново да стартирате `npm run dev`.
 
+If the error persists, be sure to run TypeScript with this configuration:
+
+```bash
+npx tsc --project tsconfig.json
+# or
+npx ts-node --project tsconfig.json worker.js
+```
+
 ### Generate Documentation
 
 Create API documentation using Typedoc:
