@@ -472,6 +472,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `POST /api/saveAiPreset` – съхранява нов пресет или обновява съществуващ.
 - `POST /api/testAiModel` – проверява връзката с конкретен AI модел.
 - `POST /api/analyzeImage` – анализира качено изображение и връща резултат.
+- `POST /api/sendTestEmail` – изпраща тестов имейл. Изисква администраторски токен.
 
   ```bash
   curl -X POST https://<your-domain>/api/testAiModel \
@@ -483,6 +484,13 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
   Възможен е отговор **HTTP 500**, ако името на модела е невалидно или липсват
   необходимите Cloudflare AI секрети. Имената на моделите трябва да са във
   формата `@cf/...` и да съвпадат с наличните модели в Cloudflare.
+
+  ```bash
+  curl -X POST https://<your-domain>/api/sendTestEmail \
+    -H "Authorization: Bearer <WORKER_ADMIN_TOKEN>" \
+    -H "Content-Type: application/json" \
+    --data '{"recipient":"user@example.com","subject":"Test","body":"Hello"}'
+  ```
 - **Дебъг логове** – при изпращане на заглавие `X-Debug: 1` към който и да е API
 ендпойнт, worker-ът записва в конзолата кратка информация за заявката.
 
