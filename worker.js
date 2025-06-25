@@ -11,6 +11,7 @@
 // - Попълнени липсващи части от предходни версии.
 // - Запазени всички предходни функционалности.
 
+import { sendWelcomeEmail } from './mailer.js'
 // ------------- START BLOCK: GlobalConstantsAndBindings -------------
 const PHP_FILE_MANAGER_API_URL_SECRET_NAME = 'тут_ваш_php_api_url_secret_name';
 const PHP_API_STATIC_TOKEN_SECRET_NAME = 'тут_ваш_php_api_token_secret_name';
@@ -177,6 +178,8 @@ export default {
                 responseBody = await handleAnalyzeImageRequest(request, env);
             } else if (method === 'GET' && path === '/api/listClients') {
                 responseBody = await handleListClientsRequest(request, env);
+            } else if (method === 'GET' && path === '/api/getEmailStats') {
+                responseBody = await handleGetEmailStatsRequest(request, env);
             } else if (method === 'POST' && path === '/api/addAdminQuery') {
                 responseBody = await handleAddAdminQueryRequest(request, env);
             } else if (method === 'GET' && path === '/api/getAdminQueries') {
@@ -413,6 +416,12 @@ async function handleRegisterRequest(request, env) {
         const phpApiResult = await phpApiResponse.json(); if (!phpApiResult.message || !phpApiResult.file) { console.warn(`REGISTER_INFO (${userId}): PHP API unexpected success response for POST:`, phpApiResult); } else { console.log(`REGISTER_SUCCESS (${userId}): PHP API: Credential file created successfully for ${userId}:`, phpApiResult); }
         await env.USER_METADATA_KV.put(`email_to_uuid_${trimmedEmail}`, userId);
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
+        try {
+            await sendWelcomeEmail(trimmedEmail, trimmedEmail.split('@')[0]);
+            await env.USER_METADATA_KV.put(`welcome_email_ts_${userId}`, Date.now().toString());
+        } catch (e) {
+            console.error(`Failed to send welcome email for ${userId}:`, e);
+        }
         return { success: true, message: 'Регистрацията успешна!' };
      } catch (error) { console.error('Error in handleRegisterRequest:', error.message, error.stack); let userMessage = 'Вътрешна грешка при регистрация.'; if (error.message.includes('Failed to fetch')) userMessage = 'Грешка при свързване със сървъра.'; else if (error instanceof SyntaxError) userMessage = 'Грешка в отговора от сървъра.'; return { success: false, message: userMessage, statusHint: 500 }; }
 }
@@ -1468,6 +1477,27 @@ async function handleListClientsRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleListClientsRequest -------------
+
+// ------------- START FUNCTION: handleGetEmailStatsRequest -------------
+async function handleGetEmailStatsRequest(request, env) {
+    try {
+        const list = await env.USER_METADATA_KV.list({ prefix: 'welcome_email_ts_' });
+        const recent = [];
+        for (const key of list.keys.slice(0, 10)) {
+            const tsStr = await env.USER_METADATA_KV.get(key.name);
+            recent.push({
+                userId: key.name.replace('welcome_email_ts_', ''),
+                timestamp: Number(tsStr) || 0
+            });
+        }
+        recent.sort((a, b) => b.timestamp - a.timestamp);
+        return { success: true, total: list.keys.length, recent };
+    } catch (error) {
+        console.error('Error in handleGetEmailStatsRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при зареждане на статистиката.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleGetEmailStatsRequest -------------
 
 // ------------- START FUNCTION: handleAddAdminQueryRequest -------------
 async function handleAddAdminQueryRequest(request, env) {
@@ -3614,4 +3644,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, handleRegisterRequest, handleGetEmailStatsRequest };
