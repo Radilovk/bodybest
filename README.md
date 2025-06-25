@@ -135,7 +135,7 @@ the page.
 
 ## Deployment to Cloudflare
 
-A GitHub Action workflow at `.github/workflows/deploy.yml` automatically deploys the worker when you push to `main` or open a pull request that modifies `worker.js`. It runs `wrangler deploy` using the secret `CF_API_TOKEN` for authentication.
+A GitHub Action workflow at `.github/workflows/deploy.yml` automatically deploys the worker when you push to `main` or open a pull request. It runs `wrangler deploy` using the secret `CF_API_TOKEN` for authentication. Pull requests from forks cannot access the secrets, so those builds will skip deployment.
 
 To set the token:
 
@@ -148,6 +148,7 @@ The worker configuration is stored in `wrangler.toml`. Update `account_id` with 
 compatibility_date = "2025-06-20"
 ```
 Препоръчително е периодично (например веднъж годишно) да обновявате тази дата до последна валидна стойност, за да се възползва worker-ът от новите възможности на Cloudflare.
+В workflow-а има стъпка `update-compat-date`, която автоматично я коригира, ако е зададена по-нова от днешната.
 
 Пример за промяна в `wrangler.toml`:
 

@@ -4,8 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    paths:
-      - 'worker.js'
+    branches: [ '*' ]
   workflow_dispatch:
 
 jobs:
@@ -20,6 +19,12 @@ jobs:
           env:
             USER_METADATA_KV_ID: ${{ secrets.USER_METADATA_KV_ID }}
             USER_METADATA_KV_PREVIEW_ID: ${{ secrets.USER_METADATA_KV_PREVIEW_ID }}
+        - name: Update compatibility date
+          run: node scripts/update-compat-date.js
+        - name: Check required secrets
+          if: ${{ !secrets.CF_API_TOKEN }}
+          run: |
+            echo "Missing CF_API_TOKEN secret. Deployment cannot continue." && exit 1
         - name: Validate configuration
           run: node scripts/validate-wrangler.js
           env:
