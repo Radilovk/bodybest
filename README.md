@@ -86,16 +86,6 @@ Include the common registration logic by importing `setupRegistration`:
 </script>
 ```
 
-### Email Notifications
-
-Automatic welcome emails are sent after a successful registration. The function
-`sendWelcomeEmail` in `mailer.js` uses `nodemailer` to deliver the message.
-Set the environment variable `EMAIL_PASSWORD` with the mailbox password before
-running the server or tests. When `handleRegisterRequest` completes, it triggers
-`sendWelcomeEmail` and records the timestamp under `welcome_email_ts_<userId>`
-in KV storage. The admin panel can display these stats via the new endpoint
-`/api/getEmailStats`.
-
 
 ### Отстраняване на проблеми
 
