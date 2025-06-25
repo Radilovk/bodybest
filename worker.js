@@ -420,6 +420,14 @@ async function handleRegisterRequest(request, env) {
         const phpApiResult = await phpApiResponse.json(); if (!phpApiResult.message || !phpApiResult.file) { console.warn(`REGISTER_INFO (${userId}): PHP API unexpected success response for POST:`, phpApiResult); } else { console.log(`REGISTER_SUCCESS (${userId}): PHP API: Credential file created successfully for ${userId}:`, phpApiResult); }
         await env.USER_METADATA_KV.put(`email_to_uuid_${trimmedEmail}`, userId);
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
+
+        try {
+            const template = await env.RESOURCES_KV.get('registration_email_html') || '';
+            await sendWelcomeEmail(trimmedEmail, trimmedEmail, template, env);
+        } catch (err) {
+            console.error(`REGISTER_EMAIL_ERROR (${userId}):`, err.message);
+        }
+
         return { success: true, message: 'Регистрацията успешна!' };
      } catch (error) { console.error('Error in handleRegisterRequest:', error.message, error.stack); let userMessage = 'Вътрешна грешка при регистрация.'; if (error.message.includes('Failed to fetch')) userMessage = 'Грешка при свързване със сървъра.'; else if (error instanceof SyntaxError) userMessage = 'Грешка в отговора от сървъра.'; return { success: false, message: userMessage, statusHint: 500 }; }
 }

@@ -86,6 +86,10 @@ Include the common registration logic by importing `setupRegistration`:
 </script>
 ```
 
+Successful registration triggers a welcome email. The worker loads the
+`registration_email_html` template from `RESOURCES_KV` and passes it to
+`sendWelcomeEmail`.
+
 
 ### Отстраняване на проблеми
 
@@ -315,6 +319,9 @@ wrangler kv key put model_image_analysis "@cf/llava-hf/llava-v1.6b" --binding=RE
 Оттам можете да редактирате HTML текста на писмото, изпращано при нова регистрация.
 Наличен е бутон **Изпрати тест**, който използва `/api/sendTestEmail` за изпращане
 на пробен имейл до посочен адрес.
+
+При реална регистрация същият шаблон се взема от `RESOURCES_KV` и се изпраща
+чрез `sendWelcomeEmail` на новия потребител.
 
 При деплой на worker-а задайте секрет `SENDGRID_API_KEY`, който съдържа вашия
 SendGrid API ключ. Той се използва от функцията `sendWelcomeEmail` за
