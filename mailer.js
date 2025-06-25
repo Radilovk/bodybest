@@ -65,17 +65,22 @@ async function getEmailTemplate() {
     }
 }
 
+export async function sendEmail(toEmail, subject, html) {
+    await transporter.sendMail({
+        from: 'info@mybody.best',
+        to: toEmail,
+        subject,
+        html
+    })
+}
+
 export async function sendWelcomeEmail(toEmail, userName) {
     const tpl = await getEmailTemplate()
     const html = tpl.body.replace(/{{\s*name\s*}}/g, userName)
     try {
-        await transporter.sendMail({
-            from: 'info@mybody.best',
-            to: toEmail,
-            subject: tpl.subject,
-            html
-        })
+        await sendEmail(toEmail, tpl.subject, html)
     } catch (error) {
         console.error('Failed to send welcome email:', error)
     }
 }
+
