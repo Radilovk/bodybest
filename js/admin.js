@@ -34,8 +34,6 @@ const clientRepliesList = document.getElementById('clientRepliesList');
 const feedbackList = document.getElementById('feedbackList');
 const statsOutput = document.getElementById('statsOutput');
 const showStatsBtn = document.getElementById('showStats');
-const emailStatsOutput = document.getElementById('emailStatsOutput');
-const showEmailStatsBtn = document.getElementById('showEmailStats');
 const sortOrderSelect = document.getElementById('sortOrder');
 const initialAnswersPre = document.getElementById('initialAnswers');
 const planMenuPre = document.getElementById('planMenu');
@@ -499,22 +497,6 @@ async function loadClients() {
     }
 }
 
-async function loadEmailStats() {
-    try {
-        const resp = await fetch(apiEndpoints.getEmailStats);
-        const data = await resp.json();
-        if (resp.ok && data.success) {
-            if (emailStatsOutput)
-                emailStatsOutput.textContent = JSON.stringify(data, null, 2);
-        } else if (emailStatsOutput) {
-            emailStatsOutput.textContent = 'Грешка при зареждане.';
-        }
-    } catch (err) {
-        console.error('Error loading email stats:', err);
-        if (emailStatsOutput) emailStatsOutput.textContent = 'Грешка при връзка.';
-    }
-}
-
 function renderClients() {
     const search = (clientSearch.value || '').toLowerCase();
     const filter = statusFilter.value;
@@ -719,14 +701,6 @@ showStatsBtn.addEventListener('click', () => {
     const sec = document.getElementById('statsSection');
     sec.classList.toggle('hidden');
 });
-
-if (showEmailStatsBtn) {
-    showEmailStatsBtn.addEventListener('click', async () => {
-        const sec = document.getElementById('emailStatsSection');
-        sec.classList.toggle('hidden');
-        if (!sec.classList.contains('hidden')) await loadEmailStats();
-    });
-}
 
 if (toggleWeightChartBtn) {
     toggleWeightChartBtn.addEventListener('click', () => {
@@ -1347,7 +1321,6 @@ if (aiConfigForm) {
 export {
     allClients,
     loadClients,
-    loadEmailStats,
     renderClients,
     showNotificationDot,
     checkForNotifications,
