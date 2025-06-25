@@ -18,13 +18,14 @@ const transporter = nodemailer.createTransport({
  * @param {string} toEmail recipient address
  * @param {string} userName user name for greeting
  */
-export async function sendWelcomeEmail(toEmail, userName) {
-    const html = `<h2>Здравей, ${userName} 👋</h2>
+export async function sendWelcomeEmail(toEmail, userName, htmlTemplate) {
+    const defaultHtml = `<h2>Здравей, ${userName} 👋</h2>
 <p>Благодарим ти, че се регистрира в <strong>MyBody</strong> – твоето пространство за здраве, балансирано хранене и осъзнат живот.</p>
 <p>Нашата мисия е да ти помогнем да постигнеш целите си с яснота, подкрепа и научно обоснован подход.</p>
 <p>Очаквай още полезни ресурси и съвети съвсем скоро.</p>
 <p>Бъди здрав и вдъхновен!</p>
 <p>– Екипът на MyBody</p>`
+    const html = htmlTemplate ? htmlTemplate.replace(/%%USER_NAME%%/g, userName) : defaultHtml
 
     try {
         await transporter.sendMail({
