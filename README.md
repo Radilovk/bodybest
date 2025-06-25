@@ -105,6 +105,10 @@ in KV storage. The admin panel can display these stats via the new endpoint
 npm install
 ```
 
+If you see an error such as **"Cannot find module './mailer.js'"**, most often it
+means the Node dependencies haven't been installed. Run `npm install` and then
+try again.
+
 
 След успешната инсталация можете отново да стартирате `npm run dev`.
 
