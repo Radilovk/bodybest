@@ -28,6 +28,9 @@ import * as chatUpload from './chat.js';
 import { computeSwipeTargetIndex } from './swipeUtils.js';
 import { handleAchievementClick } from './achievements.js';
 
+// Guard to prevent attaching static listeners multiple times
+let staticListenersSet = false;
+
 let touchStartX = null;
 const SWIPE_THRESHOLD = 50;
 
@@ -56,6 +59,10 @@ export function handleAdaptiveQuizBtnClick(triggerFn = _handleTriggerAdaptiveQui
 
 
 export function setupStaticEventListeners() {
+    if (staticListenersSet) {
+        console.warn('setupStaticEventListeners called more than once');
+        return;
+    }
     if (selectors.menuToggle) selectors.menuToggle.addEventListener('click', toggleMenu);
     if (selectors.menuClose) selectors.menuClose.addEventListener('click', closeMenu);
     if (selectors.menuOverlay) selectors.menuOverlay.addEventListener('click', closeMenu);
@@ -224,6 +231,8 @@ export function setupStaticEventListeners() {
             closeModal('adaptiveQuizWrapper');
         }
     });
+
+    staticListenersSet = true;
 }
 
 export function initializeCollapsibleCards() {
