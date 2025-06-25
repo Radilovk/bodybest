@@ -880,6 +880,32 @@ async function generatePraise() {
     }
 }
 
+async function sendTestEmail(email) {
+    if (!email) {
+        alert('Въведете имейл адрес.');
+        return;
+    }
+    try {
+        const adminToken = adminTokenInput ? adminTokenInput.value.trim() : (sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '');
+        const headers = { 'Content-Type': 'application/json' };
+        if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+        const resp = await fetch(apiEndpoints.sendTestEmail, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ email })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.success) {
+            alert('Тестовият имейл е изпратен.');
+        } else {
+            alert(data.message || 'Грешка при изпращане на имейла.');
+        }
+    } catch (err) {
+        console.error('Error sending test email:', err);
+        alert('Грешка при изпращане на имейла.');
+    }
+}
+
 if (generatePraiseBtn) {
     generatePraiseBtn.addEventListener('click', generatePraise);
 }
@@ -1379,5 +1405,6 @@ export {
     showNotificationDot,
     checkForNotifications,
     showClient,
-    unreadClients
+    unreadClients,
+    sendTestEmail
 };

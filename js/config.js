@@ -43,6 +43,7 @@ export const apiEndpoints = {
     getAiPreset: `${workerBaseUrl}/api/getAiPreset`,
     saveAiPreset: `${workerBaseUrl}/api/saveAiPreset`,
     testAiModel: `${workerBaseUrl}/api/testAiModel`,
+    sendTestEmail: `${workerBaseUrl}/api/sendTestEmail`,
     analyzeImage: `${workerBaseUrl}/api/analyzeImage`
 };
 
