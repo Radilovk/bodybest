@@ -508,8 +508,17 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
   }
   ```
 
-  Полето `status` обозначава текущия етап на обработка (напр. `pending`, `done`),
-  а `createdTimestamp` съдържа UNIX време на създаване в милисекунди.
+Полето `status` обозначава текущия етап на обработка (напр. `pending`, `done`),
+а `createdTimestamp` съдържа UNIX време на създаване в милисекунди.
+
+## Email Notifications
+
+The `mailer.js` script relies on `nodemailer` to send welcome emails. This
+library requires a full Node.js environment, so it is **not** executed inside the
+Cloudflare Worker. If you need to deliver notifications, trigger `node
+mailer.js` separately or call an external SMTP service. For production consider
+Cloudflare [MailChannels](https://developers.cloudflare.com/email-routing/mailchannels/)
+or another hosted provider.
 
 ## Cron configuration
 
