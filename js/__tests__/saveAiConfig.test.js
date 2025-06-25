@@ -101,7 +101,9 @@ test('saveAiConfig sends updates payload with Authorization header', async () =>
       mod_token_limit: '3',
       mod_temperature: '0.3',
       image_token_limit: '4',
-      image_temperature: '0.4'
+      image_temperature: '0.4',
+      welcome_email_subject: '',
+      welcome_email_body: ''
     }
   });
   expect(sessionStorage.getItem('adminToken')).toBe('newSecret');

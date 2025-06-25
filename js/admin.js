@@ -85,6 +85,9 @@ const testPlanBtn = document.getElementById('testPlanModel');
 const testChatBtn = document.getElementById('testChatModel');
 const testModBtn = document.getElementById('testModModel');
 const testImageBtn = document.getElementById('testImageModel');
+const emailSettingsForm = document.getElementById('emailSettingsForm');
+const welcomeEmailSubjectInput = document.getElementById('welcomeEmailSubject');
+const welcomeEmailBodyInput = document.getElementById('welcomeEmailBody');
 const clientNameHeading = document.getElementById('clientName');
 const closeProfileBtn = document.getElementById('closeProfile');
 const notificationsList = document.getElementById('notificationsList');
@@ -1083,6 +1086,8 @@ async function loadAiConfig() {
         if (modTemperatureInput) modTemperatureInput.value = cfg.mod_temperature || '';
         if (imageTokensInput) imageTokensInput.value = cfg.image_token_limit || '';
         if (imageTemperatureInput) imageTemperatureInput.value = cfg.image_temperature || '';
+        if (welcomeEmailSubjectInput) welcomeEmailSubjectInput.value = cfg.welcome_email_subject || '';
+        if (welcomeEmailBodyInput) welcomeEmailBodyInput.value = cfg.welcome_email_body || '';
         updateHints(planModelInput, planHints);
         updateHints(chatModelInput, chatHints);
         updateHints(modModelInput, modHints);
@@ -1112,7 +1117,9 @@ async function saveAiConfig() {
             mod_token_limit: modTokensInput ? modTokensInput.value.trim() : '',
             mod_temperature: modTemperatureInput ? modTemperatureInput.value.trim() : '',
             image_token_limit: imageTokensInput ? imageTokensInput.value.trim() : '',
-            image_temperature: imageTemperatureInput ? imageTemperatureInput.value.trim() : ''
+            image_temperature: imageTemperatureInput ? imageTemperatureInput.value.trim() : '',
+            welcome_email_subject: welcomeEmailSubjectInput ? welcomeEmailSubjectInput.value.trim() : '',
+            welcome_email_body: welcomeEmailBodyInput ? welcomeEmailBodyInput.value.trim() : ''
         }
     };
     try {
@@ -1146,6 +1153,45 @@ async function saveAiConfig() {
         } else {
             alert('Грешка при записване на AI конфигурацията.');
         }
+    }
+}
+
+async function loadEmailSettings() {
+    try {
+        const resp = await fetch(apiEndpoints.getAiConfig)
+        const data = await resp.json()
+        if (!resp.ok || !data.success) throw new Error(data.message || 'Error')
+        const cfg = data.config || {}
+        if (welcomeEmailSubjectInput) welcomeEmailSubjectInput.value = cfg.welcome_email_subject || ''
+        if (welcomeEmailBodyInput) welcomeEmailBodyInput.value = cfg.welcome_email_body || ''
+    } catch (err) {
+        console.error('Error loading email settings:', err)
+    }
+}
+
+async function saveEmailSettings() {
+    if (!emailSettingsForm) return
+    const payload = {
+        updates: {
+            welcome_email_subject: welcomeEmailSubjectInput ? welcomeEmailSubjectInput.value.trim() : '',
+            welcome_email_body: welcomeEmailBodyInput ? welcomeEmailBodyInput.value.trim() : ''
+        }
+    }
+    try {
+        const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || ''
+        const headers = { 'Content-Type': 'application/json' }
+        if (adminToken) headers.Authorization = `Bearer ${adminToken}`
+        const resp = await fetch(apiEndpoints.setAiConfig, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload)
+        })
+        const data = await resp.json()
+        if (!resp.ok || !data.success) throw new Error(data.message || 'Error')
+        alert('Имейл настройките са записани.')
+    } catch (err) {
+        console.error('Error saving email settings:', err)
+        alert('Грешка при запис на имейл настройките.')
     }
 }
 
@@ -1296,6 +1342,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadAdminToken();
         await loadAiConfig();
         await loadAiPresets();
+        if (emailSettingsForm) await loadEmailSettings();
         setInterval(checkForNotifications, 60000);
         setInterval(loadNotifications, 60000);
     })();
@@ -1316,6 +1363,13 @@ if (aiConfigForm) {
     chatModelInput?.addEventListener('input', () => updateHints(chatModelInput, chatHints));
     modModelInput?.addEventListener('input', () => updateHints(modModelInput, modHints));
     imageModelInput?.addEventListener('input', () => updateHints(imageModelInput, imageHints));
+}
+
+if (emailSettingsForm) {
+    emailSettingsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await saveEmailSettings();
+    });
 }
 
 export {
