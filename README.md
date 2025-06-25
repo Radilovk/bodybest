@@ -309,6 +309,17 @@ php -r "echo password_hash('yourPassword', PASSWORD_DEFAULT);"
 wrangler kv key put model_image_analysis "@cf/llava-hf/llava-v1.6b" --binding=RESOURCES_KV
 ```
 
+### Редакция на имейл при регистрация
+
+В админ панела има отделна секция **Имейл при регистрация**.
+Оттам можете да редактирате HTML текста на писмото, изпращано при нова регистрация.
+Наличен е бутон **Изпрати тест**, който използва `/api/sendTestEmail` за изпращане
+на пробен имейл до посочен адрес.
+
+При деплой на worker-а задайте секрет `SENDGRID_API_KEY`, който съдържа вашия
+SendGrid API ключ. Той се използва от функцията `sendWelcomeEmail` за
+изпращане на писмата чрез HTTP API.
+
 > **Note**: При по-старите LLaVA модели, например `@cf/llava-hf/llava-1.5-7b-hf`,
 > Cloudflare очаква полетата `prompt` и `image` (data URL) вместо `messages`.
 > Пример за директно извикване през `env.AI.run`:
@@ -454,6 +465,9 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `POST /api/saveAiPreset` – съхранява нов пресет или обновява съществуващ.
 - `POST /api/testAiModel` – проверява връзката с конкретен AI модел.
 - `POST /api/analyzeImage` – анализира качено изображение и връща резултат.
+- `GET /api/getEmailTemplate` – връща HTML шаблона за имейла при регистрация.
+- `POST /api/setEmailTemplate` – записва новия шаблон в `RESOURCES_KV`.
+- `POST /api/sendTestEmail` – изпраща тестово писмо с текущия шаблон.
 
   ```bash
   curl -X POST https://<your-domain>/api/testAiModel \
