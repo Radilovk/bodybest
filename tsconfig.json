@@ -1,10 +1,9 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "module": "nodenext",
+    "module": "esnext",
     "moduleResolution": "nodenext",
-    "allowJs": true,
-    "resolveJsonModule": true
+    "allowJs": true
   },
   "include": ["worker.js", "mailer.js", "js/**/*"]
 }
