@@ -107,6 +107,12 @@ npm run docs
 ```
 The output is placed in the `docs/` folder.
 
+Type-check the source with:
+
+```bash
+npx tsc --noEmit
+```
+
 ### Template Loading
 
 Client pages sometimes fetch HTML snippets at runtime. Templates such as
