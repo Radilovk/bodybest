@@ -1,4 +1,5 @@
 // Cloudflare Worker Script (index.js) - Версия 2.3
+import { sendWelcomeEmail } from './mailer.js'
 // Добавен е режим за дебъг чрез HTTP заглавие `X-Debug: 1`
 // Също така са запазени всички функционалности от предходните версии
 // Включва:
@@ -413,6 +414,13 @@ async function handleRegisterRequest(request, env) {
         const phpApiResult = await phpApiResponse.json(); if (!phpApiResult.message || !phpApiResult.file) { console.warn(`REGISTER_INFO (${userId}): PHP API unexpected success response for POST:`, phpApiResult); } else { console.log(`REGISTER_SUCCESS (${userId}): PHP API: Credential file created successfully for ${userId}:`, phpApiResult); }
         await env.USER_METADATA_KV.put(`email_to_uuid_${trimmedEmail}`, userId);
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
+        let template;
+        try {
+            template = await env.RESOURCES_KV.get('registration_email_template');
+            await sendWelcomeEmail(trimmedEmail, trimmedEmail, template, env);
+        } catch (emailErr) {
+            console.error(`REGISTER_EMAIL_ERROR (${userId}):`, emailErr.message);
+        }
         return { success: true, message: 'Регистрацията успешна!' };
      } catch (error) { console.error('Error in handleRegisterRequest:', error.message, error.stack); let userMessage = 'Вътрешна грешка при регистрация.'; if (error.message.includes('Failed to fetch')) userMessage = 'Грешка при свързване със сървъра.'; else if (error instanceof SyntaxError) userMessage = 'Грешка в отговора от сървъра.'; return { success: false, message: userMessage, statusHint: 500 }; }
 }
@@ -3614,4 +3622,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, handleRegisterRequest };

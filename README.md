@@ -86,6 +86,9 @@ Include the common registration logic by importing `setupRegistration`:
 </script>
 ```
 
+Upon successful registration the worker fetches an HTML template from
+`RESOURCES_KV` and sends a welcome email using `sendWelcomeEmail`.
+
 
 ### Отстраняване на проблеми
 
