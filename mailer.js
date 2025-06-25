@@ -1,7 +1,15 @@
 import nodemailer from 'nodemailer'
 import dotenv from 'dotenv'
+import fs from 'fs/promises'
 
 dotenv.config()
+
+const DEFAULT_SUBJECT = 'Добре дошъл в MyBody!'
+const DEFAULT_BODY = `<h2>Здравей, {{name}} 👋</h2>
+<p>Благодарим ти, че се регистрира в <strong>MyBody</strong> – твоето пространство за здраве, балансирано хранене и осъзнат живот.</p>
+<p>Очаквай още полезни ресурси и съвети съвсем скоро.</p>
+<p>Бъди здрав и вдъхновен!</p>
+<p>– Екипът на MyBody</p>`
 
 const transporter = nodemailer.createTransport({
     host: 'mybody.best',
@@ -18,19 +26,53 @@ const transporter = nodemailer.createTransport({
  * @param {string} toEmail recipient address
  * @param {string} userName user name for greeting
  */
-export async function sendWelcomeEmail(toEmail, userName) {
-    const html = `<h2>Здравей, ${userName} 👋</h2>
-<p>Благодарим ти, че се регистрира в <strong>MyBody</strong> – твоето пространство за здраве, балансирано хранене и осъзнат живот.</p>
-<p>Нашата мисия е да ти помогнем да постигнеш целите си с яснота, подкрепа и научно обоснован подход.</p>
-<p>Очаквай още полезни ресурси и съвети съвсем скоро.</p>
-<p>Бъди здрав и вдъхновен!</p>
-<p>– Екипът на MyBody</p>`
+async function getEmailTemplate() {
+    const envSubject = process.env.WELCOME_EMAIL_SUBJECT
+    const envBody = process.env.WELCOME_EMAIL_BODY
+    if (envSubject || envBody) {
+        return {
+            subject: envSubject || DEFAULT_SUBJECT,
+            body: envBody || DEFAULT_BODY
+        }
+    }
+    const workerUrl = process.env.WORKER_URL
+    if (workerUrl) {
+        try {
+            const resp = await fetch(`${workerUrl}/api/getAiConfig`)
+            const data = await resp.json()
+            if (resp.ok && data.success) {
+                const cfg = data.config || {}
+                if (cfg.welcome_email_subject || cfg.welcome_email_body) {
+                    return {
+                        subject: cfg.welcome_email_subject || DEFAULT_SUBJECT,
+                        body: cfg.welcome_email_body || DEFAULT_BODY
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Failed to fetch email template:', err)
+        }
+    }
+    try {
+        const raw = await fs.readFile('./data/welcomeEmailTemplate.json', 'utf8')
+        const parsed = JSON.parse(raw)
+        return {
+            subject: parsed.subject || DEFAULT_SUBJECT,
+            body: parsed.body || DEFAULT_BODY
+        }
+    } catch {
+        return { subject: DEFAULT_SUBJECT, body: DEFAULT_BODY }
+    }
+}
 
+export async function sendWelcomeEmail(toEmail, userName) {
+    const tpl = await getEmailTemplate()
+    const html = tpl.body.replace(/{{\s*name\s*}}/g, userName)
     try {
         await transporter.sendMail({
             from: 'info@mybody.best',
             to: toEmail,
-            subject: 'Добре дошъл в MyBody!',
+            subject: tpl.subject,
             html
         })
     } catch (error) {
