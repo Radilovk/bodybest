@@ -65,6 +65,13 @@ async function getEmailTemplate() {
     }
 }
 
+/**
+ * Send an email via the configured transporter.
+ * @param {string} toEmail recipient address
+ * @param {string} subject email subject line
+ * @param {string} html email HTML content
+ * @returns {Promise<void>} resolves when the message is sent
+ */
 export async function sendEmail(toEmail, subject, html) {
     await transporter.sendMail({
         from: 'info@mybody.best',
