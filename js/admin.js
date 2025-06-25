@@ -72,10 +72,6 @@ const modTemperatureInput = document.getElementById('modTemperature');
 const imageTokensInput = document.getElementById('imageTokens');
 const imageTemperatureInput = document.getElementById('imageTemperature');
 const imagePromptInput = document.getElementById('imagePrompt');
-const emailTemplateTextarea = document.getElementById('emailTemplate');
-const emailTemplateForm = document.getElementById('emailTemplateForm');
-const testEmailInput = document.getElementById('testEmailAddress');
-const sendTestEmailBtn = document.getElementById('sendTestEmail');
 const planHints = document.getElementById('planHints');
 const chatHints = document.getElementById('chatHints');
 const modHints = document.getElementById('modHints');
@@ -1286,57 +1282,6 @@ async function testAiModel(modelName) {
     }
 }
 
-async function loadEmailTemplate() {
-    if (!emailTemplateTextarea) return;
-    try {
-        const resp = await fetch(apiEndpoints.getEmailTemplate);
-        const data = await resp.json();
-        if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
-        emailTemplateTextarea.value = data.template || '';
-    } catch (err) {
-        console.error('Error loading email template:', err);
-        alert('Грешка при зареждане на шаблона.');
-    }
-}
-
-async function saveEmailTemplate() {
-    if (!emailTemplateTextarea) return;
-    try {
-        const resp = await fetch(apiEndpoints.setEmailTemplate, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ html: emailTemplateTextarea.value.trim() })
-        });
-        const data = await resp.json();
-        if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
-        alert('Шаблонът е запазен.');
-    } catch (err) {
-        console.error('Error saving email template:', err);
-        alert('Грешка при записване на шаблона.');
-    }
-}
-
-async function sendTestEmail() {
-    const to = testEmailInput?.value.trim();
-    if (!to) { alert('Въведете имейл.'); return; }
-    try {
-        const resp = await fetch(apiEndpoints.sendTestEmail, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ to })
-        });
-        const data = await resp.json();
-        if (!resp.ok || !data.success) {
-            alert(data.message || 'Неуспешно изпращане.');
-        } else {
-            alert('Тестовият имейл е изпратен.');
-        }
-    } catch (err) {
-        console.error('Error sending test email:', err);
-        alert('Грешка при изпращане на тестовия имейл.');
-    }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     // Инициализира табовете веднага
     setupTabs();
@@ -1351,7 +1296,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadAdminToken();
         await loadAiConfig();
         await loadAiPresets();
-        await loadEmailTemplate();
         setInterval(checkForNotifications, 60000);
         setInterval(loadNotifications, 60000);
     })();
@@ -1372,14 +1316,6 @@ if (aiConfigForm) {
     chatModelInput?.addEventListener('input', () => updateHints(chatModelInput, chatHints));
     modModelInput?.addEventListener('input', () => updateHints(modModelInput, modHints));
     imageModelInput?.addEventListener('input', () => updateHints(imageModelInput, imageHints));
-}
-
-if (emailTemplateForm) {
-    emailTemplateForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await saveEmailTemplate();
-    });
-    sendTestEmailBtn?.addEventListener('click', sendTestEmail);
 }
 
 export {
