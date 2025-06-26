@@ -24,18 +24,25 @@ async function defaultSendEmail(to, subject, body) {
 }
 /** @type {(to: string, subject: string, body: string) => Promise<void>} */
 let sendEmailFn = defaultSendEmail;
-async function getSendEmail() {
+const MAILER_MODULE_URL_VAR_NAME = 'MAILER_MODULE_URL';
+async function getSendEmail(env) {
     if (sendEmailFn && sendEmailFn !== defaultSendEmail) return sendEmailFn;
+    const specifier = env?.[MAILER_MODULE_URL_VAR_NAME];
+    if (!specifier) {
+        console.warn('MAILER_MODULE_URL not configured; email disabled.');
+        sendEmailFn = defaultSendEmail;
+        return sendEmailFn;
+    }
     try {
-        const mod = await import('./mailer.js');
+        const mod = await import(specifier);
         if (mod && typeof mod.sendEmail === 'function') {
             sendEmailFn = mod.sendEmail;
         } else {
             sendEmailFn = defaultSendEmail;
-            console.warn('mailer.js does not export sendEmail; email disabled.');
+            console.warn('Mailer module missing sendEmail export; email disabled.');
         }
     } catch (err) {
-        console.warn('mailer.js not found; email functionality disabled.');
+        console.warn(`Failed to load mailer from ${specifier}:`, err);
         sendEmailFn = defaultSendEmail;
     }
     return sendEmailFn;
@@ -1730,7 +1737,7 @@ async function handleSendTestEmailRequest(request, env) {
             return { success: false, message: 'Липсват данни.', statusHint: 400 };
         }
 
-        const sendEmail = await getSendEmail();
+        const sendEmail = await getSendEmail(env);
         await sendEmail(recipient, subject, body);
         return { success: true };
     } catch (error) {
