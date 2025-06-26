@@ -112,6 +112,23 @@ npx tsc --project tsconfig.json
 npx ts-node --project tsconfig.json worker.js
 ```
 
+#### Troubleshooting Cloudflare AI
+
+- Run `wrangler secret list` and confirm `CF_AI_TOKEN` is listed.
+- Ensure the token has **Workers AI: Run** permission.
+- Check that `model_image_analysis` points to a valid model:
+
+```bash
+wrangler kv key get model_image_analysis --binding=RESOURCES_KV
+```
+
+Example errors:
+
+```
+HTTP 403 permission missing: Workers AI: Run
+HTTP 404 account not found or not authorized to access account
+```
+
 ### Generate Documentation
 
 Create API documentation using Typedoc:
