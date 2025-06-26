@@ -14,6 +14,7 @@
 function defaultSendEmail() {
     throw new Error('Email functionality is not configured.');
 }
+/** @type {(to: string, subject: string, body: string) => Promise<void>} */
 let sendEmailFn = defaultSendEmail;
 async function getSendEmail() {
     if (sendEmailFn && sendEmailFn !== defaultSendEmail) return sendEmailFn;
