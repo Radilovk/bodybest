@@ -3,12 +3,12 @@ import globals from 'globals';
 
 export default [
   {
-    ignores: ['docs/**']
+    ignores: ['**/node_modules/**', 'docs/**']
   },
   js.configs.recommended,
   {
     files: ['**/*.js'],
-    ignores: ['**/node_modules/**', '**/docs/**'],
+    // Additional per-file ignores unnecessary; handled globally above
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
