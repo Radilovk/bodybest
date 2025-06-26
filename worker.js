@@ -24,27 +24,23 @@ async function defaultSendEmail(to, subject, body) {
 }
 /** @type {(to: string, subject: string, body: string) => Promise<void>} */
 let sendEmailFn = defaultSendEmail;
-const MAILER_MODULE_URL_VAR_NAME = 'MAILER_MODULE_URL';
+const MAILER_ENDPOINT_URL_VAR_NAME = 'MAILER_ENDPOINT_URL';
 async function getSendEmail(env) {
     if (sendEmailFn && sendEmailFn !== defaultSendEmail) return sendEmailFn;
-    const specifier = env?.[MAILER_MODULE_URL_VAR_NAME];
-    if (!specifier) {
-        console.warn('MAILER_MODULE_URL not configured; email disabled.');
+    const endpoint = env?.[MAILER_ENDPOINT_URL_VAR_NAME];
+    if (!endpoint) {
+        console.warn('MAILER_ENDPOINT_URL not configured; email disabled.');
         sendEmailFn = defaultSendEmail;
         return sendEmailFn;
     }
-    try {
-        const mod = await import(specifier);
-        if (mod && typeof mod.sendEmail === 'function') {
-            sendEmailFn = mod.sendEmail;
-        } else {
-            sendEmailFn = defaultSendEmail;
-            console.warn('Mailer module missing sendEmail export; email disabled.');
-        }
-    } catch (err) {
-        console.warn(`Failed to load mailer from ${specifier}:`, err);
-        sendEmailFn = defaultSendEmail;
-    }
+    sendEmailFn = async (to, subject, body) => {
+        const resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to, subject, text: body })
+        });
+        if (!resp.ok) throw new Error(`Mailer responded with ${resp.status}`);
+    };
     return sendEmailFn;
 }
 
