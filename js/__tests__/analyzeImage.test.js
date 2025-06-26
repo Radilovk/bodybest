@@ -184,4 +184,24 @@ describe('handleAnalyzeImageRequest', () => {
     expect(res.message).toBe('Невалиден Base64 стринг.');
     expect(res.statusHint).toBe(400);
   });
+
+  test('returns friendly message on Cloudflare decode error', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({ errors: [{ message: 'failed to decode u8' }] })
+    });
+    const env = {
+      CF_ACCOUNT_ID: 'acc',
+      CF_AI_TOKEN: 'token',
+      RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) }
+    };
+    const request = {
+      json: async () => ({ userId: 'u1', imageData: 'img', mimeType: 'image/png' })
+    };
+    const res = await handleAnalyzeImageRequest(request, env);
+    expect(res.success).toBe(false);
+    expect(res.message).toBe('Невалидни или повредени данни на изображението.');
+    expect(res.statusHint).toBe(400);
+  });
 });
