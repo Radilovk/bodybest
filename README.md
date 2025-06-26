@@ -456,16 +456,16 @@ base64 -w0 image.jpg > base64.txt
 ```
 The worker forwards the image data together with your text prompt to the
 configured vision model and returns a JSON summary describing the detected
-objects or text.
+objects or text. По подразбиране ендпойнтът е отворен и не изисква `WORKER_ADMIN_TOKEN`.
 
 Example `curl` request sending both image and text:
 
 ```bash
 curl -X POST https://<your-domain>/api/analyzeImage \
-  -H "Authorization: Bearer <WORKER_ADMIN_TOKEN>" \
   -H "Content-Type: application/json" \
   --data '{"userId":"123","imageData":"<base64>","mimeType":"image/jpeg","prompt":"Намери текст"}'
 ```
+Add the `Authorization` header only ако сте активирали защита с `WORKER_ADMIN_TOKEN`.
 
 For Cloudflare models set `CF_AI_TOKEN`. When using Gemini Vision provide
 `GEMINI_API_KEY`. Without these secrets the endpoint will respond with an error.
@@ -474,10 +474,10 @@ Example with the Cloudflare LLaVA model (KV key `model_image_analysis=@cf/llava-
 
 ```bash
 curl -X POST https://<your-domain>/api/analyzeImage \
-  -H "Authorization: Bearer <WORKER_ADMIN_TOKEN>" \
   -H "Content-Type: application/json" \
   --data '{"userId":"123","imageData":"<base64>","mimeType":"image/png","prompt":"Опиши подробно"}'
 ```
+Добавете `Authorization` заглавка само при активен `WORKER_ADMIN_TOKEN`.
 
 ### Промяна на началното съобщение в чата
 
@@ -514,7 +514,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `GET /api/getAiPreset` – връща данните за конкретен пресет.
 - `POST /api/saveAiPreset` – съхранява нов пресет или обновява съществуващ.
 - `POST /api/testAiModel` – проверява връзката с конкретен AI модел.
-- `POST /api/analyzeImage` – анализира качено изображение и връща резултат.
+- `POST /api/analyzeImage` – анализира качено изображение и връща резултат. Ендпойнтът не изисква `WORKER_ADMIN_TOKEN`, освен ако изрично не сте го добавили като защита.
 - `POST /api/sendTestEmail` – изпраща тестов имейл. Изисква администраторски токен.
 
   ```bash
