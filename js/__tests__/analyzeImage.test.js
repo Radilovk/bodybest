@@ -115,12 +115,30 @@ describe('handleAnalyzeImageRequest', () => {
     });
   });
 
-  test('fails when CF secrets missing', async () => {
+  test('fails when both CF secrets missing', async () => {
     const env = { RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) } };
     const request = { json: async () => ({ userId: 'u1', imageData: 'img' }) };
     const res = await handleAnalyzeImageRequest(request, env);
     expect(res.success).toBe(false);
-    expect(res.message).toBe('Липсва CF_AI_TOKEN или CF_ACCOUNT_ID.');
+    expect(res.message).toBe('Липсват CF_AI_TOKEN и CF_ACCOUNT_ID.');
+    expect(res.statusHint).toBe(500);
+  });
+
+  test('fails when only CF_AI_TOKEN missing', async () => {
+    const env = { CF_ACCOUNT_ID: 'acc', RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) } };
+    const request = { json: async () => ({ userId: 'u1', imageData: 'img' }) };
+    const res = await handleAnalyzeImageRequest(request, env);
+    expect(res.success).toBe(false);
+    expect(res.message).toBe('Липсва CF_AI_TOKEN.');
+    expect(res.statusHint).toBe(500);
+  });
+
+  test('fails when only CF_ACCOUNT_ID missing', async () => {
+    const env = { CF_AI_TOKEN: 't', RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) } };
+    const request = { json: async () => ({ userId: 'u1', imageData: 'img' }) };
+    const res = await handleAnalyzeImageRequest(request, env);
+    expect(res.success).toBe(false);
+    expect(res.message).toBe('Липсва CF_ACCOUNT_ID.');
     expect(res.statusHint).toBe(500);
   });
 

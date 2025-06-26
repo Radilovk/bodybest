@@ -1464,8 +1464,12 @@ async function handleAnalyzeImageRequest(request, env) {
         const provider = getModelProvider(modelName);
 
         if (provider === 'cf') {
-            if (!env[CF_AI_TOKEN_SECRET_NAME] || !(env[CF_ACCOUNT_ID_VAR_NAME] || env.accountId || env.ACCOUNT_ID)) {
-                return { success: false, message: 'Липсва CF_AI_TOKEN или CF_ACCOUNT_ID.', statusHint: 500 };
+            const missing = [];
+            if (!env[CF_AI_TOKEN_SECRET_NAME]) missing.push('CF_AI_TOKEN');
+            if (!(env[CF_ACCOUNT_ID_VAR_NAME] || env.accountId || env.ACCOUNT_ID)) missing.push('CF_ACCOUNT_ID');
+            if (missing.length) {
+                const verb = missing.length > 1 ? 'Липсват' : 'Липсва';
+                return { success: false, message: `${verb} ${missing.join(' и ')}.`, statusHint: 500 };
             }
         } else if (provider === 'gemini') {
             if (!env[GEMINI_API_KEY_SECRET_NAME]) {
