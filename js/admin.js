@@ -1,6 +1,6 @@
 import { apiEndpoints } from './config.js';
 import { labelMap, statusMap } from './labelMap.js';
-import { fileToBase64 } from './utils.js';
+import { fileToDataURL } from './utils.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -1239,11 +1239,11 @@ async function sendTestImage() {
         const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
         const headers = { 'Content-Type': 'application/json' };
         if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
-        const imageData = await fileToBase64(file);
+        const image = await fileToDataURL(file);
         const resp = await fetch(apiEndpoints.analyzeImage, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ userId: 'admin-test', imageData, mimeType: file.type, prompt })
+            body: JSON.stringify({ userId: 'admin-test', image, prompt })
         });
         const data = await resp.json();
         if (testImageResultPre) testImageResultPre.textContent = JSON.stringify(data, null, 2);

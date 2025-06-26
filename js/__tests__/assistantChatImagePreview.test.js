@@ -19,7 +19,7 @@ beforeEach(async () => {
     cloudflareAccountId: 'c'
   }));
   jest.unstable_mockModule('../utils.js', () => ({
-    fileToBase64: jest.fn(async () => 'imgdata')
+    fileToDataURL: jest.fn(async () => 'data:image/png;base64,imgdata')
   }));
 
   global.fetch = jest.fn().mockResolvedValue({

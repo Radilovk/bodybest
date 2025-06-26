@@ -18,7 +18,7 @@ beforeEach(async () => {
     apiEndpoints: { analyzeImage: '/api/analyzeImage' }
   }));
   jest.unstable_mockModule('../utils.js', () => ({
-    fileToBase64: jest.fn(async () => 'imgdata')
+    fileToDataURL: jest.fn(async () => 'data:image/png;base64,imgdata')
   }));
 
   const mod = await import('../admin.js');
@@ -38,6 +38,6 @@ test('sendTestImage posts selected file', async () => {
   expect(global.fetch).toHaveBeenCalledWith('/api/analyzeImage', expect.objectContaining({
     method: 'POST',
     headers: expect.any(Object),
-    body: JSON.stringify({ userId: 'admin-test', imageData: 'imgdata', mimeType: 'image/png', prompt: 'desc' })
+    body: JSON.stringify({ userId: 'admin-test', image: 'data:image/png;base64,imgdata', prompt: 'desc' })
   }));
 });

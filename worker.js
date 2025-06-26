@@ -1445,22 +1445,32 @@ async function handleAnalyzeImageRequest(request, env) {
         return { success: false, message: 'Невалиден JSON.', statusHint: 400 };
     }
     try {
-        const { userId, imageData, mimeType, prompt } = payloadData;
-        if (!userId || !imageData) {
-            return { success: false, message: 'Липсват imageData или userId.', statusHint: 400 };
+        const { userId, image, imageData, mimeType, prompt } = payloadData;
+        if (!userId || (!image && !imageData)) {
+            return { success: false, message: 'Липсва изображение или userId.', statusHint: 400 };
         }
 
-        let base64 = imageData;
+        let base64 = imageData || '';
         let finalMime = mimeType;
-        if (typeof base64 === 'string' && base64.startsWith('data:')) {
+        if (typeof image === 'string') {
+            if (!image.startsWith('data:image/')) {
+                return { success: false, message: 'Невалиден формат на изображението.', statusHint: 400 };
+            }
+            const match = /^data:([^;]+);base64,(.+)$/.exec(image);
+            if (!match) {
+                return { success: false, message: 'Невалиден формат на изображението.', statusHint: 400 };
+            }
+            finalMime = match[1];
+            base64 = match[2];
+        } else if (typeof base64 === 'string' && base64.startsWith('data:')) {
             const match = /^data:([^;]+);base64,(.+)$/.exec(base64);
             if (match) {
                 finalMime = match[1];
                 base64 = match[2];
             }
-        }
-        if (typeof imageData === 'string' && imageData.startsWith('data:') && !imageData.startsWith('data:image/')) {
-            return { success: false, message: 'Невалиден формат на изображението.', statusHint: 400 };
+            if (!base64 || !finalMime.startsWith('image/')) {
+                return { success: false, message: 'Невалиден формат на изображението.', statusHint: 400 };
+            }
         }
         if (finalMime && !finalMime.startsWith('image/')) {
             return { success: false, message: 'Невалиден MIME тип.', statusHint: 400 };
@@ -1502,12 +1512,15 @@ async function handleAnalyzeImageRequest(request, env) {
         const provider = getModelProvider(modelName);
 
         if (provider === 'cf') {
-            const missing = [];
-            if (!env[CF_AI_TOKEN_SECRET_NAME]) missing.push('CF_AI_TOKEN');
-            if (!(env[CF_ACCOUNT_ID_VAR_NAME] || env.accountId || env.ACCOUNT_ID)) missing.push('CF_ACCOUNT_ID');
-            if (missing.length) {
-                const verb = missing.length > 1 ? 'Липсват' : 'Липсва';
-                return { success: false, message: `${verb} ${missing.join(' и ')}.`, statusHint: 500 };
+            const usingBinding = env.AI && typeof env.AI.run === 'function';
+            if (!usingBinding) {
+                const missing = [];
+                if (!env[CF_AI_TOKEN_SECRET_NAME]) missing.push('CF_AI_TOKEN');
+                if (!(env[CF_ACCOUNT_ID_VAR_NAME] || env.accountId || env.ACCOUNT_ID)) missing.push('CF_ACCOUNT_ID');
+                if (missing.length) {
+                    const verb = missing.length > 1 ? 'Липсват' : 'Липсва';
+                    return { success: false, message: `${verb} ${missing.join(' и ')}.`, statusHint: 500 };
+                }
             }
         } else if (provider === 'gemini') {
             if (!env[GEMINI_API_KEY_SECRET_NAME]) {
@@ -1517,13 +1530,13 @@ async function handleAnalyzeImageRequest(request, env) {
 
         let aiResp;
         if (provider === 'cf') {
-            console.log('Received image:', String(imageData).substring(0, 100));
+            console.log('Received image:', String(image || imageData).substring(0, 100));
             console.log('Prompt:', finalPrompt);
             const dataUrl = `data:${finalMime || 'image/jpeg'};base64,${base64}`;
             const payload = buildCfImagePayload(modelName, dataUrl, finalPrompt);
             aiResp = await callCfAi(modelName, payload, env);
         } else if (provider === 'gemini') {
-            console.log('Received image:', String(imageData).substring(0, 100));
+            console.log('Received image:', String(image || imageData).substring(0, 100));
             console.log('Prompt:', finalPrompt);
             const key = env[GEMINI_API_KEY_SECRET_NAME];
             if (!key) throw new Error('Missing Gemini API key.');
@@ -1536,7 +1549,7 @@ async function handleAnalyzeImageRequest(request, env) {
                 modelName
             );
         } else {
-            console.log('Received image:', String(imageData).substring(0, 100));
+            console.log('Received image:', String(image || imageData).substring(0, 100));
             console.log('Prompt:', finalPrompt);
             const textPrompt = finalPrompt || `Опиши съдържанието на това изображение: ${base64}`;
             aiResp = await callModel(modelName, textPrompt, env, { temperature: 0.2, maxTokens: 200 });
@@ -3233,6 +3246,10 @@ function buildCfImagePayload(model, imageUrl, promptText) {
 
 // ------------- START FUNCTION: callCfAi -------------
 async function callCfAi(model, payload, env) {
+    if (env.AI && typeof env.AI.run === 'function') {
+        const result = await env.AI.run(model, payload);
+        return result?.response || result;
+    }
     const accountId = env[CF_ACCOUNT_ID_VAR_NAME] || env.accountId || env.ACCOUNT_ID;
     const token = env[CF_AI_TOKEN_SECRET_NAME];
     if (!accountId || !token) {

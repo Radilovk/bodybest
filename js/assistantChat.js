@@ -1,5 +1,5 @@
 import { apiEndpoints, cloudflareAccountId } from './config.js';
-import { fileToBase64 } from './utils.js';
+import { fileToDataURL } from './utils.js';
 
 const chatEndpoint = apiEndpoints.chat;
 const chatHistory = [];
@@ -85,12 +85,12 @@ async function sendImage(file) {
     saveHistory();
     showTyping();
     try {
-        const imageData = await fileToBase64(file);
+        const image = await fileToDataURL(file);
         const prompt = document.getElementById('chat-input').value.trim();
         const res = await fetch(apiEndpoints.analyzeImage, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, imageData, mimeType: file.type, prompt })
+            body: JSON.stringify({ userId, image, prompt })
         });
         const data = await res.json();
         if (handleModelAgreement(data)) {

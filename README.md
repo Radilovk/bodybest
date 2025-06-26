@@ -471,15 +471,14 @@ curl https://api.cloudflare.com/client/v4/accounts/<CF_ACCOUNT_ID>/ai/run/@cf/me
 Replace the placeholders with your own values and keep the token secret.
 
 In addition to text messages you can upload an image for automatic analysis.
-Open `assistant.html`, choose a file and it will be converted to a Base64 string
-and sent to `/api/analyzeImage` as JSON with fields `userId`, `imageData`,
-`mimeType` and an optional `prompt` describing what you want to see.
-The `imageData` value may contain either the raw Base64 string or a complete
-`data:` URL. Malformed Base64 will return "Невалиден Base64 стринг.". For raw
-strings you can convert a file in the browser using FileReader:
+Open `assistant.html`, choose a file and it will be converted to a full data URL
+and sent to `/api/analyzeImage` as JSON with fields `userId`, `image` and an
+optional `prompt` describing what you want to see. Malformed Base64 will return
+"Невалиден Base64 стринг.". You can convert a file in the browser using
+FileReader:
 ```javascript
 const reader = new FileReader();
-reader.onload = () => send({imageData: reader.result.split(",")[1]});
+reader.onload = () => send({image: reader.result});
 reader.readAsDataURL(file);
 ```
 You can also generate a Base64 string via shell:
@@ -495,13 +494,13 @@ Example `curl` request sending both image and text:
 ```bash
 curl -X POST https://<your-domain>/api/analyzeImage \
   -H "Content-Type: application/json" \
-  --data '{"userId":"123","imageData":"<base64>","mimeType":"image/jpeg","prompt":"Намери текст"}'
+  --data '{"userId":"123","image":"data:image/jpeg;base64,<base64>","prompt":"Намери текст"}'
 ```
 The worker also accepts a `data:` URL directly:
 ```bash
 curl -X POST https://<your-domain>/api/analyzeImage \
   -H "Content-Type: application/json" \
-  --data '{"userId":"123","imageData":"data:image/png;base64,<base64>","prompt":"Опиши"}'
+  --data '{"userId":"123","image":"data:image/png;base64,<base64>","prompt":"Опиши"}'
 ```
 Add the `Authorization` header only ако сте активирали защита с `WORKER_ADMIN_TOKEN`.
 
@@ -513,7 +512,7 @@ Example with the Cloudflare LLaVA model (KV key `model_image_analysis=@cf/llava-
 ```bash
 curl -X POST https://<your-domain>/api/analyzeImage \
   -H "Content-Type: application/json" \
-  --data '{"userId":"123","imageData":"<base64>","mimeType":"image/png","prompt":"Опиши подробно"}'
+  --data '{"userId":"123","image":"data:image/png;base64,<base64>","prompt":"Опиши подробно"}'
 ```
 Добавете `Authorization` заглавка само при активен `WORKER_ADMIN_TOKEN`.
 
@@ -552,7 +551,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `GET /api/getAiPreset` – връща данните за конкретен пресет.
 - `POST /api/saveAiPreset` – съхранява нов пресет или обновява съществуващ.
 - `POST /api/testAiModel` – проверява връзката с конкретен AI модел.
-- `POST /api/analyzeImage` – анализира качено изображение и връща резултат. Полето `imageData` може да е Base64 стринг или пълен `data:` URL. Ендпойнтът не изисква `WORKER_ADMIN_TOKEN`, освен ако изрично не сте го добавили като защита.
+- `POST /api/analyzeImage` – анализира качено изображение и връща резултат. Изпращайте поле `image` с пълен `data:` URL. Ендпойнтът не изисква `WORKER_ADMIN_TOKEN`, освен ако изрично не сте го добавили като защита.
 - `POST /api/sendTestEmail` – изпраща тестов имейл. Изисква администраторски токен.
 - `POST /api/sendEmail` – изпраща имейл чрез MailChannels. Приема JSON `{ "to": "user@example.com", "subject": "Тема", "text": "Съобщение" }`.
 
