@@ -341,6 +341,16 @@ const result = await env.AI.run('@cf/llava-hf/llava-1.5-7b-hf', {
 });
 ```
 
+По същия начин може да подадете изображение към всеки Cloudflare AI модел
+чрез JSON обект от вида:
+
+```json
+{
+  "image": "data:image/jpeg;base64,<BASE64>",
+  "prompt": "INPUT PROMPT"
+}
+```
+
 Администраторският скрипт `admin.js` добавя автоматично тази
 заглавка, ако в `sessionStorage` съществува ключ `adminToken`.
 Стойността може да зададете от панела в полето „Admin Token“,
