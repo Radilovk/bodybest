@@ -1507,7 +1507,18 @@ async function handleAnalyzeImageRequest(request, env) {
         return { success: true, result: aiResp };
     } catch (error) {
         console.error('Error in handleAnalyzeImageRequest:', error.message, error.stack);
-        return { success: false, message: `Грешка при анализа на изображението: ${error.message}`, statusHint: 500 };
+        if (/failed to decode u8|Tensor error/i.test(error.message)) {
+            return {
+                success: false,
+                message: 'Невалидни или повредени данни на изображението.',
+                statusHint: 400
+            };
+        }
+        return {
+            success: false,
+            message: `Грешка при анализа на изображението: ${error.message}`,
+            statusHint: 500
+        };
     }
 }
 // ------------- END FUNCTION: handleAnalyzeImageRequest -------------
