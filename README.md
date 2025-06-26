@@ -584,10 +584,30 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 ## Email Notifications
 
 The worker sends emails by calling a separate endpoint specified in the
-`MAILER_ENDPOINT_URL` environment variable. If `MAILER_ENDPOINT_URL` is not provided
+`MAILER_ENDPOINT_URL` environment variable. If this variable is not provided
 the worker falls back to a stub implementation and no emails are sent. In that
 case `/api/sendTestEmail` responds with status **400** and a message indicating
 the functionality is disabled.
+
+To enable real emails:
+
+1. Deploy `sendEmailWorker.js` with Wrangler and note the public URL that it
+   prints after deployment.
+2. Set `MAILER_ENDPOINT_URL=<worker-url>` either in your environment or inside
+   `wrangler.toml`.
+
+Example `.env` snippet:
+
+```env
+MAILER_ENDPOINT_URL=https://send-email-worker.example.workers.dev
+```
+
+Example in `wrangler.toml`:
+
+```toml
+[vars]
+MAILER_ENDPOINT_URL = "https://send-email-worker.example.workers.dev"
+```
 
 For a simple setup deploy `sendEmailWorker.js`, which exposes `/api/sendEmail`
 and sends messages via MailChannels. Point `MAILER_ENDPOINT_URL` to the URL of
