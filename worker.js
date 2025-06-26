@@ -19,7 +19,9 @@
  * @param {string} body
  * @returns {Promise<void>}
  */
-async function defaultSendEmail() {
+// Parameters are unused but kept to preserve the expected signature
+// eslint-disable-next-line no-unused-vars
+async function defaultSendEmail(to, subject, body) {
     throw new Error('Email functionality is not configured.');
 }
 /** @type {(to: string, subject: string, body: string) => Promise<void>} */
@@ -1479,6 +1481,7 @@ async function handleAnalyzeImageRequest(request, env) {
             return { success: false, message: 'Невалиден Base64 стринг.', statusHint: 400 };
         }
 
+        // eslint-disable-next-line no-undef
         const buf = typeof Buffer !== 'undefined'
             ? new Uint8Array(Buffer.from(base64, 'base64'))
             : (() => {
