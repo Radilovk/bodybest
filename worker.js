@@ -1418,6 +1418,19 @@ async function handleAnalyzeImageRequest(request, env) {
             return { success: false, message: 'Липсват imageData или userId.', statusHint: 400 };
         }
 
+        let base64 = imageData;
+        let finalMime = mimeType;
+        if (typeof base64 === 'string' && base64.startsWith('data:')) {
+            const match = /^data:([^;]+);base64,(.+)$/.exec(base64);
+            if (match) {
+                finalMime = match[1];
+                base64 = match[2];
+            }
+        }
+        if (!/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) {
+            return { success: false, message: 'Невалиден Base64 стринг.', statusHint: 400 };
+        }
+
         const modelFromKv = env.RESOURCES_KV ? await env.RESOURCES_KV.get('model_image_analysis') : null;
         let kvPrompt = null;
         if (env.RESOURCES_KV) {
@@ -1440,22 +1453,22 @@ async function handleAnalyzeImageRequest(request, env) {
 
         let aiResp;
         if (provider === 'cf') {
-            const dataUrl = `data:${mimeType || 'image/jpeg'};base64,${imageData}`;
+            const dataUrl = `data:${finalMime || 'image/jpeg'};base64,${base64}`;
             const payload = buildCfImagePayload(modelName, dataUrl, finalPrompt);
             aiResp = await callCfAi(modelName, payload, env);
         } else if (provider === 'gemini') {
             const key = env[GEMINI_API_KEY_SECRET_NAME];
             if (!key) throw new Error('Missing Gemini API key.');
             aiResp = await callGeminiVisionAPI(
-                imageData,
-                mimeType || 'image/jpeg',
+                base64,
+                finalMime || 'image/jpeg',
                 key,
                 finalPrompt,
                 { temperature: 0.2, maxOutputTokens: 200 },
                 modelName
             );
         } else {
-            const textPrompt = finalPrompt || `Опиши съдържанието на това изображение: ${imageData}`;
+            const textPrompt = finalPrompt || `Опиши съдържанието на това изображение: ${base64}`;
             aiResp = await callModel(modelName, textPrompt, env, { temperature: 0.2, maxTokens: 200 });
         }
 
