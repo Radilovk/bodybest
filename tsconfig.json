@@ -7,5 +7,11 @@
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": ["worker.js", "mailer.js", "mailer.d.ts", "js/**/*"]
+  "include": [
+    "worker.js",
+    "worker-backend.js",
+    "mailer.js",
+    "mailer.d.ts",
+    "js/**/*"
+  ]
 }
