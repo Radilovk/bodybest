@@ -18,7 +18,7 @@ test('rejects invalid token', async () => {
     headers: { get: h => (h === 'Authorization' ? 'Bearer bad' : null) },
     json: async () => ({ recipient: 'test@example.com', subject: 's', body: 'b' })
   };
-  const env = { WORKER_ADMIN_TOKEN: 'secret' };
+  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILER_MODULE_URL: './mailer.js' };
   const res = await handleSendTestEmailRequest(request, env);
   expect(res.success).toBe(false);
   expect(res.statusHint).toBe(403);
@@ -40,7 +40,7 @@ test('sends email on valid data', async () => {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ recipient: 'test@example.com', subject: 'Hi', body: 'b' })
   };
-  const env = { WORKER_ADMIN_TOKEN: 'secret' };
+  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILER_MODULE_URL: './mailer.js' };
   const res = await handleSendTestEmailRequest(request, env);
   expect(res.success).toBe(true);
   expect(sendEmailMock).toHaveBeenCalledWith('test@example.com', 'Hi', 'b');

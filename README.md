@@ -146,6 +146,8 @@ To set the token:
 
 The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed. For the `USER_METADATA_KV` namespace the file expects the environment variables `USER_METADATA_KV_ID` and `USER_METADATA_KV_PREVIEW_ID`. Configure them as GitHub secrets so the workflow can substitute the correct IDs before deployment. **Важно:** полето `compatibility_date` не може да сочи в бъдещето спрямо датата на деплой. Ако е зададена по-нова дата, Cloudflare ще откаже деплойването. Затова поддържайте стойност, която е днес или по-стара. Например:
 
+If mailing is required, set `MAILER_MODULE_URL` to a Node service implementing `sendEmail` (see `mailer.js`). Omitting this variable disables email sending in the deployed worker.
+
 ```toml
 compatibility_date = "2025-06-20"
 ```
@@ -534,14 +536,15 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 
 ## Email Notifications
 
-The `mailer.js` script relies on `nodemailer` to send welcome emails. This
-library requires a full Node.js environment, so it is **not** executed inside the
-Cloudflare Worker. The worker dynamically imports this module when available; if
-`mailer.js` cannot be loaded, calls that send email will simply return an error
-and no email will be sent. For real notifications, run `node mailer.js`
-separately or use an external SMTP service. For production consider Cloudflare
-[MailChannels](https://developers.cloudflare.com/email-routing/mailchannels/) or
-another hosted provider.
+The worker loads mailing logic only at runtime. Specify a module URL in the
+`MAILER_MODULE_URL` environment variable. That module must export a
+`sendEmail(to, subject, html)` function. If `MAILER_MODULE_URL` is not provided
+the worker falls back to a stub implementation and no emails are sent.
+
+The included `mailer.js` relies on `nodemailer` and therefore requires a Node.js
+environment. Run it as a separate service or replace it with a script that calls
+an external provider such as Cloudflare
+[MailChannels](https://developers.cloudflare.com/email-routing/mailchannels/).
 
 ## Cron configuration
 
