@@ -4,10 +4,12 @@ import { handleAnalyzeImageRequest } from '../../worker.js';
 const validPng = 'iVBORw0KGgoA';
 
 const originalFetch = global.fetch;
+const originalBuffer = global.Buffer;
 
 describe('handleAnalyzeImageRequest', () => {
   afterEach(() => {
     global.fetch = originalFetch;
+    global.Buffer = originalBuffer;
   });
 
   test('returns 400 on invalid JSON', async () => {
@@ -206,6 +208,23 @@ describe('handleAnalyzeImageRequest', () => {
     const res = await handleAnalyzeImageRequest(request, {});
     expect(res.success).toBe(false);
     expect(res.statusHint).toBe(400);
+  });
+
+  test('handles undefined Buffer and detects mimeType', async () => {
+    global.Buffer = undefined;
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ candidates: [{ content: { parts: [{ text: 'ok' }] } }] })
+    });
+    const env = {
+      GEMINI_API_KEY: 'k',
+      RESOURCES_KV: { get: jest.fn().mockResolvedValue('gemini-pro-vision') }
+    };
+    const request = { json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}` }) };
+    const res = await handleAnalyzeImageRequest(request, env);
+    expect(res.success).toBe(true);
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.contents[0].parts[0].inlineData.mimeType).toBe('image/png');
   });
 
   test('returns friendly message on Cloudflare decode error', async () => {
