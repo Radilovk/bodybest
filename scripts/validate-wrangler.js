@@ -15,8 +15,8 @@ try {
     process.exit(1);
   }
 
-  if (!process.env.CF_API_TOKEN) {
-    console.error('Липсва променливата на средата CF_API_TOKEN.');
+  if (!process.env.CLOUDFLARE_API_TOKEN) {
+    console.error('Липсва променливата на средата CLOUDFLARE_API_TOKEN.');
     process.exit(1);
   }
 
