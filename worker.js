@@ -11,15 +11,27 @@
 // - Попълнени липсващи части от предходни версии.
 // - Запазени всички предходни функционалности.
 
-function defaultSendEmail() {
+/**
+ * Fallback email sender used when `mailer.js` is unavailable.
+ * Matches the signature of the real implementation to satisfy TypeScript.
+ * @param {string} to
+ * @param {string} subject
+ * @param {string} body
+ * @returns {Promise<void>}
+ */
+async function defaultSendEmail(to, subject, body) {
     throw new Error('Email functionality is not configured.');
 }
 /** @type {(to: string, subject: string, body: string) => Promise<void>} */
 let sendEmailFn = defaultSendEmail;
+/* eslint-disable no-new-func */
 async function getSendEmail() {
     if (sendEmailFn && sendEmailFn !== defaultSendEmail) return sendEmailFn;
     try {
-        const mod = await import('./mailer.js');
+        // Use dynamic import wrapped in Function to prevent bundlers from
+        // statically analyzing the Node-only dependency.
+        const dynamicImport = new Function('p', 'return import(p)');
+        const mod = await dynamicImport('./mailer.js');
         if (mod && typeof mod.sendEmail === 'function') {
             sendEmailFn = mod.sendEmail;
         } else {
@@ -32,6 +44,7 @@ async function getSendEmail() {
     }
     return sendEmailFn;
 }
+/* eslint-enable no-new-func */
 
 // ------------- START BLOCK: GlobalConstantsAndBindings -------------
 const PHP_FILE_MANAGER_API_URL_SECRET_NAME = 'тут_ваш_php_api_url_secret_name';

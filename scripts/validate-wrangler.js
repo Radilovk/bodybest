@@ -15,9 +15,13 @@ try {
     process.exit(1);
   }
 
-  if (!process.env.CF_API_TOKEN) {
-    console.error('Липсва променливата на средата CF_API_TOKEN.');
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN || process.env.CF_API_TOKEN;
+  if (!apiToken) {
+    console.error('Липсва променлива CLOUDFLARE_API_TOKEN (или CF_API_TOKEN).');
     process.exit(1);
+  }
+  if (!process.env.CLOUDFLARE_API_TOKEN && process.env.CF_API_TOKEN) {
+    console.warn('CF_API_TOKEN е deprecated. Използвайте CLOUDFLARE_API_TOKEN.');
   }
 
   console.log('Конфигурацията изглежда валидна.');
