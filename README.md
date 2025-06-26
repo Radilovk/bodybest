@@ -98,9 +98,10 @@ npm install
 If you see an error such as **"Cannot find module './mailer.js'"**, most often it
 means the Node dependencies haven't been installed. Run `npm install` and then
 try again. Recent versions of the worker rely on the `MAILER_ENDPOINT_URL`
-environment variable instead of dynamic imports. When this variable is missing
-the worker skips all email functionality and `/api/sendTestEmail` responds with
-status **400**.
+environment variable instead of dynamic imports. If this variable is missing the
+worker attempts to send messages directly through MailChannels using the
+`FROM_EMAIL` address. `/api/sendTestEmail` may respond with **500** if the mail
+service fails.
 
 
 След успешната инсталация можете отново да стартирате `npm run dev`.
@@ -624,6 +625,7 @@ The worker can send emails in two ways:
 
 In both cases the `/api/sendTestEmail` endpoint behaves the same and returns a
 JSON response indicating success or failure.
+A status **500** typically means MailChannels or your external service failed and should be investigated via the worker logs.
 
 To enable real emails:
 
@@ -658,7 +660,7 @@ an external provider such as Cloudflare
 
 | Variable | Purpose |
 |----------|---------|
-| `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If not set, email-related APIs respond with **400** and no message is delivered. |
+| `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If not set, the worker sends via MailChannels using `FROM_EMAIL`. |
 | `EMAIL_PASSWORD` | Password used by `mailer.js` when authenticating with the SMTP server. |
 | `WELCOME_EMAIL_SUBJECT` | Optional custom subject for welcome emails sent by `mailer.js`. |
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |
