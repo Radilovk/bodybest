@@ -1209,6 +1209,10 @@ async function sendTestEmail() {
     const recipient = testEmailToInput ? testEmailToInput.value.trim() : '';
     const subject = testEmailSubjectInput ? testEmailSubjectInput.value.trim() : '';
     const body = testEmailBodyInput ? testEmailBodyInput.value.trim() : '';
+    if (!recipient || !subject || !body) {
+        alert('Моля попълнете всички полета.');
+        return;
+    }
     try {
         const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
         const headers = { 'Content-Type': 'application/json' };
