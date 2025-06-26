@@ -389,6 +389,7 @@ The standalone page `assistant.html` allows you to send direct commands to the w
 Open the file in a browser, enter your message and it will call the `/api/chat` endpoint.
 The Cloudflare account ID is filled automatically from `config.js`.
 Use the small image button next to the send icon to upload a picture. The file is sent to `/api/analyzeImage` and the analysis appears as a bot reply.
+The admin panel (`admin.html`) also provides a **Test Image Analysis** form that sends a selected picture to `/api/analyzeImage` and shows the JSON response.
 
 Some models require a short license confirmation before you can send other messages. Start the conversation with:
 
