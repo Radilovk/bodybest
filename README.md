@@ -97,7 +97,9 @@ npm install
 
 If you see an error such as **"Cannot find module './mailer.js'"**, most often it
 means the Node dependencies haven't been installed. Run `npm install` and then
-try again.
+try again. From version 2.3 the worker attempts to load `mailer.js` dynamically;
+if it is missing, email features will be disabled but the worker will continue
+running.
 
 
 След успешната инсталация можете отново да стартирате `npm run dev`.
@@ -524,10 +526,12 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 
 The `mailer.js` script relies on `nodemailer` to send welcome emails. This
 library requires a full Node.js environment, so it is **not** executed inside the
-Cloudflare Worker. If you need to deliver notifications, trigger `node
-mailer.js` separately or call an external SMTP service. For production consider
-Cloudflare [MailChannels](https://developers.cloudflare.com/email-routing/mailchannels/)
-or another hosted provider.
+Cloudflare Worker. The worker dynamically imports this module when available; if
+`mailer.js` cannot be loaded, calls that send email will simply return an error
+and no email will be sent. For real notifications, run `node mailer.js`
+separately or use an external SMTP service. For production consider Cloudflare
+[MailChannels](https://developers.cloudflare.com/email-routing/mailchannels/) or
+another hosted provider.
 
 ## Cron configuration
 

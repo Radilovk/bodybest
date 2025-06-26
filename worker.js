@@ -11,7 +11,26 @@
 // - Попълнени липсващи части от предходни версии.
 // - Запазени всички предходни функционалности.
 
-import { sendEmail } from './mailer.js';
+function defaultSendEmail() {
+    throw new Error('Email functionality is not configured.');
+}
+let sendEmailFn = defaultSendEmail;
+async function getSendEmail() {
+    if (sendEmailFn && sendEmailFn !== defaultSendEmail) return sendEmailFn;
+    try {
+        const mod = await import('./mailer.js');
+        if (mod && typeof mod.sendEmail === 'function') {
+            sendEmailFn = mod.sendEmail;
+        } else {
+            sendEmailFn = defaultSendEmail;
+            console.warn('mailer.js does not export sendEmail; email disabled.');
+        }
+    } catch (err) {
+        console.warn('mailer.js not found; email functionality disabled.');
+        sendEmailFn = defaultSendEmail;
+    }
+    return sendEmailFn;
+}
 
 // ------------- START BLOCK: GlobalConstantsAndBindings -------------
 const PHP_FILE_MANAGER_API_URL_SECRET_NAME = 'тут_ваш_php_api_url_secret_name';
@@ -1728,6 +1747,7 @@ async function handleSendTestEmailRequest(request, env) {
             return { success: false, message: 'Липсват данни.', statusHint: 400 };
         }
 
+        const sendEmail = await getSendEmail();
         await sendEmail(recipient, subject, body);
         return { success: true };
     } catch (error) {
