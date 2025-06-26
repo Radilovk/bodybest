@@ -35,7 +35,7 @@ test('sendTestEmail posts form data', async () => {
   expect(global.fetch).toHaveBeenCalledWith('/api/sendTestEmail', expect.objectContaining({
     method: 'POST',
     headers: expect.any(Object),
-    body: JSON.stringify({ to: 'a@b.bg', subject: 'Sub', body: 'Body' })
+    body: JSON.stringify({ recipient: 'a@b.bg', subject: 'Sub', body: 'Body' })
   }));
 });
 
