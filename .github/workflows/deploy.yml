@@ -20,7 +20,12 @@ jobs:
       - name: Check required secrets
         run: |
           missing=0
-          for var in CF_API_TOKEN USER_METADATA_KV_ID USER_METADATA_KV_PREVIEW_ID; do
+          token="${CLOUDFLARE_API_TOKEN:-$CF_API_TOKEN}"
+          if [ -z "$token" ]; then
+            echo "❌ Missing secret: CLOUDFLARE_API_TOKEN"
+            missing=1
+          fi
+          for var in USER_METADATA_KV_ID USER_METADATA_KV_PREVIEW_ID; do
             if [ -z "${!var}" ]; then
               echo "❌ Missing secret: $var"
               missing=1
@@ -31,6 +36,7 @@ jobs:
             exit 1
           fi
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CF_API_TOKEN }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           USER_METADATA_KV_ID: ${{ secrets.USER_METADATA_KV_ID }}
           USER_METADATA_KV_PREVIEW_ID: ${{ secrets.USER_METADATA_KV_PREVIEW_ID }}
@@ -49,9 +55,11 @@ jobs:
         env:
           USER_METADATA_KV_ID: ${{ secrets.USER_METADATA_KV_ID }}
           USER_METADATA_KV_PREVIEW_ID: ${{ secrets.USER_METADATA_KV_PREVIEW_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CF_API_TOKEN }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
 
       - name: Deploy to Cloudflare Workers
         run: wrangler deploy
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CF_API_TOKEN }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
