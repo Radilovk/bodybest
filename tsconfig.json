@@ -4,7 +4,8 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "allowJs": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["node"]
   },
   "include": ["worker.js", "mailer.js", "mailer.d.ts", "js/**/*"]
 }
