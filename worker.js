@@ -1453,6 +1453,14 @@ async function handleAnalyzeImageRequest(request, env) {
             return { success: false, message: 'Невалиден Base64 стринг.', statusHint: 400 };
         }
 
+        const buf = Buffer.from(base64, 'base64');
+        const isJpeg = buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+        const pngHeader = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+        const isPng = pngHeader.every((b, i) => buf[i] === b);
+        if (!isJpeg && !isPng) {
+            return { success: false, message: 'Невалиден файлов хедър.', statusHint: 400 };
+        }
+
         const modelFromKv = env.RESOURCES_KV ? await env.RESOURCES_KV.get('model_image_analysis') : null;
         let kvPrompt = null;
         if (env.RESOURCES_KV) {

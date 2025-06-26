@@ -461,7 +461,8 @@ Open `assistant.html`, choose a file and it will be converted to a Base64 string
 and sent to `/api/analyzeImage` as JSON with fields `userId`, `imageData`,
 `mimeType` and an optional `prompt` describing what you want to see.
 The `imageData` value may contain either the raw Base64 string or a complete
-`data:` URL. Malformed Base64 will return "Невалиден Base64 стринг.". For raw
+`data:` URL. Malformed Base64 will return "Невалиден Base64 стринг.". Invalid
+file headers yield "Невалиден файлов хедър.". For raw
 strings you can convert a file in the browser using FileReader:
 ```javascript
 const reader = new FileReader();
