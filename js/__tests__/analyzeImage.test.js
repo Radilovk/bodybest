@@ -132,4 +132,24 @@ describe('handleAnalyzeImageRequest', () => {
     expect(res.message).toBe('Липсва GEMINI_API_KEY.');
     expect(res.statusHint).toBe(500);
   });
+
+  test('extracts mimeType from data URL', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ result: { response: 'ok' } })
+    });
+    const env = { CF_ACCOUNT_ID: 'acc', CF_AI_TOKEN: 'token', RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) } };
+    const request = { json: async () => ({ userId: 'u1', imageData: 'data:image/png;base64,aGVsbG8=' }) };
+    await handleAnalyzeImageRequest(request, env);
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.image).toBe('data:image/png;base64,aGVsbG8=');
+  });
+
+  test('returns 400 on invalid base64', async () => {
+    const request = { json: async () => ({ userId: 'u1', imageData: 'invalid&&' }) };
+    const res = await handleAnalyzeImageRequest(request, {});
+    expect(res.success).toBe(false);
+    expect(res.message).toBe('Невалиден Base64 стринг.');
+    expect(res.statusHint).toBe(400);
+  });
 });
