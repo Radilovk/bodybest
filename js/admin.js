@@ -1201,7 +1201,7 @@ async function saveEmailSettings() {
 
 async function sendTestEmail() {
     if (!testEmailForm) return;
-    const to = testEmailToInput ? testEmailToInput.value.trim() : '';
+    const recipient = testEmailToInput ? testEmailToInput.value.trim() : '';
     const subject = testEmailSubjectInput ? testEmailSubjectInput.value.trim() : '';
     const body = testEmailBodyInput ? testEmailBodyInput.value.trim() : '';
     try {
@@ -1211,7 +1211,7 @@ async function sendTestEmail() {
         const resp = await fetch(apiEndpoints.sendTestEmail, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ to, subject, body })
+            body: JSON.stringify({ recipient, subject, body })
         });
         const data = await resp.json();
         if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
