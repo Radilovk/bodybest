@@ -3091,21 +3091,8 @@ async function callModel(model, prompt, env, { temperature = 0.7, maxTokens = 80
 
 // ------------- START FUNCTION: buildCfImagePayload -------------
 function buildCfImagePayload(model, imageUrl, promptText) {
-    const needsPromptImage = model.includes('llava-1.5') || model.endsWith('-hf');
-    if (needsPromptImage) {
-        return { prompt: promptText, image: imageUrl };
-    }
     if (model.startsWith('@cf/')) {
-        return {
-            messages: [{
-                role: 'user',
-                content: [
-                    { type: 'image_url', image_url: { url: imageUrl } },
-                    { type: 'text', text: promptText }
-                ]
-            }],
-            stream: false
-        };
+        return { prompt: promptText, image: imageUrl };
     }
     return { image: imageUrl };
 }

@@ -32,9 +32,10 @@ describe('handleAnalyzeImageRequest', () => {
       expect.objectContaining({ method: 'POST' })
     );
     const body = JSON.parse(global.fetch.mock.calls[0][1].body);
-    expect(body.messages[0].content[0].image_url.url)
-      .toBe('data:image/png;base64,imgdata');
-    expect(body.messages[0].content[1].text).toBe('hi');
+    expect(body).toEqual({
+      prompt: 'hi',
+      image: 'data:image/png;base64,imgdata'
+    });
   });
 
   test('uses model from KV when provided', async () => {
@@ -87,7 +88,7 @@ describe('handleAnalyzeImageRequest', () => {
     expect(body.contents[0].parts[1].text).toBe('Опиши съдържанието на това изображение.');
   });
 
-  test('sends prompt-image payload for llava models', async () => {
+  test('sends prompt-image payload for cf models', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ result: { response: 'ok' } })
