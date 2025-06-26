@@ -443,8 +443,9 @@ In addition to text messages you can upload an image for automatic analysis.
 Open `assistant.html`, choose a file and it will be converted to a Base64 string
 and sent to `/api/analyzeImage` as JSON with fields `userId`, `imageData`,
 `mimeType` and an optional `prompt` describing what you want to see.
-The `imageData` field must contain only the raw Base64 string without a `data:` prefix.
-For example, convert a file in the browser using FileReader:
+The `imageData` value may contain either the raw Base64 string or a complete
+`data:` URL. Malformed Base64 will return "Невалиден Base64 стринг.". For raw
+strings you can convert a file in the browser using FileReader:
 ```javascript
 const reader = new FileReader();
 reader.onload = () => send({imageData: reader.result.split(",")[1]});
@@ -464,6 +465,12 @@ Example `curl` request sending both image and text:
 curl -X POST https://<your-domain>/api/analyzeImage \
   -H "Content-Type: application/json" \
   --data '{"userId":"123","imageData":"<base64>","mimeType":"image/jpeg","prompt":"Намери текст"}'
+```
+The worker also accepts a `data:` URL directly:
+```bash
+curl -X POST https://<your-domain>/api/analyzeImage \
+  -H "Content-Type: application/json" \
+  --data '{"userId":"123","imageData":"data:image/png;base64,<base64>","prompt":"Опиши"}'
 ```
 Add the `Authorization` header only ако сте активирали защита с `WORKER_ADMIN_TOKEN`.
 
@@ -514,7 +521,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `GET /api/getAiPreset` – връща данните за конкретен пресет.
 - `POST /api/saveAiPreset` – съхранява нов пресет или обновява съществуващ.
 - `POST /api/testAiModel` – проверява връзката с конкретен AI модел.
-- `POST /api/analyzeImage` – анализира качено изображение и връща резултат. Ендпойнтът не изисква `WORKER_ADMIN_TOKEN`, освен ако изрично не сте го добавили като защита.
+- `POST /api/analyzeImage` – анализира качено изображение и връща резултат. Полето `imageData` може да е Base64 стринг или пълен `data:` URL. Ендпойнтът не изисква `WORKER_ADMIN_TOKEN`, освен ако изрично не сте го добавили като защита.
 - `POST /api/sendTestEmail` – изпраща тестов имейл. Изисква администраторски токен.
 
   ```bash
