@@ -1738,6 +1738,13 @@ async function handleSendTestEmailRequest(request, env) {
         }
 
         const sendEmail = await getSendEmail(env);
+        if (sendEmail === defaultSendEmail) {
+            return {
+                success: false,
+                message: 'Email functionality is not configured.',
+                statusHint: 400
+            };
+        }
         await sendEmail(recipient, subject, body);
         return { success: true };
     } catch (error) {

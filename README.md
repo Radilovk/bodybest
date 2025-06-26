@@ -146,7 +146,7 @@ To set the token:
 
 The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed. For the `USER_METADATA_KV` namespace the file expects the environment variables `USER_METADATA_KV_ID` and `USER_METADATA_KV_PREVIEW_ID`. Configure them as GitHub secrets so the workflow can substitute the correct IDs before deployment. **Важно:** полето `compatibility_date` не може да сочи в бъдещето спрямо датата на деплой. Ако е зададена по-нова дата, Cloudflare ще откаже деплойването. Затова поддържайте стойност, която е днес или по-стара. Например:
 
-If mailing is required, set `MAILER_MODULE_URL` to a Node service implementing `sendEmail` (see `mailer.js`). Omitting this variable disables email sending in the deployed worker.
+If mailing is required, set `MAILER_MODULE_URL` to a Node service implementing `sendEmail` (see `mailer.js`). Omitting this variable disables email sending in the deployed worker. Without it the `/api/sendTestEmail` endpoint returns a 400 status indicating the feature is disabled.
 
 ```toml
 compatibility_date = "2025-06-20"
@@ -523,6 +523,8 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
     -H "Content-Type: application/json" \
     --data '{"recipient":"user@example.com","subject":"Test","body":"Hello"}'
   ```
+  Ако `MAILER_MODULE_URL` не е конфигуриран, ендпойнтът връща **HTTP 400** с
+  `{ "success": false, "message": "Email functionality is not configured." }`.
 - **Дебъг логове** – при изпращане на заглавие `X-Debug: 1` към който и да е API
 ендпойнт, worker-ът записва в конзолата кратка информация за заявката.
 
@@ -556,7 +558,9 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 The worker loads mailing logic only at runtime. Specify a module URL in the
 `MAILER_MODULE_URL` environment variable. That module must export a
 `sendEmail(to, subject, html)` function. If `MAILER_MODULE_URL` is not provided
-the worker falls back to a stub implementation and no emails are sent.
+the worker falls back to a stub implementation and no emails are sent. In that
+case `/api/sendTestEmail` responds with status **400** and a message indicating
+the functionality is disabled.
 
 The included `mailer.js` relies on `nodemailer` and therefore requires a Node.js
 environment. Run it as a separate service or replace it with a script that calls

@@ -45,3 +45,14 @@ test('sends email on valid data', async () => {
   expect(res.success).toBe(true);
   expect(sendEmailMock).toHaveBeenCalledWith('test@example.com', 'Hi', 'b');
 });
+
+test('returns 400 when mailer is not configured', async () => {
+  const request = {
+    headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
+    json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b' })
+  };
+  const env = { WORKER_ADMIN_TOKEN: 'secret' };
+  const res = await handleSendTestEmailRequest(request, env);
+  expect(res.success).toBe(false);
+  expect(res.statusHint).toBe(400);
+});
