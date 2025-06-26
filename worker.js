@@ -1469,9 +1469,24 @@ async function handleAnalyzeImageRequest(request, env) {
             return { success: false, message: 'Невалиден Base64 стринг.', statusHint: 400 };
         }
 
-        const buf = Buffer.from(base64, 'base64');
-        const jpeg = buf.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]));
-        const png = buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+        const buf = typeof Buffer !== 'undefined'
+            ? new Uint8Array(Buffer.from(base64, 'base64'))
+            : (() => {
+                const binary = atob(base64);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                return bytes;
+            })();
+        const jpeg = buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+        const png =
+            buf[0] === 0x89 &&
+            buf[1] === 0x50 &&
+            buf[2] === 0x4e &&
+            buf[3] === 0x47 &&
+            buf[4] === 0x0d &&
+            buf[5] === 0x0a &&
+            buf[6] === 0x1a &&
+            buf[7] === 0x0a;
         if (!jpeg && !png) {
             return { success: false, message: 'Невалиден формат на изображението.', statusHint: 400 };
         }
