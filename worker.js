@@ -1744,13 +1744,13 @@ async function handleSendTestEmailRequest(request, env) {
         const body = data.body ?? data.text;
 
         if (typeof recipient !== 'string' || !recipient) {
-            return { success: false, message: 'Missing field: recipient', statusHint: 400 };
+            return { success: false, message: 'Missing field: recipient (use "recipient" or "to")', statusHint: 400 };
         }
         if (typeof subject !== 'string' || !subject) {
             return { success: false, message: 'Missing field: subject', statusHint: 400 };
         }
         if (typeof body !== 'string' || !body) {
-            return { success: false, message: 'Missing field: body', statusHint: 400 };
+            return { success: false, message: 'Missing field: body (use "body" or "text")', statusHint: 400 };
         }
 
         const sendEmail = await getSendEmail(env);
