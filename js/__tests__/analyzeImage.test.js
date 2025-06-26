@@ -8,6 +8,14 @@ describe('handleAnalyzeImageRequest', () => {
     global.fetch = originalFetch;
   });
 
+  test('returns 400 on invalid JSON', async () => {
+    const request = { json: jest.fn().mockRejectedValue(new SyntaxError('bad')) };
+    const res = await handleAnalyzeImageRequest(request, {});
+    expect(res.success).toBe(false);
+    expect(res.message).toBe('Невалиден JSON.');
+    expect(res.statusHint).toBe(400);
+  });
+
   test('validates input fields', async () => {
     const request = { json: async () => ({}) };
     const res = await handleAnalyzeImageRequest(request, {});
@@ -105,5 +113,23 @@ describe('handleAnalyzeImageRequest', () => {
       prompt: 'desc',
       image: 'data:image/png;base64,img'
     });
+  });
+
+  test('fails when CF secrets missing', async () => {
+    const env = { RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) } };
+    const request = { json: async () => ({ userId: 'u1', imageData: 'img' }) };
+    const res = await handleAnalyzeImageRequest(request, env);
+    expect(res.success).toBe(false);
+    expect(res.message).toBe('Липсва CF_AI_TOKEN или CF_ACCOUNT_ID.');
+    expect(res.statusHint).toBe(500);
+  });
+
+  test('fails when GEMINI_API_KEY missing', async () => {
+    const env = { RESOURCES_KV: { get: jest.fn().mockResolvedValue('gemini-pro-vision') } };
+    const request = { json: async () => ({ userId: 'u1', imageData: 'img' }) };
+    const res = await handleAnalyzeImageRequest(request, env);
+    expect(res.success).toBe(false);
+    expect(res.message).toBe('Липсва GEMINI_API_KEY.');
+    expect(res.statusHint).toBe(500);
   });
 });
