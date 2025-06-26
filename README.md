@@ -98,10 +98,11 @@ npm install
 If you see an error such as **"Cannot find module './mailer.js'"**, most often it
 means the Node dependencies haven't been installed. Run `npm install` and then
 try again. Recent versions of the worker rely on the `MAILER_ENDPOINT_URL`
-environment variable instead of dynamic imports. If this variable is missing the
+environment variable instead of dynamic imports. If this variable is missing, the
 worker attempts to send messages directly through MailChannels using the
-`FROM_EMAIL` address. `/api/sendTestEmail` may respond with **500** if the mail
-service fails.
+`FROM_EMAIL` address. A **500** error from `/api/sendTestEmail` usually indicates
+a failure from MailChannels or your external mailer service. Inspect the worker
+logs for details.
 
 
 След успешната инсталация можете отново да стартирате `npm run dev`.
@@ -659,7 +660,7 @@ an external provider such as Cloudflare
 
 | Variable | Purpose |
 |----------|---------|
-| `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If not set, the worker sends via MailChannels using `FROM_EMAIL`. |
+| `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If omitted, the worker sends via MailChannels using `FROM_EMAIL`. |
 | `EMAIL_PASSWORD` | Password used by `mailer.js` when authenticating with the SMTP server. |
 | `WELCOME_EMAIL_SUBJECT` | Optional custom subject for welcome emails sent by `mailer.js`. |
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |
