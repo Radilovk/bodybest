@@ -1427,6 +1427,12 @@ async function handleAnalyzeImageRequest(request, env) {
                 base64 = match[2];
             }
         }
+        if (typeof imageData === 'string' && imageData.startsWith('data:') && !imageData.startsWith('data:image/')) {
+            return { success: false, message: 'Невалиден формат на изображението.', statusHint: 400 };
+        }
+        if (finalMime && !finalMime.startsWith('image/')) {
+            return { success: false, message: 'Невалиден MIME тип.', statusHint: 400 };
+        }
         if (!/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) {
             return { success: false, message: 'Невалиден Base64 стринг.', statusHint: 400 };
         }
@@ -1453,10 +1459,14 @@ async function handleAnalyzeImageRequest(request, env) {
 
         let aiResp;
         if (provider === 'cf') {
+            console.log('Received image:', String(imageData).substring(0, 100));
+            console.log('Prompt:', finalPrompt);
             const dataUrl = `data:${finalMime || 'image/jpeg'};base64,${base64}`;
             const payload = buildCfImagePayload(modelName, dataUrl, finalPrompt);
             aiResp = await callCfAi(modelName, payload, env);
         } else if (provider === 'gemini') {
+            console.log('Received image:', String(imageData).substring(0, 100));
+            console.log('Prompt:', finalPrompt);
             const key = env[GEMINI_API_KEY_SECRET_NAME];
             if (!key) throw new Error('Missing Gemini API key.');
             aiResp = await callGeminiVisionAPI(
@@ -1468,6 +1478,8 @@ async function handleAnalyzeImageRequest(request, env) {
                 modelName
             );
         } else {
+            console.log('Received image:', String(imageData).substring(0, 100));
+            console.log('Prompt:', finalPrompt);
             const textPrompt = finalPrompt || `Опиши съдържанието на това изображение: ${base64}`;
             aiResp = await callModel(modelName, textPrompt, env, { temperature: 0.2, maxTokens: 200 });
         }

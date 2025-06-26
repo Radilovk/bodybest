@@ -133,6 +133,20 @@ describe('handleAnalyzeImageRequest', () => {
     expect(res.statusHint).toBe(500);
   });
 
+  test('rejects non-image data URL', async () => {
+    const request = { json: async () => ({ userId: 'u1', imageData: 'data:text/plain;base64,ZWxv' }) };
+    const res = await handleAnalyzeImageRequest(request, {});
+    expect(res.success).toBe(false);
+    expect(res.statusHint).toBe(400);
+  });
+
+  test('rejects mimeType not starting with image/', async () => {
+    const request = { json: async () => ({ userId: 'u1', imageData: 'ZWxv', mimeType: 'application/pdf' }) };
+    const res = await handleAnalyzeImageRequest(request, {});
+    expect(res.success).toBe(false);
+    expect(res.statusHint).toBe(400);
+  });
+
   test('extracts mimeType from data URL', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
