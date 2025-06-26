@@ -219,6 +219,16 @@
     </form>
   </details>
 
+  <details id="testImageSection" class="card">
+    <summary>Тест на анализ на изображение</summary>
+    <form id="testImageForm">
+      <label>Файл:<br><input id="testImageFile" type="file" accept="image/*"></label>
+      <label>Пояснение:<br><input id="testImagePrompt" type="text"></label>
+      <button type="submit">Изпрати</button>
+    </form>
+    <pre id="testImageResult" class="json"></pre>
+  </details>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module" src="js/admin.js"></script>
 </body>

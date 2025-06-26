@@ -1,5 +1,6 @@
 import { apiEndpoints } from './config.js';
 import { labelMap, statusMap } from './labelMap.js';
+import { fileToBase64 } from './utils.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -92,6 +93,10 @@ const testEmailForm = document.getElementById('testEmailForm');
 const testEmailToInput = document.getElementById('testEmailTo');
 const testEmailSubjectInput = document.getElementById('testEmailSubject');
 const testEmailBodyInput = document.getElementById('testEmailBody');
+const testImageForm = document.getElementById('testImageForm');
+const testImageFileInput = document.getElementById('testImageFile');
+const testImagePromptInput = document.getElementById('testImagePrompt');
+const testImageResultPre = document.getElementById('testImageResult');
 const clientNameHeading = document.getElementById('clientName');
 const closeProfileBtn = document.getElementById('closeProfile');
 const notificationsList = document.getElementById('notificationsList');
@@ -1222,6 +1227,33 @@ async function sendTestEmail() {
     }
 }
 
+async function sendTestImage() {
+    if (!testImageForm || !testImageFileInput?.files?.[0]) return;
+    const file = testImageFileInput.files[0];
+    const prompt = testImagePromptInput ? testImagePromptInput.value.trim() : '';
+    try {
+        const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
+        const headers = { 'Content-Type': 'application/json' };
+        if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+        const imageData = await fileToBase64(file);
+        const resp = await fetch(apiEndpoints.analyzeImage, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ userId: 'admin-test', imageData, mimeType: file.type, prompt })
+        });
+        const data = await resp.json();
+        if (testImageResultPre) testImageResultPre.textContent = JSON.stringify(data, null, 2);
+        if (!resp.ok || !data.success) {
+            alert(data.message || 'Неуспешен анализ.');
+        }
+    } catch (err) {
+        console.error('Error analyzing image:', err);
+        alert('Грешка при анализа.');
+    } finally {
+        if (testImageFileInput) testImageFileInput.value = '';
+    }
+}
+
 async function loadAiPresets() {
     if (!presetSelect) return;
     try {
@@ -1406,6 +1438,13 @@ if (testEmailForm) {
     });
 }
 
+if (testImageForm) {
+    testImageForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await sendTestImage();
+    });
+}
+
 export {
     allClients,
     loadClients,
@@ -1414,5 +1453,6 @@ export {
     checkForNotifications,
     showClient,
     unreadClients,
-    sendTestEmail
+    sendTestEmail,
+    sendTestImage
 };
