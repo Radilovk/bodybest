@@ -137,12 +137,12 @@ the page.
 
 ## Deployment to Cloudflare
 
-A GitHub Action workflow at `.github/workflows/deploy.yml` automatically deploys the worker when you push to `main` or open a pull request. It runs `wrangler deploy` using the secret `CF_API_TOKEN` for authentication. Pull requests from forks cannot access the secrets, so those builds will skip deployment.
+A GitHub Action workflow at `.github/workflows/deploy.yml` automatically deploys the worker when you push to `main` or open a pull request. It runs `wrangler deploy` using the secret `CLOUDFLARE_API_TOKEN` for authentication. Pull requests from forks cannot access the secrets, so those builds will skip deployment.
 
 To set the token:
 
 1. Generate an API token with **Edit Cloudflare Workers** permissions.
-2. In your repository settings, create a GitHub secret named `CF_API_TOKEN` containing the token value.
+2. In your repository settings, create a GitHub secret named `CLOUDFLARE_API_TOKEN` containing the token value.
 
 The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed. For the `USER_METADATA_KV` namespace the file expects the environment variables `USER_METADATA_KV_ID` and `USER_METADATA_KV_PREVIEW_ID`. Configure them as GitHub secrets so the workflow can substitute the correct IDs before deployment. **Важно:** полето `compatibility_date` не може да сочи в бъдещето спрямо датата на деплой. Ако е зададена по-нова дата, Cloudflare ще откаже деплойването. Затова поддържайте стойност, която е днес или по-стара. Например:
 
@@ -162,7 +162,7 @@ You can verify this setup locally by running:
 ```bash
 node scripts/validate-wrangler.js
 ```
-This script checks for placeholder values and for a provided `CF_API_TOKEN`.
+This script checks for placeholder values and for a provided `CLOUDFLARE_API_TOKEN`.
 
 
 ### Работа с KV
@@ -175,7 +175,7 @@ wrangler kv key get <ключ> --binding=RESOURCES_KV
 wrangler kv key delete <ключ> --binding=RESOURCES_KV
 ```
 
-> За работа с тези команди трябва да имате зададен `CF_API_TOKEN` или да сте изпълнили `wrangler login`.
+> За работа с тези команди трябва да имате зададен `CLOUDFLARE_API_TOKEN` или да сте изпълнили `wrangler login`.
 
 Заменете `RESOURCES_KV` с `USER_METADATA_KV` при нужда. В директорията `scripts` има примерен Node скрипт `manage-kv.js`, който изпълнява същите операции:
 
@@ -271,7 +271,7 @@ This list is combined with the defaults when building the CORS headers.
 The PHP helper scripts expect the following variables set in the server environment:
 
 - `STATIC_TOKEN` – shared secret token used for authentication in `file_manager_api.php`.
-- `CF_API_TOKEN` – token used by `save-questions.php` to update the Cloudflare KV store.
+- `CLOUDFLARE_API_TOKEN` – token used by `save-questions.php` to update the Cloudflare KV store.
 - `ALLOWED_ORIGINS` – optional comma-separated list of origins allowed to
   access the PHP scripts and `worker-backend.js`. Defaults match the worker
   configuration when not provided.
