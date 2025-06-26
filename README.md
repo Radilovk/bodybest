@@ -332,14 +332,30 @@ php -r "echo password_hash('yourPassword', PASSWORD_DEFAULT);"
 wrangler kv key put model_image_analysis "@cf/llava-hf/llava-v1.6b" --binding=RESOURCES_KV
 ```
 
-> **Note**: При по-старите LLaVA модели, например `@cf/llava-hf/llava-1.5-7b-hf`,
-> Cloudflare очаква полетата `prompt` и `image` (data URL) вместо `messages`.
+> **Note**: Всички Cloudflare AI модели за анализ на изображения приемат JSON с
+> полета `prompt` и `image` (data URL) вместо `messages`.
 > Пример за директно извикване през `env.AI.run`:
 
 ```javascript
-const result = await env.AI.run('@cf/llava-hf/llava-1.5-7b-hf', {
+const result = await env.AI.run('@cf/llava-hf/llava-v1.6b', {
   prompt: 'Опиши какво виждаш',
   image: `data:image/png;base64,${base64}`
+});
+```
+
+Кратък пример с `fetch` към Cloudflare AI:
+
+```javascript
+await fetch(CF_URL, {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${CF_AI_TOKEN}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    prompt: 'Опиши какво виждаш',
+    image: `data:image/png;base64,${base64}`
+  })
 });
 ```
 
