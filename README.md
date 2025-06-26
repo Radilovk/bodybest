@@ -146,7 +146,7 @@ To set the token:
 
 The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed. For the `USER_METADATA_KV` namespace the file expects the environment variables `USER_METADATA_KV_ID` and `USER_METADATA_KV_PREVIEW_ID`. Configure them as GitHub secrets so the workflow can substitute the correct IDs before deployment. **Важно:** полето `compatibility_date` не може да сочи в бъдещето спрямо датата на деплой. Ако е зададена по-нова дата, Cloudflare ще откаже деплойването. Затова поддържайте стойност, която е днес или по-стара. Например:
 
-If mailing is required, set `MAILER_MODULE_URL` to a Node service implementing `sendEmail` (see `mailer.js`). Omitting this variable disables email sending in the deployed worker. Without it the `/api/sendTestEmail` endpoint returns a 400 status indicating the feature is disabled.
+If mailing is required, set `MAILER_ENDPOINT_URL` to the URL of the standalone worker that sends emails. Omitting this variable disables email sending in the deployed worker. Without it the `/api/sendTestEmail` endpoint returns a 400 status indicating the feature is disabled.
 
 ```toml
 compatibility_date = "2025-06-20"
@@ -516,6 +516,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `POST /api/testAiModel` – проверява връзката с конкретен AI модел.
 - `POST /api/analyzeImage` – анализира качено изображение и връща резултат. Ендпойнтът не изисква `WORKER_ADMIN_TOKEN`, освен ако изрично не сте го добавили като защита.
 - `POST /api/sendTestEmail` – изпраща тестов имейл. Изисква администраторски токен.
+- `POST /api/sendEmail` – изпраща имейл чрез MailChannels. Приема JSON `{ "to": "user@example.com", "subject": "Тема", "text": "Съобщение" }`.
 
   ```bash
   curl -X POST https://<your-domain>/api/testAiModel \
@@ -543,7 +544,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
     -H "Content-Type: application/json" \
     --data '{"to":"someone@example.com","subject":"Тест","text":"Здравей"}'
   ```
-  Ако `MAILER_MODULE_URL` не е конфигуриран, ендпойнтът връща **HTTP 400** с
+  Ако `MAILER_ENDPOINT_URL` не е конфигуриран, ендпойнтът връща **HTTP 400** с
   `{ "success": false, "message": "Email functionality is not configured." }`.
 - **Дебъг логове** – при изпращане на заглавие `X-Debug: 1` към който и да е API
 ендпойнт, worker-ът записва в конзолата кратка информация за заявката.
@@ -575,12 +576,15 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 
 ## Email Notifications
 
-The worker loads mailing logic only at runtime. Specify a module URL in the
-`MAILER_MODULE_URL` environment variable. That module must export a
-`sendEmail(to, subject, html)` function. If `MAILER_MODULE_URL` is not provided
+The worker sends emails by calling a separate endpoint specified in the
+`MAILER_ENDPOINT_URL` environment variable. If `MAILER_ENDPOINT_URL` is not provided
 the worker falls back to a stub implementation and no emails are sent. In that
 case `/api/sendTestEmail` responds with status **400** and a message indicating
 the functionality is disabled.
+
+For a simple setup deploy `sendEmailWorker.js`, which exposes `/api/sendEmail`
+and sends messages via MailChannels. Point `MAILER_ENDPOINT_URL` to the URL of
+this worker so the main service can dispatch emails without relying on Node.js.
 
 The included `mailer.js` relies on `nodemailer` and therefore requires a Node.js
 environment. Run it as a separate service or replace it with a script that calls

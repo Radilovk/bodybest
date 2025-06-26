@@ -1,16 +1,17 @@
 import { jest } from '@jest/globals';
 
-let handleSendTestEmailRequest, sendEmailMock;
+let handleSendTestEmailRequest;
 
 beforeEach(async () => {
   jest.resetModules();
-  sendEmailMock = jest.fn().mockResolvedValue();
-  jest.unstable_mockModule('../../mailer.js', () => ({ sendEmail: sendEmailMock }));
   ({ handleSendTestEmailRequest } = await import('../../worker.js'));
 });
 
 afterEach(() => {
   jest.resetModules();
+  if (global.fetch && typeof global.fetch.mockRestore === 'function') {
+    global.fetch.mockRestore();
+  }
 });
 
 test('rejects invalid token', async () => {
@@ -18,7 +19,7 @@ test('rejects invalid token', async () => {
     headers: { get: h => (h === 'Authorization' ? 'Bearer bad' : null) },
     json: async () => ({ recipient: 'test@example.com', subject: 's', body: 'b' })
   };
-  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILER_MODULE_URL: './mailer.js' };
+  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILER_ENDPOINT_URL: 'https://mail.example.com' };
   const res = await handleSendTestEmailRequest(request, env);
   expect(res.success).toBe(false);
   expect(res.statusHint).toBe(403);
@@ -47,25 +48,27 @@ test('rejects invalid json', async () => {
 });
 
 test('sends email on valid data', async () => {
+  global.fetch = jest.fn().mockResolvedValue({ ok: true });
   const request = {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ recipient: 'test@example.com', subject: 'Hi', body: 'b' })
   };
-  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILER_MODULE_URL: './mailer.js' };
+  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILER_ENDPOINT_URL: 'https://mail.example.com' };
   const res = await handleSendTestEmailRequest(request, env);
   expect(res.success).toBe(true);
-  expect(sendEmailMock).toHaveBeenCalledWith('test@example.com', 'Hi', 'b');
+  expect(fetch).toHaveBeenCalledWith('https://mail.example.com', expect.any(Object));
 });
 
 test('supports alternate field names', async () => {
+  global.fetch = jest.fn().mockResolvedValue({ ok: true });
   const request = {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ to: 'alt@example.com', subject: 'Hi', text: 'b' })
   };
-  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILER_MODULE_URL: './mailer.js' };
+  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILER_ENDPOINT_URL: 'https://mail.example.com' };
   const res = await handleSendTestEmailRequest(request, env);
   expect(res.success).toBe(true);
-  expect(sendEmailMock).toHaveBeenCalledWith('alt@example.com', 'Hi', 'b');
+  expect(fetch).toHaveBeenCalledWith('https://mail.example.com', expect.any(Object));
 });
 
 test('returns 400 when mailer is not configured', async () => {
