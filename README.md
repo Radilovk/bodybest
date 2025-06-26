@@ -523,6 +523,8 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
     -H "Content-Type: application/json" \
     --data '{"recipient":"user@example.com","subject":"Test","body":"Hello"}'
   ```
+  Полетата `recipient`, `subject` и `body` са задължителни. Като алтернатива
+  могат да се използват имената `to` и `text`.
   Ако `MAILER_MODULE_URL` не е конфигуриран, ендпойнтът връща **HTTP 400** с
   `{ "success": false, "message": "Email functionality is not configured." }`.
 - **Дебъг логове** – при изпращане на заглавие `X-Debug: 1` към който и да е API

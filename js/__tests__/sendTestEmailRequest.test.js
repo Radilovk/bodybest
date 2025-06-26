@@ -35,6 +35,17 @@ test('rejects missing fields', async () => {
   expect(res.statusHint).toBe(400);
 });
 
+test('rejects invalid json', async () => {
+  const request = {
+    headers: { get: () => null },
+    json: async () => { throw new Error('bad json'); }
+  };
+  const env = {};
+  const res = await handleSendTestEmailRequest(request, env);
+  expect(res.success).toBe(false);
+  expect(res.statusHint).toBe(400);
+});
+
 test('sends email on valid data', async () => {
   const request = {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
@@ -44,6 +55,17 @@ test('sends email on valid data', async () => {
   const res = await handleSendTestEmailRequest(request, env);
   expect(res.success).toBe(true);
   expect(sendEmailMock).toHaveBeenCalledWith('test@example.com', 'Hi', 'b');
+});
+
+test('supports alternate field names', async () => {
+  const request = {
+    headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
+    json: async () => ({ to: 'alt@example.com', subject: 'Hi', text: 'b' })
+  };
+  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILER_MODULE_URL: './mailer.js' };
+  const res = await handleSendTestEmailRequest(request, env);
+  expect(res.success).toBe(true);
+  expect(sendEmailMock).toHaveBeenCalledWith('alt@example.com', 'Hi', 'b');
 });
 
 test('returns 400 when mailer is not configured', async () => {
