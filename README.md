@@ -648,7 +648,7 @@ MAILER_ENDPOINT_URL = "https://send-email-worker.example.workers.dev"
 ```
 
 For a simple setup deploy `sendEmailWorker.js`, which exposes `/api/sendEmail`
-and sends messages via MailChannels. Point `MAILER_ENDPOINT_URL` to the URL of
+and sends messages via a PHP backend. Point `MAILER_ENDPOINT_URL` to the URL of
 this worker so the main service can dispatch emails without relying on Node.js.
 
 The included `mailer.js` relies on `nodemailer` and therefore requires a Node.js
@@ -661,6 +661,7 @@ an external provider such as Cloudflare
 | Variable | Purpose |
 |----------|---------|
 | `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If omitted, the worker sends via MailChannels using `FROM_EMAIL`. |
+| `MAIL_PHP_URL` | Endpoint used by `sendEmailWorker.js` to deliver messages. Defaults to `https://mybody.best/mail.php`. |
 | `EMAIL_PASSWORD` | Password used by `mailer.js` when authenticating with the SMTP server. |
 | `WELCOME_EMAIL_SUBJECT` | Optional custom subject for welcome emails sent by `mailer.js`. |
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |

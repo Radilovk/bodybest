@@ -1,19 +1,14 @@
 /**
- * Send an email via MailChannels.
+ * Send an email via a PHP backend.
  * Exported so other modules can reuse the same logic.
  * @param {string} to recipient address
  * @param {string} subject email subject line
  * @param {string} text plain text body
  */
 export async function sendEmail(to, subject, text, env = {}) {
-  const fromEmail = env.FROM_EMAIL || 'info@mybody.best';
-  const payload = {
-    personalizations: [{ to: [{ email: to }] }],
-    from: { email: fromEmail },
-    subject,
-    content: [{ type: 'text/plain', value: text }]
-  };
-  const resp = await fetch('https://api.mailchannels.net/tx/v1/send', {
+  const endpoint = env.MAIL_PHP_URL || 'https://mybody.best/mail.php';
+  const payload = { to, subject, body: text };
+  const resp = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
