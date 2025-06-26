@@ -11,7 +11,15 @@
 // - Попълнени липсващи части от предходни версии.
 // - Запазени всички предходни функционалности.
 
-function defaultSendEmail() {
+/**
+ * Fallback email sender used when `mailer.js` is unavailable.
+ * Matches the signature of the real implementation to satisfy TypeScript.
+ * @param {string} to
+ * @param {string} subject
+ * @param {string} body
+ * @returns {Promise<void>}
+ */
+async function defaultSendEmail(to, subject, body) {
     throw new Error('Email functionality is not configured.');
 }
 /** @type {(to: string, subject: string, body: string) => Promise<void>} */
