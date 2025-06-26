@@ -1732,9 +1732,25 @@ async function handleSendTestEmailRequest(request, env) {
             return { success: false, message: 'Невалиден токен.', statusHint: 403 };
         }
 
-        const { recipient, subject, body } = await request.json();
-        if (!recipient || !subject || !body) {
-            return { success: false, message: 'Липсват данни.', statusHint: 400 };
+        let data;
+        try {
+            data = await request.json();
+        } catch {
+            return { success: false, message: 'Invalid JSON.', statusHint: 400 };
+        }
+
+        const recipient = data.recipient ?? data.to;
+        const subject = data.subject;
+        const body = data.body ?? data.text;
+
+        if (typeof recipient !== 'string' || !recipient) {
+            return { success: false, message: 'Missing field: recipient', statusHint: 400 };
+        }
+        if (typeof subject !== 'string' || !subject) {
+            return { success: false, message: 'Missing field: subject', statusHint: 400 };
+        }
+        if (typeof body !== 'string' || !body) {
+            return { success: false, message: 'Missing field: body', statusHint: 400 };
         }
 
         const sendEmail = await getSendEmail(env);
