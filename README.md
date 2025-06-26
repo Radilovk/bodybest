@@ -129,6 +129,18 @@ HTTP 403 permission missing: Workers AI: Run
 HTTP 404 account not found or not authorized to access account
 ```
 
+##### Verify the base64 string
+
+You can confirm the input is a valid image by decoding the base64 data locally:
+
+```bash
+echo "<BASE64>" | base64 --decode > test.jpg
+file test.jpg
+```
+
+The `file` output should recognize an image format like JPEG or PNG.  
+Cloudflare returns `Tensor error: failed to decode u8` when the data isn't a valid image.
+
 ### Generate Documentation
 
 Create API documentation using Typedoc:
