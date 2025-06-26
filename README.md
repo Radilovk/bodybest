@@ -443,6 +443,17 @@ In addition to text messages you can upload an image for automatic analysis.
 Open `assistant.html`, choose a file and it will be converted to a Base64 string
 and sent to `/api/analyzeImage` as JSON with fields `userId`, `imageData`,
 `mimeType` and an optional `prompt` describing what you want to see.
+The `imageData` field must contain only the raw Base64 string without a `data:` prefix.
+For example, convert a file in the browser using FileReader:
+```javascript
+const reader = new FileReader();
+reader.onload = () => send({imageData: reader.result.split(",")[1]});
+reader.readAsDataURL(file);
+```
+You can also generate a Base64 string via shell:
+```bash
+base64 -w0 image.jpg > base64.txt
+```
 The worker forwards the image data together with your text prompt to the
 configured vision model and returns a JSON summary describing the detected
 objects or text.
