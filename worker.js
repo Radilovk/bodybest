@@ -1406,8 +1406,14 @@ async function handleAiHelperRequest(request, env) {
 
 // ------------- START FUNCTION: handleAnalyzeImageRequest -------------
 async function handleAnalyzeImageRequest(request, env) {
+    let payloadData;
     try {
-        const { userId, imageData, mimeType, prompt } = await request.json();
+        payloadData = await request.json();
+    } catch {
+        return { success: false, message: 'Невалиден JSON.', statusHint: 400 };
+    }
+    try {
+        const { userId, imageData, mimeType, prompt } = payloadData;
         if (!userId || !imageData) {
             return { success: false, message: 'Липсват imageData или userId.', statusHint: 400 };
         }
@@ -1421,6 +1427,16 @@ async function handleAnalyzeImageRequest(request, env) {
         const finalPrompt = prompt || kvPrompt || 'Опиши съдържанието на това изображение.';
         const modelName = modelFromKv || '@cf/stabilityai/clip';
         const provider = getModelProvider(modelName);
+
+        if (provider === 'cf') {
+            if (!env[CF_AI_TOKEN_SECRET_NAME] || !(env[CF_ACCOUNT_ID_VAR_NAME] || env.accountId || env.ACCOUNT_ID)) {
+                return { success: false, message: 'Липсва CF_AI_TOKEN или CF_ACCOUNT_ID.', statusHint: 500 };
+            }
+        } else if (provider === 'gemini') {
+            if (!env[GEMINI_API_KEY_SECRET_NAME]) {
+                return { success: false, message: 'Липсва GEMINI_API_KEY.', statusHint: 500 };
+            }
+        }
 
         let aiResp;
         if (provider === 'cf') {
@@ -1446,7 +1462,7 @@ async function handleAnalyzeImageRequest(request, env) {
         return { success: true, result: aiResp };
     } catch (error) {
         console.error('Error in handleAnalyzeImageRequest:', error.message, error.stack);
-        return { success: false, message: 'Грешка при анализа на изображението.', statusHint: 500 };
+        return { success: false, message: `Грешка при анализа на изображението: ${error.message}`, statusHint: 500 };
     }
 }
 // ------------- END FUNCTION: handleAnalyzeImageRequest -------------
