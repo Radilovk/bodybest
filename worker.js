@@ -1408,35 +1408,9 @@ async function handleAnalyzeImageRequest(request, env) {
 
         let aiResp;
         if (provider === 'cf') {
-            const promptImageNeeded =
-                modelName.includes('llava-1.5') || modelName.endsWith('-hf');
-            if (promptImageNeeded) {
-                aiResp = await callCfAi(
-                    modelName,
-                    {
-                        prompt: finalPrompt,
-                        image: `data:${mimeType || 'image/jpeg'};base64,${imageData}`
-                    },
-                    env
-                );
-            } else if (modelName.startsWith('@cf/')) {
-                const msgContent = [
-                    {
-                        type: 'image_url',
-                        image_url: {
-                            url: `data:${mimeType || 'image/jpeg'};base64,${imageData}`
-                        }
-                    },
-                    { type: 'text', text: finalPrompt }
-                ];
-                aiResp = await callCfAi(
-                    modelName,
-                    { messages: [{ role: 'user', content: msgContent }], stream: false },
-                    env
-                );
-            } else {
-                aiResp = await callCfAi(modelName, { image: imageData }, env);
-            }
+            const dataUrl = `data:${mimeType || 'image/jpeg'};base64,${imageData}`;
+            const payload = buildCfImagePayload(modelName, dataUrl, finalPrompt);
+            aiResp = await callCfAi(modelName, payload, env);
         } else if (provider === 'gemini') {
             const key = env[GEMINI_API_KEY_SECRET_NAME];
             if (!key) throw new Error('Missing Gemini API key.');
@@ -3099,6 +3073,28 @@ async function callModel(model, prompt, env, { temperature = 0.7, maxTokens = 80
     return callGeminiAPI(prompt, key, { temperature, maxOutputTokens: maxTokens }, [], model);
 }
 
+// ------------- START FUNCTION: buildCfImagePayload -------------
+function buildCfImagePayload(model, imageUrl, promptText) {
+    const needsPromptImage = model.includes('llava-1.5') || model.endsWith('-hf');
+    if (needsPromptImage) {
+        return { prompt: promptText, image: imageUrl };
+    }
+    if (model.startsWith('@cf/')) {
+        return {
+            messages: [{
+                role: 'user',
+                content: [
+                    { type: 'image_url', image_url: { url: imageUrl } },
+                    { type: 'text', text: promptText }
+                ]
+            }],
+            stream: false
+        };
+    }
+    return { image: imageUrl };
+}
+// ------------- END FUNCTION: buildCfImagePayload -------------
+
 // ------------- START FUNCTION: callCfAi -------------
 async function callCfAi(model, payload, env) {
     const accountId = env[CF_ACCOUNT_ID_VAR_NAME] || env.accountId || env.ACCOUNT_ID;
@@ -3662,4 +3658,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
