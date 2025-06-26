@@ -6,5 +6,5 @@
     "allowJs": true,
     "resolveJsonModule": true
   },
-  "include": ["worker.js", "mailer.js", "js/**/*"]
+  "include": ["worker.js", "mailer.js", "mailer.d.ts", "js/**/*"]
 }
