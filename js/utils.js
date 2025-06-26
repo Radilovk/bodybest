@@ -64,3 +64,17 @@ export function fileToBase64(file) {
         reader.readAsDataURL(file);
     });
 }
+
+/**
+ * Преобразува File обект към Data URL (data:image/...) с Base64 съдържание.
+ * @param {File} file - Изображението за конвертиране.
+ * @returns {Promise<string>} Обещание с пълния Data URL.
+ */
+export function fileToDataURL(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result || '');
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+    });
+}

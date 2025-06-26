@@ -31,7 +31,7 @@ describe('handleAnalyzeImageRequest', () => {
       json: async () => ({ result: { response: 'ok' } })
     });
     const env = { CF_ACCOUNT_ID: 'acc', CF_AI_TOKEN: 'token', RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) } };
-    const request = { json: async () => ({ userId: 'u1', imageData: validPng, mimeType: 'image/png', prompt: 'hi' }) };
+    const request = { json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}`, prompt: 'hi' }) };
     const res = await handleAnalyzeImageRequest(request, env);
     expect(res.success).toBe(true);
     expect(res.result).toBe('ok');
@@ -58,7 +58,7 @@ describe('handleAnalyzeImageRequest', () => {
       CF_AI_TOKEN: 'token',
       RESOURCES_KV: { get: jest.fn().mockResolvedValue('@cf/custom') }
     };
-    const request = { json: async () => ({ userId: 'u1', imageData: validPng, mimeType: 'image/png', prompt: 'desc' }) };
+    const request = { json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}`, prompt: 'desc' }) };
     await handleAnalyzeImageRequest(request, env);
     const url = global.fetch.mock.calls[0][0];
     expect(url).toContain('@cf/custom');
@@ -73,7 +73,7 @@ describe('handleAnalyzeImageRequest', () => {
       GEMINI_API_KEY: 'k',
       RESOURCES_KV: { get: jest.fn().mockResolvedValue('gemini-pro-vision') }
     };
-    const request = { json: async () => ({ userId: 'u1', imageData: validPng, mimeType: 'image/png', prompt: 'desc' }) };
+    const request = { json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}`, prompt: 'desc' }) };
     const res = await handleAnalyzeImageRequest(request, env);
     expect(res.success).toBe(true);
     expect(res.result).toBe('ok');
@@ -92,7 +92,7 @@ describe('handleAnalyzeImageRequest', () => {
       GEMINI_API_KEY: 'k',
       RESOURCES_KV: { get: jest.fn().mockResolvedValue('gemini-pro-vision') }
     };
-    const request = { json: async () => ({ userId: 'u1', imageData: validPng, mimeType: 'image/png' }) };
+    const request = { json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}` }) };
     await handleAnalyzeImageRequest(request, env);
     const body = JSON.parse(global.fetch.mock.calls[0][1].body);
     expect(body.contents[0].parts[1].text).toBe('Опиши съдържанието на това изображение.');
@@ -108,7 +108,7 @@ describe('handleAnalyzeImageRequest', () => {
       CF_AI_TOKEN: 'token',
       RESOURCES_KV: { get: jest.fn().mockResolvedValue('@cf/llava-hf/llava-1.5-7b-hf') }
     };
-    const request = { json: async () => ({ userId: 'u1', imageData: validPng, mimeType: 'image/png', prompt: 'desc' }) };
+    const request = { json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}`, prompt: 'desc' }) };
     await handleAnalyzeImageRequest(request, env);
     const body = JSON.parse(global.fetch.mock.calls[0][1].body);
     expect(body).toEqual({
@@ -117,9 +117,22 @@ describe('handleAnalyzeImageRequest', () => {
     });
   });
 
+  test('uses env.AI.run when available', async () => {
+    const aiRun = jest.fn().mockResolvedValue({ response: 'ok' });
+    const env = {
+      AI: { run: aiRun },
+      RESOURCES_KV: { get: jest.fn().mockResolvedValue('@cf/llava-hf/llava-1.5-7b-hf') }
+    };
+    const request = { json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}`, prompt: 'desc' }) };
+    const res = await handleAnalyzeImageRequest(request, env);
+    expect(res.success).toBe(true);
+    expect(res.result).toBe('ok');
+    expect(aiRun).toHaveBeenCalledWith('@cf/llava-hf/llava-1.5-7b-hf', { prompt: 'desc', image: `data:image/png;base64,${validPng}` });
+  });
+
   test('fails when both CF secrets missing', async () => {
     const env = { RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) } };
-    const request = { json: async () => ({ userId: 'u1', imageData: validPng }) };
+    const request = { json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}` }) };
     const res = await handleAnalyzeImageRequest(request, env);
     expect(res.success).toBe(false);
     expect(res.message).toBe('Липсват CF_AI_TOKEN и CF_ACCOUNT_ID.');
@@ -128,7 +141,7 @@ describe('handleAnalyzeImageRequest', () => {
 
   test('fails when only CF_AI_TOKEN missing', async () => {
     const env = { CF_ACCOUNT_ID: 'acc', RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) } };
-    const request = { json: async () => ({ userId: 'u1', imageData: validPng }) };
+    const request = { json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}` }) };
     const res = await handleAnalyzeImageRequest(request, env);
     expect(res.success).toBe(false);
     expect(res.message).toBe('Липсва CF_AI_TOKEN.');
@@ -137,7 +150,7 @@ describe('handleAnalyzeImageRequest', () => {
 
   test('fails when only CF_ACCOUNT_ID missing', async () => {
     const env = { CF_AI_TOKEN: 't', RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) } };
-    const request = { json: async () => ({ userId: 'u1', imageData: validPng }) };
+    const request = { json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}` }) };
     const res = await handleAnalyzeImageRequest(request, env);
     expect(res.success).toBe(false);
     expect(res.message).toBe('Липсва CF_ACCOUNT_ID.');
@@ -146,7 +159,7 @@ describe('handleAnalyzeImageRequest', () => {
 
   test('fails when GEMINI_API_KEY missing', async () => {
     const env = { RESOURCES_KV: { get: jest.fn().mockResolvedValue('gemini-pro-vision') } };
-    const request = { json: async () => ({ userId: 'u1', imageData: validPng }) };
+    const request = { json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}` }) };
     const res = await handleAnalyzeImageRequest(request, env);
     expect(res.success).toBe(false);
     expect(res.message).toBe('Липсва GEMINI_API_KEY.');
@@ -154,14 +167,14 @@ describe('handleAnalyzeImageRequest', () => {
   });
 
   test('rejects non-image data URL', async () => {
-    const request = { json: async () => ({ userId: 'u1', imageData: 'data:text/plain;base64,ZWxv' }) };
+    const request = { json: async () => ({ userId: 'u1', image: 'data:text/plain;base64,ZWxv' }) };
     const res = await handleAnalyzeImageRequest(request, {});
     expect(res.success).toBe(false);
     expect(res.statusHint).toBe(400);
   });
 
   test('rejects mimeType not starting with image/', async () => {
-    const request = { json: async () => ({ userId: 'u1', imageData: 'ZWxv', mimeType: 'application/pdf' }) };
+    const request = { json: async () => ({ userId: 'u1', image: 'ZWxv', mimeType: 'application/pdf' }) };
     const res = await handleAnalyzeImageRequest(request, {});
     expect(res.success).toBe(false);
     expect(res.statusHint).toBe(400);
@@ -173,23 +186,23 @@ describe('handleAnalyzeImageRequest', () => {
       json: async () => ({ result: { response: 'ok' } })
     });
     const env = { CF_ACCOUNT_ID: 'acc', CF_AI_TOKEN: 'token', RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) } };
-    const request = { json: async () => ({ userId: 'u1', imageData: `data:image/png;base64,${validPng}` }) };
+    const request = { json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}` }) };
     await handleAnalyzeImageRequest(request, env);
     const body = JSON.parse(global.fetch.mock.calls[0][1].body);
     expect(body.image).toBe(`data:image/png;base64,${validPng}`);
   });
 
   test('returns 400 on invalid base64', async () => {
-    const request = { json: async () => ({ userId: 'u1', imageData: 'invalid&&' }) };
+    const request = { json: async () => ({ userId: 'u1', image: 'invalid&&' }) };
     const res = await handleAnalyzeImageRequest(request, {});
     expect(res.success).toBe(false);
-    expect(res.message).toBe('Невалиден Base64 стринг.');
+    expect(res.message).toBe('Невалиден формат на изображението.');
     expect(res.statusHint).toBe(400);
   });
 
   test('rejects data with invalid image header', async () => {
     const b64 = Buffer.from('hello').toString('base64');
-    const request = { json: async () => ({ userId: 'u1', imageData: b64, mimeType: 'image/png' }) };
+    const request = { json: async () => ({ userId: 'u1', image: b64, mimeType: 'image/png' }) };
     const res = await handleAnalyzeImageRequest(request, {});
     expect(res.success).toBe(false);
     expect(res.statusHint).toBe(400);
@@ -207,7 +220,7 @@ describe('handleAnalyzeImageRequest', () => {
       RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) }
     };
     const request = {
-      json: async () => ({ userId: 'u1', imageData: validPng, mimeType: 'image/png' })
+      json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}` })
     };
     const res = await handleAnalyzeImageRequest(request, env);
     expect(res.success).toBe(false);
