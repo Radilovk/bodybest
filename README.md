@@ -523,6 +523,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `POST /api/testAiModel` – проверява връзката с конкретен AI модел.
 - `POST /api/analyzeImage` – анализира качено изображение и връща резултат. Полето `imageData` може да е Base64 стринг или пълен `data:` URL. Ендпойнтът не изисква `WORKER_ADMIN_TOKEN`, освен ако изрично не сте го добавили като защита.
 - `POST /api/sendTestEmail` – изпраща тестов имейл. Изисква администраторски токен.
+- `POST /api/sendEmail` – изпраща имейл чрез MailChannels. Приема JSON `{ "to": "user@example.com", "subject": "Тема", "text": "Съобщение" }`.
 
   ```bash
   curl -X POST https://<your-domain>/api/testAiModel \
@@ -588,6 +589,10 @@ The worker loads mailing logic only at runtime. Specify a module URL in the
 the worker falls back to a stub implementation and no emails are sent. In that
 case `/api/sendTestEmail` responds with status **400** and a message indicating
 the functionality is disabled.
+
+For a simple setup deploy `sendEmailWorker.js`, which exposes `/api/sendEmail`
+and sends messages via MailChannels. Point `MAILER_MODULE_URL` to the URL of
+this worker so the main service can dispatch emails without relying on Node.js.
 
 The included `mailer.js` relies on `nodemailer` and therefore requires a Node.js
 environment. Run it as a separate service or replace it with a script that calls
