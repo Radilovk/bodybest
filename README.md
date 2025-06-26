@@ -175,7 +175,7 @@ To set the token:
 
 The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed. For the `USER_METADATA_KV` namespace the file expects the environment variables `USER_METADATA_KV_ID` and `USER_METADATA_KV_PREVIEW_ID`. Configure them as GitHub secrets so the workflow can substitute the correct IDs before deployment. **Важно:** полето `compatibility_date` не може да сочи в бъдещето спрямо датата на деплой. Ако е зададена по-нова дата, Cloudflare ще откаже деплойването. Затова поддържайте стойност, която е днес или по-стара. Например:
 
-If mailing is required, set `MAILER_ENDPOINT_URL` to the URL of the standalone worker that sends emails. Omitting this variable disables email sending in the deployed worker. Without it the `/api/sendTestEmail` endpoint returns a 400 status indicating the feature is disabled.
+For email notifications you may set `MAILER_ENDPOINT_URL` to point to a standalone worker or service that performs the delivery. If the variable is omitted, the main worker still sends emails directly via MailChannels using the `FROM_EMAIL` address.
 
 ```toml
 compatibility_date = "2025-06-20"
@@ -272,6 +272,7 @@ Before deploying, configure the following secrets in Cloudflare (via the dashboa
 - `тут_ваш_php_api_token_secret_name`
 - `CF_AI_TOKEN` – API token used for Cloudflare AI requests
 - `OPENAI_API_KEY` – set via `wrangler secret put OPENAI_API_KEY`, used by `worker.js`
+- `FROM_EMAIL` – optional sender address for outgoing emails
 
 Без тази стойност част от AI функционалностите няма да работят.
 
@@ -580,8 +581,9 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
     -H "Content-Type: application/json" \
     --data '{"to":"someone@example.com","subject":"Тест","text":"Здравей"}'
   ```
-  Ако `MAILER_ENDPOINT_URL` не е конфигуриран, ендпойнтът връща **HTTP 400** с
-  `{ "success": false, "message": "Email functionality is not configured." }`.
+  Ако `MAILER_ENDPOINT_URL` не е зададен, работникът изпраща имейла директно
+  чрез MailChannels, използвайки адреса от `FROM_EMAIL` (по подразбиране
+  `info@mybody.best`).
 - **Дебъг логове** – при изпращане на заглавие `X-Debug: 1` към който и да е API
 ендпойнт, worker-ът записва в конзолата кратка информация за заявката.
 
@@ -612,11 +614,15 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 
 ## Email Notifications
 
-The worker sends emails by calling a separate endpoint specified in the
-`MAILER_ENDPOINT_URL` environment variable. If this variable is not provided
-the worker falls back to a stub implementation and no emails are sent. In that
-case `/api/sendTestEmail` responds with status **400** and a message indicating
-the functionality is disabled.
+The worker can send emails in two ways:
+
+1. If `MAILER_ENDPOINT_URL` is set, requests are forwarded to that endpoint
+   (for example a standalone worker) which handles the actual delivery.
+2. Otherwise the worker sends messages directly via MailChannels using the
+   address from `FROM_EMAIL` (defaults to `info@mybody.best`).
+
+In both cases the `/api/sendTestEmail` endpoint behaves the same and returns a
+JSON response indicating success or failure.
 
 To enable real emails:
 

@@ -19,27 +19,43 @@
  * @param {string} body
  * @returns {Promise<void>}
  */
-async function defaultSendEmail(to, subject, body) {
+async function defaultSendEmail() {
     throw new Error('Email functionality is not configured.');
 }
 /** @type {(to: string, subject: string, body: string) => Promise<void>} */
 let sendEmailFn = defaultSendEmail;
 const MAILER_ENDPOINT_URL_VAR_NAME = 'MAILER_ENDPOINT_URL';
+const FROM_EMAIL_VAR_NAME = 'FROM_EMAIL';
 async function getSendEmail(env) {
     if (sendEmailFn && sendEmailFn !== defaultSendEmail) return sendEmailFn;
     const endpoint = env?.[MAILER_ENDPOINT_URL_VAR_NAME];
-    if (!endpoint) {
-        console.warn('MAILER_ENDPOINT_URL not configured; email disabled.');
-        sendEmailFn = defaultSendEmail;
+    if (endpoint) {
+        sendEmailFn = async (to, subject, body) => {
+            const resp = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ to, subject, text: body })
+            });
+            if (!resp.ok) throw new Error(`Mailer responded with ${resp.status}`);
+        };
         return sendEmailFn;
     }
+
+    console.warn('MAILER_ENDPOINT_URL not configured; falling back to MailChannels');
+    const fromEmail = env?.[FROM_EMAIL_VAR_NAME] || 'info@mybody.best';
     sendEmailFn = async (to, subject, body) => {
-        const resp = await fetch(endpoint, {
+        const payload = {
+            personalizations: [{ to: [{ email: to }] }],
+            from: { email: fromEmail },
+            subject,
+            content: [{ type: 'text/plain', value: body }]
+        };
+        const resp = await fetch('https://api.mailchannels.net/tx/v1/send', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ to, subject, text: body })
+            body: JSON.stringify(payload)
         });
-        if (!resp.ok) throw new Error(`Mailer responded with ${resp.status}`);
+        if (!resp.ok) throw new Error(`MailChannels responded with ${resp.status}`);
     };
     return sendEmailFn;
 }
