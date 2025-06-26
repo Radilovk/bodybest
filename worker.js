@@ -44,6 +44,24 @@ async function getSendEmail(env) {
     return sendEmailFn;
 }
 
+const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
+const WELCOME_BODY_TEMPLATE = '<h2>Здравей, {{name}} 👋</h2>' +
+    '<p>Благодарим ти, че се регистрира в <strong>MyBody</strong> – твоето пространство за здраве, балансирано хранене и осъзнат живот.</p>' +
+    '<p>Очаквай още полезни ресурси и съвети съвсем скоро.</p>' +
+    '<p>Бъди здрав и вдъхновен!</p>' +
+    '<p>– Екипът на MyBody</p>';
+
+async function sendWelcomeEmail(to, name, env) {
+    const sendEmail = await getSendEmail(env);
+    if (sendEmail === defaultSendEmail) return;
+    const html = WELCOME_BODY_TEMPLATE.replace(/{{\s*name\s*}}/g, name);
+    try {
+        await sendEmail(to, WELCOME_SUBJECT, html);
+    } catch (err) {
+        console.error('Failed to send welcome email:', err);
+    }
+}
+
 // ------------- START BLOCK: GlobalConstantsAndBindings -------------
 const PHP_FILE_MANAGER_API_URL_SECRET_NAME = 'тут_ваш_php_api_url_secret_name';
 const PHP_API_STATIC_TOKEN_SECRET_NAME = 'тут_ваш_php_api_token_secret_name';
@@ -153,7 +171,7 @@ export default {
 
         try {
             if (method === 'POST' && path === '/api/register') {
-                responseBody = await handleRegisterRequest(request, env);
+                responseBody = await handleRegisterRequest(request, env, ctx);
             } else if (method === 'POST' && path === '/api/login') {
                  responseBody = await handleLoginRequest(request, env);
             } else if (method === 'POST' && path === '/api/submitQuestionnaire') {
@@ -425,7 +443,7 @@ export default {
  * @param {Object} env - Обект с environment променливи и KV връзки.
  * @returns {Promise<Object>} Резултат от операцията.
  */
-async function handleRegisterRequest(request, env) {
+async function handleRegisterRequest(request, env, ctx) {
      try {
         const { email, password, confirm_password } = await request.json();
         const trimmedEmail = email ? String(email).trim().toLowerCase() : null;
@@ -448,6 +466,8 @@ async function handleRegisterRequest(request, env) {
         const phpApiResult = await phpApiResponse.json(); if (!phpApiResult.message || !phpApiResult.file) { console.warn(`REGISTER_INFO (${userId}): PHP API unexpected success response for POST:`, phpApiResult); } else { console.log(`REGISTER_SUCCESS (${userId}): PHP API: Credential file created successfully for ${userId}:`, phpApiResult); }
         await env.USER_METADATA_KV.put(`email_to_uuid_${trimmedEmail}`, userId);
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
+        const emailTask = sendWelcomeEmail(trimmedEmail, userId, env);
+        if (ctx) ctx.waitUntil(emailTask); else await emailTask;
         return { success: true, message: 'Регистрацията успешна!' };
      } catch (error) { console.error('Error in handleRegisterRequest:', error.message, error.stack); let userMessage = 'Вътрешна грешка при регистрация.'; if (error.message.includes('Failed to fetch')) userMessage = 'Грешка при свързване със сървъра.'; else if (error instanceof SyntaxError) userMessage = 'Грешка в отговора от сървъра.'; return { success: false, message: userMessage, statusHint: 500 }; }
 }
@@ -3721,4 +3741,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
