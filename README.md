@@ -112,8 +112,29 @@ worker attempts to send messages directly through MailChannels using the
 a failure from MailChannels or your external mailer service. Inspect the worker
 logs for details.
 
+If TypeScript complains that it cannot find `Buffer` or the type definition file
+for **`node`**, make sure Node.js types are installed and enabled:
 
-След успешната инсталация можете отново да стартирате `npm run dev`.
+```bash
+npm install  # installs dev dependencies, including @types/node
+```
+
+Check that `tsconfig.json` includes `"node"` in the `types` array.
+
+> **Tip**: Activate Node compatibility in `wrangler.toml`:
+
+```toml
+compatibility_flags = ["nodejs_compat"]
+```
+
+Then import `Buffer` explicitly when needed:
+
+```ts
+import { Buffer } from 'buffer';
+const encoded = Buffer.from('hello').toString('base64');
+```
+
+След успешната инсталация стартирайте `npm run dev` отново.
 
 If the error persists, be sure to run TypeScript with this configuration:
 
@@ -152,7 +173,7 @@ file test.jpg
 The `file` output should recognize an image format like JPEG or PNG.
 Cloudflare returns `Tensor error: failed to decode u8` when the data isn't a valid image.
 
-> **Note**: При нужда от `Buffer` импортирайте го от `'buffer'`. Активирайте `nodejs_compat` в `wrangler.toml`, за да работи коректно.
+> **Note**: За Node функции като `Buffer` активирайте `nodejs_compat` в `wrangler.toml` (вижте по-горе) и импортирайте от `'buffer'` при нужда.
 
 ### Generate Documentation
 
