@@ -16,6 +16,15 @@ jobs:
       - name: Install Wrangler
         run: npm install -g wrangler
 
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
       - name: Prepare wrangler.toml
         run: node scripts/prepare-wrangler.js
         env:
