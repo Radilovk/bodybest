@@ -50,7 +50,8 @@ try {
     $mail->Username = 'info@mybody.best';
     $mail->Password = getenv('EMAIL_PASSWORD');
 
-    $mail->setFrom('info@mybody.best');
+    $from = $_ENV['FROM_EMAIL'] ?? 'info@mybody.best';
+    $mail->setFrom($from);
     $mail->addAddress($to);
     $mail->Subject = $subject;
     $mail->isHTML(true);
