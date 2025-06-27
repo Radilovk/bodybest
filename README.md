@@ -674,11 +674,12 @@ an external provider such as Cloudflare
 | Variable | Purpose |
 |----------|---------|
 | `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If omitted, the worker sends via MailChannels using `FROM_EMAIL`. |
-| `MAIL_PHP_URL` | Endpoint used by `sendEmailWorker.js` to deliver messages. Defaults to `https://mybody.best/mail.php`. |
+| `MAIL_PHP_URL` | Endpoint used by `sendEmailWorker.js` to deliver messages. Defaults to `https://mybody.best/mail.php`. Set this to the public URL of the script from [docs/mail.php](docs/mail.php). |
 | `EMAIL_PASSWORD` | Password used by `mailer.js` when authenticating with the SMTP server. |
 | `WELCOME_EMAIL_SUBJECT` | Optional custom subject for welcome emails sent by `mailer.js`. |
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |
 | `WORKER_URL` | Base URL of the main worker used by `mailer.js` to fetch email templates when no subject or body is provided. |
+Примерен PHP скрипт за изпращане на писма е наличен в [docs/mail.php](docs/mail.php). Настройте `MAIL_PHP_URL` да сочи към същия или сходен адрес.
 
 ## Cron configuration
 
