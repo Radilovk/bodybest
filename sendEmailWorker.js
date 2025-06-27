@@ -8,12 +8,20 @@
 export async function sendEmail(to, subject, text, env = {}) {
   const endpoint = env.MAIL_PHP_URL || 'https://mybody.best/mail.php';
   const payload = { to, subject, body: text };
+  console.log('sendEmail payload', payload);
   const resp = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
-  if (!resp.ok) throw new Error('Failed to send');
+  let data = {};
+  try {
+    data = await resp.json();
+  } catch {
+    // ignore malformed JSON
+  }
+  console.log('sendEmail response', resp.status, data);
+  if (!resp.ok || data.success !== true) throw new Error('Failed to send');
 }
 
 export async function handleSendEmailRequest(request, env = {}) {

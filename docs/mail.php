@@ -14,6 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Извлечи и декодирай JSON от заявката
 $data = json_decode(file_get_contents("php://input"), true);
+$logFile = __DIR__ . '/mail_debug.log';
+file_put_contents($logFile, date('c') . " INPUT: " . json_encode($data) . PHP_EOL, FILE_APPEND);
 
 // Валидация
 $to = $data['to'] ?? '';
@@ -47,12 +49,25 @@ $headers .= "Reply-To: info@mybody.best\r\n";
 
 // Изпращане
 $success = mail($to, $subject, $body, $headers);
+file_put_contents($logFile, date('c') . " RESULT: " . json_encode(['success' => $success]) . PHP_EOL, FILE_APPEND);
 
 // Отговор
 if ($success) {
     http_response_code(200);
-    echo json_encode(["success" => true, "message" => "Email sent successfully."]);
+    echo json_encode([
+        "success" => true,
+        "message" => "Email sent successfully.",
+        "to" => $to,
+        "subject" => $subject,
+        "body" => $body
+    ]);
 } else {
     http_response_code(500);
-    echo json_encode(["success" => false, "error" => "Failed to send email."]);
+    echo json_encode([
+        "success" => false,
+        "error" => "Failed to send email.",
+        "to" => $to,
+        "subject" => $subject,
+        "body" => $body
+    ]);
 }
