@@ -100,3 +100,22 @@ test('records usage in USER_METADATA_KV', async () => {
     expect.any(String)
   );
 });
+
+test('rate limits excessive requests', async () => {
+  const now = Date.now();
+  const env = {
+    WORKER_ADMIN_TOKEN: 'secret',
+    FROM_EMAIL: 'info@mybody.best',
+    USER_METADATA_KV: {
+      get: jest.fn().mockResolvedValue(JSON.stringify({ ts: now, count: 3 })),
+      put: jest.fn()
+    }
+  };
+  const request = {
+    headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
+    json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b' })
+  };
+  const res = await handleSendTestEmailRequest(request, env);
+  expect(res.success).toBe(false);
+  expect(res.statusHint).toBe(429);
+});
