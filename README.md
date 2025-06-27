@@ -244,6 +244,14 @@ node scripts/repair-log.js <userId> <YYYY-MM-DD>
 Скриптът изтегля стойността от `USER_METADATA_KV`, опитва да я поправи с помощта
 на `jsonrepair` и я записва обратно, ако корекцията е успешна.
 
+За преглед на логовете от администраторските операции използвайте `view-usage-logs.js`:
+
+```bash
+node scripts/view-usage-logs.js sendTestEmail 5
+```
+
+Скриптът показва последните N записа за зададения тип (`sendTestEmail` или `analyzeImage`).
+
 ### Задължителни ключове в `RESOURCES_KV`
 
 Следните ключове трябва да са налични в KV пространството `RESOURCES_KV`, за да

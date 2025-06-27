@@ -246,4 +246,26 @@ describe('handleAnalyzeImageRequest', () => {
     expect(res.message).toBe('Невалидни или повредени данни на изображението.');
     expect(res.statusHint).toBe(400);
   });
+
+  test('records usage in USER_METADATA_KV', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ result: { response: 'ok' } })
+    });
+    const env = {
+      CF_ACCOUNT_ID: 'acc',
+      CF_AI_TOKEN: 'token',
+      RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) },
+      USER_METADATA_KV: { put: jest.fn() }
+    };
+    const request = {
+      headers: { get: () => null },
+      json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}` })
+    };
+    await handleAnalyzeImageRequest(request, env);
+    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith(
+      expect.stringMatching(/^usage_analyzeImage_/),
+      expect.any(String)
+    );
+  });
 });
