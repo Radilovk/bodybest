@@ -5,6 +5,52 @@
  * @param {string} subject email subject line
  * @param {string} text plain text body
  */
+const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
+
+async function recordUsage(env, identifier = '') {
+  try {
+    if (env.USER_METADATA_KV && typeof env.USER_METADATA_KV.put === 'function') {
+      const key = `usage_sendEmail_${Date.now()}`;
+      const entry = { ts: new Date().toISOString(), id: identifier };
+      await env.USER_METADATA_KV.put(key, JSON.stringify(entry));
+    }
+  } catch (err) {
+    console.error('Failed to record usage:', err.message);
+  }
+}
+
+async function checkRateLimit(env, identifier, limit = 3, windowMs = 60000) {
+  if (!env.USER_METADATA_KV ||
+      typeof env.USER_METADATA_KV.get !== 'function' ||
+      typeof env.USER_METADATA_KV.put !== 'function') {
+    return false;
+  }
+  const key = `rl_sendEmail_${identifier}`;
+  try {
+    const now = Date.now();
+    const existing = await env.USER_METADATA_KV.get(key);
+    if (existing) {
+      const data = JSON.parse(existing);
+      if (now - data.ts < windowMs) {
+        if (data.count >= limit) return true;
+        data.count++;
+        await env.USER_METADATA_KV.put(key, JSON.stringify(data), {
+          expirationTtl: Math.ceil((windowMs - (now - data.ts)) / 1000)
+        });
+        return false;
+      }
+    }
+    await env.USER_METADATA_KV.put(
+      key,
+      JSON.stringify({ ts: now, count: 1 }),
+      { expirationTtl: Math.ceil(windowMs / 1000) }
+    );
+  } catch (err) {
+    console.error('Failed to enforce rate limit:', err.message);
+  }
+  return false;
+}
+
 export async function sendEmail(to, subject, text, env = {}) {
   const endpoint = env.MAIL_PHP_URL || 'https://mybody.best/mail.php';
   const payload = { to, subject, body: text };
@@ -22,6 +68,20 @@ export async function sendEmail(to, subject, text, env = {}) {
 
 export async function handleSendEmailRequest(request, env = {}) {
   try {
+    const auth = request.headers?.get?.('Authorization') || '';
+    const token = auth.replace(/^Bearer\s+/i, '').trim();
+    const identifier = token || request.headers?.get?.('CF-Connecting-IP') || '';
+    const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
+    if (expected && token !== expected) {
+      return { status: 403, body: { success: false, message: 'Invalid token' } };
+    }
+
+    if (await checkRateLimit(env, identifier)) {
+      return { status: 429, body: { success: false, message: 'Too many requests' } };
+    }
+
+    await recordUsage(env, identifier);
+
     let data;
     try {
       data = await request.json();
@@ -66,7 +126,7 @@ export default {
     const corsHeaders = {
       'Access-Control-Allow-Origin': originToSend,
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Vary': 'Origin'
     };
 
