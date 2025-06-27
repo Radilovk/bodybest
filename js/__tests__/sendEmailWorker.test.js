@@ -13,13 +13,13 @@ afterEach(() => {
 
 test('rejects invalid JSON', async () => {
   const req = { json: async () => { throw new Error('bad'); } };
-  const res = await handleSendEmailRequest(req, { FROM_EMAIL: 'info@mybody.best' });
+  const res = await handleSendEmailRequest(req, {});
   expect(res.status).toBe(400);
 });
 
 test('rejects missing fields', async () => {
   const req = { json: async () => ({}) };
-  const res = await handleSendEmailRequest(req, { FROM_EMAIL: 'info@mybody.best' });
+  const res = await handleSendEmailRequest(req, {});
   expect(res.status).toBe(400);
 });
 
@@ -39,16 +39,19 @@ test('calls PHP endpoint on valid input', async () => {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ to: 'a@b.bg', subject: 'S', text: 'B' })
   };
-  const res = await handleSendEmailRequest(req, { MAIL_PHP_URL: 'https://mybody.best/mail.php', WORKER_ADMIN_TOKEN: 'secret' });
-  expect(fetch).toHaveBeenCalledWith('https://mybody.best/mail.php', expect.any(Object));
+  const env = { MAIL_PHP_URL: 'https://mybody.best/mail.php', WORKER_ADMIN_TOKEN: 'secret', FROM_EMAIL: 'info@mybody.best' };
+  const res = await handleSendEmailRequest(req, env);
+  const body = JSON.parse(fetch.mock.calls[0][1].body);
+  expect(body.from).toBe('info@mybody.best');
   expect(res.status).toBe(200);
   fetch.mockRestore();
 });
 
 test('sendEmail forwards data to PHP endpoint', async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
-  await sendEmail('t@e.com', 'Hi', 'Body', { MAIL_PHP_URL: 'https://mybody.best/mail.php' });
-  expect(fetch).toHaveBeenCalledWith('https://mybody.best/mail.php', expect.any(Object));
+  await sendEmail('t@e.com', 'Hi', 'Body', { MAIL_PHP_URL: 'https://mybody.best/mail.php', FROM_EMAIL: 'info@mybody.best' });
+  const body = JSON.parse(fetch.mock.calls[0][1].body);
+  expect(body.from).toBe('info@mybody.best');
   fetch.mockRestore();
 });
 

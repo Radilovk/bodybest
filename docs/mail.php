@@ -20,6 +20,7 @@ error_log('Input: '.json_encode($data));
 $to = $data['to'] ?? '';
 $subject = $data['subject'] ?? '(Без тема)';
 $body = $data['body'] ?? '';
+$from = $_ENV['FROM_EMAIL'] ?? 'info@mybody.best';
 
 if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
@@ -43,8 +44,8 @@ if (preg_match("/[\r\n]/", $to) || preg_match("/[\r\n]/", $subject)) {
 // Имейл заглавки за HTML
 $headers = "MIME-Version: 1.0\r\n";
 $headers .= "Content-type: text/html; charset=UTF-8\r\n";
-$headers .= "From: info@mybody.best\r\n";
-$headers .= "Reply-To: info@mybody.best\r\n";
+$headers .= "From: {$from}\r\n";
+$headers .= "Reply-To: {$from}\r\n";
 
 // Изпращане
 $success = mail($to, $subject, $body, $headers);
