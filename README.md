@@ -107,10 +107,10 @@ If you see an error such as **"Cannot find module './mailer.js'"**, most often i
 means the Node dependencies haven't been installed. Run `npm install` and then
 try again. Recent versions of the worker rely on the `MAILER_ENDPOINT_URL`
 environment variable instead of dynamic imports. If this variable is missing, the
-worker attempts to send messages directly through MailChannels using the
-`FROM_EMAIL` address. A **500** error from `/api/sendTestEmail` usually indicates
-a failure from MailChannels or your external mailer service. Inspect the worker
-logs for details.
+worker uses the helper from `sendEmailWorker.js` and posts directly to
+`MAIL_PHP_URL` (defaults to `https://mybody.best/mail.php`). A **500** error from
+`/api/sendTestEmail` usually indicates a problem with the PHP backend. Inspect
+the worker logs for details.
 
 If TypeScript complains that it cannot find `Buffer` or the type definition file
 for **`node`**, make sure Node.js types are installed and enabled:
@@ -203,7 +203,7 @@ To set the token:
 
 The worker configuration is stored in `wrangler.toml`. Update `account_id` with your Cloudflare account if needed. For the `USER_METADATA_KV` namespace the file expects the environment variables `USER_METADATA_KV_ID` and `USER_METADATA_KV_PREVIEW_ID`. Configure them as GitHub secrets so the workflow can substitute the correct IDs before deployment. **Важно:** полето `compatibility_date` не може да сочи в бъдещето спрямо датата на деплой. Ако е зададена по-нова дата, Cloudflare ще откаже деплойването. Затова поддържайте стойност, която е днес или по-стара. Например:
 
-For email notifications you may set `MAILER_ENDPOINT_URL` to point to a standalone worker or service that performs the delivery. If the variable is omitted, the main worker still sends emails directly via MailChannels using the `FROM_EMAIL` address.
+For email notifications you may set `MAILER_ENDPOINT_URL` to point to a standalone worker or service that performs the delivery. If the variable is omitted, the main worker posts directly to `MAIL_PHP_URL` through `sendEmailWorker.js`.
 
 ```toml
 compatibility_date = "2025-06-20"
@@ -603,7 +603,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `POST /api/testAiModel` – проверява връзката с конкретен AI модел.
 - `POST /api/analyzeImage` – анализира качено изображение и връща резултат. Изпращайте поле `image` с пълен `data:` URL. Ендпойнтът не изисква `WORKER_ADMIN_TOKEN`, освен ако изрично не сте го добавили като защита.
 - `POST /api/sendTestEmail` – изпраща тестов имейл. Изисква администраторски токен.
-- `POST /api/sendEmail` – изпраща имейл чрез MailChannels. Приема JSON `{ "to": "user@example.com", "subject": "Тема", "text": "Съобщение" }`.
+- `POST /api/sendEmail` – изпраща имейл чрез PHP бекенда. Приема JSON `{ "to": "user@example.com", "subject": "Тема", "text": "Съобщение" }`.
 
   ```bash
   curl -X POST https://<your-domain>/api/testAiModel \
@@ -631,9 +631,8 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
     -H "Content-Type: application/json" \
     --data '{"to":"someone@example.com","subject":"Тест","text":"Здравей"}'
   ```
-  Ако `MAILER_ENDPOINT_URL` не е зададен, работникът изпраща имейла директно
-  чрез MailChannels, използвайки адреса от `FROM_EMAIL` (по подразбиране
-  `info@mybody.best`).
+  Ако `MAILER_ENDPOINT_URL` не е зададен, работникът използва `sendEmailWorker.js`
+  и изпраща данните към `MAIL_PHP_URL` (по подразбиране `https://mybody.best/mail.php`).
 - **Дебъг логове** – при изпращане на заглавие `X-Debug: 1` към който и да е API
 ендпойнт, worker-ът записва в конзолата кратка информация за заявката.
 
@@ -668,12 +667,13 @@ The worker can send emails in two ways:
 
 1. If `MAILER_ENDPOINT_URL` is set, requests are forwarded to that endpoint
    (for example a standalone worker) which handles the actual delivery.
-2. Otherwise the worker sends messages directly via MailChannels using the
-   address from `FROM_EMAIL` (defaults to `info@mybody.best`).
+2. Otherwise the worker posts to `MAIL_PHP_URL` via the helper from
+   `sendEmailWorker.js` (defaults to `https://mybody.best/mail.php`).
 
 In both cases the `/api/sendTestEmail` endpoint behaves the same and returns a
 JSON response indicating success or failure.
-A status **500** typically means MailChannels or your external service failed and should be investigated via the worker logs.
+A status **500** typically means the PHP backend or your external service
+failed and should be investigated via the worker logs.
 
 To enable real emails:
 
@@ -701,14 +701,13 @@ this worker so the main service can dispatch emails without relying on Node.js.
 
 The included `mailer.js` relies on `nodemailer` and therefore requires a Node.js
 environment. Run it as a separate service or replace it with a script that calls
-an external provider such as Cloudflare
-[MailChannels](https://developers.cloudflare.com/email-routing/mailchannels/).
+an external provider.
 
 ### Email Environment Variables
 
 | Variable | Purpose |
 |----------|---------|
-| `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If omitted, the worker sends via MailChannels using `FROM_EMAIL`. |
+| `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If omitted, the worker posts to `MAIL_PHP_URL` via `sendEmailWorker.js`. |
 | `MAIL_PHP_URL` | Endpoint used by `sendEmailWorker.js` to deliver messages. Defaults to `https://mybody.best/mail.php`. Set this to the public URL of the script from [docs/mail.php](docs/mail.php). |
 | `EMAIL_PASSWORD` | Password used by `mailer.js` when authenticating with the SMTP server. |
 | `WELCOME_EMAIL_SUBJECT` | Optional custom subject for welcome emails sent by `mailer.js`. |
