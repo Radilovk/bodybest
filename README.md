@@ -108,7 +108,7 @@ means the Node dependencies haven't been installed. Run `npm install` and then
 try again. Recent versions of the worker rely on the `MAILER_ENDPOINT_URL`
 environment variable instead of dynamic imports. If this variable is missing, the
 worker uses the helper from `sendEmailWorker.js` and posts directly to
-`MAIL_PHP_URL` (defaults to `https://mybody.best/mail.php`). A **500** error from
+`MAIL_PHP_URL` (defaults to `https://mybody.best/mail_smtp.php`). A **500** error from
 `/api/sendTestEmail` usually indicates a problem with the PHP backend. Inspect
 the worker logs for details.
 
@@ -632,7 +632,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
     --data '{"to":"someone@example.com","subject":"Тест","text":"Здравей"}'
   ```
   Ако `MAILER_ENDPOINT_URL` не е зададен, работникът използва `sendEmailWorker.js`
-  и изпраща данните към `MAIL_PHP_URL` (по подразбиране `https://mybody.best/mail.php`).
+  и изпраща данните към `MAIL_PHP_URL` (по подразбиране `https://mybody.best/mail_smtp.php`).
 - **Дебъг логове** – при изпращане на заглавие `X-Debug: 1` към който и да е API
 ендпойнт, worker-ът записва в конзолата кратка информация за заявката.
 
@@ -668,7 +668,7 @@ The worker can send emails in two ways:
 1. If `MAILER_ENDPOINT_URL` is set, requests are forwarded to that endpoint
    (for example a standalone worker) which handles the actual delivery.
 2. Otherwise the worker posts to `MAIL_PHP_URL` via the helper from
-   `sendEmailWorker.js` (defaults to `https://mybody.best/mail.php`).
+   `sendEmailWorker.js` (defaults to `https://mybody.best/mail_smtp.php`).
 
 In both cases the `/api/sendTestEmail` endpoint behaves the same and returns a
 JSON response indicating success or failure.
@@ -708,12 +708,12 @@ an external provider.
 | Variable | Purpose |
 |----------|---------|
 | `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If omitted, the worker posts to `MAIL_PHP_URL` via `sendEmailWorker.js`. |
-| `MAIL_PHP_URL` | Endpoint used by `sendEmailWorker.js` to deliver messages. Defaults to `https://mybody.best/mail.php`. Set this to the public URL of the script from [docs/mail.php](docs/mail.php). |
+| `MAIL_PHP_URL` | Endpoint used by `sendEmailWorker.js` to deliver messages. Defaults to `https://mybody.best/mail_smtp.php`. Set this to the public URL of the script from [docs/mail_smtp.php](docs/mail_smtp.php). |
 | `EMAIL_PASSWORD` | Password used by `mailer.js` when authenticating with the SMTP server. |
 | `WELCOME_EMAIL_SUBJECT` | Optional custom subject for welcome emails sent by `mailer.js`. |
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |
 | `WORKER_URL` | Base URL of the main worker used by `mailer.js` to fetch email templates when no subject or body is provided. |
-Примерен PHP скрипт за изпращане на писма е наличен в [docs/mail.php](docs/mail.php). Настройте `MAIL_PHP_URL` да сочи към същия или сходен адрес.
+Примерен PHP скрипт за изпращане на писма е наличен в [docs/mail_smtp.php](docs/mail_smtp.php). Настройте `MAIL_PHP_URL` да сочи към същия или сходен адрес.
 
 ## Cron configuration
 
