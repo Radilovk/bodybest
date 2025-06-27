@@ -5,9 +5,13 @@
  * @param {string} subject email subject line
  * @param {string} text plain text body
  */
+const FROM_EMAIL_VAR_NAME = 'FROM_EMAIL';
+
 export async function sendEmail(to, subject, text, env = {}) {
   const endpoint = env.MAIL_PHP_URL || 'https://mybody.best/mail.php';
+  const from = env[FROM_EMAIL_VAR_NAME];
   const payload = { to, subject, body: text };
+  if (from) payload.from = from;
   const resp = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
