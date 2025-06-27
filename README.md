@@ -141,8 +141,10 @@ echo "<BASE64>" | base64 --decode > test.jpg
 file test.jpg
 ```
 
-The `file` output should recognize an image format like JPEG or PNG.  
+The `file` output should recognize an image format like JPEG or PNG.
 Cloudflare returns `Tensor error: failed to decode u8` when the data isn't a valid image.
+
+> **Note**: При нужда от `Buffer` импортирайте го от `'buffer'`.
 
 ### Generate Documentation
 
