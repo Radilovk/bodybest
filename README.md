@@ -198,6 +198,19 @@ node scripts/validate-wrangler.js
 ```
 This script checks for placeholder values and for a provided `CF_API_TOKEN`.
 
+### Worker Scripts
+
+The repository contains two Cloudflare workers.
+
+- `worker.js` – the main application worker defined in `wrangler.toml`. The GitHub workflow deploys this worker automatically.
+- `worker-backend.js` – a lightweight proxy used by the PHP backend to call Cloudflare AI. Deploy it separately, for example:
+
+```bash
+wrangler deploy worker-backend.js --name bodybest-backend
+```
+
+Bind the `SETTINGS` KV namespace and provide `CF_AI_TOKEN`, `CF_ACCOUNT_ID` and model variables as secrets.
+
 
 ### Работа с KV
 
