@@ -13,7 +13,11 @@ export async function sendEmail(to, subject, text, env = {}) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
-  if (!resp.ok) throw new Error('Failed to send');
+  const result = await resp.json();
+  if (!resp.ok || result.success === false) {
+    console.error('sendEmail failed response:', result);
+    throw new Error(result.error || result.message || 'Failed to send');
+  }
 }
 
 export async function handleSendEmailRequest(request, env = {}) {
