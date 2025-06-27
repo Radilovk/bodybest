@@ -144,7 +144,7 @@ file test.jpg
 The `file` output should recognize an image format like JPEG or PNG.
 Cloudflare returns `Tensor error: failed to decode u8` when the data isn't a valid image.
 
-> **Note**: При нужда от `Buffer` импортирайте го от `'buffer'`.
+> **Note**: При нужда от `Buffer` импортирайте го от `'buffer'`. Активирайте `nodejs_compat` в `wrangler.toml`, за да работи коректно.
 
 ### Generate Documentation
 
@@ -184,8 +184,10 @@ For email notifications you may set `MAILER_ENDPOINT_URL` to point to a standalo
 
 ```toml
 compatibility_date = "2025-06-20"
+compatibility_flags = ["nodejs_compat"]
 ```
 Препоръчително е периодично (например веднъж годишно) да обновявате тази дата до последна валидна стойност, за да се възползва worker-ът от новите възможности на Cloudflare.
+Опцията `nodejs_compat` активира Node съвместимост и позволява използването на модула `buffer` без допълнителни зависимости.
 В workflow-а има стъпка `update-compat-date`, която автоматично я коригира, ако е зададена по-нова от днешната.
 
 Пример за промяна в `wrangler.toml` с дата в миналото:
