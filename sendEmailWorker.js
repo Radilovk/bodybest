@@ -13,14 +13,7 @@ export async function sendEmail(to, subject, text, env = {}) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
-  let result;
-  try {
-    result = await resp.clone().json();
-  } catch {
-    const bodyText = await resp.text();
-    console.error('Failed to parse JSON response:', bodyText);
-    throw new Error('Invalid JSON response from mailer');
-  }
+  const result = await resp.json();
   if (!resp.ok || result.success === false) {
     console.error('sendEmail failed response:', result);
     throw new Error(result.error || result.message || 'Failed to send');
