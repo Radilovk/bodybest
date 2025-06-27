@@ -72,7 +72,13 @@ test('supports alternate field names', async () => {
 });
 
 test('uses PHP mail endpoint when MAILER_ENDPOINT_URL missing', async () => {
-  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
+  const resp = {
+    ok: true,
+    json: async () => ({ success: true }),
+    text: async () => JSON.stringify({ success: true }),
+    clone() { return { json: this.json }; }
+  };
+  global.fetch = jest.fn().mockResolvedValue(resp);
   const request = {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b' })
