@@ -2,6 +2,7 @@ name = "openapichatbot"
 account_id = "c2015f4060e04bc3c414f78a9946668e"
 workers_dev = true
 compatibility_date = "2025-06-20"
+compatibility_flags = ["nodejs_compat"]
 main = "worker.js"
 
 [[kv_namespaces]]
