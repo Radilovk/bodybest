@@ -40,6 +40,14 @@ Check the source code with ESLint (see `eslint.config.js` for configuration):
 npm run lint
 ```
 
+### Type Check
+
+Make sure dependencies are installed (`npm ci` or `npm install`) before running the TypeScript compiler in check mode:
+
+```bash
+npx tsc --noEmit
+```
+
 ### Инсталация на зависимости
 
 Преди да стартирате тестовете, инсталирайте необходимите зависимости, за да бъде
@@ -154,12 +162,6 @@ Create API documentation using Typedoc:
 npm run docs
 ```
 The output is placed in the `docs/` folder.
-
-Type-check the source with:
-
-```bash
-npx tsc --noEmit
-```
 
 ### Template Loading
 
