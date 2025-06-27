@@ -673,7 +673,7 @@ The worker can send emails in two ways:
 
 In both cases the `/api/sendTestEmail` endpoint behaves the same and returns a
 JSON response indicating success or failure.
-A status **500** typically means MailChannels or your external service failed and should be investigated via the worker logs.
+A status **500** typically means MailChannels or your external service failed and should be investigated via the worker logs. When this occurs the worker includes the underlying error message (or the HTTP status) in the response so you can see exactly why the request failed.
 
 To enable real emails:
 
