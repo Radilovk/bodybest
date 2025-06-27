@@ -31,7 +31,6 @@ import { Buffer } from 'buffer';
 /** @type {(to: string, subject: string, body: string) => Promise<void>} */
 let sendEmailFn = defaultSendEmail;
 const MAILER_ENDPOINT_URL_VAR_NAME = 'MAILER_ENDPOINT_URL';
-const FROM_EMAIL_VAR_NAME = 'FROM_EMAIL';
 async function getSendEmail(env) {
     if (sendEmailFn && sendEmailFn !== defaultSendEmail) return sendEmailFn;
     const endpoint = env?.[MAILER_ENDPOINT_URL_VAR_NAME];
