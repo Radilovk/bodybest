@@ -323,7 +323,9 @@ Before deploying, configure the following secrets in Cloudflare (via the dashboa
 - `тут_ваш_php_api_token_secret_name`
 - `CF_AI_TOKEN` – API token used for Cloudflare AI requests
 - `OPENAI_API_KEY` – set via `wrangler secret put OPENAI_API_KEY`, used by `worker.js`
-- `FROM_EMAIL` – optional sender address for outgoing emails
+ - `FROM_EMAIL` – optional sender address for outgoing emails. When set, this
+   value is passed to the PHP mail scripts and used in the `From` and
+   `Reply-To` headers.
 
 Без тази стойност част от AI функционалностите няма да работят.
 

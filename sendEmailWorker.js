@@ -54,12 +54,20 @@ async function checkRateLimit(env, identifier, limit = 3, windowMs = 60000) {
 export async function sendEmail(to, subject, text, env = {}) {
   const endpoint = env.MAIL_PHP_URL || 'https://mybody.best/mail.php';
   const payload = { to, subject, body: text };
+  if (env.FROM_EMAIL) payload.from = env.FROM_EMAIL;
   const resp = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
-  const result = await resp.json();
+  const raw = await resp.text();
+  let result;
+  try {
+    result = JSON.parse(raw);
+  } catch (err) {
+    console.error('Invalid JSON from mail backend:', raw);
+    throw new Error('Invalid mail backend response');
+  }
   if (!resp.ok || result.success === false) {
     console.error('sendEmail failed response:', result);
     throw new Error(result.error || result.message || 'Failed to send');

@@ -34,27 +34,42 @@ test('rejects invalid token', async () => {
 });
 
 test('calls PHP endpoint on valid input', async () => {
-  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => JSON.stringify({ success: true }) });
   const req = {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ to: 'a@b.bg', subject: 'S', text: 'B' })
   };
-  const res = await handleSendEmailRequest(req, { MAIL_PHP_URL: 'https://mybody.best/mail.php', WORKER_ADMIN_TOKEN: 'secret' });
-  expect(fetch).toHaveBeenCalledWith('https://mybody.best/mail.php', expect.any(Object));
+  const res = await handleSendEmailRequest(req, { MAIL_PHP_URL: 'https://mybody.best/mail.php', WORKER_ADMIN_TOKEN: 'secret', FROM_EMAIL: 'info@test.com' });
+  expect(fetch).toHaveBeenCalledWith(
+    'https://mybody.best/mail.php',
+    expect.objectContaining({ body: expect.stringContaining('info@test.com') })
+  );
   expect(res.status).toBe(200);
   fetch.mockRestore();
 });
 
 test('sendEmail forwards data to PHP endpoint', async () => {
-  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => JSON.stringify({ success: true }) });
   await sendEmail('t@e.com', 'Hi', 'Body', { MAIL_PHP_URL: 'https://mybody.best/mail.php' });
   expect(fetch).toHaveBeenCalledWith('https://mybody.best/mail.php', expect.any(Object));
   fetch.mockRestore();
 });
 
+test('sendEmail includes FROM_EMAIL when provided', async () => {
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => JSON.stringify({ success: true }) });
+  await sendEmail('t@e.com', 'Hi', 'Body', { MAIL_PHP_URL: 'https://mybody.best/mail.php', FROM_EMAIL: 'no-reply@test.com' });
+  expect(fetch).toHaveBeenCalledWith(
+    'https://mybody.best/mail.php',
+    expect.objectContaining({
+      body: expect.stringContaining('no-reply@test.com')
+    })
+  );
+  fetch.mockRestore();
+});
+
 test('sendEmail throws when backend reports failure', async () => {
   const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: false, error: 'bad' }) });
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => JSON.stringify({ success: false, error: 'bad' }) });
   await expect(sendEmail('x@y.z', 'S', 'B')).rejects.toThrow('bad');
   expect(errSpy).toHaveBeenCalledWith('sendEmail failed response:', { success: false, error: 'bad' });
   errSpy.mockRestore();
