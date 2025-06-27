@@ -2,6 +2,8 @@
 import { jest } from '@jest/globals';
 
 let send;
+let confirmSend;
+let mod;
 
 beforeEach(async () => {
   jest.resetModules();
@@ -18,8 +20,9 @@ beforeEach(async () => {
     apiEndpoints: { sendTestEmail: '/api/sendTestEmail' }
   }));
 
-  const mod = await import('../admin.js');
+  mod = await import('../admin.js');
   send = mod.sendTestEmail;
+  confirmSend = mod.confirmAndSendTestEmail;
 });
 
 afterEach(() => {
@@ -48,4 +51,28 @@ test('alert shown on error', async () => {
   await send();
   expect(alertSpy).toHaveBeenCalled();
   alertSpy.mockRestore();
+});
+
+test('confirmation wrapper calls sendTestEmail when confirmed', async () => {
+  const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
+  document.getElementById('testEmailTo').value = 'a@b.bg';
+  document.getElementById('testEmailSubject').value = 'Sub';
+  document.getElementById('testEmailBody').value = 'Body';
+  await confirmSend();
+  expect(confirmSpy).toHaveBeenCalled();
+  expect(global.fetch).toHaveBeenCalled();
+  confirmSpy.mockRestore();
+});
+
+test('confirmation wrapper aborts when cancelled', async () => {
+  const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(false);
+  global.fetch = jest.fn();
+  document.getElementById('testEmailTo').value = 'a@b.bg';
+  document.getElementById('testEmailSubject').value = 'Sub';
+  document.getElementById('testEmailBody').value = 'Body';
+  await confirmSend();
+  expect(confirmSpy).toHaveBeenCalled();
+  expect(global.fetch).not.toHaveBeenCalled();
+  confirmSpy.mockRestore();
 });
