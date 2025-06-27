@@ -1,3 +1,4 @@
+/// <reference types="node" />
 // Cloudflare Worker Script (index.js) - Версия 2.3
 // Добавен е режим за дебъг чрез HTTP заглавие `X-Debug: 1`
 // Също така са запазени всички функционалности от предходните версии
@@ -25,6 +26,7 @@ async function defaultSendEmail(to, subject, body) {
     throw new Error('Email functionality is not configured.');
 }
 import { sendEmail as phpSendEmail } from './sendEmailWorker.js';
+import { Buffer } from 'buffer';
 
 /** @type {(to: string, subject: string, body: string) => Promise<void>} */
 let sendEmailFn = defaultSendEmail;
@@ -1425,18 +1427,22 @@ async function handleAiHelperRequest(request, env) {
 
 // ------------- START FUNCTION: handleAnalyzeImageRequest -------------
 async function handleAnalyzeImageRequest(request, env) {
+    const identifier =
+        (request.headers?.get?.('Authorization') || '').replace(/^Bearer\s+/i, '').trim() ||
+        request.headers?.get?.('CF-Connecting-IP') || '';
+
+    if (await checkRateLimit(env, 'analyzeImage', identifier)) {
+        return { success: false, message: 'Прекалено много заявки. Опитайте по-късно.', statusHint: 429 };
+    }
+
     let payloadData;
     try {
         payloadData = await request.json();
     } catch {
         return { success: false, message: 'Невалиден JSON.', statusHint: 400 };
     }
-    await recordUsage(
-        env,
-        'analyzeImage',
-        (request.headers?.get?.('Authorization') || '').replace(/^Bearer\s+/i, '').trim() ||
-            request.headers?.get?.('CF-Connecting-IP') || ''
-    );
+
+    await recordUsage(env, 'analyzeImage', identifier);
     try {
         const { userId, image, imageData, mimeType, prompt } = payloadData;
         if (!userId || (!image && !imageData)) {
@@ -1844,15 +1850,17 @@ async function handleSendTestEmailRequest(request, env) {
     try {
         const auth = request.headers?.get?.('Authorization') || '';
         const token = auth.replace(/^Bearer\s+/i, '').trim();
-        await recordUsage(
-            env,
-            'sendTestEmail',
-            token || request.headers?.get?.('CF-Connecting-IP') || ''
-        );
+        const identifier = token || request.headers?.get?.('CF-Connecting-IP') || '';
         const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
         if (expected && token !== expected) {
             return { success: false, message: 'Невалиден токен.', statusHint: 403 };
         }
+
+        if (await checkRateLimit(env, 'sendTestEmail', identifier)) {
+            return { success: false, message: 'Прекалено много заявки. Опитайте по-късно.', statusHint: 429 };
+        }
+
+        await recordUsage(env, 'sendTestEmail', identifier);
 
         let data;
         try {
@@ -2646,6 +2654,38 @@ async function recordUsage(env, type, identifier = '') {
     }
 }
 // ------------- END FUNCTION: recordUsage -------------
+
+// ------------- START FUNCTION: checkRateLimit -------------
+async function checkRateLimit(env, type, identifier, limit = 3, windowMs = 60000) {
+    if (!env.USER_METADATA_KV || typeof env.USER_METADATA_KV.get !== 'function' || typeof env.USER_METADATA_KV.put !== 'function') {
+        return false;
+    }
+    const key = `rl_${type}_${identifier}`;
+    try {
+        const now = Date.now();
+        const existing = await env.USER_METADATA_KV.get(key);
+        if (existing) {
+            const data = JSON.parse(existing);
+            if (now - data.ts < windowMs) {
+                if (data.count >= limit) return true;
+                data.count++;
+                await env.USER_METADATA_KV.put(key, JSON.stringify(data), {
+                    expirationTtl: Math.ceil((windowMs - (now - data.ts)) / 1000)
+                });
+                return false;
+            }
+        }
+        await env.USER_METADATA_KV.put(
+            key,
+            JSON.stringify({ ts: now, count: 1 }),
+            { expirationTtl: Math.ceil(windowMs / 1000) }
+        );
+    } catch (err) {
+        console.error('Failed to enforce rate limit:', err.message);
+    }
+    return false;
+}
+// ------------- END FUNCTION: checkRateLimit -------------
 
 // ------------- START FUNCTION: safeParseJson -------------
 const safeParseJson = (jsonString, defaultValue = null) => {
