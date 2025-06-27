@@ -1,3 +1,4 @@
+import { Buffer } from 'buffer';
 // Cloudflare Worker Script (index.js) - Версия 2.3
 // Добавен е режим за дебъг чрез HTTP заглавие `X-Debug: 1`
 // Също така са запазени всички функционалности от предходните версии
