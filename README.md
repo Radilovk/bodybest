@@ -603,7 +603,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `POST /api/testAiModel` – проверява връзката с конкретен AI модел.
 - `POST /api/analyzeImage` – анализира качено изображение и връща резултат. Изпращайте поле `image` с пълен `data:` URL. Ендпойнтът не изисква `WORKER_ADMIN_TOKEN`, освен ако изрично не сте го добавили като защита.
 - `POST /api/sendTestEmail` – изпраща тестов имейл. Изисква администраторски токен.
-- `POST /api/sendEmail` – изпраща имейл чрез PHP бекенда. Приема JSON `{ "to": "user@example.com", "subject": "Тема", "text": "Съобщение" }`.
+- `POST /api/sendEmail` – изпраща имейл чрез PHP бекенда. Изисква HTTP заглавка `Authorization: Bearer <WORKER_ADMIN_TOKEN>` и приема JSON `{ "to": "user@example.com", "subject": "Тема", "text": "Съобщение" }`. Заявките са ограничени до няколко на минута.
 
   ```bash
   curl -X POST https://<your-domain>/api/testAiModel \
@@ -697,7 +697,7 @@ MAILER_ENDPOINT_URL = "https://send-email-worker.example.workers.dev"
 
 For a simple setup deploy `sendEmailWorker.js`, which exposes `/api/sendEmail`
 and sends messages via a PHP backend. Point `MAILER_ENDPOINT_URL` to the URL of
-this worker so the main service can dispatch emails without relying on Node.js.
+this worker so the main service can dispatch emails without relying on Node.js. Requests to this endpoint also require the admin token and are rate limited.
 
 The included `mailer.js` relies on `nodemailer` and therefore requires a Node.js
 environment. Run it as a separate service or replace it with a script that calls

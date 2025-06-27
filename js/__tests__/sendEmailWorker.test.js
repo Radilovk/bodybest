@@ -23,10 +23,23 @@ test('rejects missing fields', async () => {
   expect(res.status).toBe(400);
 });
 
+test('rejects invalid token', async () => {
+  const req = {
+    headers: { get: h => (h === 'Authorization' ? 'Bearer bad' : null) },
+    json: async () => ({ to: 'a@b.bg', subject: 'S', text: 'B' })
+  };
+  const env = { WORKER_ADMIN_TOKEN: 'secret', MAIL_PHP_URL: 'https://mybody.best/mail.php' };
+  const res = await handleSendEmailRequest(req, env);
+  expect(res.status).toBe(403);
+});
+
 test('calls PHP endpoint on valid input', async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
-  const req = { json: async () => ({ to: 'a@b.bg', subject: 'S', text: 'B' }) };
-  const res = await handleSendEmailRequest(req, { MAIL_PHP_URL: 'https://mybody.best/mail.php' });
+  const req = {
+    headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
+    json: async () => ({ to: 'a@b.bg', subject: 'S', text: 'B' })
+  };
+  const res = await handleSendEmailRequest(req, { MAIL_PHP_URL: 'https://mybody.best/mail.php', WORKER_ADMIN_TOKEN: 'secret' });
   expect(fetch).toHaveBeenCalledWith('https://mybody.best/mail.php', expect.any(Object));
   expect(res.status).toBe(200);
   fetch.mockRestore();
