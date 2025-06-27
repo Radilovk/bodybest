@@ -1905,8 +1905,18 @@ async function handleSendTestEmailRequest(request, env) {
                 statusHint: 400
             };
         }
-        await sendEmail(recipient, subject, body);
-        return { success: true };
+        try {
+            await sendEmail(recipient, subject, body);
+            return { success: true };
+        } catch (err) {
+            const statusMatch = /\d{3}/.exec(err?.message ?? '');
+            const hint = err?.status || err?.statusCode || (statusMatch ? Number(statusMatch[0]) : 500);
+            return {
+                success: false,
+                message: `Грешка при изпращане: ${err?.message ?? hint}`,
+                statusHint: hint
+            };
+        }
     } catch (error) {
         console.error('Error in handleSendTestEmailRequest:', error.message, error.stack);
         return { success: false, message: 'Грешка при изпращане.', statusHint: 500 };
