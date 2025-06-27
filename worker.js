@@ -37,10 +37,13 @@ async function getSendEmail(env) {
     const endpoint = env?.[MAILER_ENDPOINT_URL_VAR_NAME];
     if (endpoint) {
         sendEmailFn = async (to, subject, body) => {
+            const payload = { to, subject, text: body };
+            const from = env?.[FROM_EMAIL_VAR_NAME];
+            if (from) payload.from = from;
             const resp = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ to, subject, text: body })
+                body: JSON.stringify(payload)
             });
             if (!resp.ok) throw new Error(`Mailer responded with ${resp.status}`);
         };

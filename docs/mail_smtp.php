@@ -18,6 +18,7 @@ $data = json_decode(file_get_contents('php://input'), true);
 $to = $data['to'] ?? '';
 $subject = $data['subject'] ?? '(Без тема)';
 $body = $data['body'] ?? '';
+$from = $_ENV['FROM_EMAIL'] ?? 'info@mybody.best';
 
 if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
@@ -47,10 +48,10 @@ try {
     $mail->Port = 465;
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->SMTPAuth = true;
-    $mail->Username = 'info@mybody.best';
+    $mail->Username = $from;
     $mail->Password = getenv('EMAIL_PASSWORD');
 
-    $mail->setFrom('info@mybody.best');
+    $mail->setFrom($from);
     $mail->addAddress($to);
     $mail->Subject = $subject;
     $mail->isHTML(true);
