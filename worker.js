@@ -1447,6 +1447,12 @@ async function handleAnalyzeImageRequest(request, env) {
     } catch {
         return { success: false, message: 'Невалиден JSON.', statusHint: 400 };
     }
+    await recordUsage(
+        env,
+        'analyzeImage',
+        (request.headers?.get?.('Authorization') || '').replace(/^Bearer\s+/i, '').trim() ||
+            request.headers?.get?.('CF-Connecting-IP') || ''
+    );
     try {
         const { userId, image, imageData, mimeType, prompt } = payloadData;
         if (!userId || (!image && !imageData)) {
@@ -1852,8 +1858,13 @@ async function handleTestAiModelRequest(request, env) {
 // ------------- START FUNCTION: handleSendTestEmailRequest -------------
 async function handleSendTestEmailRequest(request, env) {
     try {
-        const auth = request.headers.get('Authorization') || '';
+        const auth = request.headers?.get?.('Authorization') || '';
         const token = auth.replace(/^Bearer\s+/i, '').trim();
+        await recordUsage(
+            env,
+            'sendTestEmail',
+            token || request.headers?.get?.('CF-Connecting-IP') || ''
+        );
         const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
         if (expected && token !== expected) {
             return { success: false, message: 'Невалиден токен.', statusHint: 403 };
@@ -2637,6 +2648,20 @@ const safeGet = (obj, path, defaultValue = null) => { try { const keys = Array.i
 // ------------- START FUNCTION: safeParseFloat -------------
 const safeParseFloat = (val, defaultVal = null) => { if (val === null || val === undefined || String(val).trim() === '') return defaultVal; const num = parseFloat(String(val).replace(',', '.')); return isNaN(num) ? defaultVal : num; };
 // ------------- END FUNCTION: safeParseFloat -------------
+
+// ------------- START FUNCTION: recordUsage -------------
+async function recordUsage(env, type, identifier = '') {
+    try {
+        if (env.USER_METADATA_KV && typeof env.USER_METADATA_KV.put === 'function') {
+            const key = `usage_${type}_${Date.now()}`;
+            const entry = { ts: new Date().toISOString(), id: identifier };
+            await env.USER_METADATA_KV.put(key, JSON.stringify(entry));
+        }
+    } catch (err) {
+        console.error('Failed to record usage:', err.message);
+    }
+}
+// ------------- END FUNCTION: recordUsage -------------
 
 // ------------- START FUNCTION: safeParseJson -------------
 const safeParseJson = (jsonString, defaultValue = null) => {

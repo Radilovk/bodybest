@@ -82,3 +82,21 @@ test('falls back to MailChannels when endpoint missing', async () => {
   expect(res.success).toBe(true);
   expect(fetch).toHaveBeenCalledWith('https://api.mailchannels.net/tx/v1/send', expect.any(Object));
 });
+
+test('records usage in USER_METADATA_KV', async () => {
+  global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  const request = {
+    headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
+    json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b' })
+  };
+  const env = {
+    WORKER_ADMIN_TOKEN: 'secret',
+    FROM_EMAIL: 'info@mybody.best',
+    USER_METADATA_KV: { put: jest.fn() }
+  };
+  await handleSendTestEmailRequest(request, env);
+  expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith(
+    expect.stringMatching(/^usage_sendTestEmail_/),
+    expect.any(String)
+  );
+});
