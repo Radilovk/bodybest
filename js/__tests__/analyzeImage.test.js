@@ -262,10 +262,30 @@ describe('handleAnalyzeImageRequest', () => {
       headers: { get: () => null },
       json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}` })
     };
-    await handleAnalyzeImageRequest(request, env);
-    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith(
-      expect.stringMatching(/^usage_analyzeImage_/),
-      expect.any(String)
-    );
+  await handleAnalyzeImageRequest(request, env);
+  expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith(
+    expect.stringMatching(/^usage_analyzeImage_/),
+    expect.any(String)
+  );
+  });
+
+  test('rate limits excessive requests', async () => {
+    const now = Date.now();
+    const env = {
+      CF_ACCOUNT_ID: 'acc',
+      CF_AI_TOKEN: 'token',
+      RESOURCES_KV: { get: jest.fn().mockResolvedValue(null) },
+      USER_METADATA_KV: {
+        get: jest.fn().mockResolvedValue(JSON.stringify({ ts: now, count: 3 })),
+        put: jest.fn()
+      }
+    };
+    const request = {
+      headers: { get: () => 'Bearer tok' },
+      json: async () => ({ userId: 'u1', image: `data:image/png;base64,${validPng}` })
+    };
+    const res = await handleAnalyzeImageRequest(request, env);
+    expect(res.success).toBe(false);
+    expect(res.statusHint).toBe(429);
   });
 });
