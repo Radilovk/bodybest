@@ -714,7 +714,6 @@ an external provider.
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |
 | `WORKER_URL` | Base URL of the main worker used by `mailer.js` to fetch email templates when no subject or body is provided. |
 Примерен PHP скрипт за изпращане на писма е наличен в [docs/mail.php](docs/mail.php). Настройте `MAIL_PHP_URL` да сочи към същия или сходен адрес.
-За изпращане през SMTP може да използвате и варианта с PHPMailer в [docs/mail_smtp.php](docs/mail_smtp.php), който приема същите полета (`to`, `subject`, `body`).
 
 ## Cron configuration
 
