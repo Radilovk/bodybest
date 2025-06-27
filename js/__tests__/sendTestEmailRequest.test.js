@@ -48,7 +48,7 @@ test('rejects invalid json', async () => {
 });
 
 test('sends email on valid data', async () => {
-  global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
   const request = {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ recipient: 'test@example.com', subject: 'Hi', body: 'b' })
@@ -60,7 +60,7 @@ test('sends email on valid data', async () => {
 });
 
 test('supports alternate field names', async () => {
-  global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
   const request = {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ to: 'alt@example.com', subject: 'Hi', text: 'b' })
@@ -72,7 +72,7 @@ test('supports alternate field names', async () => {
 });
 
 test('uses PHP mail endpoint when MAILER_ENDPOINT_URL missing', async () => {
-  global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
   const request = {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b' })
@@ -84,7 +84,7 @@ test('uses PHP mail endpoint when MAILER_ENDPOINT_URL missing', async () => {
 });
 
 test('records usage in USER_METADATA_KV', async () => {
-  global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
   const request = {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b' })
