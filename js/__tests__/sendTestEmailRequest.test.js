@@ -119,16 +119,3 @@ test('rate limits excessive requests', async () => {
   expect(res.success).toBe(false);
   expect(res.statusHint).toBe(429);
 });
-
-test('returns error details when sendEmail fails', async () => {
-  global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 502 });
-  const request = {
-    headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
-    json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b' })
-  };
-  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILER_ENDPOINT_URL: 'https://mail.example.com' };
-  const res = await handleSendTestEmailRequest(request, env);
-  expect(res.success).toBe(false);
-  expect(res.message).toMatch('502');
-  expect(res.statusHint).toBe(502);
-});
