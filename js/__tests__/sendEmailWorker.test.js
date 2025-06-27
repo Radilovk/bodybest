@@ -24,7 +24,7 @@ test('rejects missing fields', async () => {
 });
 
 test('calls PHP endpoint on valid input', async () => {
-  global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
   const req = { json: async () => ({ to: 'a@b.bg', subject: 'S', text: 'B' }) };
   const res = await handleSendEmailRequest(req, { MAIL_PHP_URL: 'https://mybody.best/mail.php' });
   expect(fetch).toHaveBeenCalledWith('https://mybody.best/mail.php', expect.any(Object));
@@ -33,8 +33,17 @@ test('calls PHP endpoint on valid input', async () => {
 });
 
 test('sendEmail forwards data to PHP endpoint', async () => {
-  global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
   await sendEmail('t@e.com', 'Hi', 'Body', { MAIL_PHP_URL: 'https://mybody.best/mail.php' });
   expect(fetch).toHaveBeenCalledWith('https://mybody.best/mail.php', expect.any(Object));
+  fetch.mockRestore();
+});
+
+test('sendEmail throws when backend reports failure', async () => {
+  const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: false, error: 'bad' }) });
+  await expect(sendEmail('x@y.z', 'S', 'B')).rejects.toThrow('bad');
+  expect(errSpy).toHaveBeenCalledWith('sendEmail failed response:', { success: false, error: 'bad' });
+  errSpy.mockRestore();
   fetch.mockRestore();
 });
