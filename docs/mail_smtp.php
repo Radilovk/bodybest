@@ -47,10 +47,11 @@ try {
     $mail->Port = 465;
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->SMTPAuth = true;
-    $mail->Username = 'info@mybody.best';
+    $mail->Username = getenv('FROM_EMAIL') ?: 'info@mybody.best';
     $mail->Password = getenv('EMAIL_PASSWORD');
 
-    $mail->setFrom('info@mybody.best');
+    $fromEmail = getenv('FROM_EMAIL') ?: 'info@mybody.best';
+    $mail->setFrom($fromEmail);
     $mail->addAddress($to);
     $mail->Subject = $subject;
     $mail->isHTML(true);

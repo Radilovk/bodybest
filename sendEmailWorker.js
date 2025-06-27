@@ -6,6 +6,7 @@
  * @param {string} text plain text body
  */
 const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
+const FROM_EMAIL_VAR_NAME = 'FROM_EMAIL';
 
 async function recordUsage(env, identifier = '') {
   try {
@@ -53,7 +54,9 @@ async function checkRateLimit(env, identifier, limit = 3, windowMs = 60000) {
 
 export async function sendEmail(to, subject, text, env = {}) {
   const endpoint = env.MAIL_PHP_URL || 'https://mybody.best/mail.php';
+  const fromEmail = env[FROM_EMAIL_VAR_NAME];
   const payload = { to, subject, body: text };
+  if (fromEmail) payload.from = fromEmail;
   const resp = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
