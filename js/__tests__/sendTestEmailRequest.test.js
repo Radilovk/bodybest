@@ -108,12 +108,19 @@ test('records usage in USER_METADATA_KV', async () => {
   const env = {
     WORKER_ADMIN_TOKEN: 'secret',
     FROM_EMAIL: 'info@mybody.best',
-    USER_METADATA_KV: { put: jest.fn() }
+    USER_METADATA_KV: { put: jest.fn() },
+    MAIL_PHP_URL: 'https://mybody.best/mail.php'
   };
   await handleSendTestEmailRequest(request, env);
   expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith(
     expect.stringMatching(/^usage_sendTestEmail_/),
     expect.any(String)
+  );
+  expect(fetch).toHaveBeenCalledWith(
+    'https://mybody.best/mail.php',
+    expect.objectContaining({
+      body: JSON.stringify({ to: 't@e.com', subject: 's', body: 'b', from: 'info@mybody.best' })
+    })
   );
 });
 
@@ -121,7 +128,6 @@ test('rate limits excessive requests', async () => {
   const now = Date.now();
   const env = {
     WORKER_ADMIN_TOKEN: 'secret',
-    FROM_EMAIL: 'info@mybody.best',
     USER_METADATA_KV: {
       get: jest.fn().mockResolvedValue(JSON.stringify({ ts: now, count: 3 })),
       put: jest.fn()
