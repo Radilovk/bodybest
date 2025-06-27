@@ -188,10 +188,10 @@ compatibility_date = "2025-06-20"
 Препоръчително е периодично (например веднъж годишно) да обновявате тази дата до последна валидна стойност, за да се възползва worker-ът от новите възможности на Cloudflare.
 В workflow-а има стъпка `update-compat-date`, която автоматично я коригира, ако е зададена по-нова от днешната.
 
-Пример за промяна в `wrangler.toml`:
+Пример за промяна в `wrangler.toml` с дата в миналото:
 
 ```toml
-compatibility_date = "2026-01-15"
+compatibility_date = "2025-06-20"
 ```
 You can verify this setup locally by running:
 
