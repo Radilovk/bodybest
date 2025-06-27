@@ -1231,6 +1231,12 @@ async function sendTestEmail() {
     }
 }
 
+async function confirmAndSendTestEmail() {
+    if (window.confirm('Изпращане на тестов имейл?')) {
+        await sendTestEmail();
+    }
+}
+
 async function sendTestImage() {
     if (!testImageForm || !testImageFileInput?.files?.[0]) return;
     const file = testImageFileInput.files[0];
@@ -1438,7 +1444,7 @@ if (emailSettingsForm) {
 if (testEmailForm) {
     testEmailForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        await sendTestEmail();
+        await confirmAndSendTestEmail();
     });
 }
 
@@ -1458,5 +1464,6 @@ export {
     showClient,
     unreadClients,
     sendTestEmail,
+    confirmAndSendTestEmail,
     sendTestImage
 };
