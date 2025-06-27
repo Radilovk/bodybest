@@ -71,16 +71,16 @@ test('supports alternate field names', async () => {
   expect(fetch).toHaveBeenCalledWith('https://mail.example.com', expect.any(Object));
 });
 
-test('falls back to MailChannels when endpoint missing', async () => {
+test('uses PHP mail endpoint when MAILER_ENDPOINT_URL missing', async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: true });
   const request = {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b' })
   };
-  const env = { WORKER_ADMIN_TOKEN: 'secret', FROM_EMAIL: 'info@mybody.best' };
+  const env = { WORKER_ADMIN_TOKEN: 'secret', MAIL_PHP_URL: 'https://mybody.best/mail.php' };
   const res = await handleSendTestEmailRequest(request, env);
   expect(res.success).toBe(true);
-  expect(fetch).toHaveBeenCalledWith('https://api.mailchannels.net/tx/v1/send', expect.any(Object));
+  expect(fetch).toHaveBeenCalledWith('https://mybody.best/mail.php', expect.any(Object));
 });
 
 test('records usage in USER_METADATA_KV', async () => {
