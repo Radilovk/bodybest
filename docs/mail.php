@@ -1,24 +1,58 @@
 <?php
-// docs/mail.php - example endpoint used by sendEmailWorker.js
-// Accepts JSON {to, subject, body} and sends the email.
-// Adjust authentication and SMTP settings as needed.
+// Разреши заявки от frontend/Worker (CORS)
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Content-Type: application/json");
 
-$input = json_decode(file_get_contents('php://input'), true);
-if (!isset($input['to'], $input['subject'], $input['body'])) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Invalid input']);
+// Позволи само POST заявки
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(["error" => "Only POST method allowed"]);
     exit;
 }
 
-$to = $input['to'];
-$subject = $input['subject'];
-$body = $input['body'];
-$headers = "Content-Type: text/plain; charset=UTF-8\r\n";
+// Извлечи и декодирай JSON от заявката
+$data = json_decode(file_get_contents("php://input"), true);
 
-if (mail($to, $subject, $body, $headers)) {
-    echo json_encode(['success' => true]);
-} else {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Failed to send']);
+// Валидация
+$to = $data['to'] ?? '';
+$subject = $data['subject'] ?? '(Без тема)';
+$body = $data['body'] ?? '';
+
+if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+    http_response_code(400);
+    echo json_encode(["error" => "Invalid recipient email"]);
+    exit;
 }
 
+if (empty($body)) {
+    http_response_code(400);
+    echo json_encode(["error" => "Missing email body"]);
+    exit;
+}
+
+// Защита от mail header injection
+if (preg_match("/[\r\n]/", $to) || preg_match("/[\r\n]/", $subject)) {
+    http_response_code(400);
+    echo json_encode(["error" => "Invalid header characters detected"]);
+    exit;
+}
+
+// Имейл заглавки за HTML
+$headers = "MIME-Version: 1.0\r\n";
+$headers .= "Content-type: text/html; charset=UTF-8\r\n";
+$headers .= "From: info@mybody.best\r\n";
+$headers .= "Reply-To: info@mybody.best\r\n";
+
+// Изпращане
+$success = mail($to, $subject, $body, $headers);
+
+// Отговор
+if ($success) {
+    http_response_code(200);
+    echo json_encode(["success" => true, "message" => "Email sent successfully."]);
+} else {
+    http_response_code(500);
+    echo json_encode(["success" => false, "error" => "Failed to send email."]);
+}
