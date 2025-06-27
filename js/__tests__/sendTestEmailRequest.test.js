@@ -82,3 +82,26 @@ test('falls back to MailChannels when endpoint missing', async () => {
   expect(res.success).toBe(true);
   expect(fetch).toHaveBeenCalledWith('https://api.mailchannels.net/tx/v1/send', expect.any(Object));
 });
+
+test('rate limits repeated requests by token', async () => {
+  global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  const makeReq = () => ({
+    headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
+    json: async () => ({ recipient: 'a@b.bg', subject: 's', body: 'b' })
+  });
+  const store = {};
+  const env = {
+    WORKER_ADMIN_TOKEN: 'secret',
+    MAILER_ENDPOINT_URL: 'https://mail.example.com',
+    USER_METADATA_KV: {
+      get: async k => store[k],
+      put: async (k, v) => { store[k] = v; }
+    }
+  };
+  await handleSendTestEmailRequest(makeReq(), env);
+  await handleSendTestEmailRequest(makeReq(), env);
+  await handleSendTestEmailRequest(makeReq(), env);
+  const res = await handleSendTestEmailRequest(makeReq(), env);
+  expect(res.success).toBe(false);
+  expect(res.statusHint).toBe(429);
+});

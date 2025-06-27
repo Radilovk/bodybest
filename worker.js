@@ -132,6 +132,38 @@ function makeJsonResponse(body, defaultStatus = 200) {
         headers: { 'Content-Type': 'application/json' }
     };
 }
+
+/**
+ * Simple token/IP based rate limiting using KV storage.
+ * @param {Request} request
+ * @param {Object} env
+ * @param {string} identifier Fallback key when IP is unavailable
+ * @param {number} [limit=3] Maximum requests per minute
+ * @returns {Promise<boolean>} True if rate limited
+ */
+async function checkRateLimit(request, env, identifier, limit = 3) {
+    if (!env.USER_METADATA_KV) return false;
+    const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('x-forwarded-for');
+    const key = ip || identifier;
+    if (!key) return false;
+    const storageKey = `rate_${key}`;
+    const now = Date.now();
+    const windowMs = 60 * 1000;
+    const entryStr = await env.USER_METADATA_KV.get(storageKey);
+    if (entryStr) {
+        let entry;
+        try { entry = JSON.parse(entryStr); } catch { entry = null; }
+        if (entry && now - entry.ts < windowMs) {
+            if (entry.count >= limit) return true;
+            entry.count++;
+            entry.ts = entry.ts || now;
+            await env.USER_METADATA_KV.put(storageKey, JSON.stringify(entry), { expirationTtl: 60 });
+            return false;
+        }
+    }
+    await env.USER_METADATA_KV.put(storageKey, JSON.stringify({ count: 1, ts: now }), { expirationTtl: 60 });
+    return false;
+}
 // ------------- END BLOCK: HelperFunctions -------------
 
 // ------------- START BLOCK: MainWorkerExport -------------
@@ -1453,6 +1485,10 @@ async function handleAnalyzeImageRequest(request, env) {
             return { success: false, message: 'Липсва изображение или userId.', statusHint: 400 };
         }
 
+        if (await checkRateLimit(request, env, userId)) {
+            return { success: false, message: 'Прекалено много заявки. Опитайте по-късно.', statusHint: 429 };
+        }
+
         let base64 = imageData || '';
         let finalMime = mimeType;
         if (typeof image === 'string') {
@@ -1750,6 +1786,14 @@ async function handleSetAiConfig(request, env) {
             return { success: false, message: 'Невалиден токен.', statusHint: 403 };
         }
 
+        if (await checkRateLimit(request, env, token)) {
+            return { success: false, message: 'Прекалено много заявки. Опитайте по-късно.', statusHint: 429 };
+        }
+
+        if (await checkRateLimit(request, env, token)) {
+            return { success: false, message: 'Прекалено много заявки. Опитайте по-късно.', statusHint: 429 };
+        }
+
         const body = await request.json();
         let updates = body.updates;
         if (!updates && body.key) {
@@ -1857,6 +1901,10 @@ async function handleSendTestEmailRequest(request, env) {
         const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
         if (expected && token !== expected) {
             return { success: false, message: 'Невалиден токен.', statusHint: 403 };
+        }
+
+        if (await checkRateLimit(request, env, token)) {
+            return { success: false, message: 'Прекалено много заявки. Опитайте по-късно.', statusHint: 429 };
         }
 
         let data;
