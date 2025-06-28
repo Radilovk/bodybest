@@ -198,7 +198,7 @@ the page.
 
 ## Deployment to Cloudflare
 
-A GitHub Action workflow at `.github/workflows/deploy.yml` automatically deploys the worker when you push to `main` or open a pull request. It runs `wrangler deploy` using the secret `CF_API_TOKEN` for authentication. Pull requests from forks cannot access the secrets, so those builds will skip deployment.
+A GitHub Action workflow at `.github/workflows/deploy.yml` deploys the worker manually. Use the **Run workflow** button in the Actions tab to start a deployment. It runs `wrangler deploy` using the secret `CF_API_TOKEN` for authentication. Pull requests from forks cannot access the secrets, so those builds will skip deployment.
 
 > **Important**: Do **not** run `wrangler deploy` manually. All production deployments should go through the GitHub Action so the worker version matches the repository history. You can freely use `wrangler dev` locally for testing, but push your changes to trigger an official deployment.
 
@@ -235,7 +235,7 @@ This script checks for placeholder values and for a provided `CF_API_TOKEN`.
 
 The repository contains two Cloudflare workers.
 
-- `worker.js` – the main application worker defined in `wrangler.toml`. The GitHub workflow deploys this worker automatically.
+- `worker.js` – the main application worker defined in `wrangler.toml`. The GitHub workflow deploys this worker when you run the deployment manually.
 - `worker-backend.js` – a lightweight proxy used by the PHP backend to call Cloudflare AI. Deploy it separately, for example:
 
 ```bash
