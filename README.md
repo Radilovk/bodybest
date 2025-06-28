@@ -638,7 +638,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
     --data '{"to":"someone@example.com","subject":"Тест","text":"Здравей"}'
   ```
   Ако `MAILER_ENDPOINT_URL` не е зададен, работникът използва `sendEmailWorker.js`
-  и изпраща данните чрез MailChannels.
+  и изпраща данните към `MAIL_PHP_URL` (по подразбиране `https://mybody.best/mail_smtp.php`).
 - **Дебъг логове** – при изпращане на заглавие `X-Debug: 1` към който и да е API
 ендпойнт, worker-ът записва в конзолата кратка информация за заявката.
 
@@ -673,8 +673,8 @@ The worker can send emails in two ways:
 
 1. If `MAILER_ENDPOINT_URL` is set, requests are forwarded to that endpoint
    (for example a standalone worker) which handles the actual delivery.
-2. Otherwise the worker calls `sendEmailWorker.js`, which now uses
-   MailChannels to deliver the message.
+2. Otherwise the worker posts to `MAIL_PHP_URL` via the helper from
+   `sendEmailWorker.js` (defaults to `https://mybody.best/mail_smtp.php`).
 
 In both cases the `/api/sendTestEmail` endpoint behaves the same and returns a
 JSON response indicating success or failure.
@@ -692,8 +692,6 @@ Example `.env` snippet:
 
 ```env
 MAILER_ENDPOINT_URL=https://send-email-worker.example.workers.dev
-MAILCHANNELS_KEY=your-mailchannels-key
-MAILCHANNELS_DOMAIN=mybody.best
 ```
 
 Example in `wrangler.toml`:
@@ -701,14 +699,12 @@ Example in `wrangler.toml`:
 ```toml
 [vars]
 MAILER_ENDPOINT_URL = "https://send-email-worker.example.workers.dev"
-MAILCHANNELS_KEY = "your-mailchannels-key"
-MAILCHANNELS_DOMAIN = "mybody.best"
 ```
 
 For a simple setup deploy `sendEmailWorker.js`, which exposes `/api/sendEmail`
-and sends messages through **MailChannels**. Point `MAILER_ENDPOINT_URL` to the URL of
-this worker so the main service can dispatch emails without relying on Node.js.
-Requests to this endpoint also require the admin token and are rate limited.
+and sends messages via a PHP backend. Point `MAILER_ENDPOINT_URL` to the URL of
+this worker so the main service can dispatch emails without relying on Node.js. Requests to this endpoint also require the admin token and are rate limited.
+`sendEmailWorker.js` logs an error if the PHP endpoint returns invalid JSON.
 
 The included `mailer.js` relies on `nodemailer` and therefore requires a Node.js
 environment. Run it as a separate service or replace it with a script that calls
@@ -717,16 +713,13 @@ an external provider.
 ### Email Environment Variables
 
 To send a test email you must set `WORKER_ADMIN_TOKEN` and either
-`MAILER_ENDPOINT_URL` or `MAILCHANNELS_KEY` (use `MAIL_PHP_URL` only for legacy
-PHP setups). The optional `FROM_EMAIL` variable overrides the default sender
-address.
+`MAILER_ENDPOINT_URL` or `MAIL_PHP_URL`. The optional `FROM_EMAIL` variable
+overrides the default sender address used by the PHP script.
 
 | Variable | Purpose |
 |----------|---------|
-| `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If omitted, the worker posts to `sendEmailWorker.js`. |
-| `MAILCHANNELS_KEY` | API key for MailChannels. Required when using the HTTP API. |
-| `MAILCHANNELS_DOMAIN` | Optional domain used for the `mail_from` address. |
-| `MAIL_PHP_URL` | Legacy PHP endpoint if you prefer your own backend. Defaults to `https://mybody.best/mail_smtp.php`. |
+| `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If omitted, the worker posts to `MAIL_PHP_URL` via `sendEmailWorker.js`. |
+| `MAIL_PHP_URL` | Endpoint used by `sendEmailWorker.js` to deliver messages. Defaults to `https://mybody.best/mail_smtp.php`. Set this to the public URL of the script from [docs/mail_smtp.php](docs/mail_smtp.php). |
 | `EMAIL_PASSWORD` | Password used by `mailer.js` when authenticating with the SMTP server. |
 | `FROM_EMAIL` | Sender address used by `mailer.js` and the PHP backend. |
 | `WELCOME_EMAIL_SUBJECT` | Optional custom subject for welcome emails sent by `mailer.js`. |

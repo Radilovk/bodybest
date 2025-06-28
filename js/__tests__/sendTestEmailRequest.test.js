@@ -79,7 +79,7 @@ test('supports alternate field names', async () => {
   expect(fetch).toHaveBeenCalledWith('https://mail.example.com', expect.any(Object));
 });
 
-test('uses MailChannels when MAILER_ENDPOINT_URL missing', async () => {
+test('uses PHP mail endpoint when MAILER_ENDPOINT_URL missing', async () => {
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
     json: async () => ({ success: true }),
@@ -89,10 +89,10 @@ test('uses MailChannels when MAILER_ENDPOINT_URL missing', async () => {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b' })
   };
-  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILCHANNELS_KEY: 'k', MAILCHANNELS_DOMAIN: 'mybody.best', FROM_EMAIL: 'info@mybody.best' };
+  const env = { WORKER_ADMIN_TOKEN: 'secret', MAIL_PHP_URL: 'https://mybody.best/mail_smtp.php' };
   const res = await handleSendTestEmailRequest(request, env);
   expect(res.success).toBe(true);
-  expect(fetch).toHaveBeenCalledWith('https://api.mailchannels.net/tx/v1/send', expect.any(Object));
+  expect(fetch).toHaveBeenCalledWith('https://mybody.best/mail_smtp.php', expect.any(Object));
 });
 
 test('records usage in USER_METADATA_KV', async () => {
@@ -109,8 +109,7 @@ test('records usage in USER_METADATA_KV', async () => {
     WORKER_ADMIN_TOKEN: 'secret',
     FROM_EMAIL: 'info@mybody.best',
     USER_METADATA_KV: { put: jest.fn() },
-    MAILCHANNELS_KEY: 'k',
-    MAILCHANNELS_DOMAIN: 'mybody.best'
+    MAIL_PHP_URL: 'https://mybody.best/mail_smtp.php'
   };
   await handleSendTestEmailRequest(request, env);
   expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith(
@@ -118,15 +117,9 @@ test('records usage in USER_METADATA_KV', async () => {
     expect.any(String)
   );
   expect(fetch).toHaveBeenCalledWith(
-    'https://api.mailchannels.net/tx/v1/send',
+    'https://mybody.best/mail_smtp.php',
     expect.objectContaining({
-      body: JSON.stringify({
-        personalizations: [{ to: [{ email: 't@e.com' }] }],
-        from: { email: 'info@mybody.best' },
-        subject: 's',
-        content: [{ type: 'text/plain', value: 'b' }],
-        mail_from: { email: 'no-reply@mybody.best' }
-      })
+      body: JSON.stringify({ to: 't@e.com', subject: 's', body: 'b', from: 'info@mybody.best' })
     })
   );
 });
