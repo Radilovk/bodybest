@@ -85,6 +85,25 @@ test('sendEmail forwards data to MailChannels endpoint', async () => {
   fetch.mockRestore();
 });
 
+test('sendEmail sets Authorization header when key provided', async () => {
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ success: true }),
+    clone: () => ({ text: async () => '{}' }),
+    headers: { get: () => 'application/json' }
+  });
+
+  await sendEmail('t@e.com', 'Hi', 'Body', { MAILCHANNELS_KEY: 'k' });
+
+  expect(fetch).toHaveBeenCalledWith(
+    'https://api.mailchannels.net/tx/v1/send',
+    expect.objectContaining({
+      headers: expect.objectContaining({ Authorization: 'Bearer k' })
+    })
+  );
+  fetch.mockRestore();
+});
+
 test('sendEmail returns error when MAILCHANNELS_KEY missing', async () => {
   const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   const result = await sendEmail('x@y.z', 'S', 'B', {});
