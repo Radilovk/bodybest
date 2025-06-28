@@ -5,7 +5,7 @@
  * @param {string} subject email subject line
  * @param {string} text plain text body
  */
-import { parseJsonSafe } from './worker.js';
+import { parseJsonSafe } from './utils/parseJsonSafe.js';
 const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
 const FROM_EMAIL_VAR_NAME = 'FROM_EMAIL';
 const MAILCHANNELS_KEY_VAR_NAME = 'MAILCHANNELS_KEY';

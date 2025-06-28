@@ -26,6 +26,7 @@ async function defaultSendEmail(to, subject, body) {
     throw new Error('Email functionality is not configured.');
 }
 import { sendEmail as phpSendEmail } from './sendEmailWorker.js';
+import { parseJsonSafe } from './utils/parseJsonSafe.js';
 
 /** @type {(to: string, subject: string, body: string) => Promise<void>} */
 let sendEmailFn = defaultSendEmail;
@@ -2700,23 +2701,6 @@ const safeParseJson = (jsonString, defaultValue = null) => {
 };
 // ------------- END FUNCTION: safeParseJson -------------
 
-// ------------- START FUNCTION: parseJsonSafe -------------
-/**
- * Parse JSON from a Response object with extra error handling.
- * Logs the raw response text when JSON parsing fails.
- * @param {Response} resp
- * @returns {Promise<any>}
- */
-async function parseJsonSafe(resp, label = 'response') {
-    try {
-        return await resp.json();
-    } catch (err) {
-        const bodyText = await resp.clone().text().catch(() => '[unavailable]');
-        console.error(`Failed to parse JSON from ${label}:`, bodyText);
-        throw new Error('Invalid JSON response');
-    }
-}
-// ------------- END FUNCTION: parseJsonSafe -------------
 
 // ------------- START FUNCTION: createFallbackPrincipleSummary -------------
 function createFallbackPrincipleSummary(principlesText) {
@@ -3881,4 +3865,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, parseJsonSafe };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
