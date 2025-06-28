@@ -88,11 +88,23 @@ test('sendEmail throws on invalid JSON response', async () => {
   const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
+    status: 200,
     json: async () => { throw new SyntaxError('bad json'); },
     clone: () => ({ text: async () => 'not-json' })
   });
-  await expect(sendEmail('x@y.z', 'S', 'B')).rejects.toThrow('Invalid JSON response from email service');
-  expect(errSpy).toHaveBeenCalledWith('Failed to parse JSON from sendEmail response:', 'not-json');
+  await expect(sendEmail('x@y.z', 'S', 'B')).rejects.toThrow(
+    'Invalid JSON response from email service (status 200)'
+  );
+  expect(errSpy).toHaveBeenNthCalledWith(
+    1,
+    'Failed to parse JSON from sendEmail response:',
+    'not-json'
+  );
+  expect(errSpy).toHaveBeenNthCalledWith(
+    2,
+    'Invalid JSON response from email service (status 200):',
+    'not-json'
+  );
   errSpy.mockRestore();
   fetch.mockRestore();
 });

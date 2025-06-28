@@ -68,7 +68,15 @@ export async function sendEmail(to, subject, text, env = {}) {
   try {
     result = await parseJsonSafe(resp, 'sendEmail response');
   } catch {
-    throw new Error('Invalid JSON response from email service');
+    const bodyText = await resp.clone().text().catch(() => '[unavailable]');
+    const snippet = bodyText.slice(0, 200);
+    console.error(
+      `Invalid JSON response from email service (status ${resp.status}):`,
+      snippet
+    );
+    throw new Error(
+      `Invalid JSON response from email service (status ${resp.status})`
+    );
   }
   if (!resp.ok || result.success === false) {
     console.error('sendEmail failed response:', result);
