@@ -8,7 +8,7 @@
     "build": "vite build",
     "start": "vite preview",
     "lint": "eslint .",
-    "test": "sh ./scripts/test.sh",
+    "test": "node scripts/check-worker-sync.js && sh ./scripts/test.sh",
     "docs": "typedoc"
   },
   "keywords": [],
