@@ -5,6 +5,7 @@
  * @param {string} subject email subject line
  * @param {string} text plain text body
  */
+import { parseJsonSafe } from './worker.js';
 const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
 const FROM_EMAIL_VAR_NAME = 'FROM_EMAIL';
 
@@ -63,13 +64,10 @@ export async function sendEmail(to, subject, text, env = {}) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
-  const respClone = resp.clone();
   let result;
   try {
-    result = await resp.json();
-  } catch (err) {
-    const bodyText = await respClone.text().catch(() => '[unavailable]');
-    console.error('Failed to parse JSON from sendEmail response:', bodyText);
+    result = await parseJsonSafe(resp, 'sendEmail response');
+  } catch {
     throw new Error('Invalid JSON response from email service');
   }
   if (!resp.ok || result.success === false) {
