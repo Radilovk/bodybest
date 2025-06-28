@@ -56,6 +56,10 @@ async function checkRateLimit(env, identifier, limit = 3, windowMs = 60000) {
 }
 
 async function sendViaMailChannels(to, subject, text, env = {}) {
+  if (!env[MAILCHANNELS_KEY_VAR_NAME]) {
+    console.error('Missing MAILCHANNELS_KEY environment variable');
+    return new Error('Missing MAILCHANNELS_KEY');
+  }
   const from = env[FROM_EMAIL_VAR_NAME] || `no-reply@${env[MAILCHANNELS_DOMAIN_VAR_NAME] || 'example.com'}`;
   const payload = {
     personalizations: [{ to: [{ email: to }] }],
@@ -97,7 +101,7 @@ async function sendViaMailChannels(to, subject, text, env = {}) {
 }
 
 export async function sendEmail(to, subject, text, env = {}) {
-  await sendViaMailChannels(to, subject, text, env);
+  return await sendViaMailChannels(to, subject, text, env);
 }
 
 export async function handleSendEmailRequest(request, env = {}) {

@@ -85,6 +85,15 @@ test('sendEmail forwards data to MailChannels endpoint', async () => {
   fetch.mockRestore();
 });
 
+test('sendEmail returns error when MAILCHANNELS_KEY missing', async () => {
+  const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  const result = await sendEmail('x@y.z', 'S', 'B', {});
+  expect(result).toBeInstanceOf(Error);
+  expect(result.message).toBe('Missing MAILCHANNELS_KEY');
+  expect(errSpy).toHaveBeenCalledWith('Missing MAILCHANNELS_KEY environment variable');
+  errSpy.mockRestore();
+});
+
 test('sendEmail throws when backend reports failure', async () => {
   const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   global.fetch = jest.fn().mockResolvedValue({
@@ -93,7 +102,7 @@ test('sendEmail throws when backend reports failure', async () => {
     clone: () => ({ text: async () => '{"errors":[{"message":"bad"}]}' }),
     headers: { get: () => 'application/json' }
   });
-  await expect(sendEmail('x@y.z', 'S', 'B')).rejects.toThrow('bad');
+  await expect(sendEmail('x@y.z', 'S', 'B', { MAILCHANNELS_KEY: 'k' })).rejects.toThrow('bad');
   expect(errSpy).toHaveBeenCalledWith('sendEmail failed response:', { errors: [{ message: 'bad' }] });
   errSpy.mockRestore();
   fetch.mockRestore();
@@ -107,7 +116,7 @@ test('sendEmail throws on invalid JSON response', async () => {
     clone: () => ({ text: async () => 'not-json' }),
     headers: { get: () => 'application/json' }
   });
-  await expect(sendEmail('x@y.z', 'S', 'B')).rejects.toThrow('Invalid JSON response from MailChannels');
+  await expect(sendEmail('x@y.z', 'S', 'B', { MAILCHANNELS_KEY: 'k' })).rejects.toThrow('Invalid JSON response from MailChannels');
   expect(errSpy).toHaveBeenCalledWith('Failed to parse JSON from MailChannels response:', 'not-json');
   errSpy.mockRestore();
   fetch.mockRestore();
