@@ -1222,12 +1222,26 @@ async function sendTestEmail() {
             headers,
             body: JSON.stringify({ recipient, subject, body })
         });
-        const data = await resp.json();
+
+        const ct = resp.headers.get('Content-Type') || '';
+        let data;
+        let raw = '';
+        if (ct.includes('application/json')) {
+            data = await resp.json();
+        } else {
+            raw = await resp.text();
+        }
+
+        if (!ct.includes('application/json')) {
+            console.error('Non-JSON response from sendTestEmail:', raw.slice(0, 200));
+            throw new Error('Unexpected server response');
+        }
+
         if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
         alert('Имейлът е изпратен успешно.');
     } catch (err) {
         console.error('Error sending test email:', err);
-        alert(err.message || 'Грешка при изпращане на имейла.');
+        alert('Грешка при изпращане.');
     }
 }
 

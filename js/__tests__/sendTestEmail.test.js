@@ -76,3 +76,24 @@ test('confirmation wrapper aborts when cancelled', async () => {
   expect(global.fetch).not.toHaveBeenCalled();
   confirmSpy.mockRestore();
 });
+
+test('logs snippet when response is not JSON', async () => {
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    headers: { get: () => 'text/plain' },
+    text: async () => 'plain text error body'
+  });
+  const logSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+  document.getElementById('testEmailTo').value = 'a@b.bg';
+  document.getElementById('testEmailSubject').value = 'Sub';
+  document.getElementById('testEmailBody').value = 'Body';
+  await send();
+  expect(logSpy).toHaveBeenCalledWith(
+    'Non-JSON response from sendTestEmail:',
+    'plain text error body'
+  );
+  expect(alertSpy).toHaveBeenCalled();
+  logSpy.mockRestore();
+  alertSpy.mockRestore();
+});
