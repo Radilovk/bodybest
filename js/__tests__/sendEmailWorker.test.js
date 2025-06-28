@@ -28,7 +28,7 @@ test('rejects invalid token', async () => {
     headers: { get: h => (h === 'Authorization' ? 'Bearer bad' : null) },
     json: async () => ({ to: 'a@b.bg', subject: 'S', text: 'B' })
   };
-  const env = { WORKER_ADMIN_TOKEN: 'secret', MAIL_PHP_URL: 'https://mybody.best/mail.php' };
+  const env = { WORKER_ADMIN_TOKEN: 'secret', MAIL_PHP_URL: 'https://mybody.best/mail_smtp.php' };
   const res = await handleSendEmailRequest(req, env);
   expect(res.status).toBe(403);
 });
@@ -43,10 +43,10 @@ test('calls PHP endpoint on valid input', async () => {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ to: 'a@b.bg', subject: 'S', text: 'B' })
   };
-  const env = { MAIL_PHP_URL: 'https://mybody.best/mail.php', WORKER_ADMIN_TOKEN: 'secret', FROM_EMAIL: 'info@mybody.best' };
+  const env = { MAIL_PHP_URL: 'https://mybody.best/mail_smtp.php', WORKER_ADMIN_TOKEN: 'secret', FROM_EMAIL: 'info@mybody.best' };
   const res = await handleSendEmailRequest(req, env);
   expect(fetch).toHaveBeenCalledWith(
-    'https://mybody.best/mail.php',
+    'https://mybody.best/mail_smtp.php',
     expect.objectContaining({
       body: JSON.stringify({ to: 'a@b.bg', subject: 'S', body: 'B', from: 'info@mybody.best' })
     })
@@ -61,9 +61,9 @@ test('sendEmail forwards data to PHP endpoint', async () => {
     json: async () => ({ success: true }),
     clone: () => ({ text: async () => '{}' })
   });
-  await sendEmail('t@e.com', 'Hi', 'Body', { MAIL_PHP_URL: 'https://mybody.best/mail.php', FROM_EMAIL: 'info@mybody.best' });
+  await sendEmail('t@e.com', 'Hi', 'Body', { MAIL_PHP_URL: 'https://mybody.best/mail_smtp.php', FROM_EMAIL: 'info@mybody.best' });
   expect(fetch).toHaveBeenCalledWith(
-    'https://mybody.best/mail.php',
+    'https://mybody.best/mail_smtp.php',
     expect.objectContaining({
       body: JSON.stringify({ to: 't@e.com', subject: 'Hi', body: 'Body', from: 'info@mybody.best' })
     })

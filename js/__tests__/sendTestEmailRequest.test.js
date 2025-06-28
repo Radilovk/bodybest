@@ -89,10 +89,10 @@ test('uses PHP mail endpoint when MAILER_ENDPOINT_URL missing', async () => {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b' })
   };
-  const env = { WORKER_ADMIN_TOKEN: 'secret', MAIL_PHP_URL: 'https://mybody.best/mail.php' };
+  const env = { WORKER_ADMIN_TOKEN: 'secret', MAIL_PHP_URL: 'https://mybody.best/mail_smtp.php' };
   const res = await handleSendTestEmailRequest(request, env);
   expect(res.success).toBe(true);
-  expect(fetch).toHaveBeenCalledWith('https://mybody.best/mail.php', expect.any(Object));
+  expect(fetch).toHaveBeenCalledWith('https://mybody.best/mail_smtp.php', expect.any(Object));
 });
 
 test('records usage in USER_METADATA_KV', async () => {
@@ -109,7 +109,7 @@ test('records usage in USER_METADATA_KV', async () => {
     WORKER_ADMIN_TOKEN: 'secret',
     FROM_EMAIL: 'info@mybody.best',
     USER_METADATA_KV: { put: jest.fn() },
-    MAIL_PHP_URL: 'https://mybody.best/mail.php'
+    MAIL_PHP_URL: 'https://mybody.best/mail_smtp.php'
   };
   await handleSendTestEmailRequest(request, env);
   expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith(
@@ -117,7 +117,7 @@ test('records usage in USER_METADATA_KV', async () => {
     expect.any(String)
   );
   expect(fetch).toHaveBeenCalledWith(
-    'https://mybody.best/mail.php',
+    'https://mybody.best/mail_smtp.php',
     expect.objectContaining({
       body: JSON.stringify({ to: 't@e.com', subject: 's', body: 'b', from: 'info@mybody.best' })
     })
