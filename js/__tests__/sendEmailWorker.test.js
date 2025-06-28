@@ -62,6 +62,28 @@ test('calls MailChannels endpoint on valid input', async () => {
   fetch.mockRestore();
 });
 
+test('includes Authorization header with key', async () => {
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ success: true }),
+    clone: () => ({ text: async () => '{}' }),
+    headers: { get: () => 'application/json' }
+  });
+  const req = {
+    headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
+    json: async () => ({ to: 'a@b.bg', subject: 'S', text: 'B' })
+  };
+  const env = { MAILCHANNELS_KEY: 'k', MAILCHANNELS_DOMAIN: 'mybody.best', WORKER_ADMIN_TOKEN: 'secret', FROM_EMAIL: 'info@mybody.best' };
+  await handleSendEmailRequest(req, env);
+  expect(fetch).toHaveBeenCalledWith(
+    'https://api.mailchannels.net/tx/v1/send',
+    expect.objectContaining({
+      headers: expect.objectContaining({ Authorization: 'Bearer k' })
+    })
+  );
+  fetch.mockRestore();
+});
+
 test('sendEmail forwards data to MailChannels endpoint', async () => {
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
