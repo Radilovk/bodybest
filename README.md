@@ -196,6 +196,8 @@ the page.
 
 A GitHub Action workflow at `.github/workflows/deploy.yml` automatically deploys the worker when you push to `main` or open a pull request. It runs `wrangler deploy` using the secret `CF_API_TOKEN` for authentication. Pull requests from forks cannot access the secrets, so those builds will skip deployment.
 
+> **Important**: Do **not** run `wrangler deploy` manually. All production deployments should go through the GitHub Action so the worker version matches the repository history. You can freely use `wrangler dev` locally for testing, but push your changes to trigger an official deployment.
+
 To set the token:
 
 1. Generate an API token with **Edit Cloudflare Workers** permissions.
