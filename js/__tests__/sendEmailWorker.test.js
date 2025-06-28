@@ -153,3 +153,28 @@ test('sendEmail throws on invalid JSON response', async () => {
   errSpy.mockRestore();
   fetch.mockRestore();
 });
+
+test('rate limit TTL never below 60 seconds', async () => {
+  const now = Date.now();
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ success: true }),
+    clone: () => ({ text: async () => '{}' })
+  });
+  const put = jest.fn();
+  const req = {
+    headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
+    json: async () => ({ to: 't@e.com', subject: 'S', text: 'B' })
+  };
+  const env = {
+    MAIL_PHP_URL: 'https://mybody.best/mail_smtp.php',
+    WORKER_ADMIN_TOKEN: 'secret',
+    USER_METADATA_KV: {
+      get: jest.fn().mockResolvedValue(JSON.stringify({ ts: now - 59000, count: 1 })),
+      put
+    }
+  };
+  await handleSendEmailRequest(req, env);
+  expect(put.mock.calls[0][2].expirationTtl).toBe(60);
+  fetch.mockRestore();
+});
