@@ -28,12 +28,12 @@ test('rejects invalid token', async () => {
     headers: { get: h => (h === 'Authorization' ? 'Bearer bad' : null) },
     json: async () => ({ to: 'a@b.bg', subject: 'S', text: 'B' })
   };
-  const env = { WORKER_ADMIN_TOKEN: 'secret', MAIL_PHP_URL: 'https://mybody.best/mail_smtp.php' };
+  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILCHANNELS_KEY: 'k' };
   const res = await handleSendEmailRequest(req, env);
   expect(res.status).toBe(403);
 });
 
-test('calls PHP endpoint on valid input', async () => {
+test('calls MailChannels endpoint on valid input', async () => {
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
     json: async () => ({ success: true }),
@@ -43,29 +43,41 @@ test('calls PHP endpoint on valid input', async () => {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ to: 'a@b.bg', subject: 'S', text: 'B' })
   };
-  const env = { MAIL_PHP_URL: 'https://mybody.best/mail_smtp.php', WORKER_ADMIN_TOKEN: 'secret', FROM_EMAIL: 'info@mybody.best' };
+  const env = { MAILCHANNELS_KEY: 'k', MAILCHANNELS_DOMAIN: 'mybody.best', WORKER_ADMIN_TOKEN: 'secret', FROM_EMAIL: 'info@mybody.best' };
   const res = await handleSendEmailRequest(req, env);
   expect(fetch).toHaveBeenCalledWith(
-    'https://mybody.best/mail_smtp.php',
+    'https://api.mailchannels.net/tx/v1/send',
     expect.objectContaining({
-      body: JSON.stringify({ to: 'a@b.bg', subject: 'S', body: 'B', from: 'info@mybody.best' })
+      body: JSON.stringify({
+        personalizations: [{ to: [{ email: 'a@b.bg' }] }],
+        from: { email: 'info@mybody.best' },
+        subject: 'S',
+        content: [{ type: 'text/plain', value: 'B' }],
+        mail_from: { email: 'no-reply@mybody.best' }
+      })
     })
   );
   expect(res.status).toBe(200);
   fetch.mockRestore();
 });
 
-test('sendEmail forwards data to PHP endpoint', async () => {
+test('sendEmail forwards data to MailChannels endpoint', async () => {
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
     json: async () => ({ success: true }),
     clone: () => ({ text: async () => '{}' })
   });
-  await sendEmail('t@e.com', 'Hi', 'Body', { MAIL_PHP_URL: 'https://mybody.best/mail_smtp.php', FROM_EMAIL: 'info@mybody.best' });
+  await sendEmail('t@e.com', 'Hi', 'Body', { MAILCHANNELS_KEY: 'k', MAILCHANNELS_DOMAIN: 'mybody.best', FROM_EMAIL: 'info@mybody.best' });
   expect(fetch).toHaveBeenCalledWith(
-    'https://mybody.best/mail_smtp.php',
+    'https://api.mailchannels.net/tx/v1/send',
     expect.objectContaining({
-      body: JSON.stringify({ to: 't@e.com', subject: 'Hi', body: 'Body', from: 'info@mybody.best' })
+      body: JSON.stringify({
+        personalizations: [{ to: [{ email: 't@e.com' }] }],
+        from: { email: 'info@mybody.best' },
+        subject: 'Hi',
+        content: [{ type: 'text/plain', value: 'Body' }],
+        mail_from: { email: 'no-reply@mybody.best' }
+      })
     })
   );
   fetch.mockRestore();
@@ -75,11 +87,11 @@ test('sendEmail throws when backend reports failure', async () => {
   const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
-    json: async () => ({ success: false, error: 'bad' }),
-    clone: () => ({ text: async () => '{"success":false}' })
+    json: async () => ({ errors: [{ message: 'bad' }] }),
+    clone: () => ({ text: async () => '{"errors":[{"message":"bad"}]}' })
   });
   await expect(sendEmail('x@y.z', 'S', 'B')).rejects.toThrow('bad');
-  expect(errSpy).toHaveBeenCalledWith('sendEmail failed response:', { success: false, error: 'bad' });
+  expect(errSpy).toHaveBeenCalledWith('sendEmail failed response:', { errors: [{ message: 'bad' }] });
   errSpy.mockRestore();
   fetch.mockRestore();
 });
@@ -91,8 +103,8 @@ test('sendEmail throws on invalid JSON response', async () => {
     json: async () => { throw new SyntaxError('bad json'); },
     clone: () => ({ text: async () => 'not-json' })
   });
-  await expect(sendEmail('x@y.z', 'S', 'B')).rejects.toThrow('Invalid JSON response from email service');
-  expect(errSpy).toHaveBeenCalledWith('Failed to parse JSON from sendEmail response:', 'not-json');
+  await expect(sendEmail('x@y.z', 'S', 'B')).rejects.toThrow('Invalid JSON response from MailChannels');
+  expect(errSpy).toHaveBeenCalledWith('Failed to parse JSON from MailChannels response:', 'not-json');
   errSpy.mockRestore();
   fetch.mockRestore();
 });
