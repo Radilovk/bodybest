@@ -141,3 +141,24 @@ test('rate limits excessive requests', async () => {
   expect(res.success).toBe(false);
   expect(res.statusHint).toBe(429);
 });
+
+test('rate limit TTL never below 60 seconds', async () => {
+  const now = Date.now();
+  global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  const put = jest.fn();
+  const env = {
+    WORKER_ADMIN_TOKEN: 'secret',
+    MAILER_ENDPOINT_URL: 'https://mybody.best/mail_smtp.php',
+    USER_METADATA_KV: {
+      get: jest.fn().mockResolvedValue(JSON.stringify({ ts: now - 59000, count: 1 })),
+      put
+    }
+  };
+  const request = {
+    headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
+    json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b' })
+  };
+  await handleSendTestEmailRequest(request, env);
+  expect(put.mock.calls[0][2].expirationTtl).toBe(60);
+  fetch.mockRestore();
+});

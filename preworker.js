@@ -2669,7 +2669,10 @@ async function checkRateLimit(env, type, identifier, limit = 3, windowMs = 60000
                 if (data.count >= limit) return true;
                 data.count++;
                 await env.USER_METADATA_KV.put(key, JSON.stringify(data), {
-                    expirationTtl: Math.ceil((windowMs - (now - data.ts)) / 1000)
+                    expirationTtl: Math.max(
+                        60,
+                        Math.ceil((windowMs - (now - data.ts)) / 1000)
+                    )
                 });
                 return false;
             }
@@ -2677,7 +2680,7 @@ async function checkRateLimit(env, type, identifier, limit = 3, windowMs = 60000
         await env.USER_METADATA_KV.put(
             key,
             JSON.stringify({ ts: now, count: 1 }),
-            { expirationTtl: Math.ceil(windowMs / 1000) }
+            { expirationTtl: Math.max(60, Math.ceil(windowMs / 1000)) }
         );
     } catch (err) {
         console.error('Failed to enforce rate limit:', err.message);
