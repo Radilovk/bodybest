@@ -26,7 +26,6 @@ async function defaultSendEmail(to, subject, body) {
     throw new Error('Email functionality is not configured.');
 }
 import { sendEmail as phpSendEmail } from './sendEmailWorker.js';
-import { Buffer } from 'buffer';
 
 /** @type {(to: string, subject: string, body: string) => Promise<void>} */
 let sendEmailFn = defaultSendEmail;
