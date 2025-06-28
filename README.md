@@ -732,6 +732,17 @@ address.
 | `WELCOME_EMAIL_SUBJECT` | Optional custom subject for welcome emails sent by `mailer.js`. |
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |
 | `WORKER_URL` | Base URL of the main worker used by `mailer.js` to fetch email templates when no subject or body is provided. |
+> **Бележка**: MailChannels връща HTTP 401 при грешен или липсващ `MAILCHANNELS_KEY`, както и когато домейнът в `MAILCHANNELS_DOMAIN` не е разрешен.
+
+Проверете стойностите така:
+
+```bash
+# показва тайните записани за работника
+wrangler secret list
+
+# или прегледайте локалния .env файл
+grep MAILCHANNELS .env
+```
 Примерен PHP скрипт за изпращане на писма е наличен в [docs/mail_smtp.php](docs/mail_smtp.php). Настройте `MAIL_PHP_URL` да сочи към същия или сходен адрес.
 
 ### PHP script requirements
