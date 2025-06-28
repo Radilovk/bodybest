@@ -53,7 +53,8 @@ async function checkRateLimit(env, identifier, limit = 3, windowMs = 60000) {
 }
 
 export async function sendEmail(to, subject, text, env = {}) {
-  const endpoint = env.MAIL_PHP_URL || 'https://mybody.best/mail.php';
+  // Fallback URL when MAIL_PHP_URL is not provided
+  const endpoint = env.MAIL_PHP_URL || 'https://mybody.best/mail_smtp.php';
   const fromEmail = env[FROM_EMAIL_VAR_NAME];
   const payload = { to, subject, body: text };
   if (fromEmail) payload.from = fromEmail;
