@@ -127,10 +127,10 @@ Check that `tsconfig.json` includes `"node"` in the `types` array.
 compatibility_flags = ["nodejs_compat"]
 ```
 
-Then import `Buffer` explicitly when needed:
+When `nodejs_compat` is enabled, Cloudflare Workers expose `Buffer` globally,
+so you can use it directly:
 
 ```ts
-import { Buffer } from 'buffer';
 const encoded = Buffer.from('hello').toString('base64');
 ```
 
@@ -173,7 +173,7 @@ file test.jpg
 The `file` output should recognize an image format like JPEG or PNG.
 Cloudflare returns `Tensor error: failed to decode u8` when the data isn't a valid image.
 
-> **Note**: За Node функции като `Buffer` активирайте `nodejs_compat` в `wrangler.toml` (вижте по-горе) и импортирайте от `'buffer'` при нужда.
+> **Note**: При активирано `nodejs_compat` Cloudflare Workers предоставят `Buffer` и други Node функции като глобални, така че няма нужда от `import`.
 
 ### Generate Documentation
 
