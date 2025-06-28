@@ -8,6 +8,8 @@
 import { parseJsonSafe } from './worker.js';
 const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
 const FROM_EMAIL_VAR_NAME = 'FROM_EMAIL';
+const MAILCHANNELS_KEY_VAR_NAME = 'MAILCHANNELS_KEY';
+const MAILCHANNELS_DOMAIN_VAR_NAME = 'MAILCHANNELS_DOMAIN';
 
 async function recordUsage(env, identifier = '') {
   try {
@@ -53,27 +55,40 @@ async function checkRateLimit(env, identifier, limit = 3, windowMs = 60000) {
   return false;
 }
 
-export async function sendEmail(to, subject, text, env = {}) {
-  // Fallback URL when MAIL_PHP_URL is not provided
-  const endpoint = env.MAIL_PHP_URL || 'https://mybody.best/mail_smtp.php';
-  const fromEmail = env[FROM_EMAIL_VAR_NAME];
-  const payload = { to, subject, body: text };
-  if (fromEmail) payload.from = fromEmail;
-  const resp = await fetch(endpoint, {
+async function sendViaMailChannels(to, subject, text, env = {}) {
+  const from = env[FROM_EMAIL_VAR_NAME] || `no-reply@${env[MAILCHANNELS_DOMAIN_VAR_NAME] || 'example.com'}`;
+  const payload = {
+    personalizations: [{ to: [{ email: to }] }],
+    from: { email: from },
+    subject,
+    content: [{ type: 'text/plain', value: text }]
+  };
+  if (env[MAILCHANNELS_DOMAIN_VAR_NAME]) {
+    payload.mail_from = { email: `no-reply@${env[MAILCHANNELS_DOMAIN_VAR_NAME]}` };
+  }
+  const headers = { 'Content-Type': 'application/json' };
+  if (env[MAILCHANNELS_KEY_VAR_NAME]) {
+    headers.Authorization = `Bearer ${env[MAILCHANNELS_KEY_VAR_NAME]}`;
+  }
+  const resp = await fetch('https://api.mailchannels.net/tx/v1/send', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(payload)
   });
   let result;
   try {
-    result = await parseJsonSafe(resp, 'sendEmail response');
+    result = await parseJsonSafe(resp, 'MailChannels response');
   } catch {
-    throw new Error('Invalid JSON response from email service');
+    throw new Error('Invalid JSON response from MailChannels');
   }
-  if (!resp.ok || result.success === false) {
+  if (!resp.ok || result.errors) {
     console.error('sendEmail failed response:', result);
-    throw new Error(result.error || result.message || 'Failed to send');
+    throw new Error(result.errors?.[0]?.message || result.message || 'Failed to send');
   }
+}
+
+export async function sendEmail(to, subject, text, env = {}) {
+  await sendViaMailChannels(to, subject, text, env);
 }
 
 export async function handleSendEmailRequest(request, env = {}) {
