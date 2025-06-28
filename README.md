@@ -727,6 +727,16 @@ overrides the default sender address used by the PHP script.
 | `WORKER_URL` | Base URL of the main worker used by `mailer.js` to fetch email templates when no subject or body is provided. |
 Примерен PHP скрипт за изпращане на писма е наличен в [docs/mail_smtp.php](docs/mail_smtp.php). Настройте `MAIL_PHP_URL` да сочи към същия или сходен адрес.
 
+### PHP script requirements
+
+The file `docs/mail_smtp.php` relies on **PHPMailer** for SMTP. Install it via Composer:
+
+```bash
+composer require phpmailer/phpmailer
+```
+
+The script expects `vendor/autoload.php` to reside one directory above the PHP file (`require __DIR__ . '/../vendor/autoload.php';`). Ensure the `vendor` folder is placed accordingly to avoid "Failed opening required" errors.
+
 ## Cron configuration
 
 Cloudflare позволява изпълнение на работници по зададен график.
