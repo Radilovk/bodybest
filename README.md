@@ -692,7 +692,6 @@ Example `.env` snippet:
 
 ```env
 MAILER_ENDPOINT_URL=https://send-email-worker.example.workers.dev
-MAILCHANNELS_KEY=your-mailchannels-key
 MAILCHANNELS_DOMAIN=mybody.best
 ```
 
@@ -701,7 +700,6 @@ Example in `wrangler.toml`:
 ```toml
 [vars]
 MAILER_ENDPOINT_URL = "https://send-email-worker.example.workers.dev"
-MAILCHANNELS_KEY = "your-mailchannels-key"
 MAILCHANNELS_DOMAIN = "mybody.best"
 ```
 
@@ -717,14 +715,14 @@ an external provider.
 ### Email Environment Variables
 
 To send a test email you must set `WORKER_ADMIN_TOKEN` and either
-`MAILER_ENDPOINT_URL` or `MAILCHANNELS_KEY` (use `MAIL_PHP_URL` only for legacy
-PHP setups). The optional `FROM_EMAIL` variable overrides the default sender
+`MAILER_ENDPOINT_URL` or `MAILCHANNELS_KEY` when using a dedicated account
+(use `MAIL_PHP_URL` only for legacy PHP setups). The optional `FROM_EMAIL` variable overrides the default sender
 address.
 
 | Variable | Purpose |
 |----------|---------|
 | `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If omitted, the worker posts to `sendEmailWorker.js`. |
-| `MAILCHANNELS_KEY` | API key for MailChannels. Required when using the HTTP API. |
+| `MAILCHANNELS_KEY` | Optional API key for MailChannels. Provide it only if you use a dedicated account. |
 | `MAILCHANNELS_DOMAIN` | Optional domain used for the `mail_from` address. |
 | `MAIL_PHP_URL` | Legacy PHP endpoint if you prefer your own backend. Defaults to `https://mybody.best/mail_smtp.php`. |
 | `EMAIL_PASSWORD` | Password used by `mailer.js` when authenticating with the SMTP server. |
@@ -732,7 +730,7 @@ address.
 | `WELCOME_EMAIL_SUBJECT` | Optional custom subject for welcome emails sent by `mailer.js`. |
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |
 | `WORKER_URL` | Base URL of the main worker used by `mailer.js` to fetch email templates when no subject or body is provided. |
-> **Бележка**: MailChannels връща HTTP 401 при грешен или липсващ `MAILCHANNELS_KEY`, както и когато домейнът в `MAILCHANNELS_DOMAIN` не е разрешен.
+> **Бележка**: MailChannels връща HTTP 401 при невалиден ключ или когато домейнът в `MAILCHANNELS_DOMAIN` не е разрешен.
 
 Проверете стойностите така:
 

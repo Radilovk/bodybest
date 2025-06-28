@@ -92,7 +92,7 @@ test('uses MailChannels when MAILER_ENDPOINT_URL missing', async () => {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b' })
   };
-  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILCHANNELS_KEY: 'k', MAILCHANNELS_DOMAIN: 'mybody.best', FROM_EMAIL: 'info@mybody.best' };
+  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILCHANNELS_DOMAIN: 'mybody.best', FROM_EMAIL: 'info@mybody.best' };
   const res = await handleSendTestEmailRequest(request, env);
   expect(res.success).toBe(true);
   expect(fetch).toHaveBeenCalledWith('https://api.mailchannels.net/tx/v1/send', expect.any(Object));
@@ -113,7 +113,6 @@ test('records usage in USER_METADATA_KV', async () => {
     WORKER_ADMIN_TOKEN: 'secret',
     FROM_EMAIL: 'info@mybody.best',
     USER_METADATA_KV: { put: jest.fn() },
-    MAILCHANNELS_KEY: 'k',
     MAILCHANNELS_DOMAIN: 'mybody.best'
   };
   await handleSendTestEmailRequest(request, env);

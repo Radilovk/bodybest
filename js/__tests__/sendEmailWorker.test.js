@@ -28,7 +28,7 @@ test('rejects invalid token', async () => {
     headers: { get: h => (h === 'Authorization' ? 'Bearer bad' : null) },
     json: async () => ({ to: 'a@b.bg', subject: 'S', text: 'B' })
   };
-  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILCHANNELS_KEY: 'k' };
+  const env = { WORKER_ADMIN_TOKEN: 'secret' };
   const res = await handleSendEmailRequest(req, env);
   expect(res.status).toBe(403);
 });
@@ -44,7 +44,7 @@ test('calls MailChannels endpoint on valid input', async () => {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
     json: async () => ({ to: 'a@b.bg', subject: 'S', text: 'B' })
   };
-  const env = { MAILCHANNELS_KEY: 'k', MAILCHANNELS_DOMAIN: 'mybody.best', WORKER_ADMIN_TOKEN: 'secret', FROM_EMAIL: 'info@mybody.best' };
+  const env = { MAILCHANNELS_DOMAIN: 'mybody.best', WORKER_ADMIN_TOKEN: 'secret', FROM_EMAIL: 'info@mybody.best' };
   const res = await handleSendEmailRequest(req, env);
   expect(fetch).toHaveBeenCalledWith(
     'https://api.mailchannels.net/tx/v1/send',
@@ -55,7 +55,8 @@ test('calls MailChannels endpoint on valid input', async () => {
         subject: 'S',
         content: [{ type: 'text/plain', value: 'B' }],
         mail_from: { email: 'no-reply@mybody.best' }
-      })
+      }),
+      headers: { 'Content-Type': 'application/json' }
     })
   );
   expect(res.status).toBe(200);
@@ -79,19 +80,28 @@ test('sendEmail forwards data to MailChannels endpoint', async () => {
         subject: 'Hi',
         content: [{ type: 'text/plain', value: 'Body' }],
         mail_from: { email: 'no-reply@mybody.best' }
-      })
+      }),
+      headers: expect.objectContaining({ Authorization: 'Bearer k' })
     })
   );
   fetch.mockRestore();
 });
 
-test('sendEmail returns error when MAILCHANNELS_KEY missing', async () => {
-  const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-  const result = await sendEmail('x@y.z', 'S', 'B', {});
-  expect(result).toBeInstanceOf(Error);
-  expect(result.message).toBe('Missing MAILCHANNELS_KEY');
-  expect(errSpy).toHaveBeenCalledWith('Missing MAILCHANNELS_KEY environment variable');
-  errSpy.mockRestore();
+test('sendEmail works without MAILCHANNELS_KEY', async () => {
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ success: true }),
+    clone: () => ({ text: async () => '{}' }),
+    headers: { get: () => 'application/json' }
+  });
+  await sendEmail('x@y.z', 'S', 'B', {});
+  expect(fetch).toHaveBeenCalledWith(
+    'https://api.mailchannels.net/tx/v1/send',
+    expect.objectContaining({
+      headers: { 'Content-Type': 'application/json' }
+    })
+  );
+  fetch.mockRestore();
 });
 
 test('sendEmail throws when backend reports failure', async () => {
