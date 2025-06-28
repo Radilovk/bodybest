@@ -704,6 +704,7 @@ MAILER_ENDPOINT_URL = "https://send-email-worker.example.workers.dev"
 For a simple setup deploy `sendEmailWorker.js`, which exposes `/api/sendEmail`
 and sends messages via a PHP backend. Point `MAILER_ENDPOINT_URL` to the URL of
 this worker so the main service can dispatch emails without relying on Node.js. Requests to this endpoint also require the admin token and are rate limited.
+`sendEmailWorker.js` logs an error if the PHP endpoint returns invalid JSON.
 
 The included `mailer.js` relies on `nodemailer` and therefore requires a Node.js
 environment. Run it as a separate service or replace it with a script that calls
@@ -711,11 +712,16 @@ an external provider.
 
 ### Email Environment Variables
 
+To send a test email you must set `WORKER_ADMIN_TOKEN` and either
+`MAILER_ENDPOINT_URL` or `MAIL_PHP_URL`. The optional `FROM_EMAIL` variable
+overrides the default sender address used by the PHP script.
+
 | Variable | Purpose |
 |----------|---------|
 | `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If omitted, the worker posts to `MAIL_PHP_URL` via `sendEmailWorker.js`. |
 | `MAIL_PHP_URL` | Endpoint used by `sendEmailWorker.js` to deliver messages. Defaults to `https://mybody.best/mail_smtp.php`. Set this to the public URL of the script from [docs/mail_smtp.php](docs/mail_smtp.php). |
 | `EMAIL_PASSWORD` | Password used by `mailer.js` when authenticating with the SMTP server. |
+| `FROM_EMAIL` | Sender address used by `mailer.js` and the PHP backend. |
 | `WELCOME_EMAIL_SUBJECT` | Optional custom subject for welcome emails sent by `mailer.js`. |
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |
 | `WORKER_URL` | Base URL of the main worker used by `mailer.js` to fetch email templates when no subject or body is provided. |
