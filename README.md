@@ -706,6 +706,11 @@ and sends messages via a PHP backend. Point `MAILER_ENDPOINT_URL` to the URL of
 this worker so the main service can dispatch emails without relying on Node.js. Requests to this endpoint also require the admin token and are rate limited.
 `sendEmailWorker.js` logs an error if the PHP endpoint returns invalid JSON.
 
+An "invalid JSON" error usually means the PHP script responded with an HTML page
+or some other error output instead of the expected JSON. Verify the response
+status and check the server logs to diagnose the issue. Ensure that
+`MAILER_ENDPOINT_URL`, `MAIL_PHP_URL` and related variables are set correctly.
+
 The included `mailer.js` relies on `nodemailer` and therefore requires a Node.js
 environment. Run it as a separate service or replace it with a script that calls
 an external provider.
