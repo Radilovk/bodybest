@@ -231,6 +231,8 @@ export default {
                 responseBody = await handleAiHelperRequest(request, env);
             } else if (method === 'POST' && path === '/api/analyzeImage') {
                 responseBody = await handleAnalyzeImageRequest(request, env);
+            } else if (path === '/api/analyzeImage') {
+                responseBody = { success: false, message: 'Method Not Allowed', statusHint: 405 };
             } else if (method === 'GET' && path === '/api/listClients') {
                 responseBody = await handleListClientsRequest(request, env);
             } else if (method === 'POST' && path === '/api/addAdminQuery') {
