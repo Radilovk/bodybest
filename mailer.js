@@ -1,4 +1,3 @@
-import nodemailer from 'nodemailer'
 import dotenv from 'dotenv'
 import fs from 'fs/promises'
 
@@ -11,15 +10,8 @@ const DEFAULT_BODY = `<h2>Здравей, {{name}} 👋</h2>
 <p>Бъди здрав и вдъхновен!</p>
 <p>– Екипът на MyBody</p>`
 
-const transporter = nodemailer.createTransport({
-    host: 'mybody.best',
-    port: 465,
-    secure: true,
-    auth: {
-        user: 'info@mybody.best',
-        pass: process.env.EMAIL_PASSWORD
-    }
-})
+
+const MAIL_PHP_URL = process.env.MAIL_PHP_URL || 'https://mybody.best/mail_smtp.php'
 
 /**
  * Send a welcome email to a newly registered user.
@@ -66,19 +58,21 @@ async function getEmailTemplate() {
 }
 
 /**
- * Send an email via the configured transporter.
+ * Send an email through the PHP backend.
  * @param {string} toEmail recipient address
  * @param {string} subject email subject line
  * @param {string} html email HTML content
  * @returns {Promise<void>} resolves when the message is sent
  */
 export async function sendEmail(toEmail, subject, html) {
-    await transporter.sendMail({
-        from: 'info@mybody.best',
-        to: toEmail,
-        subject,
-        html
+    const resp = await fetch(MAIL_PHP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: toEmail, subject, message: html })
     })
+    if (!resp.ok) {
+        throw new Error(`Email API responded with ${resp.status}`)
+    }
 }
 
 export async function sendWelcomeEmail(toEmail, userName) {

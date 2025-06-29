@@ -708,9 +708,8 @@ and sends messages through **MailChannels**. Point `MAILER_ENDPOINT_URL` to the 
 this worker so the main service can dispatch emails without relying on Node.js.
 Requests to this endpoint also require the admin token and are rate limited.
 
-The included `mailer.js` relies on `nodemailer` and therefore requires a Node.js
-environment. Run it as a separate service or replace it with a script that calls
-an external provider.
+`mailer.js` sends requests to `MAIL_PHP_URL` via `fetch`. Run it as a Node script
+when using the PHP backend or adjust it to suit your setup.
 
 ### Email Environment Variables
 
@@ -725,7 +724,7 @@ address.
 | `MAILCHANNELS_KEY` | Optional API key for MailChannels. Provide it only if you use a dedicated account. |
 | `MAILCHANNELS_DOMAIN` | Optional domain used for the `mail_from` address. |
 | `MAIL_PHP_URL` | Legacy PHP endpoint if you prefer your own backend. Defaults to `https://mybody.best/mail_smtp.php`. |
-| `EMAIL_PASSWORD` | Password used by `mailer.js` when authenticating with the SMTP server. |
+| `EMAIL_PASSWORD` | Password used by the PHP backend when authenticating with the SMTP server. |
 | `FROM_EMAIL` | Sender address used by `mailer.js` and the PHP backend. |
 | `WELCOME_EMAIL_SUBJECT` | Optional custom subject for welcome emails sent by `mailer.js`. |
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |
