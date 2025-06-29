@@ -1220,7 +1220,7 @@ async function sendTestEmail() {
         const resp = await fetch(apiEndpoints.sendTestEmail, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ recipient, subject, body })
+            body: JSON.stringify({ recipient, subject, message: body })
         });
 
         const ct = resp.headers.get('Content-Type') || '';
