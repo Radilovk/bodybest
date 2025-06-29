@@ -350,6 +350,19 @@ Add the variable in `wrangler.toml`:
 
 ```toml
 [vars]
+MAIL_PHP_URL = "https://mybody.best/mail_smtp.php"
+# MAILER_ENDPOINT_URL = "https://send-email-worker.example.workers.dev"
+
+To post an email from JavaScript you can use:
+
+```javascript
+await fetch(process.env.MAIL_PHP_URL, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ to: "user@example.com", subject: "Test", body: "<p>Hello</p>" })
+});
+```
+
 ALLOWED_ORIGINS = "https://admin.example.com,https://myapp.example.com"
 ```
 
@@ -638,7 +651,6 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
     --data '{"to":"someone@example.com","subject":"Тест","text":"Здравей"}'
   ```
   Ако `MAILER_ENDPOINT_URL` не е зададен, работникът използва `sendEmailWorker.js`
-  и изпраща данните чрез MailChannels.
 - **Дебъг логове** – при изпращане на заглавие `X-Debug: 1` към който и да е API
 ендпойнт, worker-ът записва в конзолата кратка информация за заявката.
 
@@ -673,8 +685,7 @@ The worker can send emails in two ways:
 
 1. If `MAILER_ENDPOINT_URL` is set, requests are forwarded to that endpoint
    (for example a standalone worker) which handles the actual delivery.
-2. Otherwise the worker calls `sendEmailWorker.js`, which now uses
-   MailChannels to deliver the message.
+2. Otherwise the worker uses `sendEmailWorker.js` to post the JSON payload to `MAIL_PHP_URL`.
 
 In both cases the `/api/sendTestEmail` endpoint behaves the same and returns a
 JSON response indicating success or failure.
@@ -691,56 +702,46 @@ To enable real emails:
 Example `.env` snippet:
 
 ```env
-MAILER_ENDPOINT_URL=https://send-email-worker.example.workers.dev
-MAILCHANNELS_DOMAIN=mybody.best
+MAIL_PHP_URL=https://mybody.best/mail_smtp.php
+#MAILER_ENDPOINT_URL=https://send-email-worker.example.workers.dev
 ```
 
 Example in `wrangler.toml`:
 
 ```toml
 [vars]
-MAILER_ENDPOINT_URL = "https://send-email-worker.example.workers.dev"
-MAILCHANNELS_DOMAIN = "mybody.best"
+MAIL_PHP_URL = "https://mybody.best/mail_smtp.php"
+# MAILER_ENDPOINT_URL = "https://send-email-worker.example.workers.dev"
+
+To post an email from JavaScript you can use:
+
+```javascript
+await fetch(process.env.MAIL_PHP_URL, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ to: "user@example.com", subject: "Test", body: "<p>Hello</p>" })
+});
 ```
 
-For a simple setup deploy `sendEmailWorker.js`, which exposes `/api/sendEmail`
-and sends messages through **MailChannels**. Point `MAILER_ENDPOINT_URL` to the URL of
-this worker so the main service can dispatch emails without relying on Node.js.
-Requests to this endpoint also require the admin token and are rate limited.
 
-The included `mailer.js` relies on `nodemailer`, which is not installed by
-default. Add it manually if you wish to use this Node.js script. You can run the
-mailer as a separate service or replace it with a script that calls an external
-provider.
+For a simple setup deploy `sendEmailWorker.js`, which exposes `/api/sendEmail` and forwards data to the PHP endpoint. Requests to this endpoint require the admin token and are rate limited.
+The included `mailer.js` sends emails via SMTP using nodemailer. If nodemailer is not installed, it posts the JSON payload to `MAIL_PHP_URL` instead.
+You can run the mailer as a separate service or replace it with a script that posts to an external provider.
 
 ### Email Environment Variables
 
-To send a test email you must set `WORKER_ADMIN_TOKEN` and either
-`MAILER_ENDPOINT_URL` or `MAILCHANNELS_KEY` when using a dedicated account
-(use `MAIL_PHP_URL` only for legacy PHP setups). The optional `FROM_EMAIL` variable overrides the default sender
-address.
+To send a test email you must set `WORKER_ADMIN_TOKEN` and either `MAILER_ENDPOINT_URL` or `MAIL_PHP_URL`. The optional `FROM_EMAIL` variable overrides the default sender address.
 
 | Variable | Purpose |
 |----------|---------|
-| `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If omitted, the worker posts to `sendEmailWorker.js`. |
-| `MAILCHANNELS_KEY` | Optional API key for MailChannels. Provide it only if you use a dedicated account. |
-| `MAILCHANNELS_DOMAIN` | Optional domain used for the `mail_from` address. |
+| `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If omitted, the worker posts directly to `MAIL_PHP_URL` via `sendEmailWorker.js`. |
 | `MAIL_PHP_URL` | Legacy PHP endpoint if you prefer your own backend. Defaults to `https://mybody.best/mail_smtp.php`. |
 | `EMAIL_PASSWORD` | Password used by `mailer.js` when authenticating with the SMTP server. |
 | `FROM_EMAIL` | Sender address used by `mailer.js` and the PHP backend. |
 | `WELCOME_EMAIL_SUBJECT` | Optional custom subject for welcome emails sent by `mailer.js`. |
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |
 | `WORKER_URL` | Base URL of the main worker used by `mailer.js` to fetch email templates when no subject or body is provided. |
-> **Бележка**: MailChannels връща HTTP 401 при невалиден ключ или когато домейнът в `MAILCHANNELS_DOMAIN` не е разрешен.
 
-Проверете стойностите така:
-
-```bash
-# показва тайните записани за работника
-wrangler secret list
-
-# или прегледайте локалния .env файл
-grep MAILCHANNELS .env
 ```
 Примерен PHP скрипт за изпращане на писма е наличен в [docs/mail_smtp.php](docs/mail_smtp.php). Настройте `MAIL_PHP_URL` да сочи към същия или сходен адрес.
 
