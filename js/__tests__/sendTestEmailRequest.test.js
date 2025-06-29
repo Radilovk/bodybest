@@ -73,7 +73,7 @@ test('supports alternate field names', async () => {
   });
   const request = {
     headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
-    json: async () => ({ to: 'alt@example.com', subject: 'Hi', text: 'b' })
+    json: async () => ({ to: 'alt@example.com', subject: 'Hi', message: 'b' })
   };
   const env = { WORKER_ADMIN_TOKEN: 'secret', MAILER_ENDPOINT_URL: 'https://mail.example.com' };
   const res = await handleSendTestEmailRequest(request, env);

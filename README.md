@@ -629,13 +629,13 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
     --data '{"recipient":"user@example.com","subject":"Test","body":"Hello"}'
   ```
   Полетата `recipient`, `subject` и `body` са задължителни. Като алтернатива
-  могат да се използват имената `to` и `text`.
+  могат да се използват имената `to`, `text` или `message`.
 
   ```bash
   curl -X POST https://<your-domain>/api/sendTestEmail \
     -H "Authorization: Bearer <WORKER_ADMIN_TOKEN>" \
     -H "Content-Type: application/json" \
-    --data '{"to":"someone@example.com","subject":"Тест","text":"Здравей"}'
+    --data '{"to":"someone@example.com","subject":"Тест","message":"Здравей"}'
   ```
   ```javascript
   await fetch('/api/sendTestEmail', {
@@ -647,7 +647,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
     body: JSON.stringify({
       to: 'someone@example.com',
       subject: 'Тест',
-      text: 'Здравей'
+      message: 'Здравей'
     })
   });
   ```
