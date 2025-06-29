@@ -244,6 +244,14 @@ wrangler deploy worker-backend.js --name bodybest-backend
 
 Bind the `SETTINGS` KV namespace and provide `CF_AI_TOKEN`, `CF_ACCOUNT_ID` and model variables as secrets.
 
+Заявките към този работник трябва да са **само POST**. При опит с друг метод
+ще получите **HTTP 405 Method Not Allowed**:
+
+```bash
+curl -X GET https://<your-backend-url>
+# => HTTP/1.1 405 Method Not Allowed
+```
+
 
 ### Работа с KV
 
