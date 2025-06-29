@@ -111,6 +111,9 @@ const toggleWeightChartBtn = document.getElementById('toggleWeightChart');
 let statusChart = null;
 let weightChart = null;
 let currentUserId = null;
+function setCurrentUserId(val) {
+    currentUserId = val;
+}
 let currentPlanData = null;
 let currentDashboardData = null;
 let allClients = [];
@@ -819,10 +822,10 @@ async function showClient(userId) {
 }
 
 
-sendQueryBtn.addEventListener('click', async () => {
-    if (!currentUserId) return;
+async function sendAdminQuery() {
+    if (!currentUserId) return false;
     const msg = newQueryText.value.trim();
-    if (!msg) return;
+    if (!msg) return false;
     try {
         const resp = await fetch(apiEndpoints.addAdminQuery, {
             method: 'POST',
@@ -833,13 +836,18 @@ sendQueryBtn.addEventListener('click', async () => {
         if (resp.ok && data.success) {
             newQueryText.value = '';
             await loadQueries();
-        } else {
-            alert(data.message || 'Грешка при изпращане.');
+            return true;
         }
+        alert(data.message || 'Грешка при изпращане.');
     } catch (err) {
         console.error('Error sending query:', err);
     }
-});
+    return false;
+}
+
+if (sendQueryBtn) {
+    sendQueryBtn.addEventListener('click', sendAdminQuery);
+}
 
 if (regenBtn) {
     regenBtn.addEventListener('click', async () => {
@@ -1472,12 +1480,15 @@ if (testImageForm) {
 export {
     allClients,
     loadClients,
+    loadQueries,
     renderClients,
     showNotificationDot,
     checkForNotifications,
     showClient,
+    setCurrentUserId,
     unreadClients,
     sendTestEmail,
     confirmAndSendTestEmail,
-    sendTestImage
+    sendTestImage,
+    sendAdminQuery
 };
