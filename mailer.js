@@ -64,7 +64,7 @@ async function getEmailTemplate() {
  * @returns {Promise<void>} resolves when the message is sent
  */
 export async function sendEmail(toEmail, subject, html) {
-    const url = process.env.MAIL_PHP_URL || 'https://mybody.best/mail_smtp.php'
+    const url = process.env.MAIL_PHP_URL || 'https://mybody.best/mailer/mail.php'
     const resp = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
