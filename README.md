@@ -708,9 +708,10 @@ and sends messages through **MailChannels**. Point `MAILER_ENDPOINT_URL` to the 
 this worker so the main service can dispatch emails without relying on Node.js.
 Requests to this endpoint also require the admin token and are rate limited.
 
-The included `mailer.js` relies on `nodemailer` and therefore requires a Node.js
-environment. Run it as a separate service or replace it with a script that calls
-an external provider.
+The included `mailer.js` relies on `nodemailer`, which is not installed by
+default. Add it manually if you wish to use this Node.js script. You can run the
+mailer as a separate service or replace it with a script that calls an external
+provider.
 
 ### Email Environment Variables
 
