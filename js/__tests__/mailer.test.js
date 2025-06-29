@@ -1,45 +1,59 @@
 import { jest } from '@jest/globals'
 
-let sendWelcomeEmail, createTransportMock, sendMailMock
+let sendWelcomeEmail
 
 beforeEach(async () => {
     jest.resetModules()
-    process.env.EMAIL_PASSWORD = 'pass'
+    process.env.MAIL_PHP_URL = 'https://mail'
     process.env.WORKER_URL = 'https://api'
-    sendMailMock = jest.fn().mockResolvedValue(undefined)
-    createTransportMock = jest.fn(() => ({ sendMail: sendMailMock }))
-    global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ success: true, config: { welcome_email_subject: 'Тест', welcome_email_body: '<p>Hello {{name}}</p>' } })
-    })
-    jest.unstable_mockModule('nodemailer', () => ({ default: { createTransport: createTransportMock } }))
+    global.fetch = jest.fn()
+        .mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({
+                success: true,
+                config: {
+                    welcome_email_subject: 'Тест',
+                    welcome_email_body: '<p>Hello {{name}}</p>'
+                }
+            })
+        })
+        .mockResolvedValueOnce({ ok: true, text: async () => '' })
     ;({ sendWelcomeEmail } = await import('../../mailer.js'))
 })
 
 afterEach(() => {
     global.fetch.mockRestore()
     delete process.env.WORKER_URL
+    delete process.env.MAIL_PHP_URL
 })
 
 test('sends welcome email with correct options', async () => {
     await sendWelcomeEmail('client@example.com', 'Иван')
-    expect(createTransportMock).toHaveBeenCalledWith({
-        host: 'mybody.best',
-        port: 465,
-        secure: true,
-        auth: { user: 'info@mybody.best', pass: 'pass' }
-    })
-    expect(sendMailMock).toHaveBeenCalledWith(expect.objectContaining({
-        from: 'info@mybody.best',
-        to: 'client@example.com',
-        subject: 'Тест'
+    expect(global.fetch).toHaveBeenNthCalledWith(2, 'https://mail', expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            to: 'client@example.com',
+            subject: 'Тест',
+            message: '<p>Hello Иван</p>'
+        })
     }))
-    expect(sendMailMock.mock.calls[0][0].html).toContain('Hello Иван')
 })
 
 test('logs error on failure', async () => {
-    const error = new Error('fail')
-    sendMailMock.mockRejectedValueOnce(error)
+    global.fetch.mockReset()
+    global.fetch
+        .mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({
+                success: true,
+                config: {
+                    welcome_email_subject: 'Тест',
+                    welcome_email_body: '<p>Hello {{name}}</p>'
+                }
+            })
+        })
+        .mockRejectedValueOnce(new Error('fail'))
     const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
     await sendWelcomeEmail('client@example.com', 'Иван')
     expect(spy).toHaveBeenCalled()
