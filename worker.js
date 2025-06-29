@@ -233,6 +233,8 @@ export default {
                 responseBody = await handleAnalyzeImageRequest(request, env);
             } else if (method === 'POST' && path === '/api/runImageModel') {
                 responseBody = await handleRunImageModelRequest(request, env);
+            } else if (path === '/api/runImageModel') {
+                responseBody = { success: false, message: 'Method Not Allowed', statusHint: 405 };
             } else if (method === 'GET' && path === '/api/listClients') {
                 responseBody = await handleListClientsRequest(request, env);
             } else if (method === 'POST' && path === '/api/addAdminQuery') {
