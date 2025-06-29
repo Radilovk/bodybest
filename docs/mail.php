@@ -19,7 +19,7 @@ error_log('Input: '.json_encode($data));
 // Валидация
 $to = $data['to'] ?? '';
 $subject = $data['subject'] ?? '(Без тема)';
-$body = $data['body'] ?? '';
+$body = $data['body'] ?? ($data['message'] ?? '');
 
 if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
