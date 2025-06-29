@@ -231,6 +231,13 @@ export default {
                 responseBody = await handleAiHelperRequest(request, env);
             } else if (method === 'POST' && path === '/api/analyzeImage') {
                 responseBody = await handleAnalyzeImageRequest(request, env);
+            } else if (path === '/api/runImageModel') {
+                if (method !== 'POST') {
+                    responseBody = { success: false, message: 'Method Not Allowed' };
+                    responseStatus = 405;
+                } else {
+                    responseBody = await handleRunImageModelRequest(request, env);
+                }
             } else if (method === 'GET' && path === '/api/listClients') {
                 responseBody = await handleListClientsRequest(request, env);
             } else if (method === 'POST' && path === '/api/addAdminQuery') {
@@ -1573,6 +1580,28 @@ async function handleAnalyzeImageRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleAnalyzeImageRequest -------------
+// ------------- START FUNCTION: handleRunImageModelRequest -------------
+async function handleRunImageModelRequest(request, env) {
+    let data;
+    try {
+        data = await request.json();
+    } catch {
+        return { success: false, message: 'Невалиден JSON.', statusHint: 400 };
+    }
+    const { model, prompt, image } = data || {};
+    if (typeof model !== 'string' || !model || typeof prompt !== 'string' || !prompt || !Array.isArray(image)) {
+        return { success: false, message: 'Липсват данни за модел, описание или изображение.', statusHint: 400 };
+    }
+    try {
+        const bytes = new Uint8Array(image);
+        const result = await env.AI.run(model, { prompt, image: bytes });
+        return { success: true, result };
+    } catch (error) {
+        console.error('Error in handleRunImageModelRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при анализа на изображението.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleRunImageModelRequest -------------
 
 // ------------- START FUNCTION: handleListClientsRequest -------------
 async function handleListClientsRequest(request, env) {
@@ -3865,4 +3894,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
