@@ -1,15 +1,12 @@
 /**
- * Send an email via MailChannels.
+ * Send an email via a PHP endpoint.
  * Exported so other modules can reuse the same logic.
  * @param {string} to recipient address
  * @param {string} subject email subject line
- * @param {string} text plain text body
+ * @param {string} message plain text body
  */
-import { parseJsonSafe } from './utils/parseJsonSafe.js';
 const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
-const FROM_EMAIL_VAR_NAME = 'FROM_EMAIL';
-const MAILCHANNELS_KEY_VAR_NAME = 'MAILCHANNELS_KEY';
-const MAILCHANNELS_DOMAIN_VAR_NAME = 'MAILCHANNELS_DOMAIN';
+const MAIL_PHP_URL_VAR_NAME = 'MAIL_PHP_URL';
 
 async function recordUsage(env, identifier = '') {
   try {
@@ -55,49 +52,20 @@ async function checkRateLimit(env, identifier, limit = 3, windowMs = 60000) {
   return false;
 }
 
-async function sendViaMailChannels(to, subject, text, env = {}) {
-  const from = env[FROM_EMAIL_VAR_NAME] || `no-reply@${env[MAILCHANNELS_DOMAIN_VAR_NAME] || 'example.com'}`;
-  const payload = {
-    personalizations: [{ to: [{ email: to }] }],
-    from: { email: from },
-    subject,
-    content: [{ type: 'text/plain', value: text }]
-  };
-  if (env[MAILCHANNELS_DOMAIN_VAR_NAME]) {
-    payload.mail_from = { email: `no-reply@${env[MAILCHANNELS_DOMAIN_VAR_NAME]}` };
-  }
-  const headers = { 'Content-Type': 'application/json' };
-  if (env[MAILCHANNELS_KEY_VAR_NAME]) {
-    headers.Authorization = `Bearer ${env[MAILCHANNELS_KEY_VAR_NAME]}`;
-  }
-  const resp = await fetch('https://api.mailchannels.net/tx/v1/send', {
+async function sendViaPhp(to, subject, message, env = {}) {
+  const url = env[MAIL_PHP_URL_VAR_NAME] || 'https://mybody.best/mailer/mail.php';
+  const resp = await fetch(url, {
     method: 'POST',
-    headers,
-    body: JSON.stringify(payload)
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to, subject, message })
   });
-
-  const contentType = resp.headers.get('content-type') || '';
-  let result = null;
-  if (contentType.includes('application/json')) {
-    try {
-      result = await parseJsonSafe(resp, 'MailChannels response');
-    } catch {
-      throw new Error('Invalid JSON response from MailChannels');
-    }
-  } else if (!resp.ok) {
-    const bodyText = await resp.text().catch(() => '[unavailable]');
-    console.error('Unexpected MailChannels response:', bodyText);
-    throw new Error(`MailChannels error ${resp.status}`);
-  }
-
-  if (!resp.ok || result?.errors) {
-    console.error('sendEmail failed response:', result);
-    throw new Error(result?.errors?.[0]?.message || result?.message || 'Failed to send');
+  if (!resp.ok) {
+    throw new Error(`PHP mailer error ${resp.status}`);
   }
 }
 
-export async function sendEmail(to, subject, text, env = {}) {
-  return await sendViaMailChannels(to, subject, text, env);
+export async function sendEmail(to, subject, message, env = {}) {
+  return await sendViaPhp(to, subject, message, env);
 }
 
 export async function handleSendEmailRequest(request, env = {}) {
@@ -122,15 +90,15 @@ export async function handleSendEmailRequest(request, env = {}) {
     } catch {
       return { status: 400, body: { success: false, message: 'Invalid JSON' } };
     }
-    const { to, subject, text } = data || {};
-    if (
+  const { to, subject, message } = data || {};
+  if (
       typeof to !== 'string' || !to ||
       typeof subject !== 'string' || !subject ||
-      typeof text !== 'string' || !text
+      typeof message !== 'string' || !message
     ) {
       return { status: 400, body: { success: false, message: 'Invalid input' } };
     }
-    await sendEmail(to, subject, text, env);
+    await sendEmail(to, subject, message, env);
     return { status: 200, body: { success: true } };
   } catch (err) {
     console.error('Error in handleSendEmailRequest:', err);
