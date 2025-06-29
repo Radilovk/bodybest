@@ -572,6 +572,15 @@ curl -X POST https://<your-domain>/api/analyzeImage \
 ```
 Добавете `Authorization` заглавка само при активен `WORKER_ADMIN_TOKEN`.
 
+Пример с новия ендпойнт за байтов масив:
+
+```bash
+curl -X POST https://<your-domain>/api/runImageModel \
+  -H "Content-Type: application/json" \
+  --data '{"model":"@cf/llava-hf/llava-1.5-7b-hf","prompt":"Какво има?","image":[1,2,3]}'
+```
+
+
 ### Промяна на началното съобщение в чата
 
 Текстът, който се показва при първо отваряне на чата, се намира в `js/config.js`
@@ -608,6 +617,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `POST /api/saveAiPreset` – съхранява нов пресет или обновява съществуващ.
 - `POST /api/testAiModel` – проверява връзката с конкретен AI модел.
 - `POST /api/analyzeImage` – анализира качено изображение и връща резултат. Изпращайте поле `image` с пълен `data:` URL. Ендпойнтът не изисква `WORKER_ADMIN_TOKEN`, освен ако изрично не сте го добавили като защита.
+- `POST /api/runImageModel` – изпраща байтовете на изображение към избран Cloudflare AI модел. Заявката приема `{ "model": "@cf/llava-hf/llava-1.5-7b-hf", "prompt": "Описание", "image": [..] }` и връща JSON от `env.AI.run`.
 - `POST /api/sendTestEmail` – изпраща тестов имейл. Изисква администраторски токен.
 - `POST /api/sendEmail` – изпраща имейл чрез PHP бекенда. Изисква HTTP заглавка `Authorization: Bearer <WORKER_ADMIN_TOKEN>` и приема JSON `{ "to": "user@example.com", "subject": "Тема", "text": "Съобщение" }`. Заявките са ограничени до няколко на минута.
 
