@@ -20,6 +20,13 @@ if (getRes.error) {
   console.error('Failed to run wrangler:', getRes.error);
   process.exit(1);
 }
+if (getRes.status !== 0) {
+  console.error(`wrangler exited with code ${getRes.status}`);
+  if (getRes.stderr) {
+    console.error(getRes.stderr.toString());
+  }
+  process.exit(getRes.status ?? 1);
+}
 const value = (getRes.stdout || '').trim();
 if (!value) {
   console.log(`Key ${key} not found or empty.`);
@@ -34,10 +41,20 @@ try {
   try {
     const repaired = jsonrepair(value);
     JSON.parse(repaired);
-    const putRes = runWrangler(['kv', 'key', 'put', key, repaired, '--binding', binding], { stdio: 'inherit' });
+    const putRes = runWrangler(
+      ['kv', 'key', 'put', key, repaired, '--binding', binding],
+      { stdio: ['inherit', 'inherit', 'pipe'] }
+    );
     if (putRes.error) {
       console.error('Failed to put repaired value:', putRes.error);
       process.exit(1);
+    }
+    if (putRes.status !== 0) {
+      console.error(`wrangler exited with code ${putRes.status}`);
+      if (putRes.stderr) {
+        console.error(putRes.stderr.toString());
+      }
+      process.exit(putRes.status ?? 1);
     }
     console.log('Value repaired and updated.');
   } catch (err) {
