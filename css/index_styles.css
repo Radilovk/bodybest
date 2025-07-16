@@ -1,19 +1,27 @@
         :root {
-            --primary: #3A506B; --secondary: #5BC0BE; --accent: #778DA9;
-            --bg: #F0F4F8; --bg-gradient: linear-gradient(135deg, #e0e8f0 0%, #f0f4f8 100%);
-            --card-bg: rgba(255, 255, 255, 0.8); --text: #333; --text-muted: #555;
-            --border-color: #d0d8e0; --glass-blur: 9px; --space: 1.5rem; --radius: 0.8rem;
-            --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.07); --shadow-heavy: 0 6px 24px rgba(0, 0, 0, 0.12);
-            --color-error: #e74c3c; --color-success: #2ecc71;
+            --primary-color: #3A506B; --secondary-color: #5BC0BE; --accent-color: #778DA9;
+            --bg-color: #F0F4F8; --bg-gradient: linear-gradient(135deg, #e0e8f0 0%, #f0f4f8 100%);
+            --card-bg: rgba(255, 255, 255, 0.8); --text-color-primary: #333; --text-color-secondary: #555;
+            --border-color: #d0d8e0; --glass-blur: 9px; --space-lg: 1.5rem; --radius-lg: 0.8rem;
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07); --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.12);
+            --color-danger: #e74c3c; --color-success: #2ecc71;
             --primary-rgb: 58, 80, 107; /* Добавено за :focus стила */
+        }
+        .dark-theme {
+            --primary-color: #5BC0BE; --secondary-color: #3A506B; --accent-color: #88a1c4;
+            --text-color-primary: #E0E0E0; --text-color-secondary: #bdc3c7;
+            --bg-color: #1A1A2E; --bg-gradient: linear-gradient(135deg, #16213E 0%, #1A1A2E 100%);
+            --card-bg: rgba(40, 40, 60, 0.75); --glass-blur: 12px; --border-color: #444;
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.20); --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.25);
+            --primary-rgb: 91, 192, 190;
         }
         *, *::before, *::after { box-sizing: border-box; }
         html { font-size: 100%; }
         body {
             margin: 0; font-family: 'Roboto', sans-serif; line-height: 1.6;
-            background: var(--bg) var(--bg-gradient); background-attachment: fixed;
-            color: var(--text); display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; padding: var(--space);
+            background: var(--bg-color) var(--bg-gradient); background-attachment: fixed;
+            color: var(--text-color-primary); display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; padding: var(--space-lg);
         }
         .landing-container {
             max-width: 450px;
@@ -21,70 +29,70 @@
         }
         .card {
             background: var(--card-bg); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
-            border-radius: var(--radius); box-shadow: var(--shadow-light);
-            padding: calc(var(--space) * 1.5); /* Леко намален padding */
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+            padding: calc(var(--space-lg) * 1.5); /* Леко намален padding */
             border: 1px solid rgba(var(--primary-rgb), 0.1);
             text-align: center;
         }
-        h1, h2 { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--primary); margin-top: 0; }
-        h1 { font-size: clamp(1.7rem, 5vw, 2.1rem); margin-bottom: calc(var(--space)*0.8); text-align: center; }
-        h2 { font-size: clamp(1.3rem, 4vw, 1.7rem); margin-bottom: var(--space); }
-        p { margin-bottom: var(--space); color: var(--text-muted); font-size: 0.95rem;}
-        .form-section { margin-bottom: var(--space); }
+        h1, h2 { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--primary-color); margin-top: 0; }
+        h1 { font-size: clamp(1.7rem, 5vw, 2.1rem); margin-bottom: calc(var(--space-lg)*0.8); text-align: center; }
+        h2 { font-size: clamp(1.3rem, 4vw, 1.7rem); margin-bottom: var(--space-lg); }
+        p { margin-bottom: var(--space-lg); color: var(--text-color-secondary); font-size: 0.95rem;}
+        .form-section { margin-bottom: var(--space-lg); }
         .form-section.hidden { display: none; }
-        .form-group { margin-bottom: calc(var(--space)*0.8); text-align: left; }
-        label { display: block; margin-bottom: 0.4rem; font-weight: 500; color: var(--text); font-size: 0.9rem; }
+        .form-group { margin-bottom: calc(var(--space-lg)*0.8); text-align: left; }
+        label { display: block; margin-bottom: 0.4rem; font-weight: 500; color: var(--text-color-primary); font-size: 0.9rem; }
         input[type="email"], input[type="password"] {
             width: 100%; padding: 0.7rem; border: 1px solid var(--border-color);
-            border-radius: 0.5rem; background-color: #fff; color: var(--text); font-size: 1rem;
+            border-radius: 0.5rem; background-color: #fff; color: var(--text-color-primary); font-size: 1rem;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         input:focus {
-             border-color: var(--primary); outline: none;
+             border-color: var(--primary-color); outline: none;
              box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
         }
         /* Стил за бутоните */
         .button {
-            display: inline-block; background-color: var(--primary); color: #fff; border: none;
+            display: inline-block; background-color: var(--primary-color); color: #fff; border: none;
             padding: 0.8rem 1.5rem; border-radius: 0.5rem; font-weight: 500; font-size: 1rem;
             cursor: pointer; text-decoration: none; text-align: center; width: 100%; /* Бутоните да са на цялата ширина */
             transition: background-color 0.2s, transform 0.15s ease-out, box-shadow 0.2s;
             margin-top: 0.5rem; /* Отстояние над бутона */
         }
-        .button:hover { background-color: var(--secondary); transform: translateY(-2px); box-shadow: var(--shadow-light); }
+        .button:hover { background-color: var(--secondary-color); transform: translateY(-2px); box-shadow: var(--shadow-md); }
         .button:active { transform: translateY(0px) scale(0.98); } /* По-малко движение при клик */
-        .button.button-secondary { background-color: var(--secondary); }
-        .button.button-secondary:hover { background-color: var(--primary); }
+        .button.button-secondary { background-color: var(--secondary-color); }
+        .button.button-secondary:hover { background-color: var(--primary-color); }
 
         /* Стил за линковете (превключване, забравена парола) */
         .toggle-link {
-            color: var(--primary); background: none; border: none; cursor: pointer;
+            color: var(--primary-color); background: none; border: none; cursor: pointer;
             text-decoration: underline; padding: 0; /* Намален padding */
-            font-size: 0.85rem; display: block; margin-top: calc(var(--space)*0.7); /* Леко намалено отстояние */
+            font-size: 0.85rem; display: block; margin-top: calc(var(--space-lg)*0.7); /* Леко намалено отстояние */
             text-align: center; /* Центриране по подразбиране */
             transition: color 0.2s;
         }
-        .toggle-link:hover { color: var(--accent); }
+        .toggle-link:hover { color: var(--accent-color); }
         /* Специфичен стил за "Забравена парола" */
         #forgot-password-link {
             text-align: right; /* Подравняване вдясно */
             margin-top: 5px; /* По-малко отстояние от бутона за вход */
-            margin-bottom: calc(var(--space)*0.5); /* Отстояние преди другия линк */
+            margin-bottom: calc(var(--space-lg)*0.5); /* Отстояние преди другия линк */
         }
 
         /* Съобщения */
         .message {
-            padding: 0.8rem; border-radius: 0.5rem; margin-top: var(--space);
+            padding: 0.8rem; border-radius: 0.5rem; margin-top: var(--space-lg);
             font-size: 0.9rem; display: none; border: 1px solid transparent;
             text-align: left; word-wrap: break-word;
         }
-        .message.error { color: var(--color-error); background-color: rgba(231, 76, 60, 0.1); border-color: var(--color-error); }
+        .message.error { color: var(--color-danger); background-color: rgba(231, 76, 60, 0.1); border-color: var(--color-danger); }
         .message.success { color: var(--color-success); background-color: rgba(46, 204, 113, 0.1); border-color: var(--color-success); }
 
         /* Секция за въпросник */
         .questionnaire-link {
-             margin-top: calc(var(--space) * 1.5); /* Намалено отстояние */
-             padding-top: var(--space);
+             margin-top: calc(var(--space-lg) * 1.5); /* Намалено отстояние */
+             padding-top: var(--space-lg);
              border-top: 1px dashed var(--border-color);
         }
          .questionnaire-link p { font-size: 0.9rem; } /* По-малък текст */
@@ -92,7 +100,7 @@
          /* Responsive */
         @media (max-width: 480px) {
             h1 { font-size: 1.6rem; } h2 { font-size: 1.2rem; }
-            .card { padding: var(--space); }
+            .card { padding: var(--space-lg); }
             .button { font-size: 0.9rem; padding: 0.7rem 1.2rem;}
             input[type="email"], input[type="password"] { padding: 0.7rem; }
         }
@@ -100,7 +108,7 @@
         /* Desktop enhancements */
         @media (min-width: 769px) {
             .landing-container { max-width: 600px; }
-            .card { padding: calc(var(--space) * 2); }
+            .card { padding: calc(var(--space-lg) * 2); }
             .button { width: auto; padding: 0.8rem 2rem; }
             .questionnaire-link { text-align: center; }
         }
