@@ -1,6 +1,6 @@
 {
   "entryPoints": ["worker.js", "js"],
-  "out": "docs",
+  "out": "docs/api",
   "excludePrivate": true,
   "tsconfig": "typedoc.tsconfig.json",
   "highlightLanguages": ["toml", "shell", "bash", "html", "typescript", "json"]

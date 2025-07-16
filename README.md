@@ -196,7 +196,7 @@ Create API documentation using Typedoc:
 ```bash
 npm run docs
 ```
-The output is placed in the `docs/` folder.
+The output is placed in `docs/api`. Open `docs/api/index.html` in your browser to view the API documentation.
 
 ### Template Loading
 
