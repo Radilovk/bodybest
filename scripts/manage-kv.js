@@ -11,9 +11,17 @@ const args = ['kv', 'key', action, key];
 if (action === 'put') args.push(value);
 args.push('--binding', binding);
 
-const result = spawnSync('wrangler', args, { stdio: 'inherit' });
+const result = spawnSync('wrangler', args, { encoding: 'utf8', stdio: ['inherit', 'inherit', 'pipe'] });
 
 if (result.error) {
   console.error('Failed to run wrangler:', result.error);
   process.exit(1);
+}
+
+if (result.status !== 0) {
+  console.error(`wrangler exited with code ${result.status}`);
+  if (result.stderr) {
+    console.error(result.stderr.toString());
+  }
+  process.exit(result.status ?? 1);
 }
