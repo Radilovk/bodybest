@@ -2,6 +2,7 @@
   "entryPoints": ["worker.js", "js"],
   "out": "docs/api",
   "excludePrivate": true,
+  "exclude": ["**/__tests__/**"],
   "tsconfig": "typedoc.tsconfig.json",
   "highlightLanguages": ["toml", "shell", "bash", "html", "typescript", "json"]
 }
