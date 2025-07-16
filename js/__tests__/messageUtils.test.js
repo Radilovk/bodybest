@@ -9,6 +9,7 @@ test('showMessage sets text and styles', () => {
   expect(el.textContent).toBe('ok');
   expect(el.className).toBe('message success animate-success');
   expect(el.style.display).toBe('block');
+  expect(el.scrollIntoView).toHaveBeenCalled();
 });
 
 test('hideMessage clears element', () => {
