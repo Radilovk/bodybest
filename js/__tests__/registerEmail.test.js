@@ -1,10 +1,10 @@
 import { jest } from '@jest/globals'
 
-let handleRegisterRequest, PHP_FILE_API_URL, PHP_FILE_API_TOKEN
+let handleRegisterRequest
 
 beforeEach(async () => {
   jest.resetModules()
-  ;({ handleRegisterRequest, PHP_FILE_API_URL, PHP_FILE_API_TOKEN } = await import('../../worker.js'))
+  ;({ handleRegisterRequest } = await import('../../worker.js'))
 })
 
 afterEach(() => {
@@ -14,12 +14,8 @@ afterEach(() => {
 })
 
 test('sends welcome email when mailer configured', async () => {
-  global.fetch = jest.fn()
-    .mockResolvedValueOnce({ ok: true, json: async () => ({ message: 'ok', file: 'f' }) })
-    .mockResolvedValueOnce({ ok: true })
+  global.fetch = jest.fn().mockResolvedValueOnce({ ok: true })
   const env = {
-    [PHP_FILE_API_URL]: 'https://php.example.com',
-    [PHP_FILE_API_TOKEN]: 'tok',
     MAILER_ENDPOINT_URL: 'https://mail.example.com',
     USER_METADATA_KV: {
       get: jest.fn().mockResolvedValue(null),
@@ -31,10 +27,10 @@ test('sends welcome email when mailer configured', async () => {
   }
   const res = await handleRegisterRequest(req, env)
   expect(res.success).toBe(true)
-  expect(global.fetch.mock.calls[1][0]).toBe('https://mail.example.com')
+  expect(global.fetch.mock.calls[0][0]).toBe('https://mail.example.com')
 })
 
-test('returns message when PHP API secrets missing', async () => {
+test('works without PHP API configuration', async () => {
   const env = {
     USER_METADATA_KV: {
       get: jest.fn().mockResolvedValue(null),
@@ -45,7 +41,5 @@ test('returns message when PHP API secrets missing', async () => {
     json: async () => ({ email: 'u@e.bg', password: '12345678', confirm_password: '12345678' })
   }
   const res = await handleRegisterRequest(req, env)
-  expect(res.success).toBe(false)
-  expect(res.message).toBe('PHP API не е конфигуриран.')
-  expect(res.statusHint).toBe(500)
+  expect(res.success).toBe(true)
 })

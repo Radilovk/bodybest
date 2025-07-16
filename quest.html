@@ -716,14 +716,10 @@
 
   /* ============================================================================
      РЕВИЗИРАНА ФУНКЦИЯ ЗА ИЗПРАЩАНЕ НА ДАННИ
-     Изпраща първо към Worker-а (критичната част) и само ако е успешно,
-     ще опитаме да изпратим TXT към PHP API (некритичната част).
-     Ще добавим повече console.log стъпки за дебъгване.
+     Изпраща данните към Worker-а и логва процеса за дебъгване.
      ============================================================================ */
 
-  const phpFileManagerUrl = "http://mybody.best/wp-content/uploads/file_manager_api.php";
   const workerSubmitUrl = `${workerBaseUrl}/api/submitQuestionnaire`;
-  const phpApiToken = window.FILE_API_TOKEN || "";
 
    // Преместваме ги извън функцията, за да са достъпни, ако е нужно
    // const order = [ /* ... вашият order - може да не е нужен, ако обхождаме всички отговори ... */ ];
@@ -783,64 +779,7 @@
         }
        // --- Край на изпращане към Worker ---
 
-      // --- Изпращане на TXT към PHP API (Некритична част) ---
-      console.log("Worker request successful. Proceeding with TXT backup.");
-      try {
-          let fileContent = "";
-          // Обхождаме ВСИЧКИ ключове в responses, за да включим всичко в TXT
-          for (const key in responses) {
-               if (responses.hasOwnProperty(key)) {
-                  const questionObj = flatPages.find(q => q.id === key);
-                 const questionText = (questionObj && questionObj.text) ? questionObj.text : key.replace(/_/g, ' ');
-                  const answerValue = responses[key];
-                  // Форматиране на отговора
-                   let answerText = '';
-                   if (answerValue === null || answerValue === undefined) {
-                       answerText = '(няма отговор)';
-                   } else if (Array.isArray(answerValue)) {
-                       answerText = answerValue.length > 0 ? answerValue.join(', ') : '(няма избор)';
-                   } else {
-                       answerText = String(answerValue);
-                   }
-
-                  fileContent += `${questionText}\nОтговор: ${answerText}\n\n`;
-               }
-          }
-
-          const clientName = (responses.name || "client").replace(/[^a-zA-Z0-9_\-]/g, "_");
-          const timestamp = now.toISOString().replace(/[:\-T.]/g, "").slice(0, 14);
-          const filename = `${clientName}_${timestamp}.txt`;
-
-          const txtFormData = new FormData();
-          txtFormData.append("filename", filename);
-          txtFormData.append("content", fileContent);
-          txtFormData.append("directory", "client_answers_test"); // Папка на хостинга
-          txtFormData.append("action", "create_file");
-
-          console.log("Attempting to send TXT to PHP API:", phpFileManagerUrl);
-          fetch(phpFileManagerUrl, { // Не чакаме (await) този fetch, за да не бавим
-              method: "POST",
-              body: txtFormData,
-              headers: {
-                  "Authorization": `Bearer ${phpApiToken}`
-              }
-          })
-          .then(async phpResponse => {
-              const phpData = await phpResponse.json().catch(() => ({error: 'Невалиден JSON от PHP'})); // Предпазваме от грешка при парсване
-              if (!phpResponse.ok) {
-                  console.warn("TXT backup failed:", phpData.error || `Статус ${phpResponse.status}`);
-              } else {
-                  console.log("TXT backup successful:", phpData);
-              }
-          })
-          .catch(txtError => {
-              console.warn("Error sending TXT backup (network or other):", txtError);
-          });
-
-       } catch (txtError) {
-           console.warn("Error preparing or sending TXT backup:", txtError);
-       }
-       // --- Край на изпращане на TXT ---
+      // При успех от Worker не се изпраща TXT копие към PHP API
 
       // Връщаме резултата от Worker-а (от първия try блок)
       delete responses.submissionDate; // Изтриваме датата преди да върнем резултата
