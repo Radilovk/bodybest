@@ -68,8 +68,6 @@ async function sendWelcomeEmail(to, name, env) {
 }
 
 // ------------- START BLOCK: GlobalConstantsAndBindings -------------
-const PHP_FILE_API_URL = 'PHP_FILE_API_URL';
-const PHP_FILE_API_TOKEN = 'PHP_FILE_API_TOKEN';
 const GEMINI_API_KEY_SECRET_NAME = 'GEMINI_API_KEY';
 const OPENAI_API_KEY_SECRET_NAME = 'OPENAI_API_KEY';
 const CF_AI_TOKEN_SECRET_NAME = 'CF_AI_TOKEN';
@@ -505,15 +503,8 @@ async function handleRegisterRequest(request, env, ctx) {
         if (existingUserId) { return { success: false, message: 'Имейлът вече е регистриран.', statusHint: 409 }; }
         const userId = crypto.randomUUID();
         const hashedPasswordWithSalt = await hashPassword(password);
-        const phpApiUrl = env[PHP_FILE_API_URL];
-        const phpApiToken = env[PHP_FILE_API_TOKEN];
-        if (!phpApiUrl || !phpApiToken) { console.error(`REGISTER_ERROR (${userId}): CRITICAL: PHP API URL or Token not configured!`); throw new Error("PHP API URL or Token not configured."); }
-        const credentialFileContent = JSON.stringify({ userId: userId, email: trimmedEmail, passwordHash: hashedPasswordWithSalt });
-        const formData = new FormData(); formData.append('action', 'create_file'); formData.append('directory', 'credentials'); formData.append('filename', `${userId}.json`); formData.append('content', credentialFileContent);
-        const fetchOptions = { method: 'POST', headers: { 'Authorization': `Bearer ${phpApiToken}` }, body: formData };
-        const phpApiResponse = await fetch(phpApiUrl, fetchOptions);
-        if (!phpApiResponse.ok) { const errorBodyText = await phpApiResponse.text(); let errorJson = {}; try { errorJson = JSON.parse(errorBodyText); } catch(e) {} const errorMessage = errorJson.error || errorBodyText || 'Unknown error'; console.error(`REGISTER_ERROR (${userId}): Error from PHP File Manager API (Register - Status ${phpApiResponse.status}):`, errorMessage); let userMessage = `Грешка при запис (PHP ${phpApiResponse.status}).`; if (phpApiResponse.status === 409) { userMessage = "Грешка: Файлът вече съществува."; } else if (phpApiResponse.status === 500) { userMessage = "Грешка на сървъра при запис."; } else if (phpApiResponse.status === 401) { userMessage = "Грешка: Неоторизиран достъп до PHP API.";} return { success: false, message: userMessage, statusHint: phpApiResponse.status === 401 ? 500 : phpApiResponse.status }; }
-        const phpApiResult = await phpApiResponse.json(); if (!phpApiResult.message || !phpApiResult.file) { console.warn(`REGISTER_INFO (${userId}): PHP API unexpected success response for POST:`, phpApiResult); } else { console.log(`REGISTER_SUCCESS (${userId}): PHP API: Credential file created successfully for ${userId}:`, phpApiResult); }
+        const credentialContent = JSON.stringify({ userId, email: trimmedEmail, passwordHash: hashedPasswordWithSalt });
+        await env.USER_METADATA_KV.put(`credential_${userId}`, credentialContent);
         await env.USER_METADATA_KV.put(`email_to_uuid_${trimmedEmail}`, userId);
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
         const emailTask = sendWelcomeEmail(trimmedEmail, userId, env);
@@ -521,9 +512,6 @@ async function handleRegisterRequest(request, env, ctx) {
         return { success: true, message: 'Регистрацията успешна!' };
      } catch (error) {
         console.error('Error in handleRegisterRequest:', error.message, error.stack);
-        if (error.message.includes('PHP API URL or Token not configured')) {
-            return { success: false, message: 'PHP API не е конфигуриран.', statusHint: 500 };
-        }
         let userMessage = 'Вътрешна грешка при регистрация.';
         if (error.message.includes('Failed to fetch')) userMessage = 'Грешка при свързване със сървъра.';
         else if (error instanceof SyntaxError) userMessage = 'Грешка в отговора от сървъра.';
@@ -534,7 +522,7 @@ async function handleRegisterRequest(request, env, ctx) {
 
 // ------------- START FUNCTION: handleLoginRequest -------------
 /**
- * Валидира вход на потребител чрез данните в PHP API.
+ * Валидира вход на потребител чрез записите в KV.
  * @param {Request} request
  * @param {Object} env
  * @returns {Promise<Object>} Резултат от проверката.
@@ -542,13 +530,14 @@ async function handleRegisterRequest(request, env, ctx) {
 async function handleLoginRequest(request, env) {
      try {
          const { email, password } = await request.json(); const trimmedEmail = email ? String(email).trim().toLowerCase() : null; if (!trimmedEmail || !password) { return { success: false, message: 'Имейл и парола са задължителни.', statusHint: 400 }; }
-         const userId = await env.USER_METADATA_KV.get(`email_to_uuid_${trimmedEmail}`); if (!userId) { return { success: false, message: 'Грешен имейл или парола.', statusHint: 401 }; }
-         const phpApiUrl = env[PHP_FILE_API_URL]; const phpApiToken = env[PHP_FILE_API_TOKEN]; if (!phpApiUrl || !phpApiToken) { console.error(`LOGIN_ERROR (${userId}): CRITICAL: PHP API URL or Token not configured!`); throw new Error("PHP API URL or Token not configured.");}
-         const filename = `${userId}.json`; const directory = 'credentials'; const filenameWithDir = `${directory}/${filename}`; const readFileUrl = `${phpApiUrl}?action=read_file&filename=${encodeURIComponent(filenameWithDir)}`;
-         const phpApiResponse = await fetch(readFileUrl, { method: 'GET', headers: { 'Authorization': `Bearer ${phpApiToken}` } });
-         if (!phpApiResponse.ok) { const status = phpApiResponse.status; const errorBodyText = await phpApiResponse.text(); let errorJson = {}; try { errorJson = JSON.parse(errorBodyText); } catch(e) {} const errorMessage = errorJson.error || errorBodyText || 'Unknown error'; console.error(`LOGIN_ERROR (${userId}): PHP API read error for ${filenameWithDir} (Status ${status}):`, errorMessage); if (status === 404) return { success: false, message: 'Грешен имейл или парола.', statusHint: 401 }; if (status === 401) return { success: false, message: 'Грешка при аутентикация със сървъра.', statusHint: 500 }; return { success: false, message: 'Грешка при достъп до данни.', statusHint: 500 }; }
-         const phpApiResult = await phpApiResponse.json(); if (!phpApiResult || typeof phpApiResult.content !== 'string') { console.error(`LOGIN_ERROR (${userId}): Invalid content received from PHP API for ${filenameWithDir}`); throw new Error('Invalid content from PHP API'); }
-         const credentials = safeParseJson(phpApiResult.content); if (!credentials) { console.error(`LOGIN_ERROR (${userId}): Failed to parse credentials for ${userId} from PHP API content.`); throw new Error('Failed to parse credentials'); } const storedSaltAndHash = credentials.passwordHash; if (!storedSaltAndHash || !storedSaltAndHash.includes(':')) { console.error(`LOGIN_ERROR (${userId}): Password hash missing or invalid format for ${userId}`); throw new Error('Password hash missing/invalid');}
+        const userId = await env.USER_METADATA_KV.get(`email_to_uuid_${trimmedEmail}`);
+        if (!userId) { return { success: false, message: 'Грешен имейл или парола.', statusHint: 401 }; }
+        const credStr = await env.USER_METADATA_KV.get(`credential_${userId}`);
+        if (!credStr) { return { success: false, message: 'Грешен имейл или парола.', statusHint: 401 }; }
+        const credentials = safeParseJson(credStr);
+        if (!credentials) { console.error(`LOGIN_ERROR (${userId}): Failed to parse credentials from KV.`); throw new Error('Failed to parse credentials'); }
+        const storedSaltAndHash = credentials.passwordHash;
+        if (!storedSaltAndHash || !storedSaltAndHash.includes(':')) { console.error(`LOGIN_ERROR (${userId}): Password hash missing or invalid format for ${userId}`); throw new Error('Password hash missing/invalid'); }
          const inputPasswordMatches = await verifyPassword(password, storedSaltAndHash);
          if (!inputPasswordMatches) return { success: false, message: 'Грешен имейл или парола.', statusHint: 401 };
          const planStatus = await env.USER_METADATA_KV.get(`plan_status_${userId}`) || 'pending';
@@ -576,8 +565,6 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         await env.USER_METADATA_KV.put(`${userId}_initial_answers`, JSON.stringify(questionnaireData));
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
-        ctx.waitUntil(sendTxtBackupToPhp(userId, questionnaireData, env));
-        console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Scheduled TXT backup for user.`);
         return { success: true, message: 'Данните са приети. Вашият индивидуален план ще бъде генериран скоро.' };
     } catch (error) {
         console.error(`Error in handleSubmitQuestionnaire:`, error.message, error.stack);
@@ -3771,83 +3758,6 @@ function populatePrompt(template, replacements) {
 };
 // ------------- END FUNCTION: populatePrompt -------------
 
-// ------------- START FUNCTION: sendTxtBackupToPhp -------------
-async function sendTxtBackupToPhp(userId, answers, env) {
-    console.log(`TXT_BACKUP (${userId}): Preparing to send TXT backup of initial answers.`);
-    try {
-        const phpApiUrl = env[PHP_FILE_API_URL];
-        const phpApiToken = env[PHP_FILE_API_TOKEN];
-        if (!phpApiUrl || !phpApiToken) {
-            console.warn(`TXT_BACKUP_WARN (${userId}): PHP API URL or Token not configured. Skipping TXT backup.`);
-            return;
-        }
-
-        const questionsJsonString = await env.RESOURCES_KV.get('question_definitions');
-        let questionTextMap = new Map();
-        if (questionsJsonString) {
-            try {
-                const defs = JSON.parse(questionsJsonString);
-                if (Array.isArray(defs)) {
-                    defs.forEach(q => { if (q.id && q.text) questionTextMap.set(q.id, q.text); });
-                }
-            } catch (e) {
-                console.warn(`TXT_BACKUP_WARN (${userId}): Failed to parse question_definitions for TXT backup: ${e.message}`);
-            }
-        }
-
-        let fileContent = `--- Backup of Initial Answers for User ${userId} ---\n`;
-        fileContent += `Submission Timestamp: ${answers.submissionDate || new Date().toISOString()}\n`;
-        fileContent += `User Email: ${answers.email || 'N/A'}\n`;
-        fileContent += `User Name: ${answers.name || 'N/A'}\n`;
-        fileContent += `----------------------------------------\n\n`;
-
-        for (const questionId in answers) {
-            if (answers.hasOwnProperty(questionId) && !['userId', 'email', 'name', 'submissionDate'].includes(questionId)) {
-                const questionText = questionTextMap.get(questionId) || questionId.replace(/_/g, ' '); // Fallback to ID if text not found
-                let answerValue = answers[questionId];
-                let answerText = '';
-
-                if (answerValue === null || answerValue === undefined || String(answerValue).trim() === '') {
-                    answerText = '(няма отговор)';
-                } else if (Array.isArray(answerValue)) {
-                    answerText = answerValue.length > 0 ? answerValue.join(', ') : '(няма избран отговор)';
-                } else {
-                    answerText = String(answerValue);
-                }
-                fileContent += `Question: ${questionText} (ID: ${questionId})\nAnswer: ${answerText}\n\n`;
-            }
-        }
-        fileContent += `--- End of Backup ---`;
-
-        const clientNameSanitized = (answers.name || `user_${userId.substring(0,8)}`).replace(/[^a-zA-Z0-9_\-]/g, "_");
-        const timestampForFile = (answers.submissionDate || new Date().toISOString()).replace(/[:\-T.]/g, "").slice(0, 14); // YYYYMMDDHHMMSS
-        const filename = `${clientNameSanitized}_initial_answers_${timestampForFile}.txt`;
-
-        const txtFormData = new FormData();
-        txtFormData.append("action", "create_file");
-        txtFormData.append("directory", "answers_backup"); // Specific directory for backups
-        txtFormData.append("filename", filename);
-        txtFormData.append("content", fileContent);
-
-        console.log(`TXT_BACKUP (${userId}): Sending backup file: ${filename} to PHP API.`);
-        const phpResponse = await fetch(phpApiUrl, {
-            method: "POST",
-            body: txtFormData,
-            headers: { "Authorization": `Bearer ${phpApiToken}` }
-        });
-
-        if (!phpResponse.ok) {
-            const errorText = await phpResponse.text();
-            console.error(`TXT_BACKUP_ERROR (${userId}): Failed to send TXT backup. PHP API Status: ${phpResponse.status}. Response: ${errorText.substring(0, 300)}`);
-        } else {
-            const result = await phpResponse.json().catch(() => ({ message:'Non-JSON success response from PHP API for TXT backup.' }));
-            console.log(`TXT_BACKUP_SUCCESS (${userId}): TXT backup sent successfully. PHP API Response:`, result.message || result);
-        }
-    } catch (txtBackupError) {
-        console.error(`TXT_BACKUP_FATAL_ERROR (${userId}): Error during TXT backup process:`, txtBackupError.message, txtBackupError.stack);
-    }
-}
-// ------------- END FUNCTION: sendTxtBackupToPhp -------------
 
 // ------------- START FUNCTION: createPraiseReplacements -------------
 function createPraiseReplacements(initialAnswers, logs, avgMetric, mealAdh) {
@@ -3941,4 +3851,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, PHP_FILE_API_URL, PHP_FILE_API_TOKEN };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
