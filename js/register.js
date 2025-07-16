@@ -32,7 +32,10 @@ export function setupRegistration(formSelector, messageElSelector) {
       showMessage(messageEl, msg, true);
       resetBtn();
     };
-    if (!email || !password || !confirmPassword) return showErr('Моля, попълнете всички полета.');
+    if (!email || !password || !confirmPassword)
+      return showErr('Моля, попълнете всички полета.');
+    if (!emailInput.validity.valid)
+      return showErr('Невалиден e-mail адрес.');
     if (password.length < 8) return showErr('Паролата трябва да е поне 8 знака.');
     if (password !== confirmPassword) return showErr('Паролите не съвпадат.');
     if (submitBtn) {
