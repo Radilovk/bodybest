@@ -197,6 +197,12 @@ Create API documentation using Typedoc:
 npm run docs
 ```
 The output is placed in `docs/api`. Open `docs/api/index.html` in your browser to view the API documentation.
+Тестовите файлове се пропускат чрез настройката
+
+```json
+"exclude": ["**/__tests__/**"]
+```
+така че документацията съдържа само продукционни модули.
 
 ### Template Loading
 
