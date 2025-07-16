@@ -51,10 +51,14 @@ async function loadData() {
     const dashData = await dashRes.json();
     if (profileRes.ok && profileData.success) {
       fillProfile(profileData, dashData.initialAnswers);
+    } else if (!profileRes.ok) {
+      alert(profileData.message || 'Грешка при зареждане на профила.');
     }
     if (dashRes.ok && dashData.success) {
       fillDashboard(dashData);
       fillAdminNotes(dashData.currentStatus);
+    } else if (!dashRes.ok) {
+      alert(dashData.message || 'Грешка при зареждане на таблото.');
     }
   } catch (err) {
     console.error('Load error', err);
