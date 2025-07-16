@@ -87,6 +87,16 @@ npm config delete https-proxy
 `loglevel=error` и е включен в репозиторито.
 Тези стъпки намаляват предупрежденията и потенциално ускоряват старта на
 тестовете.
+
+### Coverage
+
+Създава HTML отчет за покритието с командата:
+
+```bash
+npm run coverage
+```
+
+Файловете се намират в `coverage/lcov-report`.
 ### Registration Module Example
 
 Include the common registration logic by importing `setupRegistration`:
