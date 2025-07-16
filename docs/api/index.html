@@ -284,8 +284,8 @@ the page.</p>
 <h3 id="required-worker-secrets" class="tsd-anchor-link">Required Worker Secrets<a href="#required-worker-secrets" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><p>Before deploying, configure the following secrets in Cloudflare (via the dashboard or <code>wrangler secret put</code>):</p>
 <ul>
 <li><code>GEMINI_API_KEY</code></li>
-<li><code>тут_ваш_php_api_url_secret_name</code></li>
-<li><code>тут_ваш_php_api_token_secret_name</code></li>
+<li><code>PHP_FILE_API_URL</code></li>
+<li><code>PHP_FILE_API_TOKEN</code></li>
 <li><code>CF_AI_TOKEN</code> – API token used for Cloudflare AI requests</li>
 <li><code>OPENAI_API_KEY</code> – set via <code>wrangler secret put OPENAI_API_KEY</code>, used by <code>worker.js</code></li>
 <li><code>FROM_EMAIL</code> – optional sender address for outgoing emails</li>

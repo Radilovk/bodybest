@@ -68,8 +68,8 @@ async function sendWelcomeEmail(to, name, env) {
 }
 
 // ------------- START BLOCK: GlobalConstantsAndBindings -------------
-const PHP_FILE_MANAGER_API_URL_SECRET_NAME = 'тут_ваш_php_api_url_secret_name';
-const PHP_API_STATIC_TOKEN_SECRET_NAME = 'тут_ваш_php_api_token_secret_name';
+const PHP_FILE_API_URL = 'PHP_FILE_API_URL';
+const PHP_FILE_API_TOKEN = 'PHP_FILE_API_TOKEN';
 const GEMINI_API_KEY_SECRET_NAME = 'GEMINI_API_KEY';
 const OPENAI_API_KEY_SECRET_NAME = 'OPENAI_API_KEY';
 const CF_AI_TOKEN_SECRET_NAME = 'CF_AI_TOKEN';
@@ -505,8 +505,8 @@ async function handleRegisterRequest(request, env, ctx) {
         if (existingUserId) { return { success: false, message: 'Имейлът вече е регистриран.', statusHint: 409 }; }
         const userId = crypto.randomUUID();
         const hashedPasswordWithSalt = await hashPassword(password);
-        const phpApiUrl = env[PHP_FILE_MANAGER_API_URL_SECRET_NAME];
-        const phpApiToken = env[PHP_API_STATIC_TOKEN_SECRET_NAME];
+        const phpApiUrl = env[PHP_FILE_API_URL];
+        const phpApiToken = env[PHP_FILE_API_TOKEN];
         if (!phpApiUrl || !phpApiToken) { console.error(`REGISTER_ERROR (${userId}): CRITICAL: PHP API URL or Token not configured!`); throw new Error("PHP API URL or Token not configured."); }
         const credentialFileContent = JSON.stringify({ userId: userId, email: trimmedEmail, passwordHash: hashedPasswordWithSalt });
         const formData = new FormData(); formData.append('action', 'create_file'); formData.append('directory', 'credentials'); formData.append('filename', `${userId}.json`); formData.append('content', credentialFileContent);
@@ -534,7 +534,7 @@ async function handleLoginRequest(request, env) {
      try {
          const { email, password } = await request.json(); const trimmedEmail = email ? String(email).trim().toLowerCase() : null; if (!trimmedEmail || !password) { return { success: false, message: 'Имейл и парола са задължителни.', statusHint: 400 }; }
          const userId = await env.USER_METADATA_KV.get(`email_to_uuid_${trimmedEmail}`); if (!userId) { return { success: false, message: 'Грешен имейл или парола.', statusHint: 401 }; }
-         const phpApiUrl = env[PHP_FILE_MANAGER_API_URL_SECRET_NAME]; const phpApiToken = env[PHP_API_STATIC_TOKEN_SECRET_NAME]; if (!phpApiUrl || !phpApiToken) { console.error(`LOGIN_ERROR (${userId}): CRITICAL: PHP API URL or Token not configured!`); throw new Error("PHP API URL or Token not configured.");}
+         const phpApiUrl = env[PHP_FILE_API_URL]; const phpApiToken = env[PHP_FILE_API_TOKEN]; if (!phpApiUrl || !phpApiToken) { console.error(`LOGIN_ERROR (${userId}): CRITICAL: PHP API URL or Token not configured!`); throw new Error("PHP API URL or Token not configured.");}
          const filename = `${userId}.json`; const directory = 'credentials'; const filenameWithDir = `${directory}/${filename}`; const readFileUrl = `${phpApiUrl}?action=read_file&filename=${encodeURIComponent(filenameWithDir)}`;
          const phpApiResponse = await fetch(readFileUrl, { method: 'GET', headers: { 'Authorization': `Bearer ${phpApiToken}` } });
          if (!phpApiResponse.ok) { const status = phpApiResponse.status; const errorBodyText = await phpApiResponse.text(); let errorJson = {}; try { errorJson = JSON.parse(errorBodyText); } catch(e) {} const errorMessage = errorJson.error || errorBodyText || 'Unknown error'; console.error(`LOGIN_ERROR (${userId}): PHP API read error for ${filenameWithDir} (Status ${status}):`, errorMessage); if (status === 404) return { success: false, message: 'Грешен имейл или парола.', statusHint: 401 }; if (status === 401) return { success: false, message: 'Грешка при аутентикация със сървъра.', statusHint: 500 }; return { success: false, message: 'Грешка при достъп до данни.', statusHint: 500 }; }
@@ -3766,8 +3766,8 @@ function populatePrompt(template, replacements) {
 async function sendTxtBackupToPhp(userId, answers, env) {
     console.log(`TXT_BACKUP (${userId}): Preparing to send TXT backup of initial answers.`);
     try {
-        const phpApiUrl = env[PHP_FILE_MANAGER_API_URL_SECRET_NAME];
-        const phpApiToken = env[PHP_API_STATIC_TOKEN_SECRET_NAME];
+        const phpApiUrl = env[PHP_FILE_API_URL];
+        const phpApiToken = env[PHP_FILE_API_TOKEN];
         if (!phpApiUrl || !phpApiToken) {
             console.warn(`TXT_BACKUP_WARN (${userId}): PHP API URL or Token not configured. Skipping TXT backup.`);
             return;
@@ -3932,4 +3932,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, PHP_FILE_API_URL, PHP_FILE_API_TOKEN };
