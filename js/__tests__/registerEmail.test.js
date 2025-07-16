@@ -1,10 +1,10 @@
 import { jest } from '@jest/globals'
 
-let handleRegisterRequest
+let handleRegisterRequest, PHP_FILE_API_URL, PHP_FILE_API_TOKEN
 
 beforeEach(async () => {
   jest.resetModules()
-  ;({ handleRegisterRequest } = await import('../../worker.js'))
+  ;({ handleRegisterRequest, PHP_FILE_API_URL, PHP_FILE_API_TOKEN } = await import('../../worker.js'))
 })
 
 afterEach(() => {
@@ -18,8 +18,8 @@ test('sends welcome email when mailer configured', async () => {
     .mockResolvedValueOnce({ ok: true, json: async () => ({ message: 'ok', file: 'f' }) })
     .mockResolvedValueOnce({ ok: true })
   const env = {
-    'тут_ваш_php_api_url_secret_name': 'https://php.example.com',
-    'тут_ваш_php_api_token_secret_name': 'tok',
+    [PHP_FILE_API_URL]: 'https://php.example.com',
+    [PHP_FILE_API_TOKEN]: 'tok',
     MAILER_ENDPOINT_URL: 'https://mail.example.com',
     USER_METADATA_KV: {
       get: jest.fn().mockResolvedValue(null),

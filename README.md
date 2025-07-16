@@ -349,8 +349,8 @@ wrangler kv key put recipe_data "$(cat data/recipes.json)" --binding=RESOURCES_K
 Before deploying, configure the following secrets in Cloudflare (via the dashboard or `wrangler secret put`):
 
 - `GEMINI_API_KEY`
-- `тут_ваш_php_api_url_secret_name`
-- `тут_ваш_php_api_token_secret_name`
+- `PHP_FILE_API_URL`
+- `PHP_FILE_API_TOKEN`
 - `CF_AI_TOKEN` – API token used for Cloudflare AI requests
 - `OPENAI_API_KEY` – set via `wrangler secret put OPENAI_API_KEY`, used by `worker.js`
 - `FROM_EMAIL` – optional sender address for outgoing emails
