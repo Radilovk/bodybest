@@ -29,7 +29,7 @@ test('sends request on valid input', async () => {
   expect(global.fetch).toHaveBeenCalledWith('https://api/api/register', expect.any(Object));
 });
 
-test('accepts invalid email', async () => {
+test('shows error on invalid email', async () => {
   const form = document.getElementById('reg');
   form.querySelector('input[type="email"]').value = 'bad';
   const pw = form.querySelectorAll('input[type="password"]');
@@ -38,5 +38,11 @@ test('accepts invalid email', async () => {
   setupRegistration('#reg', '#msg');
   form.dispatchEvent(new Event('submit', { bubbles: true }));
   await Promise.resolve();
-  expect(global.fetch).toHaveBeenCalledWith('https://api/api/register', expect.any(Object));
+  expect(global.fetch).not.toHaveBeenCalled();
+  const { showMessage } = await import('../messageUtils.js');
+  expect(showMessage).toHaveBeenCalledWith(
+    document.getElementById('msg'),
+    'Невалиден e-mail адрес.',
+    true
+  );
 });
