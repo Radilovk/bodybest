@@ -1,5 +1,6 @@
 import { safeParseFloat, safeGet } from './utils.js';
 import { currentUserId } from './app.js';
+import { apiEndpoints } from './config.js';
 
 // Apply saved theme so the page matches the dashboard
 (function applySavedTheme() {
@@ -15,7 +16,7 @@ const form = document.getElementById('profileEditForm');
 if (form) {
   const prefillProfileData = async () => {
     try {
-      const res = await fetch(`/api/getProfile?userId=${currentUserId}`);
+      const res = await fetch(`${apiEndpoints.getProfile}?userId=${currentUserId}`);
       if (!res.ok) throw new Error('Server error');
       const data = await res.json();
 
@@ -51,7 +52,7 @@ if (form) {
     };
 
     try {
-      await fetch("/api/updateProfile", {
+      await fetch(apiEndpoints.updateProfile, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, userId: currentUserId }),
