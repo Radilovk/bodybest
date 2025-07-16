@@ -2,9 +2,13 @@
 import { jest } from '@jest/globals';
 
 let loadTemplateInto;
+let sanitizeHTMLMock;
 
 beforeEach(async () => {
-  jest.unstable_mockModule("../htmlSanitizer.js", () => ({ sanitizeHTML: jest.fn(() => "<div>Hi</div>") }));
+  jest.unstable_mockModule('../htmlSanitizer.js', () => {
+    sanitizeHTMLMock = jest.fn(() => '<div>Hi</div>');
+    return { sanitizeHTML: sanitizeHTMLMock };
+  });
   jest.resetModules();
   global.NodeFilter = window.NodeFilter;
   document.body.innerHTML = '<div id="cont"></div>';
@@ -18,7 +22,8 @@ afterEach(() => {
 
 test('loads and sanitizes template', async () => {
   await loadTemplateInto('/t.html', 'cont');
-  expect(global.fetch).toHaveBeenCalled();
+  expect(global.fetch).toHaveBeenCalledWith(new URL('/t.html', window.location.href));
+  expect(sanitizeHTMLMock).toHaveBeenCalledWith('<div onclick="x()">Hi</div>');
   expect(document.getElementById('cont').innerHTML).toBe('<div>Hi</div>');
 });
 
@@ -28,6 +33,6 @@ test('blocks cross-origin urls', async () => {
   await loadTemplateInto('https://evil.com/x.html', 'cont');
   expect(global.fetch).not.toHaveBeenCalled();
   expect(document.getElementById('cont').innerHTML).toBe('');
-  expect(errSpy).toHaveBeenCalled();
+  expect(errSpy).toHaveBeenCalledWith('Template load error:', expect.any(Error));
   errSpy.mockRestore();
 });
