@@ -1,5 +1,5 @@
 /** @jest-environment jsdom */
-import { initPlanEditor } from '../planEditor.js';
+import { initPlanEditor, gatherPlanFormData } from '../planEditor.js';
 
 beforeEach(() => {
   document.body.innerHTML = `
@@ -30,4 +30,33 @@ test('initializes fields from plan data', () => {
   expect(document.getElementById('allowedFoodsInput').value).toBe('ябълки\nпиле');
   expect(document.getElementById('forbiddenFoodsInput').value).toBe('захар');
   expect(document.getElementById('principlesInput').value).toBe('принцип1\nпринцип2');
+});
+
+test('gathers form data into JSON', () => {
+  document.body.innerHTML = `
+    <table id="menuEditTable">
+      <tr><td><textarea data-day="monday" class="form-control">Закуска\nОбяд</textarea></td></tr>
+      <tr><td><textarea data-day="tuesday" class="form-control">Вечеря</textarea></td></tr>
+    </table>
+    <textarea id="allowedFoodsInput">ябълки\nпиле</textarea>
+    <textarea id="forbiddenFoodsInput">захар</textarea>
+    <textarea id="principlesInput">принцип1\nпринцип2</textarea>
+  `;
+  const json = gatherPlanFormData();
+  expect(json).toEqual({
+    week1Menu: {
+      monday: [
+        { meal_name: 'Закуска', items: [] },
+        { meal_name: 'Обяд', items: [] }
+      ],
+      tuesday: [
+        { meal_name: 'Вечеря', items: [] }
+      ],
+    },
+    allowedForbiddenFoods: {
+      main_allowed_foods: ['ябълки', 'пиле'],
+      main_forbidden_foods: ['захар']
+    },
+    principlesWeek2_4: 'принцип1\nпринцип2'
+  });
 });
