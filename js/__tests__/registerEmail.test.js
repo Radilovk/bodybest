@@ -33,3 +33,19 @@ test('sends welcome email when mailer configured', async () => {
   expect(res.success).toBe(true)
   expect(global.fetch.mock.calls[1][0]).toBe('https://mail.example.com')
 })
+
+test('returns message when PHP API secrets missing', async () => {
+  const env = {
+    USER_METADATA_KV: {
+      get: jest.fn().mockResolvedValue(null),
+      put: jest.fn()
+    }
+  }
+  const req = {
+    json: async () => ({ email: 'u@e.bg', password: '12345678', confirm_password: '12345678' })
+  }
+  const res = await handleRegisterRequest(req, env)
+  expect(res.success).toBe(false)
+  expect(res.message).toBe('PHP API не е конфигуриран.')
+  expect(res.statusHint).toBe(500)
+})

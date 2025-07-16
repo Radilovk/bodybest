@@ -519,7 +519,16 @@ async function handleRegisterRequest(request, env, ctx) {
         const emailTask = sendWelcomeEmail(trimmedEmail, userId, env);
         if (ctx) ctx.waitUntil(emailTask); else await emailTask;
         return { success: true, message: 'Регистрацията успешна!' };
-     } catch (error) { console.error('Error in handleRegisterRequest:', error.message, error.stack); let userMessage = 'Вътрешна грешка при регистрация.'; if (error.message.includes('Failed to fetch')) userMessage = 'Грешка при свързване със сървъра.'; else if (error instanceof SyntaxError) userMessage = 'Грешка в отговора от сървъра.'; return { success: false, message: userMessage, statusHint: 500 }; }
+     } catch (error) {
+        console.error('Error in handleRegisterRequest:', error.message, error.stack);
+        if (error.message.includes('PHP API URL or Token not configured')) {
+            return { success: false, message: 'PHP API не е конфигуриран.', statusHint: 500 };
+        }
+        let userMessage = 'Вътрешна грешка при регистрация.';
+        if (error.message.includes('Failed to fetch')) userMessage = 'Грешка при свързване със сървъра.';
+        else if (error instanceof SyntaxError) userMessage = 'Грешка в отговора от сървъра.';
+        return { success: false, message: userMessage, statusHint: 500 };
+     }
 }
 // ------------- END FUNCTION: handleRegisterRequest -------------
 
