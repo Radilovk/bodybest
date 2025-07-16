@@ -292,13 +292,24 @@ export default {
     // ------------- START FUNCTION: scheduled -------------
     async scheduled(event, env, ctx) {
         console.log(`[CRON] Trigger executing at: ${new Date(event.scheduledTime)}`);
+        if (!env.USER_METADATA_KV) {
+            console.error("[CRON] USER_METADATA_KV binding missing. Check configuration.");
+            return;
+        }
+
         let processedUsersForPlan = 0;
         let processedUsersForPrinciples = 0;
         let processedUsersForAdaptiveQuiz = 0;
         let processedUserEvents = 0;
-        const MAX_PROCESS_PER_RUN_PLAN_GEN = 1;
-        const MAX_PROCESS_PER_RUN_PRINCIPLES = 2;
-        const MAX_PROCESS_PER_RUN_ADAPTIVE_QUIZ = 3;
+        const MAX_PROCESS_PER_RUN_PLAN_GEN = parseInt(env.MAX_PROCESS_PER_RUN_PLAN_GEN || '1', 10);
+        const MAX_PROCESS_PER_RUN_PRINCIPLES = parseInt(env.MAX_PROCESS_PER_RUN_PRINCIPLES || '2', 10);
+        const MAX_PROCESS_PER_RUN_ADAPTIVE_QUIZ = parseInt(env.MAX_PROCESS_PER_RUN_ADAPTIVE_QUIZ || '3', 10);
+
+        const planGenStart = Date.now();
+        let planGenDuration = 0;
+        let userEventsDuration = 0;
+        let principlesDuration = 0;
+        let quizDuration = 0;
 
         try {
             // --- 1. Обработка на генериране на първоначален план ---
@@ -336,7 +347,11 @@ export default {
             }
             if (processedUsersForPlan === 0) console.log("[CRON-PlanGen] No pending users for plan generation.");
 
+            planGenDuration = Date.now() - planGenStart;
+
+            const userEventsStart = Date.now();
             processedUserEvents = await processPendingUserEvents(env, ctx);
+            userEventsDuration = Date.now() - userEventsStart;
             // --- Потребители с готов план ---
             const listResultReadyPlans = await env.USER_METADATA_KV.list({ prefix: "plan_status_" });
             const usersWithReadyPlan = [];
@@ -347,6 +362,7 @@ export default {
                 if (status === 'ready') usersWithReadyPlan.push(userId);
             }
 
+            const principlesStart = Date.now();
             // --- 2. Обработка на актуализация на принципи (ръчна/стандартна) ---
             for (const userId of usersWithReadyPlan) {
                 if (processedUsersForPrinciples >= MAX_PROCESS_PER_RUN_PRINCIPLES) break;
@@ -377,8 +393,11 @@ export default {
             }
             if (processedUsersForPrinciples === 0) console.log("[CRON-Principles] No users for standard principle update.");
 
+            principlesDuration = Date.now() - principlesStart;
+
             // --- 3. Проверка и задействане на Адаптивни Въпросници ---
             console.log("[CRON-AdaptiveQuiz] Starting check for adaptive quiz triggers.");
+            const quizStart = Date.now();
             for (const userId of usersWithReadyPlan) {
                 if (processedUsersForAdaptiveQuiz >= MAX_PROCESS_PER_RUN_ADAPTIVE_QUIZ) {
                      console.log(`[CRON-AdaptiveQuiz] Reached processing limit for quiz generation this run.`);
@@ -432,8 +451,27 @@ export default {
                 console.log("[CRON-AdaptiveQuiz] No users found for adaptive quiz this run.");
             }
 
+            quizDuration = Date.now() - quizStart;
+
         } catch(error) {
             console.error("[CRON] Error during scheduled execution:", error.message, error.stack);
+        }
+
+        const metrics = {
+            ts: new Date(event.scheduledTime).toISOString(),
+            planProcessed: processedUsersForPlan,
+            planMs: planGenDuration,
+            eventsProcessed: processedUserEvents,
+            eventsMs: userEventsDuration,
+            principlesProcessed: processedUsersForPrinciples,
+            principlesMs: principlesDuration,
+            quizProcessed: processedUsersForAdaptiveQuiz,
+            quizMs: quizDuration
+        };
+        try {
+            await env.USER_METADATA_KV.put(`cron_metrics_${metrics.ts}`, JSON.stringify(metrics));
+        } catch(storeErr) {
+            console.error("[CRON] Failed to store metrics:", storeErr.message);
         }
         console.log(`[CRON] Trigger finished. PlanGen: ${processedUsersForPlan}, Principles: ${processedUsersForPrinciples}, AdaptiveQuiz: ${processedUsersForAdaptiveQuiz}, UserEvents: ${processedUserEvents}`);
     }
