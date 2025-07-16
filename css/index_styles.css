@@ -18,7 +18,7 @@
         *, *::before, *::after { box-sizing: border-box; }
         html { font-size: 100%; }
         body {
-            margin: 0; font-family: 'Roboto', sans-serif; line-height: 1.6;
+            margin: 0; font-family: var(--font-primary); line-height: 1.6;
             background: var(--bg-color) var(--bg-gradient); background-attachment: fixed;
             color: var(--text-color-primary); display: flex; justify-content: center; align-items: center;
             min-height: 100vh; padding: var(--space-lg);
@@ -34,7 +34,7 @@
             border: 1px solid rgba(var(--primary-rgb), 0.1);
             text-align: center;
         }
-        h1, h2 { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--primary-color); margin-top: 0; }
+        h1, h2 { font-family: var(--font-secondary); font-weight: 700; color: var(--primary-color); margin-top: 0; }
         h1 { font-size: clamp(1.7rem, 5vw, 2.1rem); margin-bottom: calc(var(--space-lg)*0.8); text-align: center; }
         h2 { font-size: clamp(1.3rem, 4vw, 1.7rem); margin-bottom: var(--space-lg); }
         p { margin-bottom: var(--space-lg); color: var(--text-color-secondary); font-size: 0.95rem;}

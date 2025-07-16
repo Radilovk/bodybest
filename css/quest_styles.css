@@ -1,7 +1,7 @@
     /* Основен стил – запазен от оригиналната версия с допълнения за мобилност */
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: var(--font-primary);
       background-color: #121212;
       color: #E0E0E0;
       overflow-x: hidden;
