@@ -3,5 +3,6 @@
   "out": "docs",
   "excludePrivate": true,
   "tsconfig": "typedoc.tsconfig.json",
-  "highlightLanguages": ["toml", "shell", "bash", "html", "typescript", "json"]
+  "highlightLanguages": ["toml", "shell", "bash", "html", "typescript", "json"],
+  "exclude": ["**/__tests__/**"]
 }

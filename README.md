@@ -197,6 +197,7 @@ Create API documentation using Typedoc:
 npm run docs
 ```
 The output is placed in the `docs/` folder.
+Тестовите файлове се изключват чрез `"exclude": ["**/__tests__/**"]` в `typedoc.json`.
 
 ### Template Loading
 
