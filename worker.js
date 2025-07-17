@@ -56,6 +56,13 @@ const WELCOME_BODY_TEMPLATE = '<h2>Здравей, {{name}} 👋</h2>' +
     '<p>Бъди здрав и вдъхновен!</p>' +
     '<p>– Екипът на MyBody</p>';
 
+const QUESTIONNAIRE_SUBJECT = 'Получихме вашите отговори';
+const QUESTIONNAIRE_BODY_TEMPLATE = '<p>Здравей, {{name}}.</p>' +
+    '<p>Благодарим за попълването на въпросника. Нашият екип ще изготви индивидуален план и ще се свърже с теб скоро.</p>' +
+    '<p>– Екипът на MyBody</p>';
+const QUESTIONNAIRE_EMAIL_SUBJECT_VAR_NAME = 'QUESTIONNAIRE_EMAIL_SUBJECT';
+const QUESTIONNAIRE_EMAIL_BODY_VAR_NAME = 'QUESTIONNAIRE_EMAIL_BODY';
+
 async function sendWelcomeEmail(to, name, env) {
     const sendEmail = await getSendEmail(env);
     if (sendEmail === defaultSendEmail) return;
@@ -64,6 +71,19 @@ async function sendWelcomeEmail(to, name, env) {
         await sendEmail(to, WELCOME_SUBJECT, html);
     } catch (err) {
         console.error('Failed to send welcome email:', err);
+    }
+}
+
+async function sendQuestionnaireConfirmationEmail(to, name, env) {
+    const sendEmail = await getSendEmail(env);
+    if (sendEmail === defaultSendEmail) return;
+    const subject = env?.[QUESTIONNAIRE_EMAIL_SUBJECT_VAR_NAME] || QUESTIONNAIRE_SUBJECT;
+    const tpl = env?.[QUESTIONNAIRE_EMAIL_BODY_VAR_NAME] || QUESTIONNAIRE_BODY_TEMPLATE;
+    const html = tpl.replace(/{{\s*name\s*}}/g, name);
+    try {
+        await sendEmail(to, subject, html);
+    } catch (err) {
+        console.error('Failed to send questionnaire confirmation email:', err);
     }
 }
 
@@ -565,6 +585,8 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         await env.USER_METADATA_KV.put(`${userId}_initial_answers`, JSON.stringify(questionnaireData));
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
+        const confirmTask = sendQuestionnaireConfirmationEmail(userEmail, questionnaireData.name || 'Потребител', env);
+        if (ctx) ctx.waitUntil(confirmTask); else await confirmTask;
         return { success: true, message: 'Данните са приети. Вашият индивидуален план ще бъде генериран скоро.' };
     } catch (error) {
         console.error(`Error in handleSubmitQuestionnaire:`, error.message, error.stack);
@@ -3851,4 +3873,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, handleSubmitQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };

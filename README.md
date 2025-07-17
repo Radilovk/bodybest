@@ -772,6 +772,8 @@ To send a test email задайте `WORKER_ADMIN_TOKEN`. Може да посо
 | `FROM_EMAIL` | Sender address used by `mailer.js` and the PHP backend. |
 | `WELCOME_EMAIL_SUBJECT` | Optional custom subject for welcome emails sent by `mailer.js`. |
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |
+| `QUESTIONNAIRE_EMAIL_SUBJECT` | Optional subject for the confirmation email sent след изпращане на въпросника. |
+| `QUESTIONNAIRE_EMAIL_BODY` | Optional HTML body template for the confirmation email. `{{name}}` ще бъде заменено с името на потребителя. |
 | `WORKER_URL` | Base URL of the main worker used by `mailer.js` to fetch email templates when no subject or body is provided. |
 
 Проверете стойностите така:
