@@ -51,8 +51,8 @@ export function setupRegistration(formSelector, messageElSelector) {
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || 'Грешка при регистрацията. Моля, опитайте отново.');
       showMessage(messageEl, data.message || 'Регистрацията успешна!', false);
+      form.dispatchEvent(new CustomEvent('registrationSuccess', { detail: { ...data, email } }));
       form.reset();
-      form.dispatchEvent(new CustomEvent('registrationSuccess', { detail: data }));
     } catch (err) {
       console.error('Registration failed:', err);
       showMessage(messageEl, err.message, true);
