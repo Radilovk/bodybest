@@ -25,6 +25,7 @@
 async function defaultSendEmail(to, subject, body) {
     throw new Error('Email functionality is not configured.');
 }
+import crypto from 'node:crypto';
 import { sendEmail as phpSendEmail } from './sendEmailWorker.js';
 import { parseJsonSafe } from './utils/parseJsonSafe.js';
 
@@ -519,8 +520,10 @@ async function handleRegisterRequest(request, env, ctx) {
         if (password.length < 8) { return { success: false, message: 'Паролата трябва да е поне 8 знака.', statusHint: 400 }; }
         if (password !== confirm_password) { return { success: false, message: 'Паролите не съвпадат.', statusHint: 400 }; }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) { return { success: false, message: 'Невалиден имейл формат.', statusHint: 400 }; }
-        const existingUserId = await env.USER_METADATA_KV.get(`email_to_uuid_${trimmedEmail}`);
-        if (existingUserId) { return { success: false, message: 'Имейлът вече е регистриран.', statusHint: 409 }; }
+        const previousUserId = await env.USER_METADATA_KV.get(`email_to_uuid_${trimmedEmail}`);
+        if (previousUserId) {
+            console.log(`REGISTER_OVERRIDE: ${trimmedEmail} was linked to ${previousUserId}. Overwriting with new account.`);
+        }
         const userId = crypto.randomUUID();
         const hashedPasswordWithSalt = await hashPassword(password);
         const credentialContent = JSON.stringify({ userId, email: trimmedEmail, passwordHash: hashedPasswordWithSalt });

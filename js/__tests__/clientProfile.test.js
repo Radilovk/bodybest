@@ -31,7 +31,8 @@ beforeEach(async () => {
   `;
   window.history.pushState({}, '', '/?userId=1');
 
-  const src = await fs.promises.readFile(new URL('../clientProfile.js', import.meta.url), 'utf8');
+  const clientProfilePath = path.join(path.dirname(jsonrepairMockPath), '../clientProfile.js');
+  const src = await fs.promises.readFile(clientProfilePath, 'utf8');
   const patched = src
     .replace("https://cdn.jsdelivr.net/npm/jsonrepair/+esm", jsonrepairMockPath)
     .replace('./config.js', '../config.js')
