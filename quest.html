@@ -274,8 +274,8 @@
       showPage(regIndex - 1);
     });
     setupRegistration("#register-form-q", "#register-message-q");
-    pageDiv.querySelector("#register-form-q").addEventListener("registrationSuccess", () => {
-      responses.email = emailInput.value.trim().toLowerCase();
+    pageDiv.querySelector("#register-form-q").addEventListener("registrationSuccess", (event) => {
+      responses.email = event.detail.email;
       saveProgress();
       showPage(regIndex + 1);
     });
