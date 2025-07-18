@@ -333,6 +333,8 @@ export default {
                 responseBody = await handleTestAiModelRequest(request, env);
             } else if (method === 'POST' && path === '/api/sendTestEmail') {
                 responseBody = await handleSendTestEmailRequest(request, env);
+            } else if (method === 'POST' && path === '/api/testQuestionnaireAnalysis') {
+                responseBody = await handleTestQuestionnaireAnalysis(request, env);
             } else if (method === 'GET' && path === '/api/getFeedbackMessages') {
                 responseBody = await handleGetFeedbackMessagesRequest(request, env);
             } else {
@@ -1474,18 +1476,21 @@ async function handleGeneratePraiseRequest(request, env) {
 // ------------- END FUNCTION: handleGeneratePraiseRequest -------------
 
 // ------------- START FUNCTION: handleAnalyzeInitialAnswers -------------
-async function handleAnalyzeInitialAnswers(userId, env) {
+async function handleAnalyzeInitialAnswers(userId, env, answers = null, dryRun = false) {
     try {
         if (!userId) {
             console.warn('INITIAL_ANALYSIS_ERROR: Missing userId.');
             return;
         }
-        const answersStr = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
-        if (!answersStr) {
-            console.warn(`INITIAL_ANALYSIS_ERROR (${userId}): No initial answers found.`);
-            return;
+        let initial = answers;
+        if (!initial) {
+            const answersStr = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
+            if (!answersStr) {
+                console.warn(`INITIAL_ANALYSIS_ERROR (${userId}): No initial answers found.`);
+                return;
+            }
+            initial = safeParseJson(answersStr, {});
         }
-        const answers = safeParseJson(answersStr, {});
         const promptTpl = await env.RESOURCES_KV.get('prompt_questionnaire_analysis');
         const modelName = await env.RESOURCES_KV.get('model_questionnaire_analysis');
         const provider = getModelProvider(modelName);
@@ -1495,16 +1500,18 @@ async function handleAnalyzeInitialAnswers(userId, env) {
             console.warn(`INITIAL_ANALYSIS_ERROR (${userId}): Missing prompt, model or API key.`);
             return;
         }
-        const populated = populatePrompt(promptTpl, { '%%ANSWERS_JSON%%': JSON.stringify(answers) });
+        const populated = populatePrompt(promptTpl, { '%%ANSWERS_JSON%%': JSON.stringify(initial) });
         const raw = await callModel(modelName, populated, env, { temperature: 0.5, maxTokens: 2500 });
         const cleaned = cleanGeminiJson(raw);
-        await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
-        console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
+        if (!dryRun) {
+            await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
+            console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
+        }
         const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] || 'https://mybody.best/analyze.html';
         const link = `${baseUrl}?userId=${encodeURIComponent(userId)}`;
-        if (answers.email) {
-            const name = answers.name || 'Клиент';
-            await sendAnalysisLinkEmail(answers.email, name, link, env);
+        if (!dryRun && initial.email) {
+            const name = initial.name || 'Клиент';
+            await sendAnalysisLinkEmail(initial.email, name, link, env);
         }
     } catch (error) {
         console.error(`Error in handleAnalyzeInitialAnswers (${userId}):`, error.message, error.stack);
@@ -2099,6 +2106,38 @@ async function handleSendTestEmailRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleSendTestEmailRequest -------------
+
+// ------------- START FUNCTION: handleTestQuestionnaireAnalysis -------------
+async function handleTestQuestionnaireAnalysis(request, env) {
+    try {
+        const auth = request.headers?.get?.('Authorization') || '';
+        const token = auth.replace(/^Bearer\s+/i, '').trim();
+        const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
+        if (expected && token !== expected) {
+            return { success: false, message: 'Невалиден токен.', statusHint: 403 };
+        }
+
+        let data;
+        try {
+            data = await request.json();
+        } catch {
+            return { success: false, message: 'Invalid JSON.', statusHint: 400 };
+        }
+
+        const userId = data.userId;
+        if (!userId) return { success: false, message: 'Missing userId', statusHint: 400 };
+
+        const answers = typeof data.answers === 'object' ? data.answers : null;
+        const dryRun = !!data.dryRun;
+        await handleAnalyzeInitialAnswers(userId, env, answers, dryRun);
+        const stored = await env.USER_METADATA_KV.get(`${userId}_analysis`);
+        return { success: true, analysis: safeParseJson(stored, stored) };
+    } catch (error) {
+        console.error('Error in handleTestQuestionnaireAnalysis:', error.message, error.stack);
+        return { success: false, message: 'Грешка при анализа.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleTestQuestionnaireAnalysis -------------
 
 
 // ------------- START BLOCK: PlanGenerationHeaderComment -------------
@@ -3988,4 +4027,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, handleSubmitQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleTestQuestionnaireAnalysis, handleRegisterRequest, handleSubmitQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };

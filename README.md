@@ -680,6 +680,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `POST /api/analyzeImage` – анализира качено изображение и връща резултат. Изпращайте поле `image` с пълен `data:` URL. Ендпойнтът не изисква `WORKER_ADMIN_TOKEN`, освен ако изрично не сте го добавили като защита.
 - `POST /api/runImageModel` – изпраща байтовете на изображение към избран Cloudflare AI модел. Заявката приема `{ "model": "@cf/llava-hf/llava-1.5-7b-hf", "prompt": "Описание", "image": [..] }` и връща JSON от `env.AI.run`. При заявки с друг метод се връща статус 405.
 - `POST /api/sendTestEmail` – изпраща тестов имейл. Изисква администраторски токен.
+- `POST /api/testQuestionnaireAnalysis` – генерира анализ на въпросник за съществуващ клиент. Изисква администраторски токен.
 - `POST /api/sendEmail` – изпраща имейл чрез PHP бекенда. Изисква HTTP заглавка `Authorization: Bearer <WORKER_ADMIN_TOKEN>` и приема JSON `{ "to": "user@example.com", "subject": "Тема", "text": "Съобщение" }`. Заявките са ограничени до няколко на минута.
 
   ```bash

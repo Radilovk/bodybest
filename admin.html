@@ -223,6 +223,19 @@
     </form>
   </details>
 
+  <details id="testQuestSection" class="card">
+    <summary>Тест на анализ на въпросник</summary>
+    <form id="testQuestForm">
+      <label>User ID: <input id="testQuestUserId" type="text" required></label>
+      <label>Отговори (JSON, по избор):<br>
+        <textarea id="testQuestData" rows="5"></textarea>
+      </label>
+      <button type="submit">Стартирай анализ</button>
+    </form>
+    <pre id="testQuestResult" class="json"></pre>
+    <a id="openQuestAnalysis" href="#" target="_blank" style="display:none">Отвори analyze.html</a>
+  </details>
+
   <details id="testImageSection" class="card">
     <summary>Тест на анализ на изображение</summary>
     <form id="testImageForm">
