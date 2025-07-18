@@ -324,7 +324,10 @@ node scripts/view-usage-logs.js sendTestEmail 5
 | `model_plan_generation` | Модел за първоначално генериране на план |
 | `model_principle_adjustment` | Модел за корекция на принципите |
 | `model_image_analysis` | Модел за анализ на изображения |
+| `model_questionnaire_analysis` | Модел за анализ на първоначалния въпросник |
 | `prompt_image_analysis` | Шаблон за промпт при анализ на изображение |
+| `prompt_questionnaire_analysis` | Шаблон за анализ на подадените отговори |
+| `prompt_initial_analysis` | Шаблон за създаване на персонален анализ |
 | `prompt_adaptive_quiz_generation` | Шаблон за създаване на адаптивен въпросник |
 | `prompt_analytics_textual_summary` | Шаблон за текстов анализ на прогреса |
 | `prompt_analyze_quiz_and_suggest_changes` | Шаблон за анализ на отговорите и предложения за промяна |
@@ -332,6 +335,17 @@ node scripts/view-usage-logs.js sendTestEmail 5
 | `prompt_praise_generation` | Шаблон за генериране на похвали |
 | `prompt_principle_adjustment` | Шаблон за промпт при корекция на принципи |
 | `prompt_unified_plan_generation_v2` | Шаблон за унифицирано генериране на план |
+| `prompt_plan_modification` | Шаблон за заявка към AI при промени в плана |
+| `plan_token_limit` | Максимални токени при генериране на план |
+| `plan_temperature` | Температура за плана |
+| `chat_token_limit` | Максимални токени в чат сесия |
+| `chat_temperature` | Температура за чат модела |
+| `mod_token_limit` | Token limit при промяна на плана |
+| `mod_temperature` | Температура при промяна на плана |
+| `image_token_limit` | Token limit за анализ на изображение |
+| `image_temperature` | Температура за анализ на изображение |
+| `welcome_email_subject` | Тема на приветствения имейл |
+| `welcome_email_body` | HTML съдържание за приветствения имейл |
 | `question_definitions` | JSON с дефиниции на всички въпроси |
 | `recipe_data` | Данни за примерни рецепти |
 
@@ -604,6 +618,21 @@ curl -X POST https://<your-domain>/api/runImageModel \
   --data '{"model":"@cf/llava-hf/llava-1.5-7b-hf","prompt":"Какво има?","image":[1,2,3]}'
 ```
 Този ендпойнт приема само POST заявки. При друг метод ще получите статус 405.
+
+### Персонален анализ (`analyze.html`)
+
+След попълване на въпросника Cloudflare worker-ът съхранява резултата като `<userId>_analysis` и го връща чрез `/api/getInitialAnalysis?userId=<ID>`.
+Шаблонът `reganalize/analyze.html` визуализира тези данни.
+
+1. Извикайте ендпойнта и запишете JSON отговора.
+2. Заменете плейсхолдъра `/*---JSON_DATA_PLACEHOLDER---*/` в HTML с получения JSON.
+3. Отворете готовия файл в браузър.
+
+Примерен Node.js скрипт:
+
+```bash
+node -e "const fs=require('fs');const data=require('./analysis.json');const html=fs.readFileSync('reganalize/analyze.html','utf8').replace('/*---JSON_DATA_PLACEHOLDER---*/',JSON.stringify(data));fs.writeFileSync('analysis.html',html);"
+```
 
 
 ### Промяна на началното съобщение в чата
