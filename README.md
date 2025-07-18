@@ -621,6 +621,7 @@ curl -X POST https://<your-domain>/api/runImageModel \
 ### Персонален анализ (`analyze.html`)
 
 След попълване на въпросника Cloudflare worker-ът съхранява резултата като `<userId>_analysis` и го връща чрез `/api/getInitialAnalysis?userId=<ID>`.
+Статусът на изчисляването се пази отделно в ключ `<userId>_analysis_status` и може да се провери с `/api/analysisStatus?userId=<ID>`.
 Шаблонът `reganalize/analyze.html` визуализира тези данни.
 Когато анализът е генериран, потребителят получава имейл с линк към страницата,
 на който параметърът `userId` зарежда индивидуалния JSON.
@@ -677,6 +678,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `GET /api/getAiPreset` – връща данните за конкретен пресет.
 - `POST /api/saveAiPreset` – съхранява нов пресет или обновява съществуващ.
 - `POST /api/testAiModel` – проверява връзката с конкретен AI модел.
+- `GET /api/analysisStatus` – връща текущия статус на персоналния анализ.
 - `POST /api/analyzeImage` – анализира качено изображение и връща резултат. Изпращайте поле `image` с пълен `data:` URL. Ендпойнтът не изисква `WORKER_ADMIN_TOKEN`, освен ако изрично не сте го добавили като защита.
 - `POST /api/runImageModel` – изпраща байтовете на изображение към избран Cloudflare AI модел. Заявката приема `{ "model": "@cf/llava-hf/llava-1.5-7b-hf", "prompt": "Описание", "image": [..] }` и връща JSON от `env.AI.run`. При заявки с друг метод се връща статус 405.
 - `POST /api/sendTestEmail` – изпраща тестов имейл. Изисква администраторски токен.

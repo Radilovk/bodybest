@@ -33,6 +33,7 @@ describe('submit questionnaire workflow', () => {
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_initial_answers', expect.any(String))
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('plan_status_u1', 'pending', { metadata: { status: 'pending' } })
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_analysis', '{"score":1}')
+    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_analysis_status', 'pending')
     expect(global.fetch).toHaveBeenCalledWith('https://mail.example.com', expect.any(Object))
   })
 })

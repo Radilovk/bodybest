@@ -32,6 +32,7 @@ describe('initial analysis handlers', () => {
     }
     await worker.handleAnalyzeInitialAnswers('u1', env)
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_analysis', '{"ok":true}')
+    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_analysis_status', 'ready')
     expect(global.fetch).toHaveBeenCalledWith('https://mail.example.com', expect.any(Object))
   })
 
@@ -61,6 +62,7 @@ describe('initial analysis handlers', () => {
     }
     await worker.handleAnalyzeInitialAnswers('u1', env)
     expect(warnSpy).toHaveBeenCalledWith('ANALYSIS_EMAIL_BODY missing {{link}} placeholder')
+    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_analysis_status', 'ready')
     warnSpy.mockRestore()
   })
 
@@ -98,5 +100,13 @@ describe('initial analysis handlers', () => {
     const res = await worker.handleGetInitialAnalysisRequest(req, env)
     expect(res.success).toBe(true)
     expect(res.analysis).toEqual({ a: 1 })
+  })
+
+  test('handleAnalysisStatusRequest returns stored status', async () => {
+    const env = { USER_METADATA_KV: { get: jest.fn().mockResolvedValue('ready') } }
+    const req = { url: 'https://x/api/analysisStatus?userId=u1' }
+    const res = await worker.handleAnalysisStatusRequest(req, env)
+    expect(res.success).toBe(true)
+    expect(res.analysisStatus).toBe('ready')
   })
 })
