@@ -101,6 +101,9 @@ async function sendAnalysisLinkEmail(to, name, link, env) {
     if (sendEmail === defaultSendEmail) return;
     const subject = env?.[ANALYSIS_EMAIL_SUBJECT_VAR_NAME] || ANALYSIS_READY_SUBJECT;
     const tpl = env?.[ANALYSIS_EMAIL_BODY_VAR_NAME] || ANALYSIS_READY_BODY_TEMPLATE;
+    if (!tpl.includes('{{name}}')) {
+        console.warn('ANALYSIS_EMAIL_BODY missing {{name}} placeholder');
+    }
     if (!tpl.includes('{{link}}')) {
         console.warn('ANALYSIS_EMAIL_BODY missing {{link}} placeholder');
     }
