@@ -100,6 +100,10 @@ const testImageForm = document.getElementById('testImageForm');
 const testImageFileInput = document.getElementById('testImageFile');
 const testImagePromptInput = document.getElementById('testImagePrompt');
 const testImageResultPre = document.getElementById('testImageResult');
+const testQuestForm = document.getElementById('testQuestForm');
+const testQuestUserId = document.getElementById('testQuestUserId');
+const testQuestData = document.getElementById('testQuestData');
+const testQuestResultPre = document.getElementById('testQuestResult');
 const clientNameHeading = document.getElementById('clientName');
 const closeProfileBtn = document.getElementById('closeProfile');
 const notificationsList = document.getElementById('notificationsList');
@@ -1293,6 +1297,34 @@ async function sendTestImage() {
     }
 }
 
+async function sendTestQuest() {
+    if (!testQuestForm) return;
+    const userId = testQuestUserId ? testQuestUserId.value.trim() : '';
+    if (!userId) return;
+    const payload = { userId };
+    const raw = testQuestData ? testQuestData.value.trim() : '';
+    if (raw) {
+        try { payload.answers = JSON.parse(raw); }
+        catch { alert('Невалиден JSON'); return; }
+    }
+    try {
+        const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
+        const headers = { 'Content-Type': 'application/json' };
+        if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+        const resp = await fetch(apiEndpoints.testQuestionnaireAnalysis, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload)
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (testQuestResultPre) testQuestResultPre.textContent = JSON.stringify(data, null, 2);
+        if (!resp.ok || !data.success) alert(data.message || 'Грешка');
+    } catch (err) {
+        console.error('Error testing questionnaire analysis:', err);
+        alert('Грешка при заявката.');
+    }
+}
+
 async function loadAiPresets() {
     if (!presetSelect) return;
     try {
@@ -1489,6 +1521,13 @@ if (testImageForm) {
     });
 }
 
+if (testQuestForm) {
+    testQuestForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await sendTestQuest();
+    });
+}
+
 export {
     allClients,
     loadClients,
@@ -1502,5 +1541,6 @@ export {
     sendTestEmail,
     confirmAndSendTestEmail,
     sendTestImage,
+    sendTestQuest,
     sendAdminQuery
 };
