@@ -815,6 +815,26 @@ To send a test email задайте `WORKER_ADMIN_TOKEN`. Може да посо
 | `ANALYSIS_PAGE_URL` | Base URL към `analyze.html` за генериране на линка в писмото. |
 | `WORKER_URL` | Base URL of the main worker used by `mailer.js` to fetch email templates when no subject or body is provided. |
 
+#### Example: configuring analysis email
+
+Добавете следните променливи в `.env` или `wrangler.toml`:
+
+```env
+ANALYSIS_EMAIL_SUBJECT=Персоналният ви анализ е готов
+ANALYSIS_EMAIL_BODY=<p>Здравей, {{name}}. <a href="{{link}}">Виж анализа</a>.</p>
+ANALYSIS_PAGE_URL=https://example.com/analyze.html
+```
+
+При ненастроени стойности се използват вградените теми и HTML шаблон.
+
+**Очакван резултат**
+
+```
+Subject: Персоналният ви анализ е готов
+<p>Здравей, Иван.</p>
+<p><a href="https://example.com/analyze.html?userId=123">Виж анализа</a>.</p>
+```
+
 Проверете стойностите така:
 
 ```bash
