@@ -244,6 +244,8 @@ export default {
                 responseBody = await handleGetAchievementsRequest(request, env);
             } else if (method === 'POST' && path === '/api/generatePraise') {
                 responseBody = await handleGeneratePraiseRequest(request, env);
+            } else if (method === 'GET' && path === '/api/getInitialAnalysis') {
+                responseBody = await handleGetInitialAnalysisRequest(request, env);
             } else if (method === 'GET' && path === '/api/getPlanModificationPrompt') {
                 responseBody = await handleGetPlanModificationPrompt(request, env);
             } else if (method === 'POST' && path === '/api/aiHelper') {
@@ -589,7 +591,14 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
         const confirmTask = sendQuestionnaireConfirmationEmail(userEmail, questionnaireData.name || 'Потребител', env);
-        if (ctx) ctx.waitUntil(confirmTask); else await confirmTask;
+        const analysisTask = handleAnalyzeInitialAnswers(userId, env);
+        if (ctx) {
+            ctx.waitUntil(confirmTask);
+            ctx.waitUntil(analysisTask);
+        } else {
+            await confirmTask;
+            await analysisTask;
+        }
         return { success: true, message: 'Данните са приети. Вашият индивидуален план ще бъде генериран скоро.' };
     } catch (error) {
         console.error(`Error in handleSubmitQuestionnaire:`, error.message, error.stack);
@@ -1417,6 +1426,55 @@ async function handleGeneratePraiseRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleGeneratePraiseRequest -------------
+
+// ------------- START FUNCTION: handleAnalyzeInitialAnswers -------------
+async function handleAnalyzeInitialAnswers(userId, env) {
+    try {
+        if (!userId) {
+            console.warn('INITIAL_ANALYSIS_ERROR: Missing userId.');
+            return;
+        }
+        const answersStr = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
+        if (!answersStr) {
+            console.warn(`INITIAL_ANALYSIS_ERROR (${userId}): No initial answers found.`);
+            return;
+        }
+        const answers = safeParseJson(answersStr, {});
+        const promptTpl = await env.RESOURCES_KV.get('prompt_initial_analysis');
+        const modelName = await env.RESOURCES_KV.get('model_chat') || await env.RESOURCES_KV.get('model_plan_generation');
+        const provider = getModelProvider(modelName);
+        if (!promptTpl || !modelName ||
+            (provider === 'gemini' && !env[GEMINI_API_KEY_SECRET_NAME]) ||
+            (provider === 'openai' && !env[OPENAI_API_KEY_SECRET_NAME])) {
+            console.warn(`INITIAL_ANALYSIS_ERROR (${userId}): Missing prompt, model or API key.`);
+            return;
+        }
+        const populated = populatePrompt(promptTpl, { '%%ANSWERS_JSON%%': JSON.stringify(answers) });
+        const raw = await callModel(modelName, populated, env, { temperature: 0.5, maxTokens: 2500 });
+        const cleaned = cleanGeminiJson(raw);
+        await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
+        console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
+    } catch (error) {
+        console.error(`Error in handleAnalyzeInitialAnswers (${userId}):`, error.message, error.stack);
+    }
+}
+// ------------- END FUNCTION: handleAnalyzeInitialAnswers -------------
+
+// ------------- START FUNCTION: handleGetInitialAnalysisRequest -------------
+async function handleGetInitialAnalysisRequest(request, env) {
+    try {
+        const url = new URL(request.url);
+        const userId = url.searchParams.get('userId');
+        if (!userId) return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
+        const analysisStr = await env.USER_METADATA_KV.get(`${userId}_analysis`);
+        const analysis = safeParseJson(analysisStr, analysisStr || null);
+        return { success: true, analysis };
+    } catch (error) {
+        console.error('Error in handleGetInitialAnalysisRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при зареждане на анализа.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleGetInitialAnalysisRequest -------------
 
 // ------------- START FUNCTION: handleUploadTestResult -------------
 async function handleUploadTestResult(request, env) {
@@ -3876,4 +3934,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, handleSubmitQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, handleSubmitQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
