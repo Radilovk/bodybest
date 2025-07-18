@@ -19,8 +19,8 @@ describe('submit questionnaire workflow', () => {
       },
       RESOURCES_KV: {
         get: jest.fn(key => {
-          if (key === 'prompt_initial_analysis') return 'Analyze %%ANSWERS_JSON%%'
-          if (key === 'model_chat') return '@cf/test-model'
+          if (key === 'prompt_questionnaire_analysis') return 'Analyze %%ANSWERS_JSON%%'
+          if (key === 'model_questionnaire_analysis') return '@cf/test-model'
           return null
         })
       },

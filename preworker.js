@@ -64,6 +64,14 @@ const QUESTIONNAIRE_BODY_TEMPLATE = '<p>Здравей, {{name}}.</p>' +
 const QUESTIONNAIRE_EMAIL_SUBJECT_VAR_NAME = 'QUESTIONNAIRE_EMAIL_SUBJECT';
 const QUESTIONNAIRE_EMAIL_BODY_VAR_NAME = 'QUESTIONNAIRE_EMAIL_BODY';
 
+const ANALYSIS_READY_SUBJECT = 'Вашият персонален анализ е готов';
+const ANALYSIS_READY_BODY_TEMPLATE = '<p>Здравей, {{name}}.</p>' +
+    '<p>Вашият персонален анализ е готов. Можете да го видите <a href="{{link}}">тук</a>.</p>' +
+    '<p>– Екипът на MyBody</p>';
+const ANALYSIS_EMAIL_SUBJECT_VAR_NAME = 'ANALYSIS_EMAIL_SUBJECT';
+const ANALYSIS_EMAIL_BODY_VAR_NAME = 'ANALYSIS_EMAIL_BODY';
+const ANALYSIS_PAGE_URL_VAR_NAME = 'ANALYSIS_PAGE_URL';
+
 async function sendWelcomeEmail(to, name, env) {
     const sendEmail = await getSendEmail(env);
     if (sendEmail === defaultSendEmail) return;
@@ -85,6 +93,19 @@ async function sendQuestionnaireConfirmationEmail(to, name, env) {
         await sendEmail(to, subject, html);
     } catch (err) {
         console.error('Failed to send questionnaire confirmation email:', err);
+    }
+}
+
+async function sendAnalysisLinkEmail(to, name, link, env) {
+    const sendEmail = await getSendEmail(env);
+    if (sendEmail === defaultSendEmail) return;
+    const subject = env?.[ANALYSIS_EMAIL_SUBJECT_VAR_NAME] || ANALYSIS_READY_SUBJECT;
+    const tpl = env?.[ANALYSIS_EMAIL_BODY_VAR_NAME] || ANALYSIS_READY_BODY_TEMPLATE;
+    const html = tpl.replace(/{{\s*name\s*}}/g, name).replace(/{{\s*link\s*}}/g, link);
+    try {
+        await sendEmail(to, subject, html);
+    } catch (err) {
+        console.error('Failed to send analysis link email:', err);
     }
 }
 
@@ -1462,8 +1483,8 @@ async function handleAnalyzeInitialAnswers(userId, env) {
             return;
         }
         const answers = safeParseJson(answersStr, {});
-        const promptTpl = await env.RESOURCES_KV.get('prompt_initial_analysis');
-        const modelName = await env.RESOURCES_KV.get('model_chat') || await env.RESOURCES_KV.get('model_plan_generation');
+        const promptTpl = await env.RESOURCES_KV.get('prompt_questionnaire_analysis');
+        const modelName = await env.RESOURCES_KV.get('model_questionnaire_analysis');
         const provider = getModelProvider(modelName);
         if (!promptTpl || !modelName ||
             (provider === 'gemini' && !env[GEMINI_API_KEY_SECRET_NAME]) ||
@@ -1476,6 +1497,12 @@ async function handleAnalyzeInitialAnswers(userId, env) {
         const cleaned = cleanGeminiJson(raw);
         await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
         console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
+        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] || 'https://mybody.best/analyze.html';
+        const link = `${baseUrl}?userId=${encodeURIComponent(userId)}`;
+        if (answers.email) {
+            const name = answers.name || 'Клиент';
+            await sendAnalysisLinkEmail(answers.email, name, link, env);
+        }
     } catch (error) {
         console.error(`Error in handleAnalyzeInitialAnswers (${userId}):`, error.message, error.stack);
     }
