@@ -6,8 +6,8 @@ const importConfig = async (hostname) => {
   return import('../config.js');
 };
 
-test('login endpoint in local development', async () => {
-  const { apiEndpoints } = await importConfig('localhost');
+test.each(['localhost', '127.0.0.1'])('login endpoint in local development (%s)', async (host) => {
+  const { apiEndpoints } = await importConfig(host);
   expect(apiEndpoints.login).toBe('/api/login');
 });
 
