@@ -1,5 +1,5 @@
 import { showMessage, hideMessage } from "./messageUtils.js";
-import { workerBaseUrl } from "./config.js";
+import { apiEndpoints } from "./config.js";
 
 export function setupRegistration(formSelector, messageElSelector) {
   const form = document.querySelector(formSelector);
@@ -43,7 +43,7 @@ export function setupRegistration(formSelector, messageElSelector) {
       submitBtn.textContent = 'Обработка...';
     }
     try {
-      const res = await fetch(`${workerBaseUrl}/api/register`, {
+      const res = await fetch(apiEndpoints.register, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, confirm_password: confirmPassword })

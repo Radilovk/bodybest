@@ -13,7 +13,9 @@ beforeEach(async () => {
     showMessage: jest.fn(),
     hideMessage: jest.fn()
   }));
-  jest.unstable_mockModule('../config.js', () => ({ workerBaseUrl: 'https://api' }));
+  jest.unstable_mockModule('../config.js', () => ({
+    apiEndpoints: { register: 'https://api/api/register' }
+  }));
   ({ setupRegistration } = await import('../register.js'));
   ({ showMessage } = await import('../messageUtils.js'));
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });

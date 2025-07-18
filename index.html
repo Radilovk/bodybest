@@ -70,7 +70,7 @@
     <script type="module">
         import { showMessage, hideMessage } from './js/messageUtils.js';
         import { setupRegistration } from './js/register.js';
-        import { workerBaseUrl, isLocalDevelopment } from './js/config.js';
+        import { workerBaseUrl, apiEndpoints, isLocalDevelopment } from './js/config.js';
         // Селектори
         const loginSection = document.getElementById('login-section');
         const registerSection = document.getElementById('register-section');
@@ -85,8 +85,8 @@
         // Базов URL на Worker-а е дефиниран в config.js
 
         // API Endpoints
-        const loginEndpoint = `${workerBaseUrl}/api/login`;
-        const registerEndpoint = `${workerBaseUrl}/api/register`;
+        const loginEndpoint = apiEndpoints.login;
+        const registerEndpoint = apiEndpoints.register;
         // const forgotPasswordEndpoint = `${workerBaseUrl}/api/forgotPassword`; // Placeholder за бъдещ endpoint
 
         // URL за пренасочване след логин
