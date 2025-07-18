@@ -70,7 +70,7 @@
     <script type="module">
         import { showMessage, hideMessage } from './js/messageUtils.js';
         import { setupRegistration } from './js/register.js';
-        import { workerBaseUrl, apiEndpoints, isLocalDevelopment } from './js/config.js';
+        import { apiEndpoints } from './js/config.js';
         // Селектори
         const loginSection = document.getElementById('login-section');
         const registerSection = document.getElementById('register-section');
@@ -87,7 +87,6 @@
         // API Endpoints
         const loginEndpoint = apiEndpoints.login;
         const registerEndpoint = apiEndpoints.register;
-        // const forgotPasswordEndpoint = `${workerBaseUrl}/api/forgotPassword`; // Placeholder за бъдещ endpoint
 
         // URL за пренасочване след логин
         const dashboardUrl = 'code.html'; // Променено, ако code.html е в същата директория
