@@ -13,11 +13,19 @@ function createStore(initial = {}) {
 
 describe('AI config handlers', () => {
   test('handleGetAiConfig returns all KV values', async () => {
-    const kv = createStore({ model_chat: 'base' });
+    const kv = createStore({
+      model_chat: 'base',
+      model_questionnaire_analysis: 'qa',
+      prompt_questionnaire_analysis: 'qp'
+    });
     const env = { RESOURCES_KV: kv };
     const res = await handleGetAiConfig({}, env);
     expect(res.success).toBe(true);
-    expect(res.config).toEqual({ model_chat: 'base' });
+    expect(res.config).toEqual({
+      model_chat: 'base',
+      model_questionnaire_analysis: 'qa',
+      prompt_questionnaire_analysis: 'qp'
+    });
   });
 
   test('handleSetAiConfig updates values and subsequent chat uses them', async () => {
