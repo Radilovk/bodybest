@@ -104,6 +104,7 @@ const testQuestForm = document.getElementById('testQuestForm');
 const testQuestUserId = document.getElementById('testQuestUserId');
 const testQuestData = document.getElementById('testQuestData');
 const testQuestResultPre = document.getElementById('testQuestResult');
+const openQuestAnalysisLink = document.getElementById('openQuestAnalysis');
 const clientNameHeading = document.getElementById('clientName');
 const closeProfileBtn = document.getElementById('closeProfile');
 const notificationsList = document.getElementById('notificationsList');
@@ -1301,6 +1302,7 @@ async function sendTestQuest() {
     if (!testQuestForm) return;
     const userId = testQuestUserId ? testQuestUserId.value.trim() : '';
     if (!userId) return;
+    if (openQuestAnalysisLink) openQuestAnalysisLink.style.display = 'none';
     const payload = { userId };
     const raw = testQuestData ? testQuestData.value.trim() : '';
     if (raw) {
@@ -1318,6 +1320,10 @@ async function sendTestQuest() {
         });
         const data = await resp.json().catch(() => ({}));
         if (testQuestResultPre) testQuestResultPre.textContent = JSON.stringify(data, null, 2);
+        if (openQuestAnalysisLink) {
+            openQuestAnalysisLink.href = `analyze.html?userId=${encodeURIComponent(userId)}`;
+            openQuestAnalysisLink.style.display = 'inline';
+        }
         if (!resp.ok || !data.success) alert(data.message || 'Грешка');
     } catch (err) {
         console.error('Error testing questionnaire analysis:', err);
