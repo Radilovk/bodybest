@@ -24,6 +24,8 @@ beforeEach(async () => {
       <textarea id="imagePrompt"></textarea>
       <input id="imageTokens" />
       <input id="imageTemperature" />
+      <input id="analysisModel" />
+      <textarea id="analysisPrompt"></textarea>
       <input id="adminToken" />
     </form>
     <button id="showStats"></button>
@@ -75,6 +77,8 @@ test('saveAiConfig sends updates payload with Authorization header', async () =>
   document.getElementById('imagePrompt').value = 'ip';
   document.getElementById('imageTokens').value = '4';
   document.getElementById('imageTemperature').value = '0.4';
+  document.getElementById('analysisModel').value = 'am';
+  document.getElementById('analysisPrompt').value = 'ap';
 
   await submitHandler(new Event('submit'));
 
@@ -91,6 +95,8 @@ test('saveAiConfig sends updates payload with Authorization header', async () =>
       model_principle_adjustment: 'mm',
       model_image_analysis: 'im',
       prompt_image_analysis: 'ip',
+      model_questionnaire_analysis: 'am',
+      prompt_questionnaire_analysis: 'ap',
       prompt_unified_plan_generation_v2: 'pp',
       plan_token_limit: '1',
       plan_temperature: '0.1',

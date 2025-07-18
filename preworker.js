@@ -114,6 +114,28 @@ const ADAPTIVE_QUIZ_ANSWERS_LOOKBACK_DAYS = 35; // Колко назад да т
 const PREVIOUS_QUIZZES_FOR_CONTEXT_COUNT = 2; // Брой предишни въпросници за контекст при генериране на нов
 const AUTOMATED_FEEDBACK_TRIGGER_DAYS = 3; // След толкова дни предлагаме автоматичен чат
 const PRAISE_INTERVAL_DAYS = 3; // Интервал за нова похвала/значка
+const AI_CONFIG_KEYS = [
+    'model_plan_generation',
+    'model_chat',
+    'model_principle_adjustment',
+    'model_image_analysis',
+    'prompt_image_analysis',
+    'model_questionnaire_analysis',
+    'prompt_questionnaire_analysis',
+    'prompt_unified_plan_generation_v2',
+    'plan_token_limit',
+    'plan_temperature',
+    'prompt_chat',
+    'chat_token_limit',
+    'chat_temperature',
+    'prompt_plan_modification',
+    'mod_token_limit',
+    'mod_temperature',
+    'image_token_limit',
+    'image_temperature',
+    'welcome_email_subject',
+    'welcome_email_body'
+];
 // ------------- END BLOCK: GlobalConstantsAndBindings -------------
 
 // ------------- START BLOCK: HelperFunctions -------------
@@ -1869,10 +1891,10 @@ async function handleGetPlanModificationPrompt(request, env) {
 // ------------- START FUNCTION: handleGetAiConfig -------------
 async function handleGetAiConfig(request, env) {
     try {
-        const list = await env.RESOURCES_KV.list();
         const config = {};
-        for (const { name } of list.keys) {
-            config[name] = await env.RESOURCES_KV.get(name);
+        for (const key of AI_CONFIG_KEYS) {
+            const val = await env.RESOURCES_KV.get(key);
+            if (val !== null) config[key] = val;
         }
         return { success: true, config };
     } catch (error) {
@@ -1901,7 +1923,9 @@ async function handleSetAiConfig(request, env) {
             return { success: false, message: 'Липсват данни.', statusHint: 400 };
         }
         for (const [key, value] of Object.entries(updates)) {
-            await env.RESOURCES_KV.put(key, String(value));
+            if (AI_CONFIG_KEYS.includes(key)) {
+                await env.RESOURCES_KV.put(key, String(value));
+            }
         }
         return { success: true };
     } catch (error) {

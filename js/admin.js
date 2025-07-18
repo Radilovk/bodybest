@@ -86,6 +86,9 @@ const testPlanBtn = document.getElementById('testPlanModel');
 const testChatBtn = document.getElementById('testChatModel');
 const testModBtn = document.getElementById('testModModel');
 const testImageBtn = document.getElementById('testImageModel');
+const analysisModelInput = document.getElementById('analysisModel');
+const analysisPromptInput = document.getElementById('analysisPrompt');
+const testAnalysisBtn = document.getElementById('testAnalysisModel');
 const emailSettingsForm = document.getElementById('emailSettingsForm');
 const welcomeEmailSubjectInput = document.getElementById('welcomeEmailSubject');
 const welcomeEmailBodyInput = document.getElementById('welcomeEmailBody');
@@ -1092,6 +1095,8 @@ async function loadAiConfig() {
         modModelInput.value = cfg.model_principle_adjustment || '';
         if (imageModelInput) imageModelInput.value = cfg.model_image_analysis || '';
         if (imagePromptInput) imagePromptInput.value = cfg.prompt_image_analysis || '';
+        if (analysisModelInput) analysisModelInput.value = cfg.model_questionnaire_analysis || '';
+        if (analysisPromptInput) analysisPromptInput.value = cfg.prompt_questionnaire_analysis || '';
         if (planPromptInput) planPromptInput.value = cfg.prompt_unified_plan_generation_v2 || '';
         if (planTokensInput) planTokensInput.value = cfg.plan_token_limit || '';
         if (planTemperatureInput) planTemperatureInput.value = cfg.plan_temperature || '';
@@ -1124,6 +1129,8 @@ async function saveAiConfig() {
             model_principle_adjustment: modModelInput.value.trim(),
             model_image_analysis: imageModelInput ? imageModelInput.value.trim() : '',
             prompt_image_analysis: imagePromptInput ? imagePromptInput.value.trim() : '',
+            model_questionnaire_analysis: analysisModelInput ? analysisModelInput.value.trim() : '',
+            prompt_questionnaire_analysis: analysisPromptInput ? analysisPromptInput.value.trim() : '',
             prompt_unified_plan_generation_v2: planPromptInput ? planPromptInput.value.trim() : '',
             plan_token_limit: planTokensInput ? planTokensInput.value.trim() : '',
             plan_temperature: planTemperatureInput ? planTemperatureInput.value.trim() : '',
@@ -1317,6 +1324,8 @@ async function applySelectedPreset() {
         modModelInput.value = cfg.modModel || cfg.model_principle_adjustment || '';
         if (imageModelInput) imageModelInput.value = cfg.imageModel || cfg.model_image_analysis || '';
         if (imagePromptInput) imagePromptInput.value = cfg.imagePrompt || cfg.prompt_image_analysis || '';
+        if (analysisModelInput) analysisModelInput.value = cfg.analysisModel || cfg.model_questionnaire_analysis || '';
+        if (analysisPromptInput) analysisPromptInput.value = cfg.analysisPrompt || cfg.prompt_questionnaire_analysis || '';
         if (planPromptInput) planPromptInput.value = cfg.planPrompt || cfg.prompt_unified_plan_generation_v2 || '';
         if (planTokensInput) planTokensInput.value = cfg.planTokens || cfg.plan_token_limit || '';
         if (planTemperatureInput) planTemperatureInput.value = cfg.planTemperature || cfg.plan_temperature || '';
@@ -1352,6 +1361,8 @@ async function saveCurrentPreset() {
             model_principle_adjustment: modModelInput.value.trim(),
             model_image_analysis: imageModelInput ? imageModelInput.value.trim() : '',
             prompt_image_analysis: imagePromptInput ? imagePromptInput.value.trim() : '',
+            model_questionnaire_analysis: analysisModelInput ? analysisModelInput.value.trim() : '',
+            prompt_questionnaire_analysis: analysisPromptInput ? analysisPromptInput.value.trim() : '',
             prompt_unified_plan_generation_v2: planPromptInput ? planPromptInput.value.trim() : '',
             plan_token_limit: planTokensInput ? planTokensInput.value.trim() : '',
             plan_temperature: planTemperatureInput ? planTemperatureInput.value.trim() : '',
@@ -1450,6 +1461,7 @@ if (aiConfigForm) {
     testChatBtn?.addEventListener('click', () => testAiModel(chatModelInput.value.trim()));
     testModBtn?.addEventListener('click', () => testAiModel(modModelInput.value.trim()));
     testImageBtn?.addEventListener('click', () => testAiModel(imageModelInput.value.trim()));
+    testAnalysisBtn?.addEventListener('click', () => testAiModel(analysisModelInput.value.trim()));
     planModelInput?.addEventListener('input', () => updateHints(planModelInput, planHints));
     chatModelInput?.addEventListener('input', () => updateHints(chatModelInput, chatHints));
     modModelInput?.addEventListener('input', () => updateHints(modModelInput, modHints));
