@@ -2,6 +2,7 @@
 
 // Определяваме базовия URL според средата
 export const isLocalDevelopment = window.location.hostname === 'localhost' ||
+                               window.location.hostname === '127.0.0.1' ||
                                window.location.hostname.includes('replit') ||
                                window.location.hostname.includes('preview');
 
