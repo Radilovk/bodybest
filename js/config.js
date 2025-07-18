@@ -5,11 +5,13 @@ export const isLocalDevelopment = window.location.hostname === 'localhost' ||
                                window.location.hostname.includes('replit') ||
                                window.location.hostname.includes('preview');
 
-export const workerBaseUrl = isLocalDevelopment ?
-    '/api' : // Използваме локалния proxy в развойна среда
-    'https://openapichatbot.radilov-k.workers.dev'; // Директно към Worker в продукция
+export const workerBaseUrl = isLocalDevelopment
+    ? '' // Използваме локалния proxy в развойна среда
+    : 'https://openapichatbot.radilov-k.workers.dev'; // Директно към Worker в продукция
 
 export const apiEndpoints = {
+    login: `${workerBaseUrl}/api/login`,
+    register: `${workerBaseUrl}/api/register`,
     dashboard: `${workerBaseUrl}/api/dashboardData`,
     log: `${workerBaseUrl}/api/log`,
     chat: `${workerBaseUrl}/api/chat`,
