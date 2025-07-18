@@ -623,6 +623,8 @@ curl -X POST https://<your-domain>/api/runImageModel \
 
 След попълване на въпросника Cloudflare worker-ът съхранява резултата като `<userId>_analysis` и го връща чрез `/api/getInitialAnalysis?userId=<ID>`.
 Шаблонът `reganalize/analyze.html` визуализира тези данни.
+Когато анализът е генериран, потребителят получава имейл с линк към страницата,
+на който параметърът `userId` зарежда индивидуалния JSON.
 
 1. Извикайте ендпойнта и запишете JSON отговора.
 2. Заменете плейсхолдъра `/*---JSON_DATA_PLACEHOLDER---*/` в HTML с получения JSON.
@@ -809,6 +811,9 @@ To send a test email задайте `WORKER_ADMIN_TOKEN`. Може да посо
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |
 | `QUESTIONNAIRE_EMAIL_SUBJECT` | Optional subject for the confirmation email sent след изпращане на въпросника. |
 | `QUESTIONNAIRE_EMAIL_BODY` | Optional HTML body template for the confirmation email. `{{name}}` ще бъде заменено с името на потребителя. |
+| `ANALYSIS_EMAIL_SUBJECT` | Subject for the email, sent when the personal analysis is ready. |
+| `ANALYSIS_EMAIL_BODY` | HTML body template for that email. Use `{{name}}` и `{{link}}` за персонализация. |
+| `ANALYSIS_PAGE_URL` | Base URL към `analyze.html` за генериране на линка в писмото. |
 | `WORKER_URL` | Base URL of the main worker used by `mailer.js` to fetch email templates when no subject or body is provided. |
 
 Проверете стойностите така:

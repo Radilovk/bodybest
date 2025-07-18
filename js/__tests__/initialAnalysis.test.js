@@ -8,20 +8,22 @@ describe('initial analysis handlers', () => {
     global.fetch = originalFetch
   })
 
-  test('handleAnalyzeInitialAnswers saves result', async () => {
+  test('handleAnalyzeInitialAnswers saves result and sends email', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ result: { response: '{"ok":true}' } })
     })
     const env = {
+      MAILER_ENDPOINT_URL: 'https://mail.example.com',
+      ANALYSIS_PAGE_URL: 'https://app.example.com/analyze.html',
       USER_METADATA_KV: {
-        get: jest.fn(key => key === 'u1_initial_answers' ? Promise.resolve('{"name":"A"}') : Promise.resolve(null)),
+        get: jest.fn(key => key === 'u1_initial_answers' ? Promise.resolve('{"name":"A","email":"a@ex.bg"}') : Promise.resolve(null)),
         put: jest.fn()
       },
       RESOURCES_KV: {
         get: jest.fn(key => {
-          if (key === 'prompt_initial_analysis') return 'Analyze %%ANSWERS_JSON%%'
-          if (key === 'model_chat') return '@cf/test-model'
+          if (key === 'prompt_questionnaire_analysis') return 'Analyze %%ANSWERS_JSON%%'
+          if (key === 'model_questionnaire_analysis') return '@cf/test-model'
           return null
         })
       },
@@ -30,6 +32,7 @@ describe('initial analysis handlers', () => {
     }
     await worker.handleAnalyzeInitialAnswers('u1', env)
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_analysis', '{"ok":true}')
+    expect(global.fetch).toHaveBeenCalledWith('https://mail.example.com', expect.any(Object))
   })
 
   test('handleGetInitialAnalysisRequest returns parsed analysis', async () => {
