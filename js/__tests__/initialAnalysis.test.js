@@ -35,6 +35,35 @@ describe('initial analysis handlers', () => {
     expect(global.fetch).toHaveBeenCalledWith('https://mail.example.com', expect.any(Object))
   })
 
+  test('warns when ANALYSIS_EMAIL_BODY lacks link placeholder', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ result: { response: '{"ok":true}' } })
+    })
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const env = {
+      MAILER_ENDPOINT_URL: 'https://mail.example.com',
+      ANALYSIS_PAGE_URL: 'https://app.example.com/analyze.html',
+      ANALYSIS_EMAIL_BODY: '<p>Hello {{name}}</p>',
+      USER_METADATA_KV: {
+        get: jest.fn(key => key === 'u1_initial_answers' ? Promise.resolve('{"name":"A","email":"a@ex.bg"}') : Promise.resolve(null)),
+        put: jest.fn()
+      },
+      RESOURCES_KV: {
+        get: jest.fn(key => {
+          if (key === 'prompt_questionnaire_analysis') return 'Analyze %%ANSWERS_JSON%%'
+          if (key === 'model_questionnaire_analysis') return '@cf/test-model'
+          return null
+        })
+      },
+      CF_ACCOUNT_ID: 'acc',
+      CF_AI_TOKEN: 't'
+    }
+    await worker.handleAnalyzeInitialAnswers('u1', env)
+    expect(warnSpy).toHaveBeenCalledWith('ANALYSIS_EMAIL_BODY missing {{link}} placeholder')
+    warnSpy.mockRestore()
+  })
+
   test('handleGetInitialAnalysisRequest returns parsed analysis', async () => {
     const env = { USER_METADATA_KV: { get: jest.fn().mockResolvedValue('{"a":1}') } }
     const req = { url: 'https://x/api/getInitialAnalysis?userId=u1' }
