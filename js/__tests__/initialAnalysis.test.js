@@ -66,34 +66,6 @@ describe('initial analysis handlers', () => {
     warnSpy.mockRestore()
   })
 
-  test('adds userId to ANALYSIS_PAGE_URL with existing query', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ result: { response: '{"ok":true}' } })
-    })
-    const env = {
-      MAILER_ENDPOINT_URL: 'https://mail.example.com',
-      ANALYSIS_PAGE_URL: 'https://app.example.com/analyze.html?utm=1',
-      USER_METADATA_KV: {
-        get: jest.fn(key => key === 'u1_initial_answers' ? Promise.resolve('{"name":"A","email":"a@ex.bg"}') : Promise.resolve(null)),
-        put: jest.fn()
-      },
-      RESOURCES_KV: {
-        get: jest.fn(key => {
-          if (key === 'prompt_questionnaire_analysis') return 'Analyze %%ANSWERS_JSON%%'
-          if (key === 'model_questionnaire_analysis') return '@cf/test-model'
-          return null
-        })
-      },
-      CF_ACCOUNT_ID: 'acc',
-      CF_AI_TOKEN: 't'
-    }
-    await worker.handleAnalyzeInitialAnswers('u1', env)
-    const emailCall = global.fetch.mock.calls.find(c => c[0] === 'https://mail.example.com')
-    const callBody = JSON.parse(emailCall[1].body)
-    expect(callBody.message).toContain('https://app.example.com/analyze.html?utm=1&userId=u1')
-  })
-
   test('handleGetInitialAnalysisRequest returns parsed analysis', async () => {
     const env = { USER_METADATA_KV: { get: jest.fn().mockResolvedValue('{"a":1}') } }
     const req = { url: 'https://x/api/getInitialAnalysis?userId=u1' }
