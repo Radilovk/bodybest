@@ -327,7 +327,6 @@ node scripts/view-usage-logs.js sendTestEmail 5
 | `model_questionnaire_analysis` | Модел за анализ на първоначалния въпросник |
 | `prompt_image_analysis` | Шаблон за промпт при анализ на изображение |
 | `prompt_questionnaire_analysis` | Шаблон за анализ на подадените отговори |
-| `prompt_initial_analysis` | Шаблон за създаване на персонален анализ |
 | `prompt_adaptive_quiz_generation` | Шаблон за създаване на адаптивен въпросник |
 | `prompt_analytics_textual_summary` | Шаблон за текстов анализ на прогреса |
 | `prompt_analyze_quiz_and_suggest_changes` | Шаблон за анализ на отговорите и предложения за промяна |
