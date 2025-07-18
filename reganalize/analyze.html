@@ -176,7 +176,7 @@
         const analysisData = {/*---JSON_DATA_PLACEHOLDER---*/};
 
         document.addEventListener('DOMContentLoaded', function() {
-            if (!analysisData || Object.keys(analysisData).length === 1) {
+            if (!analysisData || !analysisData.client) {
                 document.body.innerHTML = '<h1>Грешка при зареждане на данните за анализ.</h1>';
                 document.body.classList.add('loaded');
                 return;
