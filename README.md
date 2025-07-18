@@ -634,6 +634,12 @@ curl -X POST https://<your-domain>/api/runImageModel \
 node -e "const fs=require('fs');const data=require('./analysis.json');const html=fs.readFileSync('reganalize/analyze.html','utf8').replace('/*---JSON_DATA_PLACEHOLDER---*/',JSON.stringify(data));fs.writeFileSync('analysis.html',html);"
 ```
 
+По-удобно може да използвате `scripts/injectAnalysis.js`, който автоматично извлича анализа и го вгражда:
+
+```bash
+node scripts/injectAnalysis.js https://<your-domain> <userId>
+```
+
 
 ### Промяна на началното съобщение в чата
 
