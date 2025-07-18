@@ -1501,7 +1501,9 @@ async function handleAnalyzeInitialAnswers(userId, env) {
         await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
         console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
         const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] || 'https://mybody.best/analyze.html';
-        const link = `${baseUrl}?userId=${encodeURIComponent(userId)}`;
+        const url = new URL(baseUrl);
+        url.searchParams.set('userId', userId);
+        const link = url.toString();
         if (answers.email) {
             const name = answers.name || 'Клиент';
             await sendAnalysisLinkEmail(answers.email, name, link, env);
