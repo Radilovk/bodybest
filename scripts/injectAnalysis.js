@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'fs';
 
-const [apiUrl, userId, source = 'reganalize/analyze.html', output = 'analysis.html'] = process.argv.slice(2);
+const [apiUrl, userId, source = 'reganalize/analyze.html', output = 'analyze.html'] = process.argv.slice(2);
 
 if (!apiUrl || !userId) {
   console.log('Usage: node scripts/injectAnalysis.js <apiUrl> <userId> [sourceHtml] [outputHtml]');

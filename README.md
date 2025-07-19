@@ -515,7 +515,7 @@ The Cloudflare account ID is filled automatically from `config.js`.
 Use the small image button next to the send icon to upload a picture. The file is sent to `/api/analyzeImage` and the analysis appears as a bot reply.
 The admin panel (`admin.html`) also provides a **Test Image Analysis** form that sends a selected picture to `/api/analyzeImage` and shows the JSON response.
 Има и секция **Тест на анализ на въпросник**, която изпраща JSON отговори към `/api/submitQuestionnaire` и извежда статуса на обработката заедно с получения анализ. Заредете файл с резултати или поставете съдържанието в текстовото поле и натиснете **Изпрати**.
-Падащо меню **Клиент** автоматично се попълва със списък на всички профили. Може и да въведете `userId` ръчно. Достатъчно е да посочите имейл или `userId` (или и двете). Ако не подадете JSON данни, се зарежда автоматично съхраненият въпросник и се стартира нов анализ. При успешно изпращане и върнат идентификатор се появява бутон **Отвори анализа**, който отваря `analysis.html?userId=<ID>` в нов таб.
+Падащо меню **Клиент** автоматично се попълва със списък на всички профили. Може и да въведете `userId` ръчно. Достатъчно е да посочите имейл или `userId` (или и двете). Ако не подадете JSON данни, се зарежда автоматично съхраненият въпросник и се стартира нов анализ. При успешно изпращане и върнат идентификатор се появява бутон **Отвори анализа**, който отваря `analyze.html?userId=<ID>` в нов таб.
 
 ```bash
 curl -X POST https://<your-domain>/api/submitQuestionnaire \
@@ -641,7 +641,7 @@ curl -X POST https://<your-domain>/api/runImageModel \
 Примерен Node.js скрипт:
 
 ```bash
-node -e "const fs=require('fs');const data=require('./analysis.json');const html=fs.readFileSync('reganalize/analyze.html','utf8').replace('/*---JSON_DATA_PLACEHOLDER---*/',JSON.stringify(data));fs.writeFileSync('analysis.html',html);"
+node -e "const fs=require('fs');const data=require('./analysis.json');const html=fs.readFileSync('reganalize/analyze.html','utf8').replace('/*---JSON_DATA_PLACEHOLDER---*/',JSON.stringify(data));fs.writeFileSync('analyze.html',html);"
 ```
 
 По-удобно може да използвате `scripts/injectAnalysis.js`, който автоматично извлича анализа и го вгражда:
