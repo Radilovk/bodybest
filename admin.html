@@ -233,6 +233,17 @@
     <pre id="testImageResult" class="json"></pre>
   </details>
 
+  <details id="testQuestionnaireSection" class="card">
+    <summary>Тест на анализ на въпросник</summary>
+    <form id="testQuestionnaireForm">
+      <label>Имейл:<br><input id="testQEmail" type="email"></label>
+      <label>Файл с отговори:<br><input id="testQFile" type="file" accept="application/json"></label>
+      <label>JSON отговори:<br><textarea id="testQText" rows="5"></textarea></label>
+      <button type="submit">Изпрати</button>
+    </form>
+    <pre id="testQResult" class="json"></pre>
+  </details>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module" src="js/admin.js"></script>
 </body>
