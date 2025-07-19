@@ -1,6 +1,8 @@
 import { apiEndpoints } from './config.js';
 import { labelMap, statusMap } from './labelMap.js';
 import { fileToDataURL, fileToText } from './utils.js';
+import { loadTemplateInto } from './templateLoader.js';
+import { initClientProfile } from './clientProfile.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -42,7 +44,7 @@ const dailyLogsPre = document.getElementById('dailyLogs');
 const exportPlanBtn = document.getElementById('exportPlan');
 const openFullProfileLink = document.getElementById('openFullProfile');
 const openUserDataLink = document.getElementById('openUserData');
-const fullProfileFrame = document.getElementById('fullProfileFrame');
+const adminProfileContainer = document.getElementById('adminProfileContainer');
 const dashboardPre = document.getElementById('dashboardData');
 const copyDashboardJsonBtn = document.getElementById('copyDashboardJson');
 const profileSummaryDiv = document.getElementById('profileSummary');
@@ -128,6 +130,7 @@ function setCurrentUserId(val) {
 let currentPlanData = null;
 let currentDashboardData = null;
 let allClients = [];
+const originalSearch = window.location.search;
 // set of userIds с непрочетени съобщения/обратна връзка
 const unreadClients = new Set();
 const unreadByClient = new Map();
@@ -752,6 +755,8 @@ if (closeProfileBtn) {
         detailsSection.classList.add('hidden');
         resetTabs();
         sessionStorage.removeItem('activeTabId');
+        if (adminProfileContainer) adminProfileContainer.innerHTML = '';
+        history.replaceState(null, '', originalSearch);
         currentUserId = null;
     });
 }
@@ -762,7 +767,12 @@ if (sortOrderSelect) sortOrderSelect.addEventListener('change', renderClients);
 if (tagFilterSelect) tagFilterSelect.addEventListener('change', renderClients);
 
 async function showClient(userId) {
-    if (fullProfileFrame) fullProfileFrame.classList.remove('hidden');
+    if (adminProfileContainer) {
+        adminProfileContainer.innerHTML = '';
+        history.replaceState(null, '', `?userId=${encodeURIComponent(userId)}`);
+        await loadTemplateInto('profileTemplate.html', 'adminProfileContainer');
+        initClientProfile();
+    }
     try {
         const [profileResp, dashResp] = await Promise.all([
             fetch(`${apiEndpoints.getProfile}?userId=${userId}`),
@@ -787,7 +797,6 @@ async function showClient(userId) {
             if (profilePhone) profilePhone.value = data.phone || '';
             if (openFullProfileLink) openFullProfileLink.href = `clientProfile.html?userId=${encodeURIComponent(userId)}`;
             if (openUserDataLink) openUserDataLink.href = `Userdata.html?userId=${encodeURIComponent(userId)}`;
-            if (fullProfileFrame) fullProfileFrame.src = `clientProfile.html?userId=${encodeURIComponent(userId)}`;
             await Promise.all([
                 loadQueries(true),
                 loadFeedback(),
