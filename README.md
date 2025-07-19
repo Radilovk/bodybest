@@ -514,6 +514,13 @@ Open the file in a browser, enter your message and it will call the `/api/chat` 
 The Cloudflare account ID is filled automatically from `config.js`.
 Use the small image button next to the send icon to upload a picture. The file is sent to `/api/analyzeImage` and the analysis appears as a bot reply.
 The admin panel (`admin.html`) also provides a **Test Image Analysis** form that sends a selected picture to `/api/analyzeImage` and shows the JSON response.
+Има и секция **Тест на анализ на въпросник**, която изпраща JSON отговори към `/api/submitQuestionnaire` и извежда статуса на обработката заедно с получения анализ. Заредете файл с резултати или поставете съдържанието в текстовото поле и натиснете **Изпрати**.
+
+```bash
+curl -X POST https://<your-domain>/api/submitQuestionnaire \
+  -H "Content-Type: application/json" \
+  --data '{"email":"user@example.com","answers":[{"id":1,"value":"Да"}]}'
+```
 
 Some models require a short license confirmation before you can send other messages. Start the conversation with:
 
