@@ -1,119 +1,3 @@
-<!DOCTYPE html>
-<html lang="bg">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вашият Персонален Анализ</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <style>
-        :root {
-            --primary-color: #3A506B;
-            --secondary-color: #5BC0BE;
-            --accent-color: #778DA9;
-            --text-color-primary: #2c3e50;
-            --text-color-secondary: #555;
-            --bg-color: #F0F4F8;
-            --card-bg-color: #FFFFFF;
-            --border-color: #E0E7EF;
-            
-            --color-danger: #e74c3c;
-            --color-warning: #f39c12;
-            --color-ok: #5BC0BE;
-            --color-success: #2ecc71;
-            
-            --color-high: var(--color-danger);
-            --color-medium: var(--color-warning);
-            --color-low: var(--color-success);
-        }
-
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color-primary);
-            margin: 0;
-            padding: 0;
-            line-height: 1.6;
-            opacity: 0; /* Hide body until data is rendered */
-            transition: opacity 0.5s ease-in;
-        }
-
-        body.loaded { opacity: 1; }
-        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
-        header { text-align: center; padding: 40px 20px; background-color: var(--card-bg-color); border-bottom: 5px solid var(--secondary-color); margin-bottom: 40px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); }
-        header h1 { font-size: 2.8em; color: var(--primary-color); margin: 0; }
-        header .subtitle { font-size: 1.2em; color: var(--text-color-secondary); margin-top: 10px; }
-
-        .section-title { text-align: center; font-size: 2.2em; color: var(--primary-color); margin-bottom: 10px; font-weight: 700; }
-        .section-subtitle { text-align: center; font-size: 1.1em; color: var(--text-color-secondary); max-width: 700px; margin: 0 auto 40px auto; }
-        .card { background-color: var(--card-bg-color); border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 5px 20px rgba(58, 80, 107, 0.1); border: 1px solid var(--border-color); }
-
-        /* --- NEW PROFILE CARD STYLES --- */
-        .profile-card { padding: 20px; margin-top: -20px; /* Overlaps a bit */ }
-        .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: center; }
-        .profile-item i { font-size: 2em; color: var(--secondary-color); margin-bottom: 10px; display: block; }
-        .profile-item span { display: block; color: var(--text-color-secondary); font-size: 0.9em; }
-        .profile-item strong { font-size: 1.4em; color: var(--primary-color); }
-        .profile-item #profile-bmi.bmi-high { color: var(--color-danger); }
-        .profile-item #profile-bmi.bmi-medium { color: var(--color-warning); }
-        .profile-item #profile-bmi.bmi-ok { color: var(--color-success); }
-
-
-        .goal-card { text-align: center; }
-        .goal-card .goal-text { font-size: 1.8em; font-weight: 600; color: var(--primary-color); }
-        .goal-card .goal-text span { color: var(--secondary-color); font-weight: 700; }
-        .motivation-rating { font-size: 2em; color: var(--color-warning); margin: 15px 0; }
-
-        #obstacles-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; }
-        .obstacle-card { text-align: center; border-top: 5px solid var(--color-danger); }
-        .obstacle-card .icon { font-size: 3em; color: var(--color-danger); margin-bottom: 15px; }
-        .obstacle-card h3 { font-size: 1.3em; color: var(--primary-color); margin-bottom: 10px; }
-        .obstacle-card p { font-size: 0.95em; color: var(--text-color-secondary); }
-
-        .dashboard-item { display: flex; align-items: center; margin-bottom: 25px; gap: 20px; }
-        .dashboard-item .label { flex: 0 0 200px; font-weight: 600; font-size: 1.1em; }
-        .dashboard-item .label i { margin-right: 10px; color: var(--accent-color); }
-        .risk-bar-container { flex-grow: 1; height: 25px; background-color: #e0e7ef; border-radius: 15px; overflow: hidden; position: relative; }
-        .risk-bar { height: 100%; border-radius: 15px; transition: width 1s ease-out; }
-        .risk-high .risk-bar { background: var(--color-danger); }
-        .risk-medium .risk-bar { background: var(--color-warning); }
-        .risk-ok .risk-bar { background: var(--color-ok); }
-        .risk-low .risk-bar { background: var(--color-success); }
-        .risk-value { flex: 0 0 150px; text-align: right; font-weight: 700; font-size: 1.1em; }
-        .risk-high .risk-value { color: var(--color-danger); }
-        .risk-medium .risk-value { color: var(--color-warning); }
-        .risk-ok .risk-value { color: var(--color-ok); }
-        .risk-low .risk-value { color: var(--color-success); }
-
-        #deep-dive-container { display: grid; grid-template-columns: 1fr; gap: 25px; }
-        @media (min-width: 768px) { #deep-dive-container { grid-template-columns: 1fr 1fr; } }
-        .deep-dive-card h3 { color: var(--primary-color); font-size: 1.4em; margin-bottom: 15px; border-bottom: 2px solid; padding-bottom: 10px; }
-        .deep-dive-card h3 i { margin-right: 10px; }
-        .deep-dive-card ul { list-style: none; padding-left: 0; margin: 0; }
-        .deep-dive-card li { padding: 8px 0; display: flex; align-items: flex-start; }
-        .deep-dive-card li i { margin-right: 12px; margin-top: 4px; }
-        
-        /* --- NEW DEEP DIVE STYLES --- */
-        .deep-dive-card h4 { font-size: 1.1em; color: var(--primary-color); margin-top: 20px; margin-bottom: 10px; }
-        .deep-dive-card h4 i { margin-right: 8px; }
-        .deep-dive-card ul li .fa-times-circle { color: var(--color-danger); }
-        .deep-dive-card ul li .fa-arrow-alt-circle-right { color: var(--color-ok); }
-        .focus-area { background-color: #e8f6f6; border-left: 4px solid var(--secondary-color); padding: 15px 20px; margin-top: 20px; border-radius: 4px; }
-        .focus-area h4 { margin-top: 0; color: var(--primary-color); }
-        .focus-area p { margin-bottom: 0; font-weight: 600; color: var(--text-color-primary); }
-
-        .cta-section { background-color: var(--primary-color); color: white; text-align: center; padding: 50px 20px; margin-top: 40px; }
-        .cta-section h2 { font-size: 2em; margin-bottom: 15px; }
-        .cta-section p { max-width: 600px; margin: 0 auto 30px auto; opacity: 0.9; }
-        .cta-button { background-color: var(--secondary-color); color: white; font-size: 1.2em; font-weight: 700; text-decoration: none; padding: 15px 40px; border-radius: 50px; transition: background-color 0.3s ease, transform 0.3s ease; display: inline-block; border: none; cursor: pointer; }
-        .cta-button:hover { background-color: #4ab1af; transform: scale(1.05); }
-
-        footer { text-align: center; padding: 20px; font-size: 0.9em; color: var(--text-color-secondary); }
-    </style>
-</head>
 <body>
 
     <header>
@@ -122,8 +6,8 @@
     </header>
 
     <main class="container">
-        <!-- NEW SECTION: Profile Card -->
-        <section class="card profile-card">
+        <!-- NEW SECTION: Profile Card (ще се покаже само ако данните съществуват) -->
+        <section id="profile-card-container" class="card profile-card" style="display: none;">
             <h2 class="section-title" style="font-size: 1.8em; margin-bottom: 20px;">Вашият Профил</h2>
             <div class="profile-grid">
                 <div class="profile-item">
@@ -166,14 +50,14 @@
         <!-- Секция 3: Здравен светофар -->
         <section class="card" style="margin-top: 50px;">
             <h2 class="section-title">Вашият Здравен Светофар</h2>
-            <p class="section-subtitle">Визуална оценка на ключови аспекти от Вашия начин на живот. Зелените зони са Вашата сила, а червените показват къде ще се фокусираме заедно.</p>
+            <p class="section-subtitle">Визуална оценка на ключови аспекти от Вашия начин на живот. Започваме с най-проблемните области.</p>
             <div id="dashboard-container"></div>
         </section>
 
-        <!-- Секция 4: Дълбок анализ и Първи стъпки -->
+        <!-- Секция 4: Анализ и Първи Стъпки (вече не се казва "Дълбок анализ") -->
         <section style="margin-top: 50px;">
-            <h2 class="section-title">Анализ и Първи Стъпки</h2>
-            <p class="section-subtitle">Нека разгледаме в детайли зоните, които изискват работа, и да определим конкретни първи стъпки.</p>
+            <h2 class="section-title">Анализ и Препоръки</h2>
+            <p class="section-subtitle">Нека разгледаме по-отблизо зоните, които изискват най-много работа.</p>
             <div id="deep-dive-container"></div>
         </section>
     </main>
@@ -193,64 +77,93 @@
     </footer>
 
     <script>
+        // ДАННИТЕ ОТ БОТА ЩЕ БЪДАТ ИНЖЕКТИРАНИ ТУК ОТ СЪРВЪРА
         const analysisData = {/*---JSON_DATA_PLACEHOLDER---*/};
-        const isLocalDev = ['localhost', '127.0.0.1'].includes(window.location.hostname) || window.location.hostname.includes('replit') || window.location.hostname.includes('preview');
+
+        const isLocalDev = window.location.hostname === 'localhost'
+            || window.location.hostname === '127.0.0.1'
+            || window.location.hostname.includes('replit')
+            || window.location.hostname.includes('preview');
         const workerBaseUrl = isLocalDev ? '' : 'https://openapichatbot.radilov-k.workers.dev';
 
         document.addEventListener('DOMContentLoaded', function() {
-            // --- Хелпър функции ---
-            const generateMotivationStars = rating => Array.from({ length: 5 }, (_, i) => `<i class="${i < rating ? 'fas' : 'far'} fa-star"></i>`).join('');
-            const generateObstaclesHTML = obstacles => obstacles.map(o => `<div class="card obstacle-card"><div class="icon"><i class="${o.icon}"></i></div><h3>${o.title}</h3><p>${o.description}</p></div>`).join('');
-            const generateDashboardHTML = items => items.map(i => `<div class="dashboard-item risk-${i.riskClass}"><div class="label"><i class="${i.icon}"></i>${i.category}</div><div class="risk-bar-container"><div class="risk-bar" style="width: ${i.riskValue}%;" title="Риск: ${i.riskValue}%"></div></div><div class="risk-value">${i.riskLevel}</div></div>`).join('');
-            
-            // --- UPDATED Deep Dive HTML generator ---
+
+            // --- Хелпър функции за генериране на HTML ---
+            const generateMotivationStars = (rating) => {
+                let stars = '';
+                for (let i = 1; i <= 5; i++) {
+                    stars += `<i class="${i <= rating ? 'fas' : 'far'} fa-star"></i>`;
+                }
+                return stars;
+            };
+
+            const generateObstaclesHTML = (obstacles) => {
+                return obstacles.map(obstacle => `
+                    <div class="card obstacle-card">
+                        <div class="icon"><i class="${obstacle.icon}"></i></div>
+                        <h3>${obstacle.title}</h3>
+                        <p>${obstacle.description}</p>
+                    </div>
+                `).join('');
+            };
+
+            const generateDashboardHTML = (items) => {
+                return items.map(item => `
+                    <div class="dashboard-item risk-${item.riskClass}">
+                        <div class="label"><i class="${item.icon}"></i>${item.category}</div>
+                        <div class="risk-bar-container">
+                            <div class="risk-bar" style="width: ${item.riskValue}%;"></div>
+                        </div>
+                        <div class="risk-value">${item.riskLevel}</div>
+                    </div>
+                `).join('');
+            };
+
+            // --- КОРЕКЦИЯ: Тази функция вече работи с ВАШИЯ съществуващ JSON формат ---
+            // Тя премахва цитата и го заменя с по-полезна секция "Заключение"
             const generateDeepDiveHTML = (items) => {
-                // This function assumes the JSON structure is updated.
-                // It expects item.problems (array), item.recommendations (array), item.firstStep (string)
                 return items.map(item => `
                     <div class="card deep-dive-card">
                         <h3 style="border-bottom-color: var(--color-${item.riskClass}); color: var(--color-${item.riskClass});">
                             <i class="${item.icon}"></i>${item.title}
                         </h3>
-
-                        <h4><i class="fas fa-exclamation-circle" style="color: var(--color-danger);"></i> Ключови проблеми:</h4>
-                        <ul>${(item.problems || []).map(p => `<li><i class="fas fa-times-circle"></i><div>${p}</div></li>`).join('')}</ul>
-
-                        <h4 style="margin-top: 20px;"><i class="fas fa-lightbulb" style="color: var(--color-ok);"></i> Препоръки:</h4>
-                        <ul>${(item.recommendations || []).map(r => `<li><i class="fas fa-arrow-alt-circle-right"></i><div>${r}</div></li>`).join('')}</ul>
-                        
+                        <h4><i class="fas fa-lightbulb" style="color: var(--color-ok);"></i> Ключови наблюдения:</h4>
+                        <ul>
+                            ${item.points.map(point => `<li><i class="fas fa-check-circle" style="color: var(--secondary-color);"></i><div>${point}</div></li>`).join('')}
+                        </ul>
                         <div class="focus-area">
-                            <h4><i class="fas fa-bullseye"></i> Вашата първа, малка стъпка:</h4>
-                            <p>${item.firstStep || 'Да се фокусирате върху една малка промяна тази седмица.'}</p>
+                             <h4><i class="fas fa-bullseye"></i> Фокус и заключение:</h4>
+                            <p>${item.conclusion}</p>
                         </div>
                     </div>
                 `).join('');
             };
 
+            // --- Основна функция за рендиране ---
             const renderAnalysis = (data) => {
                 // Header
                 document.getElementById('client-name').textContent = `Здравейте, ${data.client.name}!`;
 
-                // --- NEW: Profile Card Population ---
-                // NOTE: This assumes `data.client` is enriched with `age`, `weight`, `height` from initial answers.
-                const { age, weight, height } = data.client;
-                document.getElementById('profile-age').textContent = age ? `${age} г.` : 'N/A';
-                document.getElementById('profile-weight').textContent = weight ? `${weight} кг` : 'N/A';
-                document.getElementById('profile-height').textContent = height ? `${height} см` : 'N/A';
-                
-                if (weight && height) {
-                    const heightInM = height / 100;
-                    const bmi = (weight / (heightInM * heightInM)).toFixed(1);
+                // --- КОРЕКЦИЯ: Профилната карта се попълва САМО ако данните ги има ---
+                if (data.client.age && data.client.weight && data.client.height) {
+                    document.getElementById('profile-age').textContent = `${data.client.age} г.`;
+                    document.getElementById('profile-weight').textContent = `${data.client.weight} кг`;
+                    document.getElementById('profile-height').textContent = `${data.client.height} см`;
+                    
+                    const heightInM = data.client.height / 100;
+                    const bmi = (data.client.weight / (heightInM * heightInM)).toFixed(1);
                     const bmiEl = document.getElementById('profile-bmi');
                     bmiEl.textContent = bmi;
                     if (bmi >= 30) bmiEl.className = 'bmi-high';
                     else if (bmi >= 25) bmiEl.className = 'bmi-medium';
                     else bmiEl.className = 'bmi-ok';
+
+                    document.getElementById('profile-card-container').style.display = 'block';
                 }
 
                 // Goal & Motivation
-                document.getElementById('goal-summary').innerHTML = `Вашата основна цел е: <span>${data.client.mainGoal.target}</span>`;
-                document.getElementById('motivation-summary').textContent = `Вашата мотивация е оценена като ${data.client.motivation.text.toLowerCase()}:`;
+                document.getElementById('goal-summary').innerHTML = `Искате да постигнете <span>${data.client.mainGoal.target}</span>`;
+                document.getElementById('motivation-summary').textContent = `Вашата мотивация е ${data.client.motivation.text.toLowerCase()}:`;
                 document.getElementById('motivation-rating').innerHTML = generateMotivationStars(data.client.motivation.rating);
                 document.getElementById('motivation-rating').title = `${data.client.motivation.rating} от 5 звезди`;
 
@@ -261,53 +174,51 @@
                 // Dashboard
                 document.getElementById('dashboard-container').innerHTML = generateDashboardHTML(data.healthDashboard);
 
-                // Deep Dive
+                // Deep Dive (с новия, работещ генератор)
                 document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
 
-                // CTA
+                // Call to Action
                 document.getElementById('cta-title').textContent = data.callToAction.title;
                 document.getElementById('cta-body').textContent = data.callToAction.body;
                 document.getElementById('cta-button-text').textContent = data.callToAction.buttonText;
                 document.getElementById('cta-button').href = data.callToAction.buttonLink;
 
                 // Footer
-                document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} Your Wellness Company. Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
+                document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} Your Wellness Company. Всички права запазени. Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
                 
                 document.body.classList.add('loaded');
             };
 
-            const hasRequiredData = analysisData && analysisData.client && Array.isArray(analysisData.healthDashboard);
+            // --- КОРЕКЦИЯ: Връщаме стария, работещ начин на зареждане на данните ---
+            const hasRequiredData = analysisData && analysisData.client && Object.keys(analysisData).length > 2;
 
-            if (hasRequiredData && Object.keys(analysisData).length > 2) {
+            if (hasRequiredData) {
                 renderAnalysis(analysisData);
             } else {
-                const userId = new URLSearchParams(location.search).get('userId');
+                const params = new URLSearchParams(location.search);
+                const userId = params.get('userId');
                 if (!userId) {
-                    document.body.innerHTML = '<h1>Грешка: Липсва ID на потребител за зареждане на анализ.</h1>';
+                    document.body.innerHTML = '<h1>Грешка при зареждане на данните за анализ.</h1>';
                     document.body.classList.add('loaded');
                     return;
                 }
-                // Fetch both analysis and initial answers to populate profile card
-                Promise.all([
-                    fetch(`${workerBaseUrl}/api/getInitialAnalysis?userId=${encodeURIComponent(userId)}`).then(res => res.json()),
-                    fetch(`${workerBaseUrl}/api/getInitialAnswers?userId=${encodeURIComponent(userId)}`).then(res => res.json()) // Assuming this endpoint exists
-                ]).then(([analysisResp, answersResp]) => {
-                    if (analysisResp.success && analysisResp.analysis && answersResp.success && answersResp.answers) {
-                        // Enrich analysis data with answers for the profile card
-                        analysisResp.analysis.client.age = answersResp.answers.age;
-                        analysisResp.analysis.client.weight = answersResp.answers.weight;
-                        analysisResp.analysis.client.height = answersResp.answers.height;
-                        renderAnalysis(analysisResp.analysis);
-                    } else {
-                        throw new Error('Invalid response from server.');
-                    }
-                }).catch((err) => {
-                    console.error(err);
-                    document.body.innerHTML = '<h1>Грешка при зареждане на данните за анализ. Моля, опитайте отново по-късно.</h1>';
-                    document.body.classList.add('loaded');
-                });
+                fetch(`${workerBaseUrl}/api/getInitialAnalysis?userId=${encodeURIComponent(userId)}`)
+                    .then(res => {
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        return res.json();
+                    })
+                    .then(resp => {
+                        if (resp && resp.success && resp.analysis) {
+                            renderAnalysis(resp.analysis);
+                        } else {
+                            throw new Error('Invalid response');
+                        }
+                    })
+                    .catch(() => {
+                        document.body.innerHTML = '<h1>Грешка при зареждане на данните за анализ.</h1>';
+                        document.body.classList.add('loaded');
+                    });
             }
         });
     </script>
 </body>
-</html>
