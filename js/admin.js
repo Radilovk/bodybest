@@ -1332,8 +1332,31 @@ async function sendTestQuestionnaire() {
         jsonStr = testQTextArea.value.trim();
     }
 
-    if ((!email && !userId) || !jsonStr) {
-        alert('Необходим е имейл или userId и данни.');
+    if (!jsonStr) {
+        if (!email && !userId) {
+            alert('Необходим е имейл или userId.');
+            return;
+        }
+        try {
+            const resp = await fetch(apiEndpoints.reAnalyzeQuestionnaire, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, userId })
+            });
+            const data = await resp.json();
+            if (testQResultPre) testQResultPre.textContent = JSON.stringify(data, null, 2);
+            if (resp.ok && data.success && data.userId) {
+                if (openTestQAnalysisLink) {
+                    openTestQAnalysisLink.classList.remove('hidden');
+                    openTestQAnalysisLink.href = `analysis.html?userId=${encodeURIComponent(data.userId)}`;
+                }
+            } else if (!resp.ok || !data.success) {
+                alert(data.message || 'Грешка при стартиране на анализа.');
+            }
+        } catch (err) {
+            console.error('Error triggering analysis:', err);
+            alert('Грешка при заявката.');
+        }
         return;
     }
 

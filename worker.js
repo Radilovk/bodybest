@@ -249,6 +249,8 @@ export default {
                  responseBody = await handleLoginRequest(request, env);
             } else if (method === 'POST' && path === '/api/submitQuestionnaire') {
                responseBody = await handleSubmitQuestionnaire(request, env, ctx);
+            } else if (method === 'POST' && path === '/api/reAnalyzeQuestionnaire') {
+                responseBody = await handleReAnalyzeQuestionnaireRequest(request, env, ctx);
             } else if (method === 'GET' && path === '/api/planStatus') {
                 responseBody = await handlePlanStatusRequest(request, env);
             } else if (method === 'GET' && path === '/api/analysisStatus') {
@@ -1557,6 +1559,41 @@ async function handleGetInitialAnalysisRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleGetInitialAnalysisRequest -------------
+
+// ------------- START FUNCTION: handleReAnalyzeQuestionnaireRequest -------------
+async function handleReAnalyzeQuestionnaireRequest(request, env, ctx) {
+    try {
+        const { userId: id, email } = await request.json();
+        let userId = id ? String(id).trim() : '';
+        const cleanEmail = email ? String(email).trim().toLowerCase() : '';
+        if (!userId && cleanEmail) {
+            userId = await env.USER_METADATA_KV.get(`email_to_uuid_${cleanEmail}`);
+        }
+        if (!userId) {
+            return { success: false, message: 'Липсва userId или email.', statusHint: 400 };
+        }
+        const answersStr = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
+        if (!answersStr) {
+            return { success: false, message: 'Няма съхранен въпросник.', statusHint: 404 };
+        }
+        if (ctx) {
+            ctx.waitUntil(handleAnalyzeInitialAnswers(userId, env));
+            await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
+        } else {
+            await handleAnalyzeInitialAnswers(userId, env);
+            await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
+        }
+        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] || 'https://mybody.best/analyze.html';
+        const url = new URL(baseUrl);
+        url.searchParams.set('userId', userId);
+        return { success: true, userId, link: url.toString() };
+    } catch (error) {
+        console.error('Error in handleReAnalyzeQuestionnaireRequest:', error.message, error.stack);
+        const body = await request.json().catch(() => ({}));
+        return { success: false, message: 'Грешка при стартиране на анализа.', statusHint: 500, userId: body.userId || 'unknown' };
+    }
+}
+// ------------- END FUNCTION: handleReAnalyzeQuestionnaireRequest -------------
 
 // ------------- START FUNCTION: handleUploadTestResult -------------
 async function handleUploadTestResult(request, env) {
@@ -4018,4 +4055,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, handleSubmitQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, handleSubmitQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };

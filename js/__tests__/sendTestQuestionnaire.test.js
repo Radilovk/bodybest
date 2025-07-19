@@ -19,7 +19,7 @@ beforeEach(async () => {
     <button id="sendQuery"></button>`;
 
   jest.unstable_mockModule('../config.js', () => ({
-    apiEndpoints: { submitQuestionnaire: '/api/submitQuestionnaire' }
+    apiEndpoints: { submitQuestionnaire: '/api/submitQuestionnaire', reAnalyzeQuestionnaire: '/api/reAnalyzeQuestionnaire' }
   }));
   jest.unstable_mockModule('../utils.js', () => ({
     fileToText: jest.fn(async () => '{"a":1}'),
@@ -59,4 +59,15 @@ test('response renders in #testQResult and link is shown', async () => {
   const link = document.getElementById('openTestQAnalysis');
   expect(link.classList.contains('hidden')).toBe(false);
   expect(link.getAttribute('href')).toBe('analysis.html?userId=u5');
+});
+
+test('calls reAnalyzeQuestionnaire when no JSON is provided', async () => {
+  const data = { success: true, userId: 'u1' };
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => data });
+  document.getElementById('testQClient').value = 'u1';
+  await send();
+  expect(global.fetch).toHaveBeenCalledWith('/api/reAnalyzeQuestionnaire', expect.any(Object));
+  const link = document.getElementById('openTestQAnalysis');
+  expect(link.classList.contains('hidden')).toBe(false);
+  expect(link.getAttribute('href')).toBe('analysis.html?userId=u1');
 });
