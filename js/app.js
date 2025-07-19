@@ -263,7 +263,7 @@ export { planHasRecContent };
  * Инициализира потребителския интерфейс и зарежда данните на таблото.
  * Извиква се при събитието DOMContentLoaded.
  */
-async function initializeApp() {
+export async function initializeApp() {
     try {
         if (isLocalDevelopment) console.log("initializeApp starting from app.js...");
         initializeSelectors();
