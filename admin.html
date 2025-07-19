@@ -237,11 +237,14 @@
     <summary>Тест на анализ на въпросник</summary>
     <form id="testQuestionnaireForm">
       <label>Имейл:<br><input id="testQEmail" type="email"></label>
+      <label>Клиент:<br><select id="testQClient"></select></label>
+      <label>User ID:<br><input id="testQUserId" type="text"></label>
       <label>Файл с отговори:<br><input id="testQFile" type="file" accept="application/json"></label>
       <label>JSON отговори:<br><textarea id="testQText" rows="5"></textarea></label>
       <button type="submit">Изпрати</button>
     </form>
     <pre id="testQResult" class="json"></pre>
+    <a id="openTestQAnalysis" class="button button-small hidden" target="_blank">Отвори анализа</a>
   </details>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
