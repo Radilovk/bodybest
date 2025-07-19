@@ -195,12 +195,6 @@ details[open] summary::after {
   margin-top: 10px;
 }
 
-.profile-frame {
-  width: 100%;
-  height: 80vh;
-  border: none;
-  margin-top: 10px;
-}
 
 /* Аналитични индекси с прогрес барове */
 #analyticsSummary .progress-bar-container {
