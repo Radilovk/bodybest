@@ -176,11 +176,6 @@
         const analysisData = {/*---JSON_DATA_PLACEHOLDER---*/};
 
         document.addEventListener('DOMContentLoaded', function() {
-            if (!analysisData || !analysisData.client) {
-                document.body.innerHTML = '<h1>Грешка при зареждане на данните за анализ.</h1>';
-                document.body.classList.add('loaded');
-                return;
-            }
 
             // --- Хелпър функции за генериране на HTML ---
             const generateMotivationStars = (rating) => {
@@ -265,8 +260,35 @@
                 document.body.classList.add('loaded');
             };
 
-            // Извикване на рендиращата функция
-            renderAnalysis(analysisData);
+            const hasRequiredData = analysisData && analysisData.client && Array.isArray(analysisData.healthDashboard) && Array.isArray(analysisData.deepDive);
+
+            if (hasRequiredData) {
+                renderAnalysis(analysisData);
+            } else {
+                const params = new URLSearchParams(location.search);
+                const userId = params.get('userId');
+                if (!userId) {
+                    document.body.innerHTML = '<h1>Грешка при зареждане на данните за анализ.</h1>';
+                    document.body.classList.add('loaded');
+                    return;
+                }
+                fetch(`/api/getInitialAnalysis?userId=${encodeURIComponent(userId)}`)
+                    .then(res => {
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        return res.json();
+                    })
+                    .then(resp => {
+                        if (resp && resp.success && resp.analysis) {
+                            renderAnalysis(resp.analysis);
+                        } else {
+                            throw new Error('Invalid response');
+                        }
+                    })
+                    .catch(() => {
+                        document.body.innerHTML = '<h1>Грешка при зареждане на данните за анализ.</h1>';
+                        document.body.classList.add('loaded');
+                    });
+            }
         });
     </script>
 </body>
