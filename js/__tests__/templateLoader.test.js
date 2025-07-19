@@ -36,3 +36,13 @@ test('blocks cross-origin urls', async () => {
   expect(errSpy).toHaveBeenCalledWith('Template load error:', expect.any(Error));
   errSpy.mockRestore();
 });
+
+test('preserves style and link tags', async () => {
+  const raw = '<link rel="stylesheet" href="x.css"><style>.a{}</style><div>Hi</div>';
+  sanitizeHTMLMock.mockReturnValueOnce(raw);
+  global.fetch.mockResolvedValueOnce({ ok: true, text: async () => raw });
+  await loadTemplateInto('/style.html', 'cont');
+  const container = document.getElementById('cont');
+  expect(container.querySelector('link[rel="stylesheet"]')).not.toBeNull();
+  expect(container.querySelector('style')).not.toBeNull();
+});
