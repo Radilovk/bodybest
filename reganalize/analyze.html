@@ -6,231 +6,292 @@
     <title>Вашият Персонален Анализ</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --accent-color: #2980b9;
-            --text-color-primary: #34495e;
-            --text-color-light: #ffffff;
-            --bg-color: #ecf0f1;
-            --card-bg-color: #FFFFFF;
-            --border-color: #e0e7ef;
+            --primary-color: #2C3E50;
+            --secondary-color: #4A90E2;
+            --accent-color: #50E3C2;
+            --bg-color: #f4f7f6;
+            --card-bg-color: rgba(255, 255, 255, 0.9);
+            --text-color: #333;
+            --heading-color: #1A2533;
+            --shadow-color: rgba(44, 62, 80, 0.15);
             
-            --color-danger: #e74c3c;
-            --color-warning: #f39c12;
-            --color-ok: #3498db;
-            --color-success: #2ecc71;
-
-            --hero-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            --color-high: #e74c3c;
+            --color-medium: #f39c12;
+            --color-low: #2ecc71;
+            --primary-gradient: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
         }
 
-        @property --p {
-            syntax: '<number>';
-            inherits: true;
-            initial-value: 0;
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        *, *::before, *::after { box-sizing: border-box; }
+        @keyframes scaleIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(80, 227, 194, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(80, 227, 194, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(80, 227, 194, 0); }
+        }
 
         body {
             font-family: 'Montserrat', sans-serif;
             background-color: var(--bg-color);
-            color: var(--text-color-primary);
+            color: var(--text-color);
             margin: 0;
             opacity: 0;
-            transition: opacity 1s ease-in-out;
+            transition: opacity 1s ease-in;
         }
-
         body.loaded { opacity: 1; }
 
         .container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
 
-        /* --- HERO SECTION --- */
-        .hero {
-            background: var(--hero-gradient);
-            color: var(--text-color-light);
-            padding: 100px 20px 60px;
+        /* --- Секции с анимация при скрол --- */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- Хедър --- */
+        header {
+            background: var(--primary-color);
+            color: white;
             text-align: center;
-            border-bottom-left-radius: 50px;
-            border-bottom-right-radius: 50px;
-            margin-bottom: -50px;
+            padding: 80px 20px 60px;
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0% 100%);
+        }
+        header h1 {
+            font-size: 3.5em;
+            font-weight: 900;
+            margin: 0;
+            animation: scaleIn 0.8s ease-out forwards;
+        }
+        header .subtitle {
+            font-size: 1.4em;
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 15px auto 0;
+            animation: fadeInUp 0.8s 0.2s ease-out forwards;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.8em;
+            color: var(--heading-color);
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2em;
+            color: #666;
+            max-width: 700px;
+            margin: 0 auto 50px auto;
+        }
+
+        .card {
+            background: var(--card-bg-color);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px var(--shadow-color);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px var(--shadow-color);
+        }
+
+        /* 1. Блокери на целта */
+        #obstacles-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        .obstacle-card {
+            text-align: center;
+            border-top: 6px solid var(--color-high);
+        }
+        .obstacle-card .icon { font-size: 3.5em; margin-bottom: 20px; color: var(--color-high); }
+        .obstacle-card h3 { font-size: 1.5em; color: var(--heading-color); margin-bottom: 10px; }
+        .obstacle-card p { font-size: 1em; line-height: 1.7; }
+        
+        /* 2. Здравен статус */
+        .dashboard-item {
+            display: grid;
+            grid-template-columns: 220px 1fr 150px;
+            align-items: center;
+            margin-bottom: 25px;
+            gap: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        .dashboard-item .label { font-weight: 700; font-size: 1.1em; }
+        .dashboard-item .label i { margin-right: 12px; color: var(--secondary-color); }
+        
+        .risk-bar-container { height: 28px; background-color: #e0e7ef; border-radius: 15px; overflow: hidden; }
+        .risk-bar {
+            height: 100%;
+            border-radius: 15px;
+            width: 0; /* Start at 0, animate with JS */
+            transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1);
             position: relative;
         }
-        .hero h1 {
-            font-size: 3.5em;
-            margin: 0 0 10px;
-            font-weight: 800;
-            animation: fadeInDown 1s ease-out;
+        .risk-bar::after { /* Shiny effect on bar */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.3), rgba(255,255,255,0.05));
         }
-        .hero .subtitle {
+
+        .risk-high .risk-bar { background: linear-gradient(to right, #f39c12, #e74c3c); }
+        .risk-medium .risk-bar { background: linear-gradient(to right, #2ecc71, #f39c12); }
+        .risk-low .risk-bar { background: linear-gradient(to right, #50E3C2, #2ecc71); }
+
+        .risk-value { text-align: right; font-weight: 900; font-size: 1.2em; }
+        .risk-high .risk-value { color: var(--color-high); }
+        .risk-medium .risk-value { color: var(--color-medium); }
+        .risk-low .risk-value { color: var(--color-low); }
+
+        /* 3. Анализ и препоръки */
+        #deep-dive-container { display: grid; grid-template-columns: 1fr; gap: 30px; }
+        .deep-dive-card h3 {
+            font-size: 1.6em;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            border-bottom: 3px solid;
+            display: flex;
+            align-items: center;
+        }
+        .deep-dive-card h3 i {
+            margin-right: 15px;
+            font-size: 1.2em;
+            background: var(--primary-gradient);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .deep-dive-card ul { list-style: none; padding-left: 0; margin: 0; }
+        .deep-dive-card li {
+            padding: 12px 0;
+            display: flex;
+            align-items: flex-start;
+            font-size: 1.1em;
+            border-bottom: 1px solid #eee;
+        }
+        .deep-dive-card li:last-child { border-bottom: none; }
+        .deep-dive-card li i { color: var(--accent-color); margin-right: 15px; margin-top: 5px; font-size: 1.2em; }
+        .conclusion-box {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #edf2f7;
+            border-left: 5px solid var(--secondary-color);
+            border-radius: 8px;
+        }
+        .conclusion-box p { margin: 0; font-weight: 700; font-size: 1.1em; color: var(--primary-color); }
+
+        /* 4. CTA */
+        .cta-section {
+            background: var(--primary-gradient);
+            color: white;
+            text-align: center;
+            padding: 80px 20px;
+            margin-top: 50px;
+        }
+        .cta-section h2 { font-size: 2.8em; margin-bottom: 20px; font-weight: 900; }
+        .cta-section p { max-width: 650px; margin: 0 auto 40px auto; opacity: 0.9; font-size: 1.2em; }
+        .cta-button {
+            background-color: white;
+            color: var(--secondary-color);
             font-size: 1.4em;
-            opacity: 0.9;
-            max-width: 600px;
-            margin: 0 auto;
-            animation: fadeInUp 1s ease-out 0.3s;
+            font-weight: 700;
+            text-decoration: none;
+            padding: 20px 50px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            display: inline-block;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: pulse 2s infinite;
         }
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* --- CONTENT STYLING --- */
-        main { padding-top: 80px; }
-        .section { margin-bottom: 60px; opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
-        .section.is-visible { opacity: 1; transform: translateY(0); }
-        .section-title { text-align: center; font-size: 2.5em; color: var(--primary-color); margin-bottom: 15px; font-weight: 700; }
-        .section-subtitle { text-align: center; font-size: 1.1em; color: #7f8c8d; max-width: 700px; margin: 0 auto 40px auto; }
-        .card { background-color: var(--card-bg-color); border-radius: 16px; padding: 35px; box-shadow: 0 10px 40px rgba(44, 62, 80, 0.1); border: 1px solid var(--border-color); }
+        .cta-button:hover {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            color: var(--primary-color);
+            animation: none;
+        }
         
-        /* --- Goal & Motivation Section --- */
-        .goal-section { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
-        .goal-text .goal-target { font-size: 2em; font-weight: 700; color: var(--primary-color); }
-        .goal-text .goal-target span { color: var(--secondary-color); }
-        .motivation-meter { text-align: center; }
-        .motivation-dial {
-            --p:90; /* Will be set by JS */
-            --b:22px;
-            --c:var(--secondary-color);
-            width: 200px; height: 200px;
-            animation: animate-dial 2s 1s forwards;
-            transition: --p 2s 1s;
-            position: relative; display: inline-grid; place-items: center; margin: 0;
-        }
-        .motivation-dial:before, .motivation-dial:after { content: ""; position: absolute; border-radius: 50%; }
-        .motivation-dial:before { inset: 0; background: radial-gradient(farthest-side,var(--c) 98%,#0000) top/var(--b) var(--b) no-repeat, conic-gradient(var(--c) calc(var(--p)*1%),#0000 0); -webkit-mask:radial-gradient(farthest-side,#0000 calc(99% - var(--b)),#000 calc(100% - var(--b))); mask:radial-gradient(farthest-side,#0000 calc(99% - var(--b)),#000 calc(100% - var(--b))); }
-        .motivation-dial:after { inset: calc(50% - var(--b)/2); background: var(--c); transform: rotate(calc(var(--p)*3.6deg - 90deg)) translateY(calc(-50% - var(--b)/2)); }
-        .motivation-dial .dial-text { font-size: 2.5em; font-weight: 800; color: var(--primary-color); }
-        .motivation-dial .dial-label { font-size: 1.1em; color: #7f8c8d; margin-top: -10px; }
-
-        /* --- Obstacles Section --- */
-        #obstacles-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 30px; }
-        .obstacle-card { text-align: center; border-bottom: 5px solid var(--color-danger); transition: transform 0.3s, box-shadow 0.3s; }
-        .obstacle-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(44, 62, 80, 0.15); }
-        .obstacle-card .icon { font-size: 3em; color: var(--color-danger); margin-bottom: 15px; }
-        .obstacle-card h3 { font-size: 1.3em; color: var(--primary-color); margin-bottom: 10px; }
-
-        /* --- Dashboard Section --- */
-        .dashboard-item { display: flex; align-items: center; margin-bottom: 25px; gap: 20px; }
-        .dashboard-item .label { flex: 0 0 200px; font-weight: 600; font-size: 1.1em; }
-        .dashboard-item .label i { margin-right: 10px; color: var(--accent-color); }
-        .risk-bar-container { flex-grow: 1; height: 28px; background-color: #e0e7ef; border-radius: 15px; overflow: hidden; position: relative; }
-        .risk-bar { height: 100%; border-radius: 15px; transition: width 1.5s ease-out; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; color: white; font-weight: 700; }
-        .risk-high .risk-bar { background: var(--color-danger); } .risk-medium .risk-bar { background: var(--color-warning); }
-        .risk-ok .risk-bar { background: var(--color-ok); } .risk-low .risk-bar { background: var(--color-success); }
-        .risk-value { flex: 0 0 150px; text-align: right; font-weight: 700; font-size: 1.1em; }
-        .risk-high .risk-value { color: var(--color-danger); } .risk-medium .risk-value { color: var(--color-warning); }
-        .risk-ok .risk-value { color: var(--color-ok); } .risk-low .risk-value { color: var(--color-success); }
-
-        /* --- Action Plan (Tabs) Section --- */
-        .plan-tabs { display: flex; gap: 30px; flex-direction: column; }
-        @media (min-width: 768px) { .plan-tabs { flex-direction: row; } }
-        .plan-tabs__nav { display: flex; flex-direction: row; gap: 10px; flex-shrink: 0; }
-        @media (min-width: 768px) { .plan-tabs__nav { flex-direction: column; } }
-        .plan-tabs__button { background: #fff; border: 2px solid var(--border-color); color: var(--text-color-primary); padding: 15px 20px; font-size: 1em; font-weight: 600; text-align: left; border-radius: 10px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 10px; }
-        .plan-tabs__button:hover { background-color: #f8f9fa; border-color: var(--accent-color); }
-        .plan-tabs__button.active { background-color: var(--secondary-color); color: white; border-color: var(--secondary-color); }
-        .plan-tabs__content-container { flex-grow: 1; }
-        .plan-tabs__content { display: none; }
-        .plan-tabs__content.active { display: block; animation: fadeIn 0.5s; }
-        .plan-tabs__content h3 { font-size: 1.6em; color: var(--primary-color); margin-top: 0; }
-        .plan-tabs__content h4 { font-size: 1.2em; margin-top: 25px; margin-bottom: 10px; color: var(--primary-color); display: flex; align-items: center; gap: 8px; }
-        .plan-tabs__content ul { list-style: none; padding-left: 0; margin: 0; }
-        .plan-tabs__content li { padding: 8px 0; display: flex; align-items: flex-start; gap: 12px; }
-        .plan-tabs__content li i { color: var(--secondary-color); margin-top: 5px; }
-        .first-step-box { background-color: #eaf6ff; border-left: 5px solid var(--secondary-color); padding: 20px; margin-top: 25px; border-radius: 8px; }
-        .first-step-box h4 { margin-top: 0; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* --- CTA Section --- */
-        .cta-section { background: var(--hero-gradient); color: white; text-align: center; padding: 80px 20px; margin-top: 60px; }
-        .cta-section h2 { font-size: 2.8em; margin-bottom: 15px; font-weight: 800; }
-        .cta-section .cta-body { max-width: 650px; margin: 0 auto 30px auto; opacity: 0.9; font-size: 1.1em; }
-        .cta-button { background-color: var(--text-color-light); color: var(--primary-color); font-size: 1.3em; font-weight: 700; text-decoration: none; padding: 20px 50px; border-radius: 50px; transition: all 0.3s ease; display: inline-block; border: none; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .cta-button:hover { background-color: #f1c40f; color: var(--primary-color); transform: scale(1.05) translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-        .cta-benefits { list-style: none; padding: 0; display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 20px 40px; margin-top: 40px; opacity: 0.8; }
-        .cta-benefits li { display: flex; align-items: center; gap: 8px; }
-
-        /* --- Footer --- */
-        footer { text-align: center; padding: 30px; font-size: 0.9em; color: #7f8c8d; }
-
-        /* --- Responsive Adjustments --- */
+        footer { text-align: center; padding: 30px 20px; font-size: 0.9em; color: #777; }
         @media (max-width: 768px) {
-            .hero h1 { font-size: 2.5em; }
-            .hero .subtitle { font-size: 1.1em; }
-            .goal-section { grid-template-columns: 1fr; }
-            .goal-text { text-align: center; margin-bottom: 30px; }
-            .dashboard-item { flex-direction: column; align-items: stretch; gap: 10px; }
-            .dashboard-item .label { text-align: center; }
-            .dashboard-item .risk-value { text-align: center; }
+            header h1 { font-size: 2.5em; }
+            .section-title { font-size: 2.2em; }
+            .dashboard-item { grid-template-columns: 1fr; gap: 10px; }
+            .dashboard-item .label, .dashboard-item .risk-value { text-align: left; }
         }
     </style>
 </head>
 <body>
 
-    <header class="hero">
+    <header>
         <h1 id="client-name"></h1>
-        <p class="subtitle">Това е Вашият ексклузивен анализ. Време е да отключите пътя към желаната промяна.</p>
+        <p class="subtitle">Вашият персонален анализ е готов. Разкриваме какво наистина се случва и как да поемете контрол.</p>
     </header>
 
     <main class="container">
-        <!-- Секция 1: Цел и Мотивация -->
-        <section class="section goal-section">
-            <div class="goal-text">
-                <h2 class="section-title" style="text-align: left;">Нашата Обща Цел</h2>
-                <p class="section-subtitle" style="text-align: left; margin-left: 0;">Вие сте задали ясна посока. Нека видим колко силно желаете да я постигнете.</p>
-                <p id="goal-summary" class="goal-target"></p>
-            </div>
-            <div class="motivation-meter">
-                <div id="motivation-dial" class="motivation-dial">
-                    <div class="dial-text" id="motivation-text"></div>
-                    <div class="dial-label">Ниво на мотивация</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Секция 2: Основни пречки -->
-        <section class="section">
-            <h2 class="section-title">Зоните, които Ви Спират</h2>
-            <p class="section-subtitle">Идентифицирахме няколко ключови навика, които работят срещу Вас. Разпознаването им е първата стъпка към преодоляването им.</p>
+        
+        <!-- Секция 1: Блокерите на Вашата Цел -->
+        <section class="reveal" style="margin-top: -60px;"> <!-- Overlap with header -->
+            <h2 class="section-title">Вашите Най-големи Блокери</h2>
+            <p class="section-subtitle">Това са 3-те ключови навика, които директно саботират Вашата цел. Нека ги осветим.</p>
             <div id="obstacles-container"></div>
         </section>
 
-        <!-- Секция 3: Здравен светофар -->
-        <section class="section">
+        <!-- Секция 2: Вашият Здравен Статус -->
+        <section class="reveal" style="margin-top: 80px;">
             <div class="card">
-                <h2 class="section-title">Вашият Персонален Светофар</h2>
-                <p class="section-subtitle">Бърз поглед върху състоянието на ключови здравни аспекти. Червените зони изискват незабавно внимание.</p>
+                <h2 class="section-title">Вашият Здравен Статус</h2>
+                <p class="section-subtitle">Това е безпристрастната картина на Вашето здраве, подредена по степен на риск. Червените зони изискват незабавно внимание.</p>
                 <div id="dashboard-container"></div>
             </div>
         </section>
 
-        <!-- Секция 4: План за действие -->
-        <section class="section">
-            <h2 class="section-title">Вашият План за Действие</h2>
-            <p class="section-subtitle">Анализът е безполезен без план. Ето конкретните стъпки, които ще Ви поведат към успеха.</p>
-            <div class="card">
-                <div class="plan-tabs">
-                    <nav id="plan-tabs-nav" class="plan-tabs__nav"></nav>
-                    <div id="plan-tabs-content-container" class="plan-tabs__content-container"></div>
-                </div>
-            </div>
+        <!-- Секция 3: Пътна Карта към Успеха -->
+        <section class="reveal" style="margin-top: 80px;">
+            <h2 class="section-title">Вашата Пътна Карта към Успеха</h2>
+            <p class="section-subtitle">Проблемите са ясни. Ето и конкретните препоръки за всяка от критичните области.</p>
+            <div id="deep-dive-container"></div>
         </section>
     </main>
     
-    <!-- Секция 5: Призив за действие -->
+    <!-- Секция 4: Призив за Действие -->
     <section class="cta-section">
-        <h2 id="cta-title"></h2>
-        <p id="cta-body" class="cta-body"></p>
-        <a id="cta-button" href="#" class="cta-button">
-             <span id="cta-button-text"></span> <i class="fas fa-rocket"></i>
-        </a>
-        <ul class="cta-benefits">
-            <li><i class="fas fa-check-circle"></i> Персонална стратегия</li>
-            <li><i class="fas fa-check-circle"></i> Експертна подкрепа</li>
-            <li><i class="fas fa-check-circle"></i> Устойчиви резултати</li>
-        </ul>
+        <div class="container reveal">
+            <h2 id="cta-title"></h2>
+            <p id="cta-body"></p>
+            <p><strong>Информацията е сила, но само когато се действа по нея.</strong></p>
+            <a id="cta-button" href="#" class="cta-button">
+                <i class="fas fa-rocket"></i> <span id="cta-button-text"></span>
+            </a>
+        </div>
     </section>
 
     <footer>
@@ -238,157 +299,134 @@
     </footer>
 
     <script>
+    document.addEventListener('DOMContentLoaded', function() {
         // ДАННИТЕ ОТ БОТА ЩЕ БЪДАТ ИНЖЕКТИРАНИ ТУК ОТ СЪРВЪРА
         const analysisData = {/*---JSON_DATA_PLACEHOLDER---*/};
-
-        const isLocalDev = ['localhost', '127.0.0.1'].includes(window.location.hostname) || window.location.hostname.includes('replit') || window.location.hostname.includes('preview');
+        const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('replit') || window.location.hostname.includes('preview');
         const workerBaseUrl = isLocalDev ? '' : 'https://openapichatbot.radilov-k.workers.dev';
 
-        document.addEventListener('DOMContentLoaded', function() {
+        // --- Хелпъри за генериране на HTML ---
+        const generateObstaclesHTML = (obstacles) => obstacles.map(o => `
+            <div class="card obstacle-card">
+                <div class="icon"><i class="${o.icon}"></i></div>
+                <h3>${o.title}</h3>
+                <p>${o.description}</p>
+            </div>`).join('');
+        
+        const generateDashboardHTML = (items) => items.map(i => `
+            <div class="dashboard-item risk-${i.riskClass}">
+                <div class="label"><i class="${i.icon}"></i>${i.category}</div>
+                <div class="risk-bar-container">
+                    <div class="risk-bar" data-width="${i.riskValue}"></div>
+                </div>
+                <div class="risk-value">${i.riskLevel}</div>
+            </div>`).join('');
 
-            // --- Хелпър функции за генериране на HTML ---
-            const generateObstaclesHTML = obstacles => obstacles.map(o => `<div class="card obstacle-card"><div class="icon"><i class="${o.icon}"></i></div><h3>${o.title}</h3><p>${o.description}</p></div>`).join('');
+        const generateDeepDiveHTML = (items) => items.map(item => `
+            <div class="card deep-dive-card">
+                <h3 style="border-color: var(--color-${item.riskClass}); color: var(--color-${item.riskClass});">
+                    <i class="${item.icon}"></i>${item.title}
+                </h3>
+                <ul>
+                    ${item.points.map(point => `<li><i class="fas fa-check-circle"></i><div>${point}</div></li>`).join('')}
+                </ul>
+                <div class="conclusion-box">
+                    <p>${item.conclusion}</p>
+                </div>
+            </div>`).join('');
+
+        // --- Основна рендираща функция ---
+        const renderAnalysis = (data) => {
+            // Маркетинг стъпка 1: Подреждане по важност
+            data.healthDashboard.sort((a, b) => b.riskValue - a.riskValue);
             
-            const generateDashboardHTML = items => items.map(item => `
-                <div class="dashboard-item risk-${item.riskClass}">
-                    <div class="label"><i class="${item.icon}"></i>${item.category}</div>
-                    <div class="risk-bar-container">
-                        <div class="risk-bar" style="width: 0%;" data-width="${item.riskValue}%">
-                           <span>${item.riskValue}%</span>
-                        </div>
-                    </div>
-                    <div class="risk-value">${item.riskLevel}</div>
-                </div>`).join('');
+            // Header
+            document.getElementById('client-name').textContent = `${data.client.name},`;
 
-            // --- Функция за генериране на табове (План за действие) ---
-            const generateActionPlanHTML = (items) => {
-                const nav = items.map((item, index) => 
-                    `<button class="plan-tabs__button ${index === 0 ? 'active' : ''}" data-tab="${index}">
-                        <i class="${item.icon}"></i> ${item.title.replace('Анализ на ', '')}
-                    </button>`
-                ).join('');
+            // Obstacles
+            document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
 
-                const content = items.map((item, index) => `
-                    <div class="plan-tabs__content ${index === 0 ? 'active' : ''}" id="tab-content-${index}">
-                        <h3>${item.title}</h3>
-                        
-                        <h4><i class="fas fa-magnifying-glass-chart"></i> Наблюдения</h4>
-                        <ul>
-                            ${item.points.map(point => `<li><i class="fas fa-crosshairs"></i><div>${point}</div></li>`).join('')}
-                        </ul>
+            // Dashboard
+            document.getElementById('dashboard-container').innerHTML = generateDashboardHTML(data.healthDashboard);
 
-                        <div class="first-step-box">
-                            <h4><i class="fas fa-bullseye"></i> Първа и най-важна стъпка</h4>
-                            <p>${item.conclusion}</p>
-                        </div>
-                    </div>`
-                ).join('');
+            // Deep Dive
+            document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
 
-                document.getElementById('plan-tabs-nav').innerHTML = nav;
-                document.getElementById('plan-tabs-content-container').innerHTML = content;
-            };
+            // CTA
+            document.getElementById('cta-title').textContent = data.callToAction.title;
+            document.getElementById('cta-body').textContent = data.callToAction.body;
+            document.getElementById('cta-button-text').textContent = data.callToAction.buttonText;
+            document.getElementById('cta-button').href = data.callToAction.buttonLink;
 
+            // Footer
+            document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} Your Wellness Company. Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
+            
+            // Активиране на анимациите
+            setupAnimations();
+            
+            // Показване на страницата
+            document.body.classList.add('loaded');
+        };
 
-            // --- Основна функция за рендиране ---
-            const renderAnalysis = (data) => {
-                // Hero
-                document.getElementById('client-name').textContent = `Здравей, ${data.client.name}!`;
-
-                // Goal & Motivation
-                document.getElementById('goal-summary').innerHTML = `Постигане на <span>${data.client.mainGoal.target}</span>`;
-                const motivationRating = data.client.motivation.rating;
-                const motivationDial = document.getElementById('motivation-dial');
-                motivationDial.style.setProperty('--p', motivationRating * 20); // 5 stars = 100%
-                document.getElementById('motivation-text').textContent = `${motivationRating}/5`;
-                
-                // Obstacles
-                document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
-
-                // Dashboard
-                document.getElementById('dashboard-container').innerHTML = generateDashboardHTML(data.healthDashboard);
-
-                // Action Plan
-                generateActionPlanHTML(data.deepDive);
-
-                // CTA
-                document.getElementById('cta-title').textContent = `Готов ли си, ${data.client.name}?`;
-                document.getElementById('cta-body').textContent = data.callToAction.body;
-                document.getElementById('cta-button-text').textContent = data.callToAction.buttonText;
-                document.getElementById('cta-button').href = data.callToAction.buttonLink;
-
-                // Footer
-                document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} Your Wellness Company. Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
-                
-                // Show the page
-                document.body.classList.add('loaded');
-                
-                // Trigger animations and interactions after rendering
-                setupInteractions();
-            };
-
-            const setupInteractions = () => {
-                // Tab functionality
-                const tabButtons = document.querySelectorAll('.plan-tabs__button');
-                const tabContents = document.querySelectorAll('.plan-tabs__content');
-                tabButtons.forEach(button => {
-                    button.addEventListener('click', () => {
-                        tabButtons.forEach(btn => btn.classList.remove('active'));
-                        button.classList.add('active');
-                        const tabId = button.dataset.tab;
-                        tabContents.forEach(content => {
-                            content.classList.remove('active');
-                            if (content.id === `tab-content-${tabId}`) {
-                                content.classList.add('active');
-                            }
-                        });
-                    });
+        // --- Логика за интерактивност и анимации ---
+        const setupAnimations = () => {
+            // Анимации при скрол
+            const revealElements = document.querySelectorAll('.reveal');
+            const revealObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        revealObserver.unobserve(entry.target);
+                    }
                 });
+            }, { threshold: 0.1 });
+            revealElements.forEach(el => revealObserver.observe(el));
 
-                // Intersection Observer for animations
-                const sections = document.querySelectorAll('.section');
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            entry.target.classList.add('is-visible');
-                            // Animate risk bars when their section is visible
-                            if (entry.target.contains(document.getElementById('dashboard-container'))) {
-                                document.querySelectorAll('.risk-bar').forEach(bar => {
-                                    bar.style.width = bar.dataset.width;
-                                });
-                            }
-                            observer.unobserve(entry.target);
-                        }
-                    });
-                }, { threshold: 0.1 });
+            // Анимация на progress bar-овете
+            const barElements = document.querySelectorAll('.risk-bar');
+            const barObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const bar = entry.target;
+                        bar.style.width = bar.dataset.width + '%';
+                        barObserver.unobserve(bar);
+                    }
+                });
+            }, { threshold: 0.5 });
+            barElements.forEach(bar => barObserver.observe(bar));
+        };
+        
+        // --- Зареждане на данни ---
+        const hasRequiredData = analysisData && analysisData.client && Object.keys(analysisData).length > 2;
 
-                sections.forEach(section => observer.observe(section));
-            };
-
-            const hasRequiredData = analysisData && analysisData.client && Object.keys(analysisData).length > 2;
-            if (hasRequiredData) {
-                renderAnalysis(analysisData);
-            } else {
-                const userId = new URLSearchParams(location.search).get('userId');
-                if (!userId) {
-                    document.body.innerHTML = '<h1>Грешка: Липсва ID на потребител за зареждане на анализ.</h1>';
-                    document.body.classList.add('loaded');
-                    return;
-                }
-                fetch(`${workerBaseUrl}/api/getInitialAnalysis?userId=${encodeURIComponent(userId)}`)
-                    .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
-                    .then(resp => {
-                        if (resp && resp.success && resp.analysis) {
-                            renderAnalysis(resp.analysis);
-                        } else {
-                            throw new Error('Invalid response');
-                        }
-                    })
-                    .catch(() => {
-                        document.body.innerHTML = '<h1>Грешка при зареждане на данните за анализ. Моля, опитайте отново по-късно.</h1>';
-                        document.body.classList.add('loaded');
-                    });
+        if (hasRequiredData) {
+            renderAnalysis(analysisData);
+        } else {
+            const userId = new URLSearchParams(location.search).get('userId');
+            if (!userId) {
+                document.body.innerHTML = '<h1>Грешка: Липсва ID на потребител.</h1>';
+                document.body.classList.add('loaded');
+                return;
             }
-        });
+            fetch(`${workerBaseUrl}/api/getInitialAnalysis?userId=${encodeURIComponent(userId)}`)
+                .then(res => {
+                    if (!res.ok) throw new Error('Network response was not ok');
+                    return res.json();
+                })
+                .then(resp => {
+                    if (resp && resp.success && resp.analysis) {
+                        renderAnalysis(resp.analysis);
+                    } else {
+                        throw new Error(resp.error || 'Invalid response structure');
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch Error:', error);
+                    document.body.innerHTML = '<h1>Грешка при зареждане на анализа. Моля, опитайте отново.</h1>';
+                    document.body.classList.add('loaded');
+                });
+        }
+    });
     </script>
 </body>
 </html>
