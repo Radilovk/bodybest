@@ -28,13 +28,7 @@ function createInfoItem(label, value) {
   return div;
 }
 
-let overrideUserId = null;
-export function setOverrideUserId(val) {
-  overrideUserId = val;
-}
-
 function getUserId() {
-  if (overrideUserId) return overrideUserId;
   const params = new URLSearchParams(window.location.search);
   return params.get('userId');
 }
