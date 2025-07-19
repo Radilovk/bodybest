@@ -3,355 +3,355 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вашата Пътна Карта към Трансформация</title>
+    <title>Вашият Персонален Анализ</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
         :root {
-            --bg-color: #0D1117;
-            --card-bg: rgba(22, 27, 34, 0.6);
-            --border-color: rgba(255, 255, 255, 0.1);
-            --text-primary: #c9d1d9;
-            --text-secondary: #8b949e;
-            --heading-color: #ffffff;
-            --accent-primary: #58a6ff;
-            --accent-secondary: #3fb950;
-
-            --color-high: #f85149;
+            --primary-color: #2C3E50;
+            --secondary-color: #4A90E2;
+            --accent-color: #50E3C2;
+            --bg-color: #f4f7f6;
+            --card-bg-color: rgba(255, 255, 255, 0.9);
+            --text-color: #333;
+            --heading-color: #1A2533;
+            --shadow-color: rgba(44, 62, 80, 0.15);
+            
+            --color-high: #e74c3c;
             --color-medium: #f39c12;
-            --color-low: #3fb950;
-
-            --glow-high: rgba(248, 81, 73, 0.5);
-            --glow-medium: rgba(243, 156, 18, 0.5);
-            --glow-low: rgba(63, 185, 80, 0.5);
+            --color-low: #2ecc71;
+            --primary-gradient: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
         }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes aurora {
-            0% { transform: translate(-50%, -50%) rotate(0deg) scale(1.5); }
-            50% { transform: translate(-50%, -50%) rotate(180deg) scale(1.6); }
-            100% { transform: translate(-50%, -50%) rotate(360deg) scale(1.5); }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
+        @keyframes scaleIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
-        
-        * { box-sizing: border-box; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(80, 227, 194, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(80, 227, 194, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(80, 227, 194, 0); }
+        }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             background-color: var(--bg-color);
-            color: var(--text-primary);
+            color: var(--text-color);
             margin: 0;
-            overflow-x: hidden;
             opacity: 0;
-            animation: fadeIn 1.5s ease-in-out forwards;
+            transition: opacity 1s ease-in;
+        }
+        body.loaded { opacity: 1; }
+
+        .container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+
+        /* --- Секции с анимация при скрол --- */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
         }
 
-        /* --- Aurora Background --- */
-        .aurora-background {
-            position: fixed;
+        /* --- Хедър --- */
+        header {
+            background: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 80px 20px 60px;
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0% 100%);
+        }
+        header h1 {
+            font-size: 3.5em;
+            font-weight: 900;
+            margin: 0;
+            animation: scaleIn 0.8s ease-out forwards;
+        }
+        header .subtitle {
+            font-size: 1.4em;
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 15px auto 0;
+            animation: fadeInUp 0.8s 0.2s ease-out forwards;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.8em;
+            color: var(--heading-color);
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2em;
+            color: #666;
+            max-width: 700px;
+            margin: 0 auto 50px auto;
+        }
+
+        .card {
+            background: var(--card-bg-color);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px var(--shadow-color);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px var(--shadow-color);
+        }
+
+        /* 1. Блокери на целта */
+        #obstacles-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        .obstacle-card {
+            text-align: center;
+            border-top: 6px solid var(--color-high);
+        }
+        .obstacle-card .icon { font-size: 3.5em; margin-bottom: 20px; color: var(--color-high); }
+        .obstacle-card h3 { font-size: 1.5em; color: var(--heading-color); margin-bottom: 10px; }
+        .obstacle-card p { font-size: 1em; line-height: 1.7; }
+        
+        /* 2. Здравен статус */
+        .dashboard-item {
+            display: grid;
+            grid-template-columns: 220px 1fr 150px;
+            align-items: center;
+            margin-bottom: 25px;
+            gap: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        .dashboard-item .label { font-weight: 700; font-size: 1.1em; }
+        .dashboard-item .label i { margin-right: 12px; color: var(--secondary-color); }
+        
+        .risk-bar-container { height: 28px; background-color: #e0e7ef; border-radius: 15px; overflow: hidden; }
+        .risk-bar {
+            height: 100%;
+            border-radius: 15px;
+            width: 0; /* Start at 0, animate with JS */
+            transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+        }
+        .risk-bar::after { /* Shiny effect on bar */
+            content: '';
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
-            overflow: hidden;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.3), rgba(255,255,255,0.05));
         }
-        .aurora-shape {
-            position: absolute;
-            width: 80vmax;
-            height: 80vmax;
-            border-radius: 50%;
-            filter: blur(150px);
-            opacity: 0.3;
-            animation: aurora 30s linear infinite;
-        }
-        .shape1 { top: 50%; left: 50%; background: radial-gradient(circle, #58a6ff, transparent 60%); }
-        .shape2 { top: 20%; left: 80%; background: radial-gradient(circle, #f85149, transparent 60%); animation-delay: -5s; animation-duration: 35s; }
-        .shape3 { top: 80%; left: 20%; background: radial-gradient(circle, #3fb950, transparent 60%); animation-delay: -10s; animation-duration: 40s; }
 
-        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+        .risk-high .risk-bar { background: linear-gradient(to right, #f39c12, #e74c3c); }
+        .risk-medium .risk-bar { background: linear-gradient(to right, #2ecc71, #f39c12); }
+        .risk-low .risk-bar { background: linear-gradient(to right, #50E3C2, #2ecc71); }
 
-        /* --- Hero Section --- */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            text-align: center;
-            animation: fadeInUp 1s 0.5s ease-out forwards;
-            opacity: 0;
-        }
-        .hero h1 { font-size: 4.5em; font-weight: 800; color: var(--heading-color); margin: 0; }
-        .hero h1 span { color: var(--accent-primary); }
-        .hero p { font-size: 1.5em; color: var(--text-secondary); max-width: 700px; margin: 20px auto 40px; }
-        .scroll-down {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: var(--text-secondary);
-            font-size: 0.9em;
-            animation: bounce 2s infinite;
-        }
-        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); } 40% { transform: translateX(-50%) translateY(-10px); } 60% { transform: translateX(-50%) translateY(-5px); } }
-
-        /* --- Card & Bento Grid --- */
-        .content-section { padding: 100px 0; }
-        .section-title { text-align: center; font-size: 3em; font-weight: 800; margin-bottom: 60px; }
-
-        .bento-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        }
-        .bento-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 30px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            transition: transform 0.3s ease, border-color 0.3s ease;
-        }
-        .bento-card:hover { transform: translateY(-10px); }
-
-        /* --- Obstacles Cards (in Bento) --- */
-        .obstacle-card {
-            grid-column: span 1;
-            text-align: center;
-            border-bottom: 4px solid var(--color-high);
-            transition: all 0.3s ease;
-        }
-        .obstacle-card:hover { border-color: var(--accent-primary); box-shadow: 0 0 30px var(--glow-high); }
-        .obstacle-card .icon { font-size: 3em; color: var(--color-high); margin-bottom: 20px; }
-        .obstacle-card h3 { font-size: 1.4em; margin: 0 0 10px 0; color: var(--heading-color); }
-
-        /* --- Dashboard List (in Bento) --- */
-        .dashboard-container {
-            grid-column: span 3;
-            padding: 20px;
-        }
-        .dashboard-item {
-            display: grid;
-            grid-template-columns: 40px 1fr 120px;
-            align-items: center;
-            gap: 20px;
-            padding: 15px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .dashboard-item:last-child { border-bottom: none; }
-        .dashboard-item .icon { font-size: 1.5em; text-align: center; }
-        .risk-high .icon { color: var(--color-high); }
-        .risk-medium .icon { color: var(--color-medium); }
-        .risk-low .icon { color: var(--color-low); }
-
-        .dashboard-item .label-bar .label { font-size: 1.1em; font-weight: 600; margin-bottom: 8px; }
-        .risk-bar-container { height: 8px; background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; }
-        .risk-bar { height: 100%; width: 0; border-radius: 4px; transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1); }
-        .risk-high .risk-bar { background: var(--color-high); }
-        .risk-medium .risk-bar { background: var(--color-medium); }
-        .risk-low .risk-bar { background: var(--color-low); }
-
-        .dashboard-item .risk-value { font-size: 1.1em; font-weight: 600; text-align: right; }
+        .risk-value { text-align: right; font-weight: 900; font-size: 1.2em; }
         .risk-high .risk-value { color: var(--color-high); }
         .risk-medium .risk-value { color: var(--color-medium); }
         .risk-low .risk-value { color: var(--color-low); }
 
-        /* --- Accordion for Deep Dive --- */
-        .accordion-container { max-width: 900px; margin: 0 auto; }
-        .accordion-item {
-            margin-bottom: 15px;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-        .accordion-item summary {
+        /* 3. Анализ и препоръки */
+        #deep-dive-container { display: grid; grid-template-columns: 1fr; gap: 30px; }
+        .deep-dive-card h3 {
+            font-size: 1.6em;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            border-bottom: 3px solid;
             display: flex;
             align-items: center;
-            padding: 25px;
-            font-size: 1.4em;
-            font-weight: 600;
-            cursor: pointer;
-            list-style: none; /* remove arrow */
         }
-        .accordion-item summary::before { /* custom arrow */
-            content: '+';
-            font-size: 1.5em;
-            margin-right: 20px;
-            transition: transform 0.3s ease;
-        }
-        .accordion-item[open] summary::before { transform: rotate(45deg); }
-        .accordion-item[open] { border-color: var(--accent-primary); box-shadow: 0 0 30px rgba(88, 166, 255, 0.3); }
-
-        .accordion-content { padding: 0 30px 30px; }
-        .accordion-content h4 { font-size: 1.2em; color: var(--accent-secondary); margin: 20px 0 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-        .accordion-content ul { list-style: none; padding: 0; }
-        .accordion-content li { display: flex; align-items: start; margin-bottom: 10px; }
-        .accordion-content li i { color: var(--accent-secondary); margin-right: 15px; margin-top: 4px; }
-        .conclusion-box {
-            margin-top: 25px; padding: 20px; background: rgba(88, 166, 255, 0.1);
-            border-left: 4px solid var(--accent-primary); border-radius: 8px;
-        }
-        .conclusion-box p { margin: 0; font-weight: 600; }
-
-        /* --- CTA --- */
-        .cta-section { text-align: center; }
-        .cta-button {
-            display: inline-block;
-            background: linear-gradient(90deg, #58a6ff, #3fb950);
+        .deep-dive-card h3 i {
+            margin-right: 15px;
+            font-size: 1.2em;
+            background: var(--primary-gradient);
             color: white;
-            font-size: 1.5em;
-            font-weight: 600;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .deep-dive-card ul { list-style: none; padding-left: 0; margin: 0; }
+        .deep-dive-card li {
+            padding: 12px 0;
+            display: flex;
+            align-items: flex-start;
+            font-size: 1.1em;
+            border-bottom: 1px solid #eee;
+        }
+        .deep-dive-card li:last-child { border-bottom: none; }
+        .deep-dive-card li i { color: var(--accent-color); margin-right: 15px; margin-top: 5px; font-size: 1.2em; }
+        .conclusion-box {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #edf2f7;
+            border-left: 5px solid var(--secondary-color);
+            border-radius: 8px;
+        }
+        .conclusion-box p { margin: 0; font-weight: 700; font-size: 1.1em; color: var(--primary-color); }
+
+        /* 4. CTA */
+        .cta-section {
+            background: var(--primary-gradient);
+            color: white;
+            text-align: center;
+            padding: 80px 20px;
+            margin-top: 50px;
+        }
+        .cta-section h2 { font-size: 2.8em; margin-bottom: 20px; font-weight: 900; }
+        .cta-section p { max-width: 650px; margin: 0 auto 40px auto; opacity: 0.9; font-size: 1.2em; }
+        .cta-button {
+            background-color: white;
+            color: var(--secondary-color);
+            font-size: 1.4em;
+            font-weight: 700;
+            text-decoration: none;
             padding: 20px 50px;
             border-radius: 50px;
-            text-decoration: none;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            transition: all 0.3s ease;
+            display: inline-block;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: pulse 2s infinite;
         }
         .cta-button:hover {
-            transform: scale(1.05) translateY(-5px);
-            box-shadow: 0 10px 40px rgba(88, 166, 255, 0.3);
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            color: var(--primary-color);
+            animation: none;
         }
-        .cta-button::before { /* Shimmer effect */
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -75%;
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
-            transform: skewX(-25deg);
-            transition: left 0.75s;
-        }
-        .cta-button:hover::before { left: 125%; }
         
-        @media (max-width: 900px) {
-            .bento-grid { grid-template-columns: 1fr; }
-            .obstacle-card, .dashboard-container { grid-column: span 1; }
-        }
+        footer { text-align: center; padding: 30px 20px; font-size: 0.9em; color: #777; }
         @media (max-width: 768px) {
-            .hero h1 { font-size: 3em; }
-            .hero p { font-size: 1.2em; }
-            .section-title { font-size: 2.5em; }
+            header h1 { font-size: 2.5em; }
+            .section-title { font-size: 2.2em; }
+            .dashboard-item { grid-template-columns: 1fr; gap: 10px; }
+            .dashboard-item .label, .dashboard-item .risk-value { text-align: left; }
         }
     </style>
 </head>
 <body>
-    <div class="aurora-background">
-        <div class="aurora-shape shape1"></div>
-        <div class="aurora-shape shape2"></div>
-        <div class="aurora-shape shape3"></div>
-    </div>
 
-    <header class="hero">
-        <div class="container">
-            <h1>Здравейте, <span id="client-name"></span></h1>
-            <p>Това не е просто отчет. Това е началото на Вашата трансформация. Разкриваме данните, за да Ви дадем силата да поемете контрол.</p>
-        </div>
-        <div class="scroll-down">
-            <i class="fas fa-chevron-down"></i> Разгледайте Анализа
-        </div>
+    <header>
+        <h1 id="client-name"></h1>
+        <p class="subtitle">Вашият персонален анализ е готов. Разкриваме какво наистина се случва и как да поемете контрол.</p>
     </header>
 
-    <main>
-        <section class="content-section">
-            <div class="container">
-                <h2 class="section-title">Картината на Реалността</h2>
-                <div class="bento-grid">
-                    <!-- Top 3 Obstacles will be injected here -->
-                    <div id="obstacles-container" class="bento-grid" style="grid-column: span 3; padding:0; gap:20px;"></div>
-                    
-                    <!-- Health Dashboard will be injected here -->
-                    <div id="dashboard-container-wrapper" class="bento-card dashboard-container">
-                        <h3 style="margin:0 0 20px 0; font-size:1.6em; color:var(--heading-color);">Вашият Здравен Профил</h3>
-                        <div id="dashboard-container"></div>
-                    </div>
-                </div>
+    <main class="container">
+        
+        <!-- Секция 1: Блокерите на Вашата Цел -->
+        <section class="reveal" style="margin-top: -60px;"> <!-- Overlap with header -->
+            <h2 class="section-title">Вашите Най-големи Блокери</h2>
+            <p class="section-subtitle">Това са 3-те ключови навика, които директно саботират Вашата цел. Нека ги осветим.</p>
+            <div id="obstacles-container"></div>
+        </section>
+
+        <!-- Секция 2: Вашият Здравен Статус -->
+        <section class="reveal" style="margin-top: 80px;">
+            <div class="card">
+                <h2 class="section-title">Вашият Здравен Статус</h2>
+                <p class="section-subtitle">Това е безпристрастната картина на Вашето здраве, подредена по степен на риск. Червените зони изискват незабавно внимание.</p>
+                <div id="dashboard-container"></div>
             </div>
         </section>
 
-        <section class="content-section">
-            <div class="container">
-                <h2 class="section-title">Вашата Пътна Карта</h2>
-                <div id="deep-dive-container" class="accordion-container"></div>
-            </div>
-        </section>
-
-        <section class="content-section cta-section">
-            <div class="container">
-                <h2 class="section-title" id="cta-title"></h2>
-                <p style="font-size:1.2em; max-width:700px; margin: -40px auto 60px; color:var(--text-secondary);" id="cta-body"></p>
-                <a id="cta-button" href="#" class="cta-button">
-                    <span id="cta-button-text"></span> <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
+        <!-- Секция 3: Пътна Карта към Успеха -->
+        <section class="reveal" style="margin-top: 80px;">
+            <h2 class="section-title">Вашата Пътна Карта към Успеха</h2>
+            <p class="section-subtitle">Проблемите са ясни. Ето и конкретните препоръки за всяка от критичните области.</p>
+            <div id="deep-dive-container"></div>
         </section>
     </main>
     
-    <footer style="text-align:center; padding: 40px 20px; color:var(--text-secondary); font-size:0.9em;">
+    <!-- Секция 4: Призив за Действие -->
+    <section class="cta-section">
+        <div class="container reveal">
+            <h2 id="cta-title"></h2>
+            <p id="cta-body"></p>
+            <p><strong>Информацията е сила, но само когато се действа по нея.</strong></p>
+            <a id="cta-button" href="#" class="cta-button">
+                <i class="fas fa-rocket"></i> <span id="cta-button-text"></span>
+            </a>
+        </div>
+    </section>
+
+    <footer>
         <p id="footer-text"></p>
     </footer>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // --- DATA PLACEHOLDER & CONFIG ---
+        // ДАННИТЕ ОТ БОТА ЩЕ БЪДАТ ИНЖЕКТИРАНИ ТУК ОТ СЪРВЪРА
         const analysisData = {/*---JSON_DATA_PLACEHOLDER---*/};
-        const isLocalDev = ['localhost', '127.0.0.1'].includes(window.location.hostname) || window.location.hostname.includes('replit') || window.location.hostname.includes('preview');
+        const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('replit') || window.location.hostname.includes('preview');
         const workerBaseUrl = isLocalDev ? '' : 'https://openapichatbot.radilov-k.workers.dev';
 
-        // --- HTML GENERATORS ---
+        // --- Хелпъри за генериране на HTML ---
         const generateObstaclesHTML = (obstacles) => obstacles.map(o => `
-            <div class="bento-card obstacle-card">
+            <div class="card obstacle-card">
                 <div class="icon"><i class="${o.icon}"></i></div>
                 <h3>${o.title}</h3>
                 <p>${o.description}</p>
             </div>`).join('');
-
+        
         const generateDashboardHTML = (items) => items.map(i => `
             <div class="dashboard-item risk-${i.riskClass}">
-                <div class="icon"><i class="${i.icon}"></i></div>
-                <div class="label-bar">
-                    <div class="label">${i.category}</div>
-                    <div class="risk-bar-container"><div class="risk-bar" data-width="${i.riskValue}"></div></div>
+                <div class="label"><i class="${i.icon}"></i>${i.category}</div>
+                <div class="risk-bar-container">
+                    <div class="risk-bar" data-width="${i.riskValue}"></div>
                 </div>
                 <div class="risk-value">${i.riskLevel}</div>
             </div>`).join('');
 
         const generateDeepDiveHTML = (items) => items.map(item => `
-            <details class="accordion-item">
-                <summary style="color: var(--color-${item.riskClass});">${item.title}</summary>
-                <div class="accordion-content">
-                    <h4><i class="fas fa-microscope"></i> Ключови Наблюдения</h4>
-                    <ul>
-                        ${item.points.map(point => `<li><i class="fas fa-times-circle"></i><div>${point.replace(/<strong>(.*?)<\/strong>/g, '<span style="color: var(--accent-primary); font-weight:600;">$1</span>')}</div></li>`).join('')}
-                    </ul>
-                    <div class="conclusion-box">
-                        <p>${item.conclusion}</p>
-                    </div>
+            <div class="card deep-dive-card">
+                <h3 style="border-color: var(--color-${item.riskClass}); color: var(--color-${item.riskClass});">
+                    <i class="${item.icon}"></i>${item.title}
+                </h3>
+                <ul>
+                    ${item.points.map(point => `<li><i class="fas fa-check-circle"></i><div>${point}</div></li>`).join('')}
+                </ul>
+                <div class="conclusion-box">
+                    <p>${item.conclusion}</p>
                 </div>
-            </details>`).join('');
-            
-        // --- MAIN RENDER FUNCTION ---
+            </div>`).join('');
+
+        // --- Основна рендираща функция ---
         const renderAnalysis = (data) => {
-            // Sort by risk for marketing impact
+            // Маркетинг стъпка 1: Подреждане по важност
             data.healthDashboard.sort((a, b) => b.riskValue - a.riskValue);
             
-            // Render content
-            document.getElementById('client-name').textContent = data.client.name;
+            // Header
+            document.getElementById('client-name').textContent = `${data.client.name},`;
+
+            // Obstacles
             document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
+
+            // Dashboard
             document.getElementById('dashboard-container').innerHTML = generateDashboardHTML(data.healthDashboard);
+
+            // Deep Dive
             document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
-            
+
             // CTA
             document.getElementById('cta-title').textContent = data.callToAction.title;
             document.getElementById('cta-body').textContent = data.callToAction.body;
@@ -361,51 +361,69 @@
             // Footer
             document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} Your Wellness Company. Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
             
+            // Активиране на анимациите
             setupAnimations();
+            
+            // Показване на страницата
+            document.body.classList.add('loaded');
         };
 
-        // --- ANIMATIONS & INTERACTIONS ---
+        // --- Логика за интерактивност и анимации ---
         const setupAnimations = () => {
-            const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
-            const observer = new IntersectionObserver((entries) => {
+            // Анимации при скрол
+            const revealElements = document.querySelectorAll('.reveal');
+            const revealObserver = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        if (entry.target.classList.contains('risk-bar')) {
-                            entry.target.style.width = entry.target.dataset.width + '%';
-                        }
-                        // Add other animations if needed
-                        observer.unobserve(entry.target);
+                        entry.target.classList.add('active');
+                        revealObserver.unobserve(entry.target);
                     }
                 });
-            }, observerOptions);
-            document.querySelectorAll('.risk-bar').forEach(el => observer.observe(el));
+            }, { threshold: 0.1 });
+            revealElements.forEach(el => revealObserver.observe(el));
+
+            // Анимация на progress bar-овете
+            const barElements = document.querySelectorAll('.risk-bar');
+            const barObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const bar = entry.target;
+                        bar.style.width = bar.dataset.width + '%';
+                        barObserver.unobserve(bar);
+                    }
+                });
+            }, { threshold: 0.5 });
+            barElements.forEach(bar => barObserver.observe(bar));
         };
         
-        // --- DATA FETCHING ---
+        // --- Зареждане на данни ---
         const hasRequiredData = analysisData && analysisData.client && Object.keys(analysisData).length > 2;
+
         if (hasRequiredData) {
             renderAnalysis(analysisData);
         } else {
             const userId = new URLSearchParams(location.search).get('userId');
             if (!userId) {
                 document.body.innerHTML = '<h1>Грешка: Липсва ID на потребител.</h1>';
+                document.body.classList.add('loaded');
                 return;
             }
             fetch(`${workerBaseUrl}/api/getInitialAnalysis?userId=${encodeURIComponent(userId)}`)
                 .then(res => {
-                    if (!res.ok) throw new Error(`Network response was not ok: ${res.statusText}`);
+                    if (!res.ok) throw new Error('Network response was not ok');
                     return res.json();
                 })
                 .then(resp => {
                     if (resp && resp.success && resp.analysis) {
                         renderAnalysis(resp.analysis);
                     } else {
-                        throw new Error(resp.error || 'Invalid response structure from server');
+                        throw new Error(resp.error || 'Invalid response structure');
                     }
                 })
                 .catch(error => {
                     console.error('Fetch Error:', error);
-                    document.body.innerHTML = `<h1>Грешка при зареждане на анализа. Моля, опитайте отново. (${error.message})</h1>`;
+                    document.body.innerHTML = '<h1>Грешка при зареждане на анализа. Моля, опитайте отново.</h1>';
+                    document.body.classList.add('loaded');
                 });
         }
     });
