@@ -766,12 +766,22 @@ if (statusFilter) statusFilter.addEventListener('change', renderClients);
 if (sortOrderSelect) sortOrderSelect.addEventListener('change', renderClients);
 if (tagFilterSelect) tagFilterSelect.addEventListener('change', renderClients);
 
+function initEmbeddedProfile() {
+    if (!adminProfileContainer || !window.bootstrap) return;
+    adminProfileContainer.querySelectorAll('[data-bs-toggle="tab"]').forEach(el => {
+        bootstrap.Tab.getOrCreateInstance(el);
+    });
+    const first = adminProfileContainer.querySelector('#basic-tab');
+    if (first) bootstrap.Tab.getOrCreateInstance(first).show();
+}
+
 async function showClient(userId) {
     if (adminProfileContainer) {
         adminProfileContainer.innerHTML = '';
         history.replaceState(null, '', `?userId=${encodeURIComponent(userId)}`);
         await loadTemplateInto('profileTemplate.html', 'adminProfileContainer');
         initClientProfile();
+        initEmbeddedProfile();
     }
     try {
         const [profileResp, dashResp] = await Promise.all([
