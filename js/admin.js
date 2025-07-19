@@ -1,6 +1,8 @@
 import { apiEndpoints } from './config.js';
 import { labelMap, statusMap } from './labelMap.js';
 import { fileToDataURL, fileToText } from './utils.js';
+import { loadTemplateInto } from './templateLoader.js';
+import { initClientProfile, setOverrideUserId } from './clientProfile.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -45,6 +47,7 @@ const openUserDataLink = document.getElementById('openUserData');
 const fullProfileFrame = document.getElementById('fullProfileFrame');
 const dashboardPre = document.getElementById('dashboardData');
 const copyDashboardJsonBtn = document.getElementById('copyDashboardJson');
+const clientDashboardContainer = document.getElementById('clientDashboard');
 const profileSummaryDiv = document.getElementById('profileSummary');
 const statusSummaryDiv = document.getElementById('statusSummary');
 const analyticsSummaryDiv = document.getElementById('analyticsSummary');
@@ -762,6 +765,11 @@ if (sortOrderSelect) sortOrderSelect.addEventListener('change', renderClients);
 if (tagFilterSelect) tagFilterSelect.addEventListener('change', renderClients);
 
 async function showClient(userId) {
+    if (clientDashboardContainer) {
+        await loadTemplateInto('profileTemplate.html', 'clientDashboard');
+        setOverrideUserId(userId);
+        initClientProfile();
+    }
     if (fullProfileFrame) fullProfileFrame.classList.remove('hidden');
     try {
         const [profileResp, dashResp] = await Promise.all([
