@@ -51,11 +51,115 @@ async function getSendEmail(env) {
 }
 
 const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
-const WELCOME_BODY_TEMPLATE = '<h2>Здравей, {{name}} 👋</h2>' +
-    '<p>Благодарим ти, че се регистрира в <strong>MyBody</strong> – твоето пространство за здраве, балансирано хранене и осъзнат живот.</p>' +
-    '<p>Очаквай още полезни ресурси и съвети съвсем скоро.</p>' +
-    '<p>Бъди здрав и вдъхновен!</p>' +
-    '<p>– Екипът на MyBody</p>';
+const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Вашият персонален анализ е готов!</title>
+<!--[if !mso]><!-->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+<!--<![endif]-->
+<style type="text/css">
+  body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+  table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+  img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+  table { border-collapse: collapse !important; }
+  body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+
+  .ExternalClass { width: 100%; }
+  .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
+
+  @media screen and (max-width: 600px) {
+    .container { width: 100% !important; max-width: 100% !important; }
+    .content { padding: 20px !important; }
+    .header { padding: 30px 20px !important; }
+  }
+</style>
+</head>
+<body style="background-color: #f4f7f6; margin: 0 !important; padding: 0 !important;">
+
+<!-- СКРИТ PREHEADER ТЕКСТ -->
+<div style="display: none; font-size: 1px; color: #f4f7f6; line-height: 1px; font-family: 'Montserrat', Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
+  Създадохме Вашата персонална пътна карта към успеха. Вижте я сега!
+</div>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td align="center" style="background-color: #f4f7f6;">
+      <!--[if (gte mso 9)|(IE)]>
+      <table align="center" border="0" cellspacing="0" cellpadding="0" width="600">
+      <tr>
+      <td align="center" valign="top" width="600">
+      <![endif]-->
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;" class="container">
+
+        <!-- ЛОГО -->
+        <tr>
+          <td align="center" valign="top" style="padding: 40px 20px 30px 20px;" class="header">
+            <!-- Заменете src с линк към вашето лого -->
+            <img src="https://via.placeholder.com/200x50.png?text=Вашето+Лого" width="200" alt="Лого на компанията" style="display: block; width: 200px; max-width: 200px; min-width: 200px; font-family: 'Montserrat', Arial, sans-serif; color: #2C3E50; font-size: 24px; font-weight: bold;">
+          </td>
+        </tr>
+
+        <!-- ОСНОВНО СЪДЪРЖАНИЕ -->
+        <tr>
+          <td align="center" style="padding: 0 20px;">
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 20px; box-shadow: 0 10px 40px rgba(44, 62, 80, 0.1);">
+              <tr>
+                <td align="center" style="padding: 40px 30px;" class="content">
+
+                  <!-- ЗАГЛАВИЕ -->
+                  <h1 style="font-family: 'Montserrat', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #2C3E50; margin: 0 0 20px 0;">Добре дошли в MyBody!</h1>
+
+                  <!-- ТЕКСТ -->
+                  <p style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333333; margin: 0 0 15px 0;">
+                    Здравейте, <strong>{{name}}</strong>,
+                  </p>
+                  <p style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #333333; margin: 0 0 30px 0;">
+                    Благодарим Ви, че се присъединихте към <strong>MyBody</strong>. Започнете своя път към по-здравословен и балансиран начин на живот още сега.
+                  </p>
+
+                  <!-- БУТОН (CTA) -->
+                  <table border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td align="center" style="border-radius: 50px; background: linear-gradient(135deg, #4A90E2 0%, #50E3C2 100%);">
+                        <a href="https://mybody.best/quest.html" target="_blank" style="font-size: 16px; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 50px; padding: 18px 40px; border: 1px solid #4A90E2; display: inline-block;">Попълнете въпросника</a>
+                      </td>
+                    </tr>
+                  </table>
+
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- ФУТЪР -->
+        <tr>
+          <td align="center" style="padding: 30px 20px;">
+            <p style="font-family: 'Montserrat', Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #777777; margin: 0;">
+              Получавате този имейл, защото сте се регистрирали на нашия сайт.
+              <br><br>
+              © {{current_year}} Your Wellness Company. Всички права запазени.<br>
+              гр. София, ул. "Примерна" 123
+            </p>
+          </td>
+        </tr>
+
+      </table>
+      <!--[if (gte mso 9)|(IE)]>
+      </td>
+      </tr>
+      </table>
+      <![endif]-->
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>`;
 
 const QUESTIONNAIRE_SUBJECT = 'Получихме вашите отговори';
 const QUESTIONNAIRE_BODY_TEMPLATE = '<p>Здравей, {{name}}.</p>' +

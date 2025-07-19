@@ -827,6 +827,10 @@ To send a test email задайте `WORKER_ADMIN_TOKEN`. Може да посо
 | `ANALYSIS_PAGE_URL` | Base URL към `analyze.html` за генериране на линка в писмото. |
 | `WORKER_URL` | Base URL of the main worker used by `mailer.js` to fetch email templates when no subject or body is provided. |
 
+### HTML шаблон за приветствени имейли
+
+Файлът `data/welcomeEmailTemplate.html` съдържа готов дизайн за писмото "Добре дошли". Заменете `https://via.placeholder.com/200x50.png?text=Вашето+Лого` с реалното лого и използвайте плейсхолдърите `{{name}}` и `{{current_year}}` за персонализация. Преди изпращане е полезно HTML кодът да се обработи с **CSS inliner** инструмент (напр. Campaign Monitor Inliner или [Juice](https://github.com/Automattic/juice)), който прехвърля стиловете от `<style>` в елементите и така подобрява съвместимостта на имейл клиентите.
+
 #### Example: configuring analysis email
 
 Добавете следните променливи в `.env` или `wrangler.toml`:
