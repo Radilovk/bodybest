@@ -1,5 +1,14 @@
 /** @jest-environment jsdom */
 import { jest } from '@jest/globals';
+jest.unstable_mockModule('../clientProfile.js', () => ({ initClientProfile: jest.fn() }));
+jest.unstable_mockModule('../templateLoader.js', () => ({
+  loadTemplateInto: async (url, id) => {
+    const container = document.getElementById(id);
+    if (container) {
+      container.innerHTML = '<div id="tmpl">ok</div><button id="savePlanBtn"></button><button id="saveProfileBtn"></button>';
+    }
+  }
+}));
 
 let admin;
 
@@ -22,6 +31,7 @@ beforeEach(() => {
     <ul id="clientRepliesList"></ul>
     <ul id="feedbackList"></ul>
     <pre id="dashboardData"></pre>
+    <div id="adminProfileContainer"></div>
   `;
   localStorage.clear();
 });
@@ -42,6 +52,12 @@ function setupFetchWithNotifications(clients, now) {
     }
     if (url.includes('planStatus')) {
       return Promise.resolve({ ok: true, json: async () => ({ planStatus: 'ready' }) });
+    }
+    if (url.includes('profileTemplate.html')) {
+      return Promise.resolve({
+        ok: true,
+        text: async () => '<button id="savePlanBtn"></button><button id="saveProfileBtn"></button><div id="tmpl">ok</div>'
+      });
     }
     if (url.includes('getProfile') || url.includes('dashboard')) {
       return Promise.resolve({ ok: true, json: async () => ({ success: true }) });
@@ -77,6 +93,7 @@ describe('admin notifications', () => {
     admin.unreadClients.add('u2');
     admin.renderClients();
     await admin.showClient('u2');
+    expect(document.getElementById('adminProfileContainer').innerHTML).toContain('ok');
     expect(admin.unreadClients.has('u2')).toBe(false);
     const dot = document.querySelector('#clientsList .notification-dot');
     expect(dot).toBeNull();
