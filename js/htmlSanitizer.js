@@ -1,4 +1,8 @@
-export function sanitizeHTML(html, allowedTags = ['a','b','i','u','p','div','span','ul','ol','li','br','hr','h1','h2','h3','h4','h5','h6','table','thead','tbody','tr','td','th','button','input','label','form','select','option','textarea','img','svg','use','path']) {
+export function sanitizeHTML(html, allowedTags = [
+  'a','b','i','u','p','div','span','ul','ol','li','br','hr','h1','h2','h3','h4','h5','h6',
+  'table','thead','tbody','tr','td','th','button','input','label','form','select','option','textarea',
+  'img','svg','use','path','style','link'
+]) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_ELEMENT, null);
