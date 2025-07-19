@@ -48,7 +48,9 @@ export const apiEndpoints = {
     testAiModel: `${workerBaseUrl}/api/testAiModel`,
     analyzeImage: `${workerBaseUrl}/api/analyzeImage`,
     sendTestEmail: `${workerBaseUrl}/api/sendTestEmail`,
-    submitQuestionnaire: `${workerBaseUrl}/api/submitQuestionnaire`
+    submitQuestionnaire: `${workerBaseUrl}/api/submitQuestionnaire`,
+    analysisStatus: `${workerBaseUrl}/api/analysisStatus`,
+    getInitialAnalysis: `${workerBaseUrl}/api/getInitialAnalysis`
 };
 
 // Cloudflare Account ID за използване в чат асистента

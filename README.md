@@ -678,7 +678,9 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `GET /api/getAiPreset` – връща данните за конкретен пресет.
 - `POST /api/saveAiPreset` – съхранява нов пресет или обновява съществуващ.
 - `POST /api/testAiModel` – проверява връзката с конкретен AI модел.
+- `POST /api/submitQuestionnaire` – изпраща отговорите от началния въпросник.
 - `GET /api/analysisStatus` – връща текущия статус на персоналния анализ.
+- `GET /api/getInitialAnalysis` – връща първоначалния анализ.
 - `POST /api/analyzeImage` – анализира качено изображение и връща резултат. Изпращайте поле `image` с пълен `data:` URL. Ендпойнтът не изисква `WORKER_ADMIN_TOKEN`, освен ако изрично не сте го добавили като защита.
 - `POST /api/runImageModel` – изпраща байтовете на изображение към избран Cloudflare AI модел. Заявката приема `{ "model": "@cf/llava-hf/llava-1.5-7b-hf", "prompt": "Описание", "image": [..] }` и връща JSON от `env.AI.run`. При заявки с друг метод се връща статус 405.
 - `POST /api/sendTestEmail` – изпраща тестов имейл. Изисква администраторски токен.
