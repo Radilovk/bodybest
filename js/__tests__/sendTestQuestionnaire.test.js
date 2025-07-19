@@ -43,3 +43,12 @@ test('sendTestQuestionnaire posts parsed JSON', async () => {
     body: JSON.stringify({ a: 1, email: 'a@b.bg' })
   }));
 });
+
+test('response renders in #testQResult', async () => {
+  const responseData = { success: true };
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => responseData });
+  document.getElementById('testQEmail').value = 'a@b.bg';
+  document.getElementById('testQText').value = '{"a":1}';
+  await send();
+  expect(document.getElementById('testQResult').textContent).toBe(JSON.stringify(responseData, null, 2));
+});
