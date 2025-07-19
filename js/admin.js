@@ -1,6 +1,6 @@
 import { apiEndpoints } from './config.js';
 import { labelMap, statusMap } from './labelMap.js';
-import { fileToDataURL } from './utils.js';
+import { fileToDataURL, fileToText } from './utils.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -1302,42 +1302,54 @@ async function sendTestQuestionnaire() {
     if (!testQuestionnaireForm) return;
     const email = testQEmailInput ? testQEmailInput.value.trim() : '';
     let jsonStr = '';
+
     if (testQFileInput?.files?.[0]) {
         try {
-            const file = testQFileInput.files[0];
-            jsonStr = await new Promise((res) => {
-                const r = new FileReader();
-                r.onload = () => res(r.result || '');
-                r.onerror = () => res('');
-                r.readAsText(file);
-            });
+            jsonStr = await fileToText(testQFileInput.files[0]);
         } catch {
             jsonStr = '';
         }
     } else if (testQTextArea) {
         jsonStr = testQTextArea.value.trim();
     }
+
     if (!email || !jsonStr) {
         alert('Липсва имейл или данни.');
         return;
     }
-    let dataObj;
+
+    let payload;
     try {
-        dataObj = JSON.parse(jsonStr);
-    } catch (err) {
+        payload = JSON.parse(jsonStr);
+    } catch {
         alert('Невалиден JSON.');
         return;
     }
-    dataObj.email = email;
+    payload.email = email;
+
     try {
         const resp = await fetch(apiEndpoints.submitQuestionnaire, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dataObj)
+            body: JSON.stringify(payload)
         });
         const data = await resp.json();
         if (testQResultPre) testQResultPre.textContent = JSON.stringify(data, null, 2);
-        if (!resp.ok || !data.success) {
+
+        if (resp.ok && data.success && data.userId) {
+            try {
+                const stResp = await fetch(`${apiEndpoints.analysisStatus}?userId=${encodeURIComponent(data.userId)}`);
+                const stData = await stResp.json();
+                if (testQResultPre) testQResultPre.textContent += `\nStatus: ${JSON.stringify(stData)}`;
+                if (stData.analysisStatus === 'ready') {
+                    const anResp = await fetch(`${apiEndpoints.getInitialAnalysis}?userId=${encodeURIComponent(data.userId)}`);
+                    const anData = await anResp.json();
+                    if (testQResultPre) testQResultPre.textContent += `\nAnalysis: ${JSON.stringify(anData)}`;
+                }
+            } catch (err) {
+                console.warn('Error fetching analysis:', err);
+            }
+        } else if (!resp.ok || !data.success) {
             alert(data.message || 'Грешка при изпращането.');
         }
     } catch (err) {

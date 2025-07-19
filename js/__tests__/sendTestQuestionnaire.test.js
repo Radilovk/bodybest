@@ -18,6 +18,10 @@ beforeEach(async () => {
   jest.unstable_mockModule('../config.js', () => ({
     apiEndpoints: { submitQuestionnaire: '/api/submitQuestionnaire' }
   }));
+  jest.unstable_mockModule('../utils.js', () => ({
+    fileToText: jest.fn(async () => '{"a":1}'),
+    fileToDataURL: jest.fn()
+  }));
 
   const mod = await import('../admin.js');
   send = mod.sendTestQuestionnaire;

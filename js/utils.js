@@ -78,3 +78,17 @@ export function fileToDataURL(file) {
         reader.readAsDataURL(file);
     });
 }
+
+/**
+ * Чете File обект като текст.
+ * @param {File} file - Файлът за прочитане.
+ * @returns {Promise<string>} Обещание със съдържанието като текст.
+ */
+export function fileToText(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result || '');
+        reader.onerror = () => reject(reader.error);
+        reader.readAsText(file);
+    });
+}
