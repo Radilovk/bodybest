@@ -175,6 +175,12 @@
         // ДАННИТЕ ОТ БОТА ЩЕ БЪДАТ ИНЖЕКТИРАНИ ТУК ОТ СЪРВЪРА
         const analysisData = {/*---JSON_DATA_PLACEHOLDER---*/};
 
+        const isLocalDev = window.location.hostname === 'localhost'
+            || window.location.hostname === '127.0.0.1'
+            || window.location.hostname.includes('replit')
+            || window.location.hostname.includes('preview');
+        const workerBaseUrl = isLocalDev ? '' : 'https://openapichatbot.radilov-k.workers.dev';
+
         document.addEventListener('DOMContentLoaded', function() {
 
             // --- Хелпър функции за генериране на HTML ---
@@ -272,7 +278,7 @@
                     document.body.classList.add('loaded');
                     return;
                 }
-                fetch(`/api/getInitialAnalysis?userId=${encodeURIComponent(userId)}`)
+                fetch(`${workerBaseUrl}/api/getInitialAnalysis?userId=${encodeURIComponent(userId)}`)
                     .then(res => {
                         if (!res.ok) throw new Error('HTTP ' + res.status);
                         return res.json();
