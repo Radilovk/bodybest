@@ -49,6 +49,7 @@ export const apiEndpoints = {
     analyzeImage: `${workerBaseUrl}/api/analyzeImage`,
     sendTestEmail: `${workerBaseUrl}/api/sendTestEmail`,
     submitQuestionnaire: `${workerBaseUrl}/api/submitQuestionnaire`,
+    reAnalyzeQuestionnaire: `${workerBaseUrl}/api/reAnalyzeQuestionnaire`,
     analysisStatus: `${workerBaseUrl}/api/analysisStatus`,
     getInitialAnalysis: `${workerBaseUrl}/api/getInitialAnalysis`
 };
