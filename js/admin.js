@@ -102,12 +102,9 @@ const testImagePromptInput = document.getElementById('testImagePrompt');
 const testImageResultPre = document.getElementById('testImageResult');
 const testQuestionnaireForm = document.getElementById('testQuestionnaireForm');
 const testQEmailInput = document.getElementById('testQEmail');
-const testQClientSelect = document.getElementById('testQClient');
-const testQUserIdInput = document.getElementById('testQUserId');
 const testQFileInput = document.getElementById('testQFile');
 const testQTextArea = document.getElementById('testQText');
 const testQResultPre = document.getElementById('testQResult');
-const openTestQAnalysisLink = document.getElementById('openTestQAnalysis');
 const clientNameHeading = document.getElementById('clientName');
 const closeProfileBtn = document.getElementById('closeProfile');
 const notificationsList = document.getElementById('notificationsList');
@@ -507,7 +504,6 @@ async function loadClients() {
             );
             allClients = withStatus;
             updateTagFilterOptions();
-            populateTestQClientOptions();
             renderClients();
             const stats = {
                 clients: withStatus.length,
@@ -588,17 +584,6 @@ function updateTagFilterOptions() {
         tagFilterSelect.appendChild(opt);
     });
     if (current.includes('all')) tagFilterSelect.querySelector('option[value="all"]').selected = true;
-}
-
-function populateTestQClientOptions() {
-    if (!testQClientSelect) return;
-    testQClientSelect.innerHTML = '<option value="">--</option>';
-    allClients.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c.userId;
-        opt.textContent = `${c.name} (${c.userId})`;
-        testQClientSelect.appendChild(opt);
-    });
 }
 
 function updateStatusChart(stats) {
@@ -1316,10 +1301,6 @@ async function sendTestImage() {
 async function sendTestQuestionnaire() {
     if (!testQuestionnaireForm) return;
     const email = testQEmailInput ? testQEmailInput.value.trim() : '';
-    if (openTestQAnalysisLink) openTestQAnalysisLink.classList.add('hidden');
-    const selectedId = testQClientSelect ? testQClientSelect.value : '';
-    const manualId = testQUserIdInput ? testQUserIdInput.value.trim() : '';
-    const userId = manualId || selectedId;
     let jsonStr = '';
 
     if (testQFileInput?.files?.[0]) {
@@ -1345,7 +1326,6 @@ async function sendTestQuestionnaire() {
         return;
     }
     payload.email = email;
-    if (userId) payload.userId = userId;
 
     try {
         const resp = await fetch(apiEndpoints.submitQuestionnaire, {
@@ -1357,10 +1337,6 @@ async function sendTestQuestionnaire() {
         if (testQResultPre) testQResultPre.textContent = JSON.stringify(data, null, 2);
 
         if (resp.ok && data.success && data.userId) {
-            if (openTestQAnalysisLink) {
-                openTestQAnalysisLink.classList.remove('hidden');
-                openTestQAnalysisLink.href = `analysis.html?userId=${encodeURIComponent(data.userId)}`;
-            }
             try {
                 const stResp = await fetch(`${apiEndpoints.analysisStatus}?userId=${encodeURIComponent(data.userId)}`);
                 const stData = await stResp.json();
