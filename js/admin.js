@@ -100,6 +100,11 @@ const testImageForm = document.getElementById('testImageForm');
 const testImageFileInput = document.getElementById('testImageFile');
 const testImagePromptInput = document.getElementById('testImagePrompt');
 const testImageResultPre = document.getElementById('testImageResult');
+const testQuestionnaireForm = document.getElementById('testQuestionnaireForm');
+const testQEmailInput = document.getElementById('testQEmail');
+const testQFileInput = document.getElementById('testQFile');
+const testQTextArea = document.getElementById('testQText');
+const testQResultPre = document.getElementById('testQResult');
 const clientNameHeading = document.getElementById('clientName');
 const closeProfileBtn = document.getElementById('closeProfile');
 const notificationsList = document.getElementById('notificationsList');
@@ -1293,6 +1298,56 @@ async function sendTestImage() {
     }
 }
 
+async function sendTestQuestionnaire() {
+    if (!testQuestionnaireForm) return;
+    const email = testQEmailInput ? testQEmailInput.value.trim() : '';
+    let jsonStr = '';
+    if (testQFileInput?.files?.[0]) {
+        try {
+            const file = testQFileInput.files[0];
+            jsonStr = await new Promise((res) => {
+                const r = new FileReader();
+                r.onload = () => res(r.result || '');
+                r.onerror = () => res('');
+                r.readAsText(file);
+            });
+        } catch {
+            jsonStr = '';
+        }
+    } else if (testQTextArea) {
+        jsonStr = testQTextArea.value.trim();
+    }
+    if (!email || !jsonStr) {
+        alert('Липсва имейл или данни.');
+        return;
+    }
+    let dataObj;
+    try {
+        dataObj = JSON.parse(jsonStr);
+    } catch (err) {
+        alert('Невалиден JSON.');
+        return;
+    }
+    dataObj.email = email;
+    try {
+        const resp = await fetch(apiEndpoints.submitQuestionnaire, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataObj)
+        });
+        const data = await resp.json();
+        if (testQResultPre) testQResultPre.textContent = JSON.stringify(data, null, 2);
+        if (!resp.ok || !data.success) {
+            alert(data.message || 'Грешка при изпращането.');
+        }
+    } catch (err) {
+        console.error('Error sending questionnaire:', err);
+        alert('Грешка при изпращане.');
+    } finally {
+        if (testQFileInput) testQFileInput.value = '';
+    }
+}
+
 async function loadAiPresets() {
     if (!presetSelect) return;
     try {
@@ -1489,6 +1544,13 @@ if (testImageForm) {
     });
 }
 
+if (testQuestionnaireForm) {
+    testQuestionnaireForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await sendTestQuestionnaire();
+    });
+}
+
 export {
     allClients,
     loadClients,
@@ -1502,5 +1564,6 @@ export {
     sendTestEmail,
     confirmAndSendTestEmail,
     sendTestImage,
+    sendTestQuestionnaire,
     sendAdminQuery
 };
