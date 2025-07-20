@@ -79,6 +79,7 @@
     position: relative; /* За да може бутонът да не го презаписва */
 }
 .modal-content .modal-close-btn { margin-top: var(--space-lg); display: block; margin-left: auto; margin-right: auto; }
+.modal-content #achievementShareBtn { margin-top: var(--space-md); display: block; margin-left: auto; margin-right: auto; }
 .modal-content .close-button {
   position: absolute; 
   top: var(--space-lg); /* Подравняване с padding-a на modal-content */

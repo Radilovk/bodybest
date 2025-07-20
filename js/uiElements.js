@@ -43,6 +43,7 @@ export function initializeSelectors() {
         progressHistoryCard: 'progressHistoryCard',
         streakGrid: 'streakGrid',
         streakCount: 'streakCount',
+        achievementShareBtn: 'achievementShareBtn',
         analyticsCardsContainer: 'analyticsCardsContainer',
         tooltipTracker: 'tooltip-tracker',
         toast: 'toast', chatFab: 'chat-fab', chatWidget: 'chat-widget', chatClose: 'chat-close',
@@ -67,7 +68,7 @@ export function initializeSelectors() {
                 'feedbackForm', 'tooltipTracker', 'planModificationBtn', 'planModInProgressIcon',
                 'planModChatModal', 'planModChatMessages', 'planModChatInput',
                 'planModChatSend', 'planModChatClose', 'planModChatClear',
-                'streakGrid', 'streakCount', 'analyticsCardsContainer',
+                'streakGrid', 'streakCount', 'analyticsCardsContainer', 'achievementShareBtn',
                 'goalCard', 'engagementCard', 'healthCard', 'streakCard',
                 'recFoodAllowedCard', 'recFoodLimitCard', 'recHydrationCard',
                 'recCookingMethodsCard', 'recSupplementsCard'
