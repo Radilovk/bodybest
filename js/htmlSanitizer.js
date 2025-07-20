@@ -1,7 +1,7 @@
 export function sanitizeHTML(html, allowedTags = [
   'a','b','i','u','p','div','span','ul','ol','li','br','hr','h1','h2','h3','h4','h5','h6',
   'table','thead','tbody','tr','td','th','button','input','label','form','select','option','textarea',
-  'img','svg','use','path','style','link'
+  'img','svg','use','path','style','link','body'
 ]) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
