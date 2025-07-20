@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ Панел на Диетолог - План на Клиент</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            margin-bottom: 1.5rem;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #e9ecef;
+        }
+        /* Скриване на елементите за редакция по подразбиране */
+        .edit-mode { display: none; }
+
+        /* Показване на елементите за редакция, когато секцията е в режим на редакция */
+        .editing .view-mode { display: none; }
+        .editing .edit-mode { display: block; }
+
+        .list-group-item-action {
+            cursor: pointer;
+        }
+        .dynamic-list .input-group {
+            margin-bottom: 0.5rem;
+        }
+        .meal-entry {
+            border: 1px solid #dee2e6;
+            border-radius: .25rem;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fefefe;
+        }
+        .item-entry {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 5px;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header / Toolbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-person-circle"></i> Клиентски План: <strong id="client-name">Loading...</strong>
+            </a>
+            <div class="ms-auto d-flex align-items-center">
+                <button class="btn btn-danger me-2" id="global-cancel-btn">Отказ Всички</button>
+                <button class="btn btn-success me-3" id="global-save-btn">Запази Всички Промени</button>
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-tools"></i> Инструменти
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-pdf"></i> Експорт като PDF</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-copy"></i> Клонирай план</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-clock-history"></i> История на промените</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Main Content Column -->
+            <div class="col-lg-8">
+                <!-- Profile Summary Card -->
+                <div class="card" id="profileSummary-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-person-lines-fill"></i> Резюме на профила</h5>
+                        <button class="btn btn-outline-primary btn-sm toggle-edit-btn" data-target="profileSummary-card">
+                            <i class="bi bi-pencil-square"></i> Редактирай
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <!-- View Mode -->
+                        <div class="view-mode">
+                            <p id="profileSummary-view"></p>
+                        </div>
+                        <!-- Edit Mode -->
+                        <div class="edit-mode">
+                             <div class="mb-3">
+                                <label for="profileSummary-edit-summary" class="form-label">Пълно резюме</label>
+                                <textarea class="form-control" id="profileSummary-edit-summary" rows="3"></textarea>
+                            </div>
+                            <button class="btn btn-success btn-sm save-section-btn">Запази секция</button>
+                            <button class="btn btn-secondary btn-sm cancel-edit-btn" data-target="profileSummary-card">Отказ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calories & Macros Card -->
+                <div class="card" id="caloriesMacros-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-pie-chart-fill"></i> Калории и Макроси</h5>
+                        <button class="btn btn-outline-primary btn-sm toggle-edit-btn" data-target="caloriesMacros-card">
+                            <i class="bi bi-pencil-square"></i> Редактирай
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <!-- View Mode -->
+                                <div class="view-mode">
+                                    <h4>Дневен прием: <strong id="caloriesMacros-calories-view"></strong></h4>
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Протеини
+                                            <span class="badge bg-primary rounded-pill" id="caloriesMacros-protein-view"></span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Въглехидрати
+                                            <span class="badge bg-warning rounded-pill" id="caloriesMacros-carbs-view"></span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Мазнини
+                                            <span class="badge bg-danger rounded-pill" id="caloriesMacros-fat-view"></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <!-- Edit Mode -->
+                                <div class="edit-mode">
+                                    <div class="input-group mb-3">
+                                        <span class="input-group-text">Калории</span>
+                                        <input type="number" class="form-control" id="caloriesMacros-edit-calories">
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text">Протеини (%)</span>
+                                        <input type="number" class="form-control" id="caloriesMacros-edit-protein-percent">
+                                        <span class="input-group-text">(г)</span>
+                                        <input type="number" class="form-control" id="caloriesMacros-edit-protein-grams">
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text">Въглехидрати (%)</span>
+                                        <input type="number" class="form-control" id="caloriesMacros-edit-carbs-percent">
+                                         <span class="input-group-text">(г)</span>
+                                        <input type="number" class="form-control" id="caloriesMacros-edit-carbs-grams">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <span class="input-group-text">Мазнини (%)</span>
+                                        <input type="number" class="form-control" id="caloriesMacros-edit-fat-percent">
+                                         <span class="input-group-text">(г)</span>
+                                        <input type="number" class="form-control" id="caloriesMacros-edit-fat-grams">
+                                    </div>
+                                    <button class="btn btn-success btn-sm save-section-btn">Запази секция</button>
+                                    <button class="btn btn-secondary btn-sm cancel-edit-btn" data-target="caloriesMacros-card">Отказ</button>
+                                </div>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-center justify-content-center">
+                                <canvas id="macro-chart" style="max-width: 250px; max-height: 250px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Allowed/Forbidden Foods Card -->
+                 <div class="card" id="allowedForbiddenFoods-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-hand-thumbs-up-fill"></i> / <i class="bi bi-hand-thumbs-down-fill"></i> Храни</h5>
+                        <button class="btn btn-outline-primary btn-sm toggle-edit-btn" data-target="allowedForbiddenFoods-card">
+                            <i class="bi bi-pencil-square"></i> Редактирай
+                        </button>
+                    </div>
+                    <div class="card-body">
+                         <!-- View Mode -->
+                        <div class="view-mode">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6><i class="bi bi-check-circle-fill text-success"></i> Основни позволени</h6>
+                                    <ul id="main_allowed_foods-view"></ul>
+                                    <h6><i class="bi bi-lightbulb-fill text-info"></i> Подробни предложения</h6>
+                                    <ul id="detailed_allowed_suggestions-view"></ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6><i class="bi bi-x-circle-fill text-danger"></i> Основни забранени</h6>
+                                    <ul id="main_forbidden_foods-view"></ul>
+                                    <h6><i class="bi bi-exclamation-triangle-fill text-warning"></i> За ограничаване</h6>
+                                    <ul id="detailed_limit_suggestions-view"></ul>
+                                </div>
+                            </div>
+                            <h6 class="mt-3"><i class="bi bi-mortarboard-fill text-secondary"></i> Идеи за дресинги/овкусяване</h6>
+                            <ul id="dressing_flavoring_ideas-view"></ul>
+                        </div>
+                        <!-- Edit Mode -->
+                        <div class="edit-mode">
+                            <h6><i class="bi bi-check-circle-fill text-success"></i> Основни позволени</h6>
+                            <div class="dynamic-list" id="main_allowed_foods-edit"></div>
+                            <button class="btn btn-outline-success btn-sm mt-2 mb-3 add-list-item-btn" data-list-id="main_allowed_foods-edit">
+                                <i class="bi bi-plus-circle"></i> Добави
+                            </button>
+
+                            <h6><i class="bi bi-lightbulb-fill text-info"></i> Подробни предложения</h6>
+                            <div class="dynamic-list" id="detailed_allowed_suggestions-edit"></div>
+                            <button class="btn btn-outline-success btn-sm mt-2 mb-3 add-list-item-btn" data-list-id="detailed_allowed_suggestions-edit">
+                                <i class="bi bi-plus-circle"></i> Добави
+                            </button>
+
+                            <h6><i class="bi bi-x-circle-fill text-danger"></i> Основни забранени</h6>
+                            <div class="dynamic-list" id="main_forbidden_foods-edit"></div>
+                            <button class="btn btn-outline-success btn-sm mt-2 mb-3 add-list-item-btn" data-list-id="main_forbidden_foods-edit">
+                                <i class="bi bi-plus-circle"></i> Добави
+                            </button>
+
+                            <h6><i class="bi bi-exclamation-triangle-fill text-warning"></i> За ограничаване</h6>
+                            <div class="dynamic-list" id="detailed_limit_suggestions-edit"></div>
+                            <button class="btn btn-outline-success btn-sm mt-2 mb-3 add-list-item-btn" data-list-id="detailed_limit_suggestions-edit">
+                                <i class="bi bi-plus-circle"></i> Добави
+                            </button>
+
+                            <h6><i class="bi bi-mortarboard-fill text-secondary"></i> Идеи за дресинги/овкусяване</h6>
+                            <div class="dynamic-list" id="dressing_flavoring_ideas-edit"></div>
+                            <button class="btn btn-outline-success btn-sm mt-2 mb-3 add-list-item-btn" data-list-id="dressing_flavoring_ideas-edit">
+                                <i class="bi bi-plus-circle"></i> Добави
+                            </button>
+
+                            <hr>
+                            <button class="btn btn-success btn-sm save-section-btn">Запази секция</button>
+                            <button class="btn btn-secondary btn-sm cancel-edit-btn" data-target="allowedForbiddenFoods-card">Отказ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Week 1 Menu Card -->
+                <div class="card" id="week1Menu-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-calendar-week"></i> Меню за Седмица 1</h5>
+                        <button class="btn btn-outline-primary btn-sm toggle-edit-btn" data-target="week1Menu-card">
+                            <i class="bi bi-pencil-square"></i> Редактирай
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="accordion" id="week1Menu-view">
+                            <!-- Menu days will be populated here by JS for view mode -->
+                        </div>
+                        <div class="edit-mode" id="week1Menu-edit">
+                            <!-- Menu days will be populated here by JS for edit mode -->
+                            <button class="btn btn-outline-primary btn-sm mt-3" id="add-week-day-btn">
+                                <i class="bi bi-plus-circle"></i> Добави ден
+                            </button>
+                            <hr>
+                            <button class="btn btn-success btn-sm save-section-btn">Запази секция</button>
+                            <button class="btn btn-secondary btn-sm cancel-edit-btn" data-target="week1Menu-card">Отказ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Principles Week 2-4 Card -->
+                <div class="card" id="principlesWeek2_4-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Принципи за Седмици 2-4</h5>
+                        <button class="btn btn-outline-primary btn-sm toggle-edit-btn" data-target="principlesWeek2_4-card">
+                            <i class="bi bi-pencil-square"></i> Редактирай
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="view-mode">
+                            <ul class="list-group list-group-flush" id="principlesWeek2_4-view"></ul>
+                        </div>
+                        <div class="edit-mode">
+                            <div class="dynamic-list" id="principlesWeek2_4-edit"></div>
+                            <button class="btn btn-outline-success btn-sm mt-2 mb-3 add-principle-btn">
+                                <i class="bi bi-plus-circle"></i> Добави принцип
+                            </button>
+                            <hr>
+                            <button class="btn btn-success btn-sm save-section-btn">Запази секция</button>
+                            <button class="btn btn-secondary btn-sm cancel-edit-btn" data-target="principlesWeek2_4-card">Отказ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hydration, Cooking, Supplements Card -->
+                <div class="card" id="hydrationCookingSupplements-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-droplet-fill"></i> Хидратация, Готвене, Добавки</h5>
+                        <button class="btn btn-outline-primary btn-sm toggle-edit-btn" data-target="hydrationCookingSupplements-card">
+                            <i class="bi bi-pencil-square"></i> Редактирай
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="view-mode">
+                            <h6><i class="bi bi-water"></i> Хидратация</h6>
+                            <p id="hydration_daily_liters-view"></p>
+                            <ul>
+                                <li>Съвети: <span id="hydration_tips-view"></span></li>
+                                <li>Подходящи напитки: <span id="hydration_suitable_drinks-view"></span></li>
+                                <li>Неподходящи напитки: <span id="hydration_unsuitable_drinks-view"></span></li>
+                            </ul>
+                            <h6><i class="bi bi-fire"></i> Методи на готвене</h6>
+                            <ul>
+                                <li>Препоръчителни: <span id="cooking_recommended-view"></span></li>
+                                <li>Ограничаване: <span id="cooking_limit_or_avoid-view"></span></li>
+                                <li>Употреба на мазнини: <span id="cooking_fat_usage_tip-view"></span></li>
+                            </ul>
+                            <h6><i class="bi bi-capsule"></i> Добавки</h6>
+                            <ul id="supplement_suggestions-view"></ul>
+                        </div>
+                        <div class="edit-mode">
+                            <h6><i class="bi bi-water"></i> Хидратация</h6>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text">Литъра дневно</span>
+                                <input type="number" step="0.1" class="form-control" id="hydration_daily_liters-edit">
+                            </div>
+                            <div class="mb-2">
+                                <label for="hydration_tips-edit" class="form-label">Съвети (разделени със запетая)</label>
+                                <input type="text" class="form-control" id="hydration_tips-edit">
+                            </div>
+                            <div class="mb-2">
+                                <label for="hydration_suitable_drinks-edit" class="form-label">Подходящи напитки (разделени със запетая)</label>
+                                <input type="text" class="form-control" id="hydration_suitable_drinks-edit">
+                            </div>
+                            <div class="mb-3">
+                                <label for="hydration_unsuitable_drinks-edit" class="form-label">Неподходящи напитки (разделени със запетая)</label>
+                                <input type="text" class="form-control" id="hydration_unsuitable_drinks-edit">
+                            </div>
+
+                            <h6><i class="bi bi-fire"></i> Методи на готвене</h6>
+                            <div class="mb-2">
+                                <label for="cooking_recommended-edit" class="form-label">Препоръчителни (разделени със запетая)</label>
+                                <input type="text" class="form-control" id="cooking_recommended-edit">
+                            </div>
+                            <div class="mb-2">
+                                <label for="cooking_limit_or_avoid-edit" class="form-label">Ограничаване (разделени със запетая)</label>
+                                <input type="text" class="form-control" id="cooking_limit_or_avoid-edit">
+                            </div>
+                            <div class="mb-3">
+                                <label for="cooking_fat_usage_tip-edit" class="form-label">Употреба на мазнини</label>
+                                <textarea class="form-control" id="cooking_fat_usage_tip-edit" rows="2"></textarea>
+                            </div>
+
+                            <h6><i class="bi bi-capsule"></i> Добавки</h6>
+                            <div class="dynamic-list" id="supplement_suggestions-edit"></div>
+                            <button class="btn btn-outline-success btn-sm mt-2 mb-3 add-supplement-btn">
+                                <i class="bi bi-plus-circle"></i> Добави добавка
+                            </button>
+                            <hr>
+                            <button class="btn btn-success btn-sm save-section-btn">Запази секция</button>
+                            <button class="btn btn-secondary btn-sm cancel-edit-btn" data-target="hydrationCookingSupplements-card">Отказ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Psychological Guidance Card -->
+                <div class="card" id="psychologicalGuidance-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-heart-fill"></i> Психологически Насоки</h5>
+                        <button class="btn btn-outline-primary btn-sm toggle-edit-btn" data-target="psychologicalGuidance-card">
+                            <i class="bi bi-pencil-square"></i> Редактирай
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="view-mode">
+                            <h6>Стратегии за справяне:</h6>
+                            <ul id="coping_strategies-view"></ul>
+                            <h6>Мотивационни съобщения:</h6>
+                            <ul id="motivational_messages-view"></ul>
+                            <h6>Съвети за изграждане на навици:</h6>
+                            <p id="habit_building_tip-view"></p>
+                            <h6>Напомняне за самосъстрадание:</h6>
+                            <p id="self_compassion_reminder-view"></p>
+                        </div>
+                        <div class="edit-mode">
+                            <div class="mb-3">
+                                <label for="coping_strategies-edit" class="form-label">Стратегии за справяне (разделени със запетая)</label>
+                                <input type="text" class="form-control" id="coping_strategies-edit">
+                            </div>
+                            <div class="mb-3">
+                                <label for="motivational_messages-edit" class="form-label">Мотивационни съобщения (разделени със запетая)</label>
+                                <input type="text" class="form-control" id="motivational_messages-edit">
+                            </div>
+                            <div class="mb-3">
+                                <label for="habit_building_tip-edit" class="form-label">Съвет за изграждане на навици</label>
+                                <textarea class="form-control" id="habit_building_tip-edit" rows="2"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="self_compassion_reminder-edit" class="form-label">Напомняне за самосъстрадание</label>
+                                <textarea class="form-control" id="self_compassion_reminder-edit" rows="2"></textarea>
+                            </div>
+                            <hr>
+                            <button class="btn btn-success btn-sm save-section-btn">Запази секция</button>
+                            <button class="btn btn-secondary btn-sm cancel-edit-btn" data-target="psychologicalGuidance-card">Отказ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generation Metadata (Read-Only) -->
+                 <div class="card" id="generationMetadata-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Метаданни на Генерацията</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Време на генерация:</strong> <span id="metadata-timestamp"></span></p>
+                        <p><strong>Използван модел:</strong> <span id="metadata-modelUsed"></span></p>
+                        <p><strong>Версия на подкана:</strong> <span id="metadata-promptVersion"></span></p>
+                        <p><strong>Грешки:</strong> <span id="metadata-errors"></span></p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Sidebar Column for Tools & Analytics -->
+            <div class="col-lg-4">
+                <!-- Weight Progress Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> Проследяване на теглото</h5>
+                    </div>
+                    <div class="card-body">
+                         <canvas id="weight-chart"></canvas>
+                         <small class="text-muted">Текущо тегло: <span id="current-weight-display"></span> кг (промяна за 7 дни: <span id="weight-change-display"></span> кг)</small>
+                    </div>
+                </div>
+
+                <!-- Detailed Targets Card -->
+                <div class="card" id="detailedTargets-card">
+                     <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-bullseye"></i> Детайлни Цели</h5>
+                        <button class="btn btn-outline-primary btn-sm toggle-edit-btn" data-target="detailedTargets-card">
+                            <i class="bi bi-pencil-square"></i> Редактирай
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <!-- View Mode -->
+                        <ul class="list-group list-group-flush view-mode">
+                          <li class="list-group-item"><strong>Качествен сън:</strong> <span id="sleep_quality_target_text-view"></span></li>
+                          <li class="list-group-item"><strong>Ниво на стрес:</strong> <span id="stress_level_target_text-view"></span></li>
+                          <li class="list-group-item"><strong>Енергийни нива:</strong> <span id="energy_level_target_text-view"></span></li>
+                          <li class="list-group-item"><strong>Хидратация:</strong> <span id="hydration_target_text-view"></span></li>
+                          <li class="list-group-item"><strong>Цел BMI:</strong> <span id="bmi_target_numeric-view"></span> (<span id="bmi_target_category_text-view"></span>)</li>
+                          <li class="list-group-item"><strong>Придържане към плана:</strong> <span id="meal_adherence_target_percent-view"></span>%</li>
+                          <li class="list-group-item"><strong>Последователност на логове:</strong> <span id="log_consistency_target_percent-view"></span>%</li>
+                        </ul>
+                         <!-- Edit Mode -->
+                        <div class="edit-mode">
+                             <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text">Качествен сън</span>
+                                <input type="text" class="form-control" id="sleep_quality_target_text-edit">
+                            </div>
+                             <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text">Ниво на стрес</span>
+                                <input type="text" class="form-control" id="stress_level_target_text-edit">
+                            </div>
+                             <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text">Енергийни нива</span>
+                                <input type="text" class="form-control" id="energy_level_target_text-edit">
+                            </div>
+                             <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text">Хидратация</span>
+                                <input type="text" class="form-control" id="hydration_target_text-edit">
+                            </div>
+                             <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text">Цел BMI</span>
+                                <input type="number" step="0.1" class="form-control" id="bmi_target_numeric-edit">
+                                <input type="text" class="form-control" id="bmi_target_category_text-edit" placeholder="Категория">
+                            </div>
+                             <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text">Придържане към плана (%)</span>
+                                <input type="number" class="form-control" id="meal_adherence_target_percent-edit">
+                            </div>
+                             <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text">Последователност на логове (%)</span>
+                                <input type="number" class="form-control" id="log_consistency_target_percent-edit">
+                            </div>
+                             <hr>
+                            <button class="btn btn-success btn-sm save-section-btn">Запази секция</button>
+                            <button class="btn btn-secondary btn-sm cancel-edit-btn" data-target="detailedTargets-card">Отказ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specialist Notes Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-journal-text"></i> Лични бележки на специалиста</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" rows="8" id="specialist-notes" placeholder="Тук можете да водите лични бележки за клиента, които не са видими за него. Например: 'Клиентът сподели, че е имал силен апетит в сряда вечер. Да обсъдим стратегия за справяне.'"></textarea>
+                        <button class="btn btn-primary mt-2 btn-sm">Запази бележката</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+    // --- Вграждане на JSON данните ---
+    const planData = {
+      "profileSummary": "Потребител с цел Отслабване, има Инсулинова резистентност и предпочита балансиран режим. Ниво на активност: Средно. Текущо тегло 85 кг (промяна за 7 дни: -0.5 кг).",
+      "caloriesMacros": {
+        "calories": 1800,
+        "protein_percent": 30,
+        "carbs_percent": 40,
+        "fat_percent": 30,
+        "protein_grams": 135,
+        "carbs_grams": 180,
+        "fat_grams": 60
+      },
+      "allowedForbiddenFoods": {
+        "main_allowed_foods": ["пилешко филе", "яйца", "кафяв ориз"],
+        "main_forbidden_foods": ["захарни изделия"],
+        "detailed_allowed_suggestions": ["Чиа пудинг с горски плодове", "Пълнозърнести храни"],
+        "detailed_limit_suggestions": ["Готови плодови кисели млека с добавена захар", "Преработени меса"],
+        "dressing_flavoring_ideas": ["Лимонов сок, зехтин и риган", "Билкови подправки"]
+      },
+      "week1Menu": {
+        "monday": [
+          { "meal_name": "Закуска", "items": [{ "name": "овесени ядки", "grams": "60g" }, { "name": "горски плодове", "grams": "100g" }] },
+          { "meal_name": "Обяд", "items": [{ "name": "пилешко филе", "grams": "150g" }, { "name": "салата микс", "grams": "200g" }] },
+          { "meal_name": "Вечеря", "items": [{ "name": "сьомга", "grams": "120g" }, { "name": "броколи на пара", "grams": "150g" }] }
+        ],
+        "tuesday": [
+            { "meal_name": "Закуска", "items": [{ "name": "яйца (варени)", "grams": "2бр" }, { "name": "пълнозърнест тост", "grams": "1 филия" }] },
+            { "meal_name": "Обяд", "items": [{ "name": "леща чорба", "grams": "300g" }] }
+        ]
+      },
+      "principlesWeek2_4": [
+        { "title": "Принцип 1", "content": "Осъзнато хранене", "icon": "icon-brain" },
+        { "title": "Принцип 2", "content": "Увеличете приема на фибри", "icon": "icon-leaf" },
+        { "title": "Принцип 3", "content": "Намалете преработените храни", "icon": "icon-cutlery" }
+      ],
+      "hydrationCookingSupplements": {
+        "hydration_recommendations": {
+          "daily_liters": "2.0",
+          "tips": ["Пийте вода с лимон сутрин", "Носете бутилка вода навсякъде"],
+          "suitable_drinks": ["билков чай без захар", "вода", "кафе (умерено)"],
+          "unsuitable_drinks": ["подсладени газирани напитки", "плодови сокове с добавена захар"]
+        },
+        "cooking_methods": {
+          "recommended": ["печене", "варене", "готвене на пара"],
+          "limit_or_avoid": ["пържене в много мазнина", "дълбоко пържене"],
+          "fat_usage_tip": "Използвайте зехтин в умерени количества, авокадово масло или кокосово масло (без мирис) за готвене при висока температура."
+        },
+        "supplement_suggestions": [
+          { "supplement_name": "Витамин D", "reasoning": "Нисък прием от храната", "caution": "Консултирайте се с лекар за дозата" },
+          { "supplement_name": "Омега-3", "reasoning": "Подкрепа за сърдечно-съдовата система", "caution": "Приемайте с храна" }
+        ]
+      },
+      "psychologicalGuidance": {
+        "coping_strategies": ["Кратка разходка при стрес", "Медитация за 10 минути", "Четене на книга"],
+        "motivational_messages": ["Всяка малка стъпка е успех!", "Постоянството води до резултати!", "Вярвай в себе си!"],
+        "habit_building_tip": "Започнете с малки промени и ги надграждайте постепенно. Не се опитвайте да промените всичко наведнъж.",
+        "self_compassion_reminder": "Бъдете добри към себе си, приемайте грешките като част от процеса и продължавайте напред."
+      },
+      "detailedTargets": {
+        "sleep_quality_target_text": "7-8 часа качествен сън",
+        "stress_level_target_text": "Ниско до умерено ниво на стрес",
+        "energy_level_target_text": "Стабилни нива на енергия през целия ден",
+        "hydration_target_text": "Около 2.5л вода дневно",
+        "bmi_target_numeric": 22.0,
+        "bmi_target_category_text": "Нормално тегло",
+        "meal_adherence_target_percent": 85,
+        "log_consistency_target_percent": 80
+      },
+      "generationMetadata": {
+        "timestamp": "2024-08-01T12:00:00Z",
+        "modelUsed": "gemini-pro",
+        "promptVersion": "v2.1-optimized",
+        "errors": []
+      }
+    };
+
+    let currentPlanData = JSON.parse(JSON.stringify(planData)); // Работно копие на данните
+    let editingCards = new Set(); // Следи кои карти са в режим на редакция
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- Инициализация на UI с данните от planData ---
+        function populateUI(data) {
+            // Client Name (Header)
+            document.getElementById('client-name').textContent = "Клиент"; // Може да се вземе от профил или име, ако JSON го съдържа
+
+            // Profile Summary
+            document.getElementById('profileSummary-view').textContent = data.profileSummary;
+            document.getElementById('profileSummary-edit-summary').value = data.profileSummary;
+            
+            // Current Weight Display (from profileSummary)
+            const weightMatch = data.profileSummary.match(/текущо тегло (\d+\.?\d*) кг \(промяна за 7 дни: (-?\d+\.?\d*) кг\)/);
+            if (weightMatch) {
+                document.getElementById('current-weight-display').textContent = weightMatch[1];
+                document.getElementById('weight-change-display').textContent = weightMatch[2];
+            }
+
+
+            // Calories & Macros
+            document.getElementById('caloriesMacros-calories-view').textContent = `${data.caloriesMacros.calories} kcal`;
+            document.getElementById('caloriesMacros-protein-view').textContent = `${data.caloriesMacros.protein_percent}% / ${data.caloriesMacros.protein_grams}г`;
+            document.getElementById('caloriesMacros-carbs-view').textContent = `${data.caloriesMacros.carbs_percent}% / ${data.caloriesMacros.carbs_grams}г`;
+            document.getElementById('caloriesMacros-fat-view').textContent = `${data.caloriesMacros.fat_percent}% / ${data.caloriesMacros.fat_grams}г`;
+
+            document.getElementById('caloriesMacros-edit-calories').value = data.caloriesMacros.calories;
+            document.getElementById('caloriesMacros-edit-protein-percent').value = data.caloriesMacros.protein_percent;
+            document.getElementById('caloriesMacros-edit-protein-grams').value = data.caloriesMacros.protein_grams;
+            document.getElementById('caloriesMacros-edit-carbs-percent').value = data.caloriesMacros.carbs_percent;
+            document.getElementById('caloriesMacros-edit-carbs-grams').value = data.caloriesMacros.carbs_grams;
+            document.getElementById('caloriesMacros-edit-fat-percent').value = data.caloriesMacros.fat_percent;
+            document.getElementById('caloriesMacros-edit-fat-grams').value = data.caloriesMacros.fat_grams;
+
+            // Allowed/Forbidden Foods
+            populateList('main_allowed_foods', data.allowedForbiddenFoods.main_allowed_foods);
+            populateList('main_forbidden_foods', data.allowedForbiddenFoods.main_forbidden_foods);
+            populateList('detailed_allowed_suggestions', data.allowedForbiddenFoods.detailed_allowed_suggestions);
+            populateList('detailed_limit_suggestions', data.allowedForbiddenFoods.detailed_limit_suggestions);
+            populateList('dressing_flavoring_ideas', data.allowedForbiddenFoods.dressing_flavoring_ideas);
+
+            // Week 1 Menu
+            populateWeek1Menu(data.week1Menu);
+
+            // Principles Week 2-4
+            populatePrinciples(data.principlesWeek2_4);
+
+            // Hydration, Cooking, Supplements
+            document.getElementById('hydration_daily_liters-view').textContent = `Препоръчителен прием: ${data.hydrationCookingSupplements.hydration_recommendations.daily_liters}л`;
+            document.getElementById('hydration_tips-view').textContent = data.hydrationCookingSupplements.hydration_recommendations.tips.join(', ');
+            document.getElementById('hydration_suitable_drinks-view').textContent = data.hydrationCookingSupplements.hydration_recommendations.suitable_drinks.join(', ');
+            document.getElementById('hydration_unsuitable_drinks-view').textContent = data.hydrationCookingSupplements.hydration_recommendations.unsuitable_drinks.join(', ');
+
+            document.getElementById('hydration_daily_liters-edit').value = data.hydrationCookingSupplements.hydration_recommendations.daily_liters;
+            document.getElementById('hydration_tips-edit').value = data.hydrationCookingSupplements.hydration_recommendations.tips.join(', ');
+            document.getElementById('hydration_suitable_drinks-edit').value = data.hydrationCookingSupplements.hydration_recommendations.suitable_drinks.join(', ');
+            document.getElementById('hydration_unsuitable_drinks-edit').value = data.hydrationCookingSupplements.hydration_recommendations.unsuitable_drinks.join(', ');
+
+            document.getElementById('cooking_recommended-view').textContent = data.hydrationCookingSupplements.cooking_methods.recommended.join(', ');
+            document.getElementById('cooking_limit_or_avoid-view').textContent = data.hydrationCookingSupplements.cooking_methods.limit_or_avoid.join(', ');
+            document.getElementById('cooking_fat_usage_tip-view').textContent = data.hydrationCookingSupplements.cooking_methods.fat_usage_tip;
+
+            document.getElementById('cooking_recommended-edit').value = data.hydrationCookingSupplements.cooking_methods.recommended.join(', ');
+            document.getElementById('cooking_limit_or_avoid-edit').value = data.hydrationCookingSupplements.cooking_methods.limit_or_avoid.join(', ');
+            document.getElementById('cooking_fat_usage_tip-edit').value = data.hydrationCookingSupplements.cooking_methods.fat_usage_tip;
+
+            populateSupplements(data.hydrationCookingSupplements.supplement_suggestions);
+
+            // Psychological Guidance
+            document.getElementById('coping_strategies-view').innerHTML = data.psychologicalGuidance.coping_strategies.map(item => `<li>${item}</li>`).join('');
+            document.getElementById('motivational_messages-view').innerHTML = data.psychologicalGuidance.motivational_messages.map(item => `<li>${item}</li>`).join('');
+            document.getElementById('habit_building_tip-view').textContent = data.psychologicalGuidance.habit_building_tip;
+            document.getElementById('self_compassion_reminder-view').textContent = data.psychologicalGuidance.self_compassion_reminder;
+
+            document.getElementById('coping_strategies-edit').value = data.psychologicalGuidance.coping_strategies.join(', ');
+            document.getElementById('motivational_messages-edit').value = data.psychologicalGuidance.motivational_messages.join(', ');
+            document.getElementById('habit_building_tip-edit').value = data.psychologicalGuidance.habit_building_tip;
+            document.getElementById('self_compassion_reminder-edit').value = data.psychologicalGuidance.self_compassion_reminder;
+
+            // Detailed Targets
+            document.getElementById('sleep_quality_target_text-view').textContent = data.detailedTargets.sleep_quality_target_text;
+            document.getElementById('stress_level_target_text-view').textContent = data.detailedTargets.stress_level_target_text;
+            document.getElementById('energy_level_target_text-view').textContent = data.detailedTargets.energy_level_target_text;
+            document.getElementById('hydration_target_text-view').textContent = data.detailedTargets.hydration_target_text;
+            document.getElementById('bmi_target_numeric-view').textContent = data.detailedTargets.bmi_target_numeric;
+            document.getElementById('bmi_target_category_text-view').textContent = data.detailedTargets.bmi_target_category_text;
+            document.getElementById('meal_adherence_target_percent-view').textContent = data.detailedTargets.meal_adherence_target_percent;
+            document.getElementById('log_consistency_target_percent-view').textContent = data.detailedTargets.log_consistency_target_percent;
+
+            document.getElementById('sleep_quality_target_text-edit').value = data.detailedTargets.sleep_quality_target_text;
+            document.getElementById('stress_level_target_text-edit').value = data.detailedTargets.stress_level_target_text;
+            document.getElementById('energy_level_target_text-edit').value = data.detailedTargets.energy_level_target_text;
+            document.getElementById('hydration_target_text-edit').value = data.detailedTargets.hydration_target_text;
+            document.getElementById('bmi_target_numeric-edit').value = data.detailedTargets.bmi_target_numeric;
+            document.getElementById('bmi_target_category_text-edit').value = data.detailedTargets.bmi_target_category_text;
+            document.getElementById('meal_adherence_target_percent-edit').value = data.detailedTargets.meal_adherence_target_percent;
+            document.getElementById('log_consistency_target_percent-edit').value = data.detailedTargets.log_consistency_target_percent;
+
+
+            // Generation Metadata (read-only)
+            document.getElementById('metadata-timestamp').textContent = new Date(data.generationMetadata.timestamp).toLocaleString();
+            document.getElementById('metadata-modelUsed').textContent = data.generationMetadata.modelUsed;
+            document.getElementById('metadata-promptVersion').textContent = data.generationMetadata.promptVersion;
+            document.getElementById('metadata-errors').textContent = data.generationMetadata.errors.length > 0 ? data.generationMetadata.errors.join(', ') : 'Няма';
+        }
+
+        // --- Функции за динамични списъци (позволени/забранени храни, принципи) ---
+        function populateList(id, items) {
+            const viewList = document.getElementById(`${id}-view`);
+            const editContainer = document.getElementById(`${id}-edit`);
+            viewList.innerHTML = '';
+            editContainer.innerHTML = '';
+
+            items.forEach(item => {
+                // View Mode
+                const li = document.createElement('li');
+                li.textContent = item;
+                viewList.appendChild(li);
+
+                // Edit Mode
+                addEditableListItem(editContainer, item);
+            });
+        }
+
+        function addEditableListItem(container, value = '') {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'input-group mb-2';
+            wrapper.innerHTML = `
+                <input type="text" class="form-control" value="${value}">
+                <button class="btn btn-outline-danger btn-sm remove-list-item-btn" type="button">
+                    <i class="bi bi-x-circle"></i>
+                </button>
+            `;
+            container.appendChild(wrapper);
+
+            wrapper.querySelector('.remove-list-item-btn').addEventListener('click', () => {
+                wrapper.remove();
+            });
+        }
+
+        document.querySelectorAll('.add-list-item-btn').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const listId = event.target.closest('button').dataset.listId;
+                const container = document.getElementById(listId);
+                addEditableListItem(container);
+            });
+        });
+
+        // --- Функции за принципи ---
+        function populatePrinciples(principles) {
+            const viewList = document.getElementById('principlesWeek2_4-view');
+            const editContainer = document.getElementById('principlesWeek2_4-edit');
+            viewList.innerHTML = '';
+            editContainer.innerHTML = '';
+
+            principles.forEach(principle => {
+                // View Mode
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.innerHTML = `<strong><i class="bi bi-${principle.icon.replace('icon-', '')}"></i> ${principle.title}:</strong> ${principle.content}`;
+                viewList.appendChild(li);
+
+                // Edit Mode
+                addEditablePrincipleItem(editContainer, principle);
+            });
+        }
+
+        function addEditablePrincipleItem(container, principle = { title: '', content: '', icon: '' }) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mb-3 p-2 border rounded';
+            wrapper.innerHTML = `
+                <div class="input-group input-group-sm mb-1">
+                    <span class="input-group-text">Заглавие</span>
+                    <input type="text" class="form-control principle-title" value="${principle.title}">
+                </div>
+                <div class="input-group input-group-sm mb-1">
+                    <span class="input-group-text">Съдържание</span>
+                    <input type="text" class="form-control principle-content" value="${principle.content}">
+                </div>
+                <div class="input-group input-group-sm mb-1">
+                    <span class="input-group-text">Икона (bi-*)</span>
+                    <input type="text" class="form-control principle-icon" value="${principle.icon.replace('icon-', '')}">
+                </div>
+                <button class="btn btn-outline-danger btn-sm mt-1 remove-principle-btn" type="button">
+                    <i class="bi bi-x-circle"></i> Изтрий принцип
+                </button>
+            `;
+            container.appendChild(wrapper);
+
+            wrapper.querySelector('.remove-principle-btn').addEventListener('click', () => {
+                wrapper.remove();
+            });
+        }
+
+        document.querySelector('.add-principle-btn').addEventListener('click', () => {
+            addEditablePrincipleItem(document.getElementById('principlesWeek2_4-edit'));
+        });
+
+        // --- Функции за добавки ---
+        function populateSupplements(supplements) {
+            const viewList = document.getElementById('supplement_suggestions-view');
+            const editContainer = document.getElementById('supplement_suggestions-edit');
+            viewList.innerHTML = '';
+            editContainer.innerHTML = '';
+
+            supplements.forEach(sup => {
+                // View Mode
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${sup.supplement_name}:</strong> ${sup.reasoning} <small class="text-muted">(Внимание: ${sup.caution})</small>`;
+                viewList.appendChild(li);
+
+                // Edit Mode
+                addEditableSupplementItem(editContainer, sup);
+            });
+        }
+
+        function addEditableSupplementItem(container, sup = { supplement_name: '', reasoning: '', caution: '' }) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mb-3 p-2 border rounded';
+            wrapper.innerHTML = `
+                <div class="input-group input-group-sm mb-1">
+                    <span class="input-group-text">Име</span>
+                    <input type="text" class="form-control supplement-name" value="${sup.supplement_name}">
+                </div>
+                <div class="input-group input-group-sm mb-1">
+                    <span class="input-group-text">Обосновка</span>
+                    <input type="text" class="form-control supplement-reasoning" value="${sup.reasoning}">
+                </div>
+                <div class="input-group input-group-sm mb-1">
+                    <span class="input-group-text">Внимание</span>
+                    <input type="text" class="form-control supplement-caution" value="${sup.caution}">
+                </div>
+                <button class="btn btn-outline-danger btn-sm mt-1 remove-supplement-btn" type="button">
+                    <i class="bi bi-x-circle"></i> Изтрий добавка
+                </button>
+            `;
+            container.appendChild(wrapper);
+
+            wrapper.querySelector('.remove-supplement-btn').addEventListener('click', () => {
+                wrapper.remove();
+            });
+        }
+
+        document.querySelector('.add-supplement-btn').addEventListener('click', () => {
+            addEditableSupplementItem(document.getElementById('supplement_suggestions-edit'));
+        });
+
+
+        // --- Функции за менюто ---
+        function populateWeek1Menu(menu) {
+            const viewAccordion = document.getElementById('week1Menu-view');
+            const editContainer = document.getElementById('week1Menu-edit');
+            viewAccordion.innerHTML = ''; // Clear previous content
+            editContainer.querySelectorAll('.week-day-edit-entry').forEach(el => el.remove()); // Clear dynamic edit entries
+
+            const dayNames = {
+                "monday": "Понеделник", "tuesday": "Вторник", "wednesday": "Сряда", "thursday": "Четвъртък",
+                "friday": "Петък", "saturday": "Събота", "sunday": "Неделя"
+            };
+            let dayIndex = 0;
+
+            for (const dayKey in menu) {
+                const day Meals = menu[dayKey];
+                const dayName = dayNames[dayKey] || dayKey.charAt(0).toUpperCase() + dayKey.slice(1);
+                const collapseId = `collapse${dayKey}`;
+                const isFirst = dayIndex === 0;
+
+                // View Mode Accordion Item
+                const accordionItem = document.createElement('div');
+                accordionItem.className = 'accordion-item';
+                accordionItem.innerHTML = `
+                    <h2 class="accordion-header">
+                        <button class="accordion-button ${isFirst ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
+                            ${dayName}
+                        </button>
+                    </h2>
+                    <div id="${collapseId}" class="accordion-collapse collapse ${isFirst ? 'show' : ''}" data-bs-parent="#week1Menu-view">
+                        <div class="accordion-body" id="menu-day-view-${dayKey}">
+                            <!-- Meals will be added here -->
+                        </div>
+                    </div>
+                `;
+                viewAccordion.appendChild(accordionItem);
+
+                const dayViewBody = accordionItem.querySelector(`#menu-day-view-${dayKey}`);
+                day Meals.forEach(meal => {
+                    const mealDiv = document.createElement('div');
+                    mealDiv.innerHTML = `<strong>${meal.meal_name}:</strong> ${meal.items.map(item => `${item.name} (${item.grams})`).join(', ')}`;
+                    dayViewBody.appendChild(mealDiv);
+                });
+
+                // Edit Mode Entry
+                addEditableDayMenu(editContainer, dayKey, dayName, day Meals);
+                dayIndex++;
+            }
+        }
+
+        function addEditableDayMenu(container, dayKey = '', dayName = '', meals = []) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'week-day-edit-entry mb-4 p-3 border rounded bg-light';
+            const randomId = Math.random().toString(36).substring(2, 9); // Unique ID for collapse
+            
+            wrapper.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <input type="text" class="form-control day-name-input me-2" value="${dayName}" placeholder="Име на деня (напр. Понеделник)">
+                    <input type="text" class="form-control day-key-input me-2" value="${dayKey}" placeholder="Ключ (напр. monday)">
+                    <button class="btn btn-danger btn-sm remove-day-btn" type="button"><i class="bi bi-trash"></i> Изтрий ден</button>
+                </div>
+                <div class="meals-container" id="meals-container-${randomId}">
+                    <!-- Meals will be added here -->
+                </div>
+                <button class="btn btn-outline-primary btn-sm mt-2 add-meal-btn" data-target-id="meals-container-${randomId}">
+                    <i class="bi bi-plus-circle"></i> Добави хранене
+                </button>
+            `;
+            container.insertBefore(wrapper, document.getElementById('add-week-day-btn'));
+
+            // Add meals to the new day's container
+            meals.forEach(meal => addEditableMeal(wrapper.querySelector(`#meals-container-${randomId}`), meal));
+
+            wrapper.querySelector('.remove-day-btn').addEventListener('click', () => {
+                wrapper.remove();
+            });
+
+            wrapper.querySelector('.add-meal-btn').addEventListener('click', (e) => {
+                const targetId = e.target.closest('button').dataset.targetId;
+                addEditableMeal(document.getElementById(targetId));
+            });
+        }
+
+        function addEditableMeal(container, meal = { meal_name: '', items: [] }) {
+            const mealWrapper = document.createElement('div');
+            mealWrapper.className = 'meal-entry';
+            const mealRandomId = Math.random().toString(36).substring(2, 9);
+
+            mealWrapper.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <input type="text" class="form-control meal-name-input me-2" value="${meal.meal_name}" placeholder="Име на хранене (напр. Закуска)">
+                    <button class="btn btn-danger btn-sm remove-meal-btn" type="button"><i class="bi bi-x-circle"></i></button>
+                </div>
+                <div class="meal-items-container" id="meal-items-container-${mealRandomId}">
+                    <!-- Items will be added here -->
+                </div>
+                <button class="btn btn-outline-secondary btn-sm mt-2 add-item-btn" type="button" data-target-id="meal-items-container-${mealRandomId}">
+                    <i class="bi bi-plus-circle"></i> Добави продукт
+                </button>
+            `;
+            container.appendChild(mealWrapper);
+
+            meal.items.forEach(item => addEditableMealItem(mealWrapper.querySelector(`#meal-items-container-${mealRandomId}`), item));
+
+            mealWrapper.querySelector('.remove-meal-btn').addEventListener('click', () => {
+                mealWrapper.remove();
+            });
+
+            mealWrapper.querySelector('.add-item-btn').addEventListener('click', (e) => {
+                const targetId = e.target.closest('button').dataset.targetId;
+                addEditableMealItem(document.getElementById(targetId));
+            });
+        }
+
+        function addEditableMealItem(container, item = { name: '', grams: '' }) {
+            const itemWrapper = document.createElement('div');
+            itemWrapper.className = 'item-entry';
+            itemWrapper.innerHTML = `
+                <input type="text" class="form-control form-control-sm item-name-input" value="${item.name}" placeholder="Продукт">
+                <input type="text" class="form-control form-control-sm item-grams-input" value="${item.grams}" placeholder="Количество">
+                <button class="btn btn-outline-danger btn-sm remove-item-btn" type="button"><i class="bi bi-x"></i></button>
+            `;
+            container.appendChild(itemWrapper);
+
+            itemWrapper.querySelector('.remove-item-btn').addEventListener('click', () => {
+                itemWrapper.remove();
+            });
+        }
+
+        document.getElementById('add-week-day-btn').addEventListener('click', () => {
+            const dayKeys = Object.keys(planData.week1Menu);
+            const nextDayIndex = dayKeys.length;
+            const newDayKey = `day${nextDayIndex + 1}`; // Simple dynamic key
+            addEditableDayMenu(document.getElementById('week1Menu-edit'), newDayKey, `Нов Ден ${nextDayIndex + 1}`);
+        });
+
+        // --- Toggle Edit Mode Logic ---
+        function toggleEditMode(card, isEditing) {
+            const cardElement = typeof card === 'string' ? document.getElementById(card) : card;
+            if (isEditing) {
+                cardElement.classList.add('editing');
+                editingCards.add(cardElement.id);
+            } else {
+                cardElement.classList.remove('editing');
+                editingCards.delete(cardElement.id);
+            }
+            updateGlobalButtonsVisibility();
+        }
+
+        document.querySelectorAll('.toggle-edit-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const cardId = button.getAttribute('data-target');
+                toggleEditMode(cardId, true);
+            });
+        });
+
+        document.querySelectorAll('.cancel-edit-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const cardId = button.getAttribute('data-target');
+                // Re-populate the specific card with original data before canceling
+                populateUI(planData); // Re-populate all to simplify state management for this demo
+                toggleEditMode(cardId, false);
+            });
+        });
+
+        // --- Global Save/Cancel Logic ---
+        function updateGlobalButtonsVisibility() {
+            if (editingCards.size > 0) {
+                document.getElementById('global-save-btn').classList.remove('d-none');
+                document.getElementById('global-cancel-btn').classList.remove('d-none');
+            } else {
+                document.getElementById('global-save-btn').classList.add('d-none');
+                document.getElementById('global-cancel-btn').classList.add('d-none');
+            }
+        }
+
+        document.getElementById('global-save-btn').addEventListener('click', () => {
+            // In a real application, you'd collect data from all editing cards
+            // and send it to the backend. For this demo, we'll just apply changes to `planData`.
+            alert('Глобално запазване: Всички промени ще бъдат събрани и изпратени към сървър.');
+            
+            // Example: Update Profile Summary
+            const newSummary = document.getElementById('profileSummary-edit-summary').value;
+            planData.profileSummary = newSummary; // Directly modify original planData
+
+            // Example: Update Calories & Macros
+            planData.caloriesMacros.calories = parseInt(document.getElementById('caloriesMacros-edit-calories').value);
+            planData.caloriesMacros.protein_percent = parseInt(document.getElementById('caloriesMacros-edit-protein-percent').value);
+            planData.caloriesMacros.protein_grams = parseInt(document.getElementById('caloriesMacros-edit-protein-grams').value);
+            planData.caloriesMacros.carbs_percent = parseInt(document.getElementById('caloriesMacros-edit-carbs-percent').value);
+            planData.caloriesMacros.carbs_grams = parseInt(document.getElementById('caloriesMacros-edit-carbs-grams').value);
+            planData.caloriesMacros.fat_percent = parseInt(document.getElementById('caloriesMacros-edit-fat-percent').value);
+            planData.caloriesMacros.fat_grams = parseInt(document.getElementById('caloriesMacros-edit-fat-grams').value);
+            
+            // ... (add logic for other sections)
+
+            // After saving, switch all cards back to view mode and re-populate UI
+            editingCards.forEach(cardId => toggleEditMode(cardId, false));
+            populateUI(planData);
+            initCharts(planData); // Re-draw charts with new data
+        });
+
+        document.getElementById('global-cancel-btn').addEventListener('click', () => {
+            alert('Отказани са всички промени. Възстановяване на оригиналните данни.');
+            // Revert all changes by re-populating with the original `planData`
+            editingCards.forEach(cardId => toggleEditMode(cardId, false));
+            populateUI(planData);
+            initCharts(planData); // Re-draw charts with original data
+        });
+
+        // Individual Save Section Buttons (for demonstration, they just toggle back)
+        document.querySelectorAll('.save-section-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const card = e.target.closest('.card');
+                alert(`Промените за секция "${card.querySelector('.card-header h5').textContent}" са запазени (само визуално за демото).`);
+                
+                // --- Collect data for the specific section here ---
+                // Example for profileSummary:
+                if (card.id === 'profileSummary-card') {
+                    planData.profileSummary = document.getElementById('profileSummary-edit-summary').value;
+                }
+                // Example for caloriesMacros:
+                if (card.id === 'caloriesMacros-card') {
+                    planData.caloriesMacros.calories = parseInt(document.getElementById('caloriesMacros-edit-calories').value);
+                    planData.caloriesMacros.protein_percent = parseInt(document.getElementById('caloriesMacros-edit-protein-percent').value);
+                    planData.caloriesMacros.protein_grams = parseInt(document.getElementById('caloriesMacros-edit-protein-grams').value);
+                    planData.caloriesMacros.carbs_percent = parseInt(document.getElementById('caloriesMacros-edit-carbs-percent').value);
+                    planData.caloriesMacros.carbs_grams = parseInt(document.getElementById('caloriesMacros-edit-carbs-grams').value);
+                    planData.caloriesMacros.fat_percent = parseInt(document.getElementById('caloriesMacros-edit-fat-percent').value);
+                    planData.caloriesMacros.fat_grams = parseInt(document.getElementById('caloriesMacros-edit-fat-grams').value);
+                    initCharts(planData); // Re-draw macros chart
+                }
+                // Example for allowedForbiddenFoods:
+                if (card.id === 'allowedForbiddenFoods-card') {
+                    planData.allowedForbiddenFoods.main_allowed_foods = Array.from(document.querySelectorAll('#main_allowed_foods-edit input')).map(input => input.value).filter(val => val.trim() !== '');
+                    planData.allowedForbiddenFoods.main_forbidden_foods = Array.from(document.querySelectorAll('#main_forbidden_foods-edit input')).map(input => input.value).filter(val => val.trim() !== '');
+                    planData.allowedForbiddenFoods.detailed_allowed_suggestions = Array.from(document.querySelectorAll('#detailed_allowed_suggestions-edit input')).map(input => input.value).filter(val => val.trim() !== '');
+                    planData.allowedForbiddenFoods.detailed_limit_suggestions = Array.from(document.querySelectorAll('#detailed_limit_suggestions-edit input')).map(input => input.value).filter(val => val.trim() !== '');
+                    planData.allowedForbiddenFoods.dressing_flavoring_ideas = Array.from(document.querySelectorAll('#dressing_flavoring_ideas-edit input')).map(input => input.value).filter(val => val.trim() !== '');
+                }
+                // Example for principlesWeek2_4:
+                if (card.id === 'principlesWeek2_4-card') {
+                    planData.principlesWeek2_4 = Array.from(document.querySelectorAll('#principlesWeek2_4-edit .mb-3.p-2.border.rounded')).map(wrapper => ({
+                        title: wrapper.querySelector('.principle-title').value,
+                        content: wrapper.querySelector('.principle-content').value,
+                        icon: `icon-${wrapper.querySelector('.principle-icon').value}`
+                    })).filter(p => p.title.trim() !== '');
+                }
+                // Example for hydrationCookingSupplements:
+                if (card.id === 'hydrationCookingSupplements-card') {
+                    planData.hydrationCookingSupplements.hydration_recommendations.daily_liters = document.getElementById('hydration_daily_liters-edit').value;
+                    planData.hydrationCookingSupplements.hydration_recommendations.tips = document.getElementById('hydration_tips-edit').value.split(',').map(s => s.trim()).filter(s => s);
+                    planData.hydrationCookingSupplements.hydration_recommendations.suitable_drinks = document.getElementById('hydration_suitable_drinks-edit').value.split(',').map(s => s.trim()).filter(s => s);
+                    planData.hydrationCookingSupplements.hydration_recommendations.unsuitable_drinks = document.getElementById('hydration_unsuitable_drinks-edit').value.split(',').map(s => s.trim()).filter(s => s);
+                    
+                    planData.hydrationCookingSupplements.cooking_methods.recommended = document.getElementById('cooking_recommended-edit').value.split(',').map(s => s.trim()).filter(s => s);
+                    planData.hydrationCookingSupplements.cooking_methods.limit_or_avoid = document.getElementById('cooking_limit_or_avoid-edit').value.split(',').map(s => s.trim()).filter(s => s);
+                    planData.hydrationCookingSupplements.cooking_methods.fat_usage_tip = document.getElementById('cooking_fat_usage_tip-edit').value;
+
+                    planData.hydrationCookingSupplements.supplement_suggestions = Array.from(document.querySelectorAll('#supplement_suggestions-edit .mb-3.p-2.border.rounded')).map(wrapper => ({
+                        supplement_name: wrapper.querySelector('.supplement-name').value,
+                        reasoning: wrapper.querySelector('.supplement-reasoning').value,
+                        caution: wrapper.querySelector('.supplement-caution').value
+                    })).filter(s => s.supplement_name.trim() !== '');
+                }
+                 // Example for psychologicalGuidance:
+                if (card.id === 'psychologicalGuidance-card') {
+                    planData.psychologicalGuidance.coping_strategies = document.getElementById('coping_strategies-edit').value.split(',').map(s => s.trim()).filter(s => s);
+                    planData.psychologicalGuidance.motivational_messages = document.getElementById('motivational_messages-edit').value.split(',').map(s => s.trim()).filter(s => s);
+                    planData.psychologicalGuidance.habit_building_tip = document.getElementById('habit_building_tip-edit').value;
+                    planData.psychologicalGuidance.self_compassion_reminder = document.getElementById('self_compassion_reminder-edit').value;
+                }
+                 // Example for detailedTargets:
+                if (card.id === 'detailedTargets-card') {
+                    planData.detailedTargets.sleep_quality_target_text = document.getElementById('sleep_quality_target_text-edit').value;
+                    planData.detailedTargets.stress_level_target_text = document.getElementById('stress_level_target_text-edit').value;
+                    planData.detailedTargets.energy_level_target_text = document.getElementById('energy_level_target_text-edit').value;
+                    planData.detailedTargets.hydration_target_text = document.getElementById('hydration_target_text-edit').value;
+                    planData.detailedTargets.bmi_target_numeric = parseFloat(document.getElementById('bmi_target_numeric-edit').value);
+                    planData.detailedTargets.bmi_target_category_text = document.getElementById('bmi_target_category_text-edit').value;
+                    planData.detailedTargets.meal_adherence_target_percent = parseInt(document.getElementById('meal_adherence_target_percent-edit').value);
+                    planData.detailedTargets.log_consistency_target_percent = parseInt(document.getElementById('log_consistency_target_percent-edit').value);
+                }
+                // Example for week1Menu:
+                if (card.id === 'week1Menu-card') {
+                    const newMenu = {};
+                    document.querySelectorAll('#week1Menu-edit .week-day-edit-entry').forEach(dayEntry => {
+                        const dayKey = dayEntry.querySelector('.day-key-input').value;
+                        const meals = [];
+                        dayEntry.querySelectorAll('.meal-entry').forEach(mealEntry => {
+                            const mealName = mealEntry.querySelector('.meal-name-input').value;
+                            const items = [];
+                            mealEntry.querySelectorAll('.item-entry').forEach(itemEntry => {
+                                items.push({
+                                    name: itemEntry.querySelector('.item-name-input').value,
+                                    grams: itemEntry.querySelector('.item-grams-input').value
+                                });
+                            });
+                            if (mealName.trim() !== '') {
+                                meals.push({ meal_name: mealName, items: items.filter(i => i.name.trim() !== '') });
+                            }
+                        });
+                        if (dayKey.trim() !== '' && meals.length > 0) {
+                            newMenu[dayKey] = meals;
+                        }
+                    });
+                    planData.week1Menu = newMenu;
+                }
+
+
+                // Re-populate the UI to reflect changes
+                populateUI(planData);
+                toggleEditMode(card.id, false);
+            });
+        });
+
+        // --- Chart.js Initialisation & Update Functions ---
+        let macroChart, weightChart;
+
+        function initCharts(data) {
+            // Destroy existing charts if they exist
+            if (macroChart) macroChart.destroy();
+            if (weightChart) weightChart.destroy();
+
+            // Macros Chart
+            const macroCtx = document.getElementById('macro-chart');
+            if (macroCtx) {
+                macroChart = new Chart(macroCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [`Протеини (${data.caloriesMacros.protein_percent}%)`, `Въглехидрати (${data.caloriesMacros.carbs_percent}%)`, `Мазнини (${data.caloriesMacros.fat_percent}%)`],
+                        datasets: [{
+                            label: 'Разпределение на макроси',
+                            data: [data.caloriesMacros.protein_grams, data.caloriesMacros.carbs_grams, data.caloriesMacros.fat_grams], // Grams
+                            backgroundColor: [
+                                'rgb(54, 162, 235)', // Blue for protein
+                                'rgb(255, 205, 86)', // Yellow for carbs
+                                'rgb(255, 99, 132)'  // Red for fat
+                            ],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: `Дневен прием (${data.caloriesMacros.calories} kcal)`
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Weight Chart
+            const weightCtx = document.getElementById('weight-chart');
+            if (weightCtx) {
+                const currentWeightMatch = data.profileSummary.match(/Текущо тегло (\d+\.?\d*) кг \(промяна за 7 дни: (-?\d+\.?\d*) кг\)/);
+                let currentWeight = currentWeightMatch ? parseFloat(currentWeightMatch[1]) : 85; // Default if not found
+                let weightChange = currentWeightMatch ? parseFloat(currentWeightMatch[2]) : -0.5;
+
+                // Simple example data for chart: assume previous weight was current - change, and then future nulls
+                const labels = ['Седмица -1', 'Седмица 0', 'Седмица 1', 'Седмица 2', 'Седмица 3', 'Седмица 4'];
+                const weights = [currentWeight - weightChange, currentWeight, null, null, null, null];
+
+                weightChart = new Chart(weightCtx, {
+                    type: 'line',
+                    data: {
+                         labels: labels,
+                         datasets: [{
+                            label: 'Тегло (кг)',
+                            data: weights,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: false
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // --- Initial Load ---
+        populateUI(planData);
+        initCharts(planData);
+        updateGlobalButtonsVisibility(); // Hide global buttons initially
+    });
+    </script>
+</body>
+</html>
