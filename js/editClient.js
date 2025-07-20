@@ -2,6 +2,7 @@ import { apiEndpoints } from './config.js';
 
 export async function initEditClient(userId) {
   let planData = {};
+  let dashboardData = null;
   let editingCards = new Set();
   let macroChart;
   let weightChart;
@@ -18,6 +19,7 @@ export async function initEditClient(userId) {
       ]);
       if (dashResp.ok && dashData.success) {
         planData = dashData.planData || {};
+        dashboardData = dashData;
       }
       if (profileResp.ok && profileData.success) {
         const name = profileData.name || 'Клиент';
@@ -494,6 +496,104 @@ export async function initEditClient(userId) {
       editingCards.forEach(id => toggleEditMode(id, false));
       populateUI(planData);
       initCharts(planData);
+    });
+  }
+
+  const regenBtn = document.getElementById('regeneratePlan');
+  if (regenBtn) {
+    regenBtn.addEventListener('click', async () => {
+      await fetch(apiEndpoints.updateStatus, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, plan_status: 'pending' })
+      });
+      alert('Заявката за нов план е изпратена.');
+    });
+  }
+
+  const aiSummaryBtn = document.getElementById('aiSummary');
+  if (aiSummaryBtn) {
+    aiSummaryBtn.addEventListener('click', async () => {
+      const resp = await fetch(apiEndpoints.aiHelper, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      const data = await resp.json().catch(() => ({}));
+      const summary = data.aiResponse?.result || data.aiResponse;
+      alert(summary || 'Няма данни');
+    });
+  }
+
+  const exportPlanBtn = document.getElementById('exportPlan');
+  if (exportPlanBtn) {
+    exportPlanBtn.addEventListener('click', () => {
+      if (!planData) return;
+      const blob = new Blob([JSON.stringify(planData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${userId || 'plan'}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  const exportDataBtn = document.getElementById('exportData');
+  if (exportDataBtn) {
+    exportDataBtn.addEventListener('click', () => {
+      if (!dashboardData) return;
+      const blob = new Blob([JSON.stringify(dashboardData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${userId || 'data'}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  const exportCsvBtn = document.getElementById('exportCsv');
+  if (exportCsvBtn) {
+    exportCsvBtn.addEventListener('click', () => {
+      if (!dashboardData) return;
+      const logs = dashboardData.dailyLogs || [];
+      let csv = 'Дата,Тегло,Бележка\n';
+      logs.forEach(l => {
+        const note = (l.data?.note || '').replace(/\n/g, ' ');
+        csv += `${l.date},${l.data?.weight || ''},${note}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${userId || 'logs'}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  const generatePraiseBtn = document.getElementById('generatePraise');
+  if (generatePraiseBtn) {
+    generatePraiseBtn.addEventListener('click', async () => {
+      try {
+        const resp = await fetch(apiEndpoints.generatePraise, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (resp.ok && data.success) {
+          const title = data.title || 'Похвала';
+          const msg = data.message || '';
+          alert(`${title}\n${msg}`.trim());
+        } else {
+          alert('Неуспешно генериране на похвала.');
+        }
+      } catch (err) {
+        console.error('Error generating praise:', err);
+        alert('Грешка при генериране на похвала.');
+      }
     });
   }
 
