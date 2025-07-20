@@ -29,6 +29,7 @@
 <script type="module">
   import { workerBaseUrl } from './js/config.js';
   import { setupRegistration } from "./js/register.js";
+  import { createStepProgress } from "./js/stepProgress.js";
   import { showMessage, hideMessage } from "./js/messageUtils.js";
   /***** Глобални променливи *****/
   let rawQuestions = [];     // Суровият масив от questions.json (йерархичен)
@@ -37,6 +38,7 @@
   let totalPages = 0;
   let registrationPageIndex = 0;
   const responses = {};
+  const progressBarCtrl = createStepProgress({ barSelector: '#progressBar' });
   // Допустими диапазони за числовите въпроси
   const numericRanges = {
     age: { min: 10, max: 120 },
@@ -98,6 +100,7 @@
 
     totalPages = 1 + flatPages.length + 2; // Стартова + Въпроси + Регистрация + Финална
     console.log("Общо страници (включително старт и финал):", totalPages);
+    progressBarCtrl.setTotal(totalPages - 1);
 
     showPage(0); // Показваме стартовата страница
   }
@@ -514,17 +517,8 @@
 
   /***** Функция за обновяване на прогрес бара *****/
   function updateProgress() {
-    const progressBar = document.getElementById('progressBar');
-    const progressContainer = document.getElementById('progressContainer');
-    if (!progressBar || !progressContainer || totalPages <= 1) return;
-
-    // Прогресът е от 0 до (totalPages - 1), тъй като индексите са от 0
-    const currentStep = currentPageIndex;
-    // Общият брой стъпки е totalPages - 1 (тъй като не броим прогрес *след* финалната страница)
-    const totalSteps = totalPages > 1 ? totalPages - 1 : 1;
-    const percent = totalSteps > 0 ? Math.round((currentStep / totalSteps) * 100) : 0;
-
-    progressBar.style.width = Math.max(0, Math.min(100, percent)) + '%'; // Гарантираме 0-100
+    if (totalPages <= 1) return;
+    progressBarCtrl.update(currentPageIndex);
   }
 
   /***** Съхраняване и зареждане на прогреса чрез localStorage *****/

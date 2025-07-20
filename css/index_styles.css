@@ -60,7 +60,8 @@
             margin-top: 0.5rem; /* Отстояние над бутона */
         }
         .button:hover { background-color: var(--secondary-color); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .button:active { transform: translateY(0px) scale(0.98); } /* По-малко движение при клик */
+        @keyframes buttonBounce { from { transform: scale(1); } 50% { transform: scale(0.96); } to { transform: scale(1); } }
+        .button:active { transform: translateY(0px) scale(0.98); animation: buttonBounce 0.2s ease; } /* По-малко движение при клик */
         .button.button-secondary { background-color: var(--secondary-color); }
         .button.button-secondary:hover { background-color: var(--primary-color); }
 
@@ -88,6 +89,16 @@
         }
         .message.error { color: var(--color-danger); background-color: rgba(231, 76, 60, 0.1); border-color: var(--color-danger); }
         .message.success { color: var(--color-success); background-color: rgba(46, 204, 113, 0.1); border-color: var(--color-success); }
+
+        /* Прогрес бар за регистрация и други форми */
+        .step-indicator-container { margin-bottom: var(--space-lg); text-align: center; }
+        .step-indicator-label { display: block; font-size: 0.85em; color: var(--text-color-secondary); margin-bottom: var(--space-xs); }
+        .progress-bar-steps { width: 100%; height: 8px; background-color: var(--progress-bar-bg-empty); border-radius: var(--radius-sm); overflow: hidden; margin: 0 auto; max-width: 300px; }
+        .progress-bar-steps .progress-bar-fill { height: 100%; background-color: var(--secondary-color); width: 0%; transition: width 0.4s ease-in-out; border-radius: var(--radius-sm); }
+
+        /* Анимация при фокус на поле */
+        .input-focus-animate { transition: transform 0.15s ease, box-shadow 0.2s; }
+        .input-focus-animate:focus { transform: scale(1.02); }
 
         /* Секция за въпросник */
         .questionnaire-link {

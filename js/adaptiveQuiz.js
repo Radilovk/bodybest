@@ -1,6 +1,9 @@
 // adaptiveQuiz.js - Логика за Адаптивен Въпросник
 import { selectors } from './uiElements.js';
 import { showToast, openModal as genericOpenModal } from './uiHandlers.js';
+import { createStepProgress } from './stepProgress.js';
+
+let quizProgressCtrl;
 import { safeGet, safeParseFloat } from './utils.js';
 import {
     currentUserId,
@@ -30,6 +33,11 @@ export async function openAdaptiveQuizModal() {
     }
 
     genericOpenModal('adaptiveQuizWrapper');
+    quizProgressCtrl = createStepProgress({
+        barSelector: selectors.quizProgressBar,
+        currentSelector: '#currentQuestionNumber',
+        totalSelector: '#totalQuestionsNumber'
+    });
 
     selectors.quizNavigation.classList.add('hidden');
     selectors.quizQuestionContainer.innerHTML = '';
@@ -330,17 +338,10 @@ export function renderCurrentQuizQuestion(isTransitioningNext = true) {
 
         selectors.quizQuestionContainer.appendChild(questionCardElement);
 
-        const progressBar = selectors.quizProgressBar;
-        if (progressBar && localCurrentQuizData && localCurrentQuizData.questions.length > 0) {
-            const progressPercentage = ((localCurrentQuestionIndex + 1) / localCurrentQuizData.questions.length) * 100;
-            progressBar.style.width = `${progressPercentage}%`;
-            progressBar.setAttribute('aria-valuenow', progressPercentage);
+        if (quizProgressCtrl && localCurrentQuizData && localCurrentQuizData.questions.length > 0) {
+            quizProgressCtrl.setTotal(localCurrentQuizData.questions.length);
+            quizProgressCtrl.update(localCurrentQuestionIndex + 1);
         }
-
-        const currentNumEl = document.getElementById('currentQuestionNumber');
-        const totalNumEl = document.getElementById('totalQuestionsNumber');
-        if (currentNumEl) currentNumEl.textContent = localCurrentQuestionIndex + 1;
-        if (totalNumEl) totalNumEl.textContent = localCurrentQuizData.questions.length;
 
         selectors.prevQuestionBtn.classList.toggle('hidden', localCurrentQuestionIndex === 0);
         selectors.nextQuestionBtn.classList.toggle('hidden', localCurrentQuestionIndex === localCurrentQuizData.questions.length - 1);
