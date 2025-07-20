@@ -20,6 +20,23 @@ function showAchievementEmoji(emoji) {
 let achievements = [];
 let currentUserId = null;
 
+export function shareAchievement() {
+    const title = document.getElementById('achievementModalTitle')?.textContent || '';
+    const message = document.getElementById('achievementModalBody')?.textContent || '';
+    const shareData = {
+        title: 'MyBody.Best',
+        text: `${title} - ${message}`,
+        url: window.location.href
+    };
+    if (navigator.share) {
+        navigator.share(shareData).catch(() => {});
+    } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`)
+            .then(() => alert('Връзката е копирана!'))
+            .catch(() => alert('Неуспешно копиране.'));
+    }
+}
+
 export async function initializeAchievements(userId) {
     currentUserId = userId || null;
     const storedId = localStorage.getItem('achievements_user_id');
@@ -39,6 +56,11 @@ export async function initializeAchievements(userId) {
         } catch (err) { console.warn('Неуспешно зареждане на постижения:', err); }
     }
     renderAchievements();
+    const shareBtn = document.getElementById('achievementShareBtn');
+    if (shareBtn && !shareBtn.dataset.listenerAttached) {
+        shareBtn.addEventListener('click', shareAchievement);
+        shareBtn.dataset.listenerAttached = 'true';
+    }
 
     const last = achievements.length > 0 ? achievements[achievements.length - 1] : null;
     const diffDays = last ? (Date.now() - last.date) / (1000 * 60 * 60 * 24) : Infinity;
