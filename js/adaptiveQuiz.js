@@ -67,7 +67,16 @@ export async function openAdaptiveQuizModal() {
             selectors.adaptiveQuizGeneralDescription.textContent = currentQuizData.quizDescription || "Няколко бързи въпроса, за да сме сигурни, че сте на прав път.";
         }
 
-        if (selectors.quizProgressBar) selectors.quizProgressBar.style.width = '0%';
+        if (selectors.quizProgressBar) {
+            selectors.quizProgressBar.style.width = '0%';
+            updateStepProgress(
+                selectors.quizProgressBar,
+                0,
+                currentQuizData.questions.length,
+                document.getElementById('quizCurrentStep'),
+                document.getElementById('quizTotalSteps')
+            );
+        }
 
         selectors.quizLoadingIndicator.classList.add('hidden');
         if(selectors.adaptiveQuizGeneralTitle.parentElement) selectors.adaptiveQuizGeneralTitle.parentElement.classList.remove('hidden');
@@ -332,13 +341,15 @@ export function renderCurrentQuizQuestion(isTransitioningNext = true) {
         selectors.quizQuestionContainer.appendChild(questionCardElement);
 
         const progressBar = selectors.quizProgressBar;
+        const currentLabel = document.getElementById('quizCurrentStep');
+        const totalLabel = document.getElementById('quizTotalSteps');
         if (progressBar && localCurrentQuizData && localCurrentQuizData.questions.length > 0) {
             updateStepProgress(
                 progressBar,
                 localCurrentQuestionIndex + 1,
                 localCurrentQuizData.questions.length,
-                null,
-                null
+                currentLabel,
+                totalLabel
             );
             const progressPercentage = ((localCurrentQuestionIndex + 1) / localCurrentQuizData.questions.length) * 100;
             progressBar.setAttribute('aria-valuenow', progressPercentage);

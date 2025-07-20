@@ -42,22 +42,7 @@
       line-height: 1.5;
       margin-bottom: 20px;
     }
-    /* Прогрес бар */
-    #progressContainer {
-      width: 100%;
-      background-color: #333;
-      height: 10px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 1000;
-    }
-    #progressBar {
-      height: 100%;
-      width: 0%;
-      background-color: #4fc3a1;
-      transition: width 0.4s ease;
-    }
+    /* Прогрес бар - използва се общият компонент */
     /* Всяка страница се състои от "екран" */
     .page {
       display: none;
