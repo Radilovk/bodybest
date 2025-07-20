@@ -1,0 +1,66 @@
+{
+  "profileSummary": "Потребител с цел Отслабване, има Инсулинова резистентност и предпочита балансиран режим. Ниво на активност: Средно. Текущо тегло 85 кг (промяна за 7 дни: -0.5 кг).",
+  "caloriesMacros": {
+    "calories": 1800,
+    "protein_percent": 30,
+    "carbs_percent": 40,
+    "fat_percent": 30,
+    "protein_grams": 135,
+    "carbs_grams": 180,
+    "fat_grams": 60
+  },
+  "allowedForbiddenFoods": {
+    "main_allowed_foods": ["пилешко филе", "яйца", "кафяв ориз"],
+    "main_forbidden_foods": ["захарни изделия"],
+    "detailed_allowed_suggestions": ["Чиа пудинг с горски плодове"],
+    "detailed_limit_suggestions": ["Готови плодови кисели млека с добавена захар"],
+    "dressing_flavoring_ideas": ["Лимонов сок, зехтин и риган"]
+  },
+  "week1Menu": {
+    "monday": [
+      { "meal_name": "Закуска", "items": [{ "name": "овесени ядки", "grams": "60g" }] },
+      { "meal_name": "Обяд", "items": [{ "name": "пилешко филе", "grams": "150g" }] }
+    ]
+  },
+  "principlesWeek2_4": [
+    { "title": "Принцип 1", "content": "Осъзнато хранене", "icon": "icon-brain" }
+  ],
+  "hydrationCookingSupplements": {
+    "hydration_recommendations": {
+      "daily_liters": "2.0",
+      "tips": ["Пийте вода с лимон сутрин"],
+      "suitable_drinks": ["билков чай без захар"],
+      "unsuitable_drinks": ["подсладени газирани напитки"]
+    },
+    "cooking_methods": {
+      "recommended": ["печене", "варене"],
+      "limit_or_avoid": ["пържене в много мазнина"],
+      "fat_usage_tip": "Използвайте зехтин в умерени количества."
+    },
+    "supplement_suggestions": [
+      { "supplement_name": "Витамин D", "reasoning": "Нисък прием от храната", "caution": "Консултирайте се с лекар" }
+    ]
+  },
+  "psychologicalGuidance": {
+    "coping_strategies": ["Кратка разходка при стрес"],
+    "motivational_messages": ["Всяка малка стъпка е успех!"],
+    "habit_building_tip": "Започнете с малки промени",
+    "self_compassion_reminder": "Бъдете добри към себе си"
+  },
+  "detailedTargets": {
+    "sleep_quality_target_text": "7-8 часа качествен сън",
+    "stress_level_target_text": "Ниско до умерено ниво на стрес",
+    "energy_level_target_text": "Стабилни нива на енергия",
+    "hydration_target_text": "Около 2.5л вода дневно",
+    "bmi_target_numeric": 22.0,
+    "bmi_target_category_text": "Нормално тегло",
+    "meal_adherence_target_percent": 85,
+    "log_consistency_target_percent": 80
+  },
+  "generationMetadata": {
+    "timestamp": "2024-08-01T12:00:00Z",
+    "modelUsed": "gemini-pro",
+    "promptVersion": "v2.1-optimized",
+    "errors": []
+  }
+}
