@@ -2,68 +2,29 @@
 <html lang="bg">
 <head>
   <meta charset="UTF-8">
-  <title>Админ Вход</title>
-  <style>
-    body {
-      font-family: var(--font-primary, Arial, sans-serif);
-      background-color: #f0f0f0;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-    }
-    .login-container {
-      width: 300px;
-      padding: 20px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    }
-    h2 {
-      margin-top: 0;
-      text-align: center;
-    }
-    input[type="password"],
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    button {
-      background-color: #4fc3a1;
-      border: none;
-      border-radius: 4px;
-      padding: 10px;
-      width: 100%;
-      color: #121212;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #43a088;
-    }
-    #errorMsg {
-      color: red;
-      margin-top: 10px;
-      text-align: center;
-      display: none;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google Fonts & Глобални стилове -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="css/base_styles.css" rel="stylesheet">
+  <link href="css/index_styles.css" rel="stylesheet">
+  <link href="css/responsive_styles.css" rel="stylesheet">
 </head>
 <body>
-<div class="login-container">
+  <div class="landing-container">
+    <div class="card">
   <h2>Администраторски Вход</h2>
-  <input type="text" id="adminUsername" placeholder="Потребителско име" />
-  <input type="password" id="adminPassword" placeholder="Парола" />
-  <label><input type="checkbox" id="showPass"> Покажи паролата</label>
-  <label><input type="checkbox" id="rememberUser"> Запомни ме</label>
-  <button id="loginBtn">Влез</button>
-  <div id="errorMsg">Грешна парола или грешка при заявката.</div>
-</div>
+  <div class="form-group">
+    <input type="text" id="adminUsername" placeholder="Потребителско име" />
+  </div>
+  <div class="form-group">
+    <input type="password" id="adminPassword" placeholder="Парола" />
+  </div>
+  <label class="form-group"><input type="checkbox" id="showPass"> Покажи паролата</label>
+  <label class="form-group"><input type="checkbox" id="rememberUser"> Запомни ме</label>
+  <button id="loginBtn" class="button">Влез</button>
+  <div id="errorMsg" class="message error">Грешна парола или грешка при заявката.</div>
+    </div>
+  </div>
 
 <script>
   const userInput = document.getElementById('adminUsername');
