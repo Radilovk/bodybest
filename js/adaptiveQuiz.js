@@ -1,6 +1,7 @@
 // adaptiveQuiz.js - Логика за Адаптивен Въпросник
 import { selectors } from './uiElements.js';
 import { showToast, openModal as genericOpenModal } from './uiHandlers.js';
+import { updateStepProgress } from './stepProgress.js';
 import { safeGet, safeParseFloat } from './utils.js';
 import {
     currentUserId,
@@ -332,8 +333,14 @@ export function renderCurrentQuizQuestion(isTransitioningNext = true) {
 
         const progressBar = selectors.quizProgressBar;
         if (progressBar && localCurrentQuizData && localCurrentQuizData.questions.length > 0) {
+            updateStepProgress(
+                progressBar,
+                localCurrentQuestionIndex + 1,
+                localCurrentQuizData.questions.length,
+                null,
+                null
+            );
             const progressPercentage = ((localCurrentQuestionIndex + 1) / localCurrentQuizData.questions.length) * 100;
-            progressBar.style.width = `${progressPercentage}%`;
             progressBar.setAttribute('aria-valuenow', progressPercentage);
         }
 
