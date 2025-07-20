@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="css/base_styles.css" rel="stylesheet">
     <link href="css/index_styles.css" rel="stylesheet">
+    <link href="css/components_styles.css" rel="stylesheet">
     <link href="css/responsive_styles.css" rel="stylesheet">
 </head>
 <body>
@@ -21,11 +22,11 @@
                 <form id="login-form" novalidate>
                     <div class="form-group">
                         <label for="login-email">Имейл:</label>
-                        <input type="email" id="login-email" name="email" required autocomplete="email">
+                        <input type="email" id="login-email" name="email" required autocomplete="email" class="input-focus-animate">
                     </div>
                     <div class="form-group">
                         <label for="login-password">Парола:</label>
-                        <input type="password" id="login-password" name="password" required autocomplete="current-password">
+                        <input type="password" id="login-password" name="password" required autocomplete="current-password" class="input-focus-animate">
                     </div>
                     <div id="login-message" class="message error" role="alert"></div>
                     <button type="submit" class="button">Вход</button>
@@ -38,18 +39,22 @@
             <!-- Секция за Регистрация -->
             <div id="register-section" class="form-section hidden">
                 <h2>Регистрация</h2>
+                <div class="step-indicator-container">
+                    <span class="step-indicator-label">Стъпка <span id="regCurrentStep">0</span> от <span id="regTotalSteps">3</span></span>
+                    <div class="progress-bar-steps"><div id="registerProgressBar" class="step-progress-bar"></div></div>
+                </div>
                 <form id="register-form" novalidate>
                     <div class="form-group">
                         <label for="register-email">Имейл:</label>
-                        <input type="email" id="register-email" name="register_email" required autocomplete="email">
+                        <input type="email" id="register-email" name="register_email" required autocomplete="email" class="input-focus-animate">
                     </div>
                     <div class="form-group">
                         <label for="register-password">Парола (мин. 8 знака):</label>
-                        <input type="password" id="register-password" name="register_password" required minlength="8" autocomplete="new-password">
+                        <input type="password" id="register-password" name="register_password" required minlength="8" autocomplete="new-password" class="input-focus-animate">
                     </div>
                     <div class="form-group">
                         <label for="confirm-password">Потвърди Парола:</label>
-                        <input type="password" id="confirm-password" name="confirm_password" required minlength="8" autocomplete="new-password">
+                        <input type="password" id="confirm-password" name="confirm_password" required minlength="8" autocomplete="new-password" class="input-focus-animate">
                     </div>
                     <div id="register-message" class="message" role="alert"></div>
                     <button type="submit" class="button button-secondary">Регистрация</button>
@@ -71,6 +76,7 @@
     <script type="module">
         import { showMessage, hideMessage } from './js/messageUtils.js';
         import { setupRegistration } from './js/register.js';
+        import { updateStepProgress } from './js/stepProgress.js';
         import { toggleTheme, initializeTheme } from './js/uiHandlers.js';
         import { apiEndpoints } from './js/config.js';
         // Селектори
@@ -83,10 +89,24 @@
         const forgotPasswordLink = document.getElementById('forgot-password-link'); // Нов селектор
         const loginMessage = document.getElementById('login-message');
         const registerMessage = document.getElementById('register-message');
+        const regBar = document.getElementById('registerProgressBar');
+        const regCurrent = document.getElementById('regCurrentStep');
+        const regTotal = document.getElementById('regTotalSteps');
         const themeToggleBtn = document.getElementById('theme-toggle');
 
         initializeTheme();
         themeToggleBtn.addEventListener('click', toggleTheme);
+
+        const regInputs = Array.from(registerForm.querySelectorAll('input'));
+        const totalRegSteps = regInputs.length;
+        regTotal.textContent = totalRegSteps;
+        updateStepProgress(regBar, 0, totalRegSteps, regCurrent, regTotal);
+        function refreshRegProgress() {
+            const filled = regInputs.filter(el => el.value.trim() !== '').length;
+            updateStepProgress(regBar, filled, totalRegSteps, regCurrent, regTotal);
+        }
+        regInputs.forEach(inp => inp.addEventListener('input', refreshRegProgress));
+        registerForm.addEventListener('reset', () => updateStepProgress(regBar, 0, totalRegSteps, regCurrent, regTotal));
 
         // Базов URL на Worker-а е дефиниран в config.js
 
@@ -106,6 +126,7 @@
             hideMessage(loginMessage);
             hideMessage(registerMessage); // Скриваме и двете при превключване
             registerForm.reset(); // Изчистваме формата за регистрация
+            updateStepProgress(regBar, 0, totalRegSteps, regCurrent, regTotal);
         });
 
         showLoginLink.addEventListener('click', () => {
@@ -114,6 +135,7 @@
             hideMessage(loginMessage);
             hideMessage(registerMessage);
             loginForm.reset(); // Изчистваме формата за вход
+            updateStepProgress(regBar, 0, totalRegSteps, regCurrent, regTotal);
         });
 
         // Обработка на клик върху "Забравена парола"

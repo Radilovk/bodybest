@@ -51,6 +51,14 @@
              border-color: var(--primary-color); outline: none;
              box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
         }
+
+        .input-focus-animate {
+            transition: transform 0.2s ease, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-focus-animate:focus {
+            transform: scale(1.02);
+        }
         /* Стил за бутоните */
         .button {
             display: inline-block; background-color: var(--primary-color); color: #fff; border: none;
@@ -60,7 +68,12 @@
             margin-top: 0.5rem; /* Отстояние над бутона */
         }
         .button:hover { background-color: var(--secondary-color); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .button:active { transform: translateY(0px) scale(0.98); } /* По-малко движение при клик */
+        .button:active { animation: button-bounce 0.25s ease; }
+        @keyframes button-bounce {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-2px) scale(0.97); }
+            100% { transform: translateY(0) scale(1); }
+        }
         .button.button-secondary { background-color: var(--secondary-color); }
         .button.button-secondary:hover { background-color: var(--primary-color); }
 

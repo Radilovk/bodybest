@@ -18,7 +18,7 @@
         <div class="form-group"> <!-- Използваме общ клас за група от форма -->
             <label for="foodDescription">Какво консумирахте?</label>
             <div class="autocomplete-container" style="position: relative;">
-                <textarea id="foodDescription" name="foodDescription" rows="3" placeholder="Въведете текст..." required aria-required="true" aria-describedby="foodDescriptionHelp"></textarea> <!-- Няма нужда от form-control, ако е глобално стилизиран textarea -->
+            <textarea id="foodDescription" name="foodDescription" rows="3" placeholder="Въведете текст..." required aria-required="true" aria-describedby="foodDescriptionHelp" class="input-focus-animate"></textarea> <!-- Няма нужда от form-control, ако е глобално стилизиран textarea -->
                 <div id="foodSuggestionsDropdown" class="autocomplete-suggestions hidden" role="listbox" style="position: absolute; background-color: var(--surface-background); border: 1px solid var(--input-border-color); border-top: none; z-index: 1050; width: 100%; max-height: 150px; overflow-y: auto; box-shadow: var(--shadow-sm); border-bottom-left-radius: var(--radius-md); border-bottom-right-radius: var(--radius-md);">
                     <!-- Предложенията ще се добавят от JS -->
                 </div>
@@ -71,7 +71,7 @@
                 </label>
             </div>
         </fieldset>
-        <input type="text" id="quantityCustom" name="quantityCustom" class="hidden" style="margin-top: var(--space-sm);" placeholder="Напр. 100гр, 2 с.л., специфично количество" aria-label="Уточнение за количество">
+        <input type="text" id="quantityCustom" name="quantityCustom" class="hidden input-focus-animate" style="margin-top: var(--space-sm);" placeholder="Напр. 100гр, 2 с.л., специфично количество" aria-label="Уточнение за количество">
 
         <div class="form-group" style="margin-top: var(--space-md);">
             <label for="mealTimeSelect">Кога го консумирахте?</label>
@@ -83,7 +83,7 @@
                 <option value="specific_time">По-рано днес (посочете точно)</option>
                 <option value="yesterday_specific_time">Вчера (посочете точно)</option>
             </select>
-            <input type="datetime-local" id="mealTimeSpecific" name="mealTimeSpecific" class="hidden" style="margin-top: var(--space-sm);" aria-label="Конкретно време на консумация">
+            <input type="datetime-local" id="mealTimeSpecific" name="mealTimeSpecific" class="hidden input-focus-animate" style="margin-top: var(--space-sm);" aria-label="Конкретно време на консумация">
         </div>
     </div>
 
@@ -105,7 +105,7 @@
                 <label><input type="radio" name="reasonPrimary" value="нямах_планирана"> <span class="emoji-icon" style="margin-right: var(--space-xs); font-size: 1.1em;">🤷</span> Нямах планирана храна</label>
                 <label><input type="radio" name="reasonPrimary" value="other_reason"> <span class="emoji-icon" style="margin-right: var(--space-xs); font-size: 1.1em;">❓</span> Друга причина</label>
             </div>
-            <input type="text" id="reasonOtherText" name="reasonOtherText" class="hidden" style="margin-top: var(--space-sm);" placeholder="Моля, уточнете причината" aria-label="Уточнение за причина">
+            <input type="text" id="reasonOtherText" name="reasonOtherText" class="hidden input-focus-animate" style="margin-top: var(--space-sm);" placeholder="Моля, уточнете причината" aria-label="Уточнение за причина">
         </fieldset>
     </div>
 
