@@ -11,8 +11,9 @@
 <body>
 
 <!-- Прогрес бар -->
-<div id="progressContainer">
-  <div id="progressBar"></div>
+<div class="step-indicator-container">
+  <span class="step-indicator-label">Стъпка <span id="questCurrentStep">0</span> от <span id="questTotalSteps">0</span></span>
+  <div class="progress-bar-steps"><div id="questProgressBar" class="step-progress-bar"></div></div>
 </div>
 
 <div class="container" id="dynamicContainer">
@@ -100,6 +101,14 @@
 
     totalPages = 1 + flatPages.length + 2; // Стартова + Въпроси + Регистрация + Финална
     console.log("Общо страници (включително старт и финал):", totalPages);
+
+    updateStepProgress(
+      document.getElementById('questProgressBar'),
+      0,
+      totalPages > 1 ? totalPages - 1 : 1,
+      document.getElementById('questCurrentStep'),
+      document.getElementById('questTotalSteps')
+    );
 
     showPage(0); // Показваме стартовата страница
   }
@@ -516,13 +525,14 @@
 
   /***** Функция за обновяване на прогрес бара *****/
   function updateProgress() {
-    const progressBar = document.getElementById('progressBar');
-    const progressContainer = document.getElementById('progressContainer');
-    if (!progressBar || !progressContainer || totalPages <= 1) return;
+    const progressBar = document.getElementById('questProgressBar');
+    const currentLabel = document.getElementById('questCurrentStep');
+    const totalLabel = document.getElementById('questTotalSteps');
+    if (!progressBar || totalPages <= 1) return;
 
     const currentStep = currentPageIndex;
     const totalSteps = totalPages > 1 ? totalPages - 1 : 1;
-    updateStepProgress(progressBar, currentStep, totalSteps, null, null);
+    updateStepProgress(progressBar, currentStep, totalSteps, currentLabel, totalLabel);
   }
 
   /***** Съхраняване и зареждане на прогреса чрез localStorage *****/
