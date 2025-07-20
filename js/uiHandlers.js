@@ -200,6 +200,10 @@ export function openMainIndexInfo(key) {
     openModal('infoModal');
 }
 
+export function openInstructionsModal() {
+    openModal('instructionsModal');
+}
+
 export function toggleDailyNote() {
     if (!selectors.dailyNote || !selectors.addNoteBtn) return;
     const isHidden = selectors.dailyNote.classList.toggle('hidden');

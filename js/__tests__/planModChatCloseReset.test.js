@@ -79,7 +79,8 @@ beforeEach(async () => {
     showLoading: jest.fn(),
     applyTheme: jest.fn(),
     updateThemeButtonText: jest.fn(),
-    openModal: jest.fn()
+    openModal: jest.fn(),
+    openInstructionsModal: jest.fn()
   }));
   jest.unstable_mockModule('../auth.js', () => ({ handleLogout: jest.fn() }));
   jest.unstable_mockModule('../extraMealForm.js', () => ({ openExtraMealModal: jest.fn() }));

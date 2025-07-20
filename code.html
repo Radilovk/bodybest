@@ -783,6 +783,7 @@
             >
               🎉
             </p>
+            <img id="welcomeIllustration" class="welcome-illustration" src="" alt="Въведение">
             <p>
               Вашият персонализиран план е готов! Разгледайте секциите, за да се
               запознаете с него.
@@ -792,6 +793,7 @@
               си. Успех!
             </p>
           </div>
+          <button id="showIntroVideoBtn" class="button-secondary" style="margin-top: 0.5rem">Гледай инструкциите</button>
           <button
             class="button-primary modal-close-btn"
             data-modal-close="welcomeScreenModal"
@@ -857,6 +859,29 @@
           >
             Затвори
           </button>
+        </div>
+      </div>
+
+      <!-- Instructions Modal -->
+      <div
+        id="instructionsModal"
+        class="modal"
+        role="dialog"
+        aria-labelledby="instructionsModalTitle"
+        aria-modal="true"
+        aria-hidden="true"
+      >
+        <div class="modal-content">
+          <button class="close-button" data-modal-close="instructionsModal" aria-label="Затвори прозореца">
+            <svg class="icon" style="width: 1.2em; height: 1.2em">
+              <use href="#icon-close"></use>
+            </svg>
+          </button>
+          <h4 id="instructionsModalTitle" style="text-align: center">Кратки инструкции</h4>
+          <video id="instructionsVideo" class="instructions-video" controls>
+            <source src="" type="video/mp4" />
+          </video>
+          <button class="button-primary modal-close-btn" data-modal-close="instructionsModal" style="margin-top: 1rem">Затвори</button>
         </div>
       </div>
 

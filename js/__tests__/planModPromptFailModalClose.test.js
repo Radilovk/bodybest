@@ -24,6 +24,7 @@ beforeEach(async () => {
     handleTabKeydown: jest.fn(),
     openModal: jest.fn(),
     closeModal: closeModalMock,
+    openInstructionsModal: jest.fn(),
     openInfoModalWithDetails: jest.fn(),
     openMainIndexInfo: jest.fn(),
     toggleDailyNote: jest.fn(),

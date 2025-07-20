@@ -38,6 +38,20 @@
         h1 { font-size: clamp(1.7rem, 5vw, 2.1rem); margin-bottom: calc(var(--space-lg)*0.8); text-align: center; }
         h2 { font-size: clamp(1.3rem, 4vw, 1.7rem); margin-bottom: var(--space-lg); }
         p { margin-bottom: var(--space-lg); color: var(--text-color-secondary); font-size: 0.95rem;}
+
+        .marketing-banner {
+            background-color: var(--primary-color);
+            color: #fff;
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-lg);
+        }
+        .marketing-banner h2 {
+            color: var(--secondary-color);
+            margin-top: 0;
+        }
+        .marketing-banner p { color: #fff; }
+        .marketing-banner .illustration { margin-top: var(--space-md); }
         .form-section { margin-bottom: var(--space-lg); }
         .form-section.hidden { display: none; }
         .form-group { margin-bottom: calc(var(--space-lg)*0.8); text-align: left; }
