@@ -2,7 +2,6 @@ import { apiEndpoints } from './config.js';
 import { labelMap, statusMap } from './labelMap.js';
 import { fileToDataURL, fileToText } from './utils.js';
 import { loadTemplateInto } from './templateLoader.js';
-import { initClientProfile } from './clientProfile.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -766,22 +765,14 @@ if (statusFilter) statusFilter.addEventListener('change', renderClients);
 if (sortOrderSelect) sortOrderSelect.addEventListener('change', renderClients);
 if (tagFilterSelect) tagFilterSelect.addEventListener('change', renderClients);
 
-function initEmbeddedProfile() {
-    if (!adminProfileContainer || !window.bootstrap) return;
-    adminProfileContainer.querySelectorAll('[data-bs-toggle="tab"]').forEach(el => {
-        bootstrap.Tab.getOrCreateInstance(el);
-    });
-    const first = adminProfileContainer.querySelector('#basic-tab');
-    if (first) bootstrap.Tab.getOrCreateInstance(first).show();
-}
 
 async function showClient(userId) {
     if (adminProfileContainer) {
         adminProfileContainer.innerHTML = '';
         history.replaceState(null, '', `?userId=${encodeURIComponent(userId)}`);
-        await loadTemplateInto('profileTemplate.html', 'adminProfileContainer');
-        initClientProfile();
-        initEmbeddedProfile();
+        await loadTemplateInto('editclient.html', 'adminProfileContainer');
+        const mod = await import('./editClient.js');
+        await mod.initEditClient(userId);
     }
     try {
         const [profileResp, dashResp] = await Promise.all([
