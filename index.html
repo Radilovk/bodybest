@@ -63,6 +63,7 @@
                  <!-- Актуализиран линк -->
                  <a href="quest.html" class="button button-secondary">Попълни Въпросник</a>
              </div>
+             <button id="theme-toggle" type="button" class="button button-secondary">Смени тема</button>
 
         </div>
     </div>
@@ -70,6 +71,7 @@
     <script type="module">
         import { showMessage, hideMessage } from './js/messageUtils.js';
         import { setupRegistration } from './js/register.js';
+        import { toggleTheme, initializeTheme } from './js/uiHandlers.js';
         import { apiEndpoints } from './js/config.js';
         // Селектори
         const loginSection = document.getElementById('login-section');
@@ -81,6 +83,10 @@
         const forgotPasswordLink = document.getElementById('forgot-password-link'); // Нов селектор
         const loginMessage = document.getElementById('login-message');
         const registerMessage = document.getElementById('register-message');
+        const themeToggleBtn = document.getElementById('theme-toggle');
+
+        initializeTheme();
+        themeToggleBtn.addEventListener('click', toggleTheme);
 
         // Базов URL на Worker-а е дефиниран в config.js
 
