@@ -28,7 +28,7 @@ beforeEach(async () => {
     streakCount: document.getElementById('streakCount')
   };
   jest.unstable_mockModule('../uiElements.js', () => ({ selectors, trackerInfoTexts: {}, detailedMetricInfoTexts: {} }));
-  jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn() }));
+  jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn(), openInstructionsModal: jest.fn() }));
   jest.unstable_mockModule('../app.js', () => ({
     fullDashboardData: {
       userName: 'Иван',

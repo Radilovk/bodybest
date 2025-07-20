@@ -236,6 +236,21 @@
   */
 }
 
+@media (min-width: 768px) {
+  .marketing-banner {
+    display: flex;
+    align-items: center;
+    text-align: left;
+  }
+  .marketing-banner .intro-text {
+    flex: 1;
+    padding-right: var(--space-lg);
+  }
+  .marketing-banner .illustration {
+    flex: 1;
+  }
+}
+
 @media (min-width: 1200px) {
   .main-indexes {
     grid-template-columns: repeat(3, 1fr);

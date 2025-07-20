@@ -4,6 +4,7 @@ import {
     toggleMenu, closeMenu, handleOutsideMenuClick, handleMenuKeydown,
     toggleTheme, activateTab, handleTabKeydown, closeModal, openModal,
     openInfoModalWithDetails, toggleDailyNote, openMainIndexInfo,
+    openInstructionsModal,
     handleTrackerTooltipShow, handleTrackerTooltipHide, showToast
 } from './uiHandlers.js';
 import { handleLogout } from './auth.js';
@@ -94,6 +95,7 @@ export function setupStaticEventListeners() {
     if (selectors.saveLogBtn) selectors.saveLogBtn.addEventListener('click', handleSaveLog);
     if (selectors.openExtraMealModalBtn) selectors.openExtraMealModalBtn.addEventListener('click', openExtraMealModal);
     if (selectors.planModificationBtn) selectors.planModificationBtn.addEventListener('click', openPlanModificationChat);
+    if (selectors.showIntroVideoBtn) selectors.showIntroVideoBtn.addEventListener('click', openInstructionsModal);
 
     if (selectors.goalCard) selectors.goalCard.addEventListener('click', () => openMainIndexInfo('goalProgress'));
     if (selectors.engagementCard) selectors.engagementCard.addEventListener('click', () => openMainIndexInfo('engagement'));

@@ -20,6 +20,7 @@ beforeEach(async () => {
     handleTabKeydown: jest.fn(),
     openModal: jest.fn(),
     closeModal: jest.fn(),
+    openInstructionsModal: jest.fn(),
     openInfoModalWithDetails: jest.fn(),
     openMainIndexInfo: jest.fn(),
     toggleDailyNote: jest.fn(),

@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 import { jest } from '@jest/globals';
 jest.unstable_mockModule('../uiElements.js', () => ({ selectors: {} }));
-jest.unstable_mockModule('../uiHandlers.js', () => ({ openModal: jest.fn() }));
+jest.unstable_mockModule('../uiHandlers.js', () => ({ openModal: jest.fn(), openInstructionsModal: jest.fn() }));
 jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
 
 let shareAchievement;
