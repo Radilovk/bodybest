@@ -35,9 +35,9 @@
             to { opacity: 1; }
         }
         @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
         }
 
         /* --- Global Styles --- */
@@ -71,9 +71,9 @@
             margin-top: 10px;
             animation: fadeIn 1s 0.2s ease-out backwards;
         }
-        .main-goal strong { color: #a7f3d0; } /* Light green accent for goal */
+        .main-goal strong { color: #a7f3d0; }
 
-        /* --- Section Titles --- */
+        /* --- Section Headers --- */
         .section-header {
             text-align: center;
             margin-bottom: 50px;
@@ -111,7 +111,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 25px;
-            margin-top: -100px; /* Overlap header */
+            margin-top: -100px;
             position: relative;
             z-index: 10;
         }
@@ -129,130 +129,100 @@
             gap: 40px;
             justify-items: center;
         }
-        .dashboard-item {
-            text-align: center;
-            opacity: 0;
-            animation: fadeInUp 0.5s ease-out forwards;
-        }
-        .donut-chart-container {
-            position: relative;
-            width: 140px;
-            height: 140px;
-            margin-bottom: 15px;
-        }
-        .donut-chart-svg {
-            transform: rotate(-90deg);
-            width: 100%;
-            height: 100%;
-        }
-        .donut-chart-svg circle {
-            fill: none;
-            stroke-width: 12;
-        }
+        .dashboard-item { text-align: center; opacity: 0; animation: fadeInUp 0.5s ease-out forwards; }
+        .donut-chart-container { position: relative; width: 140px; height: 140px; margin-bottom: 15px; }
+        .donut-chart-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+        .donut-chart-svg circle { fill: none; stroke-width: 12; }
         .donut-track { stroke: var(--border-color); }
-        .donut-fill {
-            stroke-linecap: round;
-            transition: stroke-dashoffset 1.5s cubic-bezier(0.25, 1, 0.5, 1);
-        }
+        .donut-fill { stroke-linecap: round; transition: stroke-dashoffset 1.5s cubic-bezier(0.25, 1, 0.5, 1); }
         .donut-high { stroke: var(--color-high); }
         .donut-medium { stroke: var(--color-medium); }
         .donut-ok { stroke: var(--color-ok); }
         .donut-low { stroke: var(--color-low); }
-
-        .chart-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-        }
+        .chart-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
         .chart-center .icon { font-size: 2.2em; }
         .dashboard-item h4 { margin: 0; font-weight: 600; color: var(--heading-color); }
         .dashboard-item .risk-level-text { font-size: 0.8em; color: #718096; }
 
-
         /* 3. Deep Dive Section --- */
-        .deep-dive-card {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 40px;
-        }
-        @media (min-width: 768px) {
-            .deep-dive-card { grid-template-columns: 1.2fr 1fr; }
-        }
-
-        .analysis-points h3, .key-takeaway h3 {
-            font-size: 1.4em;
-            margin: 0 0 20px 0;
-            color: var(--heading-color);
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 10px;
-        }
+        .deep-dive-card { display: grid; grid-template-columns: 1fr; gap: 40px; }
+        @media (min-width: 768px) { .deep-dive-card { grid-template-columns: 1.2fr 1fr; } }
+        .analysis-points h3, .key-takeaway h3 { font-size: 1.4em; margin: 0 0 20px 0; color: var(--heading-color); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
         .analysis-points ul { list-style: none; padding: 0; margin: 0; }
-        .analysis-points li {
-            display: flex;
-            align-items: flex-start;
-            padding: 10px 0;
-            line-height: 1.6;
-        }
-        .analysis-points li i {
-            color: var(--primary-color);
-            margin-right: 15px;
-            margin-top: 4px;
-        }
-        
-        .key-takeaway {
-            background: #f8fafc;
-            padding: 25px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-        .summary-quote {
-            margin-bottom: 25px;
-            padding-left: 20px;
-            border-left: 4px solid var(--accent-color);
-        }
-        .summary-quote .quote-text {
-            font-style: italic;
-            font-size: 1.1em;
-            margin: 0 0 5px 0;
-            color: var(--heading-color);
-        }
+        .analysis-points li { display: flex; align-items: flex-start; padding: 10px 0; line-height: 1.6; }
+        .analysis-points li i { color: var(--primary-color); margin-right: 15px; margin-top: 4px; }
+        .key-takeaway { background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); }
+        .summary-quote { margin-bottom: 25px; padding-left: 20px; border-left: 4px solid var(--accent-color); }
+        .summary-quote .quote-text { font-style: italic; font-size: 1.1em; margin: 0 0 5px 0; color: var(--heading-color); }
         .summary-quote .quote-author { font-size: 0.9em; text-align: left; color: #718096; }
-        .conclusion-box p {
-            margin: 0;
-            font-weight: 600;
-            line-height: 1.6;
-            color: var(--heading-color);
-        }
-
-        /* 4. CTA Section --- */
+        .conclusion-box p { margin: 0; font-weight: 600; line-height: 1.6; color: var(--heading-color); }
+        
+        /* 4. CTA Section --- REWORKED FOR TRUST AND HOPE --- */
         .cta-section {
-            background-color: var(--heading-color);
-            color: white;
-            text-align: center;
-            padding: 80px 20px;
+            background: linear-gradient(to top, var(--bg-color) 0%, #ffffff 100%);
+            padding: 80px 0;
             margin-top: 50px;
         }
-        .cta-section h2 { font-size: 2.2em; margin-bottom: 15px; font-weight: 900; }
-        .cta-section p { max-width: 600px; margin: 0 auto 30px auto; opacity: 0.8; font-size: 1.1em; }
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        .benefit-card {
+            text-align: center;
+            background-color: var(--card-bg-color);
+            padding: 35px 25px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+        .benefit-card .icon {
+            font-size: 2.5em;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        .benefit-card h3 {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--heading-color);
+            margin: 0 0 10px 0;
+        }
+        .benefit-card p {
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #4a5568;
+            margin: 0;
+        }
+        .final-cta-summary {
+            text-align: center;
+            margin: 60px auto 40px;
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--heading-color);
+            max-width: 500px;
+            line-height: 1.5;
+        }
+        .final-cta-summary strong { color: var(--primary-color); }
+        .cta-button-container { text-align: center; }
         .cta-button {
             background-color: var(--primary-color);
             color: white;
             font-size: 1.2em;
             font-weight: 700;
             text-decoration: none;
-            padding: 15px 40px;
+            padding: 16px 45px;
             border-radius: 50px;
             transition: all 0.3s ease;
             display: inline-block;
+            animation: pulse 2s infinite ease-in-out;
         }
         .cta-button:hover {
             background-color: var(--accent-color);
             transform: scale(1.05);
+            animation: none;
         }
-        .cta-button { animation: pulse 2s infinite ease-in-out; }
 
+        /* --- Footer --- */
         footer { text-align: center; padding: 40px 20px; font-size: 0.9em; color: #718096; }
     </style>
 </head>
@@ -264,10 +234,10 @@
     </header>
 
     <main class="container">
-        <!-- Секция 1: Ключови Бариери (само икони и заглавия) -->
+        <!-- Секция 1: Ключови Бариери -->
         <section id="obstacles-container" class="reveal"></section>
 
-        <!-- Секция 2: Риск-Профил с Donut Charts -->
+        <!-- Секция 2: Риск-Профил -->
         <section class="reveal">
             <div class="section-header">
                 <h2 class="section-title">Риск-Профил: Моментна Снимка</h2>
@@ -276,7 +246,7 @@
             <div id="dashboard-grid"></div>
         </section>
 
-        <!-- Секция 3: Дълбок Анализ (Компактен) -->
+        <!-- Секция 3: Дълбок Анализ -->
         <section class="reveal">
              <div class="section-header">
                 <h2 class="section-title">Анализ: Причина и Следствие</h2>
@@ -286,14 +256,39 @@
         </section>
     </main>
     
-    <!-- Секция 4: Призив за Действие -->
+    <!-- Секция 4: Пътят към Резултата (НОВА, ПСИХОЛОГИЧЕСКИ ЗАРЕДЕНА) -->
     <section class="cta-section">
         <div class="container reveal">
-            <h2 id="cta-title"></h2>
-            <p id="cta-body"></p>
-            <a id="cta-button" href="#" class="cta-button">
-                <i class="fas fa-rocket"></i> <span id="cta-button-text"></span>
-            </a>
+            <div class="section-header">
+                <h2 class="section-title">От Анализ към Резултат</h2>
+                <p class="section-subtitle">Разбирането на проблема е първата стъпка. Ето как ще изградим Вашия успех – заедно, с ясна стратегия и подкрепа.</p>
+            </div>
+            <div class="benefits-grid">
+                <!-- Benefit 1: Personal Plan -->
+                <div class="benefit-card">
+                    <div class="icon"><i class="fas fa-clipboard-list"></i></div>
+                    <h3>Персонален План, не просто диета</h3>
+                    <p>Забравяме за универсалните решения. Създаваме стратегия, съобразена с Вашия ритъм, цели и предпочитания.</p>
+                </div>
+                <!-- Benefit 2: Expert Support -->
+                <div class="benefit-card">
+                    <div class="icon"><i class="fas fa-hands-helping"></i></div>
+                    <h3>Експертна Подкрепа, не осъждане</h3>
+                    <p>Вие не сте сами. Получавате достъп до експерт, който да Ви напътства, мотивира и държи отговорни.</p>
+                </div>
+                <!-- Benefit 3: Sustainable Habits -->
+                <div class="benefit-card">
+                    <div class="icon"><i class="fas fa-seedling"></i></div>
+                    <h3>Устойчиви Навици, не временни ограничения</h3>
+                    <p>Целта ни не е да отслабнете, а да промените връзката си с храната завинаги. Без глад и лишения.</p>
+                </div>
+            </div>
+            <p class="final-cta-summary">Информацията е силата. <strong>Планът е свободата.</strong></p>
+            <div class="cta-button-container">
+                 <a id="cta-button" href="#" class="cta-button">
+                    <i class="fas fa-rocket"></i> <span id="cta-button-text"></span>
+                </a>
+            </div>
         </div>
     </section>
 
@@ -303,6 +298,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const analysisData = {/*---JSON_DATA_PLACEHOLDER---*/};
         
+        // ... (всички generate... HTML функции остават същите) ...
         const generateObstaclesHTML = (obstacles) => obstacles.map(o => `
             <div class="card obstacle-card">
                 <div class="icon"><i class="${o.icon}"></i></div>
@@ -345,6 +341,7 @@
                 </div>
             </div>`).join('');
 
+
         const renderAnalysis = (data) => {
             data.healthDashboard.sort((a, b) => b.riskValue - a.riskValue);
             
@@ -353,10 +350,11 @@
             document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
             document.getElementById('dashboard-grid').innerHTML = generateDashboardHTML(data.healthDashboard);
             document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
-            document.getElementById('cta-title').textContent = data.callToAction.title;
-            document.getElementById('cta-body').textContent = data.callToAction.body;
-            document.getElementById('cta-button-text').textContent = data.callToAction.buttonText;
+            
+            // CTA Button is now the only dynamic part in the CTA section
+            document.getElementById('cta-button-text').textContent = data.callToAction.buttonText || 'Започни своята трансформация';
             document.getElementById('cta-button').href = data.callToAction.buttonLink;
+
             document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} Your Wellness Company. Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
             
             setupAnimations();
@@ -370,7 +368,6 @@
                         entry.target.style.opacity = 1;
                         entry.target.style.transform = 'translateY(0)';
                         
-                        // Animate donut charts when they become visible
                         if (entry.target.id === 'dashboard-grid') {
                             const charts = entry.target.querySelectorAll('.donut-fill');
                             charts.forEach(chart => {
@@ -380,10 +377,8 @@
                                 const offset = circumference * (1 - riskValue / 100);
                                 
                                 chart.style.strokeDasharray = `${circumference} ${circumference}`;
-                                chart.style.strokeDashoffset = circumference; // Start from empty
-                                setTimeout(() => {
-                                   chart.style.strokeDashoffset = offset; // Animate to value
-                                }, 200);
+                                chart.style.strokeDashoffset = circumference;
+                                setTimeout(() => { chart.style.strokeDashoffset = offset; }, 200);
                             });
                         }
                         revealObserver.unobserve(entry.target);
@@ -391,7 +386,7 @@
                 });
             }, { threshold: 0.1 });
 
-            document.querySelectorAll('.reveal, #obstacles-container, #dashboard-grid').forEach(el => {
+            document.querySelectorAll('.reveal').forEach(el => {
                 el.style.opacity = 0;
                 el.style.transform = 'translateY(20px)';
                 el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
