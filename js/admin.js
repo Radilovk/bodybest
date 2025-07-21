@@ -3,6 +3,7 @@ import { loadConfig, saveConfig } from './adminConfig.js';
 import { labelMap, statusMap } from './labelMap.js';
 import { fileToDataURL, fileToText } from './utils.js';
 import { loadTemplateInto } from './templateLoader.js';
+import { sanitizeHTML } from './htmlSanitizer.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -103,6 +104,10 @@ const testEmailToInput = document.getElementById('testEmailTo');
 const testEmailSubjectInput = document.getElementById('testEmailSubject');
 const testEmailBodyInput = document.getElementById('testEmailBody');
 const testEmailSection = document.getElementById('testEmailSection');
+const welcomeEmailPreview = document.getElementById('welcomeEmailPreview');
+const questionnaireEmailPreview = document.getElementById('questionnaireEmailPreview');
+const analysisEmailPreview = document.getElementById('analysisEmailPreview');
+const testEmailPreview = document.getElementById('testEmailPreview');
 const testImageForm = document.getElementById('testImageForm');
 const testImageFileInput = document.getElementById('testImageFile');
 const testImagePromptInput = document.getElementById('testImagePrompt');
@@ -154,6 +159,15 @@ function updateHints(modelInput, descElem) {
     if (hints.tokens) parts.push(`Token limit: ${hints.tokens}`);
     if (hints.temperature) parts.push(`Temperature: ${hints.temperature}`);
     descElem.textContent = parts.join(' • ');
+}
+
+function attachEmailPreview(textarea, previewElem) {
+    if (!textarea || !previewElem) return;
+    const update = () => {
+        previewElem.innerHTML = sanitizeHTML(textarea.value);
+    };
+    textarea.addEventListener('input', update);
+    update();
 }
 
 function showNotificationDot(show) {
@@ -1262,11 +1276,20 @@ async function loadEmailSettings() {
             'analysis_email_body'
         ])
         if (welcomeEmailSubjectInput) welcomeEmailSubjectInput.value = cfg.welcome_email_subject || ''
-        if (welcomeEmailBodyInput) welcomeEmailBodyInput.value = cfg.welcome_email_body || ''
+        if (welcomeEmailBodyInput) {
+            welcomeEmailBodyInput.value = cfg.welcome_email_body || ''
+            if (welcomeEmailPreview) welcomeEmailPreview.innerHTML = sanitizeHTML(welcomeEmailBodyInput.value)
+        }
         if (questionnaireEmailSubjectInput) questionnaireEmailSubjectInput.value = cfg.questionnaire_email_subject || ''
-        if (questionnaireEmailBodyInput) questionnaireEmailBodyInput.value = cfg.questionnaire_email_body || ''
+        if (questionnaireEmailBodyInput) {
+            questionnaireEmailBodyInput.value = cfg.questionnaire_email_body || ''
+            if (questionnaireEmailPreview) questionnaireEmailPreview.innerHTML = sanitizeHTML(questionnaireEmailBodyInput.value)
+        }
         if (analysisEmailSubjectInput) analysisEmailSubjectInput.value = cfg.analysis_email_subject || ''
-        if (analysisEmailBodyInput) analysisEmailBodyInput.value = cfg.analysis_email_body || ''
+        if (analysisEmailBodyInput) {
+            analysisEmailBodyInput.value = cfg.analysis_email_body || ''
+            if (analysisEmailPreview) analysisEmailPreview.innerHTML = sanitizeHTML(analysisEmailBodyInput.value)
+        }
     } catch (err) {
         console.error('Error loading email settings:', err)
     }
@@ -1298,6 +1321,7 @@ async function loadTestEmailTemplate() {
     try {
         const resp = await fetch('data/welcomeEmailTemplate.html')
         testEmailBodyInput.value = await resp.text()
+        if (testEmailPreview) testEmailPreview.innerHTML = sanitizeHTML(testEmailBodyInput.value)
         testEmailTemplateLoaded = true
     } catch (err) {
         console.error('Error loading test email template:', err)
@@ -1613,6 +1637,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Инициализира табовете веднага
     setupTabs();
 
+    attachEmailPreview(welcomeEmailBodyInput, welcomeEmailPreview);
+    attachEmailPreview(questionnaireEmailBodyInput, questionnaireEmailPreview);
+    attachEmailPreview(analysisEmailBodyInput, analysisEmailPreview);
+    attachEmailPreview(testEmailBodyInput, testEmailPreview);
+
     // Стартира асинхронните операции в отделен IIFE,
     // за да не блокират работата на интерфейса
     (async () => {
@@ -1697,5 +1726,6 @@ export {
     loadTestEmailTemplate,
     sendTestImage,
     sendTestQuestionnaire,
-    sendAdminQuery
+    sendAdminQuery,
+    attachEmailPreview
 };

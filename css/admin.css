@@ -291,3 +291,10 @@ details[open] summary::after {
     display: none;
   }
 }
+
+/* Preview area for email templates */
+.email-preview {
+  border: 1px dashed #ccc;
+  padding: 8px;
+  margin-top: 4px;
+}
