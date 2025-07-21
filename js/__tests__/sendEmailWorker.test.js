@@ -1,10 +1,11 @@
 import { jest } from '@jest/globals';
 
-let handleSendEmailRequest, sendEmail;
+let handleSendEmailRequest, sendEmailUniversal;
 
 beforeEach(async () => {
   jest.resetModules();
-  ({ handleSendEmailRequest, sendEmail } = await import('../../sendEmailWorker.js'));
+  handleSendEmailRequest = (await import('../../sendEmailWorker.js')).handleSendEmailRequest;
+  sendEmailUniversal = (await import('../../utils/emailSender.js')).sendEmailUniversal;
 });
 
 afterEach(() => {
@@ -65,7 +66,7 @@ test('sendEmail forwards data to PHP endpoint', async () => {
     clone: () => ({ text: async () => '{}' }),
     headers: { get: () => 'application/json' }
   });
-  await sendEmail('t@e.com', 'Hi', 'Body', {});
+  await sendEmailUniversal('t@e.com', 'Hi', 'Body', {});
   expect(fetch).toHaveBeenCalledWith(
     'https://mybody.best/mailer/mail.php',
     expect.objectContaining({
@@ -79,7 +80,7 @@ test('sendEmail forwards data to PHP endpoint', async () => {
 
 test('sendEmail throws when backend reports failure', async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 });
-  await expect(sendEmail('x@y.z', 'S', 'B', {})).rejects.toThrow('PHP mailer error 500');
+  await expect(sendEmailUniversal('x@y.z', 'S', 'B', {})).rejects.toThrow('PHP mailer error 500');
   fetch.mockRestore();
 });
 

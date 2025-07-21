@@ -1,5 +1,6 @@
 import dotenv from 'dotenv'
 import fs from 'fs/promises'
+import { sendEmailUniversal } from './utils/emailSender.js'
 
 dotenv.config()
 
@@ -69,16 +70,7 @@ async function getEmailTemplate() {
  * @returns {Promise<void>} resolves when the message is sent
  */
 export async function sendEmail(toEmail, subject, html) {
-    const url = process.env.MAIL_PHP_URL || 'https://mybody.best/mailer/mail.php'
-    const resp = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: toEmail, subject, message: html })
-    })
-    if (!resp.ok) {
-        const text = await resp.text().catch(() => '')
-        throw new Error(`Mailer responded with ${resp.status}: ${text}`)
-    }
+    await sendEmailUniversal(toEmail, subject, html, process.env)
 }
 
 export async function sendWelcomeEmail(toEmail, userName) {

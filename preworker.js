@@ -12,43 +12,9 @@
 // - Попълнени липсващи части от предходни версии.
 // - Запазени всички предходни функционалности.
 
-/**
- * Fallback email sender used when `mailer.js` is unavailable.
- * Matches the signature of the real implementation to satisfy TypeScript.
- * @param {string} to
- * @param {string} subject
- * @param {string} body
- * @returns {Promise<void>}
- */
-// Parameters are unused but kept to preserve the expected signature
-// eslint-disable-next-line no-unused-vars
-async function defaultSendEmail(to, subject, body) {
-    throw new Error('Email functionality is not configured.');
-}
 import crypto from 'node:crypto';
-import { sendEmail as phpSendEmail } from './sendEmailWorker.js';
+import { sendEmailUniversal } from './utils/emailSender.js';
 import { parseJsonSafe } from './utils/parseJsonSafe.js';
-
-/** @type {(to: string, subject: string, body: string) => Promise<void>} */
-let sendEmailFn = defaultSendEmail;
-const MAILER_ENDPOINT_URL_VAR_NAME = 'MAILER_ENDPOINT_URL';
-async function getSendEmail(env) {
-    if (sendEmailFn && sendEmailFn !== defaultSendEmail) return sendEmailFn;
-    const endpoint = env?.[MAILER_ENDPOINT_URL_VAR_NAME];
-    if (endpoint) {
-        sendEmailFn = async (to, subject, body) => {
-            const resp = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ to, subject, message: body })
-            });
-            if (!resp.ok) throw new Error(`Mailer responded with ${resp.status}`);
-        };
-    } else {
-        sendEmailFn = (to, subject, body) => phpSendEmail(to, subject, body, env);
-    }
-    return sendEmailFn;
-}
 
 const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
 const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
@@ -175,32 +141,26 @@ const ANALYSIS_READY_BODY_TEMPLATE = '<p>Здравей, {{name}}.</p>' +
 const ANALYSIS_PAGE_URL_VAR_NAME = 'ANALYSIS_PAGE_URL';
 
 async function sendWelcomeEmail(to, name, env) {
-    const sendEmail = await getSendEmail(env);
-    if (sendEmail === defaultSendEmail) return;
     const html = WELCOME_BODY_TEMPLATE.replace(/{{\s*name\s*}}/g, name);
     try {
-        await sendEmail(to, WELCOME_SUBJECT, html);
+        await sendEmailUniversal(to, WELCOME_SUBJECT, html, env);
     } catch (err) {
         console.error('Failed to send welcome email:', err);
     }
 }
 
 async function sendQuestionnaireConfirmationEmail(to, name, env) {
-    const sendEmail = await getSendEmail(env);
-    if (sendEmail === defaultSendEmail) return;
     const subject = env?.[QUESTIONNAIRE_EMAIL_SUBJECT_VAR_NAME] || QUESTIONNAIRE_SUBJECT;
     const tpl = env?.[QUESTIONNAIRE_EMAIL_BODY_VAR_NAME] || QUESTIONNAIRE_BODY_TEMPLATE;
     const html = tpl.replace(/{{\s*name\s*}}/g, name);
     try {
-        await sendEmail(to, subject, html);
+        await sendEmailUniversal(to, subject, html, env);
     } catch (err) {
         console.error('Failed to send questionnaire confirmation email:', err);
     }
 }
 
 async function sendAnalysisLinkEmail(to, name, link, env) {
-    const sendEmail = await getSendEmail(env);
-    if (sendEmail === defaultSendEmail) return;
     const subject = env?.ANALYSIS_EMAIL_SUBJECT || ANALYSIS_READY_SUBJECT;
     const tpl = env?.ANALYSIS_EMAIL_BODY || ANALYSIS_READY_BODY_TEMPLATE;
     if (!tpl.includes('{{name}}')) {
@@ -211,7 +171,7 @@ async function sendAnalysisLinkEmail(to, name, link, env) {
     }
     const html = tpl.replace(/{{\s*name\s*}}/g, name).replace(/{{\s*link\s*}}/g, link);
     try {
-        await sendEmail(to, subject, html);
+        await sendEmailUniversal(to, subject, html, env);
     } catch (err) {
         console.error('Failed to send analysis link email:', err);
     }
@@ -2256,15 +2216,7 @@ async function handleSendTestEmailRequest(request, env) {
             return { success: false, message: 'Missing field: body (use "body", "text" or "message")', statusHint: 400 };
         }
 
-        const sendEmail = await getSendEmail(env);
-        if (sendEmail === defaultSendEmail) {
-            return {
-                success: false,
-                message: 'Email functionality is not configured.',
-                statusHint: 400
-            };
-        }
-        await sendEmail(recipient, subject, body);
+        await sendEmailUniversal(recipient, subject, body, env);
         return { success: true };
     } catch (error) {
         console.error('Error in handleSendTestEmailRequest:', error.message, error.stack);
