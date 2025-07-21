@@ -7,6 +7,8 @@ beforeEach(async () => {
   jest.resetModules();
   document.body.innerHTML = `
     <h1 id="headerTitle"></h1>
+    <div id="goalCard"></div><div id="engagementCard"></div><div id="healthCard"></div>
+    <div id="progressHistoryCard"></div>
     <div id="goalProgressMask"></div><div id="goalProgressBar"></div><span id="goalProgressText"></span>
     <div id="engagementProgressMask"></div><div id="engagementProgressBar"></div><span id="engagementProgressText"></span>
     <div id="healthProgressMask"></div><div id="healthProgressBar"></div><span id="healthProgressText"></span>
@@ -15,6 +17,10 @@ beforeEach(async () => {
 
   const selectors = {
     headerTitle: document.getElementById('headerTitle'),
+    goalCard: document.getElementById('goalCard'),
+    engagementCard: document.getElementById('engagementCard'),
+    healthCard: document.getElementById('healthCard'),
+    progressHistoryCard: document.getElementById('progressHistoryCard'),
     goalProgressMask: document.getElementById('goalProgressMask'),
     goalProgressBar: document.getElementById('goalProgressBar'),
     goalProgressText: document.getElementById('goalProgressText'),
@@ -56,4 +62,28 @@ test('populates dashboard sections', () => {
   expect(document.getElementById('healthProgressText').textContent).toBe('70%');
   expect(document.getElementById('streakCount').textContent).toBe('5');
   expect(document.querySelectorAll('#streakGrid .streak-day.logged').length).toBe(1);
+});
+
+test('hides modules when values are zero', async () => {
+  jest.resetModules();
+  const zeroData = {
+    fullDashboardData: {
+      userName: 'Иван',
+      analytics: { current: { goalProgress: 0, engagementScore: 0, overallHealthScore: 0 }, streak: {} },
+      planData: {},
+      dailyLogs: [],
+      currentStatus: {},
+      initialData: {},
+      initialAnswers: {}
+    },
+    todaysMealCompletionStatus: {},
+    planHasRecContent: false
+  };
+  jest.unstable_mockModule('../app.js', () => zeroData);
+  ({ populateUI } = await import('../populateUI.js'));
+  populateUI();
+  expect(document.getElementById('goalCard').classList.contains('hidden')).toBe(true);
+  expect(document.getElementById('engagementCard').classList.contains('hidden')).toBe(true);
+  expect(document.getElementById('healthCard').classList.contains('hidden')).toBe(true);
+  expect(document.getElementById('progressHistoryCard').classList.contains('hidden')).toBe(true);
 });
