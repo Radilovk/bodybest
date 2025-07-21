@@ -1,4 +1,3 @@
-/// <reference types="node" />
 // Cloudflare Worker Script (index.js) - Версия 2.3
 // Добавен е режим за дебъг чрез HTTP заглавие `X-Debug: 1`
 // Също така са запазени всички функционалности от предходните версии
@@ -12,7 +11,6 @@
 // - Попълнени липсващи части от предходни версии.
 // - Запазени всички предходни функционалности.
 
-import crypto from 'node:crypto';
 // Вградена функция за изпращане на имейли, за да работи скриптът
 // като самостоятелен файл в Cloudflare.
 async function sendEmailUniversal(to, subject, body, env = {}) {
@@ -1807,9 +1805,8 @@ async function handleAnalyzeImageRequest(request, env) {
             return { success: false, message: 'Невалиден Base64 стринг.', statusHint: 400 };
         }
 
-        // eslint-disable-next-line no-undef
-        const buf = typeof Buffer !== 'undefined'
-            ? new Uint8Array(Buffer.from(base64, 'base64'))
+        const buf = typeof globalThis.Buffer !== 'undefined'
+            ? new Uint8Array(globalThis.Buffer.from(base64, 'base64'))
             : (() => {
                 const binary = atob(base64);
                 const bytes = new Uint8Array(binary.length);
