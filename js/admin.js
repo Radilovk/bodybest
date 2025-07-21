@@ -1,4 +1,5 @@
 import { apiEndpoints } from './config.js';
+import { loadConfig, saveConfig } from './adminConfig.js';
 import { labelMap, statusMap } from './labelMap.js';
 import { fileToDataURL, fileToText } from './utils.js';
 import { loadTemplateInto } from './templateLoader.js';
@@ -1176,10 +1177,7 @@ function loadAdminToken() {
 async function loadAiConfig() {
     if (!aiConfigForm) return;
     try {
-        const resp = await fetch(apiEndpoints.getAiConfig);
-        const data = await resp.json();
-        if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
-        const cfg = data.config || {};
+        const cfg = await loadConfig();
         planModelInput.value = cfg.model_plan_generation || '';
         chatModelInput.value = cfg.model_chat || '';
         modModelInput.value = cfg.model_principle_adjustment || '';
@@ -1212,8 +1210,7 @@ async function loadAiConfig() {
 
 async function saveAiConfig() {
     if (!aiConfigForm) return;
-    const payload = {
-        updates: {
+    const updates = {
             model_plan_generation: planModelInput.value.trim(),
             model_chat: chatModelInput.value.trim(),
             model_principle_adjustment: modModelInput.value.trim(),
@@ -1234,30 +1231,14 @@ async function saveAiConfig() {
             image_temperature: imageTemperatureInput ? imageTemperatureInput.value.trim() : '',
             welcome_email_subject: welcomeEmailSubjectInput ? welcomeEmailSubjectInput.value.trim() : '',
             welcome_email_body: welcomeEmailBodyInput ? welcomeEmailBodyInput.value.trim() : ''
-        }
     };
     try {
-        let adminToken = '';
         if (adminTokenInput) {
-            adminToken = adminTokenInput.value.trim();
+            const adminToken = adminTokenInput.value.trim();
             sessionStorage.setItem('adminToken', adminToken);
             localStorage.removeItem('adminToken');
-        } else {
-            adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
         }
-        const headers = { 'Content-Type': 'application/json' };
-        if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
-        const resp = await fetch(apiEndpoints.setAiConfig, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(payload)
-        });
-        const data = await resp.json();
-        if (!resp.ok || !data.success) {
-            const error = new Error(data.message || 'Error');
-            error.status = resp.status;
-            throw error;
-        }
+        await saveConfig(updates);
         alert('AI конфигурацията е записана.');
         await loadAiConfig();
     } catch (err) {
@@ -1272,10 +1253,14 @@ async function saveAiConfig() {
 
 async function loadEmailSettings() {
     try {
-        const resp = await fetch(apiEndpoints.getAiConfig)
-        const data = await resp.json()
-        if (!resp.ok || !data.success) throw new Error(data.message || 'Error')
-        const cfg = data.config || {}
+        const cfg = await loadConfig([
+            'welcome_email_subject',
+            'welcome_email_body',
+            'questionnaire_email_subject',
+            'questionnaire_email_body',
+            'analysis_email_subject',
+            'analysis_email_body'
+        ])
         if (welcomeEmailSubjectInput) welcomeEmailSubjectInput.value = cfg.welcome_email_subject || ''
         if (welcomeEmailBodyInput) welcomeEmailBodyInput.value = cfg.welcome_email_body || ''
         if (questionnaireEmailSubjectInput) questionnaireEmailSubjectInput.value = cfg.questionnaire_email_subject || ''
@@ -1289,27 +1274,16 @@ async function loadEmailSettings() {
 
 async function saveEmailSettings() {
     if (!emailSettingsForm) return
-    const payload = {
-        updates: {
+    const updates = {
             welcome_email_subject: welcomeEmailSubjectInput ? welcomeEmailSubjectInput.value.trim() : '',
             welcome_email_body: welcomeEmailBodyInput ? welcomeEmailBodyInput.value.trim() : '',
             questionnaire_email_subject: questionnaireEmailSubjectInput ? questionnaireEmailSubjectInput.value.trim() : '',
             questionnaire_email_body: questionnaireEmailBodyInput ? questionnaireEmailBodyInput.value.trim() : '',
             analysis_email_subject: analysisEmailSubjectInput ? analysisEmailSubjectInput.value.trim() : '',
             analysis_email_body: analysisEmailBodyInput ? analysisEmailBodyInput.value.trim() : ''
-        }
     }
     try {
-        const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || ''
-        const headers = { 'Content-Type': 'application/json' }
-        if (adminToken) headers.Authorization = `Bearer ${adminToken}`
-        const resp = await fetch(apiEndpoints.setAiConfig, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(payload)
-        })
-        const data = await resp.json()
-        if (!resp.ok || !data.success) throw new Error(data.message || 'Error')
+        await saveConfig(updates)
         alert('Имейл настройките са записани.')
     } catch (err) {
         console.error('Error saving email settings:', err)
