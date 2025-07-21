@@ -176,7 +176,7 @@
 
         <section class="reveal">
             <div class="section-header">
-                <h2 class="section-title">Риск-Профил: Моментна Снимка</h2>
+                <h2 class="section-title">Основни Пречки и Рискове за Здравето</h2>
                 <p class="section-subtitle">Всяка област е оценена по скала от 0 до 100. По-високата стойност и червеният цвят означават по-голям риск.</p>
             </div>
             <div id="dashboard-grid"></div>
@@ -259,11 +259,6 @@
                 </div>
                 <div class="key-takeaway">
                     <h3>Ключов Извод</h3>
-                    ${item.summaryQuote && item.summaryQuote.text ? `
-                    <div class="summary-quote">
-                        <p class="quote-text">"${item.summaryQuote.text}"</p>
-                        <p class="quote-author">— ${item.summaryQuote.author || 'Вашите думи'}</p>
-                    </div>` : ''}
                     <div class="conclusion-box">
                         <p>${item.conclusion}</p>
                     </div>
