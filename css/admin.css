@@ -259,7 +259,7 @@ details[open] summary::after {
 #profileCardNav {
   display: flex;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 0;
   margin-bottom: 10px;
   flex-wrap: wrap;
 }
@@ -267,7 +267,11 @@ details[open] summary::after {
   display: none;
 }
 .profile-nav-container {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  background: var(--surface-background);
+  padding-block: 4px;
 }
 #profileCardNav a {
   padding: 4px 8px;
@@ -303,6 +307,8 @@ details[open] summary::after {
     border: 1px solid var(--border-color-soft, #ccc);
     padding: 8px;
     border-radius: var(--radius-md, 4px);
+    max-height: 60vh;
+    overflow-y: auto;
     display: none;
     flex-direction: column;
     align-items: flex-start;
@@ -310,5 +316,10 @@ details[open] summary::after {
   }
   #profileCardNav.open {
     display: flex;
+  }
+  .profile-nav-container {
+    position: sticky;
+    top: 0;
+    padding-block: 4px;
   }
 }

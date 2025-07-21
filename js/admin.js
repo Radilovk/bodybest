@@ -126,6 +126,7 @@ let currentUserId = null;
 function setCurrentUserId(val) {
     currentUserId = val;
 }
+let profileNavObserver = null;
 let currentPlanData = null;
 let currentDashboardData = null;
 let allClients = [];
@@ -667,8 +668,11 @@ function setupProfileCardNav() {
     const nav = document.getElementById('profileCardNav');
     const toggleBtn = document.getElementById('profileCardNavToggle');
     if (!nav) return;
-    const links = nav.querySelectorAll('a[data-target]');
+    const links = Array.from(nav.querySelectorAll('a[data-target]'));
     if (links.length === 0) return;
+    const sections = links
+        .map(l => document.getElementById(l.getAttribute('data-target')))
+        .filter(Boolean);
     const activate = (link) => {
         links.forEach(l => l.classList.toggle('active', l === link));
     };
@@ -692,6 +696,17 @@ function setupProfileCardNav() {
             nav.classList.toggle('open');
         });
     }
+    if (profileNavObserver) {
+        profileNavObserver.disconnect();
+    }
+    profileNavObserver = new IntersectionObserver((entries) => {
+        const visible = entries.find(e => e.isIntersecting);
+        if (visible) {
+            const link = links.find(l => l.getAttribute('data-target') === visible.target.id);
+            if (link) activate(link);
+        }
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    sections.forEach(sec => profileNavObserver.observe(sec));
 }
 
 function resetTabs() {
