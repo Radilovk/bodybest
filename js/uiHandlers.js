@@ -46,9 +46,23 @@ export function handleMenuKeydown(event) {
     if (event.key === 'Escape' && selectors.mainMenu?.classList.contains('menu-open')) closeMenu();
 }
 
+let systemThemeMediaQuery;
+
+function handleSystemThemeChange(e) {
+    const pref = localStorage.getItem('theme') || 'system';
+    if (pref === 'system') {
+        applyTheme(e.matches ? 'dark' : 'light');
+        updateThemeButtonText();
+    }
+}
+
 export function initializeTheme() {
     const savedTheme = localStorage.getItem('theme') || 'system';
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    systemThemeMediaQuery = systemThemeMediaQuery || window.matchMedia('(prefers-color-scheme: dark)');
+    const systemTheme = systemThemeMediaQuery.matches ? 'dark' : 'light';
+    if (!systemThemeMediaQuery.onchange) {
+        systemThemeMediaQuery.addEventListener('change', handleSystemThemeChange);
+    }
     applyTheme(savedTheme === 'system' ? systemTheme : savedTheme);
     updateThemeButtonText();
 }
