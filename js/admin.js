@@ -678,6 +678,7 @@ function setupProfileCardNav() {
     };
     const closeMenu = () => {
         nav.classList.remove('open');
+        if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
     };
     links.forEach(l => {
         l.addEventListener('click', (e) => {
@@ -692,8 +693,15 @@ function setupProfileCardNav() {
         });
     });
     if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            nav.classList.toggle('open');
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = nav.classList.toggle('open');
+            toggleBtn.setAttribute('aria-expanded', String(isOpen));
+        });
+        document.addEventListener('click', (e) => {
+            if (nav.classList.contains('open') && !nav.contains(e.target) && e.target !== toggleBtn) {
+                closeMenu();
+            }
         });
     }
     if (profileNavObserver) {
