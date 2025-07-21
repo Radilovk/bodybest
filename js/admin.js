@@ -99,6 +99,7 @@ const testEmailForm = document.getElementById('testEmailForm');
 const testEmailToInput = document.getElementById('testEmailTo');
 const testEmailSubjectInput = document.getElementById('testEmailSubject');
 const testEmailBodyInput = document.getElementById('testEmailBody');
+const testEmailSection = document.getElementById('testEmailSection');
 const testImageForm = document.getElementById('testImageForm');
 const testImageFileInput = document.getElementById('testImageFile');
 const testImagePromptInput = document.getElementById('testImagePrompt');
@@ -1310,11 +1311,24 @@ async function saveEmailSettings() {
     }
 }
 
+let testEmailTemplateLoaded = false
+
+async function loadTestEmailTemplate() {
+    if (testEmailTemplateLoaded || !testEmailBodyInput) return
+    try {
+        const resp = await fetch('data/welcomeEmailTemplate.html')
+        testEmailBodyInput.value = await resp.text()
+        testEmailTemplateLoaded = true
+    } catch (err) {
+        console.error('Error loading test email template:', err)
+    }
+}
+
 async function sendTestEmail() {
     if (!testEmailForm) return;
     const recipient = testEmailToInput ? testEmailToInput.value.trim() : '';
     const subject = testEmailSubjectInput ? testEmailSubjectInput.value.trim() : '';
-    const body = testEmailBodyInput ? testEmailBodyInput.value.trim() : '';
+    const body = testEmailBodyInput ? testEmailBodyInput.value : '';
     if (!recipient || !subject || !body) {
         alert('Моля попълнете всички полета.');
         return;
@@ -1630,6 +1644,7 @@ document.addEventListener('DOMContentLoaded', () => {
         await loadAiConfig();
         await loadAiPresets();
         if (emailSettingsForm) await loadEmailSettings();
+        if (testEmailSection?.open) await loadTestEmailTemplate();
         setInterval(checkForNotifications, 60000);
         setInterval(loadNotifications, 60000);
     })();
@@ -1657,6 +1672,12 @@ if (emailSettingsForm) {
     emailSettingsForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         await saveEmailSettings();
+    });
+}
+
+if (testEmailSection) {
+    testEmailSection.addEventListener('toggle', () => {
+        if (testEmailSection.open) loadTestEmailTemplate();
     });
 }
 
@@ -1693,6 +1714,7 @@ export {
     unreadClients,
     sendTestEmail,
     confirmAndSendTestEmail,
+    loadTestEmailTemplate,
     sendTestImage,
     sendTestQuestionnaire,
     sendAdminQuery
