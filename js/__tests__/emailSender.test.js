@@ -20,3 +20,21 @@ test('uses MAILER_ENDPOINT_URL when provided', async () => {
   }));
   fetch.mockRestore();
 });
+
+test('falls back to process.env variables', async () => {
+  process.env.MAILER_ENDPOINT_URL = 'https://env.mail/send';
+  global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  await sendEmailUniversal('e@m.bg', 'S', 'B');
+  expect(fetch).toHaveBeenCalledWith('https://env.mail/send', expect.any(Object));
+  fetch.mockRestore();
+  delete process.env.MAILER_ENDPOINT_URL;
+});
+
+test('uses MAIL_PHP_URL when endpoint missing', async () => {
+  process.env.MAIL_PHP_URL = 'https://my.mail/php';
+  global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  await sendEmailUniversal('x@y.z', 'Sub', 'Body');
+  expect(fetch).toHaveBeenCalledWith('https://my.mail/php', expect.any(Object));
+  fetch.mockRestore();
+  delete process.env.MAIL_PHP_URL;
+});
