@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вашият Анализ</title>
+    <title>Вашият Анализ | MyBody.Best</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
             --bg-color: #f4f5f7;
             --card-bg-color: #ffffff;
             --text-color: #3d3d3d;
-            --heading-color: #1a202c;
+            --heading-color: #1a202c; /* Deepest Blue/Black */
             --primary-color: #2563eb; /* Strong Blue */
             --accent-color: #4f46e5; /* Indigo */
             --border-color: #e2e8f0;
@@ -30,15 +30,7 @@
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* --- Global Styles --- */
         body {
@@ -73,27 +65,11 @@
         }
         .main-goal strong { color: #a7f3d0; }
 
-        /* --- Section Headers --- */
-        .section-header {
-            text-align: center;
-            margin-bottom: 50px;
-        }
-        .section-title {
-            font-size: 2.2em;
-            color: var(--heading-color);
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-        .section-subtitle {
-            font-size: 1.1em;
-            color: #718096;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        main > section {
-            padding: 60px 0;
-        }
-
+        /* --- Section Shared --- */
+        .section-header { text-align: center; margin-bottom: 50px; }
+        .section-title { font-size: 2.2em; color: var(--heading-color); margin-bottom: 10px; font-weight: 700; }
+        .section-subtitle { font-size: 1.1em; color: #718096; max-width: 600px; margin: 0 auto; }
+        main > section { padding: 60px 0; }
         .card {
             background: var(--card-bg-color);
             border-radius: 16px;
@@ -101,34 +77,16 @@
             box-shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -1px var(--shadow-color);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -2px var(--shadow-color);
-        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -2px var(--shadow-color); }
 
         /* 1. Obstacles Section --- */
-        #obstacles-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 25px;
-            margin-top: -100px;
-            position: relative;
-            z-index: 10;
-        }
-        .obstacle-card {
-            text-align: center;
-            padding: 35px 20px;
-        }
+        #obstacles-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px; margin-top: -100px; position: relative; z-index: 10; }
+        .obstacle-card { text-align: center; padding: 35px 20px; }
         .obstacle-card .icon { font-size: 3em; color: var(--primary-color); margin-bottom: 15px; }
         .obstacle-card h3 { font-size: 1.1em; font-weight: 600; color: var(--heading-color); margin: 0; }
 
         /* 2. Risk Profile --- DONUT CHARTS --- */
-        #dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 40px;
-            justify-items: center;
-        }
+        #dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 40px; justify-items: center; }
         .dashboard-item { text-align: center; opacity: 0; animation: fadeInUp 0.5s ease-out forwards; }
         .donut-chart-container { position: relative; width: 140px; height: 140px; margin-bottom: 15px; }
         .donut-chart-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
@@ -156,54 +114,40 @@
         .summary-quote .quote-text { font-style: italic; font-size: 1.1em; margin: 0 0 5px 0; color: var(--heading-color); }
         .summary-quote .quote-author { font-size: 0.9em; text-align: left; color: #718096; }
         .conclusion-box p { margin: 0; font-weight: 600; line-height: 1.6; color: var(--heading-color); }
-        
-        /* 4. CTA Section --- REWORKED FOR TRUST AND HOPE --- */
-        .cta-section {
-            background: linear-gradient(to top, var(--bg-color) 0%, #ffffff 100%);
-            padding: 80px 0;
-            margin-top: 50px;
-        }
+
+        /* 4. CTA Section --- ENHANCED --- */
+        .cta-section { background-color: var(--heading-color); color: white; text-align: center; padding: 100px 20px; margin-top: 50px; }
+        .cta-section .section-title { color: white; }
+        .cta-section .section-subtitle { color: rgba(255, 255, 255, 0.7); }
         .benefits-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 30px;
-            margin-top: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+            margin-bottom: 60px;
         }
-        .benefit-card {
-            text-align: center;
-            background-color: var(--card-bg-color);
-            padding: 35px 25px;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
+        .benefit-item { text-align: center; }
+        .benefit-icon {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .benefit-card .icon {
-            font-size: 2.5em;
-            color: var(--primary-color);
-            margin-bottom: 20px;
+        .benefit-icon i { font-size: 2em; color: var(--color-low); }
+        .benefit-item h3 { font-size: 1.2em; font-weight: 700; margin-bottom: 10px; color: white; }
+        .benefit-item p { font-size: 0.95em; color: rgba(255, 255, 255, 0.7); line-height: 1.6; margin: 0; }
+        
+        .cta-final-pitch {
+            max-width: 600px;
+            margin: 0 auto 40px auto;
+            font-size: 1.1em;
+            color: rgba(255, 255, 255, 0.9);
         }
-        .benefit-card h3 {
-            font-size: 1.2em;
-            font-weight: 700;
-            color: var(--heading-color);
-            margin: 0 0 10px 0;
-        }
-        .benefit-card p {
-            font-size: 0.95em;
-            line-height: 1.6;
-            color: #4a5568;
-            margin: 0;
-        }
-        .final-cta-summary {
-            text-align: center;
-            margin: 60px auto 40px;
-            font-size: 1.3em;
-            font-weight: 600;
-            color: var(--heading-color);
-            max-width: 500px;
-            line-height: 1.5;
-        }
-        .final-cta-summary strong { color: var(--primary-color); }
-        .cta-button-container { text-align: center; }
         .cta-button {
             background-color: var(--primary-color);
             color: white;
@@ -214,15 +158,9 @@
             border-radius: 50px;
             transition: all 0.3s ease;
             display: inline-block;
-            animation: pulse 2s infinite ease-in-out;
         }
-        .cta-button:hover {
-            background-color: var(--accent-color);
-            transform: scale(1.05);
-            animation: none;
-        }
+        .cta-button:hover { background-color: var(--accent-color); transform: scale(1.05); }
 
-        /* --- Footer --- */
         footer { text-align: center; padding: 40px 20px; font-size: 0.9em; color: #718096; }
     </style>
 </head>
@@ -234,10 +172,8 @@
     </header>
 
     <main class="container">
-        <!-- Секция 1: Ключови Бариери -->
         <section id="obstacles-container" class="reveal"></section>
 
-        <!-- Секция 2: Риск-Профил -->
         <section class="reveal">
             <div class="section-header">
                 <h2 class="section-title">Риск-Профил: Моментна Снимка</h2>
@@ -246,7 +182,6 @@
             <div id="dashboard-grid"></div>
         </section>
 
-        <!-- Секция 3: Дълбок Анализ -->
         <section class="reveal">
              <div class="section-header">
                 <h2 class="section-title">Анализ: Причина и Следствие</h2>
@@ -256,39 +191,34 @@
         </section>
     </main>
     
-    <!-- Секция 4: Пътят към Резултата (НОВА, ПСИХОЛОГИЧЕСКИ ЗАРЕДЕНА) -->
+    <!-- Секция 4: Време е за Промяна (Нова Версия) -->
     <section class="cta-section">
         <div class="container reveal">
-            <div class="section-header">
-                <h2 class="section-title">От Анализ към Резултат</h2>
-                <p class="section-subtitle">Разбирането на проблема е първата стъпка. Ето как ще изградим Вашия успех – заедно, с ясна стратегия и подкрепа.</p>
-            </div>
+            <h2 class="section-title">Защо MyBody.Best?</h2>
+            <p class="section-subtitle">Вие вече знаете "какво" е проблемът. Ние ви даваме "как" да го решите – с ясна система, наука и персонална грижа.</p>
+            
             <div class="benefits-grid">
-                <!-- Benefit 1: Personal Plan -->
-                <div class="benefit-card">
-                    <div class="icon"><i class="fas fa-clipboard-list"></i></div>
-                    <h3>Персонален План, не просто диета</h3>
-                    <p>Забравяме за универсалните решения. Създаваме стратегия, съобразена с Вашия ритъм, цели и предпочитания.</p>
+                <div class="benefit-item">
+                    <div class="benefit-icon"><i class="fas fa-drafting-compass"></i></div>
+                    <h3>Персонален Подход</h3>
+                    <p>Планове, изработени специално за Вашето тяло, цели и ежедневие. Без универсални решения.</p>
                 </div>
-                <!-- Benefit 2: Expert Support -->
-                <div class="benefit-card">
-                    <div class="icon"><i class="fas fa-hands-helping"></i></div>
-                    <h3>Експертна Подкрепа, не осъждане</h3>
-                    <p>Вие не сте сами. Получавате достъп до експерт, който да Ви напътства, мотивира и държи отговорни.</p>
+                <div class="benefit-item">
+                    <div class="benefit-icon"><i class="fas fa-chart-line"></i></div>
+                    <h3>Постоянен Прогрес и Подкрепа</h3>
+                    <p>Лесно проследяване на резултатите и достъп до експертни съвети, които да Ви държат в правилния път.</p>
                 </div>
-                <!-- Benefit 3: Sustainable Habits -->
-                <div class="benefit-card">
-                    <div class="icon"><i class="fas fa-seedling"></i></div>
-                    <h3>Устойчиви Навици, не временни ограничения</h3>
-                    <p>Целта ни не е да отслабнете, а да промените връзката си с храната завинаги. Без глад и лишения.</p>
+                <div class="benefit-item">
+                    <div class="benefit-icon"><i class="fas fa-atom"></i></div>
+                    <h3>Наука и Технология</h3>
+                    <p>Подход, съчетаващ лекари, специалисти и мощни AI алгоритми за максимална ефективност и сигурност.</p>
                 </div>
             </div>
-            <p class="final-cta-summary">Информацията е силата. <strong>Планът е свободата.</strong></p>
-            <div class="cta-button-container">
-                 <a id="cta-button" href="#" class="cta-button">
-                    <i class="fas fa-rocket"></i> <span id="cta-button-text"></span>
-                </a>
-            </div>
+
+            <p class="cta-final-pitch">Информацията е сила, но само когато се действа по нея.</p>
+            <a id="cta-button" href="#" class="cta-button">
+                <i class="fas fa-rocket"></i> Започнете Вашата Трансформация
+            </a>
         </div>
     </section>
 
@@ -298,7 +228,6 @@
     document.addEventListener('DOMContentLoaded', function() {
         const analysisData = {/*---JSON_DATA_PLACEHOLDER---*/};
         
-        // ... (всички generate... HTML функции остават същите) ...
         const generateObstaclesHTML = (obstacles) => obstacles.map(o => `
             <div class="card obstacle-card">
                 <div class="icon"><i class="${o.icon}"></i></div>
@@ -341,7 +270,6 @@
                 </div>
             </div>`).join('');
 
-
         const renderAnalysis = (data) => {
             data.healthDashboard.sort((a, b) => b.riskValue - a.riskValue);
             
@@ -350,12 +278,8 @@
             document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
             document.getElementById('dashboard-grid').innerHTML = generateDashboardHTML(data.healthDashboard);
             document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
-            
-            // CTA Button is now the only dynamic part in the CTA section
-            document.getElementById('cta-button-text').textContent = data.callToAction.buttonText || 'Започни своята трансформация';
-            document.getElementById('cta-button').href = data.callToAction.buttonLink;
-
-            document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} Your Wellness Company. Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
+            document.getElementById('cta-button').href = data.callToAction.buttonLink; // Link is set, text is static in HTML
+            document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} MyBody.Best. Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
             
             setupAnimations();
         };
@@ -386,7 +310,7 @@
                 });
             }, { threshold: 0.1 });
 
-            document.querySelectorAll('.reveal').forEach(el => {
+            document.querySelectorAll('.reveal, #obstacles-container, #dashboard-grid').forEach(el => {
                 el.style.opacity = 0;
                 el.style.transform = 'translateY(20px)';
                 el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
@@ -394,7 +318,6 @@
             });
         };
         
-        // --- Data Loading Logic ---
         const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         const workerBaseUrl = isLocalDev ? '' : 'https://openapichatbot.radilov-k.workers.dev';
         const hasRequiredData = analysisData && analysisData.client && Object.keys(analysisData).length > 2;
