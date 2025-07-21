@@ -3,6 +3,21 @@ import { apiEndpoints } from './config.js';
 let macroChart;
 let weightChart;
 
+
+export function calcMacroGrams(calories, percent, calsPerGram) {
+  const cal = Number(calories);
+  const pct = Number(percent);
+  if (!cal || !pct) return 0;
+  return Math.round((cal * pct) / 100 / calsPerGram);
+}
+
+export function calcMacroPercent(calories, grams, calsPerGram) {
+  const cal = Number(calories);
+  const g = Number(grams);
+  if (!cal || !g) return 0;
+  return Math.round((g * calsPerGram) / cal * 100);
+}
+
 export function addEditableMealItem(container, item = { name: '', grams: '' }) {
   const itemWrapper = document.createElement('div');
   itemWrapper.className = 'item-entry';
@@ -375,6 +390,40 @@ export async function initEditClient(userId) {
     });
   });
 
+
+  function setupMacroAutoCalc() {
+    const calInput = document.getElementById("caloriesMacros-edit-calories");
+    const pPct = document.getElementById("caloriesMacros-edit-protein-percent");
+    const pGram = document.getElementById("caloriesMacros-edit-protein-grams");
+    const cPct = document.getElementById("caloriesMacros-edit-carbs-percent");
+    const cGram = document.getElementById("caloriesMacros-edit-carbs-grams");
+    const fPct = document.getElementById("caloriesMacros-edit-fat-percent");
+    const fGram = document.getElementById("caloriesMacros-edit-fat-grams");
+  if (!calInput || !pPct || !pGram || !cPct || !cGram || !fPct || !fGram) return;
+
+    function updateGrams() {
+      const cal = parseInt(calInput.value);
+      pGram.value = calcMacroGrams(cal, pPct.value, 4);
+      cGram.value = calcMacroGrams(cal, cPct.value, 4);
+      fGram.value = calcMacroGrams(cal, fPct.value, 9);
+    }
+
+    function updatePercents() {
+      const cal = parseInt(calInput.value);
+      if (!cal) return;
+      pPct.value = calcMacroPercent(cal, pGram.value, 4);
+      cPct.value = calcMacroPercent(cal, cGram.value, 4);
+      fPct.value = calcMacroPercent(cal, fGram.value, 9);
+    }
+
+    [calInput, pPct, cPct, fPct].forEach(el => {
+      el.addEventListener('input', updateGrams);
+    });
+    [pGram, cGram, fGram].forEach(el => {
+      el.addEventListener('input', updatePercents);
+    });
+  }
+
   function updateGlobalButtonsVisibility() {
     const saveBtn = document.getElementById('global-save-btn');
     const cancelBtn = document.getElementById('global-cancel-btn');
@@ -611,6 +660,7 @@ export async function initEditClient(userId) {
   });
 
   await loadData();
+  setupMacroAutoCalc();
   populateUI(planData);
   initCharts(planData);
   updateGlobalButtonsVisibility();
@@ -652,8 +702,7 @@ export function initCharts(data) {
 }
 
 // Експортиране на вътрешни функции за тестване
-export const __testExports = { initCharts, addEditableMealItem };
-
+export const __testExports = { initCharts, addEditableMealItem, calcMacroGrams, calcMacroPercent };
 // Автоматична инициализация, когато файлът се зареди директно в браузъра
 if (typeof window !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
