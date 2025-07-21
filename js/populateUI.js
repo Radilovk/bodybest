@@ -31,43 +31,57 @@ function populateUserInfo(userName) {
 }
 
 function populateDashboardMainIndexes(currentAnalytics) {
+    const hide = (el) => { if (el) el.classList.add('hidden'); };
+    const show = (el) => { if (el) el.classList.remove('hidden'); };
+
     if (!currentAnalytics) {
-        const defaultText = "Няма данни";
-        if(selectors.goalProgressText) selectors.goalProgressText.textContent = defaultText;
-        if(selectors.engagementProgressText) selectors.engagementProgressText.textContent = defaultText;
-        if(selectors.healthProgressText) selectors.healthProgressText.textContent = defaultText;
-        if(selectors.goalProgressMask) selectors.goalProgressMask.style.width = '100%';
-        if(selectors.engagementProgressMask) selectors.engagementProgressMask.style.width = '100%';
-        if(selectors.healthProgressMask) selectors.healthProgressMask.style.width = '100%';
-        if(selectors.goalProgressBar) selectors.goalProgressBar.setAttribute('aria-valuenow', '0');
-        if(selectors.engagementProgressBar) selectors.engagementProgressBar.setAttribute('aria-valuenow', '0');
-        if(selectors.healthProgressBar) selectors.healthProgressBar.setAttribute('aria-valuenow', '0');
+        hide(selectors.goalCard);
+        hide(selectors.engagementCard);
+        hide(selectors.healthCard);
         return;
     }
-    const goalProgressPercent = safeGet(currentAnalytics, 'goalProgress', 0);
-    if (selectors.goalProgressMask) selectors.goalProgressMask.style.width = `${100 - Math.max(0, Math.min(100, goalProgressPercent))}%`;
-    if (selectors.goalProgressBar) selectors.goalProgressBar.setAttribute('aria-valuenow', `${Math.round(goalProgressPercent)}`);
-    if (selectors.goalProgressText) {
-        const goal = safeGet(fullDashboardData.initialAnswers, 'goal', '').toLowerCase();
-        const startWeight = safeParseFloat(safeGet(fullDashboardData.initialData, 'weight'));
-        const lossKgTarget = safeParseFloat(safeGet(fullDashboardData.initialAnswers, 'lossKg'));
-        let goalDesc = `${Math.round(goalProgressPercent)}%`;
-        if (goal === 'отслабване' && !isNaN(startWeight) && !isNaN(lossKgTarget) && lossKgTarget > 0) {
-             const targetWeight = startWeight - lossKgTarget;
-             goalDesc = `Цел: ${targetWeight.toFixed(1)} кг | ${Math.round(goalProgressPercent)}%`;
-        } else if (goal) {
-            goalDesc = `${capitalizeFirstLetter(goal)} | ${Math.round(goalProgressPercent)}%`;
+
+    const goalProgressPercent = safeParseFloat(safeGet(currentAnalytics, 'goalProgress'), null);
+    if (goalProgressPercent === null || goalProgressPercent <= 0) {
+        hide(selectors.goalCard);
+    } else {
+        show(selectors.goalCard);
+        if (selectors.goalProgressMask) selectors.goalProgressMask.style.width = `${100 - Math.max(0, Math.min(100, goalProgressPercent))}%`;
+        if (selectors.goalProgressBar) selectors.goalProgressBar.setAttribute('aria-valuenow', `${Math.round(goalProgressPercent)}`);
+        if (selectors.goalProgressText) {
+            const goal = safeGet(fullDashboardData.initialAnswers, 'goal', '').toLowerCase();
+            const startWeight = safeParseFloat(safeGet(fullDashboardData.initialData, 'weight'));
+            const lossKgTarget = safeParseFloat(safeGet(fullDashboardData.initialAnswers, 'lossKg'));
+            let goalDesc = `${Math.round(goalProgressPercent)}%`;
+            if (goal === 'отслабване' && !isNaN(startWeight) && !isNaN(lossKgTarget) && lossKgTarget > 0) {
+                 const targetWeight = startWeight - lossKgTarget;
+                 goalDesc = `Цел: ${targetWeight.toFixed(1)} кг | ${Math.round(goalProgressPercent)}%`;
+            } else if (goal) {
+                goalDesc = `${capitalizeFirstLetter(goal)} | ${Math.round(goalProgressPercent)}%`;
+            }
+            selectors.goalProgressText.textContent = goalDesc;
         }
-        selectors.goalProgressText.textContent = goalDesc;
     }
-    const engagementScore = safeGet(currentAnalytics, 'engagementScore', 0);
-    if (selectors.engagementProgressMask) selectors.engagementProgressMask.style.width = `${100 - Math.max(0, Math.min(100, engagementScore))}%`;
-    if (selectors.engagementProgressBar) selectors.engagementProgressBar.setAttribute('aria-valuenow', `${Math.round(engagementScore)}`);
-    if (selectors.engagementProgressText) selectors.engagementProgressText.textContent = `${Math.round(engagementScore)}%`;
-    const healthScore = safeGet(currentAnalytics, 'overallHealthScore', 0);
-    if (selectors.healthProgressMask) selectors.healthProgressMask.style.width = `${100 - Math.max(0, Math.min(100, healthScore))}%`;
-    if (selectors.healthProgressBar) selectors.healthProgressBar.setAttribute('aria-valuenow', `${Math.round(healthScore)}`);
-    if (selectors.healthProgressText) selectors.healthProgressText.textContent = `${Math.round(healthScore)}%`;
+
+    const engagementScore = safeParseFloat(safeGet(currentAnalytics, 'engagementScore'), null);
+    if (engagementScore === null || engagementScore <= 0) {
+        hide(selectors.engagementCard);
+    } else {
+        show(selectors.engagementCard);
+        if (selectors.engagementProgressMask) selectors.engagementProgressMask.style.width = `${100 - Math.max(0, Math.min(100, engagementScore))}%`;
+        if (selectors.engagementProgressBar) selectors.engagementProgressBar.setAttribute('aria-valuenow', `${Math.round(engagementScore)}`);
+        if (selectors.engagementProgressText) selectors.engagementProgressText.textContent = `${Math.round(engagementScore)}%`;
+    }
+
+    const healthScore = safeParseFloat(safeGet(currentAnalytics, 'overallHealthScore'), null);
+    if (healthScore === null || healthScore <= 0) {
+        hide(selectors.healthCard);
+    } else {
+        show(selectors.healthCard);
+        if (selectors.healthProgressMask) selectors.healthProgressMask.style.width = `${100 - Math.max(0, Math.min(100, healthScore))}%`;
+        if (selectors.healthProgressBar) selectors.healthProgressBar.setAttribute('aria-valuenow', `${Math.round(healthScore)}`);
+        if (selectors.healthProgressText) selectors.healthProgressText.textContent = `${Math.round(healthScore)}%`;
+    }
 }
 
 function populateDashboardDetailedAnalytics(analyticsData) {
@@ -674,18 +688,11 @@ export function handleAccordionToggle(event) {
 }
 
 function populateProgressHistory(dailyLogs, initialData) {
-    if (!selectors.progressHistoryCard) return;
-    selectors.progressHistoryCard.innerHTML = '';
-
-    const canvas = document.createElement('canvas');
-    canvas.id = 'progressChart';
-    const chartContainer = document.createElement('div');
-    chartContainer.className = 'chart-container';
-    chartContainer.appendChild(canvas);
-    selectors.progressHistoryCard.appendChild(chartContainer);
+    const card = selectors.progressHistoryCard;
+    if (!card) return;
 
     if (typeof Chart === 'undefined') {
-        selectors.progressHistoryCard.innerHTML = '<p class="placeholder">Библиотеката за графики (Chart.js) не е заредена. Историята на прогреса не може да бъде показана.</p>';
+        card.classList.add('hidden');
         console.warn("Chart.js is not loaded.");
         return;
     }
@@ -695,7 +702,6 @@ function populateProgressHistory(dailyLogs, initialData) {
 
     const initialWeight = safeParseFloat(initialData?.weight);
     if (initialWeight !== null) {
-        // Accessing fullDashboardData which is imported from app.js
         const submissionDate = safeGet(fullDashboardData.initialAnswers, 'submissionDate', new Date().toISOString());
         labels.push(new Date(submissionDate).toLocaleDateString('bg-BG', { day: 'numeric', month: 'short' }));
         weightData.push(initialWeight);
@@ -712,10 +718,20 @@ function populateProgressHistory(dailyLogs, initialData) {
         }
     });
 
-    if (labels.length < 2 && weightData.length < 2) {
-         selectors.progressHistoryCard.innerHTML = '<p class="placeholder">Няма достатъчно данни за показване на история на прогреса в теглото.</p>';
-         return;
+    if (labels.length < 2 || weightData.length < 2) {
+        card.classList.add('hidden');
+        return;
     }
+
+    card.classList.remove('hidden');
+    card.innerHTML = '';
+
+    const canvas = document.createElement('canvas');
+    canvas.id = 'progressChart';
+    const chartContainer = document.createElement('div');
+    chartContainer.className = 'chart-container';
+    chartContainer.appendChild(canvas);
+    card.appendChild(chartContainer);
 
     const ctx = canvas.getContext('2d');
     new Chart(ctx, {
