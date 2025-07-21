@@ -259,7 +259,7 @@ details[open] summary::after {
 #profileCardNav {
   display: flex;
   gap: 8px;
-  margin-top: 0;
+  margin-top: 10px;
   margin-bottom: 10px;
   flex-wrap: wrap;
 }
@@ -267,11 +267,7 @@ details[open] summary::after {
   display: none;
 }
 .profile-nav-container {
-  position: sticky;
-  top: 0;
-  z-index: 900;
-  background: var(--surface-background);
-  padding-block: 4px;
+  position: relative;
 }
 #profileCardNav a {
   padding: 4px 8px;
@@ -314,9 +310,5 @@ details[open] summary::after {
   }
   #profileCardNav.open {
     display: flex;
-  }
-  .profile-nav-container {
-    position: static;
-    padding-block: 0;
   }
 }
