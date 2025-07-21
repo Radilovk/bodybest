@@ -4,6 +4,9 @@ A simple static web application for tracking nutrition and workouts.
 
 ## Development Setup
 
+For a quick overview in Bulgarian, see [docs/DEV_GUIDE_BG.md](docs/DEV_GUIDE_BG.md).
+
+
 1. Install [Node.js](https://nodejs.org/) (version 18 or later).
 2. Install dependencies (Jest is included as a dev dependency):
 
