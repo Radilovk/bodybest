@@ -93,6 +93,8 @@ const testAnalysisBtn = document.getElementById('testAnalysisModel');
 const emailSettingsForm = document.getElementById('emailSettingsForm');
 const welcomeEmailSubjectInput = document.getElementById('welcomeEmailSubject');
 const welcomeEmailBodyInput = document.getElementById('welcomeEmailBody');
+const questionnaireEmailSubjectInput = document.getElementById('questionnaireEmailSubject');
+const questionnaireEmailBodyInput = document.getElementById('questionnaireEmailBody');
 const analysisEmailSubjectInput = document.getElementById('analysisEmailSubject');
 const analysisEmailBodyInput = document.getElementById('analysisEmailBody');
 const testEmailForm = document.getElementById('testEmailForm');
@@ -1276,6 +1278,8 @@ async function loadEmailSettings() {
         const cfg = data.config || {}
         if (welcomeEmailSubjectInput) welcomeEmailSubjectInput.value = cfg.welcome_email_subject || ''
         if (welcomeEmailBodyInput) welcomeEmailBodyInput.value = cfg.welcome_email_body || ''
+        if (questionnaireEmailSubjectInput) questionnaireEmailSubjectInput.value = cfg.questionnaire_email_subject || ''
+        if (questionnaireEmailBodyInput) questionnaireEmailBodyInput.value = cfg.questionnaire_email_body || ''
         if (analysisEmailSubjectInput) analysisEmailSubjectInput.value = cfg.analysis_email_subject || ''
         if (analysisEmailBodyInput) analysisEmailBodyInput.value = cfg.analysis_email_body || ''
     } catch (err) {
@@ -1289,6 +1293,8 @@ async function saveEmailSettings() {
         updates: {
             welcome_email_subject: welcomeEmailSubjectInput ? welcomeEmailSubjectInput.value.trim() : '',
             welcome_email_body: welcomeEmailBodyInput ? welcomeEmailBodyInput.value.trim() : '',
+            questionnaire_email_subject: questionnaireEmailSubjectInput ? questionnaireEmailSubjectInput.value.trim() : '',
+            questionnaire_email_body: questionnaireEmailBodyInput ? questionnaireEmailBodyInput.value.trim() : '',
             analysis_email_subject: analysisEmailSubjectInput ? analysisEmailSubjectInput.value.trim() : '',
             analysis_email_body: analysisEmailBodyInput ? analysisEmailBodyInput.value.trim() : ''
         }

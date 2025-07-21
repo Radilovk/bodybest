@@ -352,6 +352,8 @@ node scripts/view-usage-logs.js sendTestEmail 5
 | `image_temperature` | Температура за анализ на изображение |
 | `welcome_email_subject` | Тема на приветствения имейл |
 | `welcome_email_body` | HTML съдържание за приветствения имейл |
+| `questionnaire_email_subject` | Тема на имейла след попълнен въпросник |
+| `questionnaire_email_body` | HTML съдържание за потвърждението на въпросника |
 | `question_definitions` | JSON с дефиниции на всички въпроси |
 | `recipe_data` | Данни за примерни рецепти |
 

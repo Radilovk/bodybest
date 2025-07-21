@@ -264,6 +264,8 @@ const AI_CONFIG_KEYS = [
     'image_temperature',
     'welcome_email_subject',
     'welcome_email_body',
+    'questionnaire_email_subject',
+    'questionnaire_email_body',
     'analysis_email_subject',
     'analysis_email_body'
 ];
