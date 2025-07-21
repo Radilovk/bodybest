@@ -663,6 +663,37 @@ function setupTabs() {
     activate(buttons[0]);
 }
 
+function setupProfileCardNav() {
+    const nav = document.getElementById('profileCardNav');
+    const toggleBtn = document.getElementById('profileCardNavToggle');
+    if (!nav) return;
+    const links = nav.querySelectorAll('a[data-target]');
+    if (links.length === 0) return;
+    const activate = (link) => {
+        links.forEach(l => l.classList.toggle('active', l === link));
+    };
+    const closeMenu = () => {
+        nav.classList.remove('open');
+    };
+    links.forEach(l => {
+        l.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = l.getAttribute('data-target');
+            const section = document.getElementById(targetId);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+                activate(l);
+                closeMenu();
+            }
+        });
+    });
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            nav.classList.toggle('open');
+        });
+    }
+}
+
 function resetTabs() {
     const buttons = document.querySelectorAll('#clientTabs .tab-btn');
     const panels = document.querySelectorAll('.client-tab');
@@ -773,6 +804,7 @@ async function showClient(userId) {
         await loadTemplateInto('editclient.html', 'adminProfileContainer');
         const mod = await import('./editClient.js');
         await mod.initEditClient(userId);
+        setupProfileCardNav();
     }
     try {
         const [profileResp, dashResp] = await Promise.all([
