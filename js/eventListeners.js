@@ -188,12 +188,6 @@ export function setupStaticEventListeners() {
 
     if (selectors.feedbackForm) selectors.feedbackForm.addEventListener('submit', handleFeedbackFormSubmit);
 
-    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-    prefersDarkScheme.addEventListener('change', e => {
-        const pref = localStorage.getItem('theme') || 'system';
-        if (pref === 'system') applyTheme(e.matches ? 'dark' : 'light'); // applyTheme from uiHandlers
-        updateThemeButtonText(); // updateThemeButtonText from uiHandlers
-    });
     document.body.addEventListener('closeExtraMealModalEvent', () => {
         closeModal('extraMealEntryModal');
     });
