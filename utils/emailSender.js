@@ -10,7 +10,7 @@
  */
 export async function sendEmailUniversal(to, subject, body, env = {}) {
   const endpoint = env.MAILER_ENDPOINT_URL ||
-    (typeof process !== 'undefined' ? process.env.MAILER_ENDPOINT_URL : undefined);
+    globalThis['process']?.env?.MAILER_ENDPOINT_URL;
   if (endpoint) {
     const resp = await fetch(endpoint, {
       method: 'POST',
@@ -24,7 +24,7 @@ export async function sendEmailUniversal(to, subject, body, env = {}) {
   }
 
   const { sendEmail } = await import('../sendEmailWorker.js');
-  const phpEnv = { MAIL_PHP_URL: env.MAIL_PHP_URL || (typeof process !== 'undefined' ? process.env.MAIL_PHP_URL : undefined) };
+  const phpEnv = { MAIL_PHP_URL: env.MAIL_PHP_URL || globalThis['process']?.env?.MAIL_PHP_URL };
   await sendEmail(to, subject, body, phpEnv);
 }
 
