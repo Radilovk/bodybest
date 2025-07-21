@@ -93,6 +93,8 @@ const testAnalysisBtn = document.getElementById('testAnalysisModel');
 const emailSettingsForm = document.getElementById('emailSettingsForm');
 const welcomeEmailSubjectInput = document.getElementById('welcomeEmailSubject');
 const welcomeEmailBodyInput = document.getElementById('welcomeEmailBody');
+const analysisEmailSubjectInput = document.getElementById('analysisEmailSubject');
+const analysisEmailBodyInput = document.getElementById('analysisEmailBody');
 const testEmailForm = document.getElementById('testEmailForm');
 const testEmailToInput = document.getElementById('testEmailTo');
 const testEmailSubjectInput = document.getElementById('testEmailSubject');
@@ -1273,6 +1275,8 @@ async function loadEmailSettings() {
         const cfg = data.config || {}
         if (welcomeEmailSubjectInput) welcomeEmailSubjectInput.value = cfg.welcome_email_subject || ''
         if (welcomeEmailBodyInput) welcomeEmailBodyInput.value = cfg.welcome_email_body || ''
+        if (analysisEmailSubjectInput) analysisEmailSubjectInput.value = cfg.analysis_email_subject || ''
+        if (analysisEmailBodyInput) analysisEmailBodyInput.value = cfg.analysis_email_body || ''
     } catch (err) {
         console.error('Error loading email settings:', err)
     }
@@ -1283,7 +1287,9 @@ async function saveEmailSettings() {
     const payload = {
         updates: {
             welcome_email_subject: welcomeEmailSubjectInput ? welcomeEmailSubjectInput.value.trim() : '',
-            welcome_email_body: welcomeEmailBodyInput ? welcomeEmailBodyInput.value.trim() : ''
+            welcome_email_body: welcomeEmailBodyInput ? welcomeEmailBodyInput.value.trim() : '',
+            analysis_email_subject: analysisEmailSubjectInput ? analysisEmailSubjectInput.value.trim() : '',
+            analysis_email_body: analysisEmailBodyInput ? analysisEmailBodyInput.value.trim() : ''
         }
     }
     try {

@@ -172,8 +172,6 @@ const ANALYSIS_READY_SUBJECT = 'Вашият персонален анализ �
 const ANALYSIS_READY_BODY_TEMPLATE = '<p>Здравей, {{name}}.</p>' +
     '<p>Вашият персонален анализ е готов. Можете да го видите <a href="{{link}}">тук</a>.</p>' +
     '<p>– Екипът на MyBody</p>';
-const ANALYSIS_EMAIL_SUBJECT_VAR_NAME = 'ANALYSIS_EMAIL_SUBJECT';
-const ANALYSIS_EMAIL_BODY_VAR_NAME = 'ANALYSIS_EMAIL_BODY';
 const ANALYSIS_PAGE_URL_VAR_NAME = 'ANALYSIS_PAGE_URL';
 
 async function sendWelcomeEmail(to, name, env) {
@@ -203,8 +201,8 @@ async function sendQuestionnaireConfirmationEmail(to, name, env) {
 async function sendAnalysisLinkEmail(to, name, link, env) {
     const sendEmail = await getSendEmail(env);
     if (sendEmail === defaultSendEmail) return;
-    const subject = env?.[ANALYSIS_EMAIL_SUBJECT_VAR_NAME] || ANALYSIS_READY_SUBJECT;
-    const tpl = env?.[ANALYSIS_EMAIL_BODY_VAR_NAME] || ANALYSIS_READY_BODY_TEMPLATE;
+    const subject = env?.ANALYSIS_EMAIL_SUBJECT || ANALYSIS_READY_SUBJECT;
+    const tpl = env?.ANALYSIS_EMAIL_BODY || ANALYSIS_READY_BODY_TEMPLATE;
     if (!tpl.includes('{{name}}')) {
         console.warn('ANALYSIS_EMAIL_BODY missing {{name}} placeholder');
     }
@@ -265,7 +263,9 @@ const AI_CONFIG_KEYS = [
     'image_token_limit',
     'image_temperature',
     'welcome_email_subject',
-    'welcome_email_body'
+    'welcome_email_body',
+    'analysis_email_subject',
+    'analysis_email_body'
 ];
 // ------------- END BLOCK: GlobalConstantsAndBindings -------------
 
