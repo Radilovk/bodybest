@@ -155,6 +155,8 @@ so you can use it directly:
 const encoded = Buffer.from('hello').toString('base64');
 ```
 
+> **Note**: Уеб редакторът на Cloudflare няма типове за Node. Възможно е да виждате предупреждения в редактора, макар че worker-ът работи нормално след деплой.
+
 След успешната инсталация стартирайте `npm run dev` отново.
 
 If the error persists, be sure to run TypeScript with this configuration:
