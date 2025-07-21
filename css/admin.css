@@ -290,7 +290,7 @@ details[open] summary::after {
   #profileCardNavToggle {
     display: flex;
     position: fixed;
-    bottom: var(--space-lg);
+    bottom: 0;
     right: var(--space-lg);
     width: 50px;
     height: 50px;
@@ -306,7 +306,7 @@ details[open] summary::after {
   }
   #profileCardNav {
     position: fixed;
-    bottom: calc(var(--space-lg) + 60px);
+    bottom: 60px;
     right: var(--space-lg);
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid var(--border-color-soft, #ccc);
