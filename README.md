@@ -258,7 +258,8 @@ This script checks for placeholder values and for a provided `CF_API_TOKEN`.
 
 The repository contains two Cloudflare workers.
 
-- `worker.js` – the main application worker defined in `wrangler.toml`. The GitHub workflow deploys this worker when you run the deployment manually.
+- `preworker.js` – used only for local development. Run `npm run dev` or `npm test` with this file, then `npm run build` generates `worker.js` from it.
+- `worker.js` – the main application worker defined in `wrangler.toml`. It gets deployed to Cloudflare through the GitHub workflow when you run the deployment manually.
 - `worker-backend.js` – a lightweight proxy used by the PHP backend to call Cloudflare AI. Deploy it separately, for example:
 
 ```bash
