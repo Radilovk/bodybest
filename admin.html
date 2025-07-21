@@ -232,10 +232,13 @@
     <form id="emailSettingsForm">
       <label>Тема:<br><input id="welcomeEmailSubject" type="text"></label>
       <label>Съдържание:<br><textarea id="welcomeEmailBody" rows="5"></textarea></label>
+      <div id="welcomeEmailPreview" class="email-preview"></div>
       <label>Тема на имейла след въпросник:<br><input id="questionnaireEmailSubject" type="text"></label>
       <label>Съдържание:<br><textarea id="questionnaireEmailBody" rows="5"></textarea></label>
+      <div id="questionnaireEmailPreview" class="email-preview"></div>
       <label>Тема на имейла за анализ:<br><input id="analysisEmailSubject" type="text"></label>
       <label>Съдържание:<br><textarea id="analysisEmailBody" rows="5"></textarea></label>
+      <div id="analysisEmailPreview" class="email-preview"></div>
       <button type="submit">Запази</button>
     </form>
   </details>
@@ -246,6 +249,7 @@
       <label>До:<br><input id="testEmailTo" type="email" required></label>
       <label>Тема:<br><input id="testEmailSubject" type="text" required></label>
       <label>Съдържание:<br><textarea id="testEmailBody" rows="5" required></textarea></label>
+      <div id="testEmailPreview" class="email-preview"></div>
       <button type="submit">Изпрати</button>
     </form>
   </details>
