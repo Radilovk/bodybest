@@ -1,11 +1,23 @@
 import { apiEndpoints } from './config.js';
 
+let macroChart;
+let weightChart;
+
+export function addEditableMealItem(container, item = { name: '', grams: '' }) {
+  const itemWrapper = document.createElement('div');
+  itemWrapper.className = 'item-entry';
+  itemWrapper.innerHTML = `
+    <input type="text" class="form-control form-control-sm item-name-input" value="${item.name}" placeholder="Продукт">
+    <input type="text" class="form-control form-control-sm item-grams-input" value="${item.grams}" placeholder="Количество">
+    <button class="btn btn-outline-danger btn-sm remove-item-btn" type="button"><i class="bi bi-x"></i></button>`;
+  container.appendChild(itemWrapper);
+  itemWrapper.querySelector('.remove-item-btn').addEventListener('click', () => itemWrapper.remove());
+}
+
 export async function initEditClient(userId) {
   let planData = {};
   let dashboardData = null;
   let editingCards = new Set();
-  let macroChart;
-  let weightChart;
 
   async function loadData() {
     try {
@@ -327,16 +339,6 @@ export async function initEditClient(userId) {
     });
   }
 
-  function addEditableMealItem(container, item = { name: '', grams: '' }) {
-    const itemWrapper = document.createElement('div');
-    itemWrapper.className = 'item-entry';
-    itemWrapper.innerHTML = `
-      <input type="text" class="form-control form-control-sm item-name-input" value="${item.name}" placeholder="Продукт">
-      <input type="text" class="form-control form-control-sm item-grams-input" value="${item.grams}" placeholder="Количество">
-      <button class="btn btn-outline-danger btn-sm remove-item-btn" type="button"><i class="bi bi-x"></i></button>`;
-    container.appendChild(itemWrapper);
-    itemWrapper.querySelector('.remove-item-btn').addEventListener('click', () => itemWrapper.remove());
-  }
 
   const addDayBtn = document.getElementById('add-week-day-btn');
   if (addDayBtn) {
@@ -608,43 +610,55 @@ export async function initEditClient(userId) {
     });
   });
 
-  function initCharts(data) {
-    if (macroChart) macroChart.destroy();
-    if (weightChart) weightChart.destroy();
-    const macroCtx = document.getElementById('macro-chart');
-    if (macroCtx) {
-      macroChart = new Chart(macroCtx, {
-        type: 'doughnut',
-        data: {
-          labels: [`Протеини (${data.caloriesMacros.protein_percent}%)`, `Въглехидрати (${data.caloriesMacros.carbs_percent}%)`, `Мазнини (${data.caloriesMacros.fat_percent}%)`],
-          datasets: [{
-            label: 'Разпределение на макроси',
-            data: [data.caloriesMacros.protein_grams, data.caloriesMacros.carbs_grams, data.caloriesMacros.fat_grams],
-            backgroundColor: ['rgb(54,162,235)', 'rgb(255,205,86)', 'rgb(255,99,132)'],
-            hoverOffset: 4
-          }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: `Дневен прием (${data.caloriesMacros.calories} kcal)` } } }
-      });
-    }
-    const weightCtx = document.getElementById('weight-chart');
-    if (weightCtx) {
-      const m = (data.profileSummary || '').match(/Текущо тегло (\d+\.?\d*) кг \(промяна за 7 дни: (-?\d+\.?\d*) кг\)/);
-      const currentWeight = m ? parseFloat(m[1]) : 0;
-      const weightChange = m ? parseFloat(m[2]) : 0;
-      weightChart = new Chart(weightCtx, {
-        type: 'line',
-        data: {
-          labels: ['Седмица -1', 'Седмица 0', 'Седмица 1', 'Седмица 2', 'Седмица 3', 'Седмица 4'],
-          datasets: [{ label: 'Тегло (кг)', data: [currentWeight - weightChange, currentWeight, null, null, null, null], fill: false, borderColor: 'rgb(75,192,192)', tension: 0.1 }]
-        },
-        options: { scales: { y: { beginAtZero: false } } }
-      });
-    }
-  }
-
   await loadData();
   populateUI(planData);
   initCharts(planData);
   updateGlobalButtonsVisibility();
+}
+
+export function initCharts(data) {
+  if (macroChart) macroChart.destroy();
+  if (weightChart) weightChart.destroy();
+  const macroCtx = document.getElementById('macro-chart');
+  if (macroCtx) {
+    macroChart = new Chart(macroCtx, {
+      type: 'doughnut',
+      data: {
+        labels: [`Протеини (${data.caloriesMacros.protein_percent}%)`, `Въглехидрати (${data.caloriesMacros.carbs_percent}%)`, `Мазнини (${data.caloriesMacros.fat_percent}%)`],
+        datasets: [{
+          label: 'Разпределение на макроси',
+          data: [data.caloriesMacros.protein_grams, data.caloriesMacros.carbs_grams, data.caloriesMacros.fat_grams],
+          backgroundColor: ['rgb(54,162,235)', 'rgb(255,205,86)', 'rgb(255,99,132)'],
+          hoverOffset: 4
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: `Дневен прием (${data.caloriesMacros.calories} kcal)` } } }
+    });
+  }
+  const weightCtx = document.getElementById('weight-chart');
+  if (weightCtx) {
+    const m = (data.profileSummary || '').match(/Текущо тегло (\d+\.?\d*) кг \(промяна за 7 дни: (-?\d+\.?\d*) кг\)/);
+    const currentWeight = m ? parseFloat(m[1]) : 0;
+    const weightChange = m ? parseFloat(m[2]) : 0;
+    weightChart = new Chart(weightCtx, {
+      type: 'line',
+      data: {
+        labels: ['Седмица -1', 'Седмица 0', 'Седмица 1', 'Седмица 2', 'Седмица 3', 'Седмица 4'],
+        datasets: [{ label: 'Тегло (кг)', data: [currentWeight - weightChange, currentWeight, null, null, null, null], fill: false, borderColor: 'rgb(75,192,192)', tension: 0.1 }]
+      },
+      options: { scales: { y: { beginAtZero: false } } }
+    });
+  }
+}
+
+// Експортиране на вътрешни функции за тестване
+export const __testExports = { initCharts, addEditableMealItem };
+
+// Автоматична инициализация, когато файлът се зареди директно в браузъра
+if (typeof window !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('userId');
+    if (userId) void initEditClient(userId);
+  });
 }
