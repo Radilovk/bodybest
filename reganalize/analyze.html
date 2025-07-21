@@ -3,365 +3,285 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Без Филтър: Вашият Анализ</title>
+    <title>Вашият Анализ</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
         :root {
-            --bg-color: #f8f9fa;
+            --bg-color: #f4f5f7;
             --card-bg-color: #ffffff;
-            --text-color: #343a40;
-            --heading-color: #0a3d62; /* Deep Blue */
-            --primary-color: #00796b;  /* Teal */
-            --accent-color: #009688;   /* Lighter Teal */
-            --border-color: #e9ecef;
-            --shadow-color: rgba(10, 61, 98, 0.1);
+            --text-color: #3d3d3d;
+            --heading-color: #1a202c;
+            --primary-color: #2563eb; /* Strong Blue */
+            --accent-color: #4f46e5; /* Indigo */
+            --border-color: #e2e8f0;
+            --shadow-color: rgba(45, 55, 72, 0.1);
             
-            --color-high: #d9534f;
-            --color-medium: #f0ad4e;
-            --color-ok: #5bc0de;
-            --color-low: #5cb85c;
-            
-            --primary-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            --color-high: #ef4444;
+            --color-medium: #f59e0b;
+            --color-ok: #3b82f6;
+            --color-low: #10b981;
         }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
-        @keyframes scaleIn {
-            from { transform: scale(0.9); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-        @keyframes arrow-move {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(8px); }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
 
         /* --- Global Styles --- */
         body {
-            font-family: 'Montserrat', sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            opacity: 0;
-            transition: opacity 1s ease-in;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-        body.loaded { opacity: 1; }
-
-        .container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
-
-        /* --- Scroll Animation --- */
-        .reveal {
-            opacity: 0;
-            transform: translateY(40px);
-            transition: opacity 0.8s cubic-bezier(0.5, 0, 0, 1), transform 0.8s cubic-bezier(0.5, 0, 0, 1);
-        }
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        .container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
 
         /* --- Header --- */
         header {
-            background-color: var(--card-bg-color);
+            background-color: var(--heading-color);
+            color: white;
             text-align: center;
-            padding: 100px 20px 80px;
-            border-bottom: 1px solid var(--border-color);
+            padding: 80px 20px 100px;
+            clip-path: polygon(0 0, 100% 0, 100% 90%, 0% 100%);
         }
         header h1 {
-            font-size: 3.2em;
+            font-size: 2.8em;
             font-weight: 900;
-            color: var(--heading-color);
-            margin: 0 0 10px 0;
-            animation: scaleIn 0.8s ease-out forwards;
+            margin: 0;
+            animation: fadeIn 1s ease-out;
         }
-        header .subtitle {
-            font-size: 1.3em;
-            color: #6c757d;
-            max-width: 650px;
-            margin: 15px auto 0;
-            line-height: 1.6;
-            animation: fadeInUp 0.8s 0.2s ease-out forwards;
+        header .main-goal {
+            font-size: 1.5em;
+            opacity: 0.8;
+            margin-top: 10px;
+            animation: fadeIn 1s 0.2s ease-out backwards;
         }
+        .main-goal strong { color: #a7f3d0; } /* Light green accent for goal */
 
         /* --- Section Titles --- */
-        .section-title {
+        .section-header {
             text-align: center;
-            font-size: 2.5em;
+            margin-bottom: 50px;
+        }
+        .section-title {
+            font-size: 2.2em;
             color: var(--heading-color);
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             font-weight: 700;
         }
         .section-subtitle {
-            text-align: center;
             font-size: 1.1em;
-            color: #6c757d;
-            max-width: 700px;
-            margin: 0 auto 60px auto;
-            line-height: 1.7;
+            color: #718096;
+            max-width: 600px;
+            margin: 0 auto;
         }
         main > section {
-            padding: 80px 0;
+            padding: 60px 0;
         }
 
-        /* --- Card Base Style --- */
         .card {
             background: var(--card-bg-color);
             border-radius: 16px;
-            padding: 40px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 30px var(--shadow-color);
-            border: 1px solid var(--border-color);
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -1px var(--shadow-color);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 40px rgba(10, 61, 98, 0.15);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -2px var(--shadow-color);
         }
 
         /* 1. Obstacles Section --- */
         #obstacles-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 25px;
+            margin-top: -100px; /* Overlap header */
+            position: relative;
+            z-index: 10;
         }
         .obstacle-card {
             text-align: center;
-            padding: 30px 25px;
+            padding: 35px 20px;
         }
-        .obstacle-card .icon {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            color: var(--primary-color);
-            width: 70px;
-            height: 70px;
-            line-height: 70px;
-            border-radius: 50%;
-            background-color: #e0f2f1; /* Light Teal */
-            display: inline-block;
-        }
-        .obstacle-card h3 {
-            font-size: 1.3em;
-            font-weight: 700;
-            color: var(--heading-color);
-            margin-bottom: 10px;
-        }
-        .obstacle-card p {
-            font-size: 0.95em;
-            line-height: 1.7;
-            color: #495057;
-        }
+        .obstacle-card .icon { font-size: 3em; color: var(--primary-color); margin-bottom: 15px; }
+        .obstacle-card h3 { font-size: 1.1em; font-weight: 600; color: var(--heading-color); margin: 0; }
 
-        /* 2. Health Risk Profile Section --- */
-        #risk-profile-container { display: flex; flex-direction: column; gap: 20px; }
-        .risk-profile-item {
-            padding: 20px;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            background-color: #f8f9fa;
+        /* 2. Risk Profile --- DONUT CHARTS --- */
+        #dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 40px;
+            justify-items: center;
         }
-        .risk-profile-item .item-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+        .dashboard-item {
+            text-align: center;
+            opacity: 0;
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+        .donut-chart-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
             margin-bottom: 15px;
         }
-        .item-header .icon { font-size: 1.4em; color: var(--primary-color); }
-        .item-header .category-title { font-weight: 700; font-size: 1.1em; color: var(--heading-color); flex-grow: 1; }
-        .item-header .risk-level {
-            font-weight: 900;
-            font-size: 0.8em;
-            padding: 4px 10px;
-            border-radius: 20px;
-            color: white;
-            letter-spacing: 0.5px;
-        }
-        .risk-high .risk-level { background-color: var(--color-high); }
-        .risk-medium .risk-level { background-color: var(--color-medium); }
-        .risk-ok .risk-level { background-color: var(--color-ok); color: var(--heading-color); }
-        .risk-low .risk-level { background-color: var(--color-low); }
-
-        .risk-bar-container { height: 10px; background-color: #dee2e6; border-radius: 5px; overflow: hidden; margin-bottom: 15px; }
-        .risk-bar {
+        .donut-chart-svg {
+            transform: rotate(-90deg);
+            width: 100%;
             height: 100%;
-            border-radius: 5px;
-            width: 0;
-            transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
-        .risk-high .risk-bar { background: var(--color-high); }
-        .risk-medium .risk-bar { background: var(--color-medium); }
-        .risk-ok .risk-bar { background: var(--color-ok); }
-        .risk-low .risk-bar { background: var(--color-low); }
-        
-        .risk-profile-item .item-summary { margin: 0; font-size: 0.9em; color: #495057; }
+        .donut-chart-svg circle {
+            fill: none;
+            stroke-width: 12;
+        }
+        .donut-track { stroke: var(--border-color); }
+        .donut-fill {
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .donut-high { stroke: var(--color-high); }
+        .donut-medium { stroke: var(--color-medium); }
+        .donut-ok { stroke: var(--color-ok); }
+        .donut-low { stroke: var(--color-low); }
+
+        .chart-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .chart-center .icon { font-size: 2.2em; }
+        .dashboard-item h4 { margin: 0; font-weight: 600; color: var(--heading-color); }
+        .dashboard-item .risk-level-text { font-size: 0.8em; color: #718096; }
+
 
         /* 3. Deep Dive Section --- */
-        #deep-dive-container { display: grid; grid-template-columns: 1fr; gap: 40px; }
-        .deep-dive-card { padding: 30px; }
-        .deep-dive-card h3 {
-            font-size: 1.8em;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            margin: 0 0 30px 0;
+        .deep-dive-card {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
         }
-        .deep-dive-card h3 i {
-            margin-right: 15px;
-            font-size: 1em;
-            color: white;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .deep-dive-card.risk-high h3 i { background-color: var(--color-high); }
-        .deep-dive-card.risk-medium h3 i { background-color: var(--color-medium); }
-        .deep-dive-card.risk-ok h3 i { background-color: var(--color-ok); }
-        .deep-dive-card.risk-low h3 i { background-color: var(--color-low); }
-        
-        .deep-dive-card .analysis-content ul { list-style: none; padding-left: 0; margin: 0 0 30px 0; }
-        .deep-dive-card .analysis-content li {
-            padding: 12px 0;
-            display: flex;
-            align-items: flex-start;
-            font-size: 1.05em;
-            line-height: 1.6;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .deep-dive-card .analysis-content li:last-child { border-bottom: none; }
-        .deep-dive-card .analysis-content li i {
-            color: var(--primary-color);
-            margin-right: 15px;
-            margin-top: 5px;
-            font-size: 1.1em;
+        @media (min-width: 768px) {
+            .deep-dive-card { grid-template-columns: 1.2fr 1fr; }
         }
 
-        .summary-quote {
-            margin: 30px 0;
-            padding: 25px;
-            background-color: #e0f2f1;
-            border-left: 5px solid var(--primary-color);
-            border-radius: 8px;
-            position: relative;
+        .analysis-points h3, .key-takeaway h3 {
+            font-size: 1.4em;
+            margin: 0 0 20px 0;
+            color: var(--heading-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
         }
-        .summary-quote::before {
-            content: '\f10d';
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            position: absolute;
-            top: -15px;
-            left: 20px;
-            font-size: 2.5em;
-            color: rgba(0, 121, 107, 0.1);
+        .analysis-points ul { list-style: none; padding: 0; margin: 0; }
+        .analysis-points li {
+            display: flex;
+            align-items: flex-start;
+            padding: 10px 0;
+            line-height: 1.6;
+        }
+        .analysis-points li i {
+            color: var(--primary-color);
+            margin-right: 15px;
+            margin-top: 4px;
+        }
+        
+        .key-takeaway {
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        .summary-quote {
+            margin-bottom: 25px;
+            padding-left: 20px;
+            border-left: 4px solid var(--accent-color);
         }
         .summary-quote .quote-text {
             font-style: italic;
-            font-size: 1.2em;
+            font-size: 1.1em;
+            margin: 0 0 5px 0;
             color: var(--heading-color);
-            margin: 0 0 10px 0;
         }
-        .summary-quote .quote-author {
-            font-size: 0.9em;
-            text-align: right;
-            color: #495057;
+        .summary-quote .quote-author { font-size: 0.9em; text-align: left; color: #718096; }
+        .conclusion-box p {
+            margin: 0;
+            font-weight: 600;
+            line-height: 1.6;
+            color: var(--heading-color);
         }
-
-        .conclusion-box {
-            margin-top: 25px;
-            padding: 20px;
-            background-color: rgba(10, 61, 98, 0.05);
-            border-radius: 8px;
-        }
-        .conclusion-box p { margin: 0; font-weight: 600; font-size: 1.1em; color: var(--heading-color); line-height: 1.6; }
-        .conclusion-box p i { margin-right: 10px; color: var(--heading-color); }
-
 
         /* 4. CTA Section --- */
         .cta-section {
-            background: var(--primary-gradient);
+            background-color: var(--heading-color);
             color: white;
             text-align: center;
-            padding: 100px 20px;
+            padding: 80px 20px;
             margin-top: 50px;
         }
-        .cta-section h2 { font-size: 2.5em; margin-bottom: 20px; font-weight: 900; }
-        .cta-section p { max-width: 650px; margin: 0 auto 40px auto; opacity: 0.95; font-size: 1.1em; line-height: 1.7; }
+        .cta-section h2 { font-size: 2.2em; margin-bottom: 15px; font-weight: 900; }
+        .cta-section p { max-width: 600px; margin: 0 auto 30px auto; opacity: 0.8; font-size: 1.1em; }
         .cta-button {
-            background-color: white;
-            color: var(--primary-color);
+            background-color: var(--primary-color);
+            color: white;
             font-size: 1.2em;
             font-weight: 700;
             text-decoration: none;
-            padding: 18px 45px;
+            padding: 15px 40px;
             border-radius: 50px;
             transition: all 0.3s ease;
             display: inline-block;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
         .cta-button:hover {
-            transform: scale(1.05) translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-            color: var(--heading-color);
+            background-color: var(--accent-color);
+            transform: scale(1.05);
         }
-        .cta-button .icon-arrow {
-            margin-left: 10px;
-            transition: transform 0.3s ease;
-        }
-        .cta-button:hover .icon-arrow {
-            animation: arrow-move 1.5s ease-in-out infinite;
-        }
+        .cta-button { animation: pulse 2s infinite ease-in-out; }
 
-        /* --- Footer --- */
-        footer { text-align: center; padding: 40px 20px; font-size: 0.9em; color: #6c757d; }
-        
-        @media (max-width: 768px) {
-            header h1 { font-size: 2.2em; }
-            .section-title { font-size: 2em; }
-            .card { padding: 30px; }
-            .item-header { flex-wrap: wrap; }
-            .item-header .category-title { width: 100%; order: -1; margin-bottom: 10px; }
-        }
+        footer { text-align: center; padding: 40px 20px; font-size: 0.9em; color: #718096; }
     </style>
 </head>
 <body>
 
     <header>
         <h1 id="client-name"></h1>
-        <p class="subtitle">Подгответе се за един честен поглед върху навиците, които ви спират. Това не е критика, а първата стъпка към истинска, осъзната промяна.</p>
+        <p class="main-goal" id="main-goal-text"></p>
     </header>
 
     <main class="container">
-        
-        <!-- Секция 1: Основните Ви Пречки -->
-        <section class="reveal">
-            <h2 class="section-title">Истината в Лицето: Основните Ви Пречки</h2>
-            <p class="section-subtitle">Игнорирането на тези проблеми няма да ги накара да изчезнат. Това са 3-те ключови бариери между Вас и Вашата цел. Нека ги осветим.</p>
-            <div id="obstacles-container"></div>
-        </section>
+        <!-- Секция 1: Ключови Бариери (само икони и заглавия) -->
+        <section id="obstacles-container" class="reveal"></section>
 
-        <!-- Секция 2: Вашият Здравен Риск-Профил -->
+        <!-- Секция 2: Риск-Профил с Donut Charts -->
         <section class="reveal">
-            <div class="card">
-                <h2 class="section-title">Вашият Здравен Риск-Профил</h2>
-                <p class="section-subtitle">Числата не лъжат. Този анализ показва къде се намирате в момента, подредено по спешност. Червените зони са вашата аларма за действие.</p>
-                <div id="risk-profile-container"></div>
+            <div class="section-header">
+                <h2 class="section-title">Риск-Профил: Моментна Снимка</h2>
+                <p class="section-subtitle">Всяка област е оценена по скала от 0 до 100. По-високата стойност и червеният цвят означават по-голям риск.</p>
             </div>
+            <div id="dashboard-grid"></div>
         </section>
 
-        <!-- Секция 3: Дълбок Анализ -->
+        <!-- Секция 3: Дълбок Анализ (Компактен) -->
         <section class="reveal">
-            <h2 class="section-title">Дълбок Анализ: Защо се Случва Това?</h2>
-            <p class="section-subtitle">Проблемите са симптом. Тук разнищваме корените им. Разбирането на "защо" е ключът към трайното "как".</p>
+             <div class="section-header">
+                <h2 class="section-title">Анализ: Причина и Следствие</h2>
+                <p class="section-subtitle">Разглеждаме най-критичните зони, за да разберем "защо" се случва и "какво" означава това за Вас.</p>
+            </div>
             <div id="deep-dive-container"></div>
         </section>
     </main>
@@ -372,147 +292,135 @@
             <h2 id="cta-title"></h2>
             <p id="cta-body"></p>
             <a id="cta-button" href="#" class="cta-button">
-                <span id="cta-button-text"></span><i class="fas fa-arrow-right icon-arrow"></i>
+                <i class="fas fa-rocket"></i> <span id="cta-button-text"></span>
             </a>
         </div>
     </section>
 
-    <footer>
-        <p id="footer-text"></p>
-    </footer>
+    <footer><p id="footer-text"></p></footer>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const analysisData = {/*---JSON_DATA_PLACEHOLDER---*/};
-        const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('replit') || window.location.hostname.includes('preview');
-        const workerBaseUrl = isLocalDev ? '' : 'https://openapichatbot.radilov-k.workers.dev';
-
-        // --- HTML Generators ---
+        
         const generateObstaclesHTML = (obstacles) => obstacles.map(o => `
             <div class="card obstacle-card">
                 <div class="icon"><i class="${o.icon}"></i></div>
                 <h3>${o.title}</h3>
-                <p>${o.description}</p>
             </div>`).join('');
         
-        const generateDashboardHTML = (items) => items.map(i => `
-            <div class="risk-profile-item risk-${i.riskClass}">
-                <div class="item-header">
-                    <i class="icon ${i.icon}"></i>
-                    <span class="category-title">${i.category}</span>
-                    <span class="risk-level">${i.riskLevel}</span>
+        const generateDashboardHTML = (items) => items.map((i, index) => `
+            <div class="dashboard-item" style="animation-delay: ${index * 100}ms;">
+                <div class="donut-chart-container">
+                    <svg class="donut-chart-svg">
+                        <circle class="donut-track" cx="70" cy="70" r="60"></circle>
+                        <circle class="donut-fill donut-${i.riskClass}" cx="70" cy="70" r="60" data-risk="${i.riskValue}"></circle>
+                    </svg>
+                    <div class="chart-center">
+                        <i class="icon ${i.icon} color-${i.riskClass}"></i>
+                    </div>
                 </div>
-                <div class="risk-bar-container">
-                    <div class="risk-bar" data-width="${i.riskValue}"></div>
-                </div>
-                <p class="item-summary">${i.summary}</p>
+                <h4>${i.category}</h4>
+                <div class="risk-level-text">${i.riskLevel}</div>
             </div>`).join('');
 
         const generateDeepDiveHTML = (items) => items.map(item => `
-            <div class="card deep-dive-card risk-${item.riskClass}">
-                <h3><i class="${item.icon}"></i>${item.title}</h3>
-                <div class="analysis-content">
+            <div class="card deep-dive-card">
+                <div class="analysis-points">
+                    <h3>Констатации</h3>
                     <ul>
-                        ${item.points.map(point => `<li><i class="fas fa-check-circle"></i><div>${point}</div></li>`).join('')}
+                        ${item.points.map(point => `<li><i class="fas fa-check"></i><div>${point}</div></li>`).join('')}
                     </ul>
+                </div>
+                <div class="key-takeaway">
+                    <h3>Ключов Извод</h3>
                     ${item.summaryQuote && item.summaryQuote.text ? `
                     <div class="summary-quote">
                         <p class="quote-text">"${item.summaryQuote.text}"</p>
                         <p class="quote-author">— ${item.summaryQuote.author || 'Вашите думи'}</p>
                     </div>` : ''}
                     <div class="conclusion-box">
-                        <p><i class="fas fa-lightbulb"></i>${item.conclusion}</p>
+                        <p>${item.conclusion}</p>
                     </div>
                 </div>
             </div>`).join('');
 
-        // --- Main Rendering Function ---
         const renderAnalysis = (data) => {
-            // Sort by risk value descending
             data.healthDashboard.sort((a, b) => b.riskValue - a.riskValue);
             
-            // Header
             document.getElementById('client-name').textContent = `${data.client.name},`;
-
-            // Obstacles
+            document.getElementById('main-goal-text').innerHTML = `Вашата цел е <strong>${data.client.mainGoal.title} (${data.client.mainGoal.target})</strong>`;
             document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
-
-            // Dashboard
-            document.getElementById('risk-profile-container').innerHTML = generateDashboardHTML(data.healthDashboard);
-
-            // Deep Dive
+            document.getElementById('dashboard-grid').innerHTML = generateDashboardHTML(data.healthDashboard);
             document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
-
-            // CTA
             document.getElementById('cta-title').textContent = data.callToAction.title;
             document.getElementById('cta-body').textContent = data.callToAction.body;
             document.getElementById('cta-button-text').textContent = data.callToAction.buttonText;
             document.getElementById('cta-button').href = data.callToAction.buttonLink;
-
-            // Footer
             document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} Your Wellness Company. Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
             
             setupAnimations();
-            document.body.classList.add('loaded');
         };
 
-        // --- Interactivity and Animations ---
         const setupAnimations = () => {
-            // Scroll reveal
-            const revealElements = document.querySelectorAll('.reveal');
             const revealObserver = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         entry.target.classList.add('active');
+                        entry.target.style.opacity = 1;
+                        entry.target.style.transform = 'translateY(0)';
+                        
+                        // Animate donut charts when they become visible
+                        if (entry.target.id === 'dashboard-grid') {
+                            const charts = entry.target.querySelectorAll('.donut-fill');
+                            charts.forEach(chart => {
+                                const radius = chart.r.baseVal.value;
+                                const circumference = 2 * Math.PI * radius;
+                                const riskValue = chart.dataset.risk;
+                                const offset = circumference * (1 - riskValue / 100);
+                                
+                                chart.style.strokeDasharray = `${circumference} ${circumference}`;
+                                chart.style.strokeDashoffset = circumference; // Start from empty
+                                setTimeout(() => {
+                                   chart.style.strokeDashoffset = offset; // Animate to value
+                                }, 200);
+                            });
+                        }
                         revealObserver.unobserve(entry.target);
                     }
                 });
             }, { threshold: 0.1 });
-            revealElements.forEach(el => revealObserver.observe(el));
 
-            // Risk bar animation
-            const barElements = document.querySelectorAll('.risk-bar');
-            const barObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const bar = entry.target;
-                        setTimeout(() => { // Small delay for better visual effect
-                            bar.style.width = bar.dataset.width + '%';
-                        }, 200);
-                        barObserver.unobserve(bar);
-                    }
-                });
-            }, { threshold: 0.5 });
-            barElements.forEach(bar => barObserver.observe(bar));
+            document.querySelectorAll('.reveal, #obstacles-container, #dashboard-grid').forEach(el => {
+                el.style.opacity = 0;
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+                revealObserver.observe(el);
+            });
         };
         
         // --- Data Loading Logic ---
+        const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const workerBaseUrl = isLocalDev ? '' : 'https://openapichatbot.radilov-k.workers.dev';
         const hasRequiredData = analysisData && analysisData.client && Object.keys(analysisData).length > 2;
+
         if (hasRequiredData) {
             renderAnalysis(analysisData);
         } else {
             const userId = new URLSearchParams(location.search).get('userId');
             if (!userId) {
-                document.body.innerHTML = '<h1>Грешка: Липсва ID на потребител. Моля, проверете линка.</h1>';
-                document.body.classList.add('loaded');
+                document.body.innerHTML = '<h1>Грешка: Липсва ID на потребител.</h1>';
                 return;
             }
             fetch(`${workerBaseUrl}/api/getInitialAnalysis?userId=${encodeURIComponent(userId)}`)
-                .then(res => {
-                    if (!res.ok) throw new Error(`Network response was not ok (${res.status})`);
-                    return res.json();
-                })
+                .then(res => res.ok ? res.json() : Promise.reject(res))
                 .then(resp => {
-                    if (resp && resp.success && resp.analysis) {
-                        renderAnalysis(resp.analysis);
-                    } else {
-                        throw new Error(resp.error || 'Структурата на отговора е невалидна.');
-                    }
+                    if (resp && resp.success && resp.analysis) renderAnalysis(resp.analysis);
+                    else throw new Error(resp.error || 'Невалиден отговор от сървъра.');
                 })
                 .catch(error => {
                     console.error('Fetch Error:', error);
-                    document.body.innerHTML = '<h1>Грешка при зареждане на анализа. Моля, опитайте отново по-късно.</h1>';
-                    document.body.classList.add('loaded');
+                    document.body.innerHTML = '<h1>Грешка при зареждане на анализа.</h1>';
                 });
         }
     });
