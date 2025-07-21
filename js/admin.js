@@ -666,22 +666,35 @@ function setupTabs() {
 function setupProfileCardNav() {
     const nav = document.getElementById('profileCardNav');
     if (!nav) return;
-    const links = nav.querySelectorAll('a[data-target]');
+    const links = Array.from(nav.querySelectorAll('a[data-target]'));
     if (links.length === 0) return;
+    const sections = links.map(l => document.getElementById(l.dataset.target)).filter(Boolean);
     const activate = (link) => {
         links.forEach(l => l.classList.toggle('active', l === link));
     };
-    links.forEach(l => {
-        l.addEventListener('click', (e) => {
+    links.forEach(link => {
+        link.addEventListener('click', (e) => {
             e.preventDefault();
-            const targetId = l.getAttribute('data-target');
-            const section = document.getElementById(targetId);
+            const section = document.getElementById(link.dataset.target);
             if (section) {
-                section.scrollIntoView({ behavior: 'smooth' });
-                activate(l);
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                activate(link);
             }
         });
     });
+    const onScroll = () => {
+        const offset = nav.offsetHeight + 20;
+        let activeLink = links[0];
+        sections.forEach((section, idx) => {
+            const rect = section.getBoundingClientRect();
+            if (rect.top - offset <= 0) {
+                activeLink = links[idx];
+            }
+        });
+        activate(activeLink);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    activate(links[0]);
 }
 
 function resetTabs() {
@@ -1651,6 +1664,7 @@ export {
     checkForNotifications,
     showClient,
     setCurrentUserId,
+    setupProfileCardNav,
     unreadClients,
     sendTestEmail,
     confirmAndSendTestEmail,
