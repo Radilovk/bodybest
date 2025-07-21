@@ -262,6 +262,11 @@ details[open] summary::after {
   margin-top: 10px;
   margin-bottom: 10px;
   flex-wrap: wrap;
+  position: sticky;
+  top: calc(var(--header-height) + var(--tabs-height));
+  z-index: 980;
+  background-color: var(--surface-background, #f8f9fa);
+  padding: 4px 0;
 }
 #profileCardNav a {
   padding: 4px 8px;
