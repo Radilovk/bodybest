@@ -5,7 +5,7 @@
     "moduleResolution": "nodenext",
     "allowJs": true,
     "resolveJsonModule": true,
-    "types": ["@cloudflare/workers-types", "node"],
+    "types": ["@cloudflare/workers-types"],
     "lib": ["es2020", "dom"],
     "skipLibCheck": true
   },
