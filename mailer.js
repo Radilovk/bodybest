@@ -49,16 +49,7 @@ async function getEmailTemplate() {
         const body = await fs.readFile('./data/welcomeEmailTemplate.html', 'utf8')
         return { subject: DEFAULT_SUBJECT, body }
     } catch {
-        try {
-            const raw = await fs.readFile('./data/welcomeEmailTemplate.json', 'utf8')
-            const parsed = JSON.parse(raw)
-            return {
-                subject: parsed.subject || DEFAULT_SUBJECT,
-                body: parsed.body || DEFAULT_BODY
-            }
-        } catch {
-            return { subject: DEFAULT_SUBJECT, body: DEFAULT_BODY }
-        }
+        return { subject: DEFAULT_SUBJECT, body: DEFAULT_BODY }
     }
 }
 
