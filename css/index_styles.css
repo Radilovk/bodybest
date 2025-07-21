@@ -51,7 +51,14 @@
             margin-top: 0;
         }
         .marketing-banner p { color: #fff; }
-        .marketing-banner .illustration { margin-top: var(--space-md); }
+        .marketing-banner .illustration {
+            margin-top: var(--space-md);
+            text-align: center;
+        }
+        #marketingIllustration {
+            max-width: 100%;
+            height: auto;
+        }
         .form-section { margin-bottom: var(--space-lg); }
         .form-section.hidden { display: none; }
         .form-group { margin-bottom: calc(var(--space-lg)*0.8); text-align: left; }
