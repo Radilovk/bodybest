@@ -1433,7 +1433,7 @@ async function sendTestQuestionnaire() {
             if (resp.ok && data.success && data.userId) {
                 if (openTestQAnalysisLink) {
                     openTestQAnalysisLink.classList.remove('hidden');
-                    openTestQAnalysisLink.href = `reganalize/analyze.html?userId=${encodeURIComponent(data.userId)}`;
+                    openTestQAnalysisLink.href = `https://radilovk.github.io/bodybest/reganalize/analyze.html?userId=${encodeURIComponent(data.userId)}`;
                 }
             } else if (!resp.ok || !data.success) {
                 alert(data.message || 'Грешка при стартиране на анализа.');
@@ -1467,7 +1467,7 @@ async function sendTestQuestionnaire() {
         if (resp.ok && data.success && data.userId) {
             if (openTestQAnalysisLink) {
                 openTestQAnalysisLink.classList.remove('hidden');
-                openTestQAnalysisLink.href = `reganalize/analyze.html?userId=${encodeURIComponent(data.userId)}`;
+                openTestQAnalysisLink.href = `https://radilovk.github.io/bodybest/reganalize/analyze.html?userId=${encodeURIComponent(data.userId)}`;
             }
             try {
                 const stResp = await fetch(`${apiEndpoints.analysisStatus}?userId=${encodeURIComponent(data.userId)}`);
