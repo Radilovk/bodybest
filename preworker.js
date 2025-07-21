@@ -1629,7 +1629,7 @@ async function handleAnalyzeInitialAnswers(userId, env) {
         await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'ready');
         console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
-        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] || 'https://mybody.best/analyze.html';
+        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] || 'https://radilovk.github.io/bodybest/reganalize/analyze.html';
         const url = new URL(baseUrl);
         url.searchParams.set('userId', userId);
         const link = url.toString();
@@ -1687,7 +1687,7 @@ async function handleReAnalyzeQuestionnaireRequest(request, env, ctx) {
             await handleAnalyzeInitialAnswers(userId, env);
             await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         }
-        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] || 'https://mybody.best/analyze.html';
+        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] || 'https://radilovk.github.io/bodybest/reganalize/analyze.html';
         const url = new URL(baseUrl);
         url.searchParams.set('userId', userId);
         return { success: true, userId, link: url.toString() };
