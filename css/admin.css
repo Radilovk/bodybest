@@ -324,7 +324,16 @@ details[open] summary::after {
     display: flex;
   }
   .profile-nav-container {
-    position: static;
-    padding-block: 0;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    padding: var(--space-sm);
+    display: flex;
+    justify-content: flex-end;
+    pointer-events: none;
+  }
+  .profile-nav-container #profileCardNavToggle {
+    pointer-events: auto;
   }
 }
