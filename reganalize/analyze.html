@@ -189,6 +189,11 @@
             display: inline-block;
             box-shadow: 0 0 5px var(--cta-glow-color);
             animation: pulse-glow-desktop 2.5s infinite ease-in-out;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
         }
 
         .cta-button:hover {
@@ -202,17 +207,12 @@
         /* --- Mobile CTA --- */
         @media (max-width: 768px) {
             .cta-section {
-                padding-bottom: 120px; /* Space for the fixed button */
+                padding-bottom: 100px; /* Space for the fixed button */
             }
 
             .cta-button {
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
                 width: 90%;
                 max-width: 400px;
-                z-index: 1000;
-                transform: translateX(-50%);
                 animation-name: pulse-glow-mobile;
             }
 
