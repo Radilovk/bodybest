@@ -171,7 +171,7 @@
         
         .cta-final-pitch {
             max-width: 600px;
-            margin: 0 auto 40px auto;
+            margin: 0 auto;
             font-size: 1.1em;
             color: rgba(255, 255, 255, 0.9);
         }
@@ -205,7 +205,7 @@
         /* --- Mobile CTA --- */
         @media (max-width: 992px) {
             .cta-section {
-                padding-bottom: 120px; /* Increased padding to ensure space */
+                padding-bottom: 120px; /* Increased padding to ensure space for button */
             }
 
             .cta-button {
@@ -255,7 +255,6 @@
         </section>
     </main>
     
-    <!-- Секция 4: Време е за Промяна (Нова Версия) -->
     <section class="cta-section">
         <div class="container reveal">
             <h2 class="section-title">Защо MyBody.Best?</h2>
@@ -282,7 +281,7 @@
             <p class="cta-final-pitch">Информацията е сила, но само когато се действа по нея.</p>
         </div> <!-- КРАЙ НА <div class="container reveal"> -->
 
-        <!-- БУТОНЪТ Е ПРЕМЕСТЕН ТУК, ЗА ДА НЕ Е В АНИМИРАНИЯ КОНТЕЙНЕР -->
+        <!-- КОРЕКЦИЯ: БУТОНЪТ Е ПРЕМЕСТЕН ТУК, ЗА ДА НЕ Е В АНИМИРАНИЯ КОНТЕЙНЕР -->
         <a id="cta-button" href="https://radilovk.github.io/bodybest/index.html" class="cta-button">
             <i class="fas fa-rocket"></i> Започнете Вашата Трансформация
         </a>
@@ -405,6 +404,7 @@
     });
     </script>
 
+    <!-- КОРЕКЦИЯ: JavaScript логика за появяване на бутона -->
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const ctaButton = document.getElementById('cta-button');
@@ -412,27 +412,25 @@
         const isMobileView = window.innerWidth <= 992;
 
         if (isMobileView) {
-            // Прагът, при който бутонът става напълно видим.
-            // Изчислява се като 1/3 от общата височина на страницата.
-            const FADE_IN_THRESHOLD = document.body.scrollHeight / 3;
+            // Изчисляваме прага за пълна видимост: половината от височината на цялата страница
+            const threshold = document.documentElement.scrollHeight / 2;
 
             const updateButtonVisibility = () => {
-                // Изчислява прогреса на скролирането спрямо прага (от 0 до 1).
-                const progress = FADE_IN_THRESHOLD > 0 ? window.scrollY / FADE_IN_THRESHOLD : 0;
-                // Ограничава прозрачността до максимум 1.
-                const opacity = Math.min(progress, 1);
+                // Изчисляваме прозрачността (от 0 до 1) на база скрола спрямо прага
+                const opacity = Math.min(window.scrollY / threshold, 1);
                 
                 ctaButton.style.opacity = opacity;
-                // Бутонът става кликаем, след като е поне малко видим.
+                
+                // Правим бутона кликаем само когато е поне малко видим
                 ctaButton.style.pointerEvents = opacity > 0.1 ? 'auto' : 'none';
             };
 
-            // Задава началното състояние (прозрачен) при зареждане.
+            // Задаваме началното състояние (прозрачен) при зареждане
             updateButtonVisibility();
-            // Следи за скрол, за да обновява видимостта.
+            // Следим за скрол, за да обновяваме видимостта
             window.addEventListener('scroll', updateButtonVisibility);
         } else {
-            // За десктоп бутонът е винаги видим.
+            // За десктоп, бутонът е винаги видим
             ctaButton.style.opacity = 1;
         }
     });
