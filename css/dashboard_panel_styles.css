@@ -317,7 +317,10 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-list li.completed {
     background-color: var(--color-success-bg);
-    border-left: 4px solid var(--color-success);
+}
+
+.meal-list li.completed .meal-color-bar {
+    background-color: var(--color-success);
 }
 
 .meal-list li.completed .meal-name {

@@ -129,3 +129,41 @@ test('populates daily plan with color bars and meal types', async () => {
   expect(cards[1].dataset.mealType).toBe('lunch');
   expect(cards[2].dataset.mealType).toBe('dinner');
 });
+
+test('applies success color to completed meal bar', async () => {
+  jest.resetModules();
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const currentDayKey = dayNames[new Date().getDay()];
+  const mealStatusKey = `${currentDayKey}_0`;
+  const fullData = {
+    userName: 'Иван',
+    analytics: { current: {}, streak: {} },
+    planData: {
+      week1Menu: {
+        [currentDayKey]: [
+          { meal_name: 'Вкусен обяд', items: [] }
+        ]
+      }
+    },
+    dailyLogs: [{ date: new Date().toISOString().split('T')[0], data: { completedMealsStatus: { [mealStatusKey]: true } } }],
+    currentStatus: {},
+    initialData: {},
+    initialAnswers: {}
+  };
+  jest.unstable_mockModule('../app.js', () => ({
+    fullDashboardData: fullData,
+    todaysMealCompletionStatus: {},
+    planHasRecContent: false
+  }));
+  ({ populateUI } = await import('../populateUI.js'));
+
+  const style = document.createElement('style');
+  style.textContent = `#dailyMealList li.completed .meal-color-bar { background-color: rgb(46, 204, 113); }`;
+  document.head.appendChild(style);
+
+  populateUI();
+  const li = document.querySelector('#dailyMealList li.completed');
+  expect(li).not.toBeNull();
+  const color = getComputedStyle(li.querySelector('.meal-color-bar')).backgroundColor;
+  expect(color).toBe('rgb(46, 204, 113)');
+});
