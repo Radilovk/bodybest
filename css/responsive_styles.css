@@ -170,7 +170,7 @@
   nav.tabs.styled-tabs .tab-btn .tab-icon { font-size: 1.1em; }
   nav.tabs.styled-tabs .tab-btn .tab-label { font-size: 0.55rem; letter-spacing: 0.2px; }
 
-  .rating-square { width: 28px; height: 14px; /* gap: 4px; Това е за rating-squares container */ }
+  .rating-square { width: 28px; height: 28px; /* gap: 4px; This is for rating-squares container */ }
   .rating-squares { gap: 4px; }
 
 
