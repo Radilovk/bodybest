@@ -24,7 +24,8 @@ test('sends welcome email with correct options', async () => {
         body: JSON.stringify({
             to: 'client@example.com',
             subject: 'Добре дошъл в MyBody!',
-            message: expected
+            message: expected,
+            body: expected
         })
     }))
 })

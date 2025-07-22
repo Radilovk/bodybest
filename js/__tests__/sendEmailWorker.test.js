@@ -50,7 +50,7 @@ test('calls PHP endpoint on valid input', async () => {
   expect(fetch).toHaveBeenCalledWith(
     'https://mybody.best/mailer/mail.php',
     expect.objectContaining({
-      body: JSON.stringify({ to: 'a@b.bg', subject: 'S', message: 'B' }),
+      body: JSON.stringify({ to: 'a@b.bg', subject: 'S', message: 'B', body: 'B' }),
       headers: { 'Content-Type': 'application/json' }
     })
   );
@@ -70,7 +70,7 @@ test('sendEmail forwards data to PHP endpoint', async () => {
   expect(fetch).toHaveBeenCalledWith(
     'https://mybody.best/mailer/mail.php',
     expect.objectContaining({
-      body: JSON.stringify({ to: 't@e.com', subject: 'Hi', message: 'Body' }),
+      body: JSON.stringify({ to: 't@e.com', subject: 'Hi', message: 'Body', body: 'Body' }),
       headers: { 'Content-Type': 'application/json' }
     })
   );

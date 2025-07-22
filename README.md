@@ -876,6 +876,7 @@ wrangler secret list
 grep MAIL_PHP_URL .env
 ```
 Примерен PHP скрипт за изпращане на писма е наличен в [docs/mail_smtp.php](docs/mail_smtp.php). Настройте `MAIL_PHP_URL` да сочи към същия или сходен адрес.
+Скриптът приема JSON поле `body` или `message` и използва стойността като HTML съдържание на имейла.
 
 ### PHP script requirements
 
