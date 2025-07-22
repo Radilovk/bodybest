@@ -185,7 +185,8 @@
             padding: 16px 45px;
             border-radius: 50px;
             border: none;
-            transition: background-color 0.3s ease, transform 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.3s ease,
+                opacity 0.4s ease;
             display: inline-block;
             box-shadow: 0 0 5px var(--cta-glow-color);
             animation: pulse-glow-desktop 2.5s infinite ease-in-out;
@@ -193,6 +194,7 @@
 
         .cta-button--hidden {
             opacity: 0;
+            transform: translateY(20px);
             pointer-events: none;
         }
 
@@ -408,16 +410,7 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const cta = document.getElementById('cta-button');
-        const toggleCtaVisibility = () => {
-            const threshold = document.body.scrollHeight / 3;
-            if (window.scrollY > threshold) {
-                cta.classList.remove('cta-button--hidden');
-            } else {
-                cta.classList.add('cta-button--hidden');
-            }
-        };
-        toggleCtaVisibility();
-        window.addEventListener('scroll', toggleCtaVisibility);
+        setTimeout(() => cta.classList.remove('cta-button--hidden'), 400);
     });
     </script>
 </body>
