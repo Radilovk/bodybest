@@ -158,6 +158,8 @@ const ANALYSIS_READY_BODY_TEMPLATE = '<p>Здравей, {{name}}.</p>' +
     '<p>Вашият персонален анализ е готов. Можете да го видите <a href="{{link}}">тук</a>.</p>' +
     '<p>– Екипът на MyBody</p>';
 const ANALYSIS_PAGE_URL_VAR_NAME = 'ANALYSIS_PAGE_URL';
+const ANALYSIS_EMAIL_SUBJECT_VAR_NAME = 'ANALYSIS_EMAIL_SUBJECT';
+const ANALYSIS_EMAIL_BODY_VAR_NAME = 'ANALYSIS_EMAIL_BODY';
 
 async function sendWelcomeEmail(to, name, env) {
     const html = WELCOME_BODY_TEMPLATE.replace(/{{\s*name\s*}}/g, name);
@@ -185,8 +187,18 @@ async function isQuestionnaireEmailEnabled(env) {
 
 async function sendQuestionnaireConfirmationEmail(to, name, env) {
     if (!(await isQuestionnaireEmailEnabled(env))) return;
-    const subject = env?.[QUESTIONNAIRE_EMAIL_SUBJECT_VAR_NAME] || QUESTIONNAIRE_SUBJECT;
-    const tpl = env?.[QUESTIONNAIRE_EMAIL_BODY_VAR_NAME] || QUESTIONNAIRE_BODY_TEMPLATE;
+    let subject = env?.[QUESTIONNAIRE_EMAIL_SUBJECT_VAR_NAME];
+    let tpl = env?.[QUESTIONNAIRE_EMAIL_BODY_VAR_NAME];
+    if (!subject && env?.RESOURCES_KV) {
+        subject = await env.RESOURCES_KV.get('questionnaire_email_subject') || QUESTIONNAIRE_SUBJECT;
+    } else if (!subject) {
+        subject = QUESTIONNAIRE_SUBJECT;
+    }
+    if (!tpl && env?.RESOURCES_KV) {
+        tpl = await env.RESOURCES_KV.get('questionnaire_email_body') || QUESTIONNAIRE_BODY_TEMPLATE;
+    } else if (!tpl) {
+        tpl = QUESTIONNAIRE_BODY_TEMPLATE;
+    }
     const html = tpl.replace(/{{\s*name\s*}}/g, name);
     try {
         await sendEmailUniversal(to, subject, html, env);
@@ -196,8 +208,18 @@ async function sendQuestionnaireConfirmationEmail(to, name, env) {
 }
 
 async function sendAnalysisLinkEmail(to, name, link, env) {
-    const subject = env?.ANALYSIS_EMAIL_SUBJECT || ANALYSIS_READY_SUBJECT;
-    const tpl = env?.ANALYSIS_EMAIL_BODY || ANALYSIS_READY_BODY_TEMPLATE;
+    let subject = env?.[ANALYSIS_EMAIL_SUBJECT_VAR_NAME];
+    let tpl = env?.[ANALYSIS_EMAIL_BODY_VAR_NAME];
+    if (!subject && env?.RESOURCES_KV) {
+        subject = await env.RESOURCES_KV.get('analysis_email_subject') || ANALYSIS_READY_SUBJECT;
+    } else if (!subject) {
+        subject = ANALYSIS_READY_SUBJECT;
+    }
+    if (!tpl && env?.RESOURCES_KV) {
+        tpl = await env.RESOURCES_KV.get('analysis_email_body') || ANALYSIS_READY_BODY_TEMPLATE;
+    } else if (!tpl) {
+        tpl = ANALYSIS_READY_BODY_TEMPLATE;
+    }
     if (!tpl.includes('{{name}}')) {
         console.warn('ANALYSIS_EMAIL_BODY missing {{name}} placeholder');
     }
