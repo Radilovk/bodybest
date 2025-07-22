@@ -127,3 +127,38 @@ test('populates daily plan with color bars and meal types', async () => {
   expect(cards[0].dataset.mealType).toBe('lunch');
   expect(cards[1].dataset.mealType).toBe('dinner');
 });
+
+test('detects meal type variants correctly', async () => {
+  jest.resetModules();
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const currentDayKey = dayNames[new Date().getDay()];
+  const fullData = {
+    userName: 'Иван',
+    analytics: { current: {}, streak: {} },
+    planData: {
+      week1Menu: {
+        [currentDayKey]: [
+          { meal_name: 'Бърз обед', items: [] },
+          { meal_name: 'Късен обяд', items: [] },
+          { meal_name: 'Вечерно хранене', items: [] }
+        ]
+      }
+    },
+    dailyLogs: [],
+    currentStatus: {},
+    initialData: {},
+    initialAnswers: {}
+  };
+  jest.unstable_mockModule('../app.js', () => ({
+    fullDashboardData: fullData,
+    todaysMealCompletionStatus: {},
+    planHasRecContent: false
+  }));
+  ({ populateUI } = await import('../populateUI.js'));
+  populateUI();
+  const cards = document.querySelectorAll('#dailyMealList .meal-card');
+  expect(cards.length).toBe(3);
+  expect(cards[0].dataset.mealType).toBe('lunch');
+  expect(cards[1].dataset.mealType).toBe('lunch');
+  expect(cards[2].dataset.mealType).toBe('dinner');
+});
