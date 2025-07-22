@@ -59,7 +59,8 @@
 
   --progress-bar-bg-empty: #e9ecef;
   --progress-gradient: linear-gradient(to right, var(--color-danger), var(--color-warning), var(--color-success));
-  --progress-bar-height: 1rem; 
+  --progress-bar-glow-color: var(--color-success);
+  --progress-bar-height: 1rem;
   --progress-bar-radius: var(--radius-sm);
 
   --toast-bg: rgba(44, 62, 80, 0.95); --toast-text: #fff; --toast-radius: var(--radius-md);
