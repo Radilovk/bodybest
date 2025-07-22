@@ -318,7 +318,6 @@ function handleDelegatedClicks(event) {
                 s.classList.remove('filled'); for(let i=1; i<=5; i++) s.classList.remove(`level-${i}`);
                 if (sValue <= selectedValue) s.classList.add('filled', `level-${sValue}`);
             });
-            metricRatingDiv.classList.toggle('active', selectedValue > 0);
         }
     }
 
