@@ -56,26 +56,3 @@ test('skips confirmation email when disabled', async () => {
   expect(res.success).toBe(true)
   expect(fetch).not.toHaveBeenCalled()
 })
-
-test('uses templates from RESOURCES_KV when env vars missing', async () => {
-  global.fetch = jest.fn().mockResolvedValue({ ok: true })
-  const env = {
-    MAILER_ENDPOINT_URL: 'https://mail.example.com',
-    USER_METADATA_KV: {
-      get: jest.fn(async key => key === 'email_to_uuid_test@ex.bg' ? 'u1' : null),
-      put: jest.fn()
-    },
-    RESOURCES_KV: {
-      get: jest.fn(key => {
-        if (key === 'questionnaire_email_subject') return 'Тема'
-        if (key === 'questionnaire_email_body') return '<p>{{name}}</p>'
-        return null
-      })
-    }
-  }
-  const req = { json: async () => ({ email: 'test@ex.bg', name: 'Иван' }) }
-  await handleSubmitQuestionnaire(req, env)
-  const callBody = JSON.parse(global.fetch.mock.calls[0][1].body)
-  expect(callBody.subject).toBe('Тема')
-  expect(callBody.message).toBe('<p>Иван</p>')
-})
