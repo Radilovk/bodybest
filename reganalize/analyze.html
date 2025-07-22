@@ -412,17 +412,27 @@
         const isMobileView = window.innerWidth <= 992;
 
         if (isMobileView) {
-            const FADE_IN_DISTANCE = 250; 
+            // Прагът, при който бутонът става напълно видим.
+            // Изчислява се като 1/3 от общата височина на страницата.
+            const FADE_IN_THRESHOLD = document.body.scrollHeight / 3;
 
             const updateButtonVisibility = () => {
-                const opacity = Math.min(window.scrollY / FADE_IN_DISTANCE, 1);
+                // Изчислява прогреса на скролирането спрямо прага (от 0 до 1).
+                const progress = FADE_IN_THRESHOLD > 0 ? window.scrollY / FADE_IN_THRESHOLD : 0;
+                // Ограничава прозрачността до максимум 1.
+                const opacity = Math.min(progress, 1);
+                
                 ctaButton.style.opacity = opacity;
+                // Бутонът става кликаем, след като е поне малко видим.
                 ctaButton.style.pointerEvents = opacity > 0.1 ? 'auto' : 'none';
             };
 
+            // Задава началното състояние (прозрачен) при зареждане.
             updateButtonVisibility();
+            // Следи за скрол, за да обновява видимостта.
             window.addEventListener('scroll', updateButtonVisibility);
         } else {
+            // За десктоп бутонът е винаги видим.
             ctaButton.style.opacity = 1;
         }
     });
