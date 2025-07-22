@@ -190,6 +190,8 @@
             box-shadow: 0 0 5px var(--cta-glow-color);
             animation: pulse-glow-desktop 2.5s infinite ease-in-out;
             opacity: 1;
+            /* Added margin for spacing on desktop */
+            margin-top: 40px;
         }
 
         .cta-button:hover {
@@ -203,7 +205,7 @@
         /* --- Mobile CTA --- */
         @media (max-width: 992px) {
             .cta-section {
-                padding-bottom: 90px; /* Space for the fixed button */
+                padding-bottom: 120px; /* Increased padding to ensure space */
             }
 
             .cta-button {
@@ -217,6 +219,7 @@
                 padding: 12px 30px;
                 z-index: 1000;
                 animation-name: pulse-glow-mobile;
+                margin-top: 0; /* Reset margin for mobile */
             }
 
             .cta-button:hover {
@@ -277,10 +280,12 @@
             </div>
 
             <p class="cta-final-pitch">Информацията е сила, но само когато се действа по нея.</p>
-            <a id="cta-button" href="https://radilovk.github.io/bodybest/index.html" class="cta-button">
-                <i class="fas fa-rocket"></i> Започнете Вашата Трансформация
-            </a>
-        </div>
+        </div> <!-- КРАЙ НА <div class="container reveal"> -->
+
+        <!-- БУТОНЪТ Е ПРЕМЕСТЕН ТУК, ЗА ДА НЕ Е В АНИМИРАНИЯ КОНТЕЙНЕР -->
+        <a id="cta-button" href="https://radilovk.github.io/bodybest/index.html" class="cta-button">
+            <i class="fas fa-rocket"></i> Започнете Вашата Трансформация
+        </a>
     </section>
 
     <footer><p id="footer-text"></p></footer>
@@ -404,33 +409,20 @@
     document.addEventListener('DOMContentLoaded', () => {
         const ctaButton = document.getElementById('cta-button');
 
-        // Проверяваме дали сме на мобилно устройство по ширината на екрана
         const isMobileView = window.innerWidth <= 992;
 
-        // Прилагаме логиката САМО за мобилни устройства
         if (isMobileView) {
-            // Разстоянието в пиксели, за което бутонът ще стане напълно видим
             const FADE_IN_DISTANCE = 250; 
 
             const updateButtonVisibility = () => {
-                // Изчисляваме прозрачността (от 0 до 1) спрямо скрола
                 const opacity = Math.min(window.scrollY / FADE_IN_DISTANCE, 1);
-                
                 ctaButton.style.opacity = opacity;
-                
-                // Правим бутона кликаем само когато е поне малко видим
                 ctaButton.style.pointerEvents = opacity > 0.1 ? 'auto' : 'none';
             };
 
-            // Задаваме началното състояние веднага при зареждане:
-            // бутонът е на екрана, но напълно прозрачен и некликаем.
             updateButtonVisibility();
-
-            // Обновяваме видимостта при всяко скролиране
             window.addEventListener('scroll', updateButtonVisibility);
         } else {
-            // За десктоп, просто се уверяваме, че бутонът е винаги видим,
-            // тъй като той си стои в края на страницата.
             ctaButton.style.opacity = 1;
         }
     });
