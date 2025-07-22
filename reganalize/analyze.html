@@ -158,10 +158,54 @@
             border-radius: 50px;
             transition: all 0.3s ease;
             display: inline-block;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); /* Initial shadow */
+            animation: pulse-glow 2s infinite; /* NEW: Added pulse animation */
         }
         .cta-button:hover { background-color: var(--accent-color); transform: scale(1.05); }
 
         footer { text-align: center; padding: 40px 20px; font-size: 0.9em; color: #718096; }
+
+        /* --- NEW STYLES for Button Animation and Mobile Sticky --- */
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); /* accent-color */
+            }
+            70% {
+                box-shadow: 0 0 0 12px rgba(79, 70, 229, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+            }
+        }
+        
+        .cta-button-wrapper {
+             /* This wrapper is used for the sticky positioning on mobile */
+        }
+        
+        @media (max-width: 768px) {
+            .cta-button-wrapper {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: rgba(26, 32, 44, 0.9); /* heading-color with transparency */
+                padding: 15px;
+                z-index: 1000;
+                text-align: center;
+                box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .cta-section {
+                 /* Adjust padding on mobile to avoid overlap with the new sticky bar */
+                padding-bottom: 40px;
+            }
+            body {
+                /* Add space at the bottom so the footer isn't hidden by the sticky bar */
+                padding-bottom: 120px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -216,9 +260,13 @@
             </div>
 
             <p class="cta-final-pitch">Информацията е сила, но само когато се действа по нея.</p>
-            <a id="cta-button" href="#" class="cta-button">
-                <i class="fas fa-rocket"></i> Започнете Вашата Трансформация
-            </a>
+            
+            <!-- NEW: Wrapper added for sticky positioning on mobile -->
+            <div class="cta-button-wrapper">
+                <a id="cta-button" href="https://radilovk.github.io/bodybest/index.html" class="cta-button">
+                    <i class="fas fa-rocket"></i> Започнете Вашата Трансформация
+                </a>
+            </div>
         </div>
     </section>
 
@@ -273,7 +321,7 @@
             document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
             document.getElementById('dashboard-grid').innerHTML = generateDashboardHTML(data.healthDashboard);
             document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
-            document.getElementById('cta-button').href = data.callToAction.buttonLink; // Link is set, text is static in HTML
+            // document.getElementById('cta-button').href = data.callToAction.buttonLink; // REMOVED: Link is now static in HTML.
             document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} MyBody.Best. Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
             
             setupAnimations();
