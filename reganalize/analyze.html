@@ -191,6 +191,11 @@
             animation: pulse-glow-desktop 2.5s infinite ease-in-out;
         }
 
+        .cta-button--hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
         .cta-button:hover {
             background-color: var(--cta-hover-color);
             transform: scale(1.08);
@@ -207,10 +212,10 @@
 
             .cta-button {
                 position: fixed;
-                bottom: 20px;
+                bottom: 12px;
                 left: 50%;
                 transform: translateX(-50%);
-                width: 85%;
+                width: 80%;
                 max-width: 340px;
                 font-size: 1.1em;
                 padding: 12px 30px;
@@ -276,7 +281,7 @@
             </div>
 
             <p class="cta-final-pitch">Информацията е сила, но само когато се действа по нея.</p>
-            <a id="cta-button" href="https://radilovk.github.io/bodybest/index.html" class="cta-button">
+            <a id="cta-button" href="https://radilovk.github.io/bodybest/index.html" class="cta-button cta-button--hidden">
                 <i class="fas fa-rocket"></i> Започнете Вашата Трансформация
             </a>
         </div>
@@ -397,6 +402,22 @@
                     document.body.innerHTML = '<h1>Грешка при зареждане на анализа.</h1>';
                 });
         }
+    });
+    </script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const cta = document.getElementById('cta-button');
+        const toggleCtaVisibility = () => {
+            const threshold = document.body.scrollHeight / 3;
+            if (window.scrollY > threshold) {
+                cta.classList.remove('cta-button--hidden');
+            } else {
+                cta.classList.add('cta-button--hidden');
+            }
+        };
+        toggleCtaVisibility();
+        window.addEventListener('scroll', toggleCtaVisibility);
     });
     </script>
 </body>
