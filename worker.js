@@ -256,6 +256,7 @@ const ADAPTIVE_QUIZ_ANSWERS_LOOKBACK_DAYS = 35; // Колко назад да т
 const PREVIOUS_QUIZZES_FOR_CONTEXT_COUNT = 2; // Брой предишни въпросници за контекст при генериране на нов
 const AUTOMATED_FEEDBACK_TRIGGER_DAYS = 3; // След толкова дни предлагаме автоматичен чат
 const PRAISE_INTERVAL_DAYS = 3; // Интервал за нова похвала/значка
+const MEDAL_EMOJIS = ['🥇', '🥈', '🥉', '🏆', '🎖️', '🏅', '🏵️', '🎊', '🔥', '💯', '🎯', '🎉', '🚀', '✨'];
 const AI_CONFIG_KEYS = [
     'model_plan_generation',
     'model_chat',
@@ -1477,7 +1478,13 @@ async function handleGetAchievementsRequest(request, env) {
         const userId = url.searchParams.get('userId');
         if (!userId) return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
         const achStr = await env.USER_METADATA_KV.get(`${userId}_achievements`);
-        const achievements = safeParseJson(achStr, []);
+        let achievements = safeParseJson(achStr, []);
+        let updated = false;
+        achievements = achievements.map(a => {
+            if (!a.emoji) { a.emoji = MEDAL_EMOJIS[Math.floor(Math.random() * MEDAL_EMOJIS.length)]; updated = true; }
+            return a;
+        });
+        if (updated) await env.USER_METADATA_KV.put(`${userId}_achievements`, JSON.stringify(achievements));
         return { success: true, achievements };
     } catch (error) {
         console.error('Error in handleGetAchievementsRequest:', error.message, error.stack);
@@ -1500,11 +1507,12 @@ async function handleGeneratePraiseRequest(request, env) {
         if (!lastTsStr && achievements.length === 0) {
             const title = 'Първа стъпка';
             const message = 'Ти направи нещо, което мнозина отлагат с месеци, години, а други въобще не започват — реши да направиш първата крачка към твоето по-добро АЗ.\nОттук нататък ние сме част от твоята кауза и стъпките, които правиш с нашата подкрепа ще донесат резултат\nСамото присъствие тук вече те отличава!';
-            const newAch = { date: now, title, message };
+            const emoji = MEDAL_EMOJIS[Math.floor(Math.random() * MEDAL_EMOJIS.length)];
+            const newAch = { date: now, title, message, emoji };
             achievements.push(newAch);
             await env.USER_METADATA_KV.put(`${userId}_achievements`, JSON.stringify(achievements));
             await env.USER_METADATA_KV.put(`${userId}_last_praise_ts`, now.toString());
-            return { success: true, title, message };
+            return { success: true, title, message, emoji };
         }
 
         if (lastTsStr && now - parseInt(lastTsStr, 10) < PRAISE_INTERVAL_DAYS * 86400000) {
@@ -1602,14 +1610,15 @@ async function handleGeneratePraiseRequest(request, env) {
             }
         }
 
-        const newAch = { date: now, title, message };
+        const emoji = MEDAL_EMOJIS[Math.floor(Math.random() * MEDAL_EMOJIS.length)];
+        const newAch = { date: now, title, message, emoji };
         achievements.push(newAch);
         if (achievements.length > 7) achievements.shift();
         await env.USER_METADATA_KV.put(`${userId}_achievements`, JSON.stringify(achievements));
         await env.USER_METADATA_KV.put(`${userId}_last_praise_ts`, now.toString());
         await env.USER_METADATA_KV.put(`${userId}_last_praise_analytics`, JSON.stringify(currentSnapshot));
 
-        return { success: true, title, message };
+        return { success: true, title, message, emoji };
     } catch (error) {
         console.error('Error in handleGeneratePraiseRequest:', error.message, error.stack);
         return { success: false, message: 'Грешка при генериране на похвала.', statusHint: 500 };

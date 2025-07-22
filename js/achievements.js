@@ -45,12 +45,21 @@ export async function initializeAchievements(userId) {
     }
     if (currentUserId) localStorage.setItem('achievements_user_id', currentUserId);
     achievements = JSON.parse(localStorage.getItem(`achievements_${currentUserId}`) || '[]');
+    let updated = false;
+    achievements = achievements.map(a => {
+        if (!a.emoji) { a.emoji = medalEmojis[Math.floor(Math.random() * medalEmojis.length)]; updated = true; }
+        return a;
+    });
+    if (updated) saveAchievements();
     if (currentUserId) {
         try {
             const res = await fetch(`${apiEndpoints.getAchievements}?userId=${currentUserId}`);
             const data = await res.json();
             if (res.ok && data.success && Array.isArray(data.achievements)) {
-                achievements = data.achievements;
+                achievements = data.achievements.map(a => {
+                    if (!a.emoji) { a.emoji = medalEmojis[Math.floor(Math.random() * medalEmojis.length)]; updated = true; }
+                    return a;
+                });
                 saveAchievements();
             }
         } catch (err) { console.warn('Неуспешно зареждане на постижения:', err); }
@@ -88,9 +97,9 @@ function renderAchievements(newIndex = -1) {
     if (selectors.streakCount) selectors.streakCount.textContent = achievements.length;
 }
 
-export function createAchievement(title, message) {
-    const emoji = medalEmojis[Math.floor(Math.random() * medalEmojis.length)];
-    achievements.push({ date: Date.now(), title, message, emoji });
+export function createAchievement(title, message, emoji = null) {
+    const chosen = emoji || medalEmojis[Math.floor(Math.random() * medalEmojis.length)];
+    achievements.push({ date: Date.now(), title, message, emoji: chosen });
     if (achievements.length > 7) achievements.shift();
     saveAchievements();
     renderAchievements(achievements.length - 1);
@@ -98,7 +107,7 @@ export function createAchievement(title, message) {
     const modalTitle = document.getElementById('achievementModalTitle');
     if (body) body.textContent = message;
     if (modalTitle) modalTitle.textContent = title;
-    showAchievementEmoji(emoji);
+    showAchievementEmoji(chosen);
     openModal('achievementModal');
     localStorage.setItem('lastPraiseDate', String(Date.now()));
 }
@@ -126,7 +135,7 @@ async function fetchPraiseAndCreate(userId) {
         });
         const data = await response.json();
         if (response.ok && data.success && data.title && data.message) {
-            createAchievement(data.title, data.message);
+            createAchievement(data.title, data.message, data.emoji);
         }
     } catch (err) {
         console.warn('Грешка при извличане на похвала:', err);
