@@ -99,6 +99,8 @@ const questionnaireEmailSubjectInput = document.getElementById('questionnaireEma
 const questionnaireEmailBodyInput = document.getElementById('questionnaireEmailBody');
 const analysisEmailSubjectInput = document.getElementById('analysisEmailSubject');
 const analysisEmailBodyInput = document.getElementById('analysisEmailBody');
+const sendQuestionnaireEmailCheckbox = document.getElementById('sendQuestionnaireEmail');
+const sameEmailContentCheckbox = document.getElementById('sameEmailContent');
 const testEmailForm = document.getElementById('testEmailForm');
 const testEmailToInput = document.getElementById('testEmailTo');
 const testEmailSubjectInput = document.getElementById('testEmailSubject');
@@ -1273,7 +1275,8 @@ async function loadEmailSettings() {
             'questionnaire_email_subject',
             'questionnaire_email_body',
             'analysis_email_subject',
-            'analysis_email_body'
+            'analysis_email_body',
+            'send_questionnaire_email'
         ])
         if (welcomeEmailSubjectInput) welcomeEmailSubjectInput.value = cfg.welcome_email_subject || ''
         if (welcomeEmailBodyInput) {
@@ -1290,6 +1293,10 @@ async function loadEmailSettings() {
             analysisEmailBodyInput.value = cfg.analysis_email_body || ''
             if (analysisEmailPreview) analysisEmailPreview.innerHTML = sanitizeHTML(analysisEmailBodyInput.value)
         }
+        if (sendQuestionnaireEmailCheckbox) {
+            const val = cfg.send_questionnaire_email
+            sendQuestionnaireEmailCheckbox.checked = val !== '0' && val !== 'false'
+        }
     } catch (err) {
         console.error('Error loading email settings:', err)
     }
@@ -1302,8 +1309,9 @@ async function saveEmailSettings() {
             welcome_email_body: welcomeEmailBodyInput ? welcomeEmailBodyInput.value.trim() : '',
             questionnaire_email_subject: questionnaireEmailSubjectInput ? questionnaireEmailSubjectInput.value.trim() : '',
             questionnaire_email_body: questionnaireEmailBodyInput ? questionnaireEmailBodyInput.value.trim() : '',
-            analysis_email_subject: analysisEmailSubjectInput ? analysisEmailSubjectInput.value.trim() : '',
-            analysis_email_body: analysisEmailBodyInput ? analysisEmailBodyInput.value.trim() : ''
+            analysis_email_subject: (sameEmailContentCheckbox?.checked ? questionnaireEmailSubjectInput?.value.trim() : analysisEmailSubjectInput?.value.trim()) || '',
+            analysis_email_body: (sameEmailContentCheckbox?.checked ? questionnaireEmailBodyInput?.value.trim() : analysisEmailBodyInput?.value.trim()) || '',
+            send_questionnaire_email: sendQuestionnaireEmailCheckbox && sendQuestionnaireEmailCheckbox.checked ? '1' : '0'
     }
     try {
         await saveConfig(updates)
@@ -1641,6 +1649,32 @@ document.addEventListener('DOMContentLoaded', () => {
     attachEmailPreview(questionnaireEmailBodyInput, questionnaireEmailPreview);
     attachEmailPreview(analysisEmailBodyInput, analysisEmailPreview);
     attachEmailPreview(testEmailBodyInput, testEmailPreview);
+
+    if (sameEmailContentCheckbox) {
+        const updateAnalysisFields = () => {
+            const checked = sameEmailContentCheckbox.checked;
+            analysisEmailSubjectInput.disabled = checked;
+            analysisEmailBodyInput.disabled = checked;
+            if (checked) {
+                analysisEmailSubjectInput.value = questionnaireEmailSubjectInput?.value || '';
+                analysisEmailBodyInput.value = questionnaireEmailBodyInput?.value || '';
+                if (analysisEmailPreview) analysisEmailPreview.innerHTML = sanitizeHTML(analysisEmailBodyInput.value);
+            }
+        };
+        sameEmailContentCheckbox.addEventListener('change', updateAnalysisFields);
+        questionnaireEmailSubjectInput?.addEventListener('input', () => {
+            if (sameEmailContentCheckbox.checked) {
+                analysisEmailSubjectInput.value = questionnaireEmailSubjectInput.value;
+            }
+        });
+        questionnaireEmailBodyInput?.addEventListener('input', () => {
+            if (sameEmailContentCheckbox.checked) {
+                analysisEmailBodyInput.value = questionnaireEmailBodyInput.value;
+                if (analysisEmailPreview) analysisEmailPreview.innerHTML = sanitizeHTML(analysisEmailBodyInput.value);
+            }
+        });
+        updateAnalysisFields();
+    }
 
     // Стартира асинхронните операции в отделен IIFE,
     // за да не блокират работата на интерфейса
