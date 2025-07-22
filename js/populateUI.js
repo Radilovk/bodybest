@@ -318,11 +318,11 @@ function populateDashboardLog(dailyLogs, currentStatus, initialData) {
     trackerDiv.appendChild(weightMetricDiv);
 
     const metrics = [
-        { key: 'mood', label: 'Настроение', icon: '<i class="bi bi-emoji-smile"></i>', defaultVal: 3 },
-        { key: 'energy', label: 'Енергия', icon: '<i class="bi bi-lightning-charge"></i>', defaultVal: 3 },
-        { key: 'calmness', label: 'Спокойствие', icon: '<i class="bi bi-yin-yang"></i>', defaultVal: 3 },
-        { key: 'hydration', label: 'Хидратация', icon: '<i class="bi bi-droplet"></i>', defaultVal: 3 },
-        { key: 'sleep', label: 'Сън (нощен)', icon: '<i class="bi bi-moon"></i>', defaultVal: 3 }
+        { key: 'mood', label: 'Настроение', icon: '😊', defaultVal: 3 },
+        { key: 'energy', label: 'Енергия', icon: '⚡️', defaultVal: 3 },
+        { key: 'calmness', label: 'Спокойствие', icon: '🧘', defaultVal: 3 },
+        { key: 'hydration', label: 'Хидратация', icon: '💧', defaultVal: 3 },
+        { key: 'sleep', label: 'Сън (нощен)', icon: '😴', defaultVal: 3 }
     ];
     metrics.forEach(metric => {
         const metricDiv = document.createElement('div');
@@ -349,7 +349,6 @@ function populateDashboardLog(dailyLogs, currentStatus, initialData) {
                 }).join('')}
             </div>
             <input type="hidden" id="${metric.key}-rating-input" value="${currentValue}">`;
-        if(currentValue > 0) metricDiv.classList.add('active');
         trackerDiv.appendChild(metricDiv);
     });
 
