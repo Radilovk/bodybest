@@ -197,8 +197,25 @@ async function sendQuestionnaireConfirmationEmail(to, name, env) {
 }
 
 async function sendAnalysisLinkEmail(to, name, link, env) {
-    const subject = env?.ANALYSIS_EMAIL_SUBJECT || ANALYSIS_READY_SUBJECT;
-    const tpl = env?.ANALYSIS_EMAIL_BODY || ANALYSIS_READY_BODY_TEMPLATE;
+    let subject = env?.ANALYSIS_EMAIL_SUBJECT;
+    if (!subject && env.RESOURCES_KV) {
+        try {
+            subject = await env.RESOURCES_KV.get('analysis_email_subject');
+        } catch {
+            subject = null;
+        }
+    }
+    if (!subject) subject = ANALYSIS_READY_SUBJECT;
+
+    let tpl = env?.ANALYSIS_EMAIL_BODY;
+    if (!tpl && env.RESOURCES_KV) {
+        try {
+            tpl = await env.RESOURCES_KV.get('analysis_email_body');
+        } catch {
+            tpl = null;
+        }
+    }
+    tpl = tpl || ANALYSIS_READY_BODY_TEMPLATE;
     if (!tpl.includes('{{name}}')) {
         console.warn('ANALYSIS_EMAIL_BODY missing {{name}} placeholder');
     }
