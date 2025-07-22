@@ -24,6 +24,11 @@
             --color-medium: #f59e0b;
             --color-ok: #3b82f6;
             --color-low: #10b981;
+
+            /* --- New CTA Colors --- */
+            --cta-color: #08D9D6; /* Vibrant Cyan */
+            --cta-hover-color: #07c4c1; /* Darker Cyan */
+            --cta-glow-color: rgba(8, 217, 214, 0.7);
         }
 
         @keyframes fadeInUp {
@@ -31,12 +36,27 @@
             to { opacity: 1; transform: translateY(0); }
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        /* --- NEW ANIMATION FOR CTA BUTTON --- */
-        @keyframes pulse-glow {
-            0% { box-shadow: 0 0 5px rgba(45, 212, 191, 0.3), 0 0 10px rgba(168, 85, 247, 0.2); }
-            50% { box-shadow: 0 0 20px rgba(45, 212, 191, 0.7), 0 0 30px rgba(168, 85, 247, 0.5); }
-            100% { box-shadow: 0 0 5px rgba(45, 212, 191, 0.3), 0 0 10px rgba(168, 85, 247, 0.2); }
+
+        @keyframes pulse-glow-desktop {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 5px var(--cta-glow-color), 0 0 10px var(--cta-glow-color);
+            }
+            50% {
+                transform: scale(1.03);
+                box-shadow: 0 0 15px var(--cta-glow-color), 0 0 25px var(--cta-glow-color);
+            }
+        }
+
+        @keyframes pulse-glow-mobile {
+            0%, 100% {
+                transform: translateX(-50%) scale(1);
+                box-shadow: 0 0 5px var(--cta-glow-color), 0 0 10px var(--cta-glow-color);
+            }
+            50% {
+                transform: translateX(-50%) scale(1.03);
+                box-shadow: 0 0 15px var(--cta-glow-color), 0 0 25px var(--cta-glow-color);
+            }
         }
 
         /* --- Global Styles --- */
@@ -156,50 +176,48 @@
             color: rgba(255, 255, 255, 0.9);
         }
         
-        /* --- MODIFIED CTA BUTTON STYLES --- */
         .cta-button {
-            background: linear-gradient(45deg, #a855f7, #2dd4bf);
-            color: white;
+            background-color: var(--cta-color);
+            color: var(--heading-color);
             font-size: 1.2em;
             font-weight: 700;
             text-decoration: none;
             padding: 16px 45px;
             border-radius: 50px;
-            transition: all 0.3s ease;
-            display: inline-block;
             border: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            animation: pulse-glow 2.5s infinite ease-in-out;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            display: inline-block;
+            box-shadow: 0 0 5px var(--cta-glow-color);
+            animation: pulse-glow-desktop 2.5s infinite ease-in-out;
         }
+
         .cta-button:hover {
-            background: linear-gradient(45deg, #c084fc, #5eead4);
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            background-color: var(--cta-hover-color);
+            transform: scale(1.08);
+            animation-play-state: paused;
         }
 
         footer { text-align: center; padding: 40px 20px; font-size: 0.9em; color: #718096; }
 
-        /* --- NEW: STICKY CTA FOR MOBILE --- */
-        @media (max-width: 767px) {
-            body {
-                /* Add padding to prevent content from being hidden behind the button */
-                padding-bottom: 80px; 
+        /* --- Mobile CTA --- */
+        @media (max-width: 768px) {
+            .cta-section {
+                padding-bottom: 120px; /* Space for the fixed button */
             }
+
             .cta-button {
                 position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                width: 100%;
-                border-radius: 0;
-                padding: 20px;
-                text-align: center;
-                font-size: 1.1em;
+                bottom: 20px;
+                left: 50%;
+                width: 90%;
+                max-width: 400px;
                 z-index: 1000;
-                margin: 0;
+                transform: translateX(-50%);
+                animation-name: pulse-glow-mobile;
             }
+
             .cta-button:hover {
-                transform: none; /* Disable scaling on fixed button */
+                transform: translateX(-50%) scale(1.08);
             }
         }
     </style>
@@ -256,7 +274,6 @@
             </div>
 
             <p class="cta-final-pitch">Информацията е сила, но само когато се действа по нея.</p>
-            <!-- LINK MODIFIED HERE -->
             <a id="cta-button" href="https://radilovk.github.io/bodybest/index.html" class="cta-button">
                 <i class="fas fa-rocket"></i> Започнете Вашата Трансформация
             </a>
@@ -314,7 +331,7 @@
             document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
             document.getElementById('dashboard-grid').innerHTML = generateDashboardHTML(data.healthDashboard);
             document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
-            // document.getElementById('cta-button').href = data.callToAction.buttonLink; // LINK IS NOW STATIC IN HTML, THIS LINE IS REMOVED
+            // document.getElementById('cta-button').href = data.callToAction.buttonLink; // Link is now static in HTML
             document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} MyBody.Best. Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
             
             setupAnimations();
