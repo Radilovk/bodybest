@@ -339,7 +339,14 @@ body.dark-theme .detailed-metric-item .value-current {
 .tracker .metric-rating label[data-tooltip-key]:focus-within .metric-info-btn { 
     cursor: help;
 }
-.tracker .metric-rating label .metric-icon { font-size: 1.2em; margin-right: 0.1em; } 
+.tracker .metric-rating label .metric-icon {
+  font-size: 1.2em;
+  margin-right: 0.1em;
+  color: var(--text-color-secondary);
+}
+.tracker .metric-rating.active label .metric-icon {
+  color: var(--text-color-primary);
+}
 .tracker .metric-rating .rating-value {
   font-weight: 700; color: var(--primary-color);
   background: color-mix(in srgb, var(--primary-color) 10%, transparent);
@@ -385,10 +392,13 @@ body.dark-theme .detailed-metric-item .value-current {
   max-width: 200px; /* Ограничена ширина */
 }
 .rating-square {
-  width: 32px; height: 32px; background-color: var(--rating-empty-bg);
-  border: 1px solid var(--rating-border); border-radius: var(--radius-sm);
+  width: 32px;
+  height: 16px;
+  background-color: transparent;
+  border: 1px solid var(--border-color-soft);
+  border-radius: var(--radius-sm);
   transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
-  flex-basis: calc(20% - 5px); /* За 5 квадратчета с gap 6px (4 gaps * 6px = 24px) */
+  flex-basis: calc(20% - 5px); /* За 5 правоъгълника с gap 6px (4 gaps * 6px = 24px) */
 }
 .rating-square:hover { transform: scale(1.1); }
 .rating-square.filled.level-1 { background-color: var(--rating-1); border-color: var(--rating-1); }
@@ -396,6 +406,28 @@ body.dark-theme .detailed-metric-item .value-current {
 .rating-square.filled.level-3 { background-color: var(--rating-3); border-color: var(--rating-3); }
 .rating-square.filled.level-4 { background-color: var(--rating-4); border-color: var(--rating-4); }
 .rating-square.filled.level-5 { background-color: var(--rating-5); border-color: var(--rating-5); }
+
+/* Цветове за Дневен Лог */
+#dailyTracker [data-metric-key="mood"] .rating-square.filled {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+#dailyTracker [data-metric-key="energy"] .rating-square.filled {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+}
+#dailyTracker [data-metric-key="calmness"] .rating-square.filled {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+#dailyTracker [data-metric-key="hydration"] .rating-square.filled {
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+}
+#dailyTracker [data-metric-key="sleep"] .rating-square.filled {
+  background-color: var(--color-warning);
+  border-color: var(--color-warning);
+}
 
 .tooltip-tracker {
     position: absolute;
