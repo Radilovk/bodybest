@@ -407,27 +407,6 @@ body.dark-theme .detailed-metric-item .value-current {
 .rating-square.filled.level-4 { background-color: var(--rating-4); border-color: var(--rating-4); }
 .rating-square.filled.level-5 { background-color: var(--rating-5); border-color: var(--rating-5); }
 
-/* Цветове за Дневен Лог */
-#dailyTracker [data-metric-key="mood"] .rating-square.filled {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
-}
-#dailyTracker [data-metric-key="energy"] .rating-square.filled {
-  background-color: var(--secondary-color);
-  border-color: var(--secondary-color);
-}
-#dailyTracker [data-metric-key="calmness"] .rating-square.filled {
-  background-color: var(--accent-color);
-  border-color: var(--accent-color);
-}
-#dailyTracker [data-metric-key="hydration"] .rating-square.filled {
-  background-color: var(--color-success);
-  border-color: var(--color-success);
-}
-#dailyTracker [data-metric-key="sleep"] .rating-square.filled {
-  background-color: var(--color-warning);
-  border-color: var(--color-warning);
-}
 
 .tooltip-tracker {
     position: absolute;
