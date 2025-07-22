@@ -41,3 +41,18 @@ test('works without email configuration', async () => {
   expect(res.success).toBe(true)
   expect(fetch).toHaveBeenCalledWith('https://mybody.best/mailer/mail.php', expect.any(Object))
 })
+
+test('skips confirmation email when disabled', async () => {
+  global.fetch = jest.fn().mockResolvedValue({ ok: true })
+  const env = {
+    SEND_QUESTIONNAIRE_EMAIL: '0',
+    USER_METADATA_KV: {
+      get: jest.fn(async key => key === 'email_to_uuid_a@b.bg' ? 'u1' : null),
+      put: jest.fn()
+    }
+  }
+  const req = { json: async () => ({ email: 'a@b.bg' }) }
+  const res = await handleSubmitQuestionnaire(req, env)
+  expect(res.success).toBe(true)
+  expect(fetch).not.toHaveBeenCalled()
+})

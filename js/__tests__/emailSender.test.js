@@ -16,7 +16,7 @@ test('uses MAILER_ENDPOINT_URL when provided', async () => {
   expect(fetch).toHaveBeenCalledWith('https://api.mail/send', expect.objectContaining({
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ to: 'a@b.bg', subject: 'S', message: 'B' })
+    body: JSON.stringify({ to: 'a@b.bg', subject: 'S', message: 'B', body: 'B' })
   }));
   fetch.mockRestore();
 });
