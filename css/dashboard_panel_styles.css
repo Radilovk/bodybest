@@ -238,6 +238,19 @@ body.dark-theme .detailed-metric-item .value-current {
   position: relative;
 }
 
+/* Цветни фонове спрямо типа хранене */
+.meal-card[data-meal-type='lunch'] {
+  background: color-mix(in srgb, var(--surface-background) 90%, var(--primary-color));
+}
+
+.meal-card[data-meal-type='dinner'] {
+  background: color-mix(in srgb, var(--surface-background) 90%, var(--tertiary-color));
+}
+
+.meal-card[data-meal-type='breakfast'] {
+  background: color-mix(in srgb, var(--surface-background) 90%, var(--secondary-color));
+}
+
 .meal-color-bar {
   width: 4px;
   border-radius: 2px;
@@ -254,6 +267,10 @@ body.dark-theme .detailed-metric-item .value-current {
 /* Определя цвят и за обяда */
 .meal-card[data-meal-type='lunch'] .meal-color-bar {
   background-color: var(--primary-color);
+}
+
+.meal-card[data-meal-type='breakfast'] .meal-color-bar {
+  background-color: var(--secondary-color);
 }
 
 .meal-list li:hover {

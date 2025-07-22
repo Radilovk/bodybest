@@ -254,6 +254,7 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
         const lowerName = (mealItem.meal_name || '').toLowerCase();
         if (lowerName.includes('обяд')) li.dataset.mealType = 'lunch';
         else if (lowerName.includes('вечеря')) li.dataset.mealType = 'dinner';
+        else if (lowerName.includes('закуска')) li.dataset.mealType = 'breakfast';
 
         let itemsHtml = (mealItem.items || []).map(i => {
             const name = i.name || 'Неизвестен продукт';
