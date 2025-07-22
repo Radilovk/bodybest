@@ -17,8 +17,8 @@ afterEach(() => {
   global.fetch && global.fetch.mockRestore()
 })
 
-test('loads welcome template into textarea', async () => {
+test('loads test email template into textarea', async () => {
   await loadTemplate()
-  expect(global.fetch).toHaveBeenCalledWith('data/welcomeEmailTemplate.html')
+  expect(global.fetch).toHaveBeenCalledWith('data/testEmailTemplate.html')
   expect(document.getElementById('testEmailBody').value).toBe('<h1>Hi</h1>')
 })

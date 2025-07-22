@@ -1362,7 +1362,7 @@ let testEmailTemplateLoaded = false
 async function loadTestEmailTemplate() {
     if (testEmailTemplateLoaded || !testEmailBodyInput) return
     try {
-        const resp = await fetch('data/welcomeEmailTemplate.html')
+        const resp = await fetch('data/testEmailTemplate.html')
         testEmailBodyInput.value = await resp.text()
         if (testEmailPreview) testEmailPreview.innerHTML = sanitizeHTML(testEmailBodyInput.value)
         testEmailTemplateLoaded = true
