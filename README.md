@@ -358,6 +358,8 @@ node scripts/view-usage-logs.js sendTestEmail 5
 | `questionnaire_email_subject` | Тема на имейла след попълнен въпросник |
 | `questionnaire_email_body` | HTML съдържание за потвърждението на въпросника |
 | `send_questionnaire_email` | "1" или "0" за включване или изключване на потвърждението |
+| `analysis_email_subject` | Тема на имейла след обработка на въпросника |
+| `analysis_email_body` | HTML съдържание за писмото с линка към анализа |
 | `question_definitions` | JSON с дефиниции на всички въпроси |
 | `recipe_data` | Данни за примерни рецепти |
 
@@ -857,6 +859,8 @@ ANALYSIS_PAGE_URL=https://example.com/analyze.html
 
 При ненастроени стойности се използват вградените теми и HTML шаблон.
 Секцията **Настройки за имейли** в `admin.html` показва визуално превю под всяко поле за HTML съдържание, за да виждате крайния резултат преди изпращане.
+Алтернативно може да запишете динамично стойностите в KV хранилището чрез ключовете
+`analysis_email_subject` и `analysis_email_body`.
 
 **Очакван резултат**
 
