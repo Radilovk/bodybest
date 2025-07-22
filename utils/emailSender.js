@@ -7,7 +7,9 @@
  * @param {string} subject Тема
  * @param {string} body    HTML съдържание
  * @param {Record<string,string>} [env] допълнителни променливи
- */
+ * Тялото се изпраща като `message` и `body` в JSON заявката,
+ * за да е съвместимо с различни API услуги.
+*/
 export async function sendEmailUniversal(to, subject, body, env = {}) {
   const endpoint = env.MAILER_ENDPOINT_URL ||
     globalThis['process']?.env?.MAILER_ENDPOINT_URL;
@@ -15,7 +17,7 @@ export async function sendEmailUniversal(to, subject, body, env = {}) {
     const resp = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, subject, message: body })
+      body: JSON.stringify({ to, subject, message: body, body })
     });
     if (!resp.ok) {
       throw new Error(`Mailer responded with ${resp.status}`);

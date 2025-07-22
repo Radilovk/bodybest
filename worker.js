@@ -13,6 +13,7 @@
 
 // Вградена функция за изпращане на имейли, за да работи скриптът
 // като самостоятелен файл в Cloudflare.
+// Тялото се изпраща като `message` и `body` за съвместимост с различни услуги
 async function sendEmailUniversal(to, subject, body, env = {}) {
   const endpoint = env.MAILER_ENDPOINT_URL ||
     globalThis['process']?.env?.MAILER_ENDPOINT_URL;
@@ -20,7 +21,7 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
     const resp = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, subject, message: body })
+      body: JSON.stringify({ to, subject, message: body, body })
     });
     if (!resp.ok) {
       throw new Error(`Mailer responded with ${resp.status}`);
@@ -151,6 +152,7 @@ const QUESTIONNAIRE_BODY_TEMPLATE = '<p>Здравей, {{name}}.</p>' +
     '<p>– Екипът на MyBody</p>';
 const QUESTIONNAIRE_EMAIL_SUBJECT_VAR_NAME = 'QUESTIONNAIRE_EMAIL_SUBJECT';
 const QUESTIONNAIRE_EMAIL_BODY_VAR_NAME = 'QUESTIONNAIRE_EMAIL_BODY';
+const SEND_QUESTIONNAIRE_EMAIL_VAR_NAME = 'SEND_QUESTIONNAIRE_EMAIL';
 
 const ANALYSIS_READY_SUBJECT = 'Вашият персонален анализ е готов';
 const ANALYSIS_READY_BODY_TEMPLATE = '<p>Здравей, {{name}}.</p>' +
@@ -167,7 +169,23 @@ async function sendWelcomeEmail(to, name, env) {
     }
 }
 
+async function isQuestionnaireEmailEnabled(env) {
+    if (env && Object.prototype.hasOwnProperty.call(env, SEND_QUESTIONNAIRE_EMAIL_VAR_NAME)) {
+        const v = String(env[SEND_QUESTIONNAIRE_EMAIL_VAR_NAME]).toLowerCase();
+        return v !== '0' && v !== 'false';
+    }
+    try {
+        const val = env?.RESOURCES_KV ? await env.RESOURCES_KV.get('send_questionnaire_email') : null;
+        if (val === null || val === undefined || val === '') return true;
+        const low = String(val).toLowerCase();
+        return low !== '0' && low !== 'false';
+    } catch {
+        return true;
+    }
+}
+
 async function sendQuestionnaireConfirmationEmail(to, name, env) {
+    if (!(await isQuestionnaireEmailEnabled(env))) return;
     const subject = env?.[QUESTIONNAIRE_EMAIL_SUBJECT_VAR_NAME] || QUESTIONNAIRE_SUBJECT;
     const tpl = env?.[QUESTIONNAIRE_EMAIL_BODY_VAR_NAME] || QUESTIONNAIRE_BODY_TEMPLATE;
     const html = tpl.replace(/{{\s*name\s*}}/g, name);
@@ -245,7 +263,8 @@ const AI_CONFIG_KEYS = [
     'questionnaire_email_subject',
     'questionnaire_email_body',
     'analysis_email_subject',
-    'analysis_email_body'
+    'analysis_email_body',
+    'send_questionnaire_email'
 ];
 // ------------- END BLOCK: GlobalConstantsAndBindings -------------
 
