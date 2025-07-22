@@ -357,6 +357,7 @@ node scripts/view-usage-logs.js sendTestEmail 5
 | `welcome_email_body` | HTML съдържание за приветствения имейл |
 | `questionnaire_email_subject` | Тема на имейла след попълнен въпросник |
 | `questionnaire_email_body` | HTML съдържание за потвърждението на въпросника |
+| `send_questionnaire_email` | "1" или "0" за включване или изключване на потвърждението |
 | `question_definitions` | JSON с дефиниции на всички въпроси |
 | `recipe_data` | Данни за примерни рецепти |
 
@@ -834,6 +835,7 @@ To send a test email задайте `WORKER_ADMIN_TOKEN`. Може да посо
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |
 | `QUESTIONNAIRE_EMAIL_SUBJECT` | Optional subject for the confirmation email sent след изпращане на въпросника. |
 | `QUESTIONNAIRE_EMAIL_BODY` | Optional HTML body template for the confirmation email. `{{name}}` ще бъде заменено с името на потребителя. |
+| `SEND_QUESTIONNAIRE_EMAIL` | Set to `false` or `0` to disable sending the confirmation email. |
 | `ANALYSIS_EMAIL_SUBJECT` | Subject for the email, sent when the personal analysis is ready. |
 | `ANALYSIS_EMAIL_BODY` | HTML body template for that email. Use `{{name}}` и `{{link}}` за персонализация. |
 | `ANALYSIS_PAGE_URL` | Base URL към `analyze.html` за генериране на линка в писмото. |
