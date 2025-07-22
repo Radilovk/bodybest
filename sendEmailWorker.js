@@ -57,7 +57,7 @@ async function sendViaPhp(to, subject, message, env = {}) {
   const resp = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ to, subject, message })
+    body: JSON.stringify({ to, subject, message, body: message })
   });
   if (!resp.ok) {
     throw new Error(`PHP mailer error ${resp.status}`);

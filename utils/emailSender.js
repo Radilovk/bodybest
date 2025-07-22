@@ -15,7 +15,7 @@ export async function sendEmailUniversal(to, subject, body, env = {}) {
     const resp = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, subject, message: body })
+      body: JSON.stringify({ to, subject, message: body, body })
     });
     if (!resp.ok) {
       throw new Error(`Mailer responded with ${resp.status}`);
