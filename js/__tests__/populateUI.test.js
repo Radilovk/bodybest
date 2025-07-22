@@ -13,6 +13,8 @@ beforeEach(async () => {
     <div id="engagementProgressMask"></div><div id="engagementProgressBar"></div><span id="engagementProgressText"></span>
     <div id="healthProgressMask"></div><div id="healthProgressBar"></div><span id="healthProgressText"></span>
     <div id="streakGrid"></div><span id="streakCount"></span>
+    <h3 id="dailyPlanTitle"></h3>
+    <ul id="dailyMealList"></ul>
   `;
 
   const selectors = {
@@ -31,7 +33,9 @@ beforeEach(async () => {
     healthProgressBar: document.getElementById('healthProgressBar'),
     healthProgressText: document.getElementById('healthProgressText'),
     streakGrid: document.getElementById('streakGrid'),
-    streakCount: document.getElementById('streakCount')
+    streakCount: document.getElementById('streakCount'),
+    dailyPlanTitle: document.getElementById('dailyPlanTitle'),
+    dailyMealList: document.getElementById('dailyMealList')
   };
   jest.unstable_mockModule('../uiElements.js', () => ({ selectors, trackerInfoTexts: {}, detailedMetricInfoTexts: {} }));
   jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn(), openInstructionsModal: jest.fn() }));
@@ -86,4 +90,40 @@ test('hides modules when values are zero', async () => {
   expect(document.getElementById('engagementCard').classList.contains('hidden')).toBe(true);
   expect(document.getElementById('healthCard').classList.contains('hidden')).toBe(true);
   expect(document.getElementById('progressHistoryCard').classList.contains('hidden')).toBe(true);
+});
+
+test('populates daily plan with color bars and meal types', async () => {
+  jest.resetModules();
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const currentDayKey = dayNames[new Date().getDay()];
+  const fullData = {
+    userName: 'Иван',
+    analytics: { current: {}, streak: {} },
+    planData: {
+      week1Menu: {
+        [currentDayKey]: [
+          { meal_name: 'Вкусен обяд', items: [] },
+          { meal_name: 'Лека вечеря', items: [] }
+        ]
+      }
+    },
+    dailyLogs: [],
+    currentStatus: {},
+    initialData: {},
+    initialAnswers: {}
+  };
+  jest.unstable_mockModule('../app.js', () => ({
+    fullDashboardData: fullData,
+    todaysMealCompletionStatus: {},
+    planHasRecContent: false
+  }));
+  ({ populateUI } = await import('../populateUI.js'));
+  populateUI();
+  const cards = document.querySelectorAll('#dailyMealList .meal-card');
+  expect(cards.length).toBe(2);
+  cards.forEach(card => {
+    expect(card.querySelector('.meal-color-bar')).not.toBeNull();
+  });
+  expect(cards[0].dataset.mealType).toBe('lunch');
+  expect(cards[1].dataset.mealType).toBe('dinner');
 });
