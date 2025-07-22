@@ -843,7 +843,7 @@ To send a test email задайте `WORKER_ADMIN_TOKEN`. Може да посо
 
 ### HTML шаблон за приветствени имейли
 
-Файлът `data/welcomeEmailTemplate.html` съдържа готов дизайн за писмото "Добре дошли". Заменете `https://via.placeholder.com/200x50.png?text=Вашето+Лого` с реалното лого и използвайте плейсхолдърите `{{name}}` и `{{current_year}}` за персонализация. Преди изпращане е полезно HTML кодът да се обработи с **CSS inliner** инструмент (напр. Campaign Monitor Inliner или [Juice](https://github.com/Automattic/juice)), който прехвърля стиловете от `<style>` в елементите и така подобрява съвместимостта на имейл клиентите.
+Файлът `data/welcomeEmailTemplate.html` съдържа изчистен HTML шаблон с вграден стил за писмото "Добре дошли". Използвайте плейсхолдърите `{{name}}` и `{{current_year}}` и при нужда коригирайте линка към въпросника. CSS вече е инлайн и не изисква допълнителна обработка.
 
 #### Example: configuring analysis email
 
