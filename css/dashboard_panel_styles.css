@@ -249,15 +249,18 @@ body.dark-theme .detailed-metric-item .value-current {
 
 /* Цветни фонове спрямо типа хранене */
 .meal-card[data-meal-type='lunch'] {
-  background: color-mix(in srgb, var(--surface-background) 90%, var(--primary-color));
+  --meal-color: var(--primary-color);
+  background: color-mix(in srgb, var(--surface-background) 90%, var(--meal-color));
 }
 
 .meal-card[data-meal-type='dinner'] {
-  background: color-mix(in srgb, var(--surface-background) 90%, var(--tertiary-color));
+  --meal-color: var(--tertiary-color);
+  background: color-mix(in srgb, var(--surface-background) 90%, var(--meal-color));
 }
 
 .meal-card[data-meal-type='breakfast'] {
-  background: color-mix(in srgb, var(--surface-background) 90%, var(--secondary-color));
+  --meal-color: var(--secondary-color);
+  background: color-mix(in srgb, var(--surface-background) 90%, var(--meal-color));
 }
 
 .meal-color-bar {
@@ -282,8 +285,20 @@ body.dark-theme .detailed-metric-item .value-current {
   background-color: var(--secondary-color);
 }
 
+.meal-card[data-meal-type='lunch']:hover {
+  background-color: color-mix(in srgb, var(--surface-background) 95%, var(--primary-color));
+}
+
+.meal-card[data-meal-type='dinner']:hover {
+  background-color: color-mix(in srgb, var(--surface-background) 95%, var(--tertiary-color));
+}
+
+.meal-card[data-meal-type='breakfast']:hover {
+  background-color: color-mix(in srgb, var(--surface-background) 95%, var(--secondary-color));
+}
+
 .meal-list li:hover {
-    background-color: color-mix(in srgb, var(--surface-background) 95%, var(--primary-color));
+    background-color: color-mix(in srgb, var(--surface-background) 95%, var(--meal-color, var(--primary-color)));
 }
 
 .meal-list li .meal-content-wrapper {
