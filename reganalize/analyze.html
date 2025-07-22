@@ -215,10 +215,10 @@
                 bottom: 12px;
                 left: 50%;
                 transform: translateX(-50%);
-                width: 70%;
-                max-width: 300px;
+                width: 80%;
+                max-width: 340px;
                 font-size: 1.1em;
-                padding: 12px 24px;
+                padding: 12px 30px;
                 z-index: 1000;
                 animation-name: pulse-glow-mobile;
             }
@@ -409,7 +409,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         const cta = document.getElementById('cta-button');
         const toggleCtaVisibility = () => {
-            const threshold = document.documentElement.scrollHeight / 3;
+            const threshold = document.body.scrollHeight / 3;
             if (window.scrollY > threshold) {
                 cta.classList.remove('cta-button--hidden');
             } else {
@@ -418,7 +418,6 @@
         };
         toggleCtaVisibility();
         window.addEventListener('scroll', toggleCtaVisibility);
-        window.addEventListener('resize', toggleCtaVisibility);
     });
     </script>
 </body>
