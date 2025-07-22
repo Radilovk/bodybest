@@ -202,17 +202,19 @@
         /* --- Mobile CTA --- */
         @media (max-width: 768px) {
             .cta-section {
-                padding-bottom: 120px; /* Space for the fixed button */
+                padding-bottom: 90px; /* Space for the fixed button */
             }
 
             .cta-button {
                 position: fixed;
                 bottom: 20px;
                 left: 50%;
-                width: 90%;
-                max-width: 400px;
-                z-index: 1000;
                 transform: translateX(-50%);
+                width: 85%;
+                max-width: 340px;
+                font-size: 1.1em;
+                padding: 12px 30px;
+                z-index: 1000;
                 animation-name: pulse-glow-mobile;
             }
 
