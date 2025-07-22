@@ -346,6 +346,7 @@
                         entry.target.classList.add('active');
                         entry.target.style.opacity = 1;
                         entry.target.style.transform = 'translateY(0)';
+                        setTimeout(() => entry.target.style.removeProperty('transform'), 600);
                         
                         if (entry.target.id === 'dashboard-grid') {
                             const charts = entry.target.querySelectorAll('.donut-fill');
