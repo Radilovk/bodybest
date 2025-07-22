@@ -248,11 +248,16 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
 
     dailyPlanData.forEach((mealItem, index) => {
         const li = document.createElement('li');
+        li.classList.add('card', 'meal-card', 'soft-shadow');
         const mealStatusKey = `${currentDayKey}_${index}`;
 
+        const lowerName = (mealItem.meal_name || '').toLowerCase();
+        if (lowerName.includes('обяд')) li.dataset.mealType = 'lunch';
+        else if (lowerName.includes('вечеря')) li.dataset.mealType = 'dinner';
+
         let itemsHtml = (mealItem.items || []).map(i => {
-            let name = i.name || "Неизвестен продукт";
-            let grams = i.grams ? `<span class="text-muted">(${i.grams})</span>` : '';
+            const name = i.name || 'Неизвестен продукт';
+            const grams = i.grams ? `<span class="caption">(${i.grams})</span>` : '';
             return `• ${name} ${grams}`;
         }).join('<br>');
 
@@ -262,8 +267,9 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
             ? `<button class="button-icon-only info" data-type="recipe" data-key="${mealItem.recipeKey}" title="Виж рецепта" aria-label="Информация за рецепта ${mealItem.meal_name || ''}"><svg class="icon"><use href="#icon-info"/></svg></button>` : '';
 
         li.innerHTML = `
+            <div class="meal-color-bar"></div>
             <div class="meal-content-wrapper">
-                <span class="meal-name">${mealItem.meal_name || 'Хранене'}</span>
+                <h2 class="meal-name">${mealItem.meal_name || 'Хранене'}</h2>
                 <div class="meal-items">${itemsHtml}</div>
             </div>
             <div class="actions">

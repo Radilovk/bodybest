@@ -224,14 +224,30 @@ body.dark-theme .detailed-metric-item .value-current {
 }
 
 .meal-list li {
-  margin: calc(var(--space-sm) * 2.0) 0;  /* НАМАЛЕН вертикален margin между храненията */
-  padding: var(--space-sm);              /* НАМАЛЕН padding вътре в контейнера (беше var(--space-md)) */
+  margin-bottom: calc(var(--space-unit) * 2);
+  padding: var(--space-sm);
   display: flex;
   justify-content: space-between;
-  align-items: flex-start; /* Оставяме flex-start, както е било */
+  align-items: flex-start;
   border: 1px solid var(--border-color-soft);
   border-radius: var(--radius-md);
   transition: background-color 0.2s;
+}
+
+.meal-card {
+  margin-bottom: calc(var(--space-unit) * 2);
+  position: relative;
+}
+
+.meal-color-bar {
+  width: 4px;
+  border-radius: 2px;
+  background-color: var(--primary-color);
+  margin-right: var(--space-md);
+}
+
+.meal-card[data-meal-type='dinner'] .meal-color-bar {
+  background-color: var(--accent-color);
 }
 
 .meal-list li:hover {
@@ -244,11 +260,9 @@ body.dark-theme .detailed-metric-item .value-current {
 }
 
 .meal-list li .meal-name {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--primary-color);
-  display: block;
-  margin-bottom: calc(var(--space-xs) * 0.75); /* Леко намален margin-bottom */
-  /* font-size - остава непроменен от вашия код */
+  margin-bottom: var(--space-xs);
 }
 
 .meal-list li .meal-items {
