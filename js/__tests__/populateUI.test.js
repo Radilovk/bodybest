@@ -102,6 +102,7 @@ test('populates daily plan with color bars and meal types', async () => {
     planData: {
       week1Menu: {
         [currentDayKey]: [
+          { meal_name: 'Ранна закуска', items: [] },
           { meal_name: 'Вкусен обяд', items: [] },
           { meal_name: 'Лека вечеря', items: [] }
         ]
@@ -120,10 +121,11 @@ test('populates daily plan with color bars and meal types', async () => {
   ({ populateUI } = await import('../populateUI.js'));
   populateUI();
   const cards = document.querySelectorAll('#dailyMealList .meal-card');
-  expect(cards.length).toBe(2);
+  expect(cards.length).toBe(3);
   cards.forEach(card => {
     expect(card.querySelector('.meal-color-bar')).not.toBeNull();
   });
-  expect(cards[0].dataset.mealType).toBe('lunch');
-  expect(cards[1].dataset.mealType).toBe('dinner');
+  expect(cards[0].dataset.mealType).toBe('breakfast');
+  expect(cards[1].dataset.mealType).toBe('lunch');
+  expect(cards[2].dataset.mealType).toBe('dinner');
 });
