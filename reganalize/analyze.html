@@ -24,6 +24,7 @@
             --color-medium: #f59e0b;
             --color-ok: #3b82f6;
             --color-low: #10b981;
+            --magenta-glow: #db2777; /* Magenta color for the glow */
         }
 
         @keyframes fadeInUp {
@@ -31,6 +32,18 @@
             to { opacity: 1; transform: translateY(0); }
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- NEW: Keyframe for the button pulse animation --- */
+        @keyframes pulseGlow {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 5px var(--magenta-glow), 0 0 10px var(--magenta-glow), 0 0 15px rgba(219, 39, 119, 0.5);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 15px var(--magenta-glow), 0 0 25px var(--magenta-glow), 0 0 40px rgba(219, 39, 119, 0.8);
+            }
+        }
 
         /* --- Global Styles --- */
         body {
@@ -156,54 +169,44 @@
             text-decoration: none;
             padding: 16px 45px;
             border-radius: 50px;
-            transition: all 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.3s ease; /* removed 'all' for performance */
             display: inline-block;
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); /* Initial shadow */
-            animation: pulse-glow 2s infinite; /* NEW: Added pulse animation */
+            border: none;
+            cursor: pointer;
+            /* --- NEW: Animation applied here --- */
+            animation: pulseGlow 2.5s infinite ease-in-out;
         }
-        .cta-button:hover { background-color: var(--accent-color); transform: scale(1.05); }
+        .cta-button:hover {
+            background-color: var(--accent-color);
+            transform: scale(1.05); /* Original hover effect remains */
+            animation-play-state: paused; /* Pause glow on hover for better interaction */
+        }
+        .cta-button-container {
+            /* This container helps with mobile sticky positioning */
+            text-align: center;
+        }
 
         footer { text-align: center; padding: 40px 20px; font-size: 0.9em; color: #718096; }
 
-        /* --- NEW STYLES for Button Animation and Mobile Sticky --- */
-        @keyframes pulse-glow {
-            0% {
-                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); /* accent-color */
-            }
-            70% {
-                box-shadow: 0 0 0 12px rgba(79, 70, 229, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
-            }
-        }
-        
-        .cta-button-wrapper {
-             /* This wrapper is used for the sticky positioning on mobile */
-        }
-        
+        /* --- NEW: Mobile-specific styles for the sticky button --- */
         @media (max-width: 768px) {
-            .cta-button-wrapper {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background: rgba(26, 32, 44, 0.9); /* heading-color with transparency */
-                padding: 15px;
-                z-index: 1000;
-                text-align: center;
-                box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            .cta-section {
-                 /* Adjust padding on mobile to avoid overlap with the new sticky bar */
-                padding-bottom: 40px;
-            }
             body {
-                /* Add space at the bottom so the footer isn't hidden by the sticky bar */
-                padding-bottom: 120px;
+                /* Add space at the bottom to prevent content from being hidden by the sticky button */
+                padding-bottom: 110px;
+            }
+
+            .cta-button-container {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 90%;
+                max-width: 400px;
+                z-index: 1000;
+            }
+
+            .cta-button {
+                width: 100%; /* Button takes full width of its container */
             }
         }
     </style>
@@ -260,9 +263,8 @@
             </div>
 
             <p class="cta-final-pitch">Информацията е сила, но само когато се действа по нея.</p>
-            
-            <!-- NEW: Wrapper added for sticky positioning on mobile -->
-            <div class="cta-button-wrapper">
+            <!-- NEW: Wrapper container for button and updated link -->
+            <div class="cta-button-container">
                 <a id="cta-button" href="https://radilovk.github.io/bodybest/index.html" class="cta-button">
                     <i class="fas fa-rocket"></i> Започнете Вашата Трансформация
                 </a>
@@ -321,7 +323,8 @@
             document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
             document.getElementById('dashboard-grid').innerHTML = generateDashboardHTML(data.healthDashboard);
             document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
-            // document.getElementById('cta-button').href = data.callToAction.buttonLink; // REMOVED: Link is now static in HTML.
+            // REMOVED: The line that sets the button link is no longer needed as it's static in the HTML
+            // document.getElementById('cta-button').href = data.callToAction.buttonLink;
             document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} MyBody.Best. Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
             
             setupAnimations();
