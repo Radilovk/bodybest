@@ -248,7 +248,12 @@ body.dark-theme .detailed-metric-item .value-current {
 }
 
 .meal-card[data-meal-type='dinner'] .meal-color-bar {
-  background-color: var(--accent-color);
+  background-color: var(--tertiary-color);
+}
+
+/* Определя цвят и за обяда */
+.meal-card[data-meal-type='lunch'] .meal-color-bar {
+  background-color: var(--primary-color);
 }
 
 .meal-list li:hover {
