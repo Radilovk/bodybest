@@ -3,7 +3,7 @@
    ========================================================================== */
 .card {
   background: var(--card-bg); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
-  border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-soft);
   padding: var(--space-lg); border: 1px solid var(--border-color-soft);
   margin-bottom: var(--space-lg);
   transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.3s ease;
