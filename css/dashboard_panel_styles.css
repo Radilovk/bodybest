@@ -235,7 +235,6 @@ body.dark-theme .detailed-metric-item .value-current {
 }
 
 .meal-card {
-  margin-bottom: calc(var(--space-unit) * 2);
   position: relative;
 }
 
