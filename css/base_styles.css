@@ -98,56 +98,57 @@
 }
 
 body.dark-theme {
-  --primary-color: #5BC0BE; 
-  --secondary-color: #3A506B; 
-  --accent-color: #88a1c4; 
+  /* Органична и спокойна тъмна тема */
+  --primary-color: #84A98C;
+  --secondary-color: #E4725C;
+  --accent-color: #B5A3C3;
 
-  --text-color-primary: #E0E0E0;
-  --text-color-secondary: #bdc3c7;
+  --text-color-primary: #F0F2F5;
+  --text-color-secondary: #A0A5B9;
   --text-color-muted: #bbb;
-  --text-color-on-primary: #1A1A2E; 
+  --text-color-on-primary: #1C1F2E;
   --text-color-on-secondary: #FFFFFF;
   --text-color-disabled: #adb5bd;
 
-  --bg-color: #1A1A2E;
-  --bg-gradient: linear-gradient(135deg, #16213E 0%, #1A1A2E 100%);
-  --surface-background: #2c3e50;
-  --surface-background-rgb: 44,62,80; /* За rgba overlay */
-  --card-bg: rgba(40, 40, 60, 0.75);
+  --bg-color: #1C1F2E;
+  --bg-gradient: linear-gradient(135deg, #1C1F2E 0%, #252A41 100%);
+  --surface-background: #252A41;
+  --surface-background-rgb: 37,42,65; /* За rgba overlay */
+  --card-bg: rgba(37, 42, 65, 0.75);
   --glass-blur: 12px;
 
-  --border-color: #444;
-  --border-color-soft: #3e3e5a;
+  --border-color: #34374B;
+  --border-color-soft: #2D3044;
 
-  --input-bg: #2c3e50;
-  --input-bg-disabled: #3a3f44;
-  --input-border-color: #555a7a;
+  --input-bg: #252A41;
+  --input-bg-disabled: #2C3147;
+  --input-border-color: #3C425A;
   --input-focus-border: var(--primary-color);
-  --input-focus-shadow: rgba(91, 192, 190, 0.3); 
+  --input-focus-shadow: rgba(132, 169, 140, 0.3);
 
   --shadow-sm: 0 2px 4px rgba(0,0,0,0.15);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.20);
   --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.25);
 
-  --progress-bar-bg-empty: #4a4a6a;
+  --progress-bar-bg-empty: #393E57;
 
-  --toast-bg: rgba(220, 220, 220, 0.95); --toast-text: #333;
+  --toast-bg: rgba(37, 42, 65, 0.95); --toast-text: #F0F2F5;
   --modal-overlay-bg: rgba(0,0,0, 0.75);
   --scrollbar-thumb: var(--primary-color); --scrollbar-track: #333;
 
   --icon-color-default: var(--accent-color);
 
-  --menu-bg: rgba(30, 30, 50, 0.9);
+  --menu-bg: rgba(37, 42, 65, 0.9);
   --menu-overlay-bg: rgba(0, 0, 0, 0.65);
   --menu-hover-bg: color-mix(in srgb, var(--primary-color) 35%, transparent);
 
-  --fab-bg: var(--primary-color); --fab-icon: #1A1A2E;
+  --fab-bg: var(--primary-color); --fab-icon: #1C1F2E;
 
   --rating-empty-bg: #444; --rating-border: #666;
 
   --chat-widget-bg: color-mix(in srgb, var(--surface-background) 90%, black);
   --chat-header-bg: var(--primary-color);
-  --chat-header-text: #1A1A2E;
+  --chat-header-text: #1C1F2E;
   --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 25%, var(--surface-background));
   --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 25%, var(--surface-background));
   --chat-input-field-bg: color-mix(in srgb, var(--surface-background) 70%, #1A1A2E);
@@ -156,9 +157,9 @@ body.dark-theme {
   --note-important-bg: rgba(255, 143, 0, 0.2); --note-important-text: #ffcc80; --note-important-border: #ff8f00;
   --note-info-bg: rgba(25, 118, 210, 0.2); --note-info-text: #90caf9; --note-info-border: #1976d2;
   --note-success-bg: rgba(46, 125, 50, 0.2); --note-success-text: #a5d6a7; --note-success-border: #2e7d32;
-  --supplement-card-bg: rgba(91, 192, 190, 0.25);
+  --supplement-card-bg: rgba(132, 169, 140, 0.25);
 
-  --primary-rgb: 91, 192, 190;
+  --primary-rgb: 132, 169, 140;
 
   --metric-value-group-bg-initial: color-mix(in srgb, var(--surface-background) 90%, var(--border-color-soft) 50%);
   --metric-value-group-bg-expected: color-mix(in srgb, var(--surface-background) 90%, var(--accent-color) 25%);
