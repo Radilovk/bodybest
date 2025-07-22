@@ -244,6 +244,8 @@ body.dark-theme .detailed-metric-item .value-current {
   border-radius: 2px;
   background-color: var(--primary-color);
   margin-right: var(--space-md);
+  height: 100%;
+  align-self: stretch;
 }
 
 .meal-card[data-meal-type='dinner'] .meal-color-bar {
