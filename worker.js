@@ -13,6 +13,7 @@
 
 // Вградена функция за изпращане на имейли, за да работи скриптът
 // като самостоятелен файл в Cloudflare.
+// Тялото се изпраща като `message` и `body` за съвместимост с различни услуги
 async function sendEmailUniversal(to, subject, body, env = {}) {
   const endpoint = env.MAILER_ENDPOINT_URL ||
     globalThis['process']?.env?.MAILER_ENDPOINT_URL;
@@ -20,7 +21,7 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
     const resp = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, subject, message: body })
+      body: JSON.stringify({ to, subject, message: body, body })
     });
     if (!resp.ok) {
       throw new Error(`Mailer responded with ${resp.status}`);
