@@ -382,13 +382,19 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-list li .check-icon {
     display: none;
-    margin-left: var(--space-xs); /* По-близо до името */
-    color: var(--color-success, var(--primary-color));
+    margin-left: 1ch; /* На един знак от името */
+    color: color-mix(in srgb,
+        var(--color-success, var(--primary-color)) 70%,
+        var(--surface-background) 30%);
+    font-weight: bold;
 }
 
 .meal-list li .check-icon svg.icon {
     width: 1.2em; /* По-голяма иконка */
     height: 1.2em;
+    stroke: currentColor;
+    stroke-width: 3;
+    fill: none;
 }
 
 .meal-list li.completed .check-icon {
