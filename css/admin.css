@@ -206,16 +206,19 @@ details[open] summary::after {
   border-radius: var(--progress-bar-radius);
   position: relative;
   height: var(--progress-bar-height);
-  overflow: hidden;
+  overflow: visible;
 }
 #analyticsSummary .progress-fill {
   background: linear-gradient(to right, var(--color-danger), var(--progress-end-color));
-  box-shadow: 0 0 6px var(--progress-bar-glow-color);
+  box-shadow: 0 0 6px var(--progress-bar-glow-color), 0 0 4px var(--progress-end-color);
   filter: drop-shadow(0 0 2px var(--progress-end-color));
   height: 100%;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   width: 0;
   border-radius: inherit;
+}
+#analyticsSummary .progress-fill.animate-progress {
+  animation: progress-grow 0.8s forwards;
 }
 
 .button-small {

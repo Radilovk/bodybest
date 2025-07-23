@@ -24,7 +24,8 @@ beforeEach(async () => {
   jest.unstable_mockModule('../utils.js', () => ({
     fileToText: jest.fn(async () => '{"a":1}'),
     fileToDataURL: jest.fn(),
-    getProgressColor: jest.fn(() => 'rgb(0,0,0)')
+    getProgressColor: jest.fn(() => 'rgb(0,0,0)'),
+    animateProgressFill: jest.fn()
   }));
 
   const mod = await import('../admin.js');

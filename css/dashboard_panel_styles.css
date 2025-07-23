@@ -31,16 +31,25 @@
   border-radius: 6px;
   position: relative;
   height: 12px;
-  overflow: hidden;
+  overflow: visible;
 }
 .progress-fill {
   background: linear-gradient(to right, var(--color-danger), var(--progress-end-color));
-  box-shadow: 0 0 6px var(--progress-bar-glow-color);
+  box-shadow: 0 0 6px var(--progress-bar-glow-color), 0 0 4px var(--progress-end-color);
   filter: drop-shadow(0 0 2px var(--progress-end-color));
   height: 100%;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   width: 0;
   border-radius: inherit;
+}
+
+.progress-fill.animate-progress {
+  animation: progress-grow 0.8s forwards;
+}
+
+@keyframes progress-grow {
+  from { width: 0; }
+  to { width: var(--target-width); }
 }
 .index-card .index-value {
   font-size: 1.2rem; font-weight: 700; color: var(--primary-color);
@@ -108,17 +117,20 @@
   border-radius: var(--progress-bar-radius);
   position: relative;
   height: 0.5rem;
-  overflow: hidden;
+  overflow: visible;
   margin-bottom: var(--space-sm);
 }
 .analytics-card .mini-progress-fill {
   background: linear-gradient(to right, var(--color-danger), var(--progress-end-color));
-  box-shadow: 0 0 6px var(--progress-bar-glow-color);
+  box-shadow: 0 0 6px var(--progress-bar-glow-color), 0 0 4px var(--progress-end-color);
   filter: drop-shadow(0 0 2px var(--progress-end-color));
   height: 100%;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   width: 0;
   border-radius: inherit;
+}
+.analytics-card .mini-progress-fill.animate-progress {
+  animation: progress-grow 0.8s forwards;
 }
 .analytics-card { cursor: pointer; }
 .metric-current-text {
