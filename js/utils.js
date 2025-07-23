@@ -98,13 +98,21 @@ export function fileToText(file) {
  * @param {number} percent Стойността в диапазона 0-100.
  * @returns {string} CSS rgb() низ за крайния цвят.
  */
+export let progressColorStops = [
+    { pct: 0, color: [231, 76, 60] },       // червено
+    { pct: 50, color: [243, 156, 18] },     // оранжево
+    { pct: 75, color: [255, 203, 0] },      // жълто
+    { pct: 100, color: [46, 204, 113] }     // зелено
+];
+
+export function setProgressColorStops(stops) {
+    if (Array.isArray(stops) && stops.length > 0) {
+        progressColorStops = stops;
+    }
+}
+
 export function getProgressColor(percent) {
-    const stops = [
-        { pct: 0, color: [231, 76, 60] },       // червено
-        { pct: 50, color: [243, 156, 18] },     // оранжево
-        { pct: 75, color: [255, 203, 0] },      // жълто
-        { pct: 100, color: [46, 204, 113] }     // зелено
-    ];
+    const stops = progressColorStops;
     const p = Math.max(0, Math.min(100, percent));
     for (let i = 1; i < stops.length; i++) {
         if (p <= stops[i].pct) {
