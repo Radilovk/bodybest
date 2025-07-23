@@ -100,10 +100,11 @@ export function fileToText(file) {
  */
 export function getProgressColor(percent) {
     const stops = [
-        { pct: 0, color: [231, 76, 60] },       // червено
-        { pct: 50, color: [243, 156, 18] },     // оранжево
-        { pct: 75, color: [255, 203, 0] },      // жълто
-        { pct: 100, color: [46, 204, 113] }     // зелено
+        { pct: 0, color: [255, 46, 46, 0.25] },
+        { pct: 25, color: [255, 165, 0, 0.35] },
+        { pct: 50, color: [247, 227, 0, 0.45] },
+        { pct: 75, color: [197, 230, 17, 0.55] },
+        { pct: 100, color: [46, 204, 113, 0.65] }
     ];
     const p = Math.max(0, Math.min(100, percent));
     for (let i = 1; i < stops.length; i++) {
@@ -115,11 +116,12 @@ export function getProgressColor(percent) {
             const r = Math.round(lower.color[0] + (upper.color[0] - lower.color[0]) * t);
             const g = Math.round(lower.color[1] + (upper.color[1] - lower.color[1]) * t);
             const b = Math.round(lower.color[2] + (upper.color[2] - lower.color[2]) * t);
-            return `rgb(${r}, ${g}, ${b})`;
+            const a = +(lower.color[3] + (upper.color[3] - lower.color[3]) * t).toFixed(2);
+            return `rgba(${r}, ${g}, ${b}, ${a})`;
         }
     }
     const c = stops[stops.length - 1].color;
-    return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+    return `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${c[3]})`;
 }
 
 /**
@@ -130,11 +132,15 @@ export function getProgressColor(percent) {
 export function animateProgressFill(el, percent) {
     if (!el) return;
     const target = Math.max(0, Math.min(100, percent));
-    el.style.setProperty("--target-width", `${target}%`);
-    el.style.width = `${target}%`;
-    el.classList.add("animate-progress");
-    el.addEventListener("animationend", () => {
-        el.classList.remove("animate-progress");
-    }, { once: true });
+    if (el.classList.contains('step-progress-bar')) {
+        el.style.setProperty('--target-width', `${target}%`);
+        el.style.width = `${target}%`;
+        el.classList.add('animate-progress');
+        el.addEventListener('animationend', () => {
+            el.classList.remove('animate-progress');
+        }, { once: true });
+    } else {
+        el.style.backgroundSize = `${target}% 100%`;
+    }
 }
 
