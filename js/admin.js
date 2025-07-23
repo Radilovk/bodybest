@@ -425,11 +425,10 @@ function renderAnalyticsCurrent(cur) {
             pbContainer.className = 'progress-bar-container';
             const pb = document.createElement('div');
             pb.className = 'progress-bar';
-            const mask = document.createElement('div');
-            mask.className = 'progress-mask';
-            const bounded = Math.max(0, Math.min(100, pct));
-            mask.style.width = `${100 - bounded}%`;
-            pb.appendChild(mask);
+            const fill = document.createElement('div');
+            fill.className = 'progress-fill';
+            fill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+            pb.appendChild(fill);
             pbContainer.appendChild(pb);
             dd.appendChild(pbContainer);
         }
