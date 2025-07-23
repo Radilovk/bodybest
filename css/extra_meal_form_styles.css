@@ -253,6 +253,12 @@
   margin-bottom: var(--space-md);
 }
 
+/* Поле за въвеждане на точно количество */
+#extraMealEntryModal #quantityCustom {
+  margin-top: var(--space-sm);
+  display: block;
+}
+
 #extraMealEntryModal .quantity-card-option {
   display: flex;
   border: 1px solid var(--input-border-color);

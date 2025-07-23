@@ -132,7 +132,6 @@ export function initializeExtraMealFormLogic(formContainerElement) {
 
     const foodDescriptionInput = form.querySelector('#foodDescription');
     const suggestionsDropdown = form.querySelector('#foodSuggestionsDropdown');
-    const quantityCustomInput = form.querySelector('#quantityCustom');
     const quantityVisualRadios = form.querySelectorAll('input[name="quantityEstimateVisual"]');
     const mealTimeSelect = form.querySelector('#mealTimeSelect');
     const mealTimeSpecificInput = form.querySelector('#mealTimeSpecific');
@@ -169,24 +168,6 @@ export function initializeExtraMealFormLogic(formContainerElement) {
         });
     }
 
-    if (quantityVisualRadios.length > 0 && quantityCustomInput) {
-        quantityVisualRadios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                if (this.value === 'other_quantity_describe' && this.checked) {
-                    quantityCustomInput.classList.remove('hidden');
-                    quantityCustomInput.focus();
-                } else {
-                    quantityCustomInput.classList.add('hidden');
-                }
-            });
-        });
-        const initiallyCheckedRadio = form.querySelector('input[name="quantityEstimateVisual"]:checked');
-        if (initiallyCheckedRadio && initiallyCheckedRadio.value === 'other_quantity_describe') {
-            quantityCustomInput.classList.remove('hidden');
-        } else if (quantityCustomInput) {
-            quantityCustomInput.classList.add('hidden');
-        }
-    }
 
     if (foodDescriptionInput && quantityVisualRadios.length > 0) {
         foodDescriptionInput.addEventListener('input', function() {
