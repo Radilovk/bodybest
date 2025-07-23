@@ -207,6 +207,7 @@ details[open] summary::after {
   position: relative;
   height: var(--progress-bar-height);
   overflow: visible;
+  z-index: 0;
 }
 #analyticsSummary .progress-fill {
   position: relative;
@@ -215,16 +216,18 @@ details[open] summary::after {
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   width: 0;
   border-radius: inherit;
+  z-index: 1;
 }
 #analyticsSummary .progress-fill::after {
   content: '';
   position: absolute;
   inset: -2px;
-  background: inherit;
+  background: var(--progress-bar-glow-color);
   border-radius: inherit;
-  filter: blur(3px);
-  opacity: 0.45;
-  z-index: -1;
+  filter: blur(4px);
+  opacity: 0.25;
+  z-index: 0;
+  pointer-events: none;
 }
 #analyticsSummary .progress-fill.animate-progress {
   animation: progress-grow 0.8s forwards;
