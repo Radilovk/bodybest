@@ -64,11 +64,18 @@
 
   --color-success: #2ecc71; --color-success-bg: rgba(46, 204, 113, 0.1);
   --color-warning: #f39c12; --color-warning-bg: rgba(243, 156, 18, 0.1);
+  --color-yellow: #ffcb00;
   --color-danger: #e74c3c; --color-danger-bg: rgba(231, 76, 60, 0.1);
   --color-info: #3498db; --color-info-bg: rgba(52, 152, 219, 0.1);
 
   --progress-bar-bg-empty: #e9ecef;
-  --progress-gradient: linear-gradient(to right, var(--color-danger), var(--color-warning), var(--color-success));
+  --progress-gradient: linear-gradient(
+    to right,
+    var(--color-danger) 0%,
+    var(--color-warning) 50%,
+    var(--color-yellow) 75%,
+    var(--color-success) 100%
+  );
   --progress-end-color: var(--color-success);
   --progress-bar-glow-color: color-mix(in srgb, var(--progress-end-color) 60%, transparent);
   --progress-bar-height: 1rem;
