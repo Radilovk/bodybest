@@ -344,6 +344,7 @@ body.dark-theme .detailed-metric-item .value-current {
 .meal-list li .meal-name {
   font-weight: 600;
   color: var(--primary-color);
+  margin-top: 0; /* Override global h2 margin to align text with top of card */
   margin-bottom: var(--space-xs);
 }
 
