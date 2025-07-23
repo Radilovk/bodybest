@@ -19,7 +19,7 @@ fetch(new URL("../data/commonFoods.json", import.meta.url))
         }
     });
 
-function initializeExtraMealFormLogic(formContainerElement) {
+export function initializeExtraMealFormLogic(formContainerElement) {
     const form = formContainerElement.querySelector('#extraMealEntryFormActual');
     if (!form) {
         console.error("EMF Logic Error: Form #extraMealEntryFormActual not found within container!");
