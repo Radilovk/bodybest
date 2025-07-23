@@ -258,7 +258,7 @@ body.dark-theme .detailed-metric-item .value-current {
 }
 #dashboardTextualAnalysis p.placeholder { font-style: italic; }
 
-/* --- Дневен План с корекции за бутоните --- */
+/* --- Меню с корекции за бутоните --- */
 .meal-list {
     margin-top: var(--space-sm);
 }
