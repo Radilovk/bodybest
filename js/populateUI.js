@@ -258,6 +258,8 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
     dailyPlanData.forEach((mealItem, index) => {
         const li = document.createElement('li');
         li.classList.add('card', 'meal-card', 'soft-shadow');
+        li.dataset.day = currentDayKey;
+        li.dataset.index = index;
         const mealStatusKey = `${currentDayKey}_${index}`;
 
         const lowerName = (mealItem.meal_name || '').toLowerCase();
@@ -292,7 +294,6 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
             </div>
             <div class="actions">
                 ${recipeButtonHtml}
-                <button class="button-icon-only complete" data-day="${currentDayKey}" data-index="${index}" title="Отбележи като изпълнено" aria-label="Отбележи ${mealItem.meal_name || 'храненето'} като изпълнено"><svg class="icon"><use href="#icon-check"/></svg></button>
             </div>`;
 
         if (todaysMealCompletionStatus[mealStatusKey] === true) {
