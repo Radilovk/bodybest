@@ -208,6 +208,9 @@
         <path d="M7 2v20" />
         <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
       </symbol>
+      <symbol id="icon-droplet" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 2.25c-2.35 2.8-7.5 8.11-7.5 11.25a7.5 7.5 0 0 0 15 0c0-3.14-5.15-8.45-7.5-11.25z" />
+      </symbol>
     </svg>
     <!-- ======================= END SVG ICONS DEFINITION ====================== -->
 
@@ -394,7 +397,7 @@
                 </div>
               </div>
               <div class="card index-card" id="engagementCard">
-                <h4>🔗 Ангажираност <span id="engagementProgressText" class="index-value">Изчисляване...</span></h4>
+                  <h4><i class="bi bi-link-45deg"></i> Ангажираност <span id="engagementProgressText" class="index-value">Изчисляване...</span></h4>
                 <div class="progress-bar-container">
                   <div
                     id="engagementProgressBar"
@@ -425,7 +428,7 @@
                 </div>
               </div>
               <div class="card index-card" id="streakCard">
-                <h4>🏅 Моите успехи</h4>
+              <h4><i class="bi bi-award"></i> Моите успехи</h4>
                 <div id="streakGrid" class="streak-grid"></div>
               </div>
             </div>
@@ -691,7 +694,7 @@
                 id="recHydrationCard"
                 class="card collapsible-card tip-card-info"
               >
-                <h4>💧 Хидратация и Напитки</h4>
+                <h4><svg class="icon"><use href="#icon-droplet"></use></svg> Хидратация и Напитки</h4>
                 <div class="collapsible-content">
                   <div id="recHydrationContent">
                     <p class="placeholder">Зареждане...</p>
@@ -785,7 +788,7 @@
             <p
               style="text-align: center; font-size: 1.5rem; margin-bottom: 1rem"
             >
-              🎉
+              <i class="bi bi-stars"></i>
             </p>
             <img id="welcomeIllustration" class="welcome-illustration" src="" alt="Въведение">
             <p>
