@@ -37,7 +37,7 @@
         h1, h2 { font-family: var(--font-secondary); font-weight: 700; color: var(--primary-color); margin-top: 0; }
         h1 { font-size: clamp(1.7rem, 5vw, 2.1rem); margin-bottom: calc(var(--space-lg)*0.8); text-align: center; }
         h2 { font-size: clamp(1.3rem, 4vw, 1.7rem); margin-bottom: var(--space-lg); }
-        p { margin-bottom: var(--space-lg); color: var(--text-color-secondary); font-size: 0.95rem;}
+        p { margin-bottom: var(--space-lg); color: var(--text-color-secondary); font-size: var(--fs-base);} 
 
         .marketing-banner {
             background-color: var(--primary-color);
@@ -62,10 +62,10 @@
         .form-section { margin-bottom: var(--space-lg); }
         .form-section.hidden { display: none; }
         .form-group { margin-bottom: calc(var(--space-lg)*0.8); text-align: left; }
-        label { display: block; margin-bottom: 0.4rem; font-weight: 500; color: var(--text-color-primary); font-size: 0.9rem; }
+        label { display: block; margin-bottom: 0.4rem; font-weight: 500; color: var(--text-color-primary); font-size: var(--fs-sm); }
         input[type="email"], input[type="password"] {
             width: 100%; padding: 0.7rem; border: 1px solid var(--border-color);
-            border-radius: 0.5rem; background-color: #fff; color: var(--text-color-primary); font-size: 1rem;
+            border-radius: 0.5rem; background-color: #fff; color: var(--text-color-primary); font-size: var(--fs-base);
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         input:focus {
