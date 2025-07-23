@@ -68,13 +68,7 @@
   --color-info: #3498db; --color-info-bg: rgba(52, 152, 219, 0.1);
 
   --progress-bar-bg-empty: #e9ecef;
-  --progress-gradient: linear-gradient(
-    to right,
-    var(--color-danger) 0%,
-    var(--color-warning) 50%,
-    #ffcb00 75%,
-    var(--color-success) 100%
-  );
+  --progress-gradient: linear-gradient(to right, var(--color-danger), var(--color-warning), var(--color-success));
   --progress-end-color: var(--color-success);
   --progress-bar-glow-color: color-mix(in srgb, var(--progress-end-color) 60%, transparent);
   --progress-bar-height: 1rem;
