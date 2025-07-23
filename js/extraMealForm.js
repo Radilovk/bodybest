@@ -298,10 +298,18 @@ export async function openExtraMealModal() {
     }
 }
 
-async function handleExtraMealFormSubmit(event) {
+export async function handleExtraMealFormSubmit(event) {
     event.preventDefault();
     const form = event.target;
     const formData = new FormData(form);
+
+    const selectedVisual = form.querySelector('input[name="quantityEstimateVisual"]:checked');
+    const quantityCustomVal = (formData.get('quantityCustom') || '').trim();
+    if (!selectedVisual && !quantityCustomVal) {
+        showToast('Моля, изберете количество или въведете стойност.', true);
+        return;
+    }
+
     const dataToSend = { userId: currentUserId, timestamp: new Date().toISOString() };
 
     for (let [key, value] of formData.entries()) {
