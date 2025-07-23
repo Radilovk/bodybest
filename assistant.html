@@ -20,10 +20,16 @@
     <symbol id="icon-trash" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4h8v2m-6 4v8m-4-8v8m8-8v8M6 6v12a2 2 0 002 2h8a2 2 0 002-2V6" />
     </symbol>
+    <symbol id="icon-assistant" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2a7 7 0 0 1 7 7c0 5-7 11-7 11S5 14 5 9a7 7 0 0 1 7-7z"/>
+      <circle cx="10" cy="9" r="1"/>
+      <circle cx="14" cy="9" r="1"/>
+      <path d="M9 12c1 1 5 1 6 0"/>
+    </symbol>
 </svg>
 <div id="chat-widget" class="chat-widget visible" role="log" aria-live="polite">
     <div class="chat-header">
-        <h4>💬 Cloudflare Асистент</h4>
+        <h4><svg class="icon assistant-icon" aria-hidden="true"><use href="#icon-assistant"></use></svg> Cloudflare Асистент</h4>
         <button id="chat-clear" class="chat-clear-btn" aria-label="Изчисти чата">
             <svg class="icon"><use href="#icon-trash"></use></svg>
         </button>
