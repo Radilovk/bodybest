@@ -4,7 +4,7 @@
     <div class="form-wizard-header" style="margin-bottom: var(--space-lg);">
         <h3 id="extraMealModalFormTitle" style="text-align:center; margin-bottom: var(--space-md);">Добавяне на Извънредно Хранене</h3>
         <div class="step-indicator-container">
-            <span class="step-indicator-label" style="display: block; font-size: 0.85em; color: var(--text-color-muted); margin-bottom: var(--space-xs); text-align: center;">Стъпка <span id="currentStepNumber">1</span> от <span id="totalStepNumber">5</span></span>
+            <span class="step-indicator-label">Стъпка <span id="currentStepNumber">1</span> от <span id="totalStepNumber">5</span></span>
             <div class="progress-bar-steps" style="width: 100%; height: 8px; background-color: var(--surface-background); border-radius: var(--radius-sm); overflow: hidden; margin: 0 auto; max-width: 300px;">
                 <div id="stepProgressBar" style="height: 100%; background-color: var(--secondary-color); width: 20%; transition: width 0.4s ease-in-out; border-radius: var(--radius-sm);"></div>
             </div>
@@ -13,8 +13,8 @@
 
     <!-- Стъпка 1: Описание на храната -->
     <div class="form-step active-step" data-step="1">
-        <h4 class="step-title" style="font-size: 1.1em; color: var(--primary-color); margin-bottom: var(--space-md); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--border-color-soft);">
-            <span class="step-icon" style="margin-right: var(--space-sm); font-size: 1.1em;"><svg class="icon"><use href="#icon-utensils"></use></svg></span>Описание на Храненето
+        <h4 class="step-title">
+            <span class="step-icon"><svg class="icon"><use href="#icon-utensils"></use></svg></span>Описание на Храненето
         </h4>
         <div class="form-group"> <!-- Използваме общ клас за група от форма -->
             <label for="foodDescription">Какво консумирахте?</label>
@@ -31,8 +31,8 @@
 
     <!-- Стъпка 2: Количество и Време -->
     <div class="form-step" data-step="2" style="display: none;">
-        <h4 class="step-title" style="font-size: 1.1em; color: var(--primary-color); margin-bottom: var(--space-md); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--border-color-soft);">
-            <span class="step-icon" style="margin-right: var(--space-sm); font-size: 1.1em;"><svg class="icon"><use href="#icon-scale"></use></svg></span>Количество и Време
+        <h4 class="step-title">
+            <span class="step-icon"><svg class="icon"><use href="#icon-scale"></use></svg></span>Количество и Време
         </h4>
         <fieldset class="form-group">
             <legend id="quantityLegend">Приблизително количество:</legend>
@@ -90,21 +90,21 @@
 
     <!-- Стъпка 3: Причина -->
     <div class="form-step" data-step="3" style="display: none;">
-        <h4 class="step-title" style="font-size: 1.1em; color: var(--primary-color); margin-bottom: var(--space-md); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--border-color-soft);">
-            <span class="step-icon" style="margin-right: var(--space-sm); font-size: 1.1em;"><i class="bi bi-question-circle"></i></span>Причина за Храненето
+        <h4 class="step-title">
+            <span class="step-icon"><i class="bi bi-question-circle"></i></span>Причина за Храненето
         </h4>
         <fieldset class="form-group">
             <legend>Основна причина:</legend>
             <div class="radio-group-vertical" style="display: flex; flex-direction: column; gap: var(--space-sm);">
                 <!-- Стилът за .radio-group-vertical и label вътре ще дойде от extra_meal_form_styles.css -->
-                <label><input type="radio" name="reasonPrimary" value="глад" checked> <span class="emoji-icon" style="margin-right: var(--space-xs); font-size: 1.1em;"><i class="bi bi-emoji-smile"></i></span> Истински физически глад</label>
-                <label><input type="radio" name="reasonPrimary" value="craving"> <span class="emoji-icon" style="margin-right: var(--space-xs); font-size: 1.1em;"><i class="bi bi-star-fill"></i></span> Силно желание (craving)</label>
-                <label><input type="radio" name="reasonPrimary" value="социално"> <span class="emoji-icon" style="margin-right: var(--space-xs); font-size: 1.1em;"><i class="bi bi-people"></i></span> Социално събитие / почерпка</label>
-                <label><input type="radio" name="reasonPrimary" value="емоция_стрес"> <span class="emoji-icon" style="margin-right: var(--space-xs); font-size: 1.1em;"><i class="bi bi-emoji-frown"></i></span> Стрес / Тъга / Емоционално</label>
-                <label><input type="radio" name="reasonPrimary" value="емоция_радост"> <span class="emoji-icon" style="margin-right: var(--space-xs); font-size: 1.1em;"><i class="bi bi-emoji-laughing"></i></span> Радост / Награда (емоционално)</label>
-                <label><input type="radio" name="reasonPrimary" value="скука"> <span class="emoji-icon" style="margin-right: var(--space-xs); font-size: 1.1em;"><i class="bi bi-moon"></i></span> Скука / От навик</label>
-                <label><input type="radio" name="reasonPrimary" value="нямах_планирана"> <span class="emoji-icon" style="margin-right: var(--space-xs); font-size: 1.1em;"><i class="bi bi-question-circle"></i></span> Нямах планирана храна</label>
-                <label><input type="radio" name="reasonPrimary" value="other_reason"> <span class="emoji-icon" style="margin-right: var(--space-xs); font-size: 1.1em;"><i class="bi bi-question"></i></span> Друга причина</label>
+                <label><input type="radio" name="reasonPrimary" value="глад" checked> <span class="emoji-icon"><i class="bi bi-emoji-smile"></i></span> Истински физически глад</label>
+                <label><input type="radio" name="reasonPrimary" value="craving"> <span class="emoji-icon"><i class="bi bi-star-fill"></i></span> Силно желание (craving)</label>
+                <label><input type="radio" name="reasonPrimary" value="социално"> <span class="emoji-icon"><i class="bi bi-people"></i></span> Социално събитие / почерпка</label>
+                <label><input type="radio" name="reasonPrimary" value="емоция_стрес"> <span class="emoji-icon"><i class="bi bi-emoji-frown"></i></span> Стрес / Тъга / Емоционално</label>
+                <label><input type="radio" name="reasonPrimary" value="емоция_радост"> <span class="emoji-icon"><i class="bi bi-emoji-laughing"></i></span> Радост / Награда (емоционално)</label>
+                <label><input type="radio" name="reasonPrimary" value="скука"> <span class="emoji-icon"><i class="bi bi-moon"></i></span> Скука / От навик</label>
+                <label><input type="radio" name="reasonPrimary" value="нямах_планирана"> <span class="emoji-icon"><i class="bi bi-question-circle"></i></span> Нямах планирана храна</label>
+                <label><input type="radio" name="reasonPrimary" value="other_reason"> <span class="emoji-icon"><i class="bi bi-question"></i></span> Друга причина</label>
             </div>
             <input type="text" id="reasonOtherText" name="reasonOtherText" class="hidden input-focus-animate" style="margin-top: var(--space-sm);" placeholder="Моля, уточнете причината" aria-label="Уточнение за причина">
         </fieldset>
@@ -112,20 +112,20 @@
 
     <!-- Стъпка 4: Усещане и Влияние -->
     <div class="form-step" data-step="4" style="display: none;">
-        <h4 class="step-title" style="font-size: 1.1em; color: var(--primary-color); margin-bottom: var(--space-md); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--border-color-soft);">
-            <span class="step-icon" style="margin-right: var(--space-sm); font-size: 1.1em;"><i class="bi bi-chat-dots"></i></span>Усещане и Влияние
+        <h4 class="step-title">
+            <span class="step-icon"><i class="bi bi-chat-dots"></i></span>Усещане и Влияние
         </h4>
         <fieldset class="form-group">
             <legend>Как се почувствахте след това?</legend>
             <div class="radio-group-icons" style="display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-md);">
                 <!-- Стилът за .icon-radio-label ще дойде от extra_meal_form_styles.css -->
-                <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="ситост_доволство" checked> <span class="emoji-icon" style="margin-right: var(--space-xs);"><i class="bi bi-emoji-smile"></i></span> <span class="icon-radio-text">Заситен/а</span></label>
-                <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="още_глад"> <span class="emoji-icon" style="margin-right: var(--space-xs);"><i class="bi bi-emoji-neutral"></i></span> <span class="icon-radio-text">Гладен/а</span></label>
-                <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="преядох_тежко"> <span class="emoji-icon" style="margin-right: var(--space-xs);"><i class="bi bi-emoji-dizzy"></i></span> <span class="icon-radio-text">Тежко ми е</span></label>
-                <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="виновен_съжаление"> <span class="emoji-icon" style="margin-right: var(--space-xs);"><i class="bi bi-emoji-frown"></i></span> <span class="icon-radio-text">Виновен/а</span></label>
-                <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="без_особена_промяна"> <span class="emoji-icon" style="margin-right: var(--space-xs);"><i class="bi bi-emoji-neutral"></i></span> <span class="icon-radio-text">Без промяна</span></label>
-                <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="енергичен"> <span class="emoji-icon" style="margin-right: var(--space-xs);"><i class="bi bi-lightning"></i></span> <span class="icon-radio-text">Енергичен/а</span></label>
-                <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="отпаднал_сънлив"> <span class="emoji-icon" style="margin-right: var(--space-xs);"><i class="bi bi-moon-fill"></i></span> <span class="icon-radio-text">Отпаднал/а</span></label>
+                <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="ситост_доволство" checked> <span class="emoji-icon"><i class="bi bi-emoji-smile"></i></span> <span class="icon-radio-text">Заситен/а</span></label>
+                <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="още_глад"> <span class="emoji-icon"><i class="bi bi-emoji-neutral"></i></span> <span class="icon-radio-text">Гладен/а</span></label>
+                <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="преядох_тежко"> <span class="emoji-icon"><i class="bi bi-emoji-dizzy"></i></span> <span class="icon-radio-text">Тежко ми е</span></label>
+                <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="виновен_съжаление"> <span class="emoji-icon"><i class="bi bi-emoji-frown"></i></span> <span class="icon-radio-text">Виновен/а</span></label>
+                <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="без_особена_промяна"> <span class="emoji-icon"><i class="bi bi-emoji-neutral"></i></span> <span class="icon-radio-text">Без промяна</span></label>
+                <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="енергичен"> <span class="emoji-icon"><i class="bi bi-lightning"></i></span> <span class="icon-radio-text">Енергичен/а</span></label>
+                <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="отпаднал_сънлив"> <span class="emoji-icon"><i class="bi bi-moon-fill"></i></span> <span class="icon-radio-text">Отпаднал/а</span></label>
             </div>
         </fieldset>
         <fieldset class="form-group">
@@ -149,10 +149,10 @@
 
     <!-- Стъпка 5: Потвърждение -->
     <div class="form-step" data-step="5" style="display: none;">
-        <h4 class="step-title" style="font-size: 1.1em; color: var(--primary-color); margin-bottom: var(--space-md); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--border-color-soft);">
-            <span class="step-icon" style="margin-right: var(--space-sm); font-size: 1.1em;"><i class="bi bi-check-lg"></i></span>Преглед и Потвърждение
+        <h4 class="step-title">
+            <span class="step-icon"><i class="bi bi-check-lg"></i></span>Преглед и Потвърждение
         </h4>
-        <div id="extraMealSummary" class="summary-box" style="background-color: var(--metric-value-group-bg-initial); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: var(--space-lg); font-size: 0.9em;">
+        <div id="extraMealSummary" class="summary-box fs-sm" style="background-color: var(--metric-value-group-bg-initial); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: var(--space-lg);">
             <p style="margin-bottom: var(--space-sm); color: var(--text-color-secondary); font-weight: 500;">Моля, прегледайте въведената информация:</p>
             <div style="margin-bottom: var(--space-xs); padding: var(--space-xs) 0; border-bottom: 1px dotted var(--border-color-soft);"><strong style="color: var(--text-color-primary); margin-right: var(--space-xs); min-width: 130px; display: inline-block;">Храна:</strong> <span data-summary="foodDescription"></span></div>
             <div style="margin-bottom: var(--space-xs); padding: var(--space-xs) 0; border-bottom: 1px dotted var(--border-color-soft);"><strong style="color: var(--text-color-primary); margin-right: var(--space-xs); min-width: 130px; display: inline-block;">Количество:</strong> <span data-summary="quantityEstimate"></span></div>

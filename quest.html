@@ -122,19 +122,13 @@
     pageDiv.className = 'page';
     pageDiv.id = 'page0';
     pageDiv.innerHTML = `
-      <h1>Добре дошли!<br><br>
-        <span style="font-family:Verdana,Geneva,sans-serif;">
-          <span style="font-size:24px;">Нека заедно да направим първата стъпка към Вашето по-добро Аз</span>
-        </span>
+      <h1 class="ff-primary">Добре дошли!<br><br>
+        <span class="fs-xl">Нека заедно да направим първата стъпка към Вашето по-добро Аз</span>
       </h1>
-      <p><span style="font-size:48px;"><i class="bi bi-seedling"></i></span></p>
+      <p><span class="fs-3xl"><i class="bi bi-seedling"></i></span></p>
       <h1>
-        <span style="color:#ecf0f1;">
-          <span style="font-size:18px;">
-            <span style="font-family:Verdana,Geneva,sans-serif;">
-              Този въпросник ще помогне за създаването на Вашият план с хранене и съвети. Натиснете бутона по-долу, за да започнете.
-            </span>
-          </span>
+        <span style="color:#ecf0f1;" class="fs-md ff-primary">
+          Този въпросник ще помогне за създаването на Вашият план с хранене и съвети. Натиснете бутона по-долу, за да започнете.
         </span>
       </h1>
       <div class="nav-buttons">
@@ -206,7 +200,7 @@
     }
 
     if (question.dependency) {
-      html += `<div style="font-size:12px; color:#aaa; margin-top: 10px;">(Показва се ако '${question.dependency.question}' е '${question.dependency.value}')</div>`;
+      html += `<div class="fs-xs text-muted" style="margin-top: 10px;">(Показва се ако '${question.dependency.question}' е '${question.dependency.value}')</div>`;
     }
 
     // Навигационни бутони
