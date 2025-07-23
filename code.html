@@ -211,6 +211,12 @@
       <symbol id="icon-droplet" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M12 2.25c-2.35 2.8-7.5 8.11-7.5 11.25a7.5 7.5 0 0 0 15 0c0-3.14-5.15-8.45-7.5-11.25z" />
       </symbol>
+      <symbol id="icon-assistant" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2a7 7 0 0 1 7 7c0 5-7 11-7 11S5 14 5 9a7 7 0 0 1 7-7z" />
+        <circle cx="10" cy="9" r="1" />
+        <circle cx="14" cy="9" r="1" />
+        <path d="M9 12c1 1 5 1 6 0" />
+      </symbol>
     </svg>
     <!-- ======================= END SVG ICONS DEFINITION ====================== -->
 
@@ -1232,7 +1238,7 @@
       >
         <div class="modal-content plan-mod-chat-content">
           <div class="plan-mod-chat-header">
-            <h4 id="planModChatTitle">💬 Промяна на план</h4>
+            <h4 id="planModChatTitle"><svg class="icon assistant-icon" aria-hidden="true"><use href="#icon-assistant"></use></svg> Промяна на план</h4>
             <div class="chat-actions">
               <button
                 id="planModChatClear"
@@ -1281,7 +1287,7 @@
         aria-expanded="false"
         aria-controls="chat-widget"
       >
-        💬
+        <svg class="icon assistant-icon" aria-hidden="true"><use href="#icon-assistant"></use></svg>
       </button>
       <!-- ======================= END FLOATING ACTION BUTTONS =================== -->
 
@@ -1290,7 +1296,7 @@
       <!-- ======================================================================= -->
       <div id="chat-widget" class="chat-widget" role="log" aria-live="polite">
         <div class="chat-header">
-          <h4>💬 Чат с Асистент</h4>
+          <h4><svg class="icon assistant-icon" aria-hidden="true"><use href="#icon-assistant"></use></svg> Чат с Асистент</h4>
           <div class="chat-actions">
             <button
               id="chat-clear"
