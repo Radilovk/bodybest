@@ -37,7 +37,26 @@ beforeEach(async () => {
     dailyMealList: document.getElementById('dailyMealList')
   };
   jest.unstable_mockModule('../uiElements.js', () => ({ selectors, trackerInfoTexts: {}, detailedMetricInfoTexts: {} }));
-  jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn(), openInstructionsModal: jest.fn() }));
+  jest.unstable_mockModule('../uiHandlers.js', () => ({
+    toggleMenu: jest.fn(),
+    closeMenu: jest.fn(),
+    handleOutsideMenuClick: jest.fn(),
+    handleMenuKeydown: jest.fn(),
+    toggleTheme: jest.fn(),
+    activateTab: jest.fn(),
+    handleTabKeydown: jest.fn(),
+    closeModal: jest.fn(),
+    openModal: jest.fn(),
+    openInfoModalWithDetails: jest.fn(),
+    toggleDailyNote: jest.fn(),
+    openMainIndexInfo: jest.fn(),
+    openInstructionsModal: jest.fn(),
+    showLoading: jest.fn(),
+    handleTrackerTooltipShow: jest.fn(),
+    handleTrackerTooltipHide: jest.fn(),
+    showToast: jest.fn()
+  }));
+  jest.unstable_mockModule('../extraMealForm.js', () => ({ openExtraMealModal: jest.fn() }));
   jest.unstable_mockModule('../app.js', () => ({
     fullDashboardData: {
       userName: 'Иван',
@@ -201,6 +220,53 @@ test('applies success color to completed meal bar', async () => {
   expect(li).not.toBeNull();
   const color = getComputedStyle(li.querySelector('.meal-color-bar')).backgroundColor;
   expect(color).toBe('rgb(46, 204, 113)');
+});
+
+test('clicking a meal card toggles completion status', async () => {
+  jest.resetModules();
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const currentDayKey = dayNames[new Date().getDay()];
+  const fullData = {
+    userName: 'Иван',
+    analytics: { current: {}, streak: {} },
+    planData: {
+      week1Menu: {
+        [currentDayKey]: [
+          { meal_name: 'Тестово хранене', items: [] }
+        ]
+      }
+    },
+    dailyLogs: [],
+    currentStatus: {},
+    initialData: {},
+    initialAnswers: {}
+  };
+
+  jest.unstable_mockModule('../app.js', async () => {
+    const realApp = await import('../app.js');
+    return {
+      ...realApp,
+      fullDashboardData: fullData,
+      todaysMealCompletionStatus: {},
+      planHasRecContent: false
+    };
+  });
+
+  const appState = await import('../app.js');
+
+  ({ populateUI } = await import('../populateUI.js'));
+  const { setupDynamicEventListeners } = await import('../eventListeners.js');
+
+  populateUI();
+  setupDynamicEventListeners();
+
+  const card = document.querySelector('#dailyMealList .meal-card');
+  card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+  expect(card.classList.contains('completed')).toBe(true);
+  expect(appState.todaysMealCompletionStatus[`${currentDayKey}_0`]).toBe(true);
+  const handlers = await import('../uiHandlers.js');
+  expect(handlers.showToast).toHaveBeenCalled();
 });
 
 describe('progress bar width handling', () => {
