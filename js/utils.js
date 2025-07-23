@@ -92,3 +92,32 @@ export function fileToText(file) {
         reader.readAsText(file);
     });
 }
+
+/**
+ * Изчислява крайния цвят на прогрес бар спрямо процента.
+ * @param {number} percent Стойността в диапазона 0-100.
+ * @returns {string} CSS rgb() низ за крайния цвят.
+ */
+export function getProgressColor(percent) {
+    const stops = [
+        { pct: 0, color: [231, 76, 60] },       // червено
+        { pct: 50, color: [243, 156, 18] },     // оранжево
+        { pct: 75, color: [255, 203, 0] },      // жълто
+        { pct: 100, color: [46, 204, 113] }     // зелено
+    ];
+    const p = Math.max(0, Math.min(100, percent));
+    for (let i = 1; i < stops.length; i++) {
+        if (p <= stops[i].pct) {
+            const lower = stops[i - 1];
+            const upper = stops[i];
+            const range = upper.pct - lower.pct;
+            const t = range === 0 ? 0 : (p - lower.pct) / range;
+            const r = Math.round(lower.color[0] + (upper.color[0] - lower.color[0]) * t);
+            const g = Math.round(lower.color[1] + (upper.color[1] - lower.color[1]) * t);
+            const b = Math.round(lower.color[2] + (upper.color[2] - lower.color[2]) * t);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+    }
+    const c = stops[stops.length - 1].color;
+    return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+}

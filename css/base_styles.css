@@ -59,7 +59,8 @@
 
   --progress-bar-bg-empty: #e9ecef;
   --progress-gradient: linear-gradient(to right, var(--color-danger), var(--color-warning), var(--color-success));
-  --progress-bar-glow-color: var(--color-success);
+  --progress-end-color: var(--color-success);
+  --progress-bar-glow-color: var(--progress-end-color);
   --progress-bar-height: 1rem;
   --progress-bar-radius: var(--radius-sm);
 
