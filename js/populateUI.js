@@ -289,7 +289,9 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
         li.innerHTML = `
             <div class="meal-color-bar"></div>
             <div class="meal-content-wrapper">
-                <h2 class="meal-name">${mealItem.meal_name || 'Хранене'}</h2>
+                <h2 class="meal-name">${mealItem.meal_name || 'Хранене'}
+                    <span class="check-icon" aria-hidden="true"><svg class="icon"><use href="#icon-check"/></svg></span>
+                </h2>
                 <div class="meal-items">${itemsHtml}</div>
             </div>
             <div class="actions">

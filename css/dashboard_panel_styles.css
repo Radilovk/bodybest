@@ -377,8 +377,23 @@ body.dark-theme .detailed-metric-item .value-current {
 }
 
 .meal-list li.completed .meal-name {
-    text-decoration: line-through;
-    opacity: 0.7;
+    opacity: 0.9;
+}
+
+.meal-list li .check-icon {
+    display: none;
+    margin-left: var(--space-sm);
+    color: var(--color-success, var(--primary-color));
+}
+
+.meal-list li.completed .check-icon {
+    display: inline-block;
+    animation: checkmark-pop 0.3s ease-out;
+}
+
+@keyframes checkmark-pop {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }
 
 /* Секцията с бутони - КЛЮЧОВИ ПРОМЕНИ ЗА ВИСОЧИНАТА ТУК */
