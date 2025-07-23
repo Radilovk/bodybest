@@ -3,15 +3,16 @@ import { selectors } from './uiElements.js';
 import { openModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
 
-const medalIcons = ['fa-star', 'fa-trophy', 'fa-heart', 'fa-fire', 'fa-bolt'];
+const medalEmojis = ['🥇', '🥈', '🥉', '🏆', '🎖️', '🏅', '🏵️', '🎊', '🔥', '💯', '🎯', '🎉', '🚀', '✨'];
 
-// Анимирано показване на икона в модала за постижение
-function showAchievementIcon(icon) {
+// Анимирано показване на емоджи в модала за постижение
+function showAchievementEmoji(emoji) {
     const emojiEl = document.getElementById('achievementModalEmoji');
     if (!emojiEl) return;
-    emojiEl.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+    emojiEl.textContent = emoji;
     emojiEl.setAttribute('aria-hidden', 'false');
     emojiEl.style.animation = 'none';
+    // Trigger reflow to restart animation
     void emojiEl.offsetWidth;
     emojiEl.style.animation = '';
 }
@@ -46,7 +47,7 @@ export async function initializeAchievements(userId) {
     achievements = JSON.parse(localStorage.getItem(`achievements_${currentUserId}`) || '[]');
     let updated = false;
     achievements = achievements.map(a => {
-        if (!a.icon) { a.icon = medalIcons[Math.floor(Math.random() * medalIcons.length)]; updated = true; }
+        if (!a.emoji) { a.emoji = medalEmojis[Math.floor(Math.random() * medalEmojis.length)]; updated = true; }
         return a;
     });
     if (updated) saveAchievements();
@@ -56,7 +57,7 @@ export async function initializeAchievements(userId) {
             const data = await res.json();
             if (res.ok && data.success && Array.isArray(data.achievements)) {
                 achievements = data.achievements.map(a => {
-                    if (!a.icon) { a.icon = medalIcons[Math.floor(Math.random() * medalIcons.length)]; updated = true; }
+                    if (!a.emoji) { a.emoji = medalEmojis[Math.floor(Math.random() * medalEmojis.length)]; updated = true; }
                     return a;
                 });
                 saveAchievements();
@@ -89,25 +90,16 @@ function renderAchievements(newIndex = -1) {
         const el = document.createElement('div');
         el.className = 'achievement-medal';
         if (index === newIndex) el.classList.add('new');
-        const icon = a.icon || medalIcons[0];
-        el.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+        el.textContent = a.emoji || '🏅';
         el.dataset.index = index;
         selectors.streakGrid.appendChild(el);
     });
-    if (selectors.streakCount) {
-        selectors.streakCount.innerHTML = '';
-        achievements.slice(-2).forEach(a => {
-            const badge = document.createElement('div');
-            badge.className = 'achievement-badge';
-            badge.innerHTML = `<i class="fa-solid ${a.icon || medalIcons[0]}"></i>`;
-            selectors.streakCount.appendChild(badge);
-        });
-    }
+    if (selectors.streakCount) selectors.streakCount.textContent = achievements.length;
 }
 
-export function createAchievement(title, message, icon = null) {
-    const chosen = icon || medalIcons[Math.floor(Math.random() * medalIcons.length)];
-    achievements.push({ date: Date.now(), title, message, icon: chosen });
+export function createAchievement(title, message, emoji = null) {
+    const chosen = emoji || medalEmojis[Math.floor(Math.random() * medalEmojis.length)];
+    achievements.push({ date: Date.now(), title, message, emoji: chosen });
     if (achievements.length > 7) achievements.shift();
     saveAchievements();
     renderAchievements(achievements.length - 1);
@@ -115,7 +107,7 @@ export function createAchievement(title, message, icon = null) {
     const modalTitle = document.getElementById('achievementModalTitle');
     if (body) body.textContent = message;
     if (modalTitle) modalTitle.textContent = title;
-    showAchievementIcon(chosen);
+    showAchievementEmoji(chosen);
     openModal('achievementModal');
     localStorage.setItem('lastPraiseDate', String(Date.now()));
 }
@@ -130,7 +122,7 @@ export function handleAchievementClick(e) {
     const modalTitle = document.getElementById('achievementModalTitle');
     if (body) body.textContent = ach.message;
     if (modalTitle) modalTitle.textContent = ach.title;
-    showAchievementIcon(ach.icon || medalIcons[0]);
+    showAchievementEmoji(ach.emoji || '🏅');
     openModal('achievementModal');
 }
 
