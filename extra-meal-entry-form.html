@@ -1,7 +1,6 @@
-<!-- extra-meal-entry-form-1.html (КОРИГИРАНА ВЕРСИЯ) -->
+<!-- extra-meal-entry-form.html -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-<!-- КОРЕКЦИЯ 1: Добавени са method и action за по-добра семантика. Това не пречи на JS обработката. -->
-<form id="extraMealEntryFormActual" aria-labelledby="extraMealModalFormTitle" novalidate method="POST" action="#">
+<form id="extraMealEntryFormActual" aria-labelledby="extraMealModalFormTitle" novalidate>
     <div class="form-wizard-header" style="margin-bottom: var(--space-lg);">
         <h3 id="extraMealModalFormTitle" style="text-align:center; margin-bottom: var(--space-md);">Добавяне на Извънредно Хранене</h3>
         <div class="step-indicator-container">
@@ -17,16 +16,16 @@
         <h4 class="step-title">
             <span class="step-icon"><svg class="icon"><use href="#icon-utensils"></use></svg></span>Описание на Храненето
         </h4>
-        <div class="form-group">
+        <div class="form-group"> <!-- Използваме общ клас за група от форма -->
             <label for="foodDescription">Какво консумирахте?</label>
             <div class="autocomplete-container" style="position: relative;">
-            <textarea id="foodDescription" name="foodDescription" rows="3" placeholder="Въведете текст..." required aria-required="true" aria-describedby="foodDescriptionHelp" class="input-focus-animate"></textarea>
+            <textarea id="foodDescription" name="foodDescription" rows="3" placeholder="Въведете текст..." required aria-required="true" aria-describedby="foodDescriptionHelp" class="input-focus-animate"></textarea> <!-- Няма нужда от form-control, ако е глобално стилизиран textarea -->
                 <div id="foodSuggestionsDropdown" class="autocomplete-suggestions hidden" role="listbox" style="position: absolute; background-color: var(--surface-background); border: 1px solid var(--input-border-color); border-top: none; z-index: 1050; width: 100%; max-height: 150px; overflow-y: auto; box-shadow: var(--shadow-sm); border-bottom-left-radius: var(--radius-md); border-bottom-right-radius: var(--radius-md);">
                     <!-- Предложенията ще се добавят от JS -->
                 </div>
             </div>
-            <!-- КОРЕКЦИЯ 2: Помощният текст е направен по-ясен. -->
-            <small id="foodDescriptionHelp" class="text-muted" style="display: block; margin-top: var(--space-xs);">✔ Опишете само една храна/напитка. За всяка следваща, попълнете нова форма.</small>
+            <small id="foodDescriptionHelp" class="text-muted" style="display: block; margin-top: var(--space-xs);">✔ 1 храна/напитка на запис.
+            ➡ Завърши и стартирай нова форма за следващата.</small>
         </div>
     </div>
 
@@ -38,9 +37,9 @@
         <fieldset class="form-group">
             <legend id="quantityLegend">Приблизително количество:</legend>
             <div id="quantityCardGroup" class="quantity-card-selector-grid" role="radiogroup" aria-labelledby="quantityLegend" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-sm); margin-bottom: var(--space-md);">
-                <!-- КОРЕКЦИЯ 3: Премахнат е 'checked' атрибутът. Това е най-важната логическа корекция. -->
+                <!-- Карти за количество (структурата е запазена, но стиловете ще дойдат от extra_meal_form_styles.css) -->
                 <label class="quantity-card-option">
-                    <input type="radio" name="quantityEstimateVisual" value="не_посочено_в_стъпка_2">
+                    <input type="radio" name="quantityEstimateVisual" value="не_посочено_в_стъпка_2" checked>
                     <span class="card-content"><span class="card-icon-wrapper"><i class="bi bi-pencil-square"></i></span><span class="card-text-wrapper"><span class="card-label">Вече описано</span></span></span>
                 </label>
                 <label class="quantity-card-option">
@@ -97,6 +96,7 @@
         <fieldset class="form-group">
             <legend>Основна причина:</legend>
             <div class="radio-group-vertical" style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                <!-- Стилът за .radio-group-vertical и label вътре ще дойде от extra_meal_form_styles.css -->
                 <label><input type="radio" name="reasonPrimary" value="глад" checked> <span class="emoji-icon"><i class="bi bi-emoji-smile"></i></span> Истински физически глад</label>
                 <label><input type="radio" name="reasonPrimary" value="craving"> <span class="emoji-icon"><i class="bi bi-star-fill"></i></span> Силно желание (craving)</label>
                 <label><input type="radio" name="reasonPrimary" value="социално"> <span class="emoji-icon"><i class="bi bi-people"></i></span> Социално събитие / почерпка</label>
@@ -118,6 +118,7 @@
         <fieldset class="form-group">
             <legend>Как се почувствахте след това?</legend>
             <div class="radio-group-icons" style="display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-md);">
+                <!-- Стилът за .icon-radio-label ще дойде от extra_meal_form_styles.css -->
                 <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="ситост_доволство" checked> <span class="emoji-icon"><i class="bi bi-emoji-smile"></i></span> <span class="icon-radio-text">Заситен/а</span></label>
                 <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="още_глад"> <span class="emoji-icon"><i class="bi bi-emoji-neutral"></i></span> <span class="icon-radio-text">Гладен/а</span></label>
                 <label class="icon-radio-label"><input type="radio" name="feelingAfter" value="преядох_тежко"> <span class="emoji-icon"><i class="bi bi-emoji-dizzy"></i></span> <span class="icon-radio-text">Тежко ми е</span></label>
@@ -134,7 +135,6 @@
                 <label><input type="radio" name="replacedPlanned" value="да_напълно"> Да, напълно го замести</label>
                 <label><input type="radio" name="replacedPlanned" value="да_частично"> Да, частично (хапнах по-малко от планираното)</label>
             </div>
-            <!-- ЗАБЕЛЕЖКА: За да работи валидацията тук, JavaScript трябва да добавя/премахва 'required' атрибута, когато полето се показва/скрива -->
             <select id="skippedMeal" name="skippedMeal" class="hidden" style="margin-top: var(--space-sm);" autocomplete="off" aria-label="Избор на засегнато хранене">
                 <option value="">-- Кое хранене беше засегнато? --</option>
                 <option value="закуска">Закуска</option>
@@ -155,8 +155,7 @@
         <div id="extraMealSummary" class="summary-box fs-sm" style="background-color: var(--metric-value-group-bg-initial); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: var(--space-lg);">
             <p style="margin-bottom: var(--space-sm); color: var(--text-color-secondary); font-weight: 500;">Моля, прегледайте въведената информация:</p>
             <div style="margin-bottom: var(--space-xs); padding: var(--space-xs) 0; border-bottom: 1px dotted var(--border-color-soft);"><strong style="color: var(--text-color-primary); margin-right: var(--space-xs); min-width: 130px; display: inline-block;">Храна:</strong> <span data-summary="foodDescription"></span></div>
-            <!-- КОРЕКЦИЯ 4: Уеднаквен data-summary с name атрибута на полето, за да работи JS логиката за обобщение. -->
-            <div style="margin-bottom: var(--space-xs); padding: var(--space-xs) 0; border-bottom: 1px dotted var(--border-color-soft);"><strong style="color: var(--text-color-primary); margin-right: var(--space-xs); min-width: 130px; display: inline-block;">Количество:</strong> <span data-summary="quantityEstimateVisual"></span></div>
+            <div style="margin-bottom: var(--space-xs); padding: var(--space-xs) 0; border-bottom: 1px dotted var(--border-color-soft);"><strong style="color: var(--text-color-primary); margin-right: var(--space-xs); min-width: 130px; display: inline-block;">Количество:</strong> <span data-summary="quantityEstimate"></span></div>
             <div style="margin-bottom: var(--space-xs); padding: var(--space-xs) 0; border-bottom: 1px dotted var(--border-color-soft);"><strong style="color: var(--text-color-primary); margin-right: var(--space-xs); min-width: 130px; display: inline-block;">Време:</strong> <span data-summary="mealTimeSelect"></span></div>
             <div style="margin-bottom: var(--space-xs); padding: var(--space-xs) 0; border-bottom: 1px dotted var(--border-color-soft);"><strong style="color: var(--text-color-primary); margin-right: var(--space-xs); min-width: 130px; display: inline-block;">Причина:</strong> <span data-summary="reasonPrimary"></span></div>
             <div style="margin-bottom: var(--space-xs); padding: var(--space-xs) 0; border-bottom: 1px dotted var(--border-color-soft);"><strong style="color: var(--text-color-primary); margin-right: var(--space-xs); min-width: 130px; display: inline-block;">Усещане:</strong> <span data-summary="feelingAfter"></span></div>
@@ -165,11 +164,10 @@
     </div>
 
     <!-- Навигация между стъпките -->
-    <!-- КОРЕКЦИЯ 5: Пренаредени бутони за по-добра интуитивност (UX). -->
     <div class="form-wizard-navigation" style="margin-top: var(--space-lg); display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm); border-top: 1px solid var(--border-color-soft); padding-top: var(--space-lg);">
-        <button type="button" id="emCancelBtn" class="button button-secondary modal-close-btn-form" style="flex-grow: 1; background-color: var(--text-color-muted); color: var(--text-color-on-primary);">Отказ</button>
-        <button type="button" id="emPrevStepBtn" class="button button-secondary" style="flex-grow: 1;">Предишна</button>
-        <button type="button" id="emNextStepBtn" class="button button-primary" style="flex-grow: 1;">Следваща</button>
-        <button type="submit" id="emSubmitBtn" class="button button-primary" style="flex-grow: 1;">Запази</button>
+        <button type="button" id="emPrevStepBtn" class="button button-secondary" style="flex-grow: 1;">Предишна</button> <!-- Добавен клас button -->
+        <button type="button" id="emCancelBtn" class="button button-secondary modal-close-btn-form" style="flex-grow: 1; background-color: var(--text-color-muted); color: var(--text-color-on-primary);">Отказ</button> <!-- Добавен клас button -->
+        <button type="button" id="emNextStepBtn" class="button button-primary" style="flex-grow: 1;">Следваща</button> <!-- Добавен клас button -->
+        <button type="submit" id="emSubmitBtn" class="button button-primary" style="flex-grow: 1;">Запази</button> <!-- Добавен клас button -->
     </div>
 </form>
