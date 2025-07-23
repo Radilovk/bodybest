@@ -19,7 +19,8 @@ beforeEach(async () => {
   }));
   jest.unstable_mockModule('../utils.js', () => ({
     fileToDataURL: jest.fn(async () => 'data:image/png;base64,imgdata'),
-    fileToText: jest.fn()
+    fileToText: jest.fn(),
+    getProgressColor: jest.fn()
   }));
 
   const mod = await import('../admin.js');
