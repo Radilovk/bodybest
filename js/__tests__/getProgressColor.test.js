@@ -2,11 +2,11 @@ import { getProgressColor } from '../utils.js';
 
 describe('getProgressColor', () => {
   test.each([
-    [0, 'rgba(255, 46, 46, 0.25)'],
-    [50, 'rgba(247, 227, 0, 0.45)'],
-    [75, 'rgba(197, 230, 17, 0.55)'],
-    [100, 'rgba(46, 204, 113, 0.65)'],
-    [25, 'rgba(255, 165, 0, 0.35)']
+    [0, 'rgb(231, 76, 60)'],
+    [50, 'rgb(243, 156, 18)'],
+    [75, 'rgb(255, 203, 0)'],
+    [100, 'rgb(46, 204, 113)'],
+    [25, 'rgb(237, 116, 39)']
   ])('returns color for %i%%', (pct, expected) => {
     expect(getProgressColor(pct)).toBe(expected);
   });
