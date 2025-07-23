@@ -4,6 +4,7 @@ import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml } from './ut
 import { generateId } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, planHasRecContent } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
+import { updateProgressBar } from './progressBar.js';
 
 export function populateUI() {
     const data = fullDashboardData; // Access global state
@@ -46,8 +47,7 @@ function populateDashboardMainIndexes(currentAnalytics) {
         hide(selectors.goalCard);
     } else {
         show(selectors.goalCard);
-        if (selectors.goalProgressMask) selectors.goalProgressMask.style.width = `${100 - Math.max(0, Math.min(100, goalProgressPercent))}%`;
-        if (selectors.goalProgressBar) selectors.goalProgressBar.setAttribute('aria-valuenow', `${Math.round(goalProgressPercent)}`);
+        if (selectors.goalProgressBar) updateProgressBar(selectors.goalProgressBar, goalProgressPercent);
         if (selectors.goalProgressText) {
             const goal = safeGet(fullDashboardData.initialAnswers, 'goal', '').toLowerCase();
             const startWeight = safeParseFloat(safeGet(fullDashboardData.initialData, 'weight'));
@@ -68,8 +68,7 @@ function populateDashboardMainIndexes(currentAnalytics) {
         hide(selectors.engagementCard);
     } else {
         show(selectors.engagementCard);
-        if (selectors.engagementProgressMask) selectors.engagementProgressMask.style.width = `${100 - Math.max(0, Math.min(100, engagementScore))}%`;
-        if (selectors.engagementProgressBar) selectors.engagementProgressBar.setAttribute('aria-valuenow', `${Math.round(engagementScore)}`);
+        if (selectors.engagementProgressBar) updateProgressBar(selectors.engagementProgressBar, engagementScore);
         if (selectors.engagementProgressText) selectors.engagementProgressText.textContent = `${Math.round(engagementScore)}%`;
     }
 
@@ -78,8 +77,7 @@ function populateDashboardMainIndexes(currentAnalytics) {
         hide(selectors.healthCard);
     } else {
         show(selectors.healthCard);
-        if (selectors.healthProgressMask) selectors.healthProgressMask.style.width = `${100 - Math.max(0, Math.min(100, healthScore))}%`;
-        if (selectors.healthProgressBar) selectors.healthProgressBar.setAttribute('aria-valuenow', `${Math.round(healthScore)}`);
+        if (selectors.healthProgressBar) updateProgressBar(selectors.healthProgressBar, healthScore);
         if (selectors.healthProgressText) selectors.healthProgressText.textContent = `${Math.round(healthScore)}%`;
     }
 }
@@ -115,10 +113,10 @@ function populateDashboardDetailedAnalytics(analyticsData) {
             card.appendChild(header);
 
             const progress = document.createElement('div');
-            progress.className = 'mini-progress-bar';
-            const mask = document.createElement('div');
-            mask.className = 'mini-progress-mask';
-            progress.appendChild(mask);
+            progress.className = 'mini-progress-bar progress-bar';
+            const fill = document.createElement('div');
+            fill.className = 'progress-fill';
+            progress.appendChild(fill);
             card.appendChild(progress);
 
             const currentDiv = document.createElement('div');
@@ -178,7 +176,7 @@ function populateDashboardDetailedAnalytics(analyticsData) {
             if (!isNaN(metric.currentValueNumeric)) {
                 const value = Number(metric.currentValueNumeric);
                 const percent = value <= 5 ? ((value - 1) / 4) * 100 : Math.max(0, Math.min(100, value));
-                mask.style.width = `${100 - Math.max(0, Math.min(100, percent))}%`;
+                updateProgressBar(progress, percent);
             }
 
             cardsContainer.appendChild(card);

@@ -26,11 +26,18 @@
   margin: var(--space-sm) auto;
 }
 .progress-bar {
-  background: var(--progress-gradient);
+  background: var(--progress-bar-bg-empty);
   border-radius: 6px;
   position: relative;
   height: 12px;
   overflow: hidden;
+}
+.progress-bar .progress-fill {
+  background: var(--progress-gradient);
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 0 6px var(--progress-bar-glow-color);
 }
 .progress-mask {
@@ -105,20 +112,20 @@
   font-size: 1.05rem;
 }
 .analytics-card .mini-progress-bar {
-  background: var(--progress-gradient);
+  background: var(--progress-bar-bg-empty);
   border-radius: var(--progress-bar-radius);
   position: relative;
   height: 0.5rem;
   overflow: hidden;
   margin-bottom: var(--space-sm);
-  box-shadow: 0 0 6px var(--progress-bar-glow-color);
 }
-.analytics-card .mini-progress-mask {
-  background: var(--surface-background);
+.analytics-card .mini-progress-bar .progress-fill {
+  background: var(--progress-gradient);
   height: 100%;
-  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  width: 100%;
+  width: 0;
   border-radius: inherit;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 6px var(--progress-bar-glow-color);
 }
 .analytics-card { cursor: pointer; }
 .metric-current-text {

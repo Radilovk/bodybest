@@ -1,6 +1,7 @@
 import { apiEndpoints } from './config.js';
 import { labelMap, statusMap } from './labelMap.js';
 import { initPlanEditor, gatherPlanFormData } from './planEditor.js';
+import { updateProgressBar } from './progressBar.js';
 
 function $(id) {
   return document.getElementById(id);
@@ -237,9 +238,9 @@ function fillDashboard(data) {
   setText('goalProgress', `${cur.goalProgress || 0}%`);
   setText('engagementScore', `${cur.engagementScore || 0}%`);
   setText('healthScore', `${cur.overallHealthScore || 0}%`);
-  if ($('goalProgressBar')) $('goalProgressBar').style.width = `${cur.goalProgress || 0}%`;
-  if ($('engagementBar')) $('engagementBar').style.width = `${cur.engagementScore || 0}%`;
-  if ($('healthBar')) $('healthBar').style.width = `${cur.overallHealthScore || 0}%`;
+  if ($('goalProgressBar')) updateProgressBar($('goalProgressBar'), cur.goalProgress || 0);
+  if ($('engagementBar')) updateProgressBar($('engagementBar'), cur.engagementScore || 0);
+  if ($('healthBar')) updateProgressBar($('healthBar'), cur.overallHealthScore || 0);
 
   const streak = data.analytics?.streak || { currentCount: 0, dailyStatusArray: [] };
   const streakCal = $('streakCalendar');
