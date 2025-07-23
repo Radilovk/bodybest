@@ -351,6 +351,7 @@ body.dark-theme .detailed-metric-item .value-current {
   font-size: 1.1em; /* Запазваме вашия размер */
   color: var(--text-color-secondary);
   line-height: 1.4; /* Леко намален line-height за по-компактен текст, ако е приемливо */
+  margin-top: 0; /* Премахваме допълнителен отстъп ако съществува */
 }
 
 .meal-list li .meal-items ul {
