@@ -196,6 +196,18 @@
       <symbol id="icon-moon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M21.7519 15.0019C20.597 15.4839 19.3296 15.75 18 15.75C12.6152 15.75 8.25 11.3848 8.25 6C8.25 4.67039 8.51614 3.40296 8.99806 2.24805C5.47566 3.71785 3 7.19481 3 11.25C3 16.6348 7.36522 21 12.75 21C16.8052 21 20.2821 18.5243 21.7519 15.0019Z"/>
       </symbol>
+      <symbol id="icon-scale" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+        <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+        <path d="M7 21h10" />
+        <path d="M12 3v18" />
+        <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
+      </symbol>
+      <symbol id="icon-utensils" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+        <path d="M7 2v20" />
+        <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+      </symbol>
     </svg>
     <!-- ======================= END SVG ICONS DEFINITION ====================== -->
 
@@ -368,7 +380,7 @@
             <!-- Основни Индекси -->
             <div class="main-indexes">
               <div class="card index-card" id="goalCard">
-                <h4>🎯 <span id="goalProgressText" class="index-value">Изчисляване...</span></h4>
+                <h4><i class="bi bi-bullseye"></i> <span id="goalProgressText" class="index-value">Изчисляване...</span></h4>
                 <div class="progress-bar-container">
                   <div
                     id="goalProgressBar"
@@ -399,7 +411,7 @@
                 </div>
               </div>
               <div class="card index-card" id="healthCard">
-                <h4>❤️ Здраве <span id="healthProgressText" class="index-value">Изчисляване...</span></h4>
+                <h4><i class="bi bi-heart-fill"></i> Здраве <span id="healthProgressText" class="index-value">Изчисляване...</span></h4>
                 <div class="progress-bar-container">
                   <div
                     id="healthProgressBar"
@@ -474,17 +486,17 @@
 
             <!-- Дневен План -->
             <div class="card">
-              <h3 id="dailyPlanTitle">🍽️ Дневен План (Зареждане...)</h3>
+              <h3 id="dailyPlanTitle"><svg class="icon"><use href="#icon-utensils"></use></svg> Дневен План (Зареждане...)</h3>
               <ul id="dailyMealList" class="meal-list">
                 <li class="placeholder">Зареждане на храненията...</li>
               </ul>
             </div>
             <!-- Край Дневен План -->
 
-            <!-- Дневен Лог (с интегрирано тегло) -->
+            <!-- Дневник (с интегрирано тегло) -->
             <div class="card">
               <h4>
-                📋 Дневен лог
+                <i class="bi bi-clipboard"></i> Дневник
                 <span
                   id="dailyLogDate"
                   class="text-muted"
@@ -501,7 +513,7 @@
                 class="button-secondary"
                 style="margin-bottom: 0.5rem; width: 100%"
               >
-                🍽️ Добави извънредно хранене
+                <svg class="icon"><use href="#icon-utensils"></use></svg> Добави извънредно хранене
               </button>
               <button
                 id="add-note-btn"
@@ -520,10 +532,10 @@
                 class="button-primary"
                 style="margin-top: 1rem"
               >
-                Запази Дневен Лог
+                Запази Дневник
               </button>
             </div>
-            <!-- Край Дневен Лог -->
+            <!-- Край Дневник -->
           </div>
         </section>
         <!-- ======================= END DASHBOARD PANEL ========================= -->
@@ -546,19 +558,19 @@
               </ul>
             </div>
             <div class="card">
-              <h3>🎯 Основни Цели</h3>
+              <h3><i class="bi bi-bullseye"></i> Основни Цели</h3>
               <ul id="profileGoals" class="profile-data-list">
                 <li class="placeholder">Зареждане на целите...</li>
               </ul>
             </div>
             <div class="card">
-              <h3>📋 Ключови Съображения от Въпросника</h3>
+              <h3><i class="bi bi-clipboard-check"></i> Ключови Съображения от Въпросника</h3>
               <div id="profileConsiderations">
                 <p class="placeholder">Зареждане на съображенията...</p>
               </div>
             </div>
             <div class="card" style="margin-top: var(--space-lg)">
-              <h3>⚙️ Инструменти за Индивидуализация</h3>
+              <h3><i class="bi bi-gear"></i> Инструменти за Индивидуализация</h3>
               <button
                 id="planModificationBtn"
                 class="button-secondary"
@@ -622,9 +634,9 @@
           aria-labelledby="recs-tab"
         >
           <div class="container">
-            <h2>💡 Препоръки</h2>
+            <h2><svg class="icon"><use href="#icon-lightbulb"></use></svg> Препоръки</h2>
             <div class="recommendation-section">
-              <h3>🍎 Основи на Храненето</h3>
+              <h3><i class="bi bi-apple"></i> Основи на Храненето</h3>
               <div
                 id="recFoodAllowedCard"
                 class="card collapsible-card tip-card-success"

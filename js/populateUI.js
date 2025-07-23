@@ -316,7 +316,7 @@ function populateDashboardLog(dailyLogs, currentStatus, initialData) {
 
     weightMetricDiv.innerHTML = `
         <label for="dailyLogWeightInput" data-tooltip-key="weight" title="${weightLabelTooltip}">
-            <span class="metric-icon">⚖️</span> Тегло (кг):
+            <span class="metric-icon"><svg class="icon"><use href="#icon-scale"></use></svg></span> Тегло (кг):
             <button class="button-icon-only metric-info-btn" aria-label="Информация за тегло">
                 <svg class="icon"><use href="#icon-info"></use></svg>
             </button>
@@ -366,9 +366,9 @@ function populateDashboardLog(dailyLogs, currentStatus, initialData) {
         const noteIsEffectivelyVisible = !!todaysLog.note || !selectors.dailyNote.classList.contains('hidden');
         selectors.dailyNote.classList.toggle('hidden', !noteIsEffectivelyVisible);
         if(selectors.addNoteBtn) {
-            const emoji = "📝";
+            const icon = '<i class="bi bi-pencil-square"></i>';
             const baseText = "бележка за деня";
-            selectors.addNoteBtn.innerHTML = `${emoji} ${noteIsEffectivelyVisible ? `Скрий ${baseText}` : `Добави ${baseText}`}`;
+            selectors.addNoteBtn.innerHTML = `${icon} ${noteIsEffectivelyVisible ? `Скрий ${baseText}` : `Добави ${baseText}`}`;
         }
     }
 }
@@ -451,7 +451,7 @@ function populateProfileTab(userName, initialData, currentStatus, initialAnswers
             if (foodPreference === "Друго / Не обичам следните:" && dislikedFoodsDetails && dislikedFoodsDetails.trim() !== '') preferenceText = `Посочени като "Друго / Не обичам следните": ${dislikedFoodsDetails}`;
             else if (foodPreferenceTrimmed.startsWith("друго") && otherPrefDetails && otherPrefDetails.trim() !== '') preferenceText = `Посочени като "Друго": ${otherPrefDetails}`;
             const note = document.createElement('div'); note.className = 'info-note note-base';
-            note.innerHTML = `<span><strong style="display:inline-block; margin-right:5px;">🍽️ Хранителни предпочитания/Ограничения:</strong> ${preferenceText}</span>`;
+            note.innerHTML = `<span><strong style="display:inline-block; margin-right:5px;"><svg class="icon"><use href="#icon-utensils"></use></svg> Хранителни предпочитания/Ограничения:</strong> ${preferenceText}</span>`;
             considerationsDiv.appendChild(note); hasConsiderations = true;
         }
         const mainChallengeText = safeGet(initialAnswers, 'mainChallenge');
@@ -592,10 +592,10 @@ function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
         selectors.recCookingMethodsContent.innerHTML = cookingHtml || '<p class="placeholder">Няма данни за методи на готвене.</p>';
     }
     const strategiesData = [];
-    if (safeGet(psychologicalGuidance, 'coping_strategies', []).length > 0) strategiesData.push({ title: "🧠 Стратегии за справяне", content: psychologicalGuidance.coping_strategies });
-    if (safeGet(psychologicalGuidance, 'motivational_messages', []).length > 0) strategiesData.push({ title: "💪 Мотивационни съобщения", content: psychologicalGuidance.motivational_messages });
-    if (psychologicalGuidance?.habit_building_tip) strategiesData.push({ title: "⚙️ Изграждане на навици", content: psychologicalGuidance.habit_building_tip });
-    if (psychologicalGuidance?.self_compassion_reminder) strategiesData.push({ title: "❤️ Напомняне за самосъстрадание", content: psychologicalGuidance.self_compassion_reminder });
+    if (safeGet(psychologicalGuidance, 'coping_strategies', []).length > 0) strategiesData.push({ title: '<svg class="icon"><use href="#icon-info"></use></svg> Стратегии за справяне', content: psychologicalGuidance.coping_strategies });
+    if (safeGet(psychologicalGuidance, 'motivational_messages', []).length > 0) strategiesData.push({ title: '<i class="bi bi-chat-dots"></i> Мотивационни съобщения', content: psychologicalGuidance.motivational_messages });
+    if (psychologicalGuidance?.habit_building_tip) strategiesData.push({ title: '<i class="bi bi-gear"></i> Изграждане на навици', content: psychologicalGuidance.habit_building_tip });
+    if (psychologicalGuidance?.self_compassion_reminder) strategiesData.push({ title: '<i class="bi bi-heart-fill"></i> Напомняне за самосъстрадание', content: psychologicalGuidance.self_compassion_reminder });
     const activityContent = [];
     if (initialAnswers?.physicalActivity === 'Да') {
         const types = initialAnswers.q1745877358368; if (Array.isArray(types) && types.length > 0) activityContent.push(`<strong>Видове:</strong> ${types.join(', ')}`);

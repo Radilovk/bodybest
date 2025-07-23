@@ -86,7 +86,7 @@ export function updateThemeButtonText() {
     const themeIconSpan = selectors.themeToggleMenu.querySelector('.menu-icon');
     const isDark = document.body.classList.contains('dark-theme');
     if (themeTextSpan) themeTextSpan.textContent = isDark ? 'Светла Тема' : 'Тъмна Тема';
-    if (themeIconSpan) themeIconSpan.textContent = isDark ? '☀️' : '🌙';
+    if (themeIconSpan) themeIconSpan.innerHTML = isDark ? '<i class="bi bi-sun"></i>' : '<i class="bi bi-moon"></i>';
 }
 
 export function activateTab(activeTabButton) {
@@ -221,9 +221,9 @@ export function openInstructionsModal() {
 export function toggleDailyNote() {
     if (!selectors.dailyNote || !selectors.addNoteBtn) return;
     const isHidden = selectors.dailyNote.classList.toggle('hidden');
-    const emoji = "📝";
+    const icon = '<i class="bi bi-pencil-square"></i>';
     const baseText = "бележка за деня";
-    selectors.addNoteBtn.innerHTML = `${emoji} ${isHidden ? `Добави ${baseText}` : `Скрий ${baseText}`}`;
+    selectors.addNoteBtn.innerHTML = `${icon} ${isHidden ? `Добави ${baseText}` : `Скрий ${baseText}`}`;
     if (!isHidden) selectors.dailyNote.focus();
 }
 
