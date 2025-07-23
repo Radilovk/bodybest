@@ -36,7 +36,7 @@
 }
 .progress-fill {
   position: relative;
-  background: linear-gradient(to right, var(--color-danger), var(--progress-end-color));
+  background: var(--progress-gradient);
   height: 100%;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   width: 0;
@@ -136,7 +136,7 @@
 }
 .analytics-card .mini-progress-fill {
   position: relative;
-  background: linear-gradient(to right, var(--color-danger), var(--progress-end-color));
+  background: var(--progress-gradient);
   height: 100%;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   width: 0;
