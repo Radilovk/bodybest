@@ -25,7 +25,6 @@
             --color-ok: #3b82f6;
             --color-low: #10b981;
 
-            /* --- New CTA Colors --- */
             --cta-color: #08D9D6; /* Vibrant Cyan */
             --cta-hover-color: #07c4c1; /* Darker Cyan */
             --cta-glow-color: rgba(8, 217, 214, 0.7);
@@ -72,7 +71,9 @@
 
         /* --- Header --- */
         header {
-            background-color: var(--heading-color);
+            /* IMPROVEMENT: Changed from solid color to a more dynamic gradient */
+            background-color: #1a202c; /* Fallback */
+            background-image: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
             color: white;
             text-align: center;
             padding: 80px 20px 100px;
@@ -142,10 +143,22 @@
         .summary-quote .quote-author { font-size: 0.9em; text-align: left; color: #718096; }
         .conclusion-box p { margin: 0; font-weight: 600; line-height: 1.6; color: var(--heading-color); }
 
-        /* 4. CTA Section --- ENHANCED --- */
-        .cta-section { background-color: var(--heading-color); color: white; text-align: center; padding: 100px 20px; margin-top: 50px; }
-        .cta-section .section-title { color: white; }
-        .cta-section .section-subtitle { color: rgba(255, 255, 255, 0.7); }
+        /* --- 4. CTA Section --- STRATEGIC IMPROVEMENT --- */
+        .cta-section {
+            /* From dark to light, to feel like a solution and a clear path forward */
+            background-color: #f8fafc;
+            color: var(--text-color);
+            text-align: center;
+            padding: 80px 20px;
+            margin-top: 50px;
+            border-top: 1px solid var(--border-color);
+        }
+        .cta-section .section-title {
+            color: var(--heading-color); /* Title is now dark on light BG */
+        }
+        .cta-section .section-subtitle {
+            color: #718096; /* Subtitle is now dark on light BG */
+        }
         .benefits-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -159,21 +172,37 @@
             height: 70px;
             margin: 0 auto 20px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            /* Kept light background for contrast */
+            background: #ffffff;
+            border: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .benefit-icon i { font-size: 2em; color: var(--color-low); }
-        .benefit-item h3 { font-size: 1.2em; font-weight: 700; margin-bottom: 10px; color: white; }
-        .benefit-item p { font-size: 0.95em; color: rgba(255, 255, 255, 0.7); line-height: 1.6; margin: 0; }
+        .benefit-icon i {
+            font-size: 2em;
+            /* Changed from green to primary blue for brand consistency and trust */
+            color: var(--primary-color);
+        }
+        .benefit-item h3 {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--heading-color); /* Text is now dark */
+        }
+        .benefit-item p {
+            font-size: 0.95em;
+            color: var(--text-color); /* Text is now dark */
+            line-height: 1.6;
+            margin: 0;
+        }
         
         .cta-final-pitch {
             max-width: 600px;
             margin: 0 auto;
             font-size: 1.1em;
-            color: rgba(255, 255, 255, 0.9);
+            color: var(--heading-color); /* Text is now dark */
+            font-weight: 600;
         }
         
         .cta-button {
@@ -190,7 +219,6 @@
             box-shadow: 0 0 5px var(--cta-glow-color);
             animation: pulse-glow-desktop 2.5s infinite ease-in-out;
             opacity: 1;
-            /* Added margin for spacing on desktop */
             margin-top: 40px;
         }
 
@@ -255,10 +283,12 @@
         </section>
     </main>
     
+    <!-- IMPROVED CTA SECTION -->
     <section class="cta-section">
         <div class="container reveal">
-            <h2 class="section-title">Защо MyBody.Best?</h2>
-            <p class="section-subtitle">Вие вече знаете "какво" е проблемът. Ние ви даваме "как" да го решите – с ясна система, наука и персонална грижа.</p>
+            <!-- IMPROVED MICROCOPY: More empowering and user-centric -->
+            <h2 class="section-title">Вашият Път към Резултатите Започва Тук</h2>
+            <p class="section-subtitle">Открихме ключовите пречки. Сега Ви даваме точната система, за да ги преодолеете и да постигнете целта си.</p>
             
             <div class="benefits-grid">
                 <div class="benefit-item">
@@ -279,9 +309,8 @@
             </div>
 
             <p class="cta-final-pitch">Информацията е сила, но само когато се действа по нея.</p>
-        </div> <!-- КРАЙ НА <div class="container reveal"> -->
-
-        <!-- КОРЕКЦИЯ: БУТОНЪТ Е ПРЕМЕСТЕН ТУК, ЗА ДА НЕ Е В АНИМИРАНИЯ КОНТЕЙНЕР -->
+        </div>
+        
         <a id="cta-button" href="https://radilovk.github.io/bodybest/index.html" class="cta-button">
             <i class="fas fa-rocket"></i> Започнете Вашата Трансформация
         </a>
@@ -289,6 +318,7 @@
 
     <footer><p id="footer-text"></p></footer>
 
+    <!-- NO CHANGES TO JAVASCRIPT LOGIC - IT REMAINS 100% FUNCTIONAL -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const analysisData = {/*---JSON_DATA_PLACEHOLDER---*/};
@@ -403,8 +433,7 @@
         }
     });
     </script>
-
-    <!-- КОРЕКЦИЯ: JavaScript логика за появяване на бутона -->
+    
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const ctaButton = document.getElementById('cta-button');
@@ -412,28 +441,18 @@
         const isMobileView = window.innerWidth <= 992;
 
         if (isMobileView) {
-            // Изчисляваме прага за пълна видимост: половината от височината на цялата страница
             const threshold = document.documentElement.scrollHeight / 2;
-
             const updateButtonVisibility = () => {
-                // Изчисляваме прозрачността (от 0 до 1) на база скрола спрямо прага
                 const opacity = Math.min(window.scrollY / threshold, 1);
-                
                 ctaButton.style.opacity = opacity;
-                
-                // Правим бутона кликаем само когато е поне малко видим
                 ctaButton.style.pointerEvents = opacity > 0.1 ? 'auto' : 'none';
             };
-
-            // Задаваме началното състояние (прозрачен) при зареждане
             updateButtonVisibility();
-            // Следим за скрол, за да обновяваме видимостта
             window.addEventListener('scroll', updateButtonVisibility);
         } else {
-            // За десктоп, бутонът е винаги видим
             ctaButton.style.opacity = 1;
         }
     });
     </script>
 </body>
-</html>
+</html>```
