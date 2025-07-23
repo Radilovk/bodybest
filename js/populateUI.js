@@ -237,11 +237,11 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
     const currentDayKey = dayNames[today.getDay()];
     const todayTitle = today.toLocaleDateString('bg-BG', { weekday: 'long', day: 'numeric', month: 'long' });
 
-    if(selectors.dailyPlanTitle) selectors.dailyPlanTitle.textContent = `📅 Дневен План (${capitalizeFirstLetter(todayTitle)})`;
+    if(selectors.dailyPlanTitle) selectors.dailyPlanTitle.textContent = `📅 Меню (${capitalizeFirstLetter(todayTitle)})`;
 
     const dailyPlanData = safeGet(week1Menu, currentDayKey, []);
     if (!dailyPlanData || dailyPlanData.length === 0) {
-        listElement.innerHTML = '<li class="placeholder">Няма наличен план за днес.</li>'; return;
+        listElement.innerHTML = '<li class="placeholder">Няма налично меню за днес.</li>'; return;
     }
     listElement.innerHTML = '';
 
