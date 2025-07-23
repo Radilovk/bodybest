@@ -317,7 +317,7 @@ function populateDashboardLog(dailyLogs, currentStatus, initialData) {
 
     weightMetricDiv.innerHTML = `
         <label for="dailyLogWeightInput" data-tooltip-key="weight" title="${weightLabelTooltip}">
-            <span class="metric-icon">⚖️</span> Тегло (кг):
+            <span class="metric-icon"><i class="fa-regular fa-scale-balanced"></i></span> Тегло (кг):
             <button class="button-icon-only metric-info-btn" aria-label="Информация за тегло">
                 <svg class="icon"><use href="#icon-info"></use></svg>
             </button>
@@ -327,11 +327,11 @@ function populateDashboardLog(dailyLogs, currentStatus, initialData) {
     trackerDiv.appendChild(weightMetricDiv);
 
     const metrics = [
-        { key: 'mood', label: 'Настроение', icon: '<i class="bi bi-emoji-smile"></i>', defaultVal: 3 },
-        { key: 'energy', label: 'Енергия', icon: '<i class="bi bi-lightning-charge"></i>', defaultVal: 3 },
-        { key: 'calmness', label: 'Спокойствие', icon: '<i class="bi bi-yin-yang"></i>', defaultVal: 3 },
-        { key: 'hydration', label: 'Хидратация', icon: '<i class="bi bi-droplet"></i>', defaultVal: 3 },
-        { key: 'sleep', label: 'Сън (нощен)', icon: '<i class="bi bi-moon"></i>', defaultVal: 3 }
+        { key: 'mood', label: 'Настроение', icon: '<i class="fa-regular fa-face-smile"></i>', defaultVal: 3 },
+        { key: 'energy', label: 'Енергия', icon: '<i class="fa-regular fa-lightbulb"></i>', defaultVal: 3 },
+        { key: 'calmness', label: 'Спокойствие', icon: '<i class="fa-regular fa-face-smile-beam"></i>', defaultVal: 3 },
+        { key: 'hydration', label: 'Хидратация', icon: '<i class="fa-regular fa-droplet"></i>', defaultVal: 3 },
+        { key: 'sleep', label: 'Сън (нощен)', icon: '<i class="fa-regular fa-moon"></i>', defaultVal: 3 }
     ];
     metrics.forEach(metric => {
         const metricDiv = document.createElement('div');
