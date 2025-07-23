@@ -202,7 +202,7 @@ details[open] summary::after {
   margin-top: 4px;
 }
 #analyticsSummary .progress-bar {
-  background: var(--progress-gradient);
+  background: var(--surface-background);
   border-radius: var(--progress-bar-radius);
   position: relative;
   height: var(--progress-bar-height);
@@ -210,14 +210,11 @@ details[open] summary::after {
   z-index: 0;
 }
 #analyticsSummary .progress-fill {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  background: var(--surface-background);
+  position: relative;
+  background: linear-gradient(to right, var(--color-danger), var(--progress-end-color));
   height: 100%;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  width: 100%;
+  width: 0;
   border-radius: inherit;
   z-index: 1;
 }
@@ -233,12 +230,7 @@ details[open] summary::after {
   pointer-events: none;
 }
 #analyticsSummary .progress-fill.animate-progress {
-  animation: progress-shrink 0.8s forwards;
-}
-
-@keyframes progress-shrink {
-  from { width: 100%; }
-  to { width: calc(100% - var(--target-width)); }
+  animation: progress-grow 0.8s forwards;
 }
 
 .button-small {
