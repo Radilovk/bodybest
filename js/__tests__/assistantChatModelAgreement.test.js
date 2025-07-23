@@ -19,7 +19,8 @@ beforeEach(async () => {
     cloudflareAccountId: 'c'
   }));
   jest.unstable_mockModule('../utils.js', () => ({
-    fileToDataURL: jest.fn(async () => 'data:image/png;base64,imgdata')
+    fileToDataURL: jest.fn(async () => 'data:image/png;base64,imgdata'),
+    animateProgressFill: jest.fn()
   }));
 
   global.fetch = jest.fn().mockResolvedValue({

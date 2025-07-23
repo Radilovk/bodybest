@@ -121,3 +121,20 @@ export function getProgressColor(percent) {
     const c = stops[stops.length - 1].color;
     return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
 }
+
+/**
+ * Анимира плавно запълването на елемент от 0 до подадения процент.
+ * @param {HTMLElement} el Елементът, представляващ запълването.
+ * @param {number} percent Процент за крайна широчина.
+ */
+export function animateProgressFill(el, percent) {
+    if (!el) return;
+    const target = Math.max(0, Math.min(100, percent));
+    el.style.setProperty("--target-width", `${target}%`);
+    el.style.width = `${target}%`;
+    el.classList.add("animate-progress");
+    el.addEventListener("animationend", () => {
+        el.classList.remove("animate-progress");
+    }, { once: true });
+}
+

@@ -1,7 +1,7 @@
 import { apiEndpoints } from './config.js';
 import { loadConfig, saveConfig } from './adminConfig.js';
 import { labelMap, statusMap } from './labelMap.js';
-import { fileToDataURL, fileToText, getProgressColor } from './utils.js';
+import { fileToDataURL, fileToText, getProgressColor, animateProgressFill } from './utils.js';
 import { loadTemplateInto } from './templateLoader.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 
@@ -428,7 +428,7 @@ function renderAnalyticsCurrent(cur) {
             const fill = document.createElement('div');
             fill.className = 'progress-fill';
             fill.style.setProperty('--progress-end-color', getProgressColor(pct));
-            fill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+            animateProgressFill(fill, pct);
             pb.appendChild(fill);
             pbContainer.appendChild(pb);
             dd.appendChild(pbContainer);
