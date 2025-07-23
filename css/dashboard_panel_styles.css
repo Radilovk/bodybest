@@ -329,6 +329,9 @@ body.dark-theme .detailed-metric-item .value-current {
 .meal-list li .meal-content-wrapper {
   flex-grow: 1;
   padding-right: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .meal-list li .meal-name {
@@ -357,7 +360,7 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-list li.completed {
     background-color: var(--color-success-bg);
-    border-left: 4px solid color-mix(in srgb, var(--meal-color) 80%, white);
+    border-left: 4px solid color-mix(in srgb, var(--meal-color) 30%, white);
 }
 
 .meal-list li.completed .meal-color-bar {
@@ -528,10 +531,16 @@ body.dark-theme .detailed-metric-item .value-current {
     font-size: 1.1em;
 }
 #daily-note { margin-top: var(--space-md); margin-bottom: var(--space-xs); }
-#saveLogBtn { 
-    width: 100%; 
-    margin-top: var(--space-lg); 
-    padding-top: var(--space-md); 
+#saveLogBtn {
+    width: 100%;
+    margin-top: var(--space-lg);
+    padding-top: var(--space-md);
     padding-bottom: var(--space-md);
     font-size: 1.05rem;
+}
+
+@media (max-width: 480px) {
+  .meal-card {
+    padding: var(--space-md);
+  }
 }
