@@ -92,3 +92,16 @@ export function fileToText(file) {
         reader.readAsText(file);
     });
 }
+
+/**
+ * Определя цвят за прогрес бар според процента.
+ * @param {number} percent - Стойност между 0 и 100.
+ * @returns {string} CSS цвят.
+ */
+export function getProgressColor(percent) {
+    const p = Number(percent);
+    if (isNaN(p)) return 'var(--color-danger)';
+    if (p >= 80) return 'var(--color-success)';
+    if (p >= 50) return 'var(--color-warning)';
+    return 'var(--color-danger)';
+}
