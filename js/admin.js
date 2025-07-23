@@ -427,7 +427,7 @@ function renderAnalyticsCurrent(cur) {
             pb.className = 'progress-bar';
             const fill = document.createElement('div');
             fill.className = 'progress-fill';
-            fill.style.width = `${Math.min(100, pct)}%`;
+            fill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
             pb.appendChild(fill);
             pbContainer.appendChild(pb);
             dd.appendChild(pbContainer);

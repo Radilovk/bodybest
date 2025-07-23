@@ -46,7 +46,7 @@ function populateDashboardMainIndexes(currentAnalytics) {
         hide(selectors.goalCard);
     } else {
         show(selectors.goalCard);
-        if (selectors.goalProgressFill) selectors.goalProgressFill.style.width = `${Math.min(100, goalProgressPercent)}%`;
+        if (selectors.goalProgressFill) selectors.goalProgressFill.style.width = `${Math.max(0, Math.min(100, goalProgressPercent))}%`;
         if (selectors.goalProgressBar) selectors.goalProgressBar.setAttribute('aria-valuenow', `${Math.round(goalProgressPercent)}`);
         if (selectors.goalProgressText) {
             const goal = safeGet(fullDashboardData.initialAnswers, 'goal', '').toLowerCase();
@@ -68,7 +68,7 @@ function populateDashboardMainIndexes(currentAnalytics) {
         hide(selectors.engagementCard);
     } else {
         show(selectors.engagementCard);
-        if (selectors.engagementProgressFill) selectors.engagementProgressFill.style.width = `${Math.min(100, engagementScore)}%`;
+        if (selectors.engagementProgressFill) selectors.engagementProgressFill.style.width = `${Math.max(0, Math.min(100, engagementScore))}%`;
         if (selectors.engagementProgressBar) selectors.engagementProgressBar.setAttribute('aria-valuenow', `${Math.round(engagementScore)}`);
         if (selectors.engagementProgressText) selectors.engagementProgressText.textContent = `${Math.round(engagementScore)}%`;
     }
@@ -78,7 +78,7 @@ function populateDashboardMainIndexes(currentAnalytics) {
         hide(selectors.healthCard);
     } else {
         show(selectors.healthCard);
-        if (selectors.healthProgressFill) selectors.healthProgressFill.style.width = `${Math.min(100, healthScore)}%`;
+        if (selectors.healthProgressFill) selectors.healthProgressFill.style.width = `${Math.max(0, Math.min(100, healthScore))}%`;
         if (selectors.healthProgressBar) selectors.healthProgressBar.setAttribute('aria-valuenow', `${Math.round(healthScore)}`);
         if (selectors.healthProgressText) selectors.healthProgressText.textContent = `${Math.round(healthScore)}%`;
     }
@@ -177,8 +177,8 @@ function populateDashboardDetailedAnalytics(analyticsData) {
 
             if (!isNaN(metric.currentValueNumeric)) {
                 const value = Number(metric.currentValueNumeric);
-                const percent = value <= 5 ? ((value - 1) / 4) * 100 : Math.min(100, value);
-                fill.style.width = `${Math.min(100, percent)}%`;
+                const percent = value <= 5 ? ((value - 1) / 4) * 100 : Math.max(0, Math.min(100, value));
+                fill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
             }
 
             cardsContainer.appendChild(card);
