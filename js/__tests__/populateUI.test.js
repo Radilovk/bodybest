@@ -203,6 +203,44 @@ test('applies success color to completed meal bar', async () => {
   expect(color).toBe('rgb(46, 204, 113)');
 });
 
+test('applies border color on completed meal', async () => {
+  jest.resetModules();
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const currentDayKey = dayNames[new Date().getDay()];
+  const mealStatusKey = `${currentDayKey}_0`;
+  const fullData = {
+    userName: 'Иван',
+    analytics: { current: {}, streak: {} },
+    planData: {
+      week1Menu: {
+        [currentDayKey]: [
+          { meal_name: 'Вкусен обяд', items: [] }
+        ]
+      }
+    },
+    dailyLogs: [{ date: new Date().toISOString().split('T')[0], data: { completedMealsStatus: { [mealStatusKey]: true } } }],
+    currentStatus: {},
+    initialData: {},
+    initialAnswers: {}
+  };
+  jest.unstable_mockModule('../app.js', () => ({
+    fullDashboardData: fullData,
+    todaysMealCompletionStatus: {},
+    planHasRecContent: false
+  }));
+  ({ populateUI } = await import('../populateUI.js'));
+
+  const style = document.createElement('style');
+  style.textContent = `#dailyMealList li.completed { border-left-color: rgb(1, 2, 3); border-left-width: 2px; }`;
+  document.head.appendChild(style);
+
+  populateUI();
+  const li = document.querySelector('#dailyMealList li.completed');
+  expect(li).not.toBeNull();
+  const color = getComputedStyle(li).borderLeftColor;
+  expect(color).toBe('rgb(1, 2, 3)');
+});
+
 describe('progress bar width handling', () => {
   const setup = async (value) => {
     jest.resetModules();
