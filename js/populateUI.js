@@ -125,8 +125,14 @@ function populateDashboardDetailedAnalytics(analyticsData) {
 
             const progress = document.createElement('div');
             progress.className = 'mini-progress-bar';
+            progress.setAttribute('role', 'progressbar');
+            progress.setAttribute('aria-valuemin', '0');
+            progress.setAttribute('aria-valuemax', '100');
             const fill = document.createElement('div');
             fill.className = 'mini-progress-fill';
+            if (metric.colorKey) {
+                fill.style.setProperty('--progress-start-color', `var(--color-${metric.colorKey})`);
+            }
             progress.appendChild(fill);
             card.appendChild(progress);
 
@@ -187,6 +193,7 @@ function populateDashboardDetailedAnalytics(analyticsData) {
             if (!isNaN(metric.currentValueNumeric)) {
                 const value = Number(metric.currentValueNumeric);
                 const percent = value <= 5 ? ((value - 1) / 4) * 100 : Math.max(0, Math.min(100, value));
+                progress.setAttribute('aria-valuenow', `${Math.round(percent)}`);
                 fill.style.setProperty('--progress-end-color', getProgressColor(percent));
                 animateProgressFill(fill, percent);
             }

@@ -36,12 +36,17 @@
 }
 .progress-fill {
   position: relative;
-  background: linear-gradient(to right, var(--color-danger), var(--progress-end-color));
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--progress-start-color) 90%, transparent),
+    var(--progress-end-color)
+  );
   height: 100%;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   width: 0;
   border-radius: inherit;
   z-index: 1;
+  opacity: 0.9;
 }
 .progress-fill::after {
   content: '';
@@ -136,12 +141,17 @@
 }
 .analytics-card .mini-progress-fill {
   position: relative;
-  background: linear-gradient(to right, var(--color-danger), var(--progress-end-color));
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--progress-start-color) 90%, transparent),
+    var(--progress-end-color)
+  );
   height: 100%;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   width: 0;
   border-radius: inherit;
   z-index: 1;
+  opacity: 0.85;
 }
 .analytics-card .mini-progress-fill::after {
   content: '';
