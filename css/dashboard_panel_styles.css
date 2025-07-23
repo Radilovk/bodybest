@@ -367,11 +367,11 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-list li.completed {
     background-color: var(--color-success-bg);
-    border-left: 4px solid color-mix(in srgb, var(--meal-color) 30%, white);
+    border-left: 2px solid color-mix(in srgb, var(--meal-color) 60%, white);
 }
 
 .meal-list li.completed .meal-color-bar {
-    background-color: var(--color-success);
+    background-color: var(--meal-color);
 }
 
 .meal-list li.completed .meal-name {
