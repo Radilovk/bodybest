@@ -1,0 +1,131 @@
+# INSTRUCTIONS FOR UNIFIED PLAN GENERATION (JSON OUTPUT ONLY) - v2.1 (Optimized)
+
+Your primary goal is to analyze the provided user questionnaire answers and generate a **single, comprehensive, valid JSON object** representing a complete personalized plan. Adhere strictly to the specified JSON structure and all instructions. The entire output MUST be a single JSON object.
+
+**Overall Tone and Language:** Use a supportive, positive, and easily understandable tone in Bulgarian for all textual content. Avoid overly medical or technical jargon unless quoting user input. Ensure all generated text is practical and actionable for the user. STRIVE FOR ORIGINALITY AND SPECIFICITY: Especially in `psychologicalGuidance` and `principlesWeek2_4`, avoid overly generic phrases or cliches. Try to make the advice feel unique to the user's situation where possible, drawing from their `%%MAIN_CHALLENGES%%` and other answers.
+
+**Допълнителни данни от дневник:** Работерът ще подаде следните показатели за последните дни, които може да използваш в краткия преглед и насоките:
+- `%%RECENT_WEIGHT_KG%%` - последно отчетено тегло в кг.
+- `%%WEIGHT_CHANGE_LAST_7_DAYS%%` - промяна спрямо теглото преди седмица.
+- `%%AVG_MOOD_LAST_7_DAYS%%` - средна оценка на настроение (1-5).
+- `%%AVG_ENERGY_LAST_7_DAYS%%` - средна оценка на енергия (1-5).
+
+**Expected JSON Output Structure:**
+
+```json
+{
+  "profileSummary": "string",
+  // BG: Generate a 2-3 sentence summary in Bulgarian.
+  // Start with the user's primary goal (%%USER_GOAL%%).
+  // Mention key medical conditions from %%CONDITIONS%% (e.g., 'Инсулинова резистентност', 'Хипотиреоидизъм').
+  // Include stated food preferences from %%FOOD_PREFERENCE%% (e.g., 'Вегетариански режим') and general activity level from %%ACTIVITY_LEVEL%%.
+  // Example: "Потребител с цел Отслабване, има Инсулинова резистентност, предпочита Вегетариански режим и има Средно ниво на активност."
+  // Ако има налични данни за скорошен прогрес, спомени накратко теглото: "Текущо тегло %%RECENT_WEIGHT_KG%% (промяна за 7 дни: %%WEIGHT_CHANGE_LAST_7_DAYS%%)".
+
+  "caloriesMacros": {
+    "calories": "number (integer)",
+    "protein_percent": "number (integer)",
+    "carbs_percent": "number (integer)",
+    "fat_percent": "number (integer)",
+    "protein_grams": "number (integer)",
+    "carbs_grams": "number (integer)",
+    "fat_grams": "number (integer)"
+  },
+
+  "allowedForbiddenFoods": {
+    // All lists in Bulgarian. Base on %%BASE_DIET_MODEL_SUMMARY%%, user's %%FOOD_PREFERENCE%%, %%INTOLERANCES%%, %%DISLIKED_FOODS%%, %%CONDITIONS%%.
+    // CRITICAL PRIORITY: In case of conflict, MEDICAL NEEDS (from %%CONDITIONS%% and %%INTOLERANCES%%) ALWAYS take precedence over %%FOOD_PREFERENCE%% or %%DISLIKED_FOODS%%.
+    // If a disliked food is medically necessary, try to find alternative ways to prepare it or suggest similar beneficial foods.
+    // If a preferred food is medically contraindicated, it MUST be in "main_forbidden_foods".
+    "main_allowed_foods": ["string"],
+    "main_forbidden_foods": ["string"],
+    "detailed_allowed_suggestions": ["string"],
+    "detailed_limit_suggestions": ["string"],
+    "dressing_flavoring_ideas": ["string"]
+  },
+
+  "week1Menu": {
+    // Keys: "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday".
+    // Each day is an array of meal objects.
+    // Each meal object: {
+    //   "meal_name": "string",
+    //   "items": [{
+    //     "name": "string",
+    //     "grams": "string" // CRITICAL: Quantity WITH THE UNIT (e.g., "150g", "100ml", "1 бр.", "1/2 чаша (120ml)", "2 с.л.").
+                           // Quantities should reflect standard portion sizes that align with the calculated "caloriesMacros".
+                           // For whole items like fruits/vegetables, "1 бр. (среден размер)" or "1 малък банан" is acceptable.
+                           // For liquids, use "ml" or "чаша (200-250ml)". For spoons, specify "с.л." (супена) or "ч.л." (чаена).
+                           // Avoid vague terms like "малко", "много" without a concrete reference.
+    //   }],
+    //   "recipeKey": "string"
+    // }
+    // Menu should align with "caloriesMacros", prioritize "main_allowed_foods", avoid "main_forbidden_foods", and respect user preferences/intolerances.
+    // Ensure variety and simplicity. Use %%ALLOWED_MEAL_COMBINATIONS%% for inspiration.
+    // If appropriate for the user's psychological profile (based on %%MAIN_CHALLENGES%% and overall context, e.g., if they struggle with strictness), consider including one or two "more flexible" or "comfort food" options within the week, ensuring they still broadly fit the calorie/macro targets or are clearly marked as an occasional treat with portion control advice.
+  },
+
+  "principlesWeek2_4": [
+    // BG: Array of 3-5 objects. These are for weeks 2-4, building on the week 1 menu.
+    // Each object: {
+    //   "title": "string",
+    //   "content": "string",
+    //   "icon": "string" // Optional: Suggest an icon from this list: "icon-strategy", "icon-leaf", "icon-run", "icon-brain", "icon-check-circle", "icon-food-apple", "icon-pill". If not applicable, omit or use empty string.
+    // }
+    // Consider user's main challenges (%%MAIN_CHALLENGES%%). If user struggles with strictness, one principle could be about incorporating planned flexibility (e.g., 'Принцип на 80/20 правилото за хранене' or 'Интегриране на любими храни умерено').
+    // STRIVE FOR ORIGINALITY AND SPECIFICITY: Avoid overly generic phrases or cliches.
+    // Example: { "title": "Принцип 1: Осъзнато хранене", "content": "Обръщайте внимание на сигналите на тялото си за глад и ситост. Хранете се бавно и се наслаждавайте на всяка хапка.", "icon": "icon-brain" }
+  ],
+
+  "hydrationCookingSupplements": {
+    // All text in Bulgarian.
+    "hydration_recommendations": {
+      "daily_liters": "string",
+      "tips": ["string"],
+      "suitable_drinks": ["string"],
+      "unsuitable_drinks": ["string"]
+    },
+    "cooking_methods": {
+      "recommended": ["string"],
+      "limit_or_avoid": ["string"],
+      "fat_usage_tip": "string"
+    },
+    "supplement_suggestions": [
+      // BG: Array of objects. Suggest ONLY if strongly indicated by user answers (e.g., deficiency risk from %%CONDITIONS%% or %%FOOD_PREFERENCE%%, specific goal support). Keep it basic.
+      // Each object: {
+      //   "supplement_name": "string",
+      //   "reasoning": "string",
+      //   "caution": "string"
+      // }
+      // If no supplements are indicated, return an empty array [].
+    ]
+  },
+
+  "psychologicalGuidance": {
+    // All text in Bulgarian. Tailor advice to user's %%STRESS_LEVEL%%, %%SLEEP_INFO%%, %%MAIN_CHALLENGES%%, and other relevant answers. Use %%EATING_PSYCHOLOGY_SUMMARY%% for general principles.
+    // STRIVE FOR ORIGINALITY AND SPECIFICITY: Avoid overly generic phrases or cliches. Try to make the advice feel unique to the user's situation where possible, drawing from their `%%MAIN_CHALLENGES%%` and other answers.
+    // Може да използваш средните стойности %%AVG_MOOD_LAST_7_DAYS%% и %%AVG_ENERGY_LAST_7_DAYS%% като ориентир за психо-емоционално състояние.
+    "coping_strategies": ["string"],
+    "motivational_messages": ["string"],
+    "habit_building_tip": "string",
+    "self_compassion_reminder": "string"
+  },
+
+  "detailedTargets": {
+    // All text in Bulgarian. Define clear, achievable target values/descriptions.
+    "sleep_quality_target_text": "string",
+    "stress_level_target_text": "string",
+    "energy_level_target_text": "string",
+    "hydration_target_text": "string",
+    "bmi_target_numeric": "number (float, 1 decimal place)",
+    "bmi_target_category_text": "string",
+    "meal_adherence_target_percent": "number (integer)",
+    "log_consistency_target_percent": "number (integer)"
+  },
+
+  "generationMetadata": {
+      "timestamp": "%%GENERATION_TIMESTAMP%%",
+      "modelUsed": "%%MODEL_NAME_USED%%",
+      "promptVersion": "v2.1-optimized",
+      "errors": []
+   }
+}

@@ -1,0 +1,228 @@
+# --- AI Assistant Guide: Analyzing Nutrition Questionnaire & Generating Recommendations ---
+
+# --- I. INPUTS ---
+# 1. user_answers: JSON object containing answers from 'questions (4).json'.
+# 2. knowledge_base: Access to the content of 'психология.txt' (pre-parsed or queryable).
+#    - Contains descriptions of 6 profiles: Emotional, Impulsive, ExternalInfluence, LowSelfControl, FoodAddiction, Restrictive.
+#    - Contains associated behavioral questions (Q1-Q15) for each profile.
+#    - Contains detailed dietary and holistic recommendations for each profile.
+# 3. supplementary_texts: Access to Mayo Clinic article on emotional eating and other provided texts for additional context/strategies.
+
+# --- II. CONSTANTS & MAPPINGS ---
+BEHAVIORAL_QUESTIONS_IDS = [
+    "q_beh_1", "q_beh_2", "q_beh_3", "q_beh_4", "q_beh_5",
+    "q_beh_6", "q_beh_7", "q_beh_8", "q_beh_9", "q_beh_10",
+    "q_beh_11", "q_beh_12", "q_beh_13", "q_beh_14", "q_beh_15"
+] # ASSUMPTION: These IDs need to be added to the JSON or mapped correctly to the 15 behavioral questions described in 'психология.txt'.
+# For this example, let's assume the 15 questions from 'психология.txt' are sequentially mapped or have unique IDs in the user_answers JSON. We'll refer to them as Q1 to Q15 conceptually.
+
+PROFILE_QUESTION_MAP = {
+    "Emotional": {"questions": [1, 2, 13], "threshold": 4},
+    "Impulsive": {"questions": [3, 4, 14], "threshold": 4},
+    "ExternalInfluence": {"questions": [5, 6], "threshold": 4},
+    "LowSelfControl": {"questions": [7, 8, 14], "threshold": 4},
+    "FoodAddiction": {"questions": [9, 10], "threshold": 4},
+    "Restrictive": {"questions": [11, 12], "threshold": 4},
+    "GuiltFactor": {"questions": [15], "threshold": 4} # Q15 indicates consequence/reinforcer
+}
+
+# Map rating scale text to numerical values if needed (depends on JSON structure)
+# Example: "★★★★★" -> 5, "★" -> 1 OR "Винаги" -> 5, "Никога" -> 1
+
+# --- III. PROCESSING STEPS ---
+
+FUNCTION process_user_data(user_answers):
+
+    # --- Step 1: Extract General & Lifestyle Data ---
+    general_info = {
+        "name": user_answers.get("name"),
+        "gender": user_answers.get("gender"),
+        "age": user_answers.get("age"),
+        "height": user_answers.get("height"),
+        "weight": user_answers.get("weight"),
+        "email": user_answers.get("email"),
+        "goal": user_answers.get("goal"),
+        "goal_details": user_answers.get("lossKg") if user_answers.get("goal") == "Отслабване" else None,
+        "motivation": parse_rating(user_answers.get("motivation")), # Convert ★★★★★ to number
+        "weight_change_history": user_answers.get("weightChangeDetails") if user_answers.get("weightChange") == "Да" else None,
+        "diet_history": {
+            "type": user_answers.get("dietType"),
+            "result": user_answers.get("dietResult")
+        } if user_answers.get("dietHistory") == "Да" else None,
+        "sleep_hours": user_answers.get("sleepHours"),
+        "sleep_interrupted": user_answers.get("sleepInterrupt") == "Да",
+        "chronotype": user_answers.get("chronotype"),
+        "activity_level_daily": user_answers.get("q1745878295708"), # Map to numeric if needed
+        "stress_level": user_answers.get("stressLevel"), # Map to numeric if needed
+        "water_intake": user_answers.get("waterIntake"),
+        "other_drinks": user_answers.get("q1745891342178") or user_answers.get("q1745891468155") or user_answers.get("q1745891537884"), # Combine details
+        "eating_out_freq": user_answers.get("q1745805447648"),
+        "eating_out_type": user_answers.get("q1745805721482"),
+        "alcohol_freq": user_answers.get("alcoholFrequency"),
+        "medications_supplements": user_answers.get("q1745889856829") if user_answers.get("medications") == "Да" else None,
+        "physical_activity_details": {
+             "type": user_answers.get("q1745877358368"),
+             "freq_weekly": user_answers.get("q1745878063775"),
+             "duration_minutes": user_answers.get("q1745890775342")
+        } if user_answers.get("physicalActivity") == "Да" else None,
+        "medical_conditions": user_answers.get("medicalConditions"), # List of conditions
+        "medical_conditions_other": user_answers.get("q1745804366749") if "Друго" in user_answers.get("medicalConditions", []) else None,
+        "food_preferences": user_answers.get("foodPreference"),
+        "food_preferences_details": user_answers.get("q1745806409218") or user_answers.get("q1745806494081"), # Dislikes/Other
+        "main_challenge": user_answers.get("mainChallenge"),
+        "additional_notes": user_answers.get("q1745892518511")
+    }
+
+    # --- Step 2: Extract & Score Behavioral Questions (Q1-Q15 from 'психология.txt') ---
+    behavioral_scores = {}
+    # IMPORTANT: Map the conceptual Q1-Q15 to actual IDs in user_answers JSON
+    # Assuming they are directly available or mapped via BEHAVIORAL_QUESTIONS_IDS
+    for i in range(1, 16):
+        question_id = f"Q{i}" # Placeholder ID, replace with actual mapping
+        answer = user_answers.get(question_id) # Fetch the answer (e.g., "4" or "Често")
+        behavioral_scores[question_id] = parse_behavioral_answer(answer) # Convert to 1-5 score
+
+    # --- Step 3: Identify Dominant Psychoprofile(s) ---
+    identified_profiles = {}
+    for profile, details in PROFILE_QUESTION_MAP.items():
+        if profile == "GuiltFactor": continue # Handle guilt separately
+
+        high_score_count = 0
+        total_score = 0
+        num_questions = len(details["questions"])
+
+        for q_num in details["questions"]:
+            q_id = f"Q{q_num}" # Placeholder ID
+            score = behavioral_scores.get(q_id, 0)
+            total_score += score
+            if score >= details["threshold"]:
+                high_score_count += 1
+
+        if high_score_count > 0:
+            # Calculate intensity (e.g., based on count or average score)
+            intensity = high_score_count / num_questions # Simple intensity metric
+            average_score = total_score / num_questions
+            identified_profiles[profile] = {"intensity": intensity, "avg_score": average_score, "high_scores": high_score_count}
+
+    # Sort profiles by intensity (descending) to identify dominant ones
+    dominant_profiles = sorted(identified_profiles.items(), key=lambda item: item[1]['intensity'], reverse=True)
+
+    has_guilt = behavioral_scores.get("Q15", 0) >= PROFILE_QUESTION_MAP["GuiltFactor"]["threshold"]
+
+    # --- Step 4: Generate Base Dietary & Lifestyle Recommendations ---
+    # (This part requires standard nutritional logic, BMR/TDEE calculations, etc.)
+    base_recommendations = generate_base_plan(general_info)
+    # Example output structure for base_recommendations:
+    # {
+    #   "calorie_target": 2000, # Example
+    #   "macro_split": {"protein": 0.3, "carbs": 0.4, "fat": 0.3}, # Example
+    #   "meal_structure_suggestion": "3 meals, 1-2 snacks",
+    #   "foods_to_include": ["Lean protein", "Vegetables", ...],
+    #   "foods_to_limit_or_avoid": ["Processed sugar", "Trans fats", ... based on conditions/prefs],
+    #   "hydration_goal": "2L water",
+    #   "activity_recommendation": "Increase daily steps, continue current sport 2x/week",
+    #   "sleep_recommendation": "Aim for 7-8 hours, improve sleep hygiene",
+    #   "stress_management_suggestion": "Explore relaxation techniques"
+    # }
+
+    # --- Step 5: Tailor Recommendations Based on Psychoprofile(s) ---
+    final_report = {
+        "identified_profiles_summary": [],
+        "detailed_analysis": [],
+        "tailored_dietary_guidelines": list(base_recommendations.get("foods_to_include", []) + base_recommendations.get("foods_to_limit_or_avoid", [])), # Start with base list
+        "tailored_meal_structure": base_recommendations.get("meal_structure_suggestion"),
+        "holistic_strategies": [
+            f"Hydration: Aim for {base_recommendations.get('hydration_goal')}.",
+            f"Activity: {base_recommendations.get('activity_recommendation')}.",
+            f"Sleep: {base_recommendations.get('sleep_recommendation')}.",
+            f"Stress: {base_recommendations.get('stress_management_suggestion')}."
+         ] # Start with base lifestyle
+    }
+
+    if not dominant_profiles:
+        final_report["identified_profiles_summary"].append("Не са установени силно изразени специфични хранителни психо-профили. Препоръките са базирани на общите ви цели и здравословно състояние.")
+        final_report["detailed_analysis"].append("Вашите отговори на поведенческите въпроси не показват доминиращ модел на емоционално, импулсивно или друг тип проблемно хранене. Продължете да се вслушвате в сигналите на тялото си.")
+    else:
+        # Add analysis and recommendations for dominant profile(s)
+        for profile_name, profile_data in dominant_profiles:
+            profile_info = knowledge_base.get_profile_info(profile_name) # Fetch description and recommendations
+
+            final_report["identified_profiles_summary"].append(f"Идентифициран профил: **{profile_name}** (Интензитет: {profile_data['intensity']:.2f})")
+            final_report["detailed_analysis"].append(f"**Анализ ({profile_name}):** {profile_info['description_summary']}") # Summarized description
+
+            # --- Dietary Tailoring ---
+            # Modify base recommendations based on profile
+            if profile_name == "Emotional":
+                final_report["tailored_dietary_guidelines"].append("-> Фокус върху идентифициране на емоционални тригери. Да се избягва лесен достъп до 'комфортни' храни (сладки, чипс). Да се подготвят здравословни алтернативи (плодове, ядки, чай).")
+                final_report["holistic_strategies"].append(f"**({profile_name}):** {profile_info['holistic_recommendations']}")
+                # Add specific techniques from Mayo Clinic text if relevant
+                final_report["holistic_strategies"].append("-> Практикувайте: водене на дневник (храна/настроение), техники за стрес (медитация, дишане), търсене на подкрепа, борба със скуката (разходка, хоби).")
+            elif profile_name == "Impulsive":
+                final_report["tailored_meal_structure"] = "-> Препоръчва се по-ясна структура на хранене (напр. 3 основни + 1-2 ПЛАНИРАНИ закуски)."
+                final_report["tailored_dietary_guidelines"].append("-> Да се планират здравословни междинни закуски. Да се избягва държането на изкушения на видно място.")
+                final_report["holistic_strategies"].append(f"**({profile_name}):** {profile_info['holistic_recommendations']}")
+                final_report["holistic_strategies"].append("-> Практикувайте: осъзнато хранене (пауза преди похапване - 'Гладен ли съм?'), изчакване 10 мин при импулс.")
+            elif profile_name == "ExternalInfluence":
+                 final_report["tailored_dietary_guidelines"].append("-> Сервирайте по-малки порции, използвайте по-малки чинии. Хапнете леко преди социални събития с много храна.")
+                 final_report["holistic_strategies"].append(f"**({profile_name}):** {profile_info['holistic_recommendations']}")
+                 final_report["holistic_strategies"].append("-> Практикувайте: хранене по-бавно, вслушване в собствените сигнали за ситост (не се водете по другите), планиране на пазаруването със списък.")
+            elif profile_name == "LowSelfControl":
+                 final_report["tailored_dietary_guidelines"].append("-> Сервирайте храната в чиния, НЕ яжте от опаковката/тавата. Избягвайте разсейване по време на хранене (ТВ, телефон).")
+                 final_report["holistic_strategies"].append(f"**({profile_name}):** {profile_info['holistic_recommendations']}")
+                 final_report["holistic_strategies"].append("-> Практикувайте: хранене бавно, оставяне на приборите между хапките, изчакване преди втора порция, водене на хранителен дневник за осъзнаване на моделите.")
+            elif profile_name == "FoodAddiction":
+                 final_report["tailored_dietary_guidelines"].append("-> ПОСТЕПЕННО намаляване на проблемните храни (не рязко спиране). Намиране на здравословни заместители (плодове, черен шоколад). Осигуряване на пълноценни основни хранения (протеин, фибри, мазнини).")
+                 final_report["holistic_strategies"].append(f"**({profile_name}):** {profile_info['holistic_recommendations']}")
+                 final_report["holistic_strategies"].append("-> Ключово: добър сън, управление на стреса, редовна физическа активност (регулира настроението и намалява 'глада' за удоволствие от храна). При нужда - професионална помощ.")
+            elif profile_name == "Restrictive":
+                 final_report["tailored_meal_structure"] = "-> Важно: Преминаване към БАЛАНСИРАН, УСТОЙЧИВ режим. Препоръчително: 3 основни хранения + 1-2 закуски на 3-4 часа."
+                 final_report["tailored_dietary_guidelines"].append("-> Избягвайте строги забрани. Позволявайте си любими храни УМЕРЕНО. Включвайте всички хранителни групи.")
+                 final_report["holistic_strategies"].append(f"**({profile_name}):** {profile_info['holistic_recommendations']}")
+                 final_report["holistic_strategies"].append("-> Фокус върху ЗДРАВОСЛОВЕН НАЧИН НА ЖИВОТ, не диета. Приоритизирайте сън, движение, стрес управление. Следете прогреса дългосрочно (не ежедневно). При нужда - помощ от диетолог/психолог.")
+
+            # Add consequence note if guilt is high
+            if has_guilt:
+                final_report["holistic_strategies"].append(f"**(!) Забележка (вина):** Вашите отговори показват често чувство на вина след хранене (Q15). Това е често срещано при профили като {profile_name} и може да засили цикъла на проблемно хранене. Важно е да работите върху приемането и да избягвате самообвиненията.")
+
+    # --- Step 6: Consolidate and Format Output Report ---
+    # Combine dietary guidelines, removing duplicates, structuring holistic advice clearly.
+    # Add introduction and conclusion.
+    # Ensure recommendations consider general_info (e.g., medical conditions override general advice).
+    final_output = format_final_report(final_report, general_info)
+
+    RETURN final_output
+
+# --- Helper Functions (Conceptual) ---
+
+FUNCTION parse_rating(rating_string):
+    # Converts "★★★★★" to 5, "★★★★" to 4, etc.
+    RETURN len(rating_string) if rating_string else 0 # Example logic
+
+FUNCTION parse_behavioral_answer(answer):
+    # Converts scale answers ("Никога", "1", "Винаги", "5") to a consistent 1-5 numerical score.
+    mapping = {"Никога": 1, "Рядко": 2, "Понякога": 3, "Често": 4, "Винаги": 5}
+    try:
+        return int(answer)
+    except ValueError:
+        return mapping.get(answer, 0) # Default to 0 if unknown
+
+FUNCTION generate_base_plan(general_info):
+    # Complex function involving nutritional science, BMR/TDEE calculations,
+    # applying constraints from medical conditions, goals, preferences.
+    # Returns a dictionary like the example in Step 4.
+    # ... implementation details needed ...
+    RETURN base_recommendations_dict
+
+FUNCTION knowledge_base.get_profile_info(profile_name):
+    # Fetches structured info (description summary, dietary hints, holistic advice)
+    # for the given profile from the parsed 'психология.txt'.
+    # ... implementation details needed ...
+    RETURN profile_info_dict
+
+FUNCTION format_final_report(report_data, general_info):
+    # Structures the collected information into a user-friendly report (e.g., Markdown, HTML).
+    # Includes sections: Introduction, Identified Profiles, Detailed Analysis, Tailored Dietary Plan, Holistic Strategies, Conclusion.
+    # ... implementation details needed ...
+    RETURN formatted_report_string
+
+# --- End of Guide ---
