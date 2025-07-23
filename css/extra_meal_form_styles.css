@@ -154,6 +154,7 @@
     font-size: 1.1em;
     display: inline-flex;
     align-items: center;
+    vertical-align: middle;
     justify-content: center;
 }
 
