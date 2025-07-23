@@ -112,6 +112,9 @@
   overflow: hidden;
   margin-bottom: var(--space-sm);
 }
+.analytics-card .mini-progress-mask {
+  background: var(--surface-background);
+}
 .analytics-card .mini-progress-fill {
   background: var(--progress-gradient);
   box-shadow: 0 0 6px var(--progress-bar-glow-color);
