@@ -129,6 +129,9 @@
   text-align: center;
   animation: celebrate 0.8s ease-out;
   margin-bottom: var(--space-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .welcome-illustration {

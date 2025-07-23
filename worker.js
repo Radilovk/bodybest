@@ -256,7 +256,12 @@ const ADAPTIVE_QUIZ_ANSWERS_LOOKBACK_DAYS = 35; // Колко назад да т
 const PREVIOUS_QUIZZES_FOR_CONTEXT_COUNT = 2; // Брой предишни въпросници за контекст при генериране на нов
 const AUTOMATED_FEEDBACK_TRIGGER_DAYS = 3; // След толкова дни предлагаме автоматичен чат
 const PRAISE_INTERVAL_DAYS = 3; // Интервал за нова похвала/значка
-const MEDAL_EMOJIS = ['🥇', '🥈', '🥉', '🏆', '🎖️', '🏅', '🏵️', '🎊', '🔥', '💯', '🎯', '🎉', '🚀', '✨'];
+const MEDAL_ICONS = [
+    '<i class="bi bi-award-fill"></i>',
+    '<i class="bi bi-trophy-fill"></i>',
+    '<i class="bi bi-fire"></i>',
+    '<i class="bi bi-stars"></i>'
+];
 const AI_CONFIG_KEYS = [
     'model_plan_generation',
     'model_chat',
@@ -1481,7 +1486,7 @@ async function handleGetAchievementsRequest(request, env) {
         let achievements = safeParseJson(achStr, []);
         let updated = false;
         achievements = achievements.map(a => {
-            if (!a.emoji) { a.emoji = MEDAL_EMOJIS[Math.floor(Math.random() * MEDAL_EMOJIS.length)]; updated = true; }
+            if (!a.emoji) { a.emoji = MEDAL_ICONS[Math.floor(Math.random() * MEDAL_ICONS.length)]; updated = true; }
             return a;
         });
         if (updated) await env.USER_METADATA_KV.put(`${userId}_achievements`, JSON.stringify(achievements));
@@ -1507,7 +1512,7 @@ async function handleGeneratePraiseRequest(request, env) {
         if (!lastTsStr && achievements.length === 0) {
             const title = 'Първа стъпка';
             const message = 'Ти направи нещо, което мнозина отлагат с месеци, години, а други въобще не започват — реши да направиш първата крачка към твоето по-добро АЗ.\nОттук нататък ние сме част от твоята кауза и стъпките, които правиш с нашата подкрепа ще донесат резултат\nСамото присъствие тук вече те отличава!';
-            const emoji = MEDAL_EMOJIS[Math.floor(Math.random() * MEDAL_EMOJIS.length)];
+            const emoji = MEDAL_ICONS[Math.floor(Math.random() * MEDAL_ICONS.length)];
             const newAch = { date: now, title, message, emoji };
             achievements.push(newAch);
             await env.USER_METADATA_KV.put(`${userId}_achievements`, JSON.stringify(achievements));
@@ -1610,7 +1615,7 @@ async function handleGeneratePraiseRequest(request, env) {
             }
         }
 
-        const emoji = MEDAL_EMOJIS[Math.floor(Math.random() * MEDAL_EMOJIS.length)];
+        const emoji = MEDAL_ICONS[Math.floor(Math.random() * MEDAL_ICONS.length)];
         const newAch = { date: now, title, message, emoji };
         achievements.push(newAch);
         if (achievements.length > 7) achievements.shift();
