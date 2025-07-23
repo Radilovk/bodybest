@@ -44,11 +44,11 @@
 .progress-fill::after {
   content: '';
   position: absolute;
-  inset: -2px 0;
+  inset: -2px;
   background: inherit;
   border-radius: inherit;
-  filter: blur(4px);
-  opacity: 0.6;
+  filter: blur(3px);
+  opacity: 0.45;
   z-index: -1;
 }
 
@@ -140,11 +140,11 @@
 .analytics-card .mini-progress-fill::after {
   content: '';
   position: absolute;
-  inset: -2px 0;
+  inset: -2px;
   background: inherit;
   border-radius: inherit;
-  filter: blur(3px);
-  opacity: 0.6;
+  filter: blur(2px);
+  opacity: 0.45;
   z-index: -1;
 }
 .analytics-card .mini-progress-fill.animate-progress {
