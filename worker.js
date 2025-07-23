@@ -44,7 +44,6 @@ const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title>Вашият персонален анализ е готов!</title>
 <!--[if !mso]><!-->
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 <!--<![endif]-->
 <style type="text/css">
   body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
