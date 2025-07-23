@@ -382,8 +382,13 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-list li .check-icon {
     display: none;
-    margin-left: var(--space-sm);
+    margin-left: var(--space-xs); /* По-близо до името */
     color: var(--color-success, var(--primary-color));
+}
+
+.meal-list li .check-icon svg.icon {
+    width: 1.2em; /* По-голяма иконка */
+    height: 1.2em;
 }
 
 .meal-list li.completed .check-icon {
