@@ -209,8 +209,8 @@ details[open] summary::after {
   overflow: hidden;
 }
 #analyticsSummary .progress-fill {
-  background: var(--progress-gradient);
-  box-shadow: 0 0 6px var(--progress-bar-glow-color);
+  background-color: var(--color-danger);
+  box-shadow: 0 0 6px var(--color-danger);
   height: 100%;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   width: 0;
