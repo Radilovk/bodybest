@@ -606,7 +606,7 @@ function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
     if (safeGet(psychologicalGuidance, 'coping_strategies', []).length > 0) strategiesData.push({ title: '<svg class="icon"><use href="#icon-info"></use></svg> Стратегии за справяне', content: psychologicalGuidance.coping_strategies });
     if (safeGet(psychologicalGuidance, 'motivational_messages', []).length > 0) strategiesData.push({ title: '<i class="bi bi-chat-dots"></i> Мотивационни съобщения', content: psychologicalGuidance.motivational_messages });
     if (psychologicalGuidance?.habit_building_tip) strategiesData.push({ title: '<i class="bi bi-gear"></i> Изграждане на навици', content: psychologicalGuidance.habit_building_tip });
-    if (psychologicalGuidance?.self_compassion_reminder) strategiesData.push({ title: '<i class="bi bi-heart-fill"></i> Напомняне за самосъстрадание', content: psychologicalGuidance.self_compassion_reminder });
+    if (psychologicalGuidance?.self_compassion_reminder) strategiesData.push({ title: '<i class="bi bi-heart-fill"></i> Разбиране към себе си', content: psychologicalGuidance.self_compassion_reminder });
     const activityContent = [];
     if (initialAnswers?.physicalActivity === 'Да') {
         const types = initialAnswers.q1745877358368; if (Array.isArray(types) && types.length > 0) activityContent.push(`<strong>Видове:</strong> ${types.join(', ')}`);
