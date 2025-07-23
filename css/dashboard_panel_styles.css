@@ -79,26 +79,6 @@
 }
 .achievement-medal.new { animation: pop-in 0.6s ease; }
 
-/* Икони за статистиката на успехите */
-.achievement-count {
-  display: flex;
-  justify-content: center;
-  gap: var(--space-sm);
-  margin-top: var(--space-sm);
-}
-
-.achievement-badge {
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
-  background: var(--surface-background);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary-color);
-  font-size: 1.2rem;
-}
-
 @keyframes pop-in {
   0% { transform: scale(0); }
   80% { transform: scale(1.2); }
