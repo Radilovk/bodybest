@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <title>Прогрес барове - пример</title>
+    <link rel="stylesheet" href="../css/base_styles.css">
+    <link rel="stylesheet" href="../css/components_styles.css">
+    <style>
+        body { font-family: var(--font-primary); padding: 1rem; }
+        section { margin-bottom: 2rem; }
+    </style>
+</head>
+<body>
+    <h1>Примерен шаблон за прогрес барове</h1>
+
+    <section>
+        <h2>1. Стъпков прогрес бар</h2>
+        <p>Използва се при форми от типа "wizard". Ширината на вътрешния елемент се променя според текущата стъпка.</p>
+        <div class="step-indicator-container">
+            <span class="step-indicator-label">Стъпка <span id="currentStep">1</span> от <span id="totalSteps">3</span></span>
+            <div class="progress-bar-steps">
+                <div id="exampleStepProgressBar" class="step-progress-bar" style="width: 33%"></div>
+            </div>
+        </div>
+        <pre><code>&lt;div class="progress-bar-steps"&gt;
+    &lt;div id="exampleStepProgressBar" class="step-progress-bar"&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        <p>JS логиката (напр. <code>updateStepIndicator()</code> в <code>extraMealForm.js</code>) задава ширината в проценти.</p>
+    </section>
+
+    <section>
+        <h2>2. Линеен прогрес бар</h2>
+        <p>Използва се в таблото на потребителя за показване на общия напредък. Цветът се променя според процента.</p>
+        <div class="progress" style="max-width: 300px;">
+            <div class="progress-bar bg-success" id="goalProgressBar" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <pre><code>&lt;div class="progress"&gt;
+    &lt;div class="progress-bar" id="goalProgressBar" role="progressbar" style="width: 75%"&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        <p>Функцията <code>animateProgressFill()</code> в <code>utils.js</code> плавно анимира запълването, а <code>getProgressColor()</code> определя цвета.</p>
+    </section>
+</body>
+</html>
