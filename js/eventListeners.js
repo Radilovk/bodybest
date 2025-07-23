@@ -288,18 +288,6 @@ function handleDelegatedClicks(event) {
         if (type && key) openInfoModalWithDetails(key, type);
         return;
     }
-    const colorBar = target.closest('.meal-color-bar');
-    if (colorBar) {
-        event.stopPropagation();
-        const mealItemLi = colorBar.closest('li');
-        const day = mealItemLi?.dataset.day; const index = mealItemLi?.dataset.index;
-        if (mealItemLi && day && index !== undefined) {
-            const isCompleted = mealItemLi.classList.toggle('completed');
-            todaysMealCompletionStatus[`${day}_${index}`] = isCompleted; // Modifies global state from app.js
-            showToast(`Храненето е ${isCompleted ? 'отбелязано' : 'размаркирано'}.`, false, 2000);
-        }
-        return;
-    }
     const ratingSquare = target.closest('.rating-square');
     if (ratingSquare) {
         // Ensure this rating square is part of the daily log, not the adaptive quiz
@@ -320,6 +308,19 @@ function handleDelegatedClicks(event) {
             });
             metricRatingDiv.classList.toggle('active', selectedValue > 0);
         }
+    }
+
+    const mealCard = target.closest('.meal-card');
+    if (mealCard && !target.closest('button')) {
+        event.stopPropagation();
+        const day = mealCard.dataset.day;
+        const index = mealCard.dataset.index;
+        if (day && index !== undefined) {
+            const isCompleted = mealCard.classList.toggle('completed');
+            todaysMealCompletionStatus[`${day}_${index}`] = isCompleted;
+            showToast(`Храненето е ${isCompleted ? 'отбелязано' : 'размаркирано'}.`, false, 2000);
+        }
+        return;
     }
 
     const medal = target.closest('.achievement-medal');
