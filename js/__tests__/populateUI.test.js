@@ -201,3 +201,42 @@ test('applies success color to completed meal bar', async () => {
   const color = getComputedStyle(li.querySelector('.meal-color-bar')).backgroundColor;
   expect(color).toBe('rgb(46, 204, 113)');
 });
+
+describe('progress bar width handling', () => {
+  const setup = async (value) => {
+    jest.resetModules();
+    jest.unstable_mockModule('../app.js', () => ({
+      fullDashboardData: {
+        userName: 'Иван',
+        analytics: {
+          current: { goalProgress: value, engagementScore: value, overallHealthScore: value },
+          streak: {}
+        },
+        planData: {},
+        dailyLogs: [],
+        currentStatus: {},
+        initialData: {},
+        initialAnswers: {}
+      },
+      todaysMealCompletionStatus: {},
+      planHasRecContent: false
+    }));
+    ({ populateUI } = await import('../populateUI.js'));
+    populateUI();
+  };
+
+  test.each([
+    [50, '50%', false],
+    [120, '100%', false],
+    [-10, '', true],
+    [0, '', true]
+  ])('value %i sets width %s', async (val, expectedWidth, hidden) => {
+    await setup(val);
+    expect(document.getElementById('goalProgressFill').style.width).toBe(expectedWidth);
+    expect(document.getElementById('engagementProgressFill').style.width).toBe(expectedWidth);
+    expect(document.getElementById('healthProgressFill').style.width).toBe(expectedWidth);
+    expect(document.getElementById('goalCard').classList.contains('hidden')).toBe(hidden);
+    expect(document.getElementById('engagementCard').classList.contains('hidden')).toBe(hidden);
+    expect(document.getElementById('healthCard').classList.contains('hidden')).toBe(hidden);
+  });
+});
