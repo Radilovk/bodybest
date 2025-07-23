@@ -623,7 +623,7 @@ function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
         let supplementsHtml = ''; const supps = safeGet(hydrationCookingSupplements, 'supplement_suggestions', []);
         if (supps.length > 0) {
             supplementsHtml += '<ul>';
-            supps.forEach(s => { supplementsHtml += `<li><strong>💊 ${s.supplement_name||'?'}</strong>${s.reasoning?`: ${s.reasoning}`:''}${s.dosage_suggestion?` <span class="text-muted">(Препоръка: ${s.dosage_suggestion})</span>`:''}${s.caution?` <br><em class="text-muted" style="font-size:0.9em; display:block; margin-top:0.2rem;">Внимание: ${s.caution}</em>`:''}</li>`; });
+            supps.forEach(s => { supplementsHtml += `<li><strong>💊 ${s.supplement_name||'?'}</strong>${s.reasoning?`: ${s.reasoning}`:''}${s.dosage_suggestion?` <span class="text-muted">(Препоръка: ${s.dosage_suggestion})</span>`:''}${s.caution?` <br><em class="text-muted fs-sm" style="display:block; margin-top:0.2rem;">Внимание: ${s.caution}</em>`:''}</li>`; });
             supplementsHtml += '</ul>';
         } else supplementsHtml = '<p class="placeholder">Няма специфични препоръки за добавки.</p>';
         selectors.recSupplementsContent.innerHTML = supplementsHtml;
