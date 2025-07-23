@@ -383,10 +383,7 @@ body.dark-theme .detailed-metric-item .value-current {
 .meal-list li .check-icon {
     display: none;
     margin-left: 1ch; /* На един знак от името */
-    color: color-mix(in srgb,
-        var(--color-success, var(--primary-color)) 70%,
-        var(--surface-background) 30%);
-    font-weight: bold;
+    font-weight: normal;
 }
 
 .meal-list li .check-icon svg.icon {
@@ -399,6 +396,7 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-list li.completed .check-icon {
     display: inline-block;
+    color: color-mix(in srgb, var(--meal-color) 60%, white); /* Същият цвят като вертикалната линия */
     animation: checkmark-pop 0.3s ease-out;
 }
 
