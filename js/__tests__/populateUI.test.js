@@ -9,9 +9,9 @@ beforeEach(async () => {
     <h1 id="headerTitle"></h1>
     <div id="goalCard"></div><div id="engagementCard"></div><div id="healthCard"></div>
     <div id="progressHistoryCard"></div>
-    <div id="goalProgressFill"></div><div id="goalProgressBar"></div><span id="goalProgressText"></span>
-    <div id="engagementProgressFill"></div><div id="engagementProgressBar"></div><span id="engagementProgressText"></span>
-    <div id="healthProgressFill"></div><div id="healthProgressBar"></div><span id="healthProgressText"></span>
+    <div id="goalProgressMask"></div><div id="goalProgressBar"></div><span id="goalProgressText"></span>
+    <div id="engagementProgressMask"></div><div id="engagementProgressBar"></div><span id="engagementProgressText"></span>
+    <div id="healthProgressMask"></div><div id="healthProgressBar"></div><span id="healthProgressText"></span>
     <div id="streakGrid"></div><span id="streakCount"></span>
     <h3 id="dailyPlanTitle"></h3>
     <ul id="dailyMealList"></ul>
@@ -23,13 +23,13 @@ beforeEach(async () => {
     engagementCard: document.getElementById('engagementCard'),
     healthCard: document.getElementById('healthCard'),
     progressHistoryCard: document.getElementById('progressHistoryCard'),
-    goalProgressFill: document.getElementById('goalProgressFill'),
+    goalProgressMask: document.getElementById('goalProgressMask'),
     goalProgressBar: document.getElementById('goalProgressBar'),
     goalProgressText: document.getElementById('goalProgressText'),
-    engagementProgressFill: document.getElementById('engagementProgressFill'),
+    engagementProgressMask: document.getElementById('engagementProgressMask'),
     engagementProgressBar: document.getElementById('engagementProgressBar'),
     engagementProgressText: document.getElementById('engagementProgressText'),
-    healthProgressFill: document.getElementById('healthProgressFill'),
+    healthProgressMask: document.getElementById('healthProgressMask'),
     healthProgressBar: document.getElementById('healthProgressBar'),
     healthProgressText: document.getElementById('healthProgressText'),
     streakGrid: document.getElementById('streakGrid'),
@@ -227,14 +227,14 @@ describe('progress bar width handling', () => {
 
   test.each([
     [50, '50%', false],
-    [120, '100%', false],
+    [120, '0%', false],
     [-10, '', true],
     [0, '', true]
   ])('value %i sets width %s', async (val, expectedWidth, hidden) => {
     await setup(val);
-    expect(document.getElementById('goalProgressFill').style.width).toBe(expectedWidth);
-    expect(document.getElementById('engagementProgressFill').style.width).toBe(expectedWidth);
-    expect(document.getElementById('healthProgressFill').style.width).toBe(expectedWidth);
+    expect(document.getElementById('goalProgressMask').style.width).toBe(expectedWidth);
+    expect(document.getElementById('engagementProgressMask').style.width).toBe(expectedWidth);
+    expect(document.getElementById('healthProgressMask').style.width).toBe(expectedWidth);
     expect(document.getElementById('goalCard').classList.contains('hidden')).toBe(hidden);
     expect(document.getElementById('engagementCard').classList.contains('hidden')).toBe(hidden);
     expect(document.getElementById('healthCard').classList.contains('hidden')).toBe(hidden);
