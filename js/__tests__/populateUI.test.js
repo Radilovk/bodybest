@@ -12,7 +12,7 @@ beforeEach(async () => {
     <div id="goalProgressFill"></div><div id="goalProgressBar"></div><span id="goalProgressText"></span>
     <div id="engagementProgressFill"></div><div id="engagementProgressBar"></div><span id="engagementProgressText"></span>
     <div id="healthProgressFill"></div><div id="healthProgressBar"></div><span id="healthProgressText"></span>
-    <div id="streakGrid"></div><span id="streakCount"></span>
+    <div id="streakGrid"></div>
     <h3 id="dailyPlanTitle"></h3>
     <ul id="dailyMealList"></ul>
   `;
@@ -33,7 +33,6 @@ beforeEach(async () => {
     healthProgressBar: document.getElementById('healthProgressBar'),
     healthProgressText: document.getElementById('healthProgressText'),
     streakGrid: document.getElementById('streakGrid'),
-    streakCount: document.getElementById('streakCount'),
     dailyPlanTitle: document.getElementById('dailyPlanTitle'),
     dailyMealList: document.getElementById('dailyMealList')
   };
@@ -64,7 +63,6 @@ test('populates dashboard sections', () => {
   expect(document.getElementById('goalProgressText').textContent).toBe('50%');
   expect(document.getElementById('engagementProgressText').textContent).toBe('80%');
   expect(document.getElementById('healthProgressText').textContent).toBe('70%');
-  expect(document.getElementById('streakCount').textContent).toBe('5');
   expect(document.querySelectorAll('#streakGrid .streak-day.logged').length).toBe(1);
 });
 

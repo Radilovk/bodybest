@@ -94,7 +94,6 @@ function renderAchievements(newIndex = -1) {
         el.dataset.index = index;
         selectors.streakGrid.appendChild(el);
     });
-    if (selectors.streakCount) selectors.streakCount.textContent = achievements.length;
 }
 
 export function createAchievement(title, message, emoji = null) {
