@@ -157,6 +157,12 @@
   }
   header h1 { font-size: 1.2rem; }
   .card { padding: var(--space-md); }
+  .meal-list li {
+    padding: var(--space-sm);
+  }
+  .meal-list li .actions {
+    margin-top: var(--space-sm);
+  }
   /* .actions button svg.icon { width: 1.4em; height: 1.4em; } */ /* This seems too generic for meal list actions, already handled there */
   .modal-content { padding: var(--space-md); }
   #toast { width: calc(100% - 2 * var(--space-md)); }

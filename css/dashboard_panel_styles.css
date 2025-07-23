@@ -276,6 +276,7 @@ body.dark-theme .detailed-metric-item .value-current {
   margin-right: var(--space-md);
   height: 100%;
   align-self: stretch;
+  cursor: pointer;
 }
 
 .meal-card[data-meal-type='dinner'] .meal-color-bar {
@@ -338,6 +339,7 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-list li.completed {
     background-color: var(--color-success-bg);
+    border-left: 4px solid color-mix(in srgb, var(--meal-color) 80%, white);
 }
 
 .meal-list li.completed .meal-color-bar {
@@ -370,7 +372,6 @@ body.dark-theme .detailed-metric-item .value-current {
     height: 1.6em;
 }
 
-.actions button.complete:hover { color: var(--color-success); }
 .actions button.info:hover { color: var(--secondary-color); }
 
 

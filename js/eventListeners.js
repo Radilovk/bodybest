@@ -288,11 +288,11 @@ function handleDelegatedClicks(event) {
         if (type && key) openInfoModalWithDetails(key, type);
         return;
     }
-    const completeButton = target.closest('button.complete');
-    if (completeButton) {
+    const colorBar = target.closest('.meal-color-bar');
+    if (colorBar) {
         event.stopPropagation();
-        const day = completeButton.dataset.day; const index = completeButton.dataset.index;
-        const mealItemLi = completeButton.closest('li');
+        const mealItemLi = colorBar.closest('li');
+        const day = mealItemLi?.dataset.day; const index = mealItemLi?.dataset.index;
         if (mealItemLi && day && index !== undefined) {
             const isCompleted = mealItemLi.classList.toggle('completed');
             todaysMealCompletionStatus[`${day}_${index}`] = isCompleted; // Modifies global state from app.js

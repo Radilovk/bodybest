@@ -122,6 +122,9 @@ test('populates daily plan with color bars and meal types', async () => {
   expect(cards.length).toBe(3);
   cards.forEach(card => {
     expect(card.querySelector('.meal-color-bar')).not.toBeNull();
+    expect(card.dataset.day).toBeDefined();
+    expect(card.dataset.index).toBeDefined();
+    expect(card.querySelector('button.complete')).toBeNull();
   });
   expect(cards[0].dataset.mealType).toBe('breakfast');
   expect(cards[1].dataset.mealType).toBe('lunch');
