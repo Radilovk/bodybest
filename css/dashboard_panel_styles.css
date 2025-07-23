@@ -27,18 +27,21 @@
   margin: var(--space-sm) auto;
 }
 .progress-bar {
-  background: var(--surface-background);
+  background: var(--progress-gradient);
   border-radius: 6px;
   position: relative;
   height: 12px;
   overflow: hidden;
 }
-.progress-fill {
-  background: var(--progress-gradient);
-  box-shadow: 0 0 6px var(--progress-bar-glow-color);
-  height: 100%;
+.progress-mask {
+  background: var(--surface-background);
+  opacity: 0.5;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  width: 0;
   border-radius: inherit;
 }
 .index-card .index-value {
@@ -103,7 +106,7 @@
   font-size: 1.05rem;
 }
 .analytics-card .mini-progress-bar {
-  background: var(--surface-background);
+  background: var(--progress-gradient);
   border-radius: var(--progress-bar-radius);
   position: relative;
   height: 0.5rem;
@@ -112,13 +115,13 @@
 }
 .analytics-card .mini-progress-mask {
   background: var(--surface-background);
-}
-.analytics-card .mini-progress-fill {
-  background: var(--progress-gradient);
-  box-shadow: 0 0 6px var(--progress-bar-glow-color);
-  height: 100%;
+  opacity: 0.5;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  width: 0;
   border-radius: inherit;
 }
 .analytics-card { cursor: pointer; }
