@@ -14,13 +14,14 @@
     cursor: pointer;
 }
 .index-card h4 {
-  font-size: 1.1rem; 
-  margin-bottom: var(--space-sm); 
+  font-size: 1.1rem;
+  margin-bottom: var(--space-sm);
   text-align: center;
   color: var(--text-color-secondary); display: flex; align-items: center;
   justify-content: center; gap: var(--space-xs);
-  margin-top: var(--space-xs); 
+  margin-top: var(--space-xs);
 }
+.index-card h4 .index-value { margin: 0; }
 .index-card .progress-bar-container {
   width: 100%;
   margin: var(--space-sm) auto;
@@ -67,12 +68,9 @@
 .achievement-medal {
   width: 24px;
   height: 24px;
-  border-radius: 50%;
-  background: var(--secondary-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-color-on-secondary);
   font-size: 1rem;
   cursor: pointer;
   transition: transform 0.3s ease;

@@ -213,7 +213,6 @@ function populateDashboardStreak(streakData) {
         el.title = new Date(d.date).toLocaleDateString('bg-BG');
         selectors.streakGrid.appendChild(el);
     });
-    if (selectors.streakCount) selectors.streakCount.textContent = streakData?.currentCount || 0;
 }
 
 function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
