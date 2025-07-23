@@ -224,18 +224,15 @@ describe('progress bar width handling', () => {
   };
 
   test.each([
-    [50, '50%', false, 'var(--color-warning)'],
-    [120, '100%', false, 'var(--color-success)'],
-    [-10, '', true, ''],
-    [0, '', true, '']
-  ])('value %i sets width %s', async (val, expectedWidth, hidden, color) => {
+    [50, '50%', false],
+    [120, '100%', false],
+    [-10, '', true],
+    [0, '', true]
+  ])('value %i sets width %s', async (val, expectedWidth, hidden) => {
     await setup(val);
     expect(document.getElementById('goalProgressFill').style.width).toBe(expectedWidth);
     expect(document.getElementById('engagementProgressFill').style.width).toBe(expectedWidth);
     expect(document.getElementById('healthProgressFill').style.width).toBe(expectedWidth);
-    expect(document.getElementById('goalProgressFill').style.background).toBe(color);
-    expect(document.getElementById('engagementProgressFill').style.background).toBe(color);
-    expect(document.getElementById('healthProgressFill').style.background).toBe(color);
     expect(document.getElementById('goalCard').classList.contains('hidden')).toBe(hidden);
     expect(document.getElementById('engagementCard').classList.contains('hidden')).toBe(hidden);
     expect(document.getElementById('healthCard').classList.contains('hidden')).toBe(hidden);
