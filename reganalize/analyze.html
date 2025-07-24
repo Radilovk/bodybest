@@ -368,12 +368,12 @@
         .conclusion-box p { margin: 0; font-weight: 600; line-height: 1.6; color: var(--heading-color); position: relative; z-index: 1; }
 
         /* 4. CTA Section --- ENHANCED --- */
-        .cta-section { 
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: white; 
-            text-align: center; 
-            padding: 100px 20px; 
-            margin-top: 50px; 
+        .cta-section {
+            background: linear-gradient(135deg, #e0f7fa 0%, #f0fff4 100%);
+            color: #1a202c;
+            text-align: center;
+            padding: 100px 20px;
+            margin-top: 50px;
             position: relative;
             overflow: hidden;
             z-index: 1;
@@ -391,11 +391,11 @@
             z-index: -1;
         }
         
-        .cta-section .section-title { color: white; }
+        .cta-section .section-title { color: var(--heading-color); }
         .cta-section .section-title::after {
-            background: linear-gradient(90deg, var(--cta-color), white);
+            background: linear-gradient(90deg, var(--cta-color), var(--primary-color));
         }
-        .cta-section .section-subtitle { color: rgba(255, 255, 255, 0.7); }
+        .cta-section .section-subtitle { color: rgba(0, 0, 0, 0.6); }
         .benefits-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -590,8 +590,14 @@
             
             /* FIXED [1]: Force donut charts into a single column on small phones */
             #dashboard-grid {
-                grid-template-columns: 1fr;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
                 gap: 30px;
+            }
+
+            .donut-chart-container {
+                margin: 0 auto 15px;
             }
             
             /* FIXED [2]: Better sizing for the CTA button on small phones */
