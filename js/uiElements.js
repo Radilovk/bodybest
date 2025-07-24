@@ -44,7 +44,6 @@ export function initializeSelectors() {
         feedbackModal: 'feedbackModal',
         feedbackForm: 'feedbackForm',
         progressHistoryCard: 'progressHistoryCard',
-        detailedRadarCard: 'detailedRadarCard',
         streakGrid: 'streakGrid',
         achievementShareBtn: 'achievementShareBtn',
         analyticsCardsContainer: 'analyticsCardsContainer',
@@ -74,7 +73,7 @@ export function initializeSelectors() {
                 'streakGrid', 'analyticsCardsContainer', 'achievementShareBtn',
                 'goalCard', 'engagementCard', 'healthCard', 'streakCard',
                 'recFoodAllowedCard', 'recFoodLimitCard', 'recHydrationCard',
-                'recCookingMethodsCard', 'recSupplementsCard', 'detailedRadarCard'
+                'recCookingMethodsCard', 'recSupplementsCard'
             ];
             if (!optionalOrDynamic.includes(key) && key !== 'adaptiveQuizModal' && key !== 'adaptiveQuizContainer') {
                 console.warn(`HTML element not found: ${key} (selector: '${selectorValue}')`);
