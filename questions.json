@@ -203,7 +203,7 @@
         "children": {
             "Всеки ден": [
                 {
-                    "id": "activityType",
+                    "id": "activityTypeDaily",
                     "text": "Какъв спорт?",
                     "type": "checkbox",
                     "options": [
@@ -225,7 +225,7 @@
                                 "type": "text",
                                 "options": [],
                                 "dependsOn": {
-                                    "question": "activityType",
+                                    "question": "activityTypeDaily",
                                     "value": "Друго"
                                 },
                                 "children": []
@@ -247,7 +247,7 @@
             ],
             "2-3 пъти/седм": [
                 {
-                    "id": "activityType",
+                    "id": "activityTypeWeekly",
                     "text": "Какъв спорт?",
                     "type": "select",
                     "options": [
@@ -275,7 +275,7 @@
             ],
             "Рядко": [
                 {
-                    "id": "activityType",
+                    "id": "activityTypeRare",
                     "text": "Какъв спорт?",
                     "type": "select",
                     "options": [
