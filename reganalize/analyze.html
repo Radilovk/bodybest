@@ -276,8 +276,8 @@
         .donut-low { stroke: var(--color-low); filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.7)); }
         .chart-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
         .chart-center .icon { font-size: 2.2em; }
-        .dashboard-item h4 { margin: 0; font-weight: 600; color: var(--heading-color); }
-        .dashboard-item .risk-level-text { font-size: 0.8em; color: #718096; }
+        .dashboard-item h4 { margin: 10px 0 5px 0; font-weight: 600; color: var(--heading-color); }
+        .dashboard-item .risk-level-text { font-size: 0.9em; color: #718096; min-height: 40px; }
 
         /* 3. Deep Dive Section --- */
         .deep-dive-card { display: grid; grid-template-columns: 1fr; gap: 40px; }
@@ -293,7 +293,7 @@
         .analysis-points li { 
             display: flex; 
             align-items: flex-start; 
-            padding: 10px 0; 
+            padding: 12px 0; 
             line-height: 1.6; 
             position: relative;
         }
@@ -306,9 +306,34 @@
             height: 8px;
             background: var(--primary-color);
             border-radius: 50%;
+            opacity: 0; /* Hide default dot, icon will be used instead */
         }
-        .analysis-points li i { color: var(--primary-color); margin-right: 15px; margin-top: 4px; }
+        .analysis-points li i { 
+            margin-right: 15px; 
+            margin-top: 5px; 
+            font-size: 1.1em;
+        }
         
+        /* NEW: Pulsating Icon Styles */
+        @keyframes pulse-red-icon {
+            0%, 100% { opacity: 0.7; text-shadow: 0 0 4px var(--color-high); }
+            50% { opacity: 1; text-shadow: 0 0 12px var(--color-high); }
+        }
+        @keyframes pulse-yellow-icon {
+            0%, 100% { opacity: 0.7; text-shadow: 0 0 4px var(--color-medium); }
+            50% { opacity: 1; text-shadow: 0 0 12px var(--color-medium); }
+        }
+        .analysis-points li i.icon-high {
+            color: var(--color-high);
+            animation: pulse-red-icon 2s infinite ease-in-out;
+        }
+        .analysis-points li i.icon-medium {
+            color: var(--color-medium);
+            animation: pulse-yellow-icon 2s infinite ease-in-out;
+        }
+        .analysis-points li i.icon-ok { color: var(--color-ok); }
+        .analysis-points li i.icon-low { color: var(--color-low); }
+
         .key-takeaway { 
             background: #f0f5ff;
             padding: 25px; 
@@ -604,6 +629,19 @@
                 <h3>${o.title}</h3>
             </div>`).join('');
         
+        // MODIFIED: Helper function to get the definition text
+        const getRiskDefinition = (riskClass, category) => {
+            const catLower = category.toLowerCase();
+            switch (riskClass) {
+                case 'high': return `Лошо ниво на ${catLower}`;
+                case 'medium': return `Средно ниво на ${catLower}`;
+                case 'ok': return `Добро ниво на ${catLower}`;
+                case 'low': return `Отлично ниво на ${catLower}`;
+                default: return category;
+            }
+        };
+
+        // MODIFIED: generateDashboardHTML now uses getRiskDefinition
         const generateDashboardHTML = (items) => items.map((i, index) => `
             <div class="dashboard-item" style="animation-delay: ${index * 100}ms;">
                 <div class="donut-chart-container">
@@ -616,15 +654,24 @@
                     </div>
                 </div>
                 <h4>${i.category}</h4>
-                <div class="risk-level-text">${i.riskLevel}</div>
+                <div class="risk-level-text">${getRiskDefinition(i.riskClass, i.category)}</div>
             </div>`).join('');
-
+        
+        // MODIFIED: Helper function to get the right icon for findings
+        const getFindingIcon = (riskClass) => {
+            if (riskClass === 'high' || riskClass === 'medium') {
+                return `<i class="fas fa-exclamation-triangle icon-${riskClass}"></i>`;
+            }
+            return `<i class="fas fa-check-circle icon-${riskClass || 'ok'}"></i>`;
+        };
+        
+        // MODIFIED: generateDeepDiveHTML now uses getFindingIcon
         const generateDeepDiveHTML = (items) => items.map(item => `
             <div class="card deep-dive-card">
                 <div class="analysis-points">
                     <h3>Констатации</h3>
                     <ul>
-                        ${item.points.map(point => `<li><i class="fas fa-check"></i><div>${point}</div></li>`).join('')}
+                        ${item.points.map(point => `<li>${getFindingIcon(item.riskClass)}<div>${point}</div></li>`).join('')}
                     </ul>
                 </div>
                 <div class="key-takeaway">
@@ -636,6 +683,15 @@
             </div>`).join('');
 
         const renderAnalysis = (data) => {
+            // I assume deepDive items should have a riskClass property. 
+            // If it's missing, I'll try to add it by matching category names.
+            const riskMap = new Map(data.healthDashboard.map(i => [i.category, i.riskClass]));
+            data.deepDive.forEach(item => {
+                if (!item.riskClass && riskMap.has(item.category)) {
+                     item.riskClass = riskMap.get(item.category);
+                }
+            });
+
             data.healthDashboard.sort((a, b) => b.riskValue - a.riskValue);
             
             document.getElementById('client-name').textContent = `${data.client.name},`;
