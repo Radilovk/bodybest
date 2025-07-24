@@ -78,6 +78,7 @@ async function checkAdminQueries(userId) {
             });
             if (!selectors.chatWidget?.classList.contains('visible')) {
                 if (selectors.chatFab) selectors.chatFab.classList.add('notification');
+                triggerAssistantWiggle();
                 setAutomatedChatPending(true);
             }
         }
@@ -136,6 +137,16 @@ export function setCurrentQuizData(data) { currentQuizData = data; }
 export function setUserQuizAnswers(answers) { userQuizAnswers = answers; }
 export function setCurrentQuestionIndex(index) { currentQuestionIndex = index; }
 export function setActiveTooltip(tooltip) { activeTooltip = tooltip; }
+
+export function triggerAssistantWiggle() {
+    const icon = selectors.chatFab?.querySelector('.assistant-icon');
+    if (!icon) return;
+    icon.classList.add('wiggle');
+    function handleEnd() {
+        icon.classList.remove('wiggle');
+    }
+    icon.addEventListener('animationend', handleEnd, { once: true });
+}
 
 // Функция за нулиране на глобалното състояние при изход
 export function resetAppState() {
@@ -267,6 +278,7 @@ async function initializeApp() {
     try {
         if (isLocalDevelopment) console.log("initializeApp starting from app.js...");
         initializeSelectors();
+        triggerAssistantWiggle();
         await loadInfoTexts();
         if (!document.getElementById('planModInProgressIcon') && selectors.planModificationBtn) {
             const icon = document.createElement('svg');
@@ -426,6 +438,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
         if (data.triggerAutomatedFeedbackChat) {
             setAutomatedChatPending(true);
             if (selectors.chatFab) selectors.chatFab.classList.add('notification');
+            triggerAssistantWiggle();
         }
 
         populateUI();
