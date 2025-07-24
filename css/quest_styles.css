@@ -1,150 +1,436 @@
-    /* Основен стил – запазен от оригиналната версия с допълнения за мобилност */
-    body {
-      margin: 0;
-      font-family: var(--font-primary);
-      background-color: #121212;
-      color: #E0E0E0;
-      overflow-x: hidden;
-    }
-    .container {
-      max-width: 600px;
-      margin: 60px auto 20px;
-      padding: 20px;
-      background-color: #1e1e1e;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.6);
-    }
-    .question-text {
-      font-size: 18px;
-      color: #80cbc4;
-      margin-bottom: 20px;
-      line-height: 1.4;
-    }
-    .answer-label {
-      font-size: 16px;
-      line-height: 1.4;
-      margin-bottom: 8px;
-      display: block;
-    }
-    .section-title {
-      font-size: 22px;
-      text-align: center;
-      color: #4fc3a1;
-      margin-bottom: 20px;
-    }
-    h1, h2 {
-      text-align: center;
-      color: #80cbc4;
-      margin-bottom: 20px;
-    }
-    p {
-      text-align: center;
-      line-height: 1.5;
-      margin-bottom: 20px;
-    }
-    /* Прогрес бар - използва се общият компонент */
-    /* Всяка страница се състои от "екран" */
-    .page {
-      display: none;
-      animation: fadeIn 0.4s ease-in-out;
-    }
-    .page.active {
-      display: block;
-    }
-    /* Навигационни бутони */
-    .nav-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 20px;
-    }
-    button {
-      background-color: #4fc3a1;
-      color: #121212;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-      min-height: 48px;
-    }
-    button:hover {
-      background-color: #43a088;
-      box-shadow: 0 0 10px #80cbc4;
-    }
-    input[type="text"],
-    input[type="number"],
-    input[type="email"],
-    input[type="password"],
-    textarea,
-    select {
-      width: 93%;
-      padding: 10px;
-      margin: 10px 0 20px;
-      border: 1px solid #333;
-      border-radius: 5px;
-      background-color: #1e1e1e;
-      color: #E0E0E0;
-    }
-    input[type="radio"],
-    input[type="checkbox"] {
-      margin-right: 6px;
-    }
-    .message {
-      padding: 0.8rem;
-      border-radius: 0.5rem;
-      margin-top: 15px;
-      font-size: 0.9rem;
-      display: none;
-      border: 1px solid transparent;
-      text-align: left;
-      word-wrap: break-word;
-    }
-    .message.error {
-      color: #e74c3c;
-      background-color: rgba(231, 76, 60, 0.1);
-      border-color: #e74c3c;
-    }
-    .message.success {
-      color: #2ecc71;
-      background-color: rgba(46, 204, 113, 0.1);
-      border-color: #2ecc71;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-    }
-    .form-group input {
-      width: 100%;
-    }
-    @keyframes popIn {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-    .animate-success {
-      animation: popIn 0.6s ease-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @media (max-width: 600px) {
-      .container {
-        margin: 80px 15px 20px;
-        padding: 15px;
-      }
-      .nav-buttons button {
-        width: 100%;
-      }
-      .question-text {
-        font-size: 16px;
-      }
-      button {
-        font-size: 16px;
-        min-height: 52px;
-      }
-    }
+/* --- BodyBest Questionnaire Redesign --- */
+
+/* 1. Глобални променливи и основи
+------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+:root {
+  --font-primary: 'Montserrat', sans-serif;
+
+  /* Светла тема (по подразбиране) */
+  --bg-color: #f4f7f6;
+  --text-color: #121212;
+  --text-muted: #5c6a78;
+  --primary-accent: #2a9d8f;
+  --primary-accent-darker: #26897f;
+  --secondary-accent: #e9c46a;
+  --card-bg: #ffffff;
+  --border-color: #dde4e9;
+  --input-bg: #ffffff;
+  --shadow-color: rgba(0, 0, 0, 0.08);
+  --success-color: #2a9d8f;
+  --error-color: #e76f51;
+}
+
+/* Тъмна тема - активира се от системата или с атрибут [data-theme="dark"] на <body> */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #121212;
+    --text-color: #E0E0E0;
+    --text-muted: #8899a6;
+    --primary-accent: #4fc3a1;
+    --primary-accent-darker: #43a088;
+    --secondary-accent: #f4a261;
+    --card-bg: #1e1e1e;
+    --border-color: #333;
+    --input-bg: #2c2c2c;
+    --shadow-color: rgba(0, 0, 0, 0.5);
+    --success-color: #4fc3a1;
+    --error-color: #e76f51;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-primary);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* 2. Начална страница (Hero Section)
+------------------------------------- */
+.hero-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  height: 100vh;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.hero-container::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%);
+  opacity: 0.5;
+  z-index: 1;
+}
+
+/* Анимация за изчезване */
+.hero-container.exiting .hero-content {
+  animation: fadeOutUp 0.5s ease-in forwards;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  animation: fadeInUp 1s ease-out forwards;
+  opacity: 0;
+}
+
+.hero-icon {
+  font-size: 2.5rem;
+  color: var(--primary-accent);
+  margin-bottom: 20px;
+  animation: icon-float 6s ease-in-out infinite;
+}
+
+.hero-icon .fa-brain {
+  margin-left: 15px;
+  animation-delay: -3s; /* Разминаване на анимациите */
+}
+
+.hero-title {
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 10px 0;
+  line-height: 1.1;
+}
+
+.hero-subtitle {
+  font-size: clamp(1rem, 4vw, 1.25rem);
+  color: var(--text-muted);
+  max-width: 500px;
+  margin: 0 auto 30px;
+}
+
+.hero-trust-text {
+  margin-top: 30px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+}
+
+/* Частици за фон */
+.particles {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 0;
+}
+.particle {
+  position: absolute;
+  background-color: var(--primary-accent);
+  border-radius: 50%;
+  opacity: 0;
+  animation: float 20s infinite linear;
+}
+@keyframes float {
+  0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+  10% { opacity: 0.7; }
+  90% { opacity: 0.7; }
+  100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+}
+/* Разпределяне на частиците - всеки има различен размер, позиция и забавяне */
+.particle:nth-child(1) { width: 10px; height: 10px; left: 5%; animation-delay: 0s; }
+.particle:nth-child(2) { width: 20px; height: 20px; left: 15%; animation-delay: 2s; animation-duration: 25s; }
+.particle:nth-child(3) { width: 8px; height: 8px; left: 25%; animation-delay: 4s; }
+.particle:nth-child(4) { width: 15px; height: 15px; left: 35%; animation-delay: 1s; animation-duration: 18s; }
+.particle:nth-child(5) { width: 12px; height: 12px; left: 45%; animation-delay: 6s; }
+.particle:nth-child(6) { width: 18px; height: 18px; left: 55%; animation-delay: 8s; animation-duration: 22s; }
+.particle:nth-child(7) { width: 7px; height: 7px; left: 65%; animation-delay: 3s; }
+.particle:nth-child(8) { width: 14px; height: 14px; left: 75%; animation-delay: 5s; animation-duration: 19s; }
+.particle:nth-child(9) { width: 10px; height: 10px; left: 85%; animation-delay: 7s; }
+.particle:nth-child(10) { width: 16px; height: 16px; left: 95%; animation-delay: 9s; animation-duration: 24s; }
+/* Допълнителни за плътност */
+.particle:nth-child(11) { width: 8px; height: 8px; left: 20%; animation-delay: 11s; }
+.particle:nth-child(12) { width: 12px; height: 12px; left: 40%; animation-delay: 13s; animation-duration: 17s; }
+.particle:nth-child(13) { width: 15px; height: 15px; left: 60%; animation-delay: 15s; }
+.particle:nth-child(14) { width: 9px; height: 9px; left: 80%; animation-delay: 12s; animation-duration: 21s; }
+.particle:nth-child(15) { width: 11px; height: 11px; left: 90%; animation-delay: 14s; }
+
+
+/* 3. Обща структура на въпросника
+------------------------------------- */
+.step-indicator-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 10px 20px;
+  background-color: var(--bg-color);
+  z-index: 100;
+  box-shadow: 0 2px 10px var(--shadow-color);
+  box-sizing: border-box;
+}
+
+.container {
+  max-width: 650px;
+  margin: 100px auto 40px;
+  padding: 20px;
+  background-color: transparent; /* Премахваме фона, body го осигурява */
+  border-radius: 10px;
+  box-shadow: none; /* Премахваме сянката */
+}
+
+.page {
+  display: none;
+  animation: fadeIn 0.5s ease-in-out;
+}
+.page.active {
+  display: block;
+}
+
+/* 4. Стилизиране на елементи
+------------------------------------- */
+.question-text {
+  font-size: clamp(1.1rem, 4vw, 1.4rem);
+  color: var(--text-color);
+  font-weight: 600;
+  margin-bottom: 30px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+h2 {
+  text-align: center;
+  color: var(--text-color);
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.section-title {
+  font-size: 22px;
+  text-align: center;
+  color: var(--primary-accent);
+  margin-bottom: 20px;
+}
+
+/* Бутони */
+.nav-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+button, #startBtn {
+  background: var(--primary-accent);
+  color: #fff;
+  border: none;
+  padding: 15px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 52px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+button:hover {
+  background: var(--primary-accent-darker);
+  box-shadow: 0 4px 15px -5px var(--primary-accent);
+  transform: translateY(-2px);
+}
+
+button:disabled {
+  background-color: var(--text-muted);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Бутон "Назад" */
+button[id^="prevBtn"], button#regBackBtn, button#finalBackBtn {
+  background-color: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}
+button[id^="prevBtn"]:hover, button#regBackBtn:hover, button#finalBackBtn:hover {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border-color: var(--text-color);
+  box-shadow: none;
+  transform: none;
+}
+
+/* Формулярни елементи */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
+  padding: 15px;
+  margin: 10px 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-accent) 25%, transparent);
+}
+
+/* Персонализирани Радио и Чекбокс бутони */
+.answer-label {
+  display: block;
+  background-color: var(--card-bg);
+  padding: 15px 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  position: relative;
+  font-size: 1rem;
+}
+
+.answer-label:hover {
+  border-color: var(--primary-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px var(--shadow-color);
+}
+
+.answer-label input[type="radio"],
+.answer-label input[type="checkbox"] {
+  display: none; /* Скриваме оригиналния бутон */
+}
+
+.answer-label::before { /* Персонализиран бутон */
+  content: '';
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-color);
+  background-color: var(--bg-color);
+  transition: all 0.2s ease-out;
+}
+.answer-label { padding-left: 55px; } /* Правим място за новия бутон */
+
+.answer-label input[type="radio"] + * { /* За текст */ }
+.answer-label input[type="radio"]::before { border-radius: 50%; }
+.answer-label input[type="checkbox"]::before { border-radius: 4px; }
+
+/* Стил при избран бутон */
+.answer-label input:checked + * { /* Текстът не се променя */ }
+.answer-label input:checked ~ ::before {
+  background-color: var(--primary-accent);
+  border-color: var(--primary-accent);
+}
+
+/* "Чвка" за избрано състояние */
+.answer-label::after {
+  content: '';
+  position: absolute;
+  left: 28px;
+  top: 50%;
+  width: 6px;
+  height: 12px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  transform: translateY(-65%) rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+}
+
+.answer-label input:checked ~ ::after {
+  opacity: 1;
+}
+
+/* Съобщения за грешки/успех */
+.message {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 15px;
+  font-size: 1rem;
+  display: none;
+  border: 1px solid transparent;
+  text-align: center;
+  word-wrap: break-word;
+  font-weight: 600;
+}
+.message.error {
+  color: var(--error-color);
+  background-color: color-mix(in srgb, var(--error-color) 15%, transparent);
+  border-color: var(--error-color);
+}
+.message.success {
+  color: var(--success-color);
+  background-color: color-mix(in srgb, var(--success-color) 15%, transparent);
+  border-color: var(--success-color);
+}
+.validation-error {
+  color: var(--error-color);
+  font-size: 0.9em;
+  text-align: center;
+  margin-top: -5px;
+  margin-bottom: 10px;
+}
+.form-group {
+  margin-bottom: 15px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.form-group input {
+  width: 100%;
+}
+
+/* 5. Анимации и адаптивност
+------------------------------------- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOutUp {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-30px); }
+}
+@keyframes icon-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 40px;
+  }
+  .nav-buttons {
+    flex-direction: row-reverse;
+    justify-content: center;
+  }
+  .nav-buttons button {
+    width: auto;
+    min-width: 150px;
+  }
+}
