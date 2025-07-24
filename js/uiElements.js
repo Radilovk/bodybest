@@ -43,6 +43,7 @@ export function initializeSelectors() {
         infoModal: 'infoModal', infoModalTitle: 'infoModalTitle', infoModalBody: 'infoModalBody',
         feedbackModal: 'feedbackModal',
         feedbackForm: 'feedbackForm',
+        detailedRadarCard: 'detailedRadarCard',
         progressHistoryCard: 'progressHistoryCard',
         streakGrid: 'streakGrid',
         achievementShareBtn: 'achievementShareBtn',
@@ -71,7 +72,7 @@ export function initializeSelectors() {
                 'planModChatModal', 'planModChatMessages', 'planModChatInput',
                 'planModChatSend', 'planModChatClose', 'planModChatClear',
                 'streakGrid', 'analyticsCardsContainer', 'achievementShareBtn',
-                'goalCard', 'engagementCard', 'healthCard', 'streakCard',
+                'goalCard', 'engagementCard', 'healthCard', 'streakCard', 'detailedRadarCard',
                 'recFoodAllowedCard', 'recFoodLimitCard', 'recHydrationCard',
                 'recCookingMethodsCard', 'recSupplementsCard'
             ];
