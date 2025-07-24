@@ -54,6 +54,10 @@ Make sure dependencies are installed (`npm ci` or `npm install`) before running 
 ```bash
 npx tsc --noEmit
 ```
+### Typography
+
+Основните шрифтове и мащаби са описани в [docs/STYLE_GUIDE.md](docs/STYLE_GUIDE.md). Дизайнът е mobile-first и всички нови компоненти трябва да използват същите CSS променливи за текст.
+
 
 ### Инсталация на зависимости
 
