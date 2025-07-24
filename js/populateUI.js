@@ -108,6 +108,8 @@ function populateDashboardDetailedAnalytics(analyticsData) {
     const detailedMetrics = safeGet(analyticsData, 'detailed', []);
     const textualAnalysis = safeGet(analyticsData, 'textualAnalysis');
 
+    populateDetailedRadar(detailedMetrics);
+
     if (textualAnalysis) {
         textualAnalysisContainer.innerHTML = `<p>${escapeHtml(textualAnalysis).replace(/\n/g, "<br>")}</p>`;
     } else {
@@ -800,4 +802,70 @@ function populateProgressHistory(dailyLogs, initialData) {
             }
         }
     });
+}
+
+function populateDetailedRadar(detailedMetrics) {
+    const card = selectors.detailedRadarCard;
+    if (!card) return;
+
+    if (typeof Chart === 'undefined') {
+        card.classList.add('hidden');
+        console.warn('Chart.js is not loaded.');
+        return;
+    }
+
+    if (!Array.isArray(detailedMetrics) || detailedMetrics.length === 0) {
+        card.classList.add('hidden');
+        return;
+    }
+
+    card.classList.remove('hidden');
+    card.innerHTML = '';
+
+    const canvas = document.createElement('canvas');
+    canvas.id = 'detailedRadar';
+    const container = document.createElement('div');
+    container.className = 'chart-container';
+    container.appendChild(canvas);
+    card.appendChild(container);
+
+    const labels = detailedMetrics.map(m => m.label || m.key);
+    const dataValues = detailedMetrics.map(m => normalizeMetricValue(m));
+
+    const ctx = canvas.getContext('2d');
+    new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Текущи стойности',
+                data: dataValues,
+                backgroundColor: 'rgba(91, 192, 222, 0.2)',
+                borderColor: 'rgba(91, 192, 222, 1)',
+                pointBackgroundColor: 'rgba(91, 192, 222, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: { beginAtZero: true, max: 100 }
+            }
+        }
+    });
+
+    function normalizeMetricValue(metric) {
+        const value = Number(metric.currentValueNumeric);
+        if (isNaN(value)) return 0;
+        if (metric.key === 'bmi_status') {
+            const optimal = 22;
+            const maxDev = 10;
+            const deviation = Math.abs(value - optimal);
+            return Math.max(0, (1 - deviation / maxDev) * 100);
+        }
+        if (value <= 5) {
+            return ((value - 1) / 4) * 100;
+        }
+        return Math.max(0, Math.min(value, 100));
+    }
 }
