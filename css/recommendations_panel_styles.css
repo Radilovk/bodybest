@@ -53,19 +53,4 @@ body.dark-theme .recommendation-section .card {
     position: relative;
     padding: var(--space-sm);
 }
-
-#detailedRadarCard .chart-container {
-    min-height: 200px;
-    position: relative;
-    padding: var(--space-sm);
-}
-
-#detailedRadarCard .radar-controls {
-    text-align: center;
-    margin-top: var(--space-md);
-}
-
-#detailedRadarCard .radar-controls button {
-    margin: 0 var(--space-xs);
-}
 /* #motivationalMessageCard - Премахнато */
