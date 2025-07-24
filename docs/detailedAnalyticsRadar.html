@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Детайлни показатели - радарна диаграма</title>
+  <link rel="stylesheet" href="../css/base_styles.css">
+  <link rel="stylesheet" href="../css/components_styles.css">
+  <link rel="stylesheet" href="../css/dashboard_panel_styles.css">
+  <link rel="stylesheet" href="../css/responsive_styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body>
+  <div class="card" style="max-width:480px;margin:2rem auto;">
+    <h3><i class="bi bi-graph-up"></i> Радарна диаграма</h3>
+    <div class="chart-container">
+      <canvas id="detailedRadar" width="320" height="260"></canvas>
+    </div>
+  </div>
+
+  <details>
+    <summary>Как работи и зависимости</summary>
+    <p>Този пример използва <a href="https://www.chartjs.org/">Chart.js</a> за визуализация. 
+    Данните са аналогични на тези, които функцията <code>populateDashboardDetailedAnalytics</code> подава към 
+    <code>detailedAnalyticsContent</code> в <code>populateUI.js</code>.</p>
+  </details>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const metrics = [
+      { label: 'Качество на Съня', value: 4.2 },
+      { label: 'Ниво на Спокойствие', value: 3.5 },
+      { label: 'Ниво на Енергия', value: 3.8 },
+      { label: 'Хидратация', value: 4.1 },
+      { label: 'BMI (ИТМ)', value: 26.2 },
+      { label: 'Придържане към Хранения', value: 85 },
+      { label: 'Редовност на Дневника', value: 72 }
+    ];
+
+    const normalized = metrics.map(m => {
+      if (m.value <= 5) {
+        // скала 1-5
+        return ((m.value - 1) / 4) * 100;
+      }
+      if (m.label.includes('BMI')) {
+        // груба нормализация спрямо граница 40
+        return Math.min(40, m.value) / 40 * 100;
+      }
+      return m.value; // проценти
+    });
+
+    const ctx = document.getElementById('detailedRadar').getContext('2d');
+    new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: metrics.map(m => m.label),
+        datasets: [{
+          label: 'Текущи стойности',
+          data: normalized,
+          backgroundColor: 'rgba(91, 192, 222, 0.2)',
+          borderColor: 'rgba(91, 192, 222, 1)',
+          pointBackgroundColor: 'rgba(91, 192, 222, 1)'
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          r: { beginAtZero: true, suggestedMax: 100 }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
