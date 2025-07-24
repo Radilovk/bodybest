@@ -181,15 +181,6 @@
   .rating-square { width: 28px; height: 14px; /* gap: 4px; Това е за rating-squares container */ }
   .rating-squares { gap: 4px; }
 
-  #detailedRadarCard .radar-controls {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-  }
-  #detailedRadarCard .radar-controls button {
-    width: 100%;
-  }
-
 
   #chat-fab, #feedback-fab {
     width: 50px;
