@@ -138,15 +138,24 @@
             z-index: 2;
         }
         
-        header .main-goal {
+        header .goal-label {
             position: relative;
-            font-size: 1.5em;
-            opacity: 0.8;
+            font-size: 1.2em;
+            opacity: 0.9;
             margin-top: 10px;
+            color: var(--cta-color);
             animation: fadeIn 1s 0.2s ease-out backwards;
             z-index: 2;
         }
-        .main-goal strong { color: #a7f3d0; }
+
+        header .main-goal {
+            position: relative;
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-top: 5px;
+            animation: fadeIn 1s 0.4s ease-out backwards;
+            z-index: 2;
+        }
 
         /* --- Section Shared --- */
         .section-header { text-align: center; margin-bottom: 50px; }
@@ -570,8 +579,11 @@
             header h1 {
                 font-size: 2.2em;
             }
+            header .goal-label {
+                font-size: 1em;
+            }
             header .main-goal {
-                font-size: 1.2em;
+                font-size: 1.4em;
             }
             .section-title {
                 font-size: 1.8em;
@@ -622,6 +634,7 @@
 
     <header>
         <h1 id="client-name"></h1>
+        <p class="goal-label">Основна цел</p>
         <p class="main-goal" id="main-goal-text"></p>
     </header>
 
@@ -754,7 +767,7 @@
             data.healthDashboard.sort((a, b) => b.riskValue - a.riskValue);
             
             document.getElementById('client-name').textContent = `${data.client.name},`;
-            document.getElementById('main-goal-text').innerHTML = `<strong>${data.client.mainGoal.title} (${data.client.mainGoal.target})</strong>`;
+            document.getElementById('main-goal-text').textContent = `${data.client.mainGoal.title} ${data.client.mainGoal.target}`;
             document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
             document.getElementById('dashboard-grid').innerHTML = generateDashboardHTML(data.healthDashboard);
             document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
