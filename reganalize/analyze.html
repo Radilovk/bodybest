@@ -3,357 +3,517 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вашият Био-Код | MyBody.Best</title>
+    <title>Вашият Анализ | MyBody.Best</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+    <!-- НОВО: Добавяме Chart.js за радарната диаграма -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         :root {
-            --bg-color: #020409;
-            --scan-light-color: rgba(88, 166, 255, 0.05);
-            --panel-bg: #0D1117;
-            --text-color: #b0bac3;
-            --heading-color: #e6edf3;
-            --primary-color: #388bfd;
-            --accent-color: #4f46e5;
-            
-            --border-color: rgba(56, 139, 253, 0.15);
-            --border-hover-color: rgba(56, 139, 253, 0.7);
+            --bg-color: #f8f9fa; /* По-мек, леко сив фон */
+            --card-bg-color: rgba(255, 255, 255, 0.65); /* Основа за ефект "матирано стъкло" */
+            --text-color: #34495e; /* По-меко сиво-синьо */
+            --heading-color: #2c3e50; /* Дълбоко индиго */
+            --primary-color: #3498db; /* По-ярко и чисто синьо */
+            --primary-gradient: linear-gradient(45deg, #3498db, #2980b9);
+            --accent-color: #8e44ad; /* Акцент - аметист */
+            --border-color: rgba(226, 232, 240, 0.7);
+            --shadow-color: rgba(45, 55, 72, 0.1);
 
-            --color-high: #f47073;
-            --color-medium: #f59e0b;
-            --color-ok: #388bfd;
-            --color-low: #28a745;
+            --color-high: #e74c3c;
+            --color-medium: #f39c12;
+            --color-ok: #3498db;
+            --color-low: #2ecc71;
 
             --cta-color: #08D9D6;
+            --cta-hover-color: #07c4c1;
             --cta-glow-color: rgba(8, 217, 214, 0.7);
         }
 
-        @keyframes scan {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        /* --- НОВО: Анимации --- */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(25px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes pulse-glow {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 10px var(--cta-glow-color); }
-            50% { transform: scale(1.05); box-shadow: 0 0 25px var(--cta-glow-color); }
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 8px var(--cta-glow-color), 0 0 16px var(--cta-glow-color);
+            }
+            50% {
+                transform: scale(1.03);
+                box-shadow: 0 0 20px var(--cta-glow-color), 0 0 30px var(--cta-glow-color);
+            }
+        }
+        @keyframes pulse-glow-mobile {
+             0%, 100% {
+                transform: translateX(-50%) scale(1);
+                box-shadow: 0 0 8px var(--cta-glow-color), 0 0 16px var(--cta-glow-color);
+            }
+            50% {
+                transform: translateX(-50%) scale(1.03);
+                box-shadow: 0 0 20px var(--cta-glow-color), 0 0 30px var(--cta-glow-color);
+            }
         }
 
-        /* --- GLOBAL & BACKGROUND --- */
+        /* --- Global Styles --- */
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            background-image: radial-gradient(circle at 20% 20%, var(--scan-light-color) 0%, transparent 40%),
-                              radial-gradient(circle at 80% 70%, var(--scan-light-color) 0%, transparent 40%);
-            background-size: 200% 200%;
-            animation: scan 20s infinite linear;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            /* НОВО: Фин градиент на фона за дълбочина */
+            background-image: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
         }
-        .container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
 
-        /* --- HERO --- */
-        .hero {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+        /* --- ПРОМЯНА: Header --- */
+        header {
+            color: white;
             text-align: center;
-            min-height: 80vh;
-            padding: 40px 20px;
+            padding: 100px 20px 120px;
+            position: relative;
+            overflow: hidden;
+            background-color: var(--heading-color);
+             /* НОВО: Абстрактен фон за "технологично" усещане */
+            background-image:
+                radial-gradient(circle at 10% 10%, rgba(255,255,255,0.08) 0%, transparent 30%),
+                radial-gradient(circle at 80% 90%, rgba(255,255,255,0.08) 0%, transparent 30%),
+                linear-gradient(135deg, var(--heading-color) 0%, #1e2732 100%);
         }
-        .hero h1 {
-            font-size: 3.5em;
+        header h1 {
+            font-size: 3.2em;
             font-weight: 900;
             margin: 0;
-            color: var(--heading-color);
-            animation: fadeIn 1s 0.1s ease-out backwards;
+            animation: fadeIn 1s ease-out;
+            /* НОВО: Градиент на текста за премиум визия */
+            background: linear-gradient(45deg, #ffffff, #bdc3c7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .hero .main-goal {
-            font-size: 1.5em;
+        header .main-goal {
+            font-size: 1.6em;
+            opacity: 0.85;
             margin-top: 15px;
-            font-weight: 300;
-            letter-spacing: 0.5px;
-            animation: fadeIn 1s 0.3s ease-out backwards;
-            color: #84909c;
+            animation: fadeIn 1s 0.2s ease-out backwards;
         }
-        .main-goal strong {
-            color: var(--heading-color);
-            font-weight: 700;
-        }
+        .main-goal strong { color: var(--cta-color); }
 
-        /* --- SECTION & CARD STYLING --- */
-        .section {
-            padding: 60px 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.07);
-        }
+        /* --- ПРОМЯНА: Секции и Карти --- */
+        main > section { padding: 80px 0; }
         .section-header { text-align: center; margin-bottom: 60px; }
-        .section-title {
-            font-size: 2.8em;
-            color: var(--heading-color);
-            margin-bottom: 0;
-            font-weight: 700;
+        .section-title { font-size: 2.5em; color: var(--heading-color); margin-bottom: 15px; font-weight: 700; }
+        .section-subtitle { font-size: 1.1em; color: #7f8c8d; max-width: 650px; margin: 0 auto; }
+        
+        .card {
+            background: var(--card-bg-color);
+            border-radius: 20px;
+            padding: 35px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+            /* НОВО: Ефект "матирано стъкло" и градиентна рамка */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid transparent;
+            background-clip: padding-box;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 32px 0 rgba(44, 62, 80, 0.12);
+        }
+        .card:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 16px 40px 0 rgba(44, 62, 80, 0.18);
+            background: rgba(255, 255, 255, 0.8);
+        }
+        .reveal { opacity: 0; transition: opacity 0.8s ease-out; }
+        .reveal.active { opacity: 1; }
+
+        /* --- НОВО: Централна Радарна Диаграма --- */
+        #radar-chart-section {
+            margin-top: -100px;
+            position: relative;
+            z-index: 10;
+        }
+        #radar-chart-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
         }
 
-        .diagnostic-card {
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 30px;
-            transition: transform 0.3s ease, border-color 0.3s ease;
+        /* --- ПРОМЯНА: Пречките са сега по-малки акценти --- */
+        #obstacles-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 25px; 
         }
-        .diagnostic-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--border-hover-color);
+        .obstacle-card { text-align: center; padding: 25px 20px; }
+        .obstacle-card .icon { 
+            font-size: 2.5em; 
+            margin-bottom: 20px;
+            display: inline-block;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
+        .obstacle-card h3 { font-size: 1.1em; font-weight: 600; color: var(--heading-color); margin: 0; }
 
-        /* --- 1. Obstacles Section --- */
-        #obstacles-container {
+
+        /* --- ПРОМЯНА: Анализ "Причина и Следствие" --- */
+        #deep-dive-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 25px;
+            gap: 30px;
         }
-        .obstacle-card { text-align: center; padding: 40px 20px; }
-        .obstacle-card .icon { font-size: 3em; color: var(--primary-color); margin-bottom: 20px; }
-        .obstacle-card h3 { font-size: 1.1em; font-weight: 500; color: var(--heading-color); margin: 0; }
-
-        /* --- 2. Risk Profile --- */
-        #dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 40px; justify-items: center; }
-        .donut-chart-container { position: relative; width: 140px; height: 140px; margin-bottom: 15px; }
-        .donut-chart-svg { transform: rotate(-90deg); }
-        .donut-chart-svg circle { fill: none; stroke-width: 12; }
-        .donut-track { stroke: rgba(255, 255, 255, 0.1); }
-        .donut-fill { stroke-linecap: round; transition: stroke-dashoffset 1.5s cubic-bezier(0.25, 1, 0.5, 1); }
-        .donut-high { stroke: var(--color-high); }
-        .donut-medium { stroke: var(--color-medium); }
-        .donut-ok { stroke: var(--color-ok); }
-        .donut-low { stroke: var(--color-low); }
-        .chart-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        .chart-center .icon { font-size: 2.2em; }
-        .dashboard-item h4 { margin: 0; font-weight: 500; color: var(--heading-color); }
-        .dashboard-item .risk-level-text { font-size: 0.8em; color: var(--text-color); }
-
-        /* --- 3. Deep Dive Section --- */
-        #deep-dive-container .deep-dive-card { margin-bottom: 30px; }
-        .deep-dive-card {
-            display: grid; grid-template-columns: 1fr; gap: 40px;
+        .deep-dive-card { 
+            padding: 30px;
         }
-        @media (min-width: 768px) { .deep-dive-card { grid-template-columns: 1.2fr 1fr; } }
-        .analysis-points h3, .key-takeaway h3 { font-size: 1.4em; margin: 0 0 20px 0; color: var(--heading-color); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        .deep-dive-card h3 { 
+            font-size: 1.5em; 
+            margin: 0 0 25px 0; 
+            color: var(--heading-color); 
+            border-bottom: 2px solid var(--border-color); 
+            padding-bottom: 15px; 
+            display: flex;
+            align-items: center;
+        }
+        .deep-dive-card h3 i {
+            margin-right: 15px;
+            font-size: 1.2em;
+            color: var(--accent-color);
+        }
         .analysis-points ul { list-style: none; padding: 0; margin: 0; }
-        .analysis-points li { display: flex; align-items: flex-start; padding: 12px 0; line-height: 1.6; }
-        .analysis-points li i { color: var(--primary-color); margin-right: 15px; margin-top: 4px; }
-        .key-takeaway { background: #020409; padding: 25px; border-radius: 12px; }
-        .conclusion-box p { margin: 0; font-weight: 500; line-height: 1.7; color: var(--heading-color); font-size: 1.1em; }
-
-        /* --- 4. CTA Section --- */
-        .cta-section {
-            text-align: center;
-            padding: 100px 20px;
-            background-image: linear-gradient(180deg, var(--bg-color) 0%, #0d1a30 100%);
+        .analysis-points li { 
+            display: flex; 
+            padding: 12px 0; 
+            line-height: 1.7; 
+            border-bottom: 1px solid var(--border-color);
         }
-        .cta-section .section-title { font-size: 2.5em; margin-bottom: 20px; }
-        .cta-section .section-subtitle { font-size: 1.2em; color: var(--text-color); max-width: 600px; margin: 0 auto 60px; font-weight: 300; }
-        .benefit-item { text-align: center; }
-        .benefit-icon {
-            width: 70px; height: 70px; margin: 0 auto 20px; border-radius: 50%;
-            background: var(--panel-bg); border: 1px solid var(--border-color);
-            display: flex; align-items: center; justify-content: center;
+        .analysis-points li:last-child { border-bottom: none; }
+        .analysis-points li i { 
+            color: var(--primary-color); 
+            margin-right: 18px; 
+            margin-top: 5px; 
+            font-size: 1.2em;
         }
-        .benefit-icon i { font-size: 2em; color: var(--cta-color); }
-        .benefit-item h3 { font-size: 1.2em; font-weight: 700; margin-bottom: 10px; color: var(--heading-color); }
-        .benefit-item p { font-size: 1em; line-height: 1.6; margin: 0; }
-        .benefits-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-bottom: 80px; }
-        .cta-final-pitch { font-size: 1.2em; color: var(--heading-color); font-weight: 500;}
-
-        /* --- CTA BUTTON --- */
-        .cta-button-container {
-            margin-top: 40px;
+        .conclusion-box { 
+            margin-top: 25px;
+            background: #f8fafc; 
+            padding: 20px; 
+            border-radius: 12px; 
+            border-left: 5px solid var(--accent-color);
             position: relative;
         }
-        .cta-button {
-            background-color: var(--cta-color);
-            color: #020409;
-            font-size: 1.2em; font-weight: 700;
-            text-decoration: none; padding: 16px 45px;
-            border-radius: 50px; border: none;
-            transition: transform 0.3s ease, opacity 0.4s ease;
-            display: inline-block;
-            box-shadow: 0 0 5px var(--cta-glow-color);
-            animation: pulse-glow 3s infinite ease-in-out;
-            opacity: 1;
+        .conclusion-box p { margin: 0; font-weight: 600; line-height: 1.6; color: var(--heading-color); }
+        .conclusion-box .icon {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            background: var(--accent-color);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
         }
-        .cta-button:hover { transform: scale(1.08); animation-play-state: paused; }
+
+        /* --- ПРОМЯНА: CTA Секция --- */
+        .cta-section { 
+            background-color: var(--heading-color);
+            color: white; 
+            text-align: center; 
+            padding: 120px 20px; 
+            margin-top: 80px; 
+            position: relative;
+            overflow: hidden;
+        }
+        /* НОВО: Декоративни елементи за динамика */
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image:
+                radial-gradient(circle at 20% 80%, var(--cta-glow-color) 0%, transparent 20%),
+                radial-gradient(circle at 80% 30%, var(--primary-color) 0%, transparent 25%);
+            opacity: 0.15;
+            animation: fadeIn 3s infinite alternate;
+        }
+        .cta-section .container { position: relative; z-index: 1; }
+        .cta-section .section-title { color: white; }
+        .cta-section .section-subtitle { color: rgba(255, 255, 255, 0.75); }
         
-        footer { text-align: center; padding: 40px 20px; font-size: 0.9em; color: #555e68; border-top: 1px solid rgba(255,255,255,0.07); }
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin: 60px 0;
+        }
+        .benefit-item { text-align: center; background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px; transition: transform 0.3s, background 0.3s; }
+        .benefit-item:hover { transform: translateY(-5px); background: rgba(255,255,255,0.1); }
+        .benefit-icon {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: var(--cta-color);
+            text-shadow: 0 0 15px var(--cta-glow-color);
+        }
+        .benefit-item h3 { font-size: 1.2em; font-weight: 700; margin-bottom: 10px; color: white; }
+        .benefit-item p { font-size: 0.95em; color: rgba(255, 255, 255, 0.7); line-height: 1.6; margin: 0; }
+        
+        .cta-final-pitch { max-width: 600px; margin: 0 auto 40px; font-size: 1.2em; font-weight: 600; color: rgba(255, 255, 255, 0.9); }
+        
+        .cta-button {
+            background: var(--cta-color);
+            color: var(--heading-color);
+            font-size: 1.25em;
+            font-weight: 700;
+            text-decoration: none;
+            padding: 18px 50px;
+            border-radius: 50px;
+            border: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: inline-block;
+            animation: pulse-glow 2.5s infinite ease-in-out;
+            position: relative;
+            z-index: 10;
+        }
+        .cta-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px var(--cta-glow-color), 0 0 40px var(--cta-glow-color);
+            animation-play-state: paused;
+        }
+        
+        footer { text-align: center; padding: 50px 20px; font-size: 0.9em; color: #95a5a6; }
 
-        /* --- MOBILE & FLOATING BUTTON LOGIC --- */
+        /* --- Mobile CTA --- */
         @media (max-width: 992px) {
-            .hero h1 { font-size: 2.5em; }
-            .hero .main-goal { font-size: 1.2em; }
+            header h1 { font-size: 2.5em; }
+            header .main-goal { font-size: 1.3em; }
             .section-title { font-size: 2em; }
-            .benefits-grid { grid-template-columns: 1fr; gap: 50px; }
-            .cta-section { padding-bottom: 140px; } /* Space for the button */
+            main > section { padding: 60px 0; }
 
-            .cta-button-container {
-                position: fixed;
-                bottom: 0; left: 0; right: 0;
-                padding: 15px;
-                z-index: 1000;
-                /* No background on container */
-            }
+            .cta-section { padding-bottom: 140px; }
             .cta-button {
-                width: 100%;
-                font-size: 1.1em;
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 90%;
+                max-width: 380px;
                 padding: 15px 30px;
-                /* Visibility controlled by JS */
-                opacity: 0;
-                transform: translateY(100px);
-                pointer-events: none;
-                transition: opacity 0.4s ease, transform 0.4s ease;
+                z-index: 1000;
+                animation-name: pulse-glow-mobile;
             }
-            .cta-button.is-visible {
-                opacity: 1;
-                transform: translateY(0);
-                pointer-events: auto;
+             .cta-button:hover {
+                transform: translateX(-50%) scale(1.05);
             }
         }
     </style>
 </head>
 <body>
-    <header class="hero">
+
+    <header>
         <h1 id="client-name"></h1>
         <p class="main-goal" id="main-goal-text"></p>
     </header>
 
     <main class="container">
-        <section class="section">
+        <!-- НОВО: Секция за Радарната диаграма -->
+        <section id="radar-chart-section" class="reveal">
+            <div class="card">
+                <div class="section-header" style="margin-bottom: 20px;">
+                    <h2 class="section-title">Вашият Здравен Профил</h2>
+                    <p class="section-subtitle">Цялостен поглед върху ключовите здравни аспекти. По-голямата площ индикира по-висок риск.</p>
+                </div>
+                <div id="radar-chart-container">
+                    <canvas id="healthRadarChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="reveal">
             <div class="section-header">
-                <h2 class="section-title">Ключови Пречки</h2>
+                <h2 class="section-title">Основни Пречки</h2>
+                <p class="section-subtitle">Идентифицирахме следните основни предизвикателства пред постигането на Вашата цел.</p>
             </div>
             <div id="obstacles-container"></div>
         </section>
 
-        <section class="section">
-            <div class="section-header">
-                <h2 class="section-title">Био-Метричен Профил</h2>
-            </div>
-            <div id="dashboard-grid"></div>
-        </section>
-
-        <section class="section">
+        <section class="reveal">
              <div class="section-header">
-                <h2 class="section-title">Диагностичен Анализ</h2>
+                <h2 class="section-title">Анализ: Причина и Следствие</h2>
+                <p class="section-subtitle">Разглеждаме най-критичните зони, за да разберем "защо" се случва и "какво" означава това за Вас.</p>
             </div>
             <div id="deep-dive-container"></div>
         </section>
     </main>
     
-    <section class="cta-section" id="solution-section">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Вашата Трансформация. Декодирана.</h2>
-                <p class="section-subtitle">Спираме с предположенията. Започваме с прецизността.</p>
-            </div>
+    <section class="cta-section">
+        <div class="container reveal">
+            <h2 class="section-title">От Анализ към Резултат</h2>
+            <p class="section-subtitle">Вие вече знаете "какво" е проблемът. Ние ви даваме "как" да го решите – с ясна система, наука и персонална грижа.</p>
             
             <div class="benefits-grid">
                 <div class="benefit-item">
-                    <div class="benefit-icon"><i class="fas fa-dna"></i></div>
-                    <h3>Био-индивидуалност</h3>
-                    <p>План, създаден за Вашия геном.</p>
-                </div>
-                <div class="benefit-item">
-                    <div class="benefit-icon"><i class="fas fa-microscope"></i></div>
-                    <h3>Научна Прецизност</h3>
-                    <p>Решения, базирани на данни.</p>
+                    <div class="benefit-icon"><i class="fas fa-drafting-compass"></i></div>
+                    <h3>Хипер-Персонализация</h3>
+                    <p>План, изграден около Вашия уникален ДНК, метаболизъм и ежедневие. Не просто поредната диета.</p>
                 </div>
                 <div class="benefit-item">
                     <div class="benefit-icon"><i class="fas fa-chart-line"></i></div>
-                    <h3>Измерим Резултат</h3>
-                    <p>Прогрес, който виждате.</p>
+                    <h3>Интелигентна Подкрепа</h3>
+                    <p>Нашата AI система и експертен екип са до Вас, за да адаптират плана и да гарантират Вашия успех.</p>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon"><i class="fas fa-atom"></i></div>
+                    <h3>Научно-обоснован Подход</h3>
+                    <p>Комбинация от медицински познания и технологични иновации за максимална ефективност и сигурност.</p>
                 </div>
             </div>
 
-            <div class="cta-button-container">
-                <a id="cta-button" href="https://radilovk.github.io/bodybest/index.html" class="cta-button">
-                    <i class="fas fa-rocket"></i> Започнете Сега
-                </a>
-            </div>
+            <p class="cta-final-pitch">Информацията е сила, но само когато се действа по нея. Готови ли сте?</p>
+            
+            <a id="cta-button" href="https://radilovk.github.io/bodybest/index.html" class="cta-button">
+                <i class="fas fa-rocket"></i> Започнете Вашата Трансформация
+            </a>
         </div>
     </section>
 
     <footer><p id="footer-text"></p></footer>
-    
-    <!-- CORE DATA & LOGIC SCRIPT (UNCHANGED) -->
+
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // --- ДАННИТЕ ОСТАВАТ СЪЩИТЕ ---
         const analysisData = {/*---JSON_DATA_PLACEHOLDER---*/};
         
+        // --- ГЕНЕРИРАЩИТЕ ФУНКЦИИ СА ЛЕКО ПРОМЕНЕНИ ---
         const generateObstaclesHTML = (obstacles) => obstacles.map(o => `
-            <div class="diagnostic-card obstacle-card">
+            <div class="card obstacle-card">
                 <div class="icon"><i class="${o.icon}"></i></div>
                 <h3>${o.title}</h3>
             </div>`).join('');
         
-        const generateDashboardHTML = (items) => items.map((i, index) => `
-            <div class="dashboard-item" style="animation: fadeIn 0.5s ${index * 100}ms ease-out backwards;">
-                <div class="donut-chart-container">
-                    <svg class="donut-chart-svg" width="140" height="140" viewBox="0 0 140 140">
-                        <circle class="donut-track" cx="70" cy="70" r="60"></circle>
-                        <circle class="donut-fill donut-${i.riskClass}" cx="70" cy="70" r="60" data-risk="${i.riskValue}"></circle>
-                    </svg>
-                    <div class="chart-center"><i class="icon ${i.icon} color-${i.riskClass}"></i></div>
+        const generateDeepDiveHTML = (items) => items.map(item => `
+            <div class="card deep-dive-card">
+                <div class="analysis-points">
+                    <h3><i class="fas fa-vial"></i>Констатации за "${item.title}"</h3>
+                    <ul>
+                        ${item.points.map(point => `<li><i class="fas fa-check-circle"></i><div>${point}</div></li>`).join('')}
+                    </ul>
                 </div>
-                <h4>${i.category}</h4>
-                <div class="risk-level-text">${i.riskLevel}</div>
+                <div class="conclusion-box">
+                    <div class="icon"><i class="fas fa-lightbulb"></i></div>
+                    <p>${item.conclusion}</p>
+                </div>
             </div>`).join('');
 
-        const generateDeepDiveHTML = (items) => items.map(item => `
-            <div class="diagnostic-card deep-dive-card">
-                <div class="analysis-points">
-                    <h3>Констатации</h3>
-                    <ul>${item.points.map(point => `<li><i class="fas fa-check-circle"></i><div>${point}</div></li>`).join('')}</ul>
-                </div>
-                <div class="key-takeaway">
-                    <h3>Ключов Извод</h3>
-                    <div class="conclusion-box"><p>${item.conclusion}</p></div>
-                </div>
-            </div>`).join('');
+        // --- НОВО: Функция за рендиране на радарната диаграма ---
+        const renderRadarChart = (dashboardData) => {
+            const ctx = document.getElementById('healthRadarChart').getContext('2d');
+            const labels = dashboardData.map(item => item.category);
+            const dataPoints = dashboardData.map(item => item.riskValue);
+            
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(52, 152, 219, 0.4)');
+            gradient.addColorStop(1, 'rgba(142, 68, 173, 0.3)');
+
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Рисков Профил',
+                        data: dataPoints,
+                        backgroundColor: gradient,
+                        borderColor: 'rgba(44, 62, 80, 0.8)',
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: 'rgba(44, 62, 80, 1)',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeInOutQuart'
+                    },
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                            grid: { color: 'rgba(0, 0, 0, 0.08)' },
+                            pointLabels: {
+                                font: { size: 13, weight: '600' },
+                                color: 'var(--text-color)'
+                            },
+                            ticks: {
+                                backdropColor: 'rgba(255, 255, 255, 0.75)',
+                                color: 'var(--text-color)',
+                                stepSize: 25,
+                                font: { weight: '600'}
+                            },
+                            min: 0,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        };
 
         const renderAnalysis = (data) => {
             data.healthDashboard.sort((a, b) => b.riskValue - a.riskValue);
-            document.getElementById('client-name').textContent = `Био-Код: ${data.client.name}`;
-            document.getElementById('main-goal-text').innerHTML = `Цел: <strong>${data.client.mainGoal.title}</strong>`;
+            
+            document.getElementById('client-name').textContent = `${data.client.name},`;
+            document.getElementById('main-goal-text').innerHTML = `Вашата цел е <strong>${data.client.mainGoal.title} (${data.client.mainGoal.target})</strong>`;
             document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
-            document.getElementById('dashboard-grid').innerHTML = generateDashboardHTML(data.healthDashboard);
             document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
-            document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} MyBody.Best | Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
-            setupDonutChartAnimations();
-        };
-
-        const setupDonutChartAnimations = () => {
-            const charts = document.querySelectorAll('.donut-fill');
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const chart = entry.target;
-                        const radius = chart.r.baseVal.value;
-                        const circumference = 2 * Math.PI * radius;
-                        const riskValue = chart.dataset.risk;
-                        const offset = circumference * (1 - riskValue / 100);
-                        chart.style.strokeDasharray = `${circumference} ${circumference}`;
-                        chart.style.strokeDashoffset = circumference;
-                        setTimeout(() => { chart.style.strokeDashoffset = offset; }, 100);
-                        observer.unobserve(chart);
-                    }
-                });
-            }, { threshold: 0.5 });
-            charts.forEach(chart => observer.observe(chart));
+            document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} MyBody.Best. Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
+            
+            setupAnimations(data.healthDashboard); // Подаваме данните за диаграмата
         };
         
+        // --- ПРОМЯНА: Анимациите вече включват и радарната диаграма ---
+        const setupAnimations = (dashboardData) => {
+            const revealObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        
+                        // Анимираме елементите в полезрението
+                        const animatedChildren = entry.target.querySelectorAll('.card, .benefit-item');
+                        animatedChildren.forEach((child, index) => {
+                           child.style.animation = `fadeInUp 0.6s ${index * 100}ms ease-out forwards`;
+                        });
+                        
+                        // Специален случай за радарната диаграма
+                        if (entry.target.id === 'radar-chart-section') {
+                           // Изчакваме малко, за да може контейнерът да се появи, преди да нарисуваме
+                           setTimeout(() => renderRadarChart(dashboardData), 200);
+                        }
+                        
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.15 }); // Малко по-голям праг, за да се вижда повече от елемента
+
+            document.querySelectorAll('.reveal').forEach(el => {
+                revealObserver.observe(el);
+            });
+        };
+        
+       // --- ЛОГИКАТА ЗА ЗАРЕЖДАНЕ НА ДАННИ ОСТАВА БЕЗ ПРОМЯНА ---
         const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         const workerBaseUrl = isLocalDev ? '' : 'https://openapichatbot.radilov-k.workers.dev';
         const hasRequiredData = analysisData && analysisData.client && Object.keys(analysisData).length > 2;
@@ -363,7 +523,7 @@
         } else {
             const userId = new URLSearchParams(location.search).get('userId');
             if (!userId) {
-                document.body.innerHTML = '<h1 style="color: white; text-align: center; padding-top: 50px;">Грешка: Липсва ID на потребител.</h1>';
+                document.body.innerHTML = '<h1>Грешка: Липсва ID на потребител.</h1>';
                 return;
             }
             fetch(`${workerBaseUrl}/api/getInitialAnalysis?userId=${encodeURIComponent(userId)}`)
@@ -374,38 +534,24 @@
                 })
                 .catch(error => {
                     console.error('Fetch Error:', error);
-                    document.body.innerHTML = '<h1 style="color: white; text-align: center; padding-top: 50px;">Грешка при зареждане на анализа. Моля, опитайте отново.</h1>';
+                    document.body.innerHTML = '<h1>Грешка при зареждане на анализа.</h1>';
                 });
         }
-    });
-    </script>
-    
-    <!-- ROBUST FLOATING BUTTON SCRIPT -->
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
+        
+        // --- ЛОГИКАТА ЗА МОБИЛНИЯ БУТОН СЕ ЗАПАЗВА ---
         const ctaButton = document.getElementById('cta-button');
-        const ctaSection = document.getElementById('solution-section');
-
-        if (!ctaButton || !ctaSection) return;
-
-        // Logic only for mobile views
-        if (window.innerWidth <= 992) {
-            const observer = new IntersectionObserver(
-                ([entry]) => {
-                    // When the CTA section is intersecting with the viewport
-                    if (entry.isIntersecting) {
-                        ctaButton.classList.add('is-visible');
-                    } else {
-                        ctaButton.classList.remove('is-visible');
-                    }
-                },
-                {
-                    root: null, // relative to the viewport
-                    threshold: 0.1 // 10% of the item must be visible
-                }
-            );
-            // Start observing the CTA section
-            observer.observe(ctaSection);
+        const isMobileView = window.innerWidth <= 992;
+        if (isMobileView) {
+            ctaButton.style.opacity = 0; // Скрит по подразбиране
+            const threshold = document.documentElement.scrollHeight / 2.5; // Появява се по-рано
+            const updateButtonVisibility = () => {
+                const opacity = Math.min(window.scrollY / threshold, 1);
+                ctaButton.style.opacity = opacity;
+                ctaButton.style.pointerEvents = opacity > 0.1 ? 'auto' : 'none';
+            };
+            window.addEventListener('scroll', updateButtonVisibility, { passive: true });
+        } else {
+            ctaButton.style.opacity = 1;
         }
     });
     </script>
