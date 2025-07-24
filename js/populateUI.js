@@ -204,12 +204,6 @@ function populateDashboardDetailedAnalytics(analyticsData) {
         cardsContainer.innerHTML = '<p class="placeholder">Няма налични детайлни показатели за показване.</p>';
     }
 
-    try {
-        populateDetailedRadar(detailedMetrics, analyticsData.previousDetailed);
-    } catch (e) {
-        console.error('Error in populateDetailedRadar:', e);
-    }
-
     const accordionHeader = selectors.detailedAnalyticsAccordion?.querySelector('.accordion-header');
     if (accordionHeader) {
         const isCurrentlyOpen = accordionHeader.getAttribute('aria-expanded') === 'true';
@@ -805,103 +799,5 @@ function populateProgressHistory(dailyLogs, initialData) {
                 tooltip: { mode: 'index', intersect: false }
             }
         }
-    });
-}
-
-function populateDetailedRadar(detailedMetrics, previousMetrics = null) {
-    const card = selectors.detailedRadarCard;
-    if (!card) return;
-
-    if (typeof Chart === 'undefined') {
-        card.classList.add('hidden');
-        console.warn('Chart.js is not loaded.');
-        return;
-    }
-
-    card.classList.remove('hidden');
-    card.querySelector('.chart-container')?.remove();
-    card.querySelector('.radar-controls')?.remove();
-
-    const canvas = document.createElement('canvas');
-    canvas.id = 'detailedRadarChartCanvas';
-    const container = document.createElement('div');
-    container.className = 'chart-container';
-    container.appendChild(canvas);
-    card.insertBefore(container, card.firstChild.nextSibling);
-
-    const controls = document.createElement('div');
-    controls.className = 'radar-controls';
-    const compareBtn = document.createElement('button');
-    compareBtn.id = 'compareRadarBtn';
-    compareBtn.className = 'button-secondary';
-    compareBtn.textContent = 'Сравни с предишен период';
-    const resetBtn = document.createElement('button');
-    resetBtn.id = 'resetRadarBtn';
-    resetBtn.className = 'button-secondary';
-    resetBtn.textContent = 'Нулирай';
-    controls.appendChild(compareBtn);
-    controls.appendChild(resetBtn);
-    card.appendChild(controls);
-
-    const normalize = (m) => {
-        const val = Number(m.currentValueNumeric);
-        if (isNaN(val)) return 0;
-        if (m.label.includes('BMI')) {
-            const optimal = 22;
-            const maxDev = 10;
-            const dev = Math.abs(val - optimal);
-            return Math.max(0, (1 - (dev / maxDev)) * 100);
-        }
-        if (val <= 5) return ((val - 1) / 4) * 100;
-        return Math.max(0, Math.min(100, val));
-    };
-
-    const data = {
-        labels: detailedMetrics.map(m => m.label),
-        datasets: [{
-            label: 'Текущи стойности',
-            data: detailedMetrics.map(normalize),
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 0.8)',
-            pointBackgroundColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 2
-        }]
-    };
-
-    const ctx = canvas.getContext('2d');
-    const chart = new Chart(ctx, {
-        type: 'radar',
-        data,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { r: { beginAtZero: true, max: 100 } },
-            plugins: { legend: { position: 'top' } }
-        }
-    });
-
-    if (previousMetrics && Array.isArray(previousMetrics) && previousMetrics.length) {
-        compareBtn.disabled = false;
-        const prevData = previousMetrics.map(normalize);
-        compareBtn.addEventListener('click', () => {
-            if (chart.data.datasets.length > 1) return;
-            chart.data.datasets.push({
-                label: 'Предишен период',
-                data: prevData,
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderColor: 'rgba(255, 99, 132, 1)',
-                pointBackgroundColor: 'rgba(255, 99, 132, 1)',
-                borderWidth: 1,
-                borderDash: [5,5]
-            });
-            chart.update();
-        });
-    } else {
-        compareBtn.disabled = true;
-    }
-
-    resetBtn.addEventListener('click', () => {
-        chart.data.datasets.splice(1);
-        chart.update();
     });
 }
