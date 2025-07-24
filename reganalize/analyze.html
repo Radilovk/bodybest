@@ -738,7 +738,7 @@
             data.healthDashboard.sort((a, b) => b.riskValue - a.riskValue);
             
             document.getElementById('client-name').textContent = `${data.client.name},`;
-            document.getElementById('main-goal-text').innerHTML = `Вашата цел е <strong>${data.client.mainGoal.title} (${data.client.mainGoal.target})</strong>`;
+            document.getElementById('main-goal-text').innerHTML = `<strong>${data.client.mainGoal.title} (${data.client.mainGoal.target})</strong>`;
             document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
             document.getElementById('dashboard-grid').innerHTML = generateDashboardHTML(data.healthDashboard);
             document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
