@@ -50,21 +50,14 @@
                 box-shadow: 0 0 15px var(--cta-glow-color), 0 0 25px var(--cta-glow-color);
             }
         }
-
-        @keyframes pulse-glow-mobile {
-            0%, 100% {
-                transform: translateX(-50%) scale(1);
-                box-shadow: 0 0 5px var(--cta-glow-color), 0 0 10px var(--cta-glow-color);
-            }
-            50% {
-                transform: translateX(-50%) scale(1.03);
-                box-shadow: 0 0 15px var(--cta-glow-color), 0 0 25px var(--cta-glow-color);
-            }
+        
+        @keyframes pulse-red-icon {
+            0%, 100% { opacity: 0.7; text-shadow: 0 0 4px var(--color-high); }
+            50% { opacity: 1; text-shadow: 0 0 12px var(--color-high); }
         }
-
-        @keyframes pulse {
-            0% { opacity: 0.3; }
-            100% { opacity: 0.8; }
+        @keyframes pulse-yellow-icon {
+            0%, 100% { opacity: 0.7; text-shadow: 0 0 4px var(--color-medium); }
+            50% { opacity: 1; text-shadow: 0 0 12px var(--color-medium); }
         }
         
         @keyframes shine {
@@ -76,20 +69,6 @@
             0% { transform: translate(0, 0) rotate(0deg); }
             50% { transform: translate(50px, 50px) rotate(180deg); }
             100% { transform: translate(0, 0) rotate(360deg); }
-        }
-        
-        @keyframes hologram {
-            0% { box-shadow: 0 0 10px 2px rgba(8, 217, 214, 0.5); }
-            100% { box-shadow: 0 0 20px 8px rgba(8, 217, 214, 0.8); }
-        }
-        
-        @keyframes pulse-red-icon {
-            0%, 100% { opacity: 0.7; text-shadow: 0 0 4px var(--color-high); }
-            50% { opacity: 1; text-shadow: 0 0 12px var(--color-high); }
-        }
-        @keyframes pulse-yellow-icon {
-            0%, 100% { opacity: 0.7; text-shadow: 0 0 4px var(--color-medium); }
-            50% { opacity: 1; text-shadow: 0 0 12px var(--color-medium); }
         }
 
         /* --- Global Styles --- */
@@ -210,7 +189,7 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
 
-        /* 1. Obstacles Section --- */
+        /* 1. Obstacles Section */
         #obstacles-container { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
@@ -235,10 +214,7 @@
         .obstacle-card::after {
             content: "";
             position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
             background: linear-gradient(45deg, #08D9D6, #2563eb);
             z-index: -1;
             filter: blur(5px);
@@ -246,11 +222,8 @@
             transition: opacity 0.4s;
         }
         
-        .obstacle-card:hover::after {
-            opacity: 0.5;
-        }
+        .obstacle-card:hover::after { opacity: 0.5; }
         
-        /* MODIFIED [1]: Icon color changed to high-risk red and pulse animation added. */
         .obstacle-card .icon { 
             font-size: 3.5em; 
             color: var(--color-high); 
@@ -259,10 +232,7 @@
             animation: pulse-red-icon 2s infinite ease-in-out;
         }
         
-        /* MODIFIED [1]: Icon hover no longer changes color, only scales. */
-        .obstacle-card:hover .icon {
-            transform: scale(1.15);
-        }
+        .obstacle-card:hover .icon { transform: scale(1.15); }
         
         .obstacle-card h3 { 
             font-size: 1.1em; 
@@ -273,8 +243,13 @@
             z-index: 2;
         }
 
-        /* 2. Risk Profile --- DONUT CHARTS --- */
-        #dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 40px; justify-items: center; }
+        /* 2. Risk Profile --- DONUT CHARTS */
+        #dashboard-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+            gap: 40px; 
+            justify-items: center; 
+        }
         .dashboard-item { text-align: center; opacity: 0; animation: fadeInUp 0.5s ease-out forwards; }
         .donut-chart-container { position: relative; width: 140px; height: 140px; margin-bottom: 15px; }
         .donut-chart-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
@@ -288,9 +263,8 @@
         .chart-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
         .chart-center .icon { font-size: 2.2em; }
         .dashboard-item h4 { margin: 10px 0 5px 0; font-weight: 600; color: var(--heading-color); font-size: 1.0em; line-height: 1.4; }
-        /* MODIFIED [2]: The .risk-level-text selector is no longer needed as the element was removed. */
 
-        /* 3. Deep Dive Section --- */
+        /* 3. Deep Dive Section */
         .deep-dive-card { display: grid; grid-template-columns: 1fr; gap: 40px; }
         @media (min-width: 768px) { .deep-dive-card { grid-template-columns: 1.2fr 1fr; } }
         .analysis-points h3, .key-takeaway h3 { 
@@ -308,281 +282,146 @@
             line-height: 1.6; 
             position: relative;
         }
-        .analysis-points li::before {
-            content: "";
-            position: absolute;
-            left: -15px;
-            top: 18px;
-            width: 8px;
-            height: 8px;
-            background: var(--primary-color);
-            border-radius: 50%;
-            opacity: 0; /* Hide default dot, icon will be used instead */
-        }
         .analysis-points li i { 
             margin-right: 15px; 
             margin-top: 5px; 
             font-size: 1.1em;
         }
-        
-        .analysis-points li i.icon-high {
-            color: var(--color-high);
-            animation: pulse-red-icon 2s infinite ease-in-out;
-        }
-        .analysis-points li i.icon-medium {
-            color: var(--color-medium);
-            animation: pulse-yellow-icon 2s infinite ease-in-out;
-        }
+        .analysis-points li i.icon-high { color: var(--color-high); animation: pulse-red-icon 2s infinite ease-in-out; }
+        .analysis-points li i.icon-medium { color: var(--color-medium); animation: pulse-yellow-icon 2s infinite ease-in-out; }
         .analysis-points li i.icon-ok { color: var(--color-ok); }
         .analysis-points li i.icon-low { color: var(--color-low); }
 
         .key-takeaway { 
-            background: #f0f5ff;
-            padding: 25px; 
-            border-radius: 20px;
-            box-shadow: 
-                8px 8px 16px #d9e2ec,
-                -8px -8px 16px #ffffff;
-            border: none;
-            position: relative;
-            overflow: hidden;
+            background: #f0f5ff; padding: 25px; border-radius: 20px;
+            box-shadow: 8px 8px 16px #d9e2ec, -8px -8px 16px #ffffff;
+            border: none; position: relative; overflow: hidden;
         }
-        
-        .key-takeaway::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(45deg, var(--cta-color), transparent 70%);
-            border-radius: 0 0 0 100%;
-            z-index: 0;
-        }
-        
-        .summary-quote { margin-bottom: 25px; padding-left: 20px; border-left: 4px solid var(--accent-color); }
-        .summary-quote .quote-text { font-style: italic; font-size: 1.1em; margin: 0 0 5px 0; color: var(--heading-color); }
-        .summary-quote .quote-author { font-size: 0.9em; text-align: left; color: #718096; }
         .conclusion-box p { margin: 0; font-weight: 600; line-height: 1.6; color: var(--heading-color); position: relative; z-index: 1; }
 
-        /* 4. CTA Section --- ENHANCED --- */
+        /* 4. CTA Section */
         .cta-section { 
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: white; 
-            text-align: center; 
-            padding: 100px 20px; 
-            margin-top: 50px; 
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
+            color: white; text-align: center; padding: 100px 20px; 
+            margin-top: 50px; position: relative; overflow: hidden; z-index: 1;
         }
-        
         .cta-section::after {
-            content: "";
-            position: absolute;
-            bottom: -10%;
-            left: -10%;
-            width: 40%;
-            height: 40%;
+            content: ""; position: absolute; bottom: -10%; left: -10%;
+            width: 40%; height: 40%;
             background: radial-gradient(circle, rgba(8,217,214,0.1) 0%, transparent 70%);
-            animation: float 25s infinite linear;
-            z-index: -1;
+            animation: float 25s infinite linear; z-index: -1;
         }
-        
         .cta-section .section-title { color: white; }
-        .cta-section .section-title::after {
-            background: linear-gradient(90deg, var(--cta-color), white);
-        }
+        .cta-section .section-title::after { background: linear-gradient(90deg, var(--cta-color), white); }
         .cta-section .section-subtitle { color: rgba(255, 255, 255, 0.7); }
         .benefits-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
-            margin-top: 60px;
-            margin-bottom: 60px;
-            position: relative;
-            z-index: 2;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px; margin-top: 60px; margin-bottom: 60px; position: relative; z-index: 2;
         }
         .benefit-item { text-align: center; }
         .benefit-icon {
-            width: 90px;
-            height: 90px;
-            margin: 0 auto 20px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 90px; height: 90px; margin: 0 auto 20px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex; align-items: center; justify-content: center;
             transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
         }
-        .benefit-icon i { 
-            font-size: 2.5em; 
-            color: var(--cta-color);
-            transition: transform 0.4s ease;
-        }
+        .benefit-icon i { font-size: 2.5em; color: var(--cta-color); transition: transform 0.4s ease; }
         .benefit-icon:hover {
             transform: translateY(-10px) scale(1.1);
             box-shadow: 0 10px 25px rgba(8, 217, 214, 0.3);
             background: rgba(255, 255, 255, 0.1);
         }
-        .benefit-icon:hover i {
-            transform: scale(1.2);
-        }
         .benefit-item h3 { font-size: 1.2em; font-weight: 700; margin-bottom: 10px; color: white; }
         .benefit-item p { font-size: 0.95em; color: rgba(255, 255, 255, 0.7); line-height: 1.6; margin: 0; }
-        
-        .cta-final-pitch {
-            max-width: 600px;
-            margin: 0 auto;
-            font-size: 1.1em;
-            color: rgba(255, 255, 255, 0.9);
-            position: relative;
-            z-index: 2;
-        }
+        .cta-final-pitch { max-width: 600px; margin: 0 auto; font-size: 1.1em; color: rgba(255, 255, 255, 0.9); position: relative; z-index: 2; }
         
         .cta-button {
-            background: linear-gradient(90deg, #08D9D6, #00B4D8);
-            color: var(--heading-color);
-            font-size: 1.2em;
-            font-weight: 700;
-            text-decoration: none;
-            padding: 16px 45px;
-            border-radius: 50px;
-            border: none;
-            transition: all 0.4s ease;
-            display: inline-block;
+            background: linear-gradient(90deg, #08D9D6, #00B4D8); color: var(--heading-color);
+            font-size: 1.2em; font-weight: 700; text-decoration: none; padding: 16px 45px;
+            border-radius: 50px; border: none; transition: all 0.4s ease; display: inline-block;
             box-shadow: 0 0 10px rgba(8, 217, 214, 0.5);
             animation: pulse-glow-desktop 2.5s infinite ease-in-out;
-            position: relative;
-            overflow: hidden;
-            z-index: 10;
-            margin-top: 40px;
+            position: relative; overflow: hidden; z-index: 10; margin-top: 40px;
         }
         
         .cta-button::before {
-            content: "";
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(
-                45deg,
-                transparent 25%,
-                rgba(255,255,255,0.2) 50%,
-                transparent 75%
-            );
-            animation: shine 3s infinite linear;
-            z-index: -1;
+            content: ""; position: absolute; top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.2) 50%, transparent 75%);
+            animation: shine 3s infinite linear; z-index: -1;
         }
-
         .cta-button:hover {
             background: linear-gradient(90deg, #07c4c1, #0099b8);
-            transform: scale(1.08);
-            box-shadow: 0 0 25px rgba(8, 217, 214, 0.8);
+            transform: scale(1.08); box-shadow: 0 0 25px rgba(8, 217, 214, 0.8);
             animation-play-state: paused;
         }
-        
-        .cta-button i {
-            margin-right: 10px;
-            transition: transform 0.3s ease;
-        }
-        
-        .cta-button:hover i {
-            transform: translateX(5px);
-        }
+        .cta-button i { margin-right: 10px; transition: transform 0.3s ease; }
+        .cta-button:hover i { transform: translateX(5px); }
 
-        footer { 
-            text-align: center; 
-            padding: 40px 20px; 
-            font-size: 0.9em; 
-            color: #718096; 
-            position: relative;
-        }
-        
-        .trust-icons {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 25px;
-        }
-        
+        footer { text-align: center; padding: 40px 20px; font-size: 0.9em; color: #718096; position: relative; }
+        .trust-icons { display: flex; justify-content: center; gap: 30px; margin-bottom: 25px; }
         .trust-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
+            width: 60px; height: 60px; border-radius: 50%;
             background: linear-gradient(145deg, #ffffff, #f0f4f8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
-        
-        .trust-icon i {
-            font-size: 1.8em;
-            color: var(--accent-color);
-        }
+        .trust-icon i { font-size: 1.8em; color: var(--accent-color); }
 
-        /* --- Mobile CTA --- */
+        /* --- MOBILE OPTIMIZATIONS --- */
+        
+        /* General Mobile Styles (Tablets and Phones) */
         @media (max-width: 992px) {
             .cta-section {
-                padding-bottom: 120px;
+                padding-bottom: 120px; /* Make space for the fixed button */
             }
 
+            /* MODIFIED [2]: CTA button optimized for mobile */
             .cta-button {
                 position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 85%;
-                max-width: 340px;
+                bottom: 15px; /* Closer to the edge */
+                left: 15px;
+                right: 15px;
+                width: auto; /* Let left/right properties define width */
+                transform: none; /* Reset desktop transform */
+                max-width: 500px; /* Set a max-width for large phones */
+                margin: 0 auto; /* Center it for slightly larger screens */
                 font-size: 1.1em;
-                padding: 14px 30px;
+                padding: 15px 20px;
                 z-index: 1000;
-                animation: hologram 3s infinite alternate;
-                margin-top: 0;
+                animation: none; /* Remove desktop glow */
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             }
-
             .cta-button:hover {
-                transform: translateX(-50%) scale(1.08);
+                transform: scale(1.03); /* Simple hover effect for mobile */
             }
-            
-            .section-title::after {
-                width: 60px;
+            .desktop-only-cta-pitch {
+                display: none;
             }
         }
         
-        /* ADDED [3]: Precise optimizations for phone screens */
+        /* Specific Mobile Phone Styles */
         @media (max-width: 576px) {
-            header h1 {
-                font-size: 2.2em;
+            header h1 { font-size: 2.1em; }
+            header .main-goal { font-size: 1.15em; }
+            .section-title { font-size: 1.8em; }
+            .section-subtitle { font-size: 1em; }
+            header { padding: 60px 20px 80px; }
+            main > section { padding: 40px 0; }
+            .card { padding: 25px; }
+            .deep-dive-card { gap: 25px; }
+            .cta-section { padding-top: 60px; }
+            .benefits-grid { gap: 30px; }
+            
+            /* MODIFIED [1]: Force single column for obstacle cards */
+            #obstacles-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
             }
-            header .main-goal {
-                font-size: 1.2em;
-            }
-            .section-title {
-                font-size: 1.8em;
-            }
-            .section-subtitle {
-                font-size: 1em;
-            }
-            header {
-                padding: 60px 20px 80px;
-            }
-            main > section {
-                padding: 40px 0;
-            }
-            .card {
-                padding: 25px;
-            }
-            .deep-dive-card {
-                gap: 25px;
-            }
-            .cta-section {
-                padding-top: 60px;
-            }
-             .benefits-grid {
+
+            /* MODIFIED [1]: Force single column for risk dashboard */
+            #dashboard-grid {
+                grid-template-columns: 1fr;
                 gap: 30px;
             }
         }
@@ -600,8 +439,8 @@
 
         <section class="reveal">
             <div class="section-header">
-                <h2 class="section-title">Основни Пречки и Рискове за Здравето</h2>
-                <p class="section-subtitle">Всяка област е оценена по скала от 0 до 100. По-високата стойност и червеният цвят означават по-голям риск.</p>
+                <h2 class="section-title">Основни Пречки и Рискове</h2>
+                <p class="section-subtitle">Всяка област е оценена по скала от 0 до 100. По-високата стойност означава по-голям риск.</p>
             </div>
             <div id="dashboard-grid"></div>
         </section>
@@ -628,17 +467,17 @@
                 </div>
                 <div class="benefit-item">
                     <div class="benefit-icon"><i class="fas fa-brain"></i></div>
-                    <h3>Постоянен Прогрес и Подкрепа</h3>
+                    <h3>Постоянен Прогрес</h3>
                     <p>Лесно проследяване на резултатите и достъп до експертни съвети, които да Ви държат в правилния път.</p>
                 </div>
                 <div class="benefit-item">
                     <div class="benefit-icon"><i class="fas fa-microchip"></i></div>
                     <h3>Наука и Технология</h3>
-                    <p>Подход, съчетаващ лекари, специалисти и мощни AI алгоритми за максимална ефективност и сигурност.</p>
+                    <p>Подход, съчетаващ лекари, специалисти и AI алгоритми за максимална ефективност и сигурност.</p>
                 </div>
             </div>
 
-            <p class="cta-final-pitch">Информацията е сила, но само когато се действа по нея.</p>
+            <p class="cta-final-pitch desktop-only-cta-pitch">Информацията е сила, но само когато се действа по нея.</p>
         </div>
 
         <a id="cta-button" href="https://radilovk.github.io/bodybest/index.html" class="cta-button">
@@ -665,19 +504,17 @@
                 <h3>${o.title}</h3>
             </div>`).join('');
         
-        // MODIFIED [2]: Helper function to get the definition text
         const getRiskDefinition = (riskClass, category) => {
             const catLower = category.toLowerCase();
             switch (riskClass) {
-                case 'high': return `Лошо ниво на ${catLower}`;
-                case 'medium': return `Средно ниво на ${catLower}`;
-                case 'ok': return `Добро ниво на ${catLower}`;
-                case 'low': return `Отлично ниво на ${catLower}`;
+                case 'high': return `Висок Риск при ${catLower}`;
+                case 'medium': return `Среден Риск при ${catLower}`;
+                case 'ok': return `Добро Ниво на ${catLower}`;
+                case 'low': return `Отлично Ниво на ${catLower}`;
                 default: return category;
             }
         };
 
-        // MODIFIED [2]: generateDashboardHTML now uses getRiskDefinition in the h4 and removes the extra div
         const generateDashboardHTML = (items) => items.map((i, index) => `
             <div class="dashboard-item" style="animation-delay: ${index * 100}ms;">
                 <div class="donut-chart-container">
@@ -742,7 +579,6 @@
                         entry.target.classList.add('active');
                         entry.target.style.opacity = 1;
                         entry.target.style.transform = 'translateY(0)';
-                        setTimeout(() => entry.target.style.removeProperty('transform'), 600);
                         
                         if (entry.target.id === 'dashboard-grid') {
                             const charts = entry.target.querySelectorAll('.donut-fill');
@@ -762,7 +598,7 @@
                 });
             }, { threshold: 0.1 });
 
-            document.querySelectorAll('.reveal, #obstacles-container, #dashboard-grid').forEach(el => {
+            document.querySelectorAll('.reveal').forEach(el => {
                 el.style.opacity = 0;
                 el.style.transform = 'translateY(20px)';
                 el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
@@ -790,31 +626,8 @@
                 })
                 .catch(error => {
                     console.error('Fetch Error:', error);
-                    document.body.innerHTML = '<h1>Грешка при зареждане на анализа.</h1>';
+                    document.body.innerHTML = '<h1>Грешка при зареждане на анализа. Моля, опитайте по-късно.</h1>';
                 });
-        }
-    });
-    </script>
-
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const ctaButton = document.getElementById('cta-button');
-
-        const isMobileView = window.innerWidth <= 992;
-
-        if (isMobileView) {
-            const threshold = document.documentElement.scrollHeight / 2;
-
-            const updateButtonVisibility = () => {
-                const opacity = Math.min(window.scrollY / threshold, 1);
-                ctaButton.style.opacity = opacity;
-                ctaButton.style.pointerEvents = opacity > 0.1 ? 'auto' : 'none';
-            };
-
-            updateButtonVisibility();
-            window.addEventListener('scroll', updateButtonVisibility);
-        } else {
-            ctaButton.style.opacity = 1;
         }
     });
     </script>
