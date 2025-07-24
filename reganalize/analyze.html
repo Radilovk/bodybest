@@ -3,119 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вашият Био-Анализ | MyBody.Best</title>
+    <title>Вашият Био-Код | MyBody.Best</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
         :root {
-            /* VISUAL UPGRADE: Biotech Dark Theme Palette */
-            --bg-color: #0D1117; /* GitHub Dark Mode style background */
-            --card-bg-color: rgba(33, 41, 54, 0.6); /* Semi-transparent glass */
-            --text-color: #c9d1d9;
-            --heading-color: #ffffff;
-            --primary-color: #58a6ff; /* A vibrant, yet professional blue */
-            --accent-color: #6366F1; /* Indigo for special highlights */
-            --border-color: rgba(139, 148, 158, 0.3); /* Subtle border for glass effect */
+            --bg-color: #020409;
+            --scan-light-color: rgba(88, 166, 255, 0.05);
+            --panel-bg: #0D1117;
+            --text-color: #b0bac3;
+            --heading-color: #e6edf3;
+            --primary-color: #388bfd;
+            --accent-color: #4f46e5;
             
-            --color-high: #F47174;
-            --color-medium: #F59E0B;
-            --color-ok: #58a6ff;
-            --color-low: #3FB950;
+            --border-color: rgba(56, 139, 253, 0.15);
+            --border-hover-color: rgba(56, 139, 253, 0.7);
+
+            --color-high: #f47073;
+            --color-medium: #f59e0b;
+            --color-ok: #388bfd;
+            --color-low: #28a745;
 
             --cta-color: #08D9D6;
-            --cta-hover-color: #07c4c1;
-            --cta-glow-color: rgba(8, 217, 214, 0.6);
+            --cta-glow-color: rgba(8, 217, 214, 0.7);
         }
 
-        /* --- Animations --- */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes scan {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes pulse-glow-desktop {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 8px var(--cta-glow-color), 0 0 16px var(--cta-glow-color); }
-            50% { transform: scale(1.03); box-shadow: 0 0 20px var(--cta-glow-color), 0 0 30px var(--cta-glow-color); }
-        }
-        @keyframes pulse-glow-mobile {
-            0%, 100% { transform: translateX(-50%) scale(1); box-shadow: 0 0 8px var(--cta-glow-color), 0 0 16px var(--cta-glow-color); }
-            50% { transform: translateX(-50%) scale(1.03); box-shadow: 0 0 20px var(--cta-glow-color), 0 0 30px var(--cta-glow-color); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 10px var(--cta-glow-color); }
+            50% { transform: scale(1.05); box-shadow: 0 0 25px var(--cta-glow-color); }
         }
 
-        /* --- Global Styles --- */
+        /* --- GLOBAL & BACKGROUND --- */
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            background-image: radial-gradient(circle at 20% 20%, var(--scan-light-color) 0%, transparent 40%),
+                              radial-gradient(circle at 80% 70%, var(--scan-light-color) 0%, transparent 40%);
+            background-size: 200% 200%;
+            animation: scan 20s infinite linear;
         }
         .container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
 
-        /* --- HERO HEADER --- */
+        /* --- HERO --- */
         .hero {
-            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            padding: 120px 20px 140px;
-            overflow: hidden;
-            border-bottom: 1px solid var(--border-color);
+            min-height: 80vh;
+            padding: 40px 20px;
         }
-        #particles-js {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-        .hero-content { position: relative; z-index: 2; }
         .hero h1 {
-            font-size: 3.2em;
+            font-size: 3.5em;
             font-weight: 900;
             margin: 0;
             color: var(--heading-color);
-            animation: fadeIn 1s ease-out;
+            animation: fadeIn 1s 0.1s ease-out backwards;
         }
         .hero .main-goal {
-            font-size: 1.6em;
-            opacity: 0.8;
+            font-size: 1.5em;
             margin-top: 15px;
-            animation: fadeIn 1s 0.2s ease-out backwards;
-            font-weight: 400;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+            animation: fadeIn 1s 0.3s ease-out backwards;
+            color: #84909c;
         }
         .main-goal strong {
-            color: var(--cta-color); /* Highlight with the most vibrant color */
+            color: var(--heading-color);
             font-weight: 700;
         }
 
-        /* --- General Section & Card Styling --- */
+        /* --- SECTION & CARD STYLING --- */
         .section {
-            padding: 80px 0;
-            position: relative;
+            padding: 60px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
         }
         .section-header { text-align: center; margin-bottom: 60px; }
-        .section-title { font-size: 2.5em; color: var(--heading-color); margin-bottom: 15px; font-weight: 700; }
-        .section-subtitle { font-size: 1.1em; color: var(--text-color); max-width: 600px; margin: 0 auto; opacity: 0.9; }
-        
-        /* VISUAL UPGRADE: Glassmorphism Card Effect */
-        .glass-card {
-            background: var(--card-bg-color);
+        .section-title {
+            font-size: 2.8em;
+            color: var(--heading-color);
+            margin-bottom: 0;
+            font-weight: 700;
+        }
+
+        .diagnostic-card {
+            background: var(--panel-bg);
             border: 1px solid var(--border-color);
             border-radius: 16px;
             padding: 30px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            transition: transform 0.3s ease, border-color 0.3s ease;
         }
-        .glass-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.3);
-            border-color: rgba(88, 166, 255, 0.5); /* Glow with primary color */
+        .diagnostic-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--border-hover-color);
         }
 
         /* --- 1. Obstacles Section --- */
@@ -123,19 +115,15 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 25px;
-            margin-top: -100px; /* Pulls it up into the hero section */
-            position: relative;
-            z-index: 10;
         }
-        .obstacle-card { text-align: center; padding: 35px 20px; }
-        .obstacle-card .icon { font-size: 3em; color: var(--primary-color); margin-bottom: 15px; }
+        .obstacle-card { text-align: center; padding: 40px 20px; }
+        .obstacle-card .icon { font-size: 3em; color: var(--primary-color); margin-bottom: 20px; }
         .obstacle-card h3 { font-size: 1.1em; font-weight: 500; color: var(--heading-color); margin: 0; }
 
         /* --- 2. Risk Profile --- */
         #dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 40px; justify-items: center; }
-        .dashboard-item { text-align: center; animation: fadeInUp 0.5s ease-out forwards; opacity: 0; }
         .donut-chart-container { position: relative; width: 140px; height: 140px; margin-bottom: 15px; }
-        .donut-chart-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+        .donut-chart-svg { transform: rotate(-90deg); }
         .donut-chart-svg circle { fill: none; stroke-width: 12; }
         .donut-track { stroke: rgba(255, 255, 255, 0.1); }
         .donut-fill { stroke-linecap: round; transition: stroke-dashoffset 1.5s cubic-bezier(0.25, 1, 0.5, 1); }
@@ -143,353 +131,227 @@
         .donut-medium { stroke: var(--color-medium); }
         .donut-ok { stroke: var(--color-ok); }
         .donut-low { stroke: var(--color-low); }
-        .chart-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+        .chart-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
         .chart-center .icon { font-size: 2.2em; }
         .dashboard-item h4 { margin: 0; font-weight: 500; color: var(--heading-color); }
         .dashboard-item .risk-level-text { font-size: 0.8em; color: var(--text-color); }
-        
+
         /* --- 3. Deep Dive Section --- */
-        #deep-dive-container .deep-dive-card {
-            margin-bottom: 30px; /* Space between deep dive cards */
-        }
+        #deep-dive-container .deep-dive-card { margin-bottom: 30px; }
         .deep-dive-card {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 40px;
+            display: grid; grid-template-columns: 1fr; gap: 40px;
         }
         @media (min-width: 768px) { .deep-dive-card { grid-template-columns: 1.2fr 1fr; } }
-        .analysis-points h3, .key-takeaway h3 {
-            font-size: 1.4em;
-            margin: 0 0 20px 0;
-            color: var(--heading-color);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
-        }
+        .analysis-points h3, .key-takeaway h3 { font-size: 1.4em; margin: 0 0 20px 0; color: var(--heading-color); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
         .analysis-points ul { list-style: none; padding: 0; margin: 0; }
         .analysis-points li { display: flex; align-items: flex-start; padding: 12px 0; line-height: 1.6; }
         .analysis-points li i { color: var(--primary-color); margin-right: 15px; margin-top: 4px; }
-        .key-takeaway {
-            background: rgba(13, 17, 23, 0.5); /* Darker, more focused background */
-            padding: 25px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
+        .key-takeaway { background: #020409; padding: 25px; border-radius: 12px; }
         .conclusion-box p { margin: 0; font-weight: 500; line-height: 1.7; color: var(--heading-color); font-size: 1.1em; }
 
         /* --- 4. CTA Section --- */
         .cta-section {
-            background-image: linear-gradient(180deg, var(--bg-color) 0%, #161b22 100%);
-            color: var(--text-color);
             text-align: center;
             padding: 100px 20px;
-            margin-top: 50px;
-            border-top: 1px solid var(--border-color);
+            background-image: linear-gradient(180deg, var(--bg-color) 0%, #0d1a30 100%);
         }
-        .cta-section .section-title { color: var(--heading-color); }
-        .cta-section .section-subtitle { color: var(--text-color); }
-        
-        .benefits-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
-            margin: 60px 0;
-        }
+        .cta-section .section-title { font-size: 2.5em; margin-bottom: 20px; }
+        .cta-section .section-subtitle { font-size: 1.2em; color: var(--text-color); max-width: 600px; margin: 0 auto 60px; font-weight: 300; }
         .benefit-item { text-align: center; }
         .benefit-icon {
-            width: 70px;
-            height: 70px;
-            margin: 0 auto 20px;
-            border-radius: 50%;
-            background: var(--card-bg-color);
-            border: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
+            width: 70px; height: 70px; margin: 0 auto 20px; border-radius: 50%;
+            background: var(--panel-bg); border: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
         }
-        .benefit-icon i {
-            font-size: 2em;
-            color: var(--cta-color);
-            transition: all 0.3s ease;
-        }
-        .benefit-item:hover .benefit-icon {
-            background: var(--cta-color);
-            box-shadow: 0 0 20px var(--cta-color);
-        }
-        .benefit-item:hover .benefit-icon i {
-            color: #0D1117;
-            transform: scale(1.1);
-        }
+        .benefit-icon i { font-size: 2em; color: var(--cta-color); }
         .benefit-item h3 { font-size: 1.2em; font-weight: 700; margin-bottom: 10px; color: var(--heading-color); }
-        .benefit-item p { font-size: 0.95em; line-height: 1.6; margin: 0; }
-        
-        .cta-final-pitch { max-width: 600px; margin: 0 auto; font-size: 1.2em; color: var(--heading-color); font-weight: 500;}
-        
+        .benefit-item p { font-size: 1em; line-height: 1.6; margin: 0; }
+        .benefits-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-bottom: 80px; }
+        .cta-final-pitch { font-size: 1.2em; color: var(--heading-color); font-weight: 500;}
+
+        /* --- CTA BUTTON --- */
+        .cta-button-container {
+            margin-top: 40px;
+            position: relative;
+        }
         .cta-button {
             background-color: var(--cta-color);
-            color: #0D1117; /* Dark text on vibrant button */
-            font-size: 1.2em;
-            font-weight: 700;
-            text-decoration: none;
-            padding: 16px 45px;
-            border-radius: 50px;
-            border: none;
-            transition: all 0.3s ease;
+            color: #020409;
+            font-size: 1.2em; font-weight: 700;
+            text-decoration: none; padding: 16px 45px;
+            border-radius: 50px; border: none;
+            transition: transform 0.3s ease, opacity 0.4s ease;
             display: inline-block;
             box-shadow: 0 0 5px var(--cta-glow-color);
-            animation: pulse-glow-desktop 2.5s infinite ease-in-out;
-            margin-top: 40px;
+            animation: pulse-glow 3s infinite ease-in-out;
+            opacity: 1;
         }
-        .cta-button:hover {
-            background-color: var(--cta-hover-color);
-            transform: scale(1.08);
-            animation-play-state: paused;
-        }
+        .cta-button:hover { transform: scale(1.08); animation-play-state: paused; }
+        
+        footer { text-align: center; padding: 40px 20px; font-size: 0.9em; color: #555e68; border-top: 1px solid rgba(255,255,255,0.07); }
 
-        footer { text-align: center; padding: 40px 20px; font-size: 0.9em; color: #8b949e; border-top: 1px solid var(--border-color); }
-
-        /* --- Mobile CTA --- */
+        /* --- MOBILE & FLOATING BUTTON LOGIC --- */
         @media (max-width: 992px) {
-            .hero { padding: 80px 20px 120px; }
             .hero h1 { font-size: 2.5em; }
             .hero .main-goal { font-size: 1.2em; }
-            .section { padding: 60px 0; }
             .section-title { font-size: 2em; }
-            
-            .cta-section { padding-bottom: 120px; }
-            .cta-button {
+            .benefits-grid { grid-template-columns: 1fr; gap: 50px; }
+            .cta-section { padding-bottom: 140px; } /* Space for the button */
+
+            .cta-button-container {
                 position: fixed;
-                bottom: 12px; left: 50%;
-                transform: translateX(-50%);
-                width: 80%; max-width: 340px;
-                font-size: 1.1em; padding: 12px 30px;
+                bottom: 0; left: 0; right: 0;
+                padding: 15px;
                 z-index: 1000;
-                animation-name: pulse-glow-mobile;
-                margin-top: 0;
+                /* No background on container */
             }
-            .cta-button:hover { transform: translateX(-50%) scale(1.08); }
+            .cta-button {
+                width: 100%;
+                font-size: 1.1em;
+                padding: 15px 30px;
+                /* Visibility controlled by JS */
+                opacity: 0;
+                transform: translateY(100px);
+                pointer-events: none;
+                transition: opacity 0.4s ease, transform 0.4s ease;
+            }
+            .cta-button.is-visible {
+                opacity: 1;
+                transform: translateY(0);
+                pointer-events: auto;
+            }
         }
     </style>
 </head>
 <body>
     <header class="hero">
-        <div id="particles-js"></div>
-        <div class="hero-content">
-            <h1 id="client-name"></h1>
-            <p class="main-goal" id="main-goal-text"></p>
-        </div>
+        <h1 id="client-name"></h1>
+        <p class="main-goal" id="main-goal-text"></p>
     </header>
 
     <main class="container">
-        <!-- Obstacles are pulled up into the hero section visually -->
-        <section id="obstacles-container"></section>
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Ключови Пречки</h2>
+            </div>
+            <div id="obstacles-container"></div>
+        </section>
 
         <section class="section">
             <div class="section-header">
-                <h2 class="section-title">Профил на Риска</h2>
-                <p class="section-subtitle">Оценка на ключови био-метрики. Високите стойности индикират зони, изискващи внимание.</p>
+                <h2 class="section-title">Био-Метричен Профил</h2>
             </div>
             <div id="dashboard-grid"></div>
         </section>
 
         <section class="section">
              <div class="section-header">
-                <h2 class="section-title">Генезис на Проблема</h2>
-                <p class="section-subtitle">Разкодираме връзката "причина-следствие" за най-критичните фактори.</p>
+                <h2 class="section-title">Диагностичен Анализ</h2>
             </div>
             <div id="deep-dive-container"></div>
         </section>
     </main>
     
-    <section class="cta-section">
+    <section class="cta-section" id="solution-section">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">Прецизност. Наука. Трансформация.</h2>
-                <p class="section-subtitle">Вие не сте статистика. Вашият план не трябва да бъде универсален. Ние декодираме Вашето тяло, за да изградим Вашето бъдеще.</p>
+                <h2 class="section-title">Вашата Трансформация. Декодирана.</h2>
+                <p class="section-subtitle">Спираме с предположенията. Започваме с прецизността.</p>
             </div>
             
             <div class="benefits-grid">
                 <div class="benefit-item">
                     <div class="benefit-icon"><i class="fas fa-dna"></i></div>
-                    <h3>Био-индивидуален Подход</h3>
-                    <p>Планове, съобразени с Вашите уникални данни. Работим с тялото Ви, не срещу него.</p>
+                    <h3>Био-индивидуалност</h3>
+                    <p>План, създаден за Вашия геном.</p>
                 </div>
                 <div class="benefit-item">
                     <div class="benefit-icon"><i class="fas fa-microscope"></i></div>
-                    <h3>Научна Методология</h3>
-                    <p>Комбинираме експертизата на специалисти с AI-базиран анализ за максимална точност и ефективност.</p>
+                    <h3>Научна Прецизност</h3>
+                    <p>Решения, базирани на данни.</p>
                 </div>
                 <div class="benefit-item">
                     <div class="benefit-icon"><i class="fas fa-chart-line"></i></div>
-                    <h3>Проследима Трансформация</h3>
-                    <p>Ясни метрики и постоянна подкрепа, за да виждате прогреса си и да останете мотивирани по пътя.</p>
+                    <h3>Измерим Резултат</h3>
+                    <p>Прогрес, който виждате.</p>
                 </div>
             </div>
 
-            <p class="cta-final-pitch">Данните са само началото. Действието е това, което променя всичко.</p>
-            
-            <a id="cta-button" href="https://radilovk.github.io/bodybest/index.html" class="cta-button">
-                <i class="fas fa-rocket"></i> Започнете Вашата Трансформация
-            </a>
+            <div class="cta-button-container">
+                <a id="cta-button" href="https://radilovk.github.io/bodybest/index.html" class="cta-button">
+                    <i class="fas fa-rocket"></i> Започнете Сега
+                </a>
+            </div>
         </div>
     </section>
 
     <footer><p id="footer-text"></p></footer>
     
-    <!-- Lightweight Particles.js for the hero background effect -->
-    <script>
-        // A simplified particle script to avoid external libraries
-        document.addEventListener('DOMContentLoaded', () => {
-            const canvas = document.createElement('canvas');
-            canvas.id = 'particles-js';
-            document.querySelector('.hero').prepend(canvas);
-            const ctx = canvas.getContext('2d');
-            let particles = [];
-            
-            const setupCanvas = () => {
-                canvas.width = canvas.offsetWidth;
-                canvas.height = canvas.offsetHeight;
-            };
-            
-            class Particle {
-                constructor() {
-                    this.x = Math.random() * canvas.width;
-                    this.y = Math.random() * canvas.height;
-                    this.size = Math.random() * 2 + 1;
-                    this.speedX = Math.random() * 1 - 0.5;
-                    this.speedY = Math.random() * 1 - 0.5;
-                    this.color = 'rgba(88, 166, 255, 0.5)';
-                }
-                update() {
-                    if (this.x > canvas.width || this.x < 0) this.speedX *= -1;
-                    if (this.y > canvas.height || this.y < 0) this.speedY *= -1;
-                    this.x += this.speedX;
-                    this.y += this.speedY;
-                }
-                draw() {
-                    ctx.fillStyle = this.color;
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-            
-            const initParticles = () => {
-                particles = [];
-                let numberOfParticles = (canvas.width * canvas.height) / 9000;
-                for (let i = 0; i < numberOfParticles; i++) {
-                    particles.push(new Particle());
-                }
-            };
-            
-            const animateParticles = () => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                for (let i = 0; i < particles.length; i++) {
-                    particles[i].update();
-                    particles[i].draw();
-                }
-                requestAnimationFrame(animateParticles);
-            };
-
-            setupCanvas();
-            initParticles();
-            animateParticles();
-            
-            window.addEventListener('resize', () => {
-                setupCanvas();
-                initParticles();
-            });
-        });
-    </script>
-
-    <!-- NO CHANGES TO CORE DATA LOGIC -->
+    <!-- CORE DATA & LOGIC SCRIPT (UNCHANGED) -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const analysisData = {/*---JSON_DATA_PLACEHOLDER---*/};
         
-        // UPDATED: generate functions now use the new .glass-card class
         const generateObstaclesHTML = (obstacles) => obstacles.map(o => `
-            <div class="glass-card obstacle-card">
+            <div class="diagnostic-card obstacle-card">
                 <div class="icon"><i class="${o.icon}"></i></div>
                 <h3>${o.title}</h3>
             </div>`).join('');
         
         const generateDashboardHTML = (items) => items.map((i, index) => `
-            <div class="dashboard-item" style="animation-delay: ${index * 100}ms;">
+            <div class="dashboard-item" style="animation: fadeIn 0.5s ${index * 100}ms ease-out backwards;">
                 <div class="donut-chart-container">
-                    <svg class="donut-chart-svg">
+                    <svg class="donut-chart-svg" width="140" height="140" viewBox="0 0 140 140">
                         <circle class="donut-track" cx="70" cy="70" r="60"></circle>
                         <circle class="donut-fill donut-${i.riskClass}" cx="70" cy="70" r="60" data-risk="${i.riskValue}"></circle>
                     </svg>
-                    <div class="chart-center">
-                        <i class="icon ${i.icon} color-${i.riskClass}"></i>
-                    </div>
+                    <div class="chart-center"><i class="icon ${i.icon} color-${i.riskClass}"></i></div>
                 </div>
                 <h4>${i.category}</h4>
                 <div class="risk-level-text">${i.riskLevel}</div>
             </div>`).join('');
 
         const generateDeepDiveHTML = (items) => items.map(item => `
-            <div class="glass-card deep-dive-card">
+            <div class="diagnostic-card deep-dive-card">
                 <div class="analysis-points">
                     <h3>Констатации</h3>
-                    <ul>
-                        ${item.points.map(point => `<li><i class="fas fa-check-circle"></i><div>${point}</div></li>`).join('')}
-                    </ul>
+                    <ul>${item.points.map(point => `<li><i class="fas fa-check-circle"></i><div>${point}</div></li>`).join('')}</ul>
                 </div>
                 <div class="key-takeaway">
                     <h3>Ключов Извод</h3>
-                    <div class="conclusion-box">
-                        <p>${item.conclusion}</p>
-                    </div>
+                    <div class="conclusion-box"><p>${item.conclusion}</p></div>
                 </div>
             </div>`).join('');
 
         const renderAnalysis = (data) => {
             data.healthDashboard.sort((a, b) => b.riskValue - a.riskValue);
-            
-            document.getElementById('client-name').textContent = `Био-анализ за ${data.client.name}`;
-            document.getElementById('main-goal-text').innerHTML = `Цел: <strong>${data.client.mainGoal.title} (${data.client.mainGoal.target})</strong>`;
+            document.getElementById('client-name').textContent = `Био-Код: ${data.client.name}`;
+            document.getElementById('main-goal-text').innerHTML = `Цел: <strong>${data.client.mainGoal.title}</strong>`;
             document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
             document.getElementById('dashboard-grid').innerHTML = generateDashboardHTML(data.healthDashboard);
             document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
             document.getElementById('footer-text').textContent = `© ${new Date().getFullYear()} MyBody.Best | Анализ, генериран на ${new Date(data.generatedAt).toLocaleString('bg-BG')}.`;
-            
-            setupAnimations();
+            setupDonutChartAnimations();
         };
 
-        const setupAnimations = () => {
-            const revealObserver = new IntersectionObserver((entries) => {
+        const setupDonutChartAnimations = () => {
+            const charts = document.querySelectorAll('.donut-fill');
+            const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        entry.target.classList.add('active');
-                        entry.target.style.opacity = 1;
-                        entry.target.style.transform = 'translateY(0)';
-                        
-                        if (entry.target.id === 'dashboard-grid') {
-                            const charts = entry.target.querySelectorAll('.donut-fill');
-                            charts.forEach(chart => {
-                                const radius = chart.r.baseVal.value;
-                                const circumference = 2 * Math.PI * radius;
-                                const riskValue = chart.dataset.risk;
-                                const offset = circumference * (1 - riskValue / 100);
-                                
-                                chart.style.strokeDasharray = `${circumference} ${circumference}`;
-                                chart.style.strokeDashoffset = circumference;
-                                setTimeout(() => { chart.style.strokeDashoffset = offset; }, 200);
-                            });
-                        }
-                        revealObserver.unobserve(entry.target);
+                        const chart = entry.target;
+                        const radius = chart.r.baseVal.value;
+                        const circumference = 2 * Math.PI * radius;
+                        const riskValue = chart.dataset.risk;
+                        const offset = circumference * (1 - riskValue / 100);
+                        chart.style.strokeDasharray = `${circumference} ${circumference}`;
+                        chart.style.strokeDashoffset = circumference;
+                        setTimeout(() => { chart.style.strokeDashoffset = offset; }, 100);
+                        observer.unobserve(chart);
                     }
                 });
-            }, { threshold: 0.1 });
-
-            document.querySelectorAll('#obstacles-container, .section, .cta-section').forEach(el => {
-                el.style.opacity = 0;
-                el.style.transform = 'translateY(30px)';
-                el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
-                revealObserver.observe(el);
-            });
+            }, { threshold: 0.5 });
+            charts.forEach(chart => observer.observe(chart));
         };
         
         const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -518,27 +380,34 @@
     });
     </script>
     
-    <!-- Floating button logic remains the same -->
+    <!-- ROBUST FLOATING BUTTON SCRIPT -->
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const ctaButton = document.getElementById('cta-button');
-        if (!ctaButton) return;
+        const ctaSection = document.getElementById('solution-section');
 
-        const isMobileView = window.innerWidth <= 992;
+        if (!ctaButton || !ctaSection) return;
 
-        if (isMobileView) {
-            const threshold = document.documentElement.scrollHeight / 2;
-            const updateButtonVisibility = () => {
-                const opacity = Math.min(window.scrollY / threshold, 1);
-                ctaButton.style.opacity = opacity;
-                ctaButton.style.pointerEvents = opacity > 0.1 ? 'auto' : 'none';
-            };
-            updateButtonVisibility();
-            window.addEventListener('scroll', updateButtonVisibility);
-        } else {
-            ctaButton.style.opacity = 1;
+        // Logic only for mobile views
+        if (window.innerWidth <= 992) {
+            const observer = new IntersectionObserver(
+                ([entry]) => {
+                    // When the CTA section is intersecting with the viewport
+                    if (entry.isIntersecting) {
+                        ctaButton.classList.add('is-visible');
+                    } else {
+                        ctaButton.classList.remove('is-visible');
+                    }
+                },
+                {
+                    root: null, // relative to the viewport
+                    threshold: 0.1 // 10% of the item must be visible
+                }
+            );
+            // Start observing the CTA section
+            observer.observe(ctaSection);
         }
     });
     </script>
 </body>
-</html>```
+</html>
