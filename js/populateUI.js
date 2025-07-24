@@ -5,6 +5,8 @@ import { generateId } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, planHasRecContent } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 
+let detailedRadarChart = null;
+
 export function populateUI() {
     const data = fullDashboardData; // Access global state
     if (!data || Object.keys(data).length === 0) {
@@ -106,6 +108,7 @@ function populateDashboardDetailedAnalytics(analyticsData) {
     textualAnalysisContainer.innerHTML = '';
 
     const detailedMetrics = safeGet(analyticsData, 'detailed', []);
+    const previousMetrics = safeGet(analyticsData, 'previous.detailed', []);
     const textualAnalysis = safeGet(analyticsData, 'textualAnalysis');
 
     if (textualAnalysis) {
@@ -113,6 +116,8 @@ function populateDashboardDetailedAnalytics(analyticsData) {
     } else {
         textualAnalysisContainer.innerHTML = '<p class="placeholder">Текстовият анализ се генерира или не е наличен...</p>';
     }
+
+    populateDetailedRadarChart(detailedMetrics, previousMetrics);
 
     if (Array.isArray(detailedMetrics) && detailedMetrics.length > 0) {
         detailedMetrics.forEach(metric => {
@@ -800,4 +805,127 @@ function populateProgressHistory(dailyLogs, initialData) {
             }
         }
     });
+}
+
+function populateDetailedRadarChart(currentMetrics = [], prevMetrics = []) {
+    const card = selectors.detailedRadarCard;
+    if (!card) return;
+
+    if (typeof Chart === 'undefined' || !Array.isArray(currentMetrics) || currentMetrics.length === 0) {
+        card.classList.add('hidden');
+        return;
+    }
+
+    card.classList.remove('hidden');
+    const container = card.querySelector('.chart-container');
+    const compareBtn = card.querySelector('#compareMetricsBtn');
+    const resetBtn = card.querySelector('#resetMetricsBtn');
+    container.innerHTML = '';
+    const canvas = document.createElement('canvas');
+    canvas.id = 'detailedRadarChart';
+    container.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    const normalizeData = (metrics) => metrics.map(m => {
+        const val = parseFloat(m.currentValueNumeric ?? m.value);
+        if (isNaN(val)) return 0;
+        if ((m.label || '').toLowerCase().includes('bmi')) {
+            const optimalBmi = 22;
+            const maxDeviation = 10;
+            const deviation = Math.abs(val - optimalBmi);
+            return Math.max(0, (1 - (deviation / maxDeviation)) * 100);
+        }
+        if (val <= 5) return ((val - 1) / 4) * 100;
+        return Math.max(0, Math.min(100, val));
+    });
+
+    const generateGradient = (context, value) => {
+        const chart = context.chart;
+        const { ctx: c, chartArea } = chart;
+        if (!chartArea) return null;
+        const gradient = c.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+        if (value < 40) {
+            gradient.addColorStop(0, 'rgba(255, 99, 132, 0.2)');
+            gradient.addColorStop(1, 'rgba(255, 99, 132, 0.8)');
+        } else if (value < 70) {
+            gradient.addColorStop(0, 'rgba(255, 206, 86, 0.2)');
+            gradient.addColorStop(1, 'rgba(255, 206, 86, 0.8)');
+        } else {
+            gradient.addColorStop(0, 'rgba(75, 192, 192, 0.2)');
+            gradient.addColorStop(1, 'rgba(75, 192, 192, 0.8)');
+        }
+        return gradient;
+    };
+
+    const data = {
+        labels: currentMetrics.map(m => m.label),
+        datasets: [{
+            label: 'Текущи Стойности',
+            data: normalizeData(currentMetrics),
+            backgroundColor: (ctx) => generateGradient(ctx, ctx.dataset.data[ctx.dataIndex]),
+            borderColor: 'rgba(255, 255, 255, 0.7)',
+            pointBackgroundColor: 'rgba(255, 255, 255, 1)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 2
+        }]
+    };
+
+    if (detailedRadarChart) detailedRadarChart.destroy();
+    detailedRadarChart = new Chart(ctx, {
+        type: 'radar',
+        data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 1000, easing: 'easeInOutQuart' },
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(255, 255, 255, 0.2)' },
+                    grid: { color: 'rgba(255, 255, 255, 0.2)' },
+                    pointLabels: { font: { size: 14 }, color: '#e0e0e0' },
+                    ticks: {
+                        backdropColor: 'rgba(0,0,0,0.5)',
+                        color: 'white',
+                        stepSize: 25,
+                        beginAtZero: true,
+                        max: 100,
+                        callback: (v) => v + '%'
+                    }
+                }
+            },
+            plugins: {
+                legend: { position: 'top', labels: { color: '#e0e0e0', font: { size: 14 } } },
+                tooltip: { enabled: true }
+            }
+        }
+    });
+
+    if (Array.isArray(prevMetrics) && prevMetrics.length > 0) {
+        const prevData = normalizeData(prevMetrics);
+        compareBtn.addEventListener('click', () => {
+            if (detailedRadarChart.data.datasets.length > 1) return;
+            detailedRadarChart.data.datasets.push({
+                label: 'Предишен Период',
+                data: prevData,
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+                borderDash: [5,5]
+            });
+            detailedRadarChart.update();
+        });
+        resetBtn.addEventListener('click', () => {
+            detailedRadarChart.data.datasets.splice(1);
+            detailedRadarChart.update();
+        });
+    } else {
+        compareBtn.style.display = 'none';
+        resetBtn.style.display = 'none';
+    }
 }

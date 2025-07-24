@@ -582,6 +582,20 @@ body.dark-theme .detailed-metric-item .value-current {
     font-size: 1.05rem;
 }
 
+/* Радарна диаграма на показателите */
+#detailedRadarCard .chart-container {
+    min-height: 120px;
+    position: relative;
+    padding: var(--space-sm);
+}
+#detailedRadarCard .radar-controls {
+    text-align: center;
+    margin-top: var(--space-md);
+}
+#detailedRadarCard .radar-controls button {
+    margin: 0 var(--space-xs);
+}
+
 @media (max-width: 480px) {
   .meal-card {
     padding: var(--space-md);
