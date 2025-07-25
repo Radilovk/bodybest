@@ -32,4 +32,34 @@ describe('processPendingUserEvents', () => {
     expect(ctx.waitUntil).toHaveBeenCalledTimes(1);
     expect(env.USER_METADATA_KV.delete).toHaveBeenCalledWith('event_updateProfile_u1_1');
   });
+
+  test('prioritizes events by priority then timestamp', async () => {
+    const env = {
+      USER_METADATA_KV: {
+        list: jest.fn().mockResolvedValue({ keys: [
+          { name: 'event_a' },
+          { name: 'event_b' }
+        ] }),
+        get: jest.fn(key => {
+          if (key === 'event_a') {
+            return Promise.resolve(JSON.stringify({
+              type: 'testResult', userId: 'u1', createdTimestamp: 2, priority: 2, payload: {}
+            }));
+          }
+          if (key === 'event_b') {
+            return Promise.resolve(JSON.stringify({
+              type: 'testResult', userId: 'u1', createdTimestamp: 1, priority: 1, payload: {}
+            }));
+          }
+          return Promise.resolve('');
+        }),
+        delete: jest.fn(),
+        put: jest.fn()
+      }
+    };
+    const ctx = { waitUntil: jest.fn() };
+    await processPendingUserEvents(env, ctx, 5);
+    expect(env.USER_METADATA_KV.delete.mock.calls[0][0]).toBe('event_b');
+    expect(env.USER_METADATA_KV.delete.mock.calls[1][0]).toBe('event_a');
+  });
 });
