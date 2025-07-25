@@ -20,6 +20,15 @@ body {
   box-shadow: 0 0 15px rgba(0,0,0,0.6);
 }
 
+/* Прозрачни контейнери в страницата с въпросника */
+#questPage .container {
+  max-width: 100%;
+  margin: 20px auto;
+  padding: 0;
+  background-color: transparent;
+  box-shadow: none;
+}
+
 .question-text {
   font-size: 18px;
   color: #80cbc4;
@@ -70,6 +79,8 @@ p {
 .page {
   display: none;
   animation: fadeIn 0.4s ease-in-out;
+  position: relative;
+  z-index: 2;
 }
 
 .page.active {
