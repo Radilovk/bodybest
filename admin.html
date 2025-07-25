@@ -256,6 +256,23 @@
     </form>
   </details>
 
+  <details id="colorSettings" class="card">
+    <summary>Настройки на цветове</summary>
+    <label>Основен цвят
+      <input type="color" id="primaryColorInput">
+    </label>
+    <label>Вторичен цвят
+      <input type="color" id="secondaryColorInput">
+    </label>
+    <label>Акцентен цвят
+      <input type="color" id="accentColorInput">
+    </label>
+    <label>Терциерен цвят
+      <input type="color" id="tertiaryColorInput">
+    </label>
+    <button id="saveColorConfig">Запази</button>
+  </details>
+
   <details id="testEmailSection" class="card">
     <summary>Тестов имейл</summary>
     <form id="testEmailForm">
@@ -294,5 +311,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module" src="js/admin.js"></script>
+  <script type="module" src="js/adminColors.js"></script>
 </body>
 </html>
