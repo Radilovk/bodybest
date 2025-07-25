@@ -751,6 +751,28 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
   ```
   Ако `MAILER_ENDPOINT_URL` не е зададен, работникът използва `sendEmailWorker.js`
   и изпраща данните директно към `MAIL_PHP_URL`.
+
+### Смяна на парола
+
+`/api/requestPasswordReset` изпраща имейл с линк за задаване на нова парола. Заявката приема JSON поле `email`.
+
+```bash
+curl -X POST https://<your-domain>/api/requestPasswordReset \
+  -H "Content-Type: application/json" \
+  --data '{"email":"user@example.com"}'
+```
+
+Успешният отговор е `{ "success": true, "message": "Изпратихме линк за смяна на паролата." }`.
+
+След получаване на токен, изпратете POST заявка към `/api/performPasswordReset` с полетата `token`, `password` и `confirm_password`:
+
+```bash
+curl -X POST https://<your-domain>/api/performPasswordReset \
+  -H "Content-Type: application/json" \
+  --data '{"token":"<token>","password":"NovaParola1","confirm_password":"NovaParola1"}'
+```
+
+При успех ще получите `{ "success": true, "message": "Паролата е обновена успешно." }`. При невалиден токен се връща статус **400** и съобщение "Невалиден или изтекъл токен.".
 - **Дебъг логове** – при изпращане на заглавие `X-Debug: 1` към който и да е API
 ендпойнт, worker-ът записва в конзолата кратка информация за заявката.
 

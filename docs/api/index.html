@@ -538,11 +538,27 @@ objects or text. По подразбиране ендпойнтът е отво�
 <p>Ако <code>MAILER_ENDPOINT_URL</code> не е зададен, работникът използва <code>sendEmailWorker.js</code>
 и изпраща данните директно към <code>MAIL_PHP_URL</code>.</p>
 </li>
+<li><p><code>POST /api/requestPasswordReset</code> – изпраща линк за възстановяване на парола.</p></li>
+<pre><code class="bash">curl -X POST https://<your-domain>/api/requestPasswordReset 
+  -H "Content-Type: application/json" 
+  --data {email:user.com}</code><button type="button">Copy</button></pre>
+<li><p><code>POST /api/performPasswordReset</code> – задава нова парола по изпратения токен.</p></li>
+<pre><code class="bash">curl -X POST https://<your-domain>/api/performPasswordReset 
+  -H "Content-Type: application/json" 
+  --data token:&lt;token&gt;</code><button type="button">Copy</button></pre>
 <li>
 <p><strong>Дебъг логове</strong> – при изпращане на заглавие <code>X-Debug: 1</code> към който и да е API
 ендпойнт, worker-ът записва в конзолата кратка информация за заявката.</p>
 </li>
 </ul>
+<li><p><code>POST /api/requestPasswordReset</code> – изпраща линк за възстановяване на парола.</p></li>
+<pre><code class="bash">curl -X POST https://&lt;your-domain&gt;/api/requestPasswordReset \
+  -H "Content-Type: application/json" \
+  --data '{"email":"user@example.com"}'</code><button type="button">Copy</button></pre>
+<li><p><code>POST /api/performPasswordReset</code> – задава нова парола по изпратения токен.</p></li>
+<pre><code class="bash">curl -X POST https://&lt;your-domain&gt;/api/performPasswordReset \
+  -H "Content-Type: application/json" \
+  --data '{"token":"&lt;token&gt;","password":"NovaParola1","confirm_password":"NovaParola1"}'</code><button type="button">Copy</button></pre>
 <h3 id="промяна-на-плана" class="tsd-anchor-link">Промяна на плана<a href="#промяна-на-плана" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><p>Процесът за актуализиране на хранителния план вече протича в два последователни етапа:</p>
 <ol>
 <li>Натиснете бутона <strong>Въведи промени</strong> в секцията „Инструменти за Индивидуализация&quot; на страницата <code>code.html</code>. Ще се отвори модален прозорец <em>Промяна на план</em>.</li>
@@ -626,6 +642,42 @@ Requests to this endpoint also require the admin token and are rate limited.</p>
 <tr>
 <td><code>WELCOME_EMAIL_BODY</code></td>
 <td>Optional HTML body template for welcome emails. The string <code>{{name}}</code> will be replaced with the recipient's name.</td>
+</tr>
+<tr>
+<td><code>QUESTIONNAIRE_EMAIL_SUBJECT</code></td>
+<td>Optional subject for the confirmation email sent след изпращане на въпросника.</td>
+</tr>
+<tr>
+<td><code>QUESTIONNAIRE_EMAIL_BODY</code></td>
+<td>HTML template for that email. Use <code>{{name}}</code> for personalization.</td>
+</tr>
+<tr>
+<td><code>SEND_QUESTIONNAIRE_EMAIL</code></td>
+<td>Set to <code>false</code> or <code>0</code> to disable sending the confirmation email.</td>
+</tr>
+<tr>
+<td><code>ANALYSIS_EMAIL_SUBJECT</code></td>
+<td>Subject for the email, sent when the personal analysis is ready.</td>
+</tr>
+<tr>
+<td><code>ANALYSIS_EMAIL_BODY</code></td>
+<td>HTML body template for that email. Use <code>{{name}}</code> и <code>{{link}}</code>.</td>
+</tr>
+<tr>
+<td><code>ANALYSIS_PAGE_URL</code></td>
+<td>Base URL към <code>analyze.html</code> за генериране на линка.</td>
+</tr>
+<tr>
+<td><code>PASSWORD_RESET_EMAIL_SUBJECT</code></td>
+<td>Subject за писмото при заявка за нова парола.</td>
+</tr>
+<tr>
+<td><code>PASSWORD_RESET_EMAIL_BODY</code></td>
+<td>HTML шаблон за имейла с линка за смяна на паролата. Използвайте <code>{{link}}</code>.</td>
+</tr>
+<tr>
+<td><code>PASSWORD_RESET_PAGE_URL</code></td>
+<td>Базов URL към <code>reset-password.html</code> за генериране на линка.</td>
 </tr>
 <tr>
 <td><code>WORKER_URL</code></td>
