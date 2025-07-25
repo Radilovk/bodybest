@@ -9,7 +9,8 @@ import {
   chatModelOverride,
   chatPromptOverride,
   stripPlanModSignature,
-  pollPlanStatus
+  pollPlanStatus,
+  pollPlanSectionStatus
 } from './app.js';
 
 export let planModChatHistory = [];
@@ -90,6 +91,7 @@ async function sendPlanModChatMessage({ messageText, userId }) {
     if (cleaned !== botReply) {
       botReply = cleaned;
       pollPlanStatus();
+      pollPlanSectionStatus();
       setChatModelOverride(null);
       setChatPromptOverride(null);
     } else {
