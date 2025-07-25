@@ -3357,12 +3357,14 @@ async function createUserEvent(eventType, userId, payload, env) {
     }
 
     const key = `event_${eventType}_${userId}_${Date.now()}`;
+    const { priority = 1, ...restPayload } = payload || {};
     const data = {
         type: eventType,
         userId,
         status: 'pending',
         createdTimestamp: Date.now(),
-        payload
+        priority,
+        payload: restPayload
     };
     await env.USER_METADATA_KV.put(key, JSON.stringify(data));
     if (['planMod', 'updateProfile', 'updateMenu'].includes(eventType)) {
@@ -4222,7 +4224,8 @@ const EVENT_HANDLERS = {
     }
 };
 
-async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
+async function processPendingUserEvents(env, ctx, maxToProcess) {
+    const limit = parseInt(maxToProcess ?? env.MAX_PROCESS_PER_RUN_USER_EVENTS ?? '5', 10);
     const list = await env.USER_METADATA_KV.list({ prefix: 'event_' });
     const events = [];
     for (const key of list.keys) {
@@ -4234,10 +4237,14 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
         }
         events.push({ key: key.name, data: eventData });
     }
-    events.sort((a, b) => (a.data.createdTimestamp || 0) - (b.data.createdTimestamp || 0));
+    events.sort((a, b) => {
+        const prioDiff = (a.data.priority ?? 0) - (b.data.priority ?? 0);
+        if (prioDiff !== 0) return prioDiff;
+        return (a.data.createdTimestamp || 0) - (b.data.createdTimestamp || 0);
+    });
     let processed = 0;
     for (const { key, data } of events) {
-        if (processed >= maxToProcess) break;
+        if (processed >= limit) break;
         const handler = EVENT_HANDLERS[data.type];
         if (handler) {
             ctx.waitUntil(handler(data.userId, env, data.payload));
