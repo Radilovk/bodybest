@@ -356,15 +356,14 @@ input[type="checkbox"] {
 }
 
 .stat-label {
-    font-size: 1.2rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
 }
 
 /* Малки икони за статистиките */
 .stat-icon {
-    width: 40px;
-    height: 40px;
+    width: 80px;
+    height: 80px;
     display: block;
     margin: 0 auto 5px;
 }
@@ -395,6 +394,13 @@ input[type="checkbox"] {
   #page0.hero-start-page #startBtn {
     width: 100%;
     padding: 16px 20px;
+    justify-content: center;
+  }
+}
+
+@media (min-width: 769px) {
+  .stats-bar {
+    flex-direction: row;
     justify-content: center;
   }
 }

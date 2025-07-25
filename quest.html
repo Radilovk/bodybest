@@ -145,16 +145,22 @@
         text-align: center;
     }
     .stat-label {
-        font-size: 1.2rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
     }
 
     .stat-icon {
-        width: 40px;
-        height: 40px;
+        width: 80px;
+        height: 80px;
         display: block;
         margin: 0 auto 5px;
+    }
+
+    @media (min-width: 769px) {
+      .stats-bar {
+        flex-direction: row;
+        justify-content: center;
+      }
     }
     
     @keyframes fadeInContent {
