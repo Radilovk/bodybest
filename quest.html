@@ -193,7 +193,7 @@
   </style>
   <!-- === КРАЙ: НОВИ СТИЛОВЕ === -->
 </head>
-<body>
+<body id="questPage">
 
 <svg style="position:absolute;width:0;height:0" aria-hidden="true">
   <symbol id="icon-brain" viewBox="0 0 40 40" fill="currentColor">
@@ -208,6 +208,7 @@
     <path d="M20 10v10l6 6" />
   </symbol>
 </svg>
+<div id="particles-js"></div>
 
 <!-- Прогрес бар -->
 <div class="step-indicator-container">
@@ -300,7 +301,6 @@
     pageDiv.id = 'page0';
 
     pageDiv.innerHTML = `
-      <div id="particles-js"></div>
       <div class="hero-content">
         <img class="hero-image" id="heroImage" src="https://radilovk.github.io/bodybest/img/myquest.png" alt="Hero">
         
