@@ -39,15 +39,9 @@
         h2 { font-size: clamp(1.3rem, 4vw, 1.7rem); margin-bottom: var(--space-lg); }
         p { margin-bottom: var(--space-lg); color: var(--text-color-secondary); font-size: var(--fs-base);}
 
-        .hero { text-align: center; }
-        .hero-animation { width: 200px; height: 200px; margin: 0 auto var(--space-lg); }
-        .rotate { transform-origin: 50% 50%; animation: rotate 15s linear infinite; }
-        .icon path, .icon line, .icon circle { stroke: currentColor; stroke-width: 2; fill: currentColor; }
-        .brain { color: var(--primary-color); }
-        .dna { color: var(--secondary-color); }
-        .person { color: var(--accent-color); }
-        .food { color: var(--color-success); }
-        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .hero-content { text-align: center; margin-bottom: var(--space-lg); }
+        .hero-image { max-width: 250px; margin: 0 auto var(--space-lg); }
+        .hero-subtitle { font-size: 1.1rem; color: var(--text-color-secondary); margin-bottom: var(--space-lg); }
 
         .marketing-banner {
             background-color: var(--primary-color);
