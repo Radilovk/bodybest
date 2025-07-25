@@ -160,6 +160,11 @@ const ANALYSIS_READY_BODY_TEMPLATE = '<p>Здравей, {{name}}.</p>' +
     '<p>Вашият персонален анализ е готов. Можете да го видите <a href="{{link}}">тук</a>.</p>' +
     '<p>– Екипът на MyBody</p>';
 const ANALYSIS_PAGE_URL_VAR_NAME = 'ANALYSIS_PAGE_URL';
+const PASSWORD_RESET_SUBJECT = 'Смяна на парола';
+const PASSWORD_RESET_BODY_TEMPLATE = '<p>За да зададете нова парола, използвайте <a href="{{link}}">този линк</a>. Линкът е валиден 1 час.</p>';
+const PASSWORD_RESET_EMAIL_SUBJECT_VAR_NAME = 'PASSWORD_RESET_EMAIL_SUBJECT';
+const PASSWORD_RESET_EMAIL_BODY_VAR_NAME = 'PASSWORD_RESET_EMAIL_BODY';
+const PASSWORD_RESET_PAGE_URL_VAR_NAME = 'PASSWORD_RESET_PAGE_URL';
 
 async function sendWelcomeEmail(to, name, env) {
     const html = WELCOME_BODY_TEMPLATE.replace(/{{\s*name\s*}}/g, name);
@@ -228,6 +233,20 @@ async function sendAnalysisLinkEmail(to, name, link, env) {
         await sendEmailUniversal(to, subject, html, env);
     } catch (err) {
         console.error('Failed to send analysis link email:', err);
+    }
+}
+
+async function sendPasswordResetEmail(to, token, env) {
+    const subject = env?.[PASSWORD_RESET_EMAIL_SUBJECT_VAR_NAME] || PASSWORD_RESET_SUBJECT;
+    const tpl = env?.[PASSWORD_RESET_EMAIL_BODY_VAR_NAME] || PASSWORD_RESET_BODY_TEMPLATE;
+    const base = env?.[PASSWORD_RESET_PAGE_URL_VAR_NAME] || 'https://mybody.best/reset-password.html';
+    const url = new URL(base);
+    url.searchParams.set('token', token);
+    const html = tpl.replace(/{{\s*link\s*}}/g, url.toString());
+    try {
+        await sendEmailUniversal(to, subject, html, env);
+    } catch (err) {
+        console.error('Failed to send password reset email:', err);
     }
 }
 
@@ -403,11 +422,11 @@ export default {
             } else if (method === 'POST' && path === '/api/updatePlanData') {
                 responseBody = await handleUpdatePlanRequest(request, env);
             } else if (method === 'POST' && path === '/api/requestPasswordReset') {
-                responseBody = { success: false, message: 'Функцията "Забравена парола" е в разработка.' };
-                responseStatus = 501;
+                responseBody = await handleRequestPasswordReset(request, env);
+                if (responseBody.statusHint) { responseStatus = responseBody.statusHint; }
             } else if (method === 'POST' && path === '/api/performPasswordReset') {
-                 responseBody = { success: false, message: 'Функцията "Забравена парола" е в разработка.' };
-                 responseStatus = 501;
+                responseBody = await handlePerformPasswordReset(request, env);
+                if (responseBody.statusHint) { responseStatus = responseBody.statusHint; }
             } else if (method === 'GET' && path === '/api/getAdaptiveQuiz') { // Запазено от v2.1
                 responseBody = await handleGetAdaptiveQuizRequest(request, env);
             } else if (method === 'POST' && path === '/api/submitAdaptiveQuiz') { // Запазено от v2.1, ще бъде прегледано за интеграция на AI summary
@@ -1308,6 +1327,56 @@ async function handleUpdatePlanRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleUpdatePlanRequest -------------
+
+// ------------- START FUNCTION: handleRequestPasswordReset -------------
+async function handleRequestPasswordReset(request, env) {
+    try {
+        const { email } = await request.json();
+        const clean = email ? String(email).trim().toLowerCase() : '';
+        if (!clean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
+            return { success: false, message: 'Невалиден имейл.', statusHint: 400 };
+        }
+        const userId = await env.USER_METADATA_KV.get(`email_to_uuid_${clean}`);
+        if (!userId) {
+            return { success: true, message: 'Ако имейлът съществува, ще получите линк за смяна на паролата.' };
+        }
+        const token = crypto.randomUUID();
+        await env.USER_METADATA_KV.put(`pwreset_${token}`, userId, { expirationTtl: 3600 });
+        await sendPasswordResetEmail(clean, token, env);
+        return { success: true, message: 'Изпратихме линк за смяна на паролата.' };
+    } catch (error) {
+        console.error('Error in handleRequestPasswordReset:', error.message, error.stack);
+        return { success: false, message: 'Грешка при заявката.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleRequestPasswordReset -------------
+
+// ------------- START FUNCTION: handlePerformPasswordReset -------------
+async function handlePerformPasswordReset(request, env) {
+    try {
+        const { token, password, confirm_password } = await request.json();
+        if (!token) return { success: false, message: 'Липсва токен.', statusHint: 400 };
+        if (!password || password.length < 8) {
+            return { success: false, message: 'Паролата трябва да е поне 8 знака.', statusHint: 400 };
+        }
+        if (confirm_password !== undefined && password !== confirm_password) {
+            return { success: false, message: 'Паролите не съвпадат.', statusHint: 400 };
+        }
+        const userId = await env.USER_METADATA_KV.get(`pwreset_${token}`);
+        if (!userId) return { success: false, message: 'Невалиден или изтекъл токен.', statusHint: 400 };
+        const credStr = await env.USER_METADATA_KV.get(`credential_${userId}`);
+        if (!credStr) return { success: false, message: 'Потребителят не е намерен.', statusHint: 404 };
+        const cred = safeParseJson(credStr, {});
+        cred.passwordHash = await hashPassword(password);
+        await env.USER_METADATA_KV.put(`credential_${userId}`, JSON.stringify(cred));
+        await env.USER_METADATA_KV.delete(`pwreset_${token}`);
+        return { success: true, message: 'Паролата е обновена успешно.' };
+    } catch (error) {
+        console.error('Error in handlePerformPasswordReset:', error.message, error.stack);
+        return { success: false, message: 'Грешка при смяна на паролата.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handlePerformPasswordReset -------------
 
 // ------------- START FUNCTION: handleGetAdaptiveQuizRequest -------------
 async function handleGetAdaptiveQuizRequest(request, env) {
@@ -4181,4 +4250,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, handleSubmitQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, handleSubmitQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
