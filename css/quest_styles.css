@@ -1,427 +1,366 @@
-/* --- BodyBest Questionnaire Styles --- */
-/* @author Gemini @ 2025 */
+/* =================================================================== */
+/* === ЧАСТ 1: ОРИГИНАЛНИ СТИЛОВЕ ЗА ВЪПРОСНИКА === */
+/* === Тези стилове осигуряват съвместимост с всички страници след началната === */
+/* =================================================================== */
 
-/* 1. Глобални настройки и шрифтове
-/* =================================== */
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&display=swap');
-
-:root {
-  --font-primary: 'Manrope', sans-serif;
-  --bg-color: #0d1117;
-  --container-bg: rgba(22, 27, 34, 0.8);
-  --text-color: #c9d1d9;
-  --text-muted: #8b949e;
-  --accent-primary: #58a6ff; /* Синьо */
-  --accent-secondary: #3fb950; /* Зелено за успех */
-  --accent-danger: #f85149; /* Червено за грешки */
-  --border-color: #30363d;
-  --shadow-color: rgba(88, 166, 255, 0.3);
-  --btn-bg: var(--accent-primary);
-  --btn-text: #ffffff;
-  --btn-hover-bg: #6ab0fc;
-}
-
+/* Основен стил – запазен от оригиналната версия с допълнения за мобилност */
 body {
   margin: 0;
-  padding: 0;
-  font-family: var(--font-primary);
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  overflow: hidden; /* Скрива скрола, докато фонът е на цял екран */
-  position: relative;
-  min-height: 100vh;
+  font-family: var(--font-primary, sans-serif); /* Добавен fallback шрифт */
+  background-color: #121212;
+  color: #E0E0E0;
+  overflow-x: hidden;
 }
 
-/* 2. Анимиран фон (само за body)
-/* =================================== */
-body::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(320deg, var(--accent-primary), #0d1117, #1f6feb);
-  background-size: 250% 250%;
-  animation: gradient-animation 18s ease infinite;
-  z-index: -1;
-}
-
-@keyframes gradient-animation {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-
-/* 3. Основен контейнер и страници
-/* =================================== */
 .container {
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
-  position: relative;
-  z-index: 10;
-  height: 100%;
+  max-width: 600px;
+  margin: 60px auto 20px;
+  padding: 20px;
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.6);
 }
 
+.question-text {
+  font-size: 18px;
+  color: #80cbc4;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.answer-label {
+  font-size: 16px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  display: block;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #333;
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.answer-label:hover {
+    background-color: rgba(79, 195, 161, 0.1);
+    border-color: #4fc3a1;
+}
+
+.section-title {
+  font-size: 22px;
+  text-align: center;
+  color: #4fc3a1;
+  margin-bottom: 20px;
+}
+
+h1, h2 {
+  text-align: center;
+  color: #80cbc4;
+  margin-bottom: 20px;
+}
+
+p {
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+/* Всяка страница се състои от "екран" */
 .page {
   display: none;
-  animation: fadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: fadeIn 0.4s ease-in-out;
 }
 
 .page.active {
   display: block;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 4. Стартова страница - Hero Section
-/* =================================== */
-#page0.page.active {
+/* Навигационни бутони */
+.nav-buttons {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh; /* Заема целия екран */
-  text-align: center;
-  padding: 1rem;
-  box-sizing: border-box;
-}
-
-#page0 .hero-icon {
-  font-size: 4rem;
-  color: var(--accent-secondary);
-  text-shadow: 0 0 25px rgba(63, 185, 80, 0.7);
-  margin-bottom: 1rem;
-}
-
-#page0 h1 {
-  font-size: clamp(2rem, 8vw, 2.8rem); /* Адаптивен размер на шрифта */
-  font-weight: 800;
-  color: #ffffff;
-  line-height: 1.2;
-  margin: 0 0 1rem 0;
-}
-
-#page0 h1 strong {
-  color: var(--accent-secondary);
-}
-
-#page0 p {
-  font-size: clamp(1rem, 4vw, 1.1rem);
-  color: var(--text-color);
-  max-width: 450px;
-  margin-bottom: 2.5rem;
-  line-height: 1.6;
-}
-
-#page0 #startBtn {
-  font-size: 1.1rem;
-  font-weight: 700;
-  padding: 16px 32px;
-  border-radius: 50px; /* Заоблен бутон */
-  background: var(--accent-secondary);
-  color: var(--bg-color);
-  border: none;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  display: inline-flex;
-  align-items: center;
   gap: 10px;
+  margin-top: 20px;
 }
 
-#page0 #startBtn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 10px 20px rgba(63, 185, 80, 0.3);
+button {
+  background-color: #4fc3a1;
+  color: #121212;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  min-height: 48px;
+  font-weight: bold; /* По-четим текст на бутоните */
 }
 
-#page0 #startBtn:active {
-  transform: scale(1);
+button:hover {
+  background-color: #43a088;
+  box-shadow: 0 0 10px rgba(128, 203, 196, 0.5);
 }
 
-#page0 #startBtn .bi {
-    font-size: 1.3rem;
-    transition: transform 0.3s ease;
-}
-
-#page0 #startBtn:hover .bi {
-    transform: translateX(5px);
-}
-
-
-/* 5. Въпроси - стил "Glassmorphism"
-/* =================================== */
-/* Този стил се прилага за всички страници, ОСВЕН стартовата */
-.page:not(#page0) {
-  background: var(--container-bg);
-  border: 1px solid var(--border-color);
-  padding: 2rem 1.5rem;
-  border-radius: 16px;
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  margin-top: 80px; /* Отстояние от прогрес бара */
-}
-
-/* 6. Елементи на формата (вътре в .page)
-/* =================================== */
-
-.question-text {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 25px;
-  line-height: 1.4;
-  text-align: center;
-}
-
-.section-title {
-  font-size: 1.5rem;
-  text-align: center;
-  color: var(--accent-primary);
-  margin-bottom: 25px;
-}
-
-h2 {
-    text-align: center;
-    color: #fff;
-    font-size: 1.4rem;
-}
-p {
-  text-align: center;
-  line-height: 1.5;
-  margin-bottom: 20px;
-  color: var(--text-muted);
-}
-
-/* Полета за въвеждане */
 input[type="text"],
 input[type="number"],
 input[type="email"],
 input[type="password"],
 textarea,
 select {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px 15px;
+  width: 100%; /* Променено на 100% за по-добро напасване */
+  box-sizing: border-box; /* Важно за правилното оразмеряване */
+  padding: 10px;
   margin: 10px 0 20px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background-color: rgba(13, 17, 23, 0.7);
-  color: var(--text-color);
-  font-family: var(--font-primary);
-  font-size: 1rem;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #333;
+  border-radius: 5px;
+  background-color: #1e1e1e;
+  color: #E0E0E0;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 input:focus, textarea:focus, select:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px var(--shadow-color);
+    outline: none;
+    border-color: #4fc3a1;
+    box-shadow: 0 0 8px rgba(79, 195, 161, 0.5);
 }
 
-/* Радио бутони и чекбоксове */
-.answer-label {
-  display: block;
-  background-color: rgba(48, 54, 61, 0.5);
-  padding: 12px 15px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  border: 1px solid var(--border-color);
-  transition: border-color 0.2s, background-color 0.2s;
-  font-size: 1rem;
-}
-
-.answer-label:hover {
-  border-color: var(--text-muted);
-}
 
 input[type="radio"],
 input[type="checkbox"] {
-  margin-right: 12px;
-  accent-color: var(--accent-primary);
-  width: 1.1em;
-  height: 1.1em;
-  vertical-align: middle;
-}
-
-/* Стил за селектирани радио/чекбокс */
-input[type="radio"]:checked + label,
-input[type="checkbox"]:checked + label,
-label:has(input[type="radio"]:checked),
-label:has(input[type="checkbox"]:checked) {
-  background-color: rgba(88, 166, 255, 0.2);
-  border-color: var(--accent-primary);
-  color: #fff;
-}
-
-
-/* 7. Навигационни бутони
-/* =================================== */
-.nav-buttons {
-  display: flex;
-  flex-direction: column-reverse; /* "Напред" е отгоре - по-удобно за палеца */
-  gap: 12px;
-  margin-top: 25px;
-}
-
-.nav-buttons button {
-  background-color: var(--btn-bg);
-  color: var(--btn-text);
-  border: none;
-  padding: 14px 20px;
-  font-size: 1rem;
-  font-weight: 700;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  width: 100%;
-}
-
-.nav-buttons button:hover {
-  background-color: var(--btn-hover-bg);
-}
-
-.nav-buttons button:active {
-  transform: scale(0.98);
-}
-
-/* Бутон "Назад" */
-.nav-buttons button[id^="prevBtn"],
-.nav-buttons button[id="regBackBtn"],
-.nav-buttons button[id="finalBackBtn"] {
-  background-color: transparent;
-  color: var(--text-muted);
-  border: 1px solid var(--border-color);
-}
-.nav-buttons button[id^="prevBtn"]:hover,
-.nav-buttons button[id="regBackBtn"]:hover,
-.nav-buttons button[id="finalBackBtn"]:hover {
-  background-color: var(--border-color);
-  color: var(--text-color);
-}
-
-
-/* 8. Прогрес бар и съобщения
-/* =================================== */
-.step-indicator-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  padding: 10px 20px;
-  box-sizing: border-box;
-  background-color: rgba(13, 17, 23, 0.7);
-  backdrop-filter: blur(5px);
-  z-index: 100;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-}
-
-.step-indicator-label {
-    text-align: center;
-    display: block;
-    margin-bottom: 8px;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-.progress-bar-steps {
-    background-color: var(--border-color);
-    border-radius: 5px;
-    height: 6px;
-    overflow: hidden;
-}
-
-.step-progress-bar {
-    background-color: var(--accent-secondary);
-    height: 100%;
-    border-radius: 5px;
-    transition: width 0.4s ease-in-out;
+  margin-right: 10px; /* Повече отстояние */
+  transform: scale(1.2); /* Леко по-големи, за да се виждат по-добре */
 }
 
 .message {
-  padding: 1rem;
-  border-radius: 8px;
+  padding: 0.8rem;
+  border-radius: 0.5rem;
   margin-top: 15px;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   display: none;
   border: 1px solid transparent;
-  text-align: center;
+  text-align: left;
   word-wrap: break-word;
-  font-weight: 700;
 }
 
 .message.error {
-  color: #ffc2bd;
-  background-color: rgba(248, 81, 73, 0.2);
-  border-color: var(--accent-danger);
+  color: #e74c3c;
+  background-color: rgba(231, 76, 60, 0.1);
+  border-color: #e74c3c;
 }
 
 .message.success {
-  color: #a0f1b2;
-  background-color: rgba(63, 185, 80, 0.2);
-  border-color: var(--accent-secondary);
+  color: #2ecc71;
+  background-color: rgba(46, 204, 113, 0.1);
+  border-color: #2ecc71;
 }
 
-.validation-error {
-    color: var(--accent-danger);
-    font-size: 0.9em;
-    margin-top: -10px;
-    margin-bottom: 10px;
-    text-align: left;
-    font-weight: 700;
+.form-group {
+  margin-bottom: 15px;
 }
 
-/* 9. Специфични стилове за регистрация
-/* =================================== */
-#register-form-q .form-group {
-    margin-bottom: 15px;
-}
-#register-form-q .form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-size: 0.9rem;
-    color: var(--text-muted);
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
 }
 
-/* 10. Медийни заявки за по-големи екрани
-/* =================================== */
-@media (min-width: 600px) {
-  body {
-    overflow-y: auto; /* Показва скрола на десктоп */
-  }
+.form-group input {
+  width: 100%;
+}
 
+@keyframes popIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.animate-success {
+  animation: popIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
   .container {
-     margin: 0 auto;
-     height: auto;
+    margin: 80px 15px 20px;
+    padding: 15px;
   }
-  
-  .page:not(#page0) {
-     margin-top: 100px; /* Повече отстояние от прогрес бара */
-     margin-bottom: 50px;
-  }
-
-  .nav-buttons {
-    flex-direction: row-reverse; /* Бутони един до друг */
-  }
-
   .nav-buttons button {
-    width: auto;
-    flex-grow: 1;
+    width: 100%;
   }
+  .question-text {
+    font-size: 16px;
+  }
+  button {
+    font-size: 16px;
+    min-height: 52px;
+  }
+}
 
-  .nav-buttons button[id^="prevBtn"],
-  .nav-buttons button[id^="regBackBtn"],
-  .nav-buttons button[id="finalBackBtn"] {
-    flex-grow: 0;
-    padding: 14px 30px;
+
+/* =================================================================== */
+/* === ЧАСТ 2: НОВИ СТИЛОВЕ ЗА МОДЕРНАТА НАЧАЛНА СТРАНИЦА === */
+/* === Тези стилове се прилагат само за #page0, когато има клас .hero-start-page === */
+/* =================================================================== */
+
+/* Анимиран градиентен фон */
+@keyframes gradientAnimation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Основен контейнер за новия начален екран */
+#page0.hero-start-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh; /* Заема целия екран */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+  color: #fff;
+  overflow: hidden; /* Скрива всичко извън екрана */
+  
+  /* Прилагаме градиента и анимацията */
+  background: linear-gradient(-45deg, #121212, #1e1e1e, #00382f, #1a4a42);
+  background-size: 400% 400%;
+  animation: gradientAnimation 15s ease infinite;
+}
+
+/* Премахваме стиловете от .container, когато е на началната страница */
+.hero-start-page .container {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 900px; /* По-широк контейнер за съдържанието */
+}
+
+/* Контейнер за съдържанието, центрирано */
+.hero-content {
+  text-align: center;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInContent 1s ease-in-out 0.5s forwards;
+}
+
+/* Значка за доверие */
+.trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(79, 195, 161, 0.15);
+  color: #80cbc4;
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  border: 1px solid rgba(79, 195, 161, 0.3);
+  margin-bottom: 25px;
+}
+
+/* Основно заглавие с "пишеща машина" */
+.hero-title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 15px;
+  line-height: 1.3;
+  min-height: 110px; /* Резервираме място, за да не "скача" лейаута */
+}
+
+/* Стил за курсора на пишещата машина */
+.hero-title .typewriter-cursor {
+  display: inline-block;
+  width: 3px;
+  height: 2.4rem;
+  background-color: #4fc3a1;
+  animation: blink 0.7s infinite;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: #E0E0E0;
+  max-width: 550px;
+  margin: 0 auto 40px auto;
+  line-height: 1.6;
+}
+
+/* Бутон за действие (Call to Action) */
+.hero-start-page #startBtn {
+  background-color: #4fc3a1;
+  color: #121212;
+  font-size: 1.1rem;
+  font-weight: bold;
+  padding: 16px 45px;
+  border-radius: 50px;
+  border: none;
+  box-shadow: 0 5px 20px rgba(79, 195, 161, 0.3);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hero-start-page #startBtn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(79, 195, 161, 0.5);
+}
+
+/* Лента със статистики */
+.stats-bar {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  opacity: 0.8;
+}
+.stat-item {
+  text-align: center;
+}
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #80cbc4;
+}
+.stat-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: #a0a0a0;
+  letter-spacing: 0.5px;
+}
+
+/* Анимация за появяване на съдържанието */
+@keyframes fadeInContent {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Медийни заявки за мобилни устройства за новия дизайн */
+@media (max-width: 600px) {
+  .hero-title {
+    font-size: 1.9rem;
+    min-height: 90px;
+  }
+  .hero-title .typewriter-cursor {
+    height: 1.9rem;
+  }
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+  .hero-start-page #startBtn {
+    width: 100%;
+    padding: 16px 20px;
+  }
+  .stats-bar {
+    flex-direction: column;
+    gap: 15px;
   }
 }
