@@ -254,6 +254,16 @@
     age: { min: 10, max: 120 }, height: { min: 100, max: 250 }, weight: { min: 30, max: 300 }, lossKg: { min: 1, max: 100 },
     q1745847247058: { min: 1, max: 300 }, q1745847190198: { min: 1, max: 300 }, q1745847315231: { min: 1, max: 300 }
   };
+  const requiredFields = [
+    'name','gender','age','height','weight','goal','lossKg','motivation','weightChange','weightChangeDetails',
+    'dietHistory','dietType','dietResult','sleepHours','sleepInterrupt','chronotype','q1745878295708','stressLevel',
+    'physicalActivity','activityTypeDaily','q1745847247058','activityTypeWeekly','q1745847190198','activityTypeRare',
+    'q1745847315231','q1745877358368','q1745878063775','q1745890775342','waterIntake','waterReplaceFreq','q1745891342178',
+    'q1745891468155','q1745891537884','overeatingFrequency','foodCravings','foodCravingsDetails','foodTriggers',
+    'q1745891178105','nighteat','q1745891865984','compensationmethod','q1745806296700','comparisson','q1745805447648',
+    'q1745805721482','alcoholFrequency','foodPreference','q1745806409218','q1745806494081','mainChallenge','q1745892518511',
+    'medicalConditions','q1745804366749','medications','medicationsList','supplementsList'
+  ];
 
   /***** Функция за рекурсивно сплескване на въпросите (без промяна) *****/
   function flattenQuestions(questions) {
@@ -394,7 +404,7 @@
     } else {
       html += `<div class="question-text">${question.text || 'Липсва текст на въпроса'}</div>`;
     }
-    const isRequired = false;
+    const isRequired = requiredFields.includes(question.id);
     if (question.type === 'section') {
     } else if (['text','number','email'].includes(question.type)) {
       const range = numericRanges[question.id];
@@ -470,7 +480,7 @@
         <div class="form-group"><label for="register-password-q">Парола (мин. 8 знака):</label><input type="password" id="register-password-q" required minlength="8"></div>
         <div class="form-group"><label for="confirm-password-q">Потвърди Парола:</label><input type="password" id="confirm-password-q" required minlength="8"></div>
         <div id="register-message-q" class="message" role="alert"></div>
-        <div class="nav-buttons"><button type="submit" id="regSubmitBtn">Регистрация</button><button type="button" id="regBackBtn">◀ Назад</button></div>
+        <div class="nav-buttons"><button type="button" id="regBackBtn">◀ Назад</button><button type="submit" id="regSubmitBtn">Регистрация</button></div>
       </form>
     `;
     container.appendChild(pageDiv);
@@ -497,8 +507,8 @@
       <h2>Поздравления! <i class="bi bi-stars"></i><br> Току що направихте най-важната стъпка по пътя към промяната</h2>
       <p>Натиснете бутона, за да изпратите вашите отговори за обработка.</p>
       <div class="nav-buttons" style="justify-content: center;">
-        <button id="submitBtn" type="button">Изпрати</button>
         <button id="finalBackBtn" type="button">◀ Назад</button>
+        <button id="submitBtn" type="button">Изпрати</button>
         <button id="restartBtn" type="button">Отначало</button>
       </div>
        <div id="submit-message" class="message" style="margin-top: 15px; text-align: center; font-weight: bold; word-wrap: break-word;"></div>
@@ -691,20 +701,10 @@
   }
   function validateAnswer(question) {
     if (!question || !question.id) return true;
-    const qId = question.id; let isValid = true; let errorMessage = '';
+    const qId = question.id;
+    let isValid = true;
+    let errorMessage = '';
     const element = document.getElementById(qId);
-    const requiredFields = [
-      'name',
-      'gender',
-      'age',
-      'height',
-      'weight',
-      'goal',
-      'motivation',
-      'physicalActivity',
-      'waterIntake',
-      'sleepHours'
-    ];
     const isRequired = requiredFields.includes(qId);
     let value = '';
     if (['text', 'number', 'email', 'textarea'].includes(question.type)) {
