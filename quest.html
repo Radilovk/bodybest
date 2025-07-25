@@ -224,24 +224,6 @@
 <div class="container" id="dynamicContainer">
   <!-- Динамично генерираните "страници" ще се вмъкнат тук -->
 </div>
-<p id="questInstructions" class="quest-instructions" style="display:none">
-  За да получите адаптирана и работеща стратегия за вас,
-  въведете коректна и изчерпателна информация
-</p>
-<div id="bottomStats" class="stats-bar bottom-stats">
-  <div class="stat-item">
-    <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/aibrain.png" alt="AI Algorithm">
-    <div class="stat-label">AI Med Алгоритъм</div>
-  </div>
-  <div class="stat-item">
-    <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/medic.png" alt="Medical Experts">
-    <div class="stat-label">Реални специалисти</div>
-  </div>
-  <div class="stat-item">
-    <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/clock.png" alt="24/7 Assistant">
-    <div class="stat-label">24/7 Личен асистент</div>
-  </div>
-</div>
 
 <!-- Тайна зона за мобилни устройства за Admin достъп -->
 <div id="secretTapArea" style="position: fixed; top: 0; left: 0; width: 30px; height: 30px; opacity: 0; z-index: 9999;"></div>
@@ -348,7 +330,20 @@
           </button>
         </div>
         
-        
+        <div class="stats-bar">
+          <div class="stat-item">
+            <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/aibrain.png" alt="AI Algorithm">
+            <div class="stat-label">AI Med Алгоритъм</div>
+          </div>
+          <div class="stat-item">
+            <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/medic.png" alt="Medical Experts">
+            <div class="stat-label">Реални специалисти</div>
+          </div>
+          <div class="stat-item">
+            <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/clock.png" alt="24/7 Assistant">
+            <div class="stat-label">24/7 Личен асистент</div>
+          </div>
+        </div>
       </div>
     `;
     container.appendChild(pageDiv);
@@ -634,10 +629,6 @@
          }
     } else { console.error(`Грешка: Активна страница с индекс ${currentPageIndex} не е намерена.`); }
     updateProgress();
-    const instructions = document.getElementById('questInstructions');
-    if (instructions) {
-      instructions.style.display = currentPageIndex > 0 && currentPageIndex < pages.length - 1 ? 'block' : 'none';
-    }
     console.log("Показване на страница:", currentPageIndex, `(ID: page${currentPageIndex})`);
   }
 
