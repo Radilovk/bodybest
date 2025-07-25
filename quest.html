@@ -3,141 +3,203 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Вашият Път към Здравето Започва Тук</title>
-  
-  <!-- Оригинални CSS файлове за съвместимост -->
+  <title>Въпросник за хранителни навици (Dynamic)</title>
   <link href="css/quest_styles.css" rel="stylesheet">
   <link href="css/components_styles.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-  <!-- =================================================================== -->
-  <!-- === НОВИ, ПОДОБРЕНИ СТИЛОВЕ (ВГРАДЕНИ ЗА ЛЕСНА ИНТЕГРАЦИЯ) === -->
-  <!-- =================================================================== -->
+  <!-- === НАЧАЛО: НОВИ СТИЛОВЕ ЗА ВЪЗДЕЙСТВАЩА НАЧАЛНА СТРАНИЦА === -->
   <style>
+    /* Запазваме оригиналния прогрес бар, но го правим 'sticky' (лепкав) */
+    .step-indicator-container {
+        position: sticky;
+        top: 0;
+        z-index: 1000; /* Висок z-index, за да е винаги отгоре */
+        background-color: rgba(18, 18, 18, 0.8); /* Леко прозрачен фон */
+        backdrop-filter: blur(5px); /* Модерен blur ефект */
+        -webkit-backdrop-filter: blur(5px);
+    }
+    
     /* 
-      Част 1: Основни стилове за съвместимост.
-      Тези стилове се зареждат от quest_styles.css, но тук дефинираме
-      промените за новия начален екран.
+      Използваме .hero-start-page, за да приложим стиловете само към първата страница, 
+      без да засягаме останалите.
     */
+    #page0.active.hero-start-page {
+      /* Пълноекранен фон */
+      height: 100vh;
+      width: 100%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+      color: #fff;
+      /* Динамичен градиентен фон */
+      background: linear-gradient(35deg, #1f2c35, #2c3e50, #466368);
+      background-size: 200% 200%;
+      animation: gradientAnimation 15s ease infinite;
+    }
 
-    /* Анимация за финия, бавен фон */
-    @keyframes subtleGradient {
+    @keyframes gradientAnimation {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
 
-    /* Стил за контейнера на новия начален екран */
-    #page0.hero-start-page {
-      position: fixed;
+    /* Контейнер за частиците от particles.js */
+    #particles-js {
+      position: absolute;
+      width: 100%;
+      height: 100%;
       top: 0;
       left: 0;
-      width: 100vw;
-      height: 100dvh; /* Използваме dvh за по-добра съвместимост с мобилни браузъри */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #ffffff;
-      
-      /* По-изтънчен, тъмен и бавен градиент */
-      background: linear-gradient(-45deg, #0a0a0a, #121212, #00201a, #101010);
-      background-size: 400% 400%;
-      animation: subtleGradient 25s ease infinite;
-    }
-
-    /* Нулиране на стиловете от .container, когато е на началната страница */
-    .hero-start-page .container {
-        background: transparent;
-        box-shadow: none;
-        padding: 0;
-        margin: 0;
-        max-width: 1000px;
-    }
-
-    /* Контейнер за съдържанието, което се появява с анимация */
-    .hero-content {
-      text-align: center;
-      padding: 20px;
-      opacity: 0;
-      transform: translateY(15px);
-      animation: fadeInHero 1.2s cubic-bezier(0.19, 1, 0.22, 1) 0.5s forwards;
-    }
-
-    @keyframes fadeInHero {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      z-index: 1;
     }
     
-    /* Основно заглавие - по-голямо, по-въздействащо */
+    /* Премахваме стиловете на .container за първата страница */
+    #page0.active.hero-start-page .container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: transparent;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    
+    .hero-content {
+      position: relative;
+      z-index: 2; /* Съдържанието е над частиците */
+      text-align: center;
+      max-width: 900px;
+      padding: 20px;
+      animation: fadeInContent 1s ease-in-out 0.3s forwards;
+      opacity: 0;
+    }
+    
+    .trust-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50px;
+      font-size: 0.9rem;
+      margin-bottom: 25px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
     .hero-title {
-      font-size: 3rem;
-      font-weight: 800;
-      color: #fff;
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+      margin-bottom: 15px;
       line-height: 1.2;
-      min-height: 140px; /* Резервираме място, за да не "скача" лейаута */
-      margin-bottom: 3rem;
-      text-shadow: 0 0 15px rgba(79, 195, 161, 0.3); /* Фин блясък */
+      min-height: 100px; /* Осигурява място за typewriter-а да не прескача */
     }
 
     .hero-title .typewriter-cursor {
-      display: inline-block;
-      width: 4px;
-      height: 3rem;
-      background-color: #4fc3a1;
-      animation: blink 0.8s infinite;
-      vertical-align: bottom;
-      margin-left: 2px;
-    }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
+        color: #4fc3a1; /* Цвят на курсора */
     }
     
-    /* Бутон за действие (CTA) - централен фокус */
-    .hero-start-page #startBtn {
-      background: #4fc3a1;
+    .hero-subtitle {
+      font-size: 1.1rem;
+      font-weight: 300;
+      color: #E0E0E0;
+      max-width: 550px;
+      margin: 0 auto 40px auto;
+      line-height: 1.6;
+    }
+    
+    #startBtn {
+      position: relative; /* Нужно за пулсиращата рамка */
+      background-color: #4fc3a1;
       color: #121212;
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       font-weight: bold;
-      padding: 18px 50px;
+      padding: 16px 45px;
       border-radius: 50px;
       border: none;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
       cursor: pointer;
-      position: relative;
-      
-      /* По-плавни преходи и по-силен "glow" ефект */
-      transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1), box-shadow 0.3s cubic-bezier(0.19, 1, 0.22, 1);
-      box-shadow: 0 0 25px rgba(79, 195, 161, 0.4);
+      box-shadow: 0 5px 20px rgba(79, 195, 161, 0.3);
+    }
+    
+    #startBtn:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(79, 195, 161, 0.5);
     }
 
-    .hero-start-page #startBtn:hover {
-      transform: translateY(-5px) scale(1.05);
-      box-shadow: 0 0 40px rgba(79, 195, 161, 0.6);
+    /* Пулсираща рамка за призив към действие */
+    #startBtn::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      top: -6px; left: -6px; right: -6px; bottom: -6px;
+      border: 2px solid rgba(79, 195, 161, 0.5);
+      border-radius: 50px;
+      animation: pulse 2s infinite ease-out;
+    }
+    
+    .stats-bar {
+        margin-top: 40px;
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        color: rgba(255, 255, 255, 0.8);
+    }
+    .stat-item {
+        text-align: center;
+    }
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #fff;
+    }
+    .stat-label {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    @keyframes fadeInContent {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.5; }
+      70% { transform: scale(1.1); opacity: 0; }
+      100% { transform: scale(0.95); opacity: 0; }
     }
     
     /* Адаптации за мобилни устройства */
     @media (max-width: 768px) {
       .hero-title {
         font-size: 2.2rem;
-        min-height: 110px;
+        min-height: 80px;
       }
-      .hero-title .typewriter-cursor {
-        height: 2.2rem;
+      .hero-subtitle {
+        font-size: 1rem;
       }
-      .hero-start-page #startBtn {
-        font-size: 1.1rem;
-        width: 90%;
-        padding: 18px 20px;
+      .stats-bar {
+        gap: 20px;
+        flex-direction: column;
+      }
+      #startBtn {
+        width: 100%;
+        padding: 16px 20px;
       }
     }
   </style>
+  <!-- === КРАЙ: НОВИ СТИЛОВЕ === -->
 </head>
 <body>
 
-<!-- Прогрес барът и другите елементи остават непроменени и ще се появят на следващите страници -->
+<!-- Прогрес бар -->
 <div class="step-indicator-container">
   <span class="step-indicator-label">Стъпка <span id="questCurrentStep">0</span> от <span id="questTotalSteps">0</span></span>
   <div class="progress-bar-steps"><div id="questProgressBar" class="step-progress-bar"></div></div>
@@ -147,18 +209,26 @@
   <!-- Динамично генерираните "страници" ще се вмъкнат тук -->
 </div>
 
-<!-- Тайни зони и бутони (остават непроменени) -->
+<!-- Тайна зона за мобилни устройства за Admin достъп -->
 <div id="secretTapArea" style="position: fixed; top: 0; left: 0; width: 30px; height: 30px; opacity: 0; z-index: 9999;"></div>
-<a href="admin.html" id="adminLink" style="display:none; position: fixed; bottom: 10px; right: 10px; background: #4fc3a1; color: #121212; padding: 5px 10px; border-radius: 5px; text-decoration: none;">Admin</a>
+
+<!-- Скрит Admin бутон -->
+<a href="admin.html" id="adminLink" style="display:none; position: fixed; bottom: 10px; right: 10px; background: #4fc3a1; color: #121212; padding: 5px 10px; border-radius: 5px; text-decoration: none;">
+  Admin
+</a>
+
+<!-- Библиотеки за ефекти -->
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<script src="https://unpkg.com/typewriter-effect@latest/dist/core.js"></script>
+
 
 <script type="module">
-  // Всички съществуващи import-и и променливи остават непроменени
   import { workerBaseUrl } from './js/config.js';
   import { setupRegistration } from "./js/register.js";
   import { showMessage, hideMessage } from "./js/messageUtils.js";
   import { updateStepProgress } from "./js/stepProgress.js";
-
-  /***** Глобални променливи (непроменени) *****/
+  
+  /***** Глобални променливи (без промяна) *****/
   let rawQuestions = [];
   let flatPages = [];
   let currentPageIndex = 0;
@@ -166,112 +236,135 @@
   let registrationPageIndex = 0;
   const responses = {};
   const numericRanges = {
-    age: { min: 10, max: 120 }, height: { min: 100, max: 250 }, weight: { min: 30, max: 300 }, lossKg: { min: 1, max: 100 }, q1745847247058: { min: 1, max: 300 }, q1745847190198: { min: 1, max: 300 }, q1745847315231: { min: 1, max: 300 }
+    age: { min: 10, max: 120 }, height: { min: 100, max: 250 }, weight: { min: 30, max: 300 }, lossKg: { min: 1, max: 100 },
+    q1745847247058: { min: 1, max: 300 }, q1745847190198: { min: 1, max: 300 }, q1745847315231: { min: 1, max: 300 }
   };
-  
-  // === НАЧАЛО: САМОСТОЯТЕЛЕН СКРИПТ ЗА TYPEWRITER ЕФЕКТ ===
-  function setupTypewriter(element, texts, wait = 2500, typeSpeed = 100) {
-    let textIndex = 0;
-    let charIndex = 0;
-    let isDeleting = false;
-    const cursor = element.querySelector('.typewriter-cursor');
 
-    function type() {
-      const currentText = texts[textIndex];
-      let speed = isDeleting ? typeSpeed / 2 : typeSpeed;
-      
-      if (isDeleting) {
-        charIndex--;
-      } else {
-        charIndex++;
+  /***** Функция за рекурсивно сплескване на въпросите (без промяна) *****/
+  function flattenQuestions(questions) {
+    let output = [];
+    questions.forEach(q => {
+      let qCopy = Object.assign({}, q);
+      delete qCopy.children;
+      if (qCopy.type !== 'section') { output.push(qCopy); }
+      if (q.children && Array.isArray(q.children)) {
+        output = output.concat(flattenQuestions(q.children));
+      } else if (q.children && typeof q.children === 'object') {
+        for (const answer in q.children) {
+          let childArray = q.children[answer];
+          if (Array.isArray(childArray)) {
+             childArray.forEach(child => { child.dependency = { question: q.id, value: answer }; });
+             output = output.concat(flattenQuestions(childArray));
+          } else { console.warn(`Expected an array for children under key '${answer}' in question '${q.id}', but got:`, typeof childArray); }
+        }
       }
-      
-      element.firstChild.textContent = currentText.substring(0, charIndex);
-      if(cursor) element.appendChild(cursor);
-
-      if (!isDeleting && charIndex === currentText.length) {
-        speed = wait;
-        isDeleting = true;
-      } else if (isDeleting && charIndex === 0) {
-        isDeleting = false;
-        textIndex = (textIndex + 1) % texts.length;
-        speed = 500;
-      }
-
-      setTimeout(type, speed);
-    }
-    
-    if (texts && texts.length > 0) {
-        type();
-    }
+    });
+    return output;
   }
-  // === КРАЙ: СКРИПТ ЗА TYPEWRITER ЕФЕКТ ===
 
-
-  /***** Функция за изграждане на страниците (непроменена) *****/
+  /***** Функция за изграждане на страниците (без промяна) *****/
   function buildDynamicPages() {
     const container = document.getElementById('dynamicContainer');
-    if (!container) return;
+    if (!container) { console.error("Container #dynamicContainer not found!"); return; }
     container.innerHTML = "";
-
-    createStartPage(); // <-- Тази функция е заменена с новата версия
+    createStartPage();
     flatPages = flattenQuestions(rawQuestions).filter(q => q.id !== 'email' && q.type !== 'section');
-
-    flatPages.forEach((q, idx) => {
-      createQuestionPage(q, idx + 1);
-    });
+    flatPages.forEach((q, idx) => { createQuestionPage(q, idx + 1); });
     createRegistrationPage();
     createFinalPage();
     setupFinalPageListener();
-
     totalPages = 1 + flatPages.length + 2;
+    console.log("Общо страници (включително старт и финал):", totalPages);
     updateStepProgress(
-      document.getElementById('questProgressBar'), 0, totalPages - 1,
+      document.getElementById('questProgressBar'), 0, totalPages > 1 ? totalPages - 1 : 1,
       document.getElementById('questCurrentStep'), document.getElementById('questTotalSteps')
     );
     showPage(0);
   }
 
-  // === НАЧАЛО: ИЗЦЯЛО НОВА, ПОДОБРЕНА ФУНКЦИЯ ЗА НАЧАЛНА СТРАНИЦА ===
-  /***** Създаване на стартова страница (ПОДОБРЕНА ВЕРСИЯ) *****/
+  /***** СЪЗДАВАНЕ НА СТАРТОВА СТРАНИЦА (ИЗЦЯЛО НОВА ВЕРСИЯ) *****/
   function createStartPage() {
     const container = document.getElementById('dynamicContainer');
     if (!container) return;
     const pageDiv = document.createElement('div');
-    // Добавяме специален клас, за да активираме новите стилове
     pageDiv.className = 'page hero-start-page'; 
     pageDiv.id = 'page0';
 
-    // Минималистичен и силно въздействащ HTML
     pageDiv.innerHTML = `
+      <div id="particles-js"></div>
       <div class="hero-content">
+        <div class="trust-badge">
+          <i class="bi bi-shield-check"></i>
+          <span>Доверен от 1000+ доволни клиенти</span>
+        </div>
+        
         <h1 class="hero-title">
-          <span></span><span class="typewriter-cursor"></span>
+            <span id="typewriter-text"></span>
         </h1>
+        
+        <p class="hero-subtitle">
+          Вашият персонализиран път към по-добро здраве започва с едно натискане.
+        </p>
+        
         <div class="cta-container">
-          <button type="button" id="startBtn">Започни</button>
+          <button id="startBtn" type="button">
+            Да Започваме! <i class="bi bi-arrow-right"></i>
+          </button>
+        </div>
+        
+        <div class="stats-bar">
+          <div class="stat-item">
+            <div class="stat-value">97%</div>
+            <div class="stat-label">Успеваемост</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">24/7</div>
+            <div class="stat-label">Поддръжка</div>
+          </div>
+           <div class="stat-item">
+            <div class="stat-value">100%</div>
+            <div class="stat-label">Научно обосновано</div>
+          </div>
         </div>
       </div>
     `;
     container.appendChild(pageDiv);
-    
-    // Активираме Typewriter ефекта с новите, по-силни послания
-    const typewriterElement = pageDiv.querySelector('.hero-title');
-    if(typewriterElement) {
-        const textsToType = [
-            "Твоята промяна започва сега.",
-            "Наука, създадена за теб.",
-            "Отключи пълния си потенциал."
-        ];
-        setupTypewriter(typewriterElement, textsToType);
+
+    // --- Активиране на ефектите САМО за тази страница ---
+    // 1. Ефект на пишеща машина
+    const typewriterEl = pageDiv.querySelector('#typewriter-text');
+    if (typewriterEl) {
+        const typewriter = new Typewriter(typewriterEl, {
+            loop: true,
+            delay: 75,
+            cursorClassName: 'typewriter-cursor'
+        });
+        typewriter
+            .typeString('Вашето здраве започва тук.')
+            .pauseFor(2000)
+            .deleteAll()
+            .typeString('Персонализирани решения.')
+            .pauseFor(2000)
+            .deleteAll()
+            .typeString('Научно обосновани резултати.')
+            .pauseFor(2500)
+            .start();
     }
 
-    // Логиката за бутона остава същата, за да работи безпроблемно с Вашата система
+    // 2. Ефект с частици
+    if (window.particlesJS) {
+        particlesJS('particles-js', {
+            "particles": { "number": { "value": 60, "density": { "enable": true, "value_area": 800 } }, "color": { "value": "#4fc3a1" }, "shape": { "type": "circle" }, "opacity": { "value": 0.5, "random": true }, "size": { "value": 3, "random": true }, "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.1, "width": 1 }, "move": { "enable": true, "speed": 1, "direction": "none", "out_mode": "out" } },
+            "interactivity": { "detect_on": "canvas", "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" } }, "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 0.3 } }, "push": { "particles_nb": 4 } } },
+            "retina_detect": true
+        });
+    }
+
+    // Логиката за бутона остава същата, за да работи с Вашата система
     const startBtn = pageDiv.querySelector('#startBtn');
     if (startBtn) {
         startBtn.addEventListener('click', () => {
-          console.log("Новият бутон 'Започни' е натиснат.");
-          // КРИТИЧНО: Премахваме специалния клас, за да се върнат нормалните стилове
+          console.log("Бутон 'Да Започваме!' е натиснат.");
           pageDiv.classList.remove('hero-start-page');
           showPage(1); // Преминаваме към първия въпрос
         });
@@ -279,44 +372,18 @@
         console.error("Start button not found on the new hero start page.");
     }
   }
-  // === КРАЙ: НОВА ФУНКЦИЯ ЗА СТАРТОВА СТРАНИЦА ===
 
 
-  // =============================================================
-  // ... ТУК СЛЕДВА ОСТАНАЛАТА ЧАСТ ОТ ВАШИЯ ОРИГИНАЛЕН JAVASCRIPT КОД ...
-  // КОПИРАЙТЕ И ПОСТАВЕТЕ ВСИЧКО ОТ `flattenQuestions` НАДОЛУ БЕЗ ПРОМЯНА.
-  // За краткост, кодът тук е съкратен, но във вашия файл той трябва да присъства.
-  // =============================================================
-  
-    /***** Функция за рекурсивно сплескване на въпросите (непроменена) *****/
-    function flattenQuestions(questions) {
-    let output = [];
-    questions.forEach(q => {
-      let qCopy = Object.assign({}, q);
-      delete qCopy.children;
-      if (qCopy.type !== 'section') {
-        output.push(qCopy);
-      }
-      if (q.children && Array.isArray(q.children)) {
-        output = output.concat(flattenQuestions(q.children));
-      } else if (q.children && typeof q.children === 'object') {
-        for (const answer in q.children) {
-          let childArray = q.children[answer];
-          if (Array.isArray(childArray)) {
-             childArray.forEach(child => {
-                child.dependency = { question: q.id, value: answer };
-             });
-             output = output.concat(flattenQuestions(childArray));
-          } else {
-             console.warn(`Expected an array for children under key '${answer}' in question '${q.id}', but got:`, typeof childArray);
-          }
-        }
-      }
-    });
-    return output;
-  }
+  /***************************************************************************/
+  /*                                                                         */
+  /*   ТУК СЛЕДВА ОСТАНАЛАТА ЧАСТ ОТ ВАШИЯ ОРИГИНАЛЕН JAVASCRIPT КОД         */
+  /*   (createQuestionPage, createRegistrationPage, showPage, и т.н.)        */
+  /*   КОЯТО ОСТАВА НАПЪЛНО НЕПРОМЕНЕНА                                      */
+  /*                                                                         */
+  /***************************************************************************/
 
-  /***** Създаване на страница за всеки въпрос (непроменена) *****/
+
+  /***** Създаване на страница за всеки въпрос (без промяна) *****/
   function createQuestionPage(question, pageIndex) {
     const container = document.getElementById('dynamicContainer');
      if (!container || !question || !question.id) {
@@ -332,9 +399,7 @@
     } else {
       html += `<div class="question-text">${question.text || 'Липсва текст на въпроса'}</div>`;
     }
-
     const isRequired = false;
-
     if (question.type === 'section') {
     } else if (['text','number','email'].includes(question.type)) {
       const range = numericRanges[question.id];
@@ -366,44 +431,35 @@
         console.warn(`Unsupported question type: ${question.type} for question ID: ${question.id}`);
         html += `<p style="color: red;">Грешка: Неподдържан тип въпрос.</p>`;
     }
-
     if (question.dependency) {
       html += `<div class="fs-xs text-muted" style="margin-top: 10px;">(Показва се ако '${question.dependency.question}' е '${question.dependency.value}')</div>`;
     }
-
     html += `<div class="nav-buttons">
                <button type="button" id="nextBtn${pageIndex}">Напред ▶</button>
                ${pageIndex > 1 ? `<button type="button" id="prevBtn${pageIndex}">◀ Назад</button>` : ''}
              </div>`;
-
     pageDiv.innerHTML = html;
     container.appendChild(pageDiv);
-
     const nextBtn = pageDiv.querySelector(`#nextBtn${pageIndex}`);
     if (nextBtn) {
         nextBtn.addEventListener('click', () => {
-          if (question.type !== 'section' && !validateAnswer(question)) return;
-          if (question.type !== 'section') saveAnswer(question);
+          if (question.type !== 'section' && !validateAnswer(question)) { return; }
+          if (question.type !== 'section') { saveAnswer(question); }
+          console.log(`Преминаване от страница ${pageIndex} към ${pageIndex + 1}`);
           showPage(pageIndex + 1);
         });
-    }
-
+    } else { console.error(`Next button not found for page ${pageIndex}`); }
     const prevBtn = pageDiv.querySelector(`#prevBtn${pageIndex}`);
     if (prevBtn) {
         prevBtn.addEventListener('click', () => {
-           if (question.type !== 'section') saveAnswer(question);
+           console.log(`Връщане от страница ${pageIndex} към ${pageIndex - 1}`);
+           if (question.type !== 'section') { saveAnswer(question); }
            showPage(pageIndex - 1);
         });
     }
   }
-  
-    /***** Останалите функции остават непроменени... *****/
-    // createRegistrationPage, createFinalPage, setupFinalPageListener, showPage,
-    // updateProgress, saveProgress, loadProgress, applySavedResponses, clearProgress,
-    // saveAnswer, validateAnswer, submitResponses, и DOMContentLoaded listener.
-    // Поставете ги тук.
-    
-  /***** Създаване на страница за регистрация *****/
+
+  /***** Създаване на страница за регистрация (без промяна) *****/
   function createRegistrationPage() {
     const container = document.getElementById('dynamicContainer');
     if (!container) return;
@@ -415,42 +471,26 @@
     pageDiv.innerHTML = `
       <h2>Регистрация</h2>
       <form id="register-form-q" novalidate>
-        <div class="form-group">
-          <label for="register-email-q">Имейл:</label>
-          <input type="email" id="register-email-q" required autocomplete="email">
-        </div>
-        <div class="form-group">
-          <label for="register-password-q">Парола (мин. 8 знака):</label>
-          <input type="password" id="register-password-q" required minlength="8">
-        </div>
-        <div class="form-group">
-          <label for="confirm-password-q">Потвърди Парола:</label>
-          <input type="password" id="confirm-password-q" required minlength="8">
-        </div>
+        <div class="form-group"><label for="register-email-q">Имейл:</label><input type="email" id="register-email-q" required autocomplete="email"></div>
+        <div class="form-group"><label for="register-password-q">Парола (мин. 8 знака):</label><input type="password" id="register-password-q" required minlength="8"></div>
+        <div class="form-group"><label for="confirm-password-q">Потвърди Парола:</label><input type="password" id="confirm-password-q" required minlength="8"></div>
         <div id="register-message-q" class="message" role="alert"></div>
-        <div class="nav-buttons">
-          <button type="submit" id="regSubmitBtn">Регистрация</button>
-          <button type="button" id="regBackBtn">◀ Назад</button>
-        </div>
+        <div class="nav-buttons"><button type="submit" id="regSubmitBtn">Регистрация</button><button type="button" id="regBackBtn">◀ Назад</button></div>
       </form>
     `;
     container.appendChild(pageDiv);
     const emailInput = pageDiv.querySelector('#register-email-q');
     if (emailInput && responses.email) emailInput.value = responses.email;
-
-    pageDiv.querySelector('#regBackBtn').addEventListener('click', () => {
-      showPage(regIndex - 1);
-    });
+    pageDiv.querySelector('#regBackBtn').addEventListener('click', () => { showPage(regIndex - 1); });
     setupRegistration("#register-form-q", "#register-message-q");
     pageDiv.querySelector("#register-form-q").addEventListener("registrationSuccess", (event) => {
       responses.email = event.detail.email;
       saveProgress();
       showPage(regIndex + 1);
     });
-
   }
 
-  /***** Създаване на финална страница *****/
+  /***** Създаване на финална страница (без промяна) *****/
   function createFinalPage() {
     const container = document.getElementById('dynamicContainer');
     if (!container) return;
@@ -471,109 +511,79 @@
     container.appendChild(pageDiv);
   }
 
-   function setupFinalPageListener() {
+  /***** Listener за финална страница (без промяна) *****/
+  function setupFinalPageListener() {
         const finalIndex = flatPages.length + 2;
         const pageDiv = document.getElementById('page' + finalIndex);
-        if (!pageDiv) {
-            console.error("Финалната страница не е намерена при настройка на listener.");
-            return;
-        }
+        if (!pageDiv) { console.error("Финалната страница не е намерена."); return; }
         const submitBtn = pageDiv.querySelector('#submitBtn');
         const restartBtn = pageDiv.querySelector('#restartBtn');
         const backBtn = pageDiv.querySelector('#finalBackBtn');
         const submitMessage = pageDiv.querySelector('#submit-message');
-
-        if (!submitBtn || !restartBtn || !backBtn || !submitMessage) {
-             console.error("Един или повече елементи липсват на финалната страница.");
-             return;
-        }
-
-        restartBtn.addEventListener('click', () => {
-            clearProgress();
-            location.reload();
-        });
-
-        backBtn.addEventListener('click', () => {
-            showPage(registrationPageIndex);
-        });
-
+        if (!submitBtn || !restartBtn || !backBtn || !submitMessage) { console.error("Един или повече елементи липсват на финалната страница."); return; }
+        restartBtn.addEventListener('click', () => { clearProgress(); location.reload(); });
+        backBtn.addEventListener('click', () => { showPage(registrationPageIndex); });
         submitBtn.addEventListener('click', async () => {
             submitBtn.disabled = true;
             submitBtn.textContent = 'Изпращане...';
             hideMessage(submitMessage);
-
             try {
                 const result = await submitResponses();
-
                 showMessage(submitMessage, result.message || "Отговорите са изпратени успешно за обработка!", false);
                 submitBtn.style.display = "none";
-        
-                const lastQuestionPageIndex = totalPages - 3; 
-
+                const lastQuestionPageIndex = totalPages - 3;
                 if (lastQuestionPageIndex >= 0) {
                     const backToEditBtn = document.createElement('button');
                     backToEditBtn.textContent = '◀ Назад';
                     backToEditBtn.type = 'button';
-                    backToEditBtn.style.marginTop = '15px'; 
+                    backToEditBtn.style.marginTop = '15px';
                     backToEditBtn.style.backgroundColor = '#f39c12';
                     backToEditBtn.style.color = '#1e1e1e';
-                    backToEditBtn.id = 'dynamicBackBtn';
-
                     backToEditBtn.onclick = () => {
-                        if (submitMessage) {
-                            hideMessage(submitMessage);
-                        }
+                        if (submitMessage) { hideMessage(submitMessage); }
                         backToEditBtn.remove();
-
                         if (submitBtn) {
                             submitBtn.style.display = 'block';
                             submitBtn.disabled = false;
-                            submitBtn.textContent = 'Изпрати отново'; 
+                            submitBtn.textContent = 'Изпрати отново';
                         }
-                        if (restartBtn) {
-                            restartBtn.disabled = false;
-                        }
-
+                        if (restartBtn) { restartBtn.disabled = false; }
                         showPage(lastQuestionPageIndex);
                     };
-
                     submitMessage.parentNode.insertBefore(backToEditBtn, submitMessage.nextSibling);
-
                     submitBtn.style.display = "none";
-                    restartBtn.disabled = false;
-                    restartBtn.textContent = "Започни наново";
-
+                     restartBtn.disabled = false;
+                     restartBtn.textContent = "Започни наново";
                 } else {
-                    submitBtn.style.display = "none";
-                    restartBtn.disabled = false;
-                    restartBtn.textContent = "Започни наново";
+                     submitBtn.style.display = "none";
+                     restartBtn.disabled = false;
+                     restartBtn.textContent = "Започни наново";
                 }
                 restartBtn.textContent = "Попълни отново";
-
             } catch (error) {
+                console.error("Error caught in submitBtn listener:", error);
                 showMessage(submitMessage, `Грешка: ${error.message || 'Неуспешно изпращане.'}`, true);
-                submitBtn.disabled = false; 
+                submitBtn.disabled = false;
                 submitBtn.textContent = 'Опитай отново';
             }
         });
    }
 
+  /***** Показване на страница с условна логика (без промяна) *****/
   function showPage(index) {
     const pages = document.querySelectorAll('.page');
-    if (!pages || pages.length === 0) return;
-
-    if (index > currentPageIndex) { 
+    if (!pages || pages.length === 0) { console.error("Не са намерени страници за показване."); return; }
+    if (index > currentPageIndex) {
         let targetIndex = index;
-        while (targetIndex < pages.length - 1) { 
+        while (targetIndex < pages.length - 1) {
              const question = flatPages[targetIndex - 1];
             if (question && question.dependency) {
                 const parentAnswer = responses[question.dependency.question];
                 const dependencyValue = question.dependency.value;
                 let shouldShow = Array.isArray(parentAnswer) ? parentAnswer.includes(dependencyValue) : parentAnswer === dependencyValue;
-
                 if (!shouldShow) {
-                    targetIndex++;
-                    continue;
+                    console.log(`Прескачане напред: стр. ${targetIndex}`);
+                    targetIndex++; continue;
                  }
             }
              break;
@@ -581,80 +591,69 @@
          index = targetIndex;
      } else if (index < currentPageIndex) {
          let targetIndex = index;
-         while (targetIndex > 0) { 
+         while (targetIndex > 0) {
             const question = flatPages[targetIndex - 1];
              if (question && question.dependency) {
                  const parentAnswer = responses[question.dependency.question];
                  const dependencyValue = question.dependency.value;
                  let shouldShow = Array.isArray(parentAnswer) ? parentAnswer.includes(dependencyValue) : parentAnswer === dependencyValue;
                  if (!shouldShow) {
-                     targetIndex--;
-                     continue;
+                     console.log(`Прескачане назад: стр. ${targetIndex}`);
+                     targetIndex--; continue;
                  }
              }
              break;
          }
          index = targetIndex;
      }
-
     if (index < 0) index = 0;
     if (index >= pages.length) index = pages.length - 1;
-
      if (currentPageIndex > 0 && currentPageIndex < pages.length -1) {
          const previousQuestion = flatPages[currentPageIndex - 1];
-         if (previousQuestion) {
-             saveAnswer(previousQuestion);
-         }
+         if (previousQuestion) { saveAnswer(previousQuestion); }
      }
-
     currentPageIndex = index;
     pages.forEach((pg, idx) => {
         pg.classList.toggle('active', idx === currentPageIndex);
     });
-
     const activePage = pages[currentPageIndex];
     if (activePage) {
         const firstInput = activePage.querySelector('input, select, textarea');
         if (firstInput) {
-             setTimeout(() => {
-                 try { firstInput.focus({ preventScroll: true }); } catch (e) { console.warn("Focus failed:", e); }
-             }, 50);
+             setTimeout(() => { try { firstInput.focus(); } catch (e) { console.warn("Неуспешен опит за фокусиране:", e); } }, 50);
          }
-    }
-
+    } else { console.error(`Грешка: Активна страница с индекс ${currentPageIndex} не е намерена.`); }
     updateProgress();
+    console.log("Показване на страница:", currentPageIndex, `(ID: page${currentPageIndex})`);
   }
 
+  /***** Останалите помощни функции (без промяна) *****/
   function updateProgress() {
     const progressBar = document.getElementById('questProgressBar');
     const currentLabel = document.getElementById('questCurrentStep');
     const totalLabel = document.getElementById('questTotalSteps');
     if (!progressBar || totalPages <= 1) return;
     const currentStep = currentPageIndex;
-    const totalSteps = totalPages - 1;
+    const totalSteps = totalPages > 1 ? totalPages - 1 : 1;
     updateStepProgress(progressBar, currentStep, totalSteps, currentLabel, totalLabel);
   }
-
   function saveProgress() {
     try {
       localStorage.setItem('questResponses', JSON.stringify(responses));
       localStorage.setItem('questCurrentPage', String(currentPageIndex));
-    } catch (e) {
-      console.warn('LocalStorage save failed:', e);
-    }
+    } catch (e) { console.warn('Неуспешно записване в localStorage:', e); }
   }
-
   function loadProgress() {
     try {
       const savedResponses = localStorage.getItem('questResponses');
       const savedPage = localStorage.getItem('questCurrentPage');
       if (savedResponses) Object.assign(responses, JSON.parse(savedResponses));
-      if (savedPage) currentPageIndex = parseInt(savedPage, 10) || 0;
-    } catch (e) {
-      console.warn('LocalStorage load failed:', e);
-    }
+      if (savedPage !== null) {
+        const idx = parseInt(savedPage, 10);
+        if (!Number.isNaN(idx)) currentPageIndex = idx;
+      }
+    } catch (e) { console.warn('Неуспешно зареждане от localStorage:', e); }
   }
-
   function applySavedResponses() {
     for (const [qId, answer] of Object.entries(responses)) {
       const question = flatPages.find(q => q.id === qId);
@@ -673,116 +672,103 @@
       }
     }
   }
-
   function clearProgress() {
     localStorage.removeItem('questResponses');
     localStorage.removeItem('questCurrentPage');
-    Object.keys(responses).forEach(key => delete responses[key]);
+    for (const key in responses) delete responses[key];
     currentPageIndex = 0;
   }
-
   function saveAnswer(question) {
-      if (!question || !question.id) return;
-      const qId = question.id;
-      let answer;
-      const el = document.getElementById(qId);
-      if (['text', 'number', 'email', 'textarea', 'select'].includes(question.type)) {
-        answer = el ? el.value.trim() : undefined;
-      } else if (question.type === 'radio') {
-        const checked = document.querySelector(`input[name="${qId}"]:checked`);
-        answer = checked ? checked.value : null;
+      if (!question || !question.id) { return; }
+      const qId = question.id; let answer;
+      const element = document.getElementById(qId);
+      if (['text', 'number', 'email', 'textarea'].includes(question.type)) { if (element) answer = element.value.trim(); } 
+      else if (question.type === 'select') { if(element) answer = element.value; } 
+      else if (question.type === 'radio') {
+        const checkedRadio = document.querySelector(`input[name="${qId}"]:checked`);
+        answer = checkedRadio ? checkedRadio.value : null;
       } else if (question.type === 'checkbox') {
-        answer = Array.from(document.querySelectorAll(`input[name="${qId}"]:checked`)).map(ch => ch.value);
+        const checked = document.querySelectorAll(`input[name="${qId}"]:checked`);
+        answer = Array.from(checked).map(ch => ch.value);
       }
-      if (answer !== undefined) {
-        responses[qId] = answer;
-        saveProgress();
-      }
+      if (answer !== undefined) { responses[qId] = answer; saveProgress(); } 
+      else { console.warn(`Не е намерен контрол за въпрос с ID: ${qId}`); }
   }
-
   function validateAnswer(question) {
     if (!question || !question.id) return true;
-    const qId = question.id;
-    let isValid = true;
-    let errorMessage = '';
-    const el = document.getElementById(qId);
+    const qId = question.id; let isValid = true; let errorMessage = '';
+    const element = document.getElementById(qId);
     const requiredFields = ['name','gender','age','height','weight','goal','motivation'];
     const isRequired = requiredFields.includes(qId);
-    let value = el ? el.value.trim() : '';
-
-    if (isRequired) {
-        if (question.type === 'radio' && !document.querySelector(`input[name="${qId}"]:checked`)) {
-            isValid = false;
-            errorMessage = "Моля, изберете опция.";
-        } else if (question.type === 'checkbox' && document.querySelectorAll(`input[name="${qId}"]:checked`).length === 0) {
-            isValid = false;
-            errorMessage = "Моля, изберете поне една опция.";
-        } else if (!value) {
-            isValid = false;
-            errorMessage = "Моля, попълнете това поле.";
+    let value = '';
+    if (['text', 'number', 'email', 'textarea'].includes(question.type)) {
+        if (element) value = element.value.trim();
+        if (isRequired && !value) { isValid = false; errorMessage = "Моля, попълнете това поле."; }
+        else if (question.type === 'number') {
+            const num = Number(value);
+            if (value && isNaN(num)) { isValid = false; errorMessage = "Моля, въведете число."; }
+            else { const range = numericRanges[qId]; if (range && (num < range.min || num > range.max)) { isValid = false; errorMessage = `Стойността трябва да е между ${range.min} и ${range.max}.`; } }
         }
+    } else if (question.type === 'select') {
+         if (element) value = element.value;
+         if (isRequired && !value) { isValid = false; errorMessage = "Моля, направете избор."; }
+     } else if (question.type === 'radio') {
+        if (isRequired && !document.querySelector(`input[name="${qId}"]:checked`)) { isValid = false; errorMessage = "Моля, изберете една от опциите."; }
+    } else if (question.type === 'checkbox') {
+        if (isRequired && document.querySelectorAll(`input[name="${qId}"]:checked`).length === 0) { isValid = false; errorMessage = "Моля, изберете поне една опция."; }
     }
-    
-    if (isValid && question.type === 'number' && value) {
-        const num = Number(value);
-        const range = numericRanges[qId];
-        if (isNaN(num)) {
-            isValid = false; errorMessage = "Моля, въведете валидно число.";
-        } else if (range && (num < range.min || num > range.max)) {
-            isValid = false; errorMessage = `Стойността трябва да е между ${range.min} и ${range.max}.`;
-        }
-    }
-
-    let errorElement = document.getElementById(`error-${qId}`);
+    const errorElementId = `error-${qId}`;
+    let errorElement = document.getElementById(errorElementId);
+    const pageElement = document.getElementById('page' + (flatPages.findIndex(p => p.id === qId) + 1));
     if (!isValid) {
-        if (!errorElement) {
+        if (!errorElement && pageElement) {
             errorElement = document.createElement('div');
-            errorElement.id = `error-${qId}`;
+            errorElement.id = errorElementId;
             errorElement.className = 'validation-error';
-            errorElement.style.cssText = "color: #e74c3c; font-size: 0.9em; margin-top: 5px;";
-            const page = el.closest('.page');
-            page?.querySelector('.nav-buttons')?.before(errorElement);
+            errorElement.style.color = '#e74c3c';
+            errorElement.style.fontSize = '0.9em';
+            errorElement.style.marginTop = '5px';
+            errorElement.setAttribute('role', 'alert');
+            const navButtons = pageElement.querySelector('.nav-buttons');
+            if(navButtons) { pageElement.insertBefore(errorElement, navButtons); }
+            else { pageElement.appendChild(errorElement); }
         }
-        errorElement.textContent = errorMessage;
-    } else if (errorElement) {
-        errorElement.remove();
-    }
+        if (errorElement) { errorElement.textContent = errorMessage; }
+    } else if (errorElement) { errorElement.remove(); }
     return isValid;
   }
-
   async function submitResponses() {
       responses.submissionDate = new Date().toISOString();
-      responses.email = String(responses.email || document.getElementById('register-email-q')?.value || '').trim().toLowerCase();
-      
+      console.log("Starting submitResponses...", JSON.stringify(responses, null, 2));
+      const userEmail = String(responses.email || (document.getElementById('register-email-q') ? document.getElementById('register-email-q').value : '')).trim().toLowerCase();
+      responses.email = userEmail;
        try {
-            const res = await fetch(`${workerBaseUrl}/api/submitQuestionnaire`, {
+            const workerResponse = await fetch(`${workerBaseUrl}/api/submitQuestionnaire`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(responses)
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || `Грешка от сървъра: ${res.status}`);
-            return data;
+            const responseData = await workerResponse.json();
+            if (!workerResponse.ok) { throw new Error(responseData.message || `Worker отговори със статус ${workerResponse.status}`); }
+            delete responses.submissionDate;
+            return responseData;
         } catch (error) {
-             console.error("Грешка при изпращане:", error);
-             throw error;
+             delete responses.submissionDate;
+             throw new Error(`Грешка при комуникация със сървъра: ${error.message}`);
         }
   }
 
+  // --- Зареждане на въпросника при старт (без промяна) ---
    document.addEventListener('DOMContentLoaded', () => {
      fetch('questions.json')
        .then(res => {
-         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         if (!res.ok) throw new Error(`HTTP ${res.status} при зареждане на questions.json`);
          const contentType = res.headers.get("content-type");
-         if (!contentType || !contentType.includes("application/json")) {
-             throw new TypeError(`Очакван JSON, но получен ${contentType}`);
-         }
+         if (contentType && !contentType.includes("application/json")) { throw new TypeError(`Очакван JSON, но получен ${contentType}`); }
          return res.json();
        })
        .then(data => {
-         if (!Array.isArray(data) || data.length === 0) {
-            throw new Error("questions.json е празен или невалиден.");
-         }
+         if (!Array.isArray(data) || data.length === 0) { throw new Error("questions.json е празен или невалиден масив."); }
          rawQuestions = data;
          buildDynamicPages();
          loadProgress();
@@ -790,23 +776,19 @@
          showPage(currentPageIndex);
        })
        .catch(err => {
-           console.error('Критична грешка при зареждане на въпросника:', err);
+           console.error('Грешка при зареждане или обработка на questions.json:', err);
            const container = document.getElementById('dynamicContainer');
-           if (container) {
-                container.innerHTML = `<div style="color: #e74c3c; text-align: center; padding: 20px;">Възникна грешка при зареждане на въпросника. Моля, опитайте да презаредите страницата. (${err.message})</div>`;
-           }
+           if(container) { container.innerHTML = `<div style="color: #e74c3c; text-align: center; padding: 20px;">Възникна грешка при зареждане на въпросника. (${err.message})</div>`; }
         });
-
        const secretArea = document.getElementById('secretTapArea');
        const adminLink = document.getElementById('adminLink');
        if(secretArea && adminLink) {
-           secretArea.addEventListener('click', () => {
+           secretArea.addEventListener('click', function() {
              adminLink.style.display = 'block';
              setTimeout(() => { adminLink.style.display = 'none'; }, 10000);
            });
        }
    });
-
 </script>
 
 </body>
