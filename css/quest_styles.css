@@ -300,7 +300,7 @@ input[type="checkbox"] {
 
 
 .hero-subtitle {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-weight: 300;
   color: #E0E0E0;
   max-width: 550px;
@@ -346,8 +346,9 @@ input[type="checkbox"] {
 .stats-bar {
     margin-top: 50px;
     display: flex;
-    justify-content: center;
-    gap: 40px;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
     color: rgba(255, 255, 255, 0.8);
     user-select: none;
 }
@@ -356,14 +357,8 @@ input[type="checkbox"] {
     text-align: center;
 }
 
-.stat-icon {
-    width: 40px;
-    height: 40px;
-    margin: 0 auto 8px auto;
-}
-
 .stat-label {
-    font-size: 0.9rem;
+    font-size: 1.2rem;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -385,12 +380,11 @@ input[type="checkbox"] {
     min-height: 80px;
   }
   .hero-subtitle {
-    font-size: 1rem;
+    font-size: 1.2rem;
     padding: 0 10px;
   }
   .stats-bar {
     gap: 30px;
-    flex-direction: column;
   }
   #page0.hero-start-page #startBtn {
     width: 100%;
