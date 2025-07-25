@@ -97,7 +97,7 @@
 
     
     .hero-subtitle {
-      font-size: 1.1rem;
+      font-size: 1.3rem;
       font-weight: 300;
       color: #E0E0E0;
       max-width: 550px;
@@ -138,20 +138,16 @@
     .stats-bar {
         margin-top: 40px;
         display: flex;
-        justify-content: center;
-        gap: 40px;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
         color: rgba(255, 255, 255, 0.8);
     }
     .stat-item {
         text-align: center;
     }
-    .stat-value {
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: #fff;
-    }
     .stat-label {
-        font-size: 0.9rem;
+        font-size: 1.2rem;
         text-transform: uppercase;
         letter-spacing: 1px;
     }
@@ -173,11 +169,10 @@
         min-height: 80px;
       }
       .hero-subtitle {
-        font-size: 1rem;
+        font-size: 1.2rem;
       }
       .stats-bar {
         gap: 20px;
-        flex-direction: column;
       }
       #startBtn {
         width: 100%;
@@ -304,21 +299,18 @@
         
         <div class="cta-container">
           <button id="startBtn" type="button">
-            Да Започваме! <i class="bi bi-arrow-right"></i>
+            Начало
           </button>
         </div>
         
         <div class="stats-bar">
           <div class="stat-item">
-            <div class="stat-icon"><svg class="icon"><use href="#icon-brain"/></svg></div>
             <div class="stat-label">AI Med Алгоритъм</div>
           </div>
           <div class="stat-item">
-            <div class="stat-icon"><svg class="icon"><use href="#icon-doctor"/></svg></div>
             <div class="stat-label">Реални специалисти</div>
           </div>
           <div class="stat-item">
-            <div class="stat-icon"><svg class="icon"><use href="#icon-clock"/></svg></div>
             <div class="stat-label">24/7 Личен асистент</div>
           </div>
         </div>
@@ -339,7 +331,7 @@
     const startBtn = pageDiv.querySelector('#startBtn');
     if (startBtn) {
         startBtn.addEventListener('click', () => {
-          console.log("Бутон 'Да Започваме!' е натиснат.");
+          console.log("Бутон 'Начало' е натиснат.");
           pageDiv.classList.remove('hero-start-page');
           showPage(1); // Преминаваме към първия въпрос
         });
