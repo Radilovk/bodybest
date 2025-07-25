@@ -1,0 +1,50 @@
+body {
+    margin: 0;
+    font-family: var(--font-primary);
+    background: var(--bg-color) var(--bg-gradient);
+    color: var(--text-color-primary);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--space-lg);
+}
+.hero-title {
+    font-family: var(--font-secondary);
+    color: var(--primary-color);
+    font-size: clamp(2rem, 5vw, 3rem);
+    margin: 0 0 var(--space-lg);
+}
+.hero-tagline {
+    color: var(--text-color-secondary);
+    font-size: clamp(1rem, 3vw, 1.4rem);
+    margin-bottom: var(--space-lg);
+}
+.start-btn {
+    margin-top: var(--space-lg);
+}
+.hero-animation {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto var(--space-lg);
+}
+.rotate {
+    transform-origin: 50% 50%;
+    animation: rotate 15s linear infinite;
+}
+.icon path,
+.icon line,
+.icon circle {
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: currentColor;
+}
+.brain { color: var(--primary-color); }
+.dna { color: var(--secondary-color); }
+.person { color: var(--accent-color); }
+.food { color: var(--color-success); }
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
