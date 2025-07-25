@@ -264,6 +264,9 @@ The repository contains two Cloudflare workers.
 - `worker.js` – the main application worker defined in `wrangler.toml`. It gets deployed to Cloudflare through the GitHub workflow when you run the deployment manually.
 - `worker-backend.js` – a lightweight proxy used by the PHP backend to call Cloudflare AI. Deploy it separately, for example:
 
+Both `worker.js` and `preworker.js` now contain all logic without external modules,
+so the worker can be deployed by uploading a single file.
+
 ```bash
 wrangler deploy worker-backend.js --name bodybest-backend
 ```
