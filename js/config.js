@@ -26,7 +26,7 @@ export const apiEndpoints = {
     acknowledgeAiUpdate: `${workerBaseUrl}/api/acknowledgeAiUpdate`,
     recordFeedbackChat: `${workerBaseUrl}/api/recordFeedbackChat`,
     submitFeedback: `${workerBaseUrl}/api/submitFeedback`,
-    forgotPassword: `${workerBaseUrl}/api/requestPasswordReset`,
+    requestPasswordReset: `${workerBaseUrl}/api/requestPasswordReset`,
     performPasswordReset: `${workerBaseUrl}/api/performPasswordReset`,
     getAchievements: `${workerBaseUrl}/api/getAchievements`,
     generatePraise: `${workerBaseUrl}/api/generatePraise`,
