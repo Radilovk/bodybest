@@ -363,6 +363,14 @@ input[type="checkbox"] {
     letter-spacing: 1px;
 }
 
+/* Малки икони за статистиките */
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    display: block;
+    margin: 0 auto 5px;
+}
+
 @keyframes fadeInContent {
   to { opacity: 1; transform: translateY(0); }
 }

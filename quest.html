@@ -151,6 +151,13 @@
         text-transform: uppercase;
         letter-spacing: 1px;
     }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        display: block;
+        margin: 0 auto 5px;
+    }
     
     @keyframes fadeInContent {
       to { opacity: 1; transform: translateY(0); }
@@ -291,10 +298,10 @@
     pageDiv.innerHTML = `
       <div id="particles-js"></div>
       <div class="hero-content">
-        <img class="hero-image" id="heroImage" src="img/assisticon.png" alt="Hero">
+        <img class="hero-image" id="heroImage" src="https://radilovk.github.io/bodybest/img/myquest.png" alt="Hero">
         
         <p class="hero-subtitle">
-          Вашият персонализиран път към по-добро здраве започва с едно натискане.
+          Разкажи ни повече за теб и твоите цели и стартирай промяната
         </p>
         
         <div class="cta-container">
@@ -305,12 +312,15 @@
         
         <div class="stats-bar">
           <div class="stat-item">
+            <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/aibrain.png" alt="AI Algorithm">
             <div class="stat-label">AI Med Алгоритъм</div>
           </div>
           <div class="stat-item">
+            <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/medic.png" alt="Medical Experts">
             <div class="stat-label">Реални специалисти</div>
           </div>
           <div class="stat-item">
+            <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/clock.png" alt="24/7 Assistant">
             <div class="stat-label">24/7 Личен асистент</div>
           </div>
         </div>
