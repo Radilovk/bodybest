@@ -283,17 +283,7 @@ input[type="checkbox"] {
   transform: translateY(20px);
 }
 
-.trust-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50px;
-  font-size: 0.9rem;
-  margin-bottom: 25px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
+
 
 .hero-title {
   font-size: 2.8rem;
@@ -302,12 +292,7 @@ input[type="checkbox"] {
   text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
   margin-bottom: 15px;
   line-height: 1.2;
-  min-height: 100px; /* Осигурява място за typewriter-а да не прескача */
-}
-
-.hero-title .typewriter-cursor {
-    color: #4fc3a1; /* Цвят на курсора */
-    font-weight: bold;
+  min-height: unset;
 }
 
 .hero-subtitle {
@@ -354,6 +339,20 @@ input[type="checkbox"] {
   animation: pulse 2s infinite ease-out;
 }
 
+.hero-image-input {
+  margin-bottom: 15px;
+  color: #121212;
+}
+
+.hero-image-preview {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 20px;
+  display: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
 .stats-bar {
     margin-top: 50px;
     display: flex;
@@ -367,10 +366,11 @@ input[type="checkbox"] {
     text-align: center;
 }
 
-.stat-value {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #fff;
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 8px auto;
+    fill: #4fc3a1;
 }
 
 .stat-label {
@@ -393,7 +393,6 @@ input[type="checkbox"] {
 @media (max-width: 768px) {
   .hero-title {
     font-size: 2.2rem;
-    min-height: 80px;
   }
   .hero-subtitle {
     font-size: 1rem;

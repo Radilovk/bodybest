@@ -80,17 +80,6 @@
       opacity: 0;
     }
     
-    .trust-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 50px;
-      font-size: 0.9rem;
-      margin-bottom: 25px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
     
     .hero-title {
       font-size: 2.8rem;
@@ -99,13 +88,8 @@
       text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
       margin-bottom: 15px;
       line-height: 1.2;
-      min-height: 100px; /* Осигурява място за typewriter-а да не прескача */
     }
 
-    .hero-title .typewriter-cursor {
-        color: #4fc3a1; /* Цвят на курсора */
-    }
-    
     .hero-subtitle {
       font-size: 1.1rem;
       font-weight: 300;
@@ -155,10 +139,11 @@
     .stat-item {
         text-align: center;
     }
-    .stat-value {
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: #fff;
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 8px auto;
+        fill: #4fc3a1;
     }
     .stat-label {
         font-size: 0.9rem;
@@ -219,7 +204,6 @@
 
 <!-- Библиотеки за ефекти -->
 <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-<script src="https://unpkg.com/typewriter-effect@latest/dist/core.js"></script>
 
 
 <script type="module">
@@ -293,14 +277,10 @@
     pageDiv.innerHTML = `
       <div id="particles-js"></div>
       <div class="hero-content">
-        <div class="trust-badge">
-          <i class="bi bi-shield-check"></i>
-          <span>Доверен от 1000+ доволни клиенти</span>
-        </div>
-        
-        <h1 class="hero-title">
-            <span id="typewriter-text"></span>
-        </h1>
+        <input type="url" id="heroImageUrl" class="hero-image-input" placeholder="Въведете линк към изображение">
+        <img id="heroImagePreview" class="hero-image-preview" alt="Предварителен преглед">
+
+        <h1 class="hero-title">Добре дошли!</h1>
         
         <p class="hero-subtitle">
           Вашият персонализиран път към по-добро здраве започва с едно натискане.
@@ -314,44 +294,43 @@
         
         <div class="stats-bar">
           <div class="stat-item">
-            <div class="stat-value">97%</div>
-            <div class="stat-label">Успеваемост</div>
+            <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+              <path d="M11 6h2v6h-2zm0 8h2v2h-2z"/>
+            </svg>
+            <div class="stat-label">AI Med Алгоритъм</div>
           </div>
           <div class="stat-item">
-            <div class="stat-value">24/7</div>
-            <div class="stat-label">Поддръжка</div>
+            <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/>
+            </svg>
+            <div class="stat-label">Реални специалисти</div>
           </div>
-           <div class="stat-item">
-            <div class="stat-value">100%</div>
-            <div class="stat-label">Научно обосновано</div>
+          <div class="stat-item">
+            <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 1a11 11 0 1 0 11 11A11 11 0 0 0 12 1zm0 20a9 9 0 1 1 9-9 9 9 0 0 1-9 9z"/>
+              <path d="M12.5 7h-1v6l5.25 3.15.5-.86-4.75-2.79z"/>
+            </svg>
+            <div class="stat-label">24/7 Личен асистент</div>
           </div>
         </div>
       </div>
     `;
     container.appendChild(pageDiv);
 
-    // --- Активиране на ефектите САМО за тази страница ---
-    // 1. Ефект на пишеща машина
-    const typewriterEl = pageDiv.querySelector('#typewriter-text');
-    if (typewriterEl) {
-        const typewriter = new Typewriter(typewriterEl, {
-            loop: true,
-            delay: 75,
-            cursorClassName: 'typewriter-cursor'
+    const heroInput = pageDiv.querySelector('#heroImageUrl');
+    const heroPreview = pageDiv.querySelector('#heroImagePreview');
+    if (heroInput && heroPreview) {
+        heroInput.addEventListener('change', () => {
+            const url = heroInput.value.trim();
+            heroPreview.src = url;
+            heroPreview.style.display = url ? 'block' : 'none';
         });
-        typewriter
-            .typeString('Вашето здраве започва тук.')
-            .pauseFor(2000)
-            .deleteAll()
-            .typeString('Персонализирани решения.')
-            .pauseFor(2000)
-            .deleteAll()
-            .typeString('Научно обосновани резултати.')
-            .pauseFor(2500)
-            .start();
     }
 
-    // 2. Ефект с частици
+    // --- Активиране на ефектите САМО за тази страница ---
+
+    // Ефект с частици
     if (window.particlesJS) {
         particlesJS('particles-js', {
             "particles": { "number": { "value": 60, "density": { "enable": true, "value_area": 800 } }, "color": { "value": "#4fc3a1" }, "shape": { "type": "circle" }, "opacity": { "value": 0.5, "random": true }, "size": { "value": 3, "random": true }, "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.1, "width": 1 }, "move": { "enable": true, "speed": 1, "direction": "none", "out_mode": "out" } },
