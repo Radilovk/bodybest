@@ -37,3 +37,33 @@ describe('createUserEvent planMod status', () => {
     expect(statusCalls.length).toBe(0);
   });
 });
+
+describe('createUserEvent updateProfile', () => {
+  test('sets plan status to pending', async () => {
+    const env = {
+      USER_METADATA_KV: {
+        list: jest.fn().mockResolvedValue({ keys: [] }),
+        get: jest.fn(),
+        put: jest.fn()
+      }
+    };
+    const res = await createUserEvent('updateProfile', 'u1', { name: 'a' }, env);
+    expect(res.success).toBe(true);
+    const statusCall = env.USER_METADATA_KV.put.mock.calls.find(c => c[0] === 'plan_status_u1');
+    expect(statusCall).toBeTruthy();
+  });
+
+  test('returns false when event already pending', async () => {
+    const env = {
+      USER_METADATA_KV: {
+        list: jest.fn().mockResolvedValue({ keys: [{ name: 'event_updateProfile_u1_old' }] }),
+        get: jest.fn().mockResolvedValue(JSON.stringify({ status: 'pending' })),
+        put: jest.fn()
+      }
+    };
+    const res = await createUserEvent('updateProfile', 'u1', { n: 1 }, env);
+    expect(res.success).toBe(false);
+    const statusCalls = env.USER_METADATA_KV.put.mock.calls.filter(c => c[0] === 'plan_status_u1');
+    expect(statusCalls.length).toBe(0);
+  });
+});
