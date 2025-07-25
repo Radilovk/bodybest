@@ -693,6 +693,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `POST /api/generatePraise` – създава мотивационно съобщение.
 - `POST /api/recordFeedbackChat` – отбелязва, че автоматичният чат е разгледан.
 - `POST /api/submitFeedback` – изпраща обратна връзка от клиента.
+- `POST /api/requestPasswordReset` – изпраща линк за възстановяване на парола.
 - `GET /api/getAiConfig` – зарежда текущата AI конфигурация.
 - `POST /api/setAiConfig` – записва токени и модели в `RESOURCES_KV`.
 - `GET /api/listAiPresets` – връща имената на записаните AI конфигурации.
