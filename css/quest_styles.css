@@ -1,411 +1,150 @@
-/* =================================================================== */
-/*            ОСНОВНИ СТИЛОВЕ ЗА ВЪПРОСНИКА (ОРИГИНАЛНИ)              */
-/* =================================================================== */
-
-/* Основен стил – запазен от оригиналната версия с допълнения за мобилност */
-body {
-  margin: 0;
-  font-family: var(--font-primary, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
-  background-color: #121212;
-  color: #E0E0E0;
-  overflow-x: hidden;
-}
-
-.container {
-  max-width: 600px;
-  margin: 60px auto 20px;
-  padding: 20px;
-  background-color: #1e1e1e;
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.6);
-}
-
-.question-text {
-  font-size: 18px;
-  color: #80cbc4;
-  margin-bottom: 20px;
-  line-height: 1.4;
-}
-
-.answer-label {
-  font-size: 16px;
-  line-height: 1.4;
-  margin-bottom: 8px;
-  display: block;
-  padding: 10px;
-  border-radius: 5px;
-  border: 1px solid #333;
-  cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
-}
-
-.answer-label:hover {
-    background-color: rgba(79, 195, 161, 0.1);
-    border-color: #4fc3a1;
-}
-
-.section-title {
-  font-size: 22px;
-  text-align: center;
-  color: #4fc3a1;
-  margin-bottom: 20px;
-}
-
-h1, h2 {
-  text-align: center;
-  color: #80cbc4;
-  margin-bottom: 20px;
-}
-
-p {
-  text-align: center;
-  line-height: 1.5;
-  margin-bottom: 20px;
-}
-
-/* Прогрес бар - използва се общият компонент */
-/* Този стил е заменен с новия "sticky" стил по-долу */
-
-/* Всяка страница се състои от "екран" */
-.page {
-  display: none;
-  animation: fadeIn 0.4s ease-in-out;
-}
-
-.page.active {
-  display: block;
-}
-
-/* Навигационни бутони */
-.nav-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-button {
-  background-color: #4fc3a1;
-  color: #121212;
-  border: none;
-  padding: 12px 20px;
-  font-size: 16px;
-  font-weight: bold;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  min-height: 48px;
-}
-
-button:hover {
-  background-color: #43a088;
-  box-shadow: 0 0 10px rgba(128, 203, 196, 0.5);
-}
-
-input[type="text"],
-input[type="number"],
-input[type="email"],
-input[type="password"],
-textarea,
-select {
-  width: 93%;
-  padding: 12px;
-  margin: 10px 0 20px;
-  border: 1px solid #333;
-  border-radius: 5px;
-  background-color: #2a2a2a;
-  color: #E0E0E0;
-  font-size: 16px;
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-
-input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: #4fc3a1;
-    box-shadow: 0 0 8px rgba(79, 195, 161, 0.5);
-}
-
-
-input[type="radio"],
-input[type="checkbox"] {
-  margin-right: 10px;
-  accent-color: #4fc3a1;
-  transform: scale(1.2);
-}
-
-.message {
-  padding: 0.8rem;
-  border-radius: 0.5rem;
-  margin-top: 15px;
-  font-size: 0.9rem;
-  display: none;
-  border: 1px solid transparent;
-  text-align: left;
-  word-wrap: break-word;
-}
-
-.message.error {
-  display: block;
-  color: #e74c3c;
-  background-color: rgba(231, 76, 60, 0.1);
-  border-color: #e74c3c;
-}
-
-.message.success {
-  display: block;
-  color: #2ecc71;
-  background-color: rgba(46, 204, 113, 0.1);
-  border-color: #2ecc71;
-}
-
-.form-group {
-  margin-bottom: 15px;
-  text-align: left;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-.form-group input {
-  width: 100%;
-  box-sizing: border-box; /* Важно за правилно оразмеряване */
-}
-
-@keyframes popIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.animate-success {
-  animation: popIn 0.6s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@media (max-width: 600px) {
-  .container {
-    margin: 60px 15px 20px;
-    padding: 15px;
-  }
-  .nav-buttons button {
-    width: 100%;
-  }
-  .question-text {
-    font-size: 16px;
-  }
-  button {
-    font-size: 16px;
-    min-height: 52px;
-  }
-}
-
-/* =================================================================== */
-/*        СТИЛОВЕ ЗА НОВАТА НАЧАЛНА СТРАНИЦА И ПОДОБРЕНИЯ             */
-/* =================================================================== */
-
-/* Подобрен, "лепкав" прогрес бар */
-.step-indicator-container {
-    position: sticky;
-    top: 0;
-    z-index: 1000; /* Висок z-index, за да е винаги отгоре */
-    background-color: rgba(18, 18, 18, 0.85);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    /* Уверяваме се, че оригиналните стилове за padding/margin са нулирани, ако има такива */
-    margin: 0;
-    padding: 8px 15px; /* Малко вътрешно отстояние */
-}
-
-/* 
-  Използваме .hero-start-page, за да приложим стиловете само към първата страница, 
-  без да засягаме останалите.
-*/
-#page0.active.hero-start-page {
-  /* Пълноекранен фон */
-  height: 100vh;
-  width: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  box-sizing: border-box;
-  color: #fff;
-  /* Динамичен градиентен фон */
-  background: linear-gradient(35deg, #1f2c35, #2c3e50, #466368);
-  background-size: 200% 200%;
-  animation: gradientAnimation 15s ease infinite;
-}
-
-@keyframes gradientAnimation {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* Контейнер за частиците от particles.js */
-#particles-js {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  z-index: 1;
-}
-
-/* Премахваме стиловете на .container за първата страница */
-#page0.active.hero-start-page .container {
-    max-width: 100%;
-    margin: 0;
-    padding: 0;
-    background-color: transparent;
-    border-radius: 0;
-    box-shadow: none;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 2; /* Съдържанието е над частиците */
-  text-align: center;
-  max-width: 900px;
-  padding: 20px;
-  animation: fadeInContent 1s ease-in-out 0.3s forwards;
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.trust-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50px;
-  font-size: 0.9rem;
-  margin-bottom: 25px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.hero-title {
-  font-size: 2.8rem;
-  font-weight: 700;
-  color: #FFFFFF;
-  text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-  margin-bottom: 15px;
-  line-height: 1.2;
-  min-height: 100px; /* Осигурява място за typewriter-а да не прескача */
-}
-
-.hero-title .typewriter-cursor {
-    color: #4fc3a1; /* Цвят на курсора */
-    font-weight: bold;
-}
-
-.hero-subtitle {
-  font-size: 1.1rem;
-  font-weight: 300;
-  color: #E0E0E0;
-  max-width: 550px;
-  margin: 0 auto 40px auto;
-  line-height: 1.6;
-}
-
-/* Специфични стилове за бутона на началната страница */
-#page0.hero-start-page #startBtn {
-  position: relative;
-  background-color: #4fc3a1;
-  color: #121212;
-  font-size: 1.2rem;
-  font-weight: bold;
-  padding: 16px 45px;
-  border-radius: 50px;
-  border: none;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-  box-shadow: 0 5px 20px rgba(79, 195, 161, 0.3);
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-
-#page0.hero-start-page #startBtn:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(79, 195, 161, 0.5);
-  background-color: #5dd4b5; /* Леко по-светъл при hover */
-}
-
-/* Пулсираща рамка за призив към действие */
-#page0.hero-start-page #startBtn::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  top: -6px; left: -6px; right: -6px; bottom: -6px;
-  border: 2px solid rgba(79, 195, 161, 0.5);
-  border-radius: 50px;
-  animation: pulse 2s infinite ease-out;
-}
-
-.stats-bar {
-    margin-top: 50px;
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    color: rgba(255, 255, 255, 0.8);
-    user-select: none;
-}
-
-.stat-item {
-    text-align: center;
-}
-
-.stat-value {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #fff;
-}
-
-.stat-label {
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-@keyframes fadeInContent {
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulse {
-  0% { transform: scale(0.95); opacity: 0.5; }
-  70% { transform: scale(1.1); opacity: 0; }
-  100% { transform: scale(0.95); opacity: 0; }
-}
-
-/* Адаптации за мобилни устройства */
-@media (max-width: 768px) {
-  .hero-title {
-    font-size: 2.2rem;
-    min-height: 80px;
-  }
-  .hero-subtitle {
-    font-size: 1rem;
-    padding: 0 10px;
-  }
-  .stats-bar {
-    gap: 30px;
-    flex-direction: column;
-  }
-  #page0.hero-start-page #startBtn {
-    width: 100%;
-    padding: 16px 20px;
-    justify-content: center;
-  }
-}
+    /* Основен стил – запазен от оригиналната версия с допълнения за мобилност */
+    body {
+      margin: 0;
+      font-family: var(--font-primary);
+      background-color: #121212;
+      color: #E0E0E0;
+      overflow-x: hidden;
+    }
+    .container {
+      max-width: 600px;
+      margin: 60px auto 20px;
+      padding: 20px;
+      background-color: #1e1e1e;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.6);
+    }
+    .question-text {
+      font-size: 18px;
+      color: #80cbc4;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+    .answer-label {
+      font-size: 16px;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .section-title {
+      font-size: 22px;
+      text-align: center;
+      color: #4fc3a1;
+      margin-bottom: 20px;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #80cbc4;
+      margin-bottom: 20px;
+    }
+    p {
+      text-align: center;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    /* Прогрес бар - използва се общият компонент */
+    /* Всяка страница се състои от "екран" */
+    .page {
+      display: none;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+    .page.active {
+      display: block;
+    }
+    /* Навигационни бутони */
+    .nav-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    button {
+      background-color: #4fc3a1;
+      color: #121212;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      min-height: 48px;
+    }
+    button:hover {
+      background-color: #43a088;
+      box-shadow: 0 0 10px #80cbc4;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="password"],
+    textarea,
+    select {
+      width: 93%;
+      padding: 10px;
+      margin: 10px 0 20px;
+      border: 1px solid #333;
+      border-radius: 5px;
+      background-color: #1e1e1e;
+      color: #E0E0E0;
+    }
+    input[type="radio"],
+    input[type="checkbox"] {
+      margin-right: 6px;
+    }
+    .message {
+      padding: 0.8rem;
+      border-radius: 0.5rem;
+      margin-top: 15px;
+      font-size: 0.9rem;
+      display: none;
+      border: 1px solid transparent;
+      text-align: left;
+      word-wrap: break-word;
+    }
+    .message.error {
+      color: #e74c3c;
+      background-color: rgba(231, 76, 60, 0.1);
+      border-color: #e74c3c;
+    }
+    .message.success {
+      color: #2ecc71;
+      background-color: rgba(46, 204, 113, 0.1);
+      border-color: #2ecc71;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .form-group input {
+      width: 100%;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .animate-success {
+      animation: popIn 0.6s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 600px) {
+      .container {
+        margin: 80px 15px 20px;
+        padding: 15px;
+      }
+      .nav-buttons button {
+        width: 100%;
+      }
+      .question-text {
+        font-size: 16px;
+      }
+      button {
+        font-size: 16px;
+        min-height: 52px;
+      }
+    }
