@@ -13,7 +13,7 @@ afterEach(() => {
   }
 })
 
-test('sends confirmation email when configured', async () => {
+test('does not send questionnaire email when analysis email is used', async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: true })
   const env = {
     MAILER_ENDPOINT_URL: 'https://mail.example.com',
@@ -25,10 +25,10 @@ test('sends confirmation email when configured', async () => {
   const req = { json: async () => ({ email: 'user@site.bg', name: 'Иван' }) }
   const res = await handleSubmitQuestionnaire(req, env)
   expect(res.success).toBe(true)
-  expect(fetch).toHaveBeenCalledWith('https://mail.example.com', expect.any(Object))
+  expect(fetch).not.toHaveBeenCalled()
 })
 
-test('works without email configuration', async () => {
+test('works without explicit mail configuration', async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: true })
   const env = {
     USER_METADATA_KV: {
@@ -39,10 +39,10 @@ test('works without email configuration', async () => {
   const req = { json: async () => ({ email: 'x@x.bg' }) }
   const res = await handleSubmitQuestionnaire(req, env)
   expect(res.success).toBe(true)
-  expect(fetch).toHaveBeenCalledWith('https://mybody.best/mailer/mail.php', expect.any(Object))
+  expect(fetch).not.toHaveBeenCalled()
 })
 
-test('skips confirmation email when disabled', async () => {
+test('always skips questionnaire email when disabled', async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: true })
   const env = {
     SEND_QUESTIONNAIRE_EMAIL: '0',
