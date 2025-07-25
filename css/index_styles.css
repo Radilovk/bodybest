@@ -37,17 +37,7 @@
         h1, h2 { font-family: var(--font-secondary); font-weight: 700; color: var(--primary-color); margin-top: 0; }
         h1 { font-size: clamp(1.7rem, 5vw, 2.1rem); margin-bottom: calc(var(--space-lg)*0.8); text-align: center; }
         h2 { font-size: clamp(1.3rem, 4vw, 1.7rem); margin-bottom: var(--space-lg); }
-        p { margin-bottom: var(--space-lg); color: var(--text-color-secondary); font-size: var(--fs-base);}
-
-        .hero { text-align: center; }
-        .hero-animation { width: 200px; height: 200px; margin: 0 auto var(--space-lg); }
-        .rotate { transform-origin: 50% 50%; animation: rotate 15s linear infinite; }
-        .icon path, .icon line, .icon circle { stroke: currentColor; stroke-width: 2; fill: currentColor; }
-        .brain { color: var(--primary-color); }
-        .dna { color: var(--secondary-color); }
-        .person { color: var(--accent-color); }
-        .food { color: var(--color-success); }
-        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        p { margin-bottom: var(--space-lg); color: var(--text-color-secondary); font-size: var(--fs-base);} 
 
         .marketing-banner {
             background-color: var(--primary-color);
@@ -71,23 +61,13 @@
         }
         .form-section { margin-bottom: var(--space-lg); }
         .form-section.hidden { display: none; }
-        .form-wrapper { display: flex; flex-direction: column; gap: var(--space-lg); }
-        .form-group { margin-bottom: calc(var(--space-lg)*0.8); text-align: left; position: relative; }
+        .form-group { margin-bottom: calc(var(--space-lg)*0.8); text-align: left; }
         label { display: block; margin-bottom: 0.4rem; font-weight: 500; color: var(--text-color-primary); font-size: var(--fs-sm); }
         input[type="email"], input[type="password"] {
-            width: 100%; padding: 0.8rem; border: 1px solid var(--border-color);
+            width: 100%; padding: 0.7rem; border: 1px solid var(--border-color);
             border-radius: 0.5rem; background-color: #fff; color: var(--text-color-primary); font-size: var(--fs-base);
             transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .with-icon i, .toggle-pass { position: absolute; top: 50%; transform: translateY(-50%); right: 0.8rem; color: var(--accent-color); }
-        .toggle-pass { background: none; border: none; cursor: pointer; }
-        .floating label { position: absolute; left: 0.8rem; top: 0.8rem; pointer-events: none; transition: transform 0.2s, color 0.2s; background: transparent; }
-        .floating input:focus + label,
-        .floating input:not(:placeholder-shown) + label { transform: translateY(-0.6rem) scale(0.85); color: var(--primary-color); }
-        .password-strength { font-size: 0.75rem; margin-top: 0.3rem; }
-        .strength-weak { color: var(--color-danger); }
-        .strength-medium { color: var(--color-warning); }
-        .strength-strong { color: var(--color-success); }
         input:focus {
              border-color: var(--primary-color); outline: none;
              box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
@@ -134,9 +114,6 @@
             margin-bottom: calc(var(--space-lg)*0.5); /* Отстояние преди другия линк */
         }
 
-        @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in { animation: fadeSlideIn 0.3s ease; }
-
         /* Съобщения */
         .message {
             padding: 0.8rem; border-radius: 0.5rem; margin-top: var(--space-lg);
@@ -145,10 +122,6 @@
         }
         .message.error { color: var(--color-danger); background-color: rgba(231, 76, 60, 0.1); border-color: var(--color-danger); }
         .message.success { color: var(--color-success); background-color: rgba(46, 204, 113, 0.1); border-color: var(--color-success); }
-
-        .benefits { list-style: none; padding: 0; margin: var(--space-lg) 0; display: grid; gap: var(--space-sm); }
-        .benefits li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text-color-primary); }
-        .benefits li i { color: var(--secondary-color); }
 
         /* Секция за въпросник */
         .questionnaire-link {
@@ -172,6 +145,4 @@
             .card { padding: calc(var(--space-lg) * 2); }
             .button { width: auto; padding: 0.8rem 2rem; }
             .questionnaire-link { text-align: center; }
-            .form-wrapper { flex-direction: row; }
-            .benefits { grid-template-columns: repeat(3, 1fr); }
         }
