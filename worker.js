@@ -2346,6 +2346,8 @@ async function processSingleUserPlan(userId, env) {
         console.log(`PROCESS_USER_PLAN (${userId}): Step 0 - Loading prerequisites.`);
         const initialAnswersString = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
         const previousPlanStr = await env.USER_METADATA_KV.get(`${userId}_final_plan`);
+        const lastUpdateTsStr = await env.USER_METADATA_KV.get(`${userId}_last_significant_update_ts`);
+        const lastUpdateTs = lastUpdateTsStr ? parseInt(lastUpdateTsStr, 10) : 0;
         if (!initialAnswersString) {
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): Initial answers not found. Cannot generate plan.`);
             throw new Error(`Initial answers not found for ${userId}. Cannot generate plan.`);
@@ -2449,26 +2451,43 @@ async function processSingleUserPlan(userId, env) {
             '%%AVG_ENERGY_LAST_7_DAYS%%': avgEnergy !== 'N/A' ? `${avgEnergy}/5` : 'N/A'
         };
         replacements["%%PLAN_MODIFICATION%%"] = pendingPlanModText;
+
+        const [profileSecStr, menuSecStr, principlesSecStr, guidanceSecStr] = await Promise.all([
+            env.USER_METADATA_KV.get(`plan_section_profile_${userId}`),
+            env.USER_METADATA_KV.get(`plan_section_menu_${userId}`),
+            env.USER_METADATA_KV.get(`plan_section_principles_${userId}`),
+            env.USER_METADATA_KV.get(`plan_section_guidance_${userId}`)
+        ]);
+        const profileSec = safeParseJson(profileSecStr, null);
+        const menuSec = safeParseJson(menuSecStr, null);
+        const principlesSec = safeParseJson(principlesSecStr, null);
+        const guidanceSec = safeParseJson(guidanceSecStr, null);
+
+        const needProfile = !profileSec || profileSec.ts < lastUpdateTs;
+        const needMenu = !menuSec || menuSec.ts < lastUpdateTs;
+        const needPrinciples = !principlesSec || principlesSec.ts < lastUpdateTs;
+        const needGuidance = !guidanceSec || guidanceSec.ts < lastUpdateTs;
+
         try {
-            const profileRes = await generateProfile(replacements, env, planModelName);
+            const profileRes = needProfile ? await generateProfile(replacements, env, planModelName, userId) : profileSec.data;
             Object.assign(planBuilder, profileRes);
         } catch (e) {
             planBuilder.generationMetadata.errors.push(`Profile gen error: ${e.message}`);
         }
         try {
-            const menuRes = await generateMenu(replacements, env, planModelName);
+            const menuRes = needMenu ? await generateMenu(replacements, env, planModelName, userId) : menuSec.data;
             Object.assign(planBuilder, menuRes);
         } catch (e) {
             planBuilder.generationMetadata.errors.push(`Menu gen error: ${e.message}`);
         }
         try {
-            const principlesRes = await generatePrinciples(replacements, env, planModelName);
+            const principlesRes = needPrinciples ? await generatePrinciples(replacements, env, planModelName, userId) : principlesSec.data;
             Object.assign(planBuilder, principlesRes);
         } catch (e) {
             planBuilder.generationMetadata.errors.push(`Principles gen error: ${e.message}`);
         }
         try {
-            const guidanceRes = await generateGuidance(replacements, env, planModelName);
+            const guidanceRes = needGuidance ? await generateGuidance(replacements, env, planModelName, userId) : guidanceSec.data;
             Object.assign(planBuilder, guidanceRes);
         } catch (e) {
             planBuilder.generationMetadata.errors.push(`Guidance gen error: ${e.message}`);
