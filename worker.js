@@ -147,17 +147,11 @@ const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
 </body>
 </html>`;
 
-const QUESTIONNAIRE_SUBJECT = 'Получихме вашите отговори';
-const QUESTIONNAIRE_BODY_TEMPLATE = '<p>Здравей, {{name}}.</p>' +
-    '<p>Благодарим за попълването на въпросника. Нашият екип ще изготви индивидуален план и ще се свърже с теб скоро.</p>' +
-    '<p>– Екипът на MyBody</p>';
-const QUESTIONNAIRE_EMAIL_SUBJECT_VAR_NAME = 'QUESTIONNAIRE_EMAIL_SUBJECT';
-const QUESTIONNAIRE_EMAIL_BODY_VAR_NAME = 'QUESTIONNAIRE_EMAIL_BODY';
-const SEND_QUESTIONNAIRE_EMAIL_VAR_NAME = 'SEND_QUESTIONNAIRE_EMAIL';
 
 const ANALYSIS_READY_SUBJECT = 'Вашият персонален анализ е готов';
 const ANALYSIS_READY_BODY_TEMPLATE = '<p>Здравей, {{name}}.</p>' +
-    '<p>Вашият персонален анализ е готов. Можете да го видите <a href="{{link}}">тук</a>.</p>' +
+    '<p>Благодарим ти, че попълни въпросника. Изготвихме първоначален анализ въз основа на отговорите ти. Можеш да го разгледаш <a href="{{link}}">тук</a>.</p>' +
+    '<p>Ще използваме резултатите, за да финализираме персоналния ти план.</p>' +
     '<p>– Екипът на MyBody</p>';
 const ANALYSIS_PAGE_URL_VAR_NAME = 'ANALYSIS_PAGE_URL';
 const PASSWORD_RESET_SUBJECT = 'Смяна на парола';
@@ -172,33 +166,6 @@ async function sendWelcomeEmail(to, name, env) {
         await sendEmailUniversal(to, WELCOME_SUBJECT, html, env);
     } catch (err) {
         console.error('Failed to send welcome email:', err);
-    }
-}
-
-async function isQuestionnaireEmailEnabled(env) {
-    if (env && Object.prototype.hasOwnProperty.call(env, SEND_QUESTIONNAIRE_EMAIL_VAR_NAME)) {
-        const v = String(env[SEND_QUESTIONNAIRE_EMAIL_VAR_NAME]).toLowerCase();
-        return v !== '0' && v !== 'false';
-    }
-    try {
-        const val = env?.RESOURCES_KV ? await env.RESOURCES_KV.get('send_questionnaire_email') : null;
-        if (val === null || val === undefined || val === '') return true;
-        const low = String(val).toLowerCase();
-        return low !== '0' && low !== 'false';
-    } catch {
-        return true;
-    }
-}
-
-async function sendQuestionnaireConfirmationEmail(to, name, env) {
-    if (!(await isQuestionnaireEmailEnabled(env))) return;
-    const subject = env?.[QUESTIONNAIRE_EMAIL_SUBJECT_VAR_NAME] || QUESTIONNAIRE_SUBJECT;
-    const tpl = env?.[QUESTIONNAIRE_EMAIL_BODY_VAR_NAME] || QUESTIONNAIRE_BODY_TEMPLATE;
-    const html = tpl.replace(/{{\s*name\s*}}/g, name);
-    try {
-        await sendEmailUniversal(to, subject, html, env);
-    } catch (err) {
-        console.error('Failed to send questionnaire confirmation email:', err);
     }
 }
 
@@ -789,14 +756,11 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         await env.USER_METADATA_KV.put(`${userId}_initial_answers`, JSON.stringify(questionnaireData));
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
-        const confirmTask = sendQuestionnaireConfirmationEmail(userEmail, questionnaireData.name || 'Потребител', env);
         const analysisTask = handleAnalyzeInitialAnswers(userId, env);
         if (ctx) {
-            ctx.waitUntil(confirmTask);
             ctx.waitUntil(analysisTask);
             await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         } else {
-            await confirmTask;
             await analysisTask;
             await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         }
