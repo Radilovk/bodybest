@@ -20,6 +20,16 @@ body {
   box-shadow: 0 0 15px rgba(0,0,0,0.6);
 }
 
+/* Прозрачни контейнери в страницата с въпросника */
+#questPage .container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background-color: transparent;
+  box-shadow: none;
+}
+
 .question-text {
   font-size: 18px;
   color: #80cbc4;
@@ -70,6 +80,8 @@ p {
 .page {
   display: none;
   animation: fadeIn 0.4s ease-in-out;
+  position: relative;
+  z-index: 2;
 }
 
 .page.active {
@@ -239,7 +251,11 @@ input[type="checkbox"] {
   box-sizing: border-box;
   color: #fff;
   /* Динамичен градиентен фон */
-  background: linear-gradient(35deg, #1f2c35, #2c3e50, #466368);
+  background: linear-gradient(35deg,
+    rgba(31, 44, 53, 0.85),
+    rgba(44, 62, 80, 0.85),
+    rgba(70, 99, 104, 0.85)
+  );
   background-size: 200% 200%;
   animation: gradientAnimation 15s ease infinite;
 }

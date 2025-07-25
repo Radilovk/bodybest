@@ -37,7 +37,11 @@
       box-sizing: border-box;
       color: #fff;
       /* Динамичен градиентен фон */
-      background: linear-gradient(35deg, #1f2c35, #2c3e50, #466368);
+      background: linear-gradient(35deg,
+        rgba(31, 44, 53, 0.85),
+        rgba(44, 62, 80, 0.85),
+        rgba(70, 99, 104, 0.85)
+      );
       background-size: 200% 200%;
       animation: gradientAnimation 15s ease infinite;
     }
@@ -193,7 +197,7 @@
   </style>
   <!-- === КРАЙ: НОВИ СТИЛОВЕ === -->
 </head>
-<body>
+<body id="questPage">
 
 <svg style="position:absolute;width:0;height:0" aria-hidden="true">
   <symbol id="icon-brain" viewBox="0 0 40 40" fill="currentColor">
@@ -208,6 +212,7 @@
     <path d="M20 10v10l6 6" />
   </symbol>
 </svg>
+<div id="particles-js"></div>
 
 <!-- Прогрес бар -->
 <div class="step-indicator-container">
@@ -300,7 +305,6 @@
     pageDiv.id = 'page0';
 
     pageDiv.innerHTML = `
-      <div id="particles-js"></div>
       <div class="hero-content">
         <img class="hero-image" id="heroImage" src="https://radilovk.github.io/bodybest/img/myquest.png" alt="Hero">
         
