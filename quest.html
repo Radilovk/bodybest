@@ -38,9 +38,9 @@
       color: #fff;
       /* Динамичен градиентен фон */
       background: linear-gradient(35deg,
-        rgba(31, 44, 53, 0.85),
-        rgba(44, 62, 80, 0.85),
-        rgba(70, 99, 104, 0.85)
+        rgba(31, 44, 53, 0.65),
+        rgba(44, 62, 80, 0.65),
+        rgba(70, 99, 104, 0.65)
       );
       background-size: 200% 200%;
       animation: gradientAnimation 15s ease infinite;
@@ -339,7 +339,7 @@
     // --- Активиране на ефекта с частици САМО за тази страница ---
     if (window.particlesJS) {
         particlesJS('particles-js', {
-            "particles": { "number": { "value": 60, "density": { "enable": true, "value_area": 800 } }, "color": { "value": "#4fc3a1" }, "shape": { "type": "circle" }, "opacity": { "value": 0.5, "random": true }, "size": { "value": 3, "random": true }, "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.1, "width": 1 }, "move": { "enable": true, "speed": 1, "direction": "none", "out_mode": "out" } },
+            "particles": { "number": { "value": 60, "density": { "enable": true, "value_area": 800 } }, "color": { "value": "#4fc3a1" }, "shape": { "type": "circle" }, "opacity": { "value": 0.7, "random": true }, "size": { "value": 3, "random": true }, "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.15, "width": 1 }, "move": { "enable": true, "speed": 1, "direction": "none", "out_mode": "out" } },
             "interactivity": { "detect_on": "canvas", "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" } }, "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 0.3 } }, "push": { "particles_nb": 4 } } },
             "retina_detect": true
         });
