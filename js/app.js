@@ -126,6 +126,18 @@ export function setChatPromptOverride(val) { chatPromptOverride = val; }
 let planStatusInterval = null;
 let planStatusTimeout = null;
 let adminQueriesInterval = null; // Интервал за проверка на администраторски съобщения
+let sectionStatusInterval = null;
+export const planSections = [
+    'profileSummary',
+    'caloriesMacros',
+    'allowedForbiddenFoods',
+    'week1Menu',
+    'principlesWeek2_4',
+    'hydrationCookingSupplements',
+    'psychologicalGuidance',
+    'detailedTargets'
+];
+let lastKnownSectionStatuses = {};
 
 // Променливи за адаптивния въпросник - управлявани от app.js
 export let currentQuizData = null;
@@ -485,6 +497,7 @@ function showPlanPendingState(customMessage) {
     if (selectors.appWrapper) selectors.appWrapper.style.display = 'none';
     if (selectors.planPendingState) {
         selectors.planPendingState.classList.remove('hidden');
+        if (selectors.planSectionProgressContainer) selectors.planSectionProgressContainer.classList.add('hidden');
         const pElements = selectors.planPendingState.querySelectorAll('p');
         if (customMessage) {
             if (pElements.length > 1) pElements[1].innerHTML = customMessage;
@@ -510,6 +523,8 @@ export function stopPlanStatusPolling() {
     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.add('hidden');
     if (selectors.planModificationBtn) selectors.planModificationBtn.classList.remove('hidden');
     if (selectors.chatFab) selectors.chatFab.classList.remove('planmod-processing');
+    if (selectors.planSectionProgressContainer) selectors.planSectionProgressContainer.classList.add('hidden');
+    stopPlanSectionStatusPolling();
 }
 
 export function startAdminQueriesPolling(intervalMs = 60000) {
@@ -544,6 +559,7 @@ export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
             if (resp.ok && data.success) {
                 if (data.planStatus === 'ready') {
                     stopPlanStatusPolling();
+                    stopPlanSectionStatusPolling();
                     if (selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
                     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.add('hidden');
                     if (selectors.planModificationBtn) selectors.planModificationBtn.classList.remove('hidden');
@@ -551,6 +567,7 @@ export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
                     showToast('Планът е обновен.', false, 4000);
                 } else if (data.planStatus === 'error') {
                     stopPlanStatusPolling();
+                    stopPlanSectionStatusPolling();
                     if (selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
                     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.add('hidden');
                     if (selectors.planModificationBtn) selectors.planModificationBtn.classList.remove('hidden');
@@ -566,6 +583,61 @@ export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
     planStatusInterval = setInterval(checkStatus, intervalMs);
     planStatusTimeout = setTimeout(stopPlanStatusPolling, maxDurationMs);
     window.addEventListener('beforeunload', stopPlanStatusPolling);
+}
+
+export function stopPlanSectionStatusPolling() {
+    if (sectionStatusInterval) {
+        clearInterval(sectionStatusInterval);
+        sectionStatusInterval = null;
+    }
+}
+
+function updatePlanSectionProgress(statuses) {
+    if (!selectors.planSectionProgressBar || !selectors.planSectionStatusList) return;
+    const total = planSections.length;
+    let readyCount = 0;
+    selectors.planSectionStatusList.innerHTML = '';
+    planSections.forEach(sec => {
+        const status = statuses[sec] || 'pending';
+        if (status === 'ready') readyCount++;
+        const li = document.createElement('li');
+        li.textContent = `${sec}: ${status}`;
+        if (status === 'ready') li.classList.add('ready');
+        selectors.planSectionStatusList.appendChild(li);
+    });
+    const percent = Math.round((readyCount / total) * 100);
+    if (selectors.planSectionProgressBar) {
+        selectors.planSectionProgressBar.style.width = `${percent}%`;
+    }
+    selectors.planSectionProgressContainer?.classList.remove('hidden');
+}
+
+export function pollPlanSectionStatus(intervalMs = 15000) {
+    if (!currentUserId) return;
+    stopPlanSectionStatusPolling();
+    async function checkSections() {
+        try {
+            const resp = await fetch(`${apiEndpoints.planSectionStatus}?userId=${currentUserId}`);
+            const data = await resp.json();
+            if (resp.ok && data.success && data.sections) {
+                updatePlanSectionProgress(data.sections);
+                for (const [sec, st] of Object.entries(data.sections)) {
+                    if (st === 'ready' && lastKnownSectionStatuses[sec] !== 'ready') {
+                        lastKnownSectionStatuses[sec] = 'ready';
+                        await loadDashboardData();
+                        showToast(`Секцията ${sec} е обновена.`, false, 3000);
+                    }
+                }
+                if (Object.values(data.sections).every(s => s === 'ready')) {
+                    stopPlanSectionStatusPolling();
+                }
+            }
+        } catch (err) {
+            console.error('pollPlanSectionStatus error:', err);
+        }
+    }
+    checkSections();
+    sectionStatusInterval = setInterval(checkSections, intervalMs);
 }
 
 // ==========================================================================
