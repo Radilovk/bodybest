@@ -260,7 +260,6 @@ input[type="checkbox"] {
   top: 0;
   left: 0;
   z-index: 1;
-  pointer-events: none; /* не блокира докосванията върху съдържанието */
 }
 
 /* Премахваме стиловете на .container за първата страница */
