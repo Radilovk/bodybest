@@ -24,13 +24,11 @@
       Използваме .hero-start-page, за да приложим стиловете само към първата страница, 
       без да засягаме останалите.
     */
-    #page0.active.hero-start-page {
-      /* Пълноекранен фон */
-      height: 100dvh; /* Използваме dynamic viewport за мобилни екрани */
-      width: 100%;
-      position: fixed;
-      top: 0;
-      left: 0;
+      #page0.active.hero-start-page {
+        /* Пълноекранен фон */
+        min-height: 100vh; /* Позволява коректно скролиране на мобилни устройства */
+        width: 100%;
+        position: relative; /* Премахваме фиксирането, за да не блокира скролът */
       display: flex;
       flex-direction: column;
       justify-content: center;

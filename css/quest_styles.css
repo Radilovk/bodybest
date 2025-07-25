@@ -228,11 +228,9 @@ input[type="checkbox"] {
 */
 #page0.active.hero-start-page {
   /* Пълноекранен фон */
-  height: 100dvh; /* Използваме динамична височина за по-добро мобилно изживяване */
+  min-height: 100vh; /* Позволява адекватно скролиране на мобилни устройства */
   width: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
+  position: relative; /* Премахваме фиксирането, за да не се блокира скролът */
   display: flex;
   flex-direction: column;
   justify-content: center;
