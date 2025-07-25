@@ -694,6 +694,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 - `POST /api/recordFeedbackChat` – отбелязва, че автоматичният чат е разгледан.
 - `POST /api/submitFeedback` – изпраща обратна връзка от клиента.
 - `POST /api/requestPasswordReset` – изпраща линк за възстановяване на парола.
+- `POST /api/performPasswordReset` – задава нова парола по изпратения токен.
 - `GET /api/getAiConfig` – зарежда текущата AI конфигурация.
 - `POST /api/setAiConfig` – записва токени и модели в `RESOURCES_KV`.
 - `GET /api/listAiPresets` – връща имената на записаните AI конфигурации.
@@ -840,6 +841,9 @@ To send a test email задайте `WORKER_ADMIN_TOKEN`. Може да посо
 | `ANALYSIS_EMAIL_SUBJECT` | Subject for the email, sent when the personal analysis is ready. |
 | `ANALYSIS_EMAIL_BODY` | HTML body template for that email. Use `{{name}}` и `{{link}}` за персонализация. |
 | `ANALYSIS_PAGE_URL` | Base URL към `analyze.html` за генериране на линка в писмото. |
+| `PASSWORD_RESET_EMAIL_SUBJECT` | Subject за писмото при заявка за нова парола. |
+| `PASSWORD_RESET_EMAIL_BODY` | HTML шаблон за имейла с линка за смяна на паролата. Използвайте `{{link}}`. |
+| `PASSWORD_RESET_PAGE_URL` | Базов URL към `reset-password.html` за генериране на линка. |
 | `WORKER_URL` | Base URL of the main worker used by `mailer.js` to fetch email templates when no subject or body is provided. |
 
 ### HTML шаблон за приветствени имейли

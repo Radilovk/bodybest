@@ -111,7 +111,8 @@
         .toggle-link {
             color: var(--primary-color); background: none; border: none; cursor: pointer;
             text-decoration: underline; padding: 0; /* Намален padding */
-            font-size: 0.85rem; display: block; margin-top: calc(var(--space-lg)*0.7); /* Леко намалено отстояние */
+            font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.3rem;
+            margin-top: calc(var(--space-lg)*0.7); /* Леко намалено отстояние */
             text-align: center; /* Центриране по подразбиране */
             transition: color 0.2s;
         }
