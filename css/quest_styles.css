@@ -87,7 +87,7 @@ p {
 }
 
 #questPage .page:not(.hero-start-page) {
-  background-color: rgba(44, 62, 80, 0.65);
+  background-color: rgba(44, 62, 80, 0.45);
   backdrop-filter: blur(4px);
   border-radius: 10px;
   padding: 20px;
@@ -270,9 +270,9 @@ input[type="checkbox"] {
   color: #fff;
   /* Динамичен градиентен фон */
   background: linear-gradient(35deg,
-    rgba(31, 44, 53, 0.65),
-    rgba(44, 62, 80, 0.65),
-    rgba(70, 99, 104, 0.65)
+    rgba(31, 44, 53, 0.55),
+    rgba(44, 62, 80, 0.55),
+    rgba(70, 99, 104, 0.55)
   );
   background-size: 200% 200%;
   animation: gradientAnimation 15s ease infinite;

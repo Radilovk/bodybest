@@ -430,8 +430,8 @@
       html += `<div class="fs-xs text-muted" style="margin-top: 10px;">(Показва се ако '${question.dependency.question}' е '${question.dependency.value}')</div>`;
     }
     html += `<div class="nav-buttons">
-               <button type="button" id="nextBtn${pageIndex}">Напред ▶</button>
                ${pageIndex > 1 ? `<button type="button" id="prevBtn${pageIndex}">◀ Назад</button>` : ''}
+               <button type="button" id="nextBtn${pageIndex}">Напред ▶</button>
              </div>`;
     pageDiv.innerHTML = html;
     container.appendChild(pageDiv);
@@ -693,7 +693,18 @@
     if (!question || !question.id) return true;
     const qId = question.id; let isValid = true; let errorMessage = '';
     const element = document.getElementById(qId);
-    const requiredFields = ['name','gender','age','height','weight','goal','motivation'];
+    const requiredFields = [
+      'name',
+      'gender',
+      'age',
+      'height',
+      'weight',
+      'goal',
+      'motivation',
+      'physicalActivity',
+      'waterIntake',
+      'sleepHours'
+    ];
     const isRequired = requiredFields.includes(qId);
     let value = '';
     if (['text', 'number', 'email', 'textarea'].includes(question.type)) {
