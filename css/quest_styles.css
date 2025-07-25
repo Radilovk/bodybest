@@ -228,7 +228,7 @@ input[type="checkbox"] {
 */
 #page0.active.hero-start-page {
   /* Пълноекранен фон */
-  height: 100vh;
+  height: 100dvh; /* Използваме динамична височина за по-добро мобилно изживяване */
   width: 100%;
   position: fixed;
   top: 0;
