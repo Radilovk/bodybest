@@ -16,17 +16,15 @@
 .step-indicator-container {
   text-align: center;
   margin-bottom: var(--space-md);
+  background-color: rgba(var(--surface-background-rgb), 0.5); /* полу-прозрачно фонче */
 }
 .step-indicator-label {
-  display: block;
-  font-size: 0.85em;
-  color: var(--text-color-muted);
-  margin-bottom: var(--space-xs);
+  display: none; /* етикетът вече не се показва */
 }
 .progress-bar-steps {
   width: 100%;
   height: 8px;
-  background-color: var(--surface-background);
+  background-color: color-mix(in srgb, var(--secondary-color) 30%, var(--surface-background)); /* по-подходящ цвят */
   border-radius: var(--radius-sm);
   overflow: visible;
   margin: 0 auto;
