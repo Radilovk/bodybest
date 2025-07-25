@@ -1,4 +1,5 @@
-/* --- BodyBest Questionnaire Redesign --- */
+--- START OF FILE: quest_styles.css ---
+/* --- BodyBest Questionnaire Redesign (Final & Corrected) --- */
 
 /* 1. Глобални променливи и основи
 ------------------------------------- */
@@ -73,7 +74,6 @@ body {
   z-index: 1;
 }
 
-/* Анимация за изчезване */
 .hero-container.exiting .hero-content {
   animation: fadeOutUp 0.5s ease-in forwards;
 }
@@ -94,7 +94,7 @@ body {
 
 .hero-icon .fa-brain {
   margin-left: 15px;
-  animation-delay: -3s; /* Разминаване на анимациите */
+  animation-delay: -3s;
 }
 
 .hero-title {
@@ -120,25 +120,14 @@ body {
 }
 
 /* Частици за фон */
-.particles {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 0;
-}
-.particle {
-  position: absolute;
-  background-color: var(--primary-accent);
-  border-radius: 50%;
-  opacity: 0;
-  animation: float 20s infinite linear;
-}
+.particles { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; }
+.particle { position: absolute; background-color: var(--primary-accent); border-radius: 50%; opacity: 0; animation: float 20s infinite linear; }
 @keyframes float {
   0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
   10% { opacity: 0.7; }
   90% { opacity: 0.7; }
   100% { transform: translateY(-10vh) scale(1); opacity: 0; }
 }
-/* Разпределяне на частиците - всеки има различен размер, позиция и забавяне */
 .particle:nth-child(1) { width: 10px; height: 10px; left: 5%; animation-delay: 0s; }
 .particle:nth-child(2) { width: 20px; height: 20px; left: 15%; animation-delay: 2s; animation-duration: 25s; }
 .particle:nth-child(3) { width: 8px; height: 8px; left: 25%; animation-delay: 4s; }
@@ -149,13 +138,11 @@ body {
 .particle:nth-child(8) { width: 14px; height: 14px; left: 75%; animation-delay: 5s; animation-duration: 19s; }
 .particle:nth-child(9) { width: 10px; height: 10px; left: 85%; animation-delay: 7s; }
 .particle:nth-child(10) { width: 16px; height: 16px; left: 95%; animation-delay: 9s; animation-duration: 24s; }
-/* Допълнителни за плътност */
 .particle:nth-child(11) { width: 8px; height: 8px; left: 20%; animation-delay: 11s; }
 .particle:nth-child(12) { width: 12px; height: 12px; left: 40%; animation-delay: 13s; animation-duration: 17s; }
 .particle:nth-child(13) { width: 15px; height: 15px; left: 60%; animation-delay: 15s; }
 .particle:nth-child(14) { width: 9px; height: 9px; left: 80%; animation-delay: 12s; animation-duration: 21s; }
 .particle:nth-child(15) { width: 11px; height: 11px; left: 90%; animation-delay: 14s; }
-
 
 /* 3. Обща структура на въпросника
 ------------------------------------- */
@@ -175,9 +162,9 @@ body {
   max-width: 650px;
   margin: 100px auto 40px;
   padding: 20px;
-  background-color: transparent; /* Премахваме фона, body го осигурява */
+  background-color: transparent;
   border-radius: 10px;
-  box-shadow: none; /* Премахваме сянката */
+  box-shadow: none;
 }
 
 .page {
@@ -252,7 +239,6 @@ button:disabled {
   transform: none;
 }
 
-/* Бутон "Назад" */
 button[id^="prevBtn"], button#regBackBtn, button#finalBackBtn {
   background-color: transparent;
   color: var(--text-muted);
@@ -291,9 +277,10 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-accent) 25%, transparent);
 }
 
-/* Персонализирани Радио и Чекбокс бутони */
+/* Персонализирани Радио и Чекбокс бутони (КОРИГИРАНА ВЕРСИЯ) */
 .answer-label {
-  display: block;
+  display: flex;
+  align-items: center;
   background-color: var(--card-bg);
   padding: 15px 20px;
   border: 1px solid var(--border-color);
@@ -313,51 +300,65 @@ input:focus, textarea:focus, select:focus {
 
 .answer-label input[type="radio"],
 .answer-label input[type="checkbox"] {
-  display: none; /* Скриваме оригиналния бутон */
+  opacity: 0;
+  position: absolute;
+  width: 0;
+  height: 0;
 }
 
-.answer-label::before { /* Персонализиран бутон */
-  content: '';
-  position: absolute;
-  left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
+.custom-control {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
   border: 2px solid var(--border-color);
   background-color: var(--bg-color);
+  margin-right: 15px;
+  position: relative;
   transition: all 0.2s ease-out;
 }
-.answer-label { padding-left: 55px; } /* Правим място за новия бутон */
 
-.answer-label input[type="radio"] + * { /* За текст */ }
-.answer-label input[type="radio"]::before { border-radius: 50%; }
-.answer-label input[type="checkbox"]::before { border-radius: 4px; }
-
-/* Стил при избран бутон */
-.answer-label input:checked + * { /* Текстът не се променя */ }
-.answer-label input:checked ~ ::before {
-  background-color: var(--primary-accent);
-  border-color: var(--primary-accent);
+.custom-control.radio {
+  border-radius: 50%;
+}
+.custom-control.checkbox {
+  border-radius: 4px;
+}
+.control-text {
+  line-height: 1.4;
 }
 
-/* "Чвка" за избрано състояние */
-.answer-label::after {
+.custom-control::after {
   content: '';
   position: absolute;
-  left: 28px;
-  top: 50%;
-  width: 6px;
-  height: 12px;
-  border: solid white;
-  border-width: 0 3px 3px 0;
-  transform: translateY(-65%) rotate(45deg);
   opacity: 0;
   transition: opacity 0.2s ease-out;
 }
 
-.answer-label input:checked ~ ::after {
+.answer-label input:checked + .custom-control {
+  background-color: var(--primary-accent);
+  border-color: var(--primary-accent);
+}
+
+.answer-label input:checked + .custom-control.radio::after {
   opacity: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: white;
+}
+
+.answer-label input:checked + .custom-control.checkbox::after {
+  opacity: 1;
+  left: 7px;
+  top: 3px;
+  width: 6px;
+  height: 12px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
 }
 
 /* Съобщения за грешки/успех */
@@ -434,3 +435,4 @@ input:focus, textarea:focus, select:focus {
     min-width: 150px;
   }
 }
+--- END OF FILE: quest_styles.css ---
