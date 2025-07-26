@@ -6,7 +6,7 @@ let mockLoad;
 
 beforeEach(async () => {
   jest.resetModules();
-  mockLoad = jest.fn().mockResolvedValue({ colors: { primary: '#111111', accent: '#222222' } });
+  mockLoad = jest.fn().mockResolvedValue({ colors: { 'primary-color': '#111111', 'accent-color': '#222222' } });
   jest.unstable_mockModule('../adminConfig.js', () => ({ loadConfig: mockLoad }));
   jest.unstable_mockModule('../app.js', () => ({
     fullDashboardData: {},
