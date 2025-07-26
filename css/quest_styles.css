@@ -1,571 +1,1185 @@
 /* =================================================================== */
-/*        ДЕФИНИЦИИ НА ТЕМИ И ЦВЕТОВИ ПРОМЕНЛИВИ              */
+
+/*        ДЕФИНИЦИИ НА ТЕМИ И ЦВЕТОВИ ПРОМЕНЛИВИ (НОВО)              */
+
 /* =================================================================== */
+
+
 
 :root {
+
   /* ТЪМНА ТЕМА (ПО ПОДРАЗБИРАНЕ) */
+
   --font-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+
+
+  /* Цветове */
+
   --bg-primary: #121212;
+
   --bg-surface: #1e1e1e;
+
   --bg-surface-secondary: #2a2a2a;
+
   --bg-sticky-header: rgba(18, 18, 18, 0.85);
+
   --box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+
+
+
   --text-primary: #E0E0E0;
+
   --text-highlight: #80cbc4;
+
   --text-accent: #4fc3a1;
+
   --text-on-accent: #121212;
+
+
+
   --border-primary: #333;
+
   --border-focus: #4fc3a1;
+
+
+
   --accent-primary: #4fc3a1;
+
   --accent-primary-hover: #43a088;
+
   --accent-primary-lighten: #5dd4b5;
+
   --accent-shadow: rgba(79, 195, 161, 0.5);
+
+
+
   --color-error: #e74c3c;
+
   --color-success: #2ecc71;
+
   --color-error-bg: rgba(231, 76, 60, 0.1);
+
   --color-success-bg: rgba(46, 204, 113, 0.1);
-  --hero-bg-gradient: linear-gradient(35deg, rgba(31, 44, 53, 0.65), rgba(44, 62, 80, 0.65), rgba(70, 99, 104, 0.65));
+
+
+
+  /* Hero страница */
+
+  --hero-bg-gradient: linear-gradient(35deg, rgba(31, 44, 53, 0.55), rgba(44, 62, 80, 0.55), rgba(70, 99, 104, 0.55));
+
   --hero-text-primary: #FFFFFF;
+
   --hero-text-secondary: #E0E0E0;
+
+
+
+  /* Въпросник */
+
   --quest-bg-color: rgba(44, 62, 80, 0.65);
+
   --answer-hover-bg: rgba(79, 195, 161, 0.1);
+
 }
+
+
 
 @media (prefers-color-scheme: light) {
+
   :root {
+
+    /* --- ПОДОБРЕНА ЦВЕТОВА ПАЛИТРА ЗА СВЕТЛА ТЕМА --- */
+
     --bg-primary: #f0f2f5;
+
     --bg-surface: #ffffff;
+
     --bg-surface-secondary: #f0f2f5;
+
     --bg-sticky-header: rgba(255, 255, 255, 0.85);
+
     --box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+
+
+
     --text-primary: #333745;
+
     --text-highlight: #004d40;
+
     --text-accent: #00695c;
+
     --text-on-accent: #ffffff;
+
+
+
     --border-primary: #d1d9e0;
+
     --border-focus: #43a088;
+
+    
+
     --accent-shadow: rgba(79, 195, 161, 0.4);
-    --hero-bg-gradient: linear-gradient(135deg, #e0f7fa, #e8f5e9);
+
+
+
+    /* Нов, по-жив градиент */
+
+    --hero-bg-gradient: linear-gradient(135deg, #a8dff0, #b3f0db);
+
     --hero-text-primary: #1c3b4d;
+
     --hero-text-secondary: #4a5c6a;
+
+
+
     --quest-bg-color: rgba(255, 255, 255, 0.6);
+
     --answer-hover-bg: rgba(79, 195, 161, 0.15);
+
   }
+
 }
 
+
+
 /* =================================================================== */
-/*                      ОБЩИ СТИЛОВЕ И ФОН                       */
+
+/*                      ОБЩИ СТИЛОВЕ ЗА СТРАНИЦАТА                     */
+
 /* =================================================================== */
+
+
 
 body {
+
   margin: 0;
+
   font-family: var(--font-primary);
+
   background-color: var(--bg-primary);
+
   color: var(--text-primary);
+
   overflow-x: hidden;
+
 }
 
-/* СТИЛОВЕ ЗА НОВИЯ 3D ФОН */
-#dna-background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  z-index: 0; /* Винаги най-отзад */
-  overflow: hidden;
-  display: none; /* Показва се само на стр. 0 */
-  background: var(--hero-bg-gradient); /* Градиентът вече е тук */
-}
-#dna-background canvas {
-  display: block;
-}
+
 
 .container {
+
   max-width: 600px;
+
   margin: 60px auto 20px;
+
   padding: 20px;
+
   background-color: var(--bg-surface);
+
   border-radius: 10px;
+
   box-shadow: var(--box-shadow);
-  position: relative; /* За да е над фона */
-  z-index: 1;
+
 }
+
+
 
 h1, h2 {
+
   text-align: center;
+
   color: var(--text-highlight);
+
   margin-bottom: 20px;
+
 }
+
+
 
 p {
+
   text-align: center;
+
   line-height: 1.5;
+
   margin-bottom: 20px;
+
 }
 
+
+
 /* =================================================================== */
+
 /*                       СТИЛОВЕ ЗА ВЪПРОСНИКА                        */
+
 /* =================================================================== */
+
+
+
+/* Прозрачни контейнери в страницата с въпросника */
 
 #questPage .container:not(#dynamicContainer) {
+
   width: 100%;
+
   max-width: none;
+
   margin: 0;
+
   padding: 0;
+
   background-color: transparent;
+
   box-shadow: none;
+
 }
+
+
+
+/* Специален контейнер за въпросника */
 
 #dynamicContainer {
+
   max-width: 640px;
+
   margin: 0 auto;
+
   padding: 10px;
+
   background-color: var(--quest-bg-color);
-  backdrop-filter: blur(8px);
+
+  backdrop-filter: blur(8px); /* По-силен блър за по-добър ефект */
+
   -webkit-backdrop-filter: blur(8px);
+
   border-radius: 10px;
+
 }
+
+
 
 .question-text {
+
   font-size: 20px;
+
   font-weight: 600;
+
   color: var(--text-highlight);
+
   margin-bottom: 20px;
+
   line-height: 1.4;
+
 }
+
+
 
 .answer-label {
+
   display: block;
+
   width: 90%;
+
   max-width: 500px;
+
   margin: 8px auto;
+
   padding: 12px 15px;
-  border-radius: 8px;
+
+  border-radius: 8px; /* Леко по-заоблени */
+
   border: 1px solid var(--border-primary);
+
   cursor: pointer;
+
   transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
+
   background-color: var(--bg-surface);
+
 }
+
+
 
 .answer-label:hover {
+
     background-color: var(--answer-hover-bg);
+
     border-color: var(--border-focus);
+
     transform: translateY(-2px);
+
 }
+
+
 
 .section-title {
+
   font-size: 22px;
+
   text-align: center;
+
   color: var(--text-accent);
+
   margin-bottom: 20px;
+
 }
+
+
 
 .quest-instructions {
+
   margin: 0 0 15px 0;
+
   max-width: 600px;
+
   text-align: center;
+
   line-height: 1.4;
+
   font-size: 1rem;
+
   color: var(--text-primary);
+
 }
+
+
 
 #persistentStats {
+
   display: none;
+
   justify-content: center;
+
   gap: 20px;
+
   padding: 10px 0;
-  position: relative;
-  z-index: 1;
-}
-#persistentStats .stat-icon {
-  width: 60px;
-  height: 60px;
+
 }
 
+#persistentStats .stat-icon {
+
+  width: 60px;
+
+  height: 60px;
+
+}
+
+
+
 /* =================================================================== */
+
 /*                СТИЛОВЕ ЗА ФОРМУЛЯРИ И КОНТРОЛИ                     */
+
 /* =================================================================== */
+
+
 
 input[type="text"],
+
 input[type="number"],
+
 input[type="email"],
+
 input[type="password"],
+
 textarea,
+
 select {
+
   display: block;
+
   width: 90%;
+
   max-width: 500px;
+
   padding: 12px;
+
   margin: 10px auto 20px;
+
   border: 1px solid var(--border-primary);
+
   border-radius: 5px;
+
   background-color: var(--bg-surface-secondary);
+
   color: var(--text-primary);
+
   font-size: 16px;
+
   box-sizing: border-box;
+
   transition: border-color 0.3s, box-shadow 0.3s;
+
 }
+
+
 
 input:focus, select:focus, textarea:focus {
+
     outline: none;
+
     border-color: var(--border-focus);
+
     box-shadow: 0 0 8px var(--accent-shadow);
+
 }
+
+
 
 input[type="radio"],
+
 input[type="checkbox"] {
+
   margin-right: 10px;
+
   accent-color: var(--accent-primary);
+
   transform: scale(1.2);
+
 }
+
+
 
 .form-group {
+
   margin-bottom: 15px;
+
   text-align: left;
+
 }
+
+
 
 .form-group label {
+
   display: block;
+
   margin-bottom: 5px;
-  padding-left: 5%;
+
+  padding-left: 5%; /* Подравняване с полетата */
+
 }
+
+
 
 .form-group input {
-  width: 100%;
+
+  width: 100%; /* Заема цялата ширина на групата */
+
   max-width: 100%;
+
   margin: 0;
+
 }
 
 
+
+
+
 /* =================================================================== */
+
 /*                       БУТОНИ И НАВИГАЦИЯ                            */
+
 /* =================================================================== */
+
+
+
+/* Общ стил за бутон */
 
 button {
+
   border: none;
+
   padding: 12px 20px;
+
   font-size: 16px;
+
   font-weight: bold;
+
   border-radius: 5px;
+
   cursor: pointer;
+
   transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+
   min-height: 48px;
+
   -webkit-tap-highlight-color: transparent;
+
 }
+
 button:hover {
+
   box-shadow: 0 0 10px var(--accent-shadow);
+
   transform: translateY(-2px);
+
 }
+
 button:disabled {
+
   opacity: 0.6;
+
   cursor: not-allowed;
+
   transform: none;
+
   box-shadow: none;
+
 }
+
+
+
+/* Основен бутон (Напред, Регистрация, Изпрати) */
 
 .btn-primary,
+
 button:not(.btn-secondary) {
+
   background-color: var(--accent-primary);
+
   color: var(--text-on-accent);
+
 }
+
 .btn-primary:hover:not(:disabled),
+
 button:not(.btn-secondary):hover:not(:disabled) {
+
   background-color: var(--accent-primary-hover);
+
 }
+
+
+
+/* Вторичен бутон (Назад, Отначало) */
 
 .btn-secondary {
+
   background-color: transparent;
+
   color: var(--accent-primary);
+
   border: 2px solid var(--accent-primary);
+
 }
+
 .btn-secondary:hover:not(:disabled) {
+
   background-color: var(--accent-primary);
+
   color: var(--text-on-accent);
+
 }
+
+
 
 .nav-buttons {
+
   display: flex;
+
   flex-direction: row;
+
   justify-content: center;
+
   gap: 10px;
+
   margin-top: 20px;
-}
-.nav-buttons button {
-  min-width: 120px;
-  flex: 1;
-  max-width: 250px;
+
 }
 
+.nav-buttons button {
+
+  min-width: 120px;
+
+  flex: 1;
+
+  max-width: 250px;
+
+}
+
+
+
 /* =================================================================== */
+
 /*                 ПРОГРЕС БАР И СЪСТОЯНИЯ НА СТРАНИЦИ                 */
+
 /* =================================================================== */
+
+
 
 .step-indicator-container {
+
     position: sticky;
+
     top: 0;
+
     z-index: 1000;
+
     background-color: var(--bg-sticky-header);
+
     backdrop-filter: blur(8px);
+
     -webkit-backdrop-filter: blur(8px);
+
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
     margin: 0;
+
     padding: 8px 15px;
+
 }
+
+
 
 .page {
+
   display: none;
+
   animation: fadeIn 0.4s ease-in-out;
+
   position: relative;
+
   z-index: 2;
+
 }
+
+
 
 #questPage .page:not(.hero-start-page) {
+
   padding: 20px;
+
   max-width: 600px;
+
   margin: 60px auto 20px;
+
 }
+
+
 
 .page.active {
+
   display: block;
+
 }
 
+
+
 /* =================================================================== */
+
 /*                 СЪОБЩЕНИЯ ЗА ГРЕШКИ И УСПЕХ                      */
+
 /* =================================================================== */
+
+
 
 .message {
+
   padding: 0.8rem;
+
   border-radius: 0.5rem;
+
   margin-top: 15px;
+
   font-size: 0.9rem;
+
   display: none;
+
   border: 1px solid transparent;
+
   text-align: left;
+
   word-wrap: break-word;
+
 }
+
+
 
 .message.error {
+
   display: block;
+
   color: var(--color-error);
+
   background-color: var(--color-error-bg);
+
   border-color: var(--color-error);
+
 }
+
+
 
 .message.success {
+
   display: block;
+
   color: var(--color-success);
+
   background-color: var(--color-success-bg);
+
   border-color: var(--color-success);
+
 }
 
+
+
 /* =================================================================== */
+
 /*               СТИЛОВЕ ЗА HERO НАЧАЛНА СТРАНИЦА                     */
+
 /* =================================================================== */
+
+
 
 #page0.active.hero-start-page {
+
   min-height: 100vh;
+
   width: 100%;
+
   position: relative;
+
   display: flex;
+
   flex-direction: column;
+
   justify-content: center;
+
   align-items: center;
+
   padding: 20px;
+
   box-sizing: border-box;
+
   color: var(--hero-text-primary);
+
+  background: var(--hero-bg-gradient);
+
+  background-size: 200% 200%;
+
+  animation: gradientAnimation 15s ease infinite;
+
 }
+
+
 
 #page0.active.hero-start-page .container {
+
     max-width: 100%;
+
     margin: 0;
+
     padding: 0;
+
     background-color: transparent;
+
     border-radius: 0;
+
     box-shadow: none;
+
 }
+
+
+
+#particles-js {
+
+  position: absolute;
+
+  width: 100%;
+
+  height: 100%;
+
+  top: 0;
+
+  left: 0;
+
+  pointer-events: none;
+
+  z-index: 1;
+
+}
+
+
+
+/* --- РЕШЕНИЕ ЗА АНИМИРАНИЯ ФОН --- */
+
+@media (prefers-color-scheme: light) {
+
+  #particles-js {
+
+    filter: invert(1);
+
+  }
+
+}
+
+
 
 .hero-content {
+
   position: relative;
+
   z-index: 2;
+
   text-align: center;
+
   max-width: 900px;
+
   padding: 20px;
+
   animation: fadeInContent 1s ease-in-out 0.3s forwards;
+
   opacity: 0;
+
   transform: translateY(20px);
+
 }
+
+
 
 .hero-image {
+
   max-width: 250px;
+
   margin: 0 auto 20px auto;
+
 }
+
+
 
 .hero-title {
+
   font-size: 2.8rem;
+
   font-weight: 700;
+
   color: var(--hero-text-primary);
+
   text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+
   margin-bottom: 15px;
+
   line-height: 1.2;
+
 }
+
+
 
 .hero-subtitle {
+
   font-size: 1.3rem;
-  font-weight: 400;
+
+  font-weight: 400; /* Малко по-плътен шрифт за четимост */
+
   color: var(--hero-text-secondary);
+
   max-width: 550px;
+
   margin: 0 auto 40px auto;
+
   line-height: 1.6;
+
 }
+
+
 
 #page0.hero-start-page #startBtn {
+
   background-color: var(--accent-primary);
+
   color: var(--text-on-accent);
+
   font-size: 1.2rem;
+
   padding: 16px 45px;
+
   border-radius: 50px;
+
   box-shadow: 0 5px 20px var(--accent-shadow);
+
   display: inline-flex;
+
   align-items: center;
+
   gap: 10px;
+
 }
+
 #page0.hero-start-page #startBtn:hover {
+
   transform: translateY(-4px);
+
   box-shadow: 0 10px 25px var(--accent-shadow);
+
   background-color: var(--accent-primary-lighten);
+
 }
+
+
 
 #page0.hero-start-page #startBtn::after {
+
   content: "";
+
   position: absolute;
+
   z-index: -1;
+
   top: -6px; left: -6px; right: -6px; bottom: -6px;
+
   border: 2px solid var(--accent-primary);
+
   opacity: 0.5;
+
   border-radius: 50px;
+
   animation: pulse 2s infinite ease-out;
+
 }
+
+
 
 .stats-bar {
+
     margin-top: 50px;
+
     display: flex;
+
     flex-direction: row;
+
     justify-content: center;
+
     gap: 20px;
+
     color: var(--hero-text-secondary);
+
     user-select: none;
+
 }
 
+
+
 .stat-item { text-align: center; }
+
 .stat-label { font-size: 1rem; letter-spacing: 0.5px; font-weight: 500;}
+
 .stat-icon { width: 80px; height: 80px; display: block; margin: 0 auto 5px; }
 
 
+
+
+
 /* =================================================================== */
+
 /*                            АНИМАЦИИ                                 */
+
 /* =================================================================== */
+
+
 
 @keyframes fadeIn {
+
   from { opacity: 0; transform: translateY(15px); }
+
   to { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeInContent {
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes popIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-@keyframes pulse {
-  0% { transform: scale(0.95); opacity: 0.5; }
-  70% { transform: scale(1.1); opacity: 0; }
-  100% { transform: scale(0.95); opacity: 0; }
-}
-@keyframes gradientAnimation {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+
 }
 
+@keyframes fadeInContent {
+
+  to { opacity: 1; transform: translateY(0); }
+
+}
+
+@keyframes popIn {
+
+  from { transform: scale(0.9); opacity: 0; }
+
+  to { transform: scale(1); opacity: 1; }
+
+}
+
+@keyframes pulse {
+
+  0% { transform: scale(0.95); opacity: 0.5; }
+
+  70% { transform: scale(1.1); opacity: 0; }
+
+  100% { transform: scale(0.95); opacity: 0; }
+
+}
+
+@keyframes gradientAnimation {
+
+  0% { background-position: 0% 50%; }
+
+  50% { background-position: 100% 50%; }
+
+  100% { background-position: 0% 50%; }
+
+}
+
+
+
 /* =================================================================== */
-/*                     ДОСТЪПНОСТ                             */
+
+/*                     ДОСТЪПНОСТ (НОВО)                             */
+
 /* =================================================================== */
+
+
 
 @media (prefers-reduced-motion: reduce) {
+
   *, *::before, *::after {
+
     animation-duration: 0.01ms !important;
+
     animation-iteration-count: 1 !important;
+
     transition-duration: 0.01ms !important;
+
     scroll-behavior: auto !important;
+
     animation: none !important;
+
     transition: none !important;
+
   }
+
 }
 
+
+
 /* =================================================================== */
+
 /*              АДАПТАЦИИ ЗА МОБИЛНИ УСТРОЙСТВА (MEDIA QUERIES)        */
+
 /* =================================================================== */
+
+
 
 @media (max-width: 768px) {
+
   .hero-title {
+
     font-size: 2.2rem;
+
     min-height: 80px;
+
   }
+
   .hero-subtitle {
+
     font-size: 1.2rem;
+
     padding: 0 10px;
+
   }
+
   .stats-bar {
+
     flex-direction: column;
+
     gap: 30px;
+
   }
+
   #page0.hero-start-page #startBtn {
+
     width: 100%;
+
     padding: 16px 20px;
+
     justify-content: center;
+
   }
+
 }
 
+
+
 @media (max-width: 600px) {
+
   .container {
+
     margin: 60px 15px 20px;
+
     padding: 15px;
+
   }
+
   #dynamicContainer {
+
     margin: 0 10px;
+
     padding: 8px;
+
   }
+
   .nav-buttons {
-    flex-direction: column-reverse;
+
+    flex-direction: column-reverse; /* Напред е отгоре, за по-лесен достъп */
+
   }
+
   .nav-buttons button {
+
     width: 100%;
+
     max-width: 100%;
+
   }
+
   .question-text {
+
     font-size: 18px;
+
   }
+
   button {
+
     font-size: 16px;
+
     min-height: 52px;
+
   }
+
   input[type="text"],
+
   input[type="number"],
+
   input[type="email"],
+
   input[type="password"],
+
   textarea,
+
   select,
+
   .answer-label {
-    width: 100%;
+
+    width: 100%; /* Полетата заемат цялата ширина */
+
     max-width: 100%;
+
     box-sizing: border-box;
+
   }
+
   .form-group label {
-    padding-left: 0;
+
+    padding-left: 0; /* Премахване на отстъпа на мобилни */
+
   }
+
   .quest-instructions {
-    text-align: left;
+
+    text-align: left; /* По-добра четимост на малки екрани */
+
     padding: 0 10px;
+
   }
+
 }
