@@ -333,6 +333,7 @@
   /***** Функция за изграждане на страниците (без промяна) *****/
   function buildDynamicPages() {
     const container = document.getElementById('dynamicContainer');
+    const instr = document.getElementById('questInstructions');
     if (!container) { console.error("Container #dynamicContainer not found!"); return; }
     container.innerHTML = "";
     createStartPage();
@@ -341,6 +342,7 @@
     createRegistrationPage();
     createFinalPage();
     setupFinalPageListener();
+    if (instr) { container.appendChild(instr); }
     totalPages = 1 + flatPages.length + 2;
     console.log("Общо страници (включително старт и финал):", totalPages);
     updateStepProgress(
