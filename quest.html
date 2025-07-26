@@ -196,6 +196,28 @@
         padding: 16px 20px;
       }
     }
+
+    /* Инструкции за попълване */
+    .quest-instructions {
+      margin: 20px auto;
+      max-width: 600px;
+      text-align: center;
+      line-height: 1.4;
+      font-size: 1rem;
+      color: #e0e0e0;
+    }
+
+    /* Постоянна лента със статистики */
+    #persistentStats {
+      display: none;
+      justify-content: center;
+      gap: 20px;
+      padding: 10px 0;
+    }
+    #persistentStats .stat-icon {
+      width: 60px;
+      height: 60px;
+    }
   </style>
   <!-- === КРАЙ: НОВИ СТИЛОВЕ === -->
 </head>
@@ -224,6 +246,26 @@
 
 <div class="container" id="dynamicContainer">
   <!-- Динамично генерираните "страници" ще се вмъкнат тук -->
+</div>
+
+<div id="questInstructions" class="quest-instructions">
+  За да получите индивидуален и максимално ефективен план за вас,
+  въведете коректна и изчерпателна информация
+</div>
+
+<div id="persistentStats" class="stats-bar">
+  <div class="stat-item">
+    <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/aibrain.png" alt="AI Algorithm">
+    <div class="stat-label">AI Med Алгоритъм</div>
+  </div>
+  <div class="stat-item">
+    <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/medic.png" alt="Medical Experts">
+    <div class="stat-label">Реални специалисти</div>
+  </div>
+  <div class="stat-item">
+    <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/clock.png" alt="24/7 Assistant">
+    <div class="stat-label">24/7 Личен асистент</div>
+  </div>
 </div>
 
 <!-- Тайна зона за мобилни устройства за Admin достъп -->
@@ -631,6 +673,17 @@
          }
     } else { console.error(`Грешка: Активна страница с индекс ${currentPageIndex} не е намерена.`); }
     updateProgress();
+    const instr = document.getElementById('questInstructions');
+    const stats = document.getElementById('persistentStats');
+    if (instr && stats) {
+      if (currentPageIndex === 0) {
+        instr.style.display = 'none';
+        stats.style.display = 'none';
+      } else {
+        instr.style.display = 'block';
+        stats.style.display = 'flex';
+      }
+    }
     console.log("Показване на страница:", currentPageIndex, `(ID: page${currentPageIndex})`);
   }
 
