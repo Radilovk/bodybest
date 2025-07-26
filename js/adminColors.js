@@ -1,15 +1,15 @@
 import { loadConfig, saveConfig } from './adminConfig.js';
+import { colorGroups } from './themeConfig.js';
 
 const inputs = {};
 
-async function fetchColorVars() {
+async function fetchBaseStyles() {
   const res = await fetch('css/base_styles.css');
-  const css = await res.text();
-  const regex = /--([a-zA-Z0-9-]*(?:-color|-bg|-border)[a-zA-Z0-9-]*)\s*:/g;
-  const vars = new Set();
-  let m;
-  while ((m = regex.exec(css))) vars.add(m[1]);
-  return { vars: [...vars], css };
+  return res.text();
+}
+
+function getAllVars() {
+  return colorGroups.flatMap(g => g.items.map(it => it.var));
 }
 
 function parseDefaultThemes(css, keys) {
@@ -32,21 +32,26 @@ function parseDefaultThemes(css, keys) {
   return { light, dark };
 }
 
-function createInput(name, container) {
+function createInput(item, container) {
   const label = document.createElement('label');
-  label.textContent = name.replace(/-/g, ' ');
+  label.textContent = item.label || item.var;
+  if (item.description) label.title = item.description;
   const input = document.createElement('input');
   input.type = 'color';
-  input.id = `${name}Input`;
+  input.id = `${item.var}Input`;
   label.appendChild(input);
   container.appendChild(label);
-  inputs[name] = input;
+  inputs[item.var] = input;
 }
 const themeSelectId = 'savedThemes';
 const themeNameId = 'themeNameInput';
 const saveThemeBtnId = 'saveThemeLocal';
 const applyThemeBtnId = 'applyThemeLocal';
 const deleteThemeBtnId = 'deleteThemeLocal';
+const previewThemeBtnId = 'previewTheme';
+const exportThemeBtnId = 'exportTheme';
+const importThemeInputId = 'importTheme';
+const importThemeBtnId = 'importThemeBtn';
 
 function setCssVar(key, val) {
   document.documentElement.style.setProperty(`--${key}`, val);
@@ -125,10 +130,54 @@ function deleteSelectedTheme() {
   }
 }
 
+function previewCurrentTheme() {
+  Object.entries(inputs).forEach(([k, el]) => {
+    if (el) setCssVar(k, el.value);
+  });
+}
+
+function exportThemeToFile() {
+  const colors = {};
+  Object.entries(inputs).forEach(([k, el]) => { if (el) colors[k] = el.value; });
+  const blob = new Blob([JSON.stringify(colors, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'theme.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importThemeFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      Object.entries(data).forEach(([k, v]) => {
+        const el = inputs[k];
+        if (el) { el.value = v; setCssVar(k, v); }
+      });
+    } catch {
+      alert('Невалиден файл');
+    }
+  };
+  reader.readAsText(file);
+}
+
 export async function initColorSettings() {
   const container = document.getElementById('colorInputs');
-  const { vars, css } = await fetchColorVars();
-  if (container) vars.forEach(v => createInput(v, container));
+  const css = await fetchBaseStyles();
+  const vars = getAllVars();
+  if (container) {
+    colorGroups.forEach(group => {
+      const fs = document.createElement('fieldset');
+      const lg = document.createElement('legend');
+      lg.textContent = group.name;
+      fs.appendChild(lg);
+      group.items.forEach(item => createInput(item, fs));
+      container.appendChild(fs);
+    });
+  }
   const defaults = parseDefaultThemes(css, vars);
   const stored = getSavedThemes();
   let changed = false;
@@ -140,6 +189,10 @@ export async function initColorSettings() {
   const saveThemeBtn = document.getElementById(saveThemeBtnId);
   const applyThemeBtn = document.getElementById(applyThemeBtnId);
   const deleteThemeBtn = document.getElementById(deleteThemeBtnId);
+  const previewBtn = document.getElementById(previewThemeBtnId);
+  const exportBtn = document.getElementById(exportThemeBtnId);
+  const importInput = document.getElementById(importThemeInputId);
+  const importBtn = document.getElementById(importThemeBtnId);
   if (!saveBtn) return;
   try {
     const { colors = {} } = await loadConfig(['colors']);
@@ -177,6 +230,15 @@ export async function initColorSettings() {
   if (saveThemeBtn) saveThemeBtn.addEventListener('click', saveTheme);
   if (applyThemeBtn) applyThemeBtn.addEventListener('click', applyThemeFromSelect);
   if (deleteThemeBtn) deleteThemeBtn.addEventListener('click', deleteSelectedTheme);
+  if (previewBtn) previewBtn.addEventListener('click', previewCurrentTheme);
+  if (exportBtn) exportBtn.addEventListener('click', exportThemeToFile);
+  if (importBtn && importInput) {
+    importBtn.addEventListener('click', () => importInput.click());
+    importInput.addEventListener('change', () => {
+      importThemeFile(importInput.files[0]);
+      importInput.value = '';
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', initColorSettings);

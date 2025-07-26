@@ -56,10 +56,12 @@ test('save button gathers colors and calls saveConfig', async () => {
   document.getElementById('primary-colorInput').value = '#333333';
   document.getElementById('secondary-colorInput').value = '#444444';
   document.getElementById('saveColorConfig').click();
-  expect(mockSave).toHaveBeenCalledWith({ colors: {
-    'primary-color': '#333333',
-    'secondary-color': '#444444'
-  } });
+  expect(mockSave).toHaveBeenCalledWith(expect.objectContaining({
+    colors: expect.objectContaining({
+      'primary-color': '#333333',
+      'secondary-color': '#444444'
+    })
+  }));
 });
 
 test('themes can be saved and applied', async () => {
