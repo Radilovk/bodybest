@@ -346,11 +346,7 @@ node scripts/view-usage-logs.js sendTestEmail 5
 | `prompt_chat` | Шаблон за чат промптове |
 | `prompt_praise_generation` | Шаблон за генериране на похвали |
 | `prompt_principle_adjustment` | Шаблон за промпт при корекция на принципи |
-| `prompt_generate_profile` | Шаблон за генериране на профилната секция |
-| `prompt_generate_menu` | Шаблон за меню за първата седмица |
-| `prompt_generate_principles` | Шаблон за основните принципи |
-| `prompt_generate_guidance` | Шаблон за седмични насоки |
-| `prompt_unified_plan_generation_v2` | **(deprecated)** стар единичен промпт |
+| `prompt_unified_plan_generation_v2` | Шаблон за унифицирано генериране на план |
 | `prompt_plan_modification` | Шаблон за заявка към AI при промени в плана |
 | `plan_token_limit` | Максимални токени при генериране на план |
 | `plan_temperature` | Температура за плана |
@@ -376,23 +372,6 @@ wrangler kv key put prompt_chat "$(cat templates/prompt_chat.txt)" --binding=RES
 # качване на рецепти
 wrangler kv key put recipe_data "$(cat data/recipes.json)" --binding=RESOURCES_KV
 ```
-
-### Генериране на плана
-
-Всеки потребителски план се изгражда на няколко стъпки. За всяка секция има отделен промпт в `RESOURCES_KV`:
-
-- `prompt_generate_profile`
-- `prompt_generate_menu`
-- `prompt_generate_principles`
-- `prompt_generate_guidance`
-
-Worker-ът попълва шаблоните с данните от въпросника и запазва резултатите като
-`plan_section_<име>_<userId>` в `USER_METADATA_KV`. При следващо генериране
-секциите се прескачат, ако вече съществуват и са актуални.
-Когато всички части са готови, те се комбинират в един JSON и се съхраняват като
-`<userId>_final_plan`.
-
-Промптът `prompt_unified_plan_generation_v2` остава в KV само за съвместимост.
 
 ### Required Worker Secrets
 
@@ -667,7 +646,7 @@ curl -X POST https://<your-domain>/api/runImageModel \
 
 След попълване на въпросника Cloudflare worker-ът съхранява резултата като `<userId>_analysis` и го връща чрез `/api/getInitialAnalysis?userId=<ID>`.
 Статусът на изчисляването се пази отделно в ключ `<userId>_analysis_status` и може да се провери с `/api/analysisStatus?userId=<ID>`.
-Секцията `profile`, `menu`, `principles` и `guidance` се пазят като отделни записи `plan_section_<име>_<userId>`. Статусът им може да се провери чрез `/api/plan-section-status?userId=<ID>`.
+За състоянието на отделните секции от плана се използват ключове `plan_section_*_<userId>`. Проверката става чрез `/api/plan-section-status?userId=<ID>`.
 Шаблонът `reganalize/analyze.html` визуализира тези данни.
 Когато анализът е генериран, потребителят получава имейл с линк към страницата,
 на който параметърът `userId` зарежда индивидуалния JSON.
