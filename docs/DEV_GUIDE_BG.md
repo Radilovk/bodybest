@@ -20,6 +20,7 @@ npm run dev       # стартира локалния сървър с Vite
 npm run lint      # проверява стила със ESLint
 npm test          # изпълнява Jest тестовете
 npm run test:watch # пуска само модифицираните тестове
+npm run test:file js/__tests__/adminConfig.test.js # пуска конкретен файл
 npm run build     # създава оптимизиран билд в папка dist/
 npm run docs      # генерира API документация в docs/api
 ```
@@ -28,6 +29,7 @@ npm run docs      # генерира API документация в docs/api
 
 За по-бърза обратна връзка използвайте `npm run test:watch`, който рестартира
 само променените тестове при запазване.
+А ако искате да стартирате само конкретен файл, ползвайте `npm run test:file <път>`.
 
 
 1. Извикайте `npm run dev` и отворете `http://localhost:5173`.
