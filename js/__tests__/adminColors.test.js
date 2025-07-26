@@ -31,6 +31,8 @@ beforeEach(async () => {
 afterEach(() => {
   mockLoad.mockReset();
   mockSave.mockReset();
+  document.documentElement.style.cssText = '';
+  document.body.style.cssText = '';
 });
 
 test('initColorSettings loads config and sets CSS vars', async () => {

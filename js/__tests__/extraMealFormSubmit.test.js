@@ -11,7 +11,8 @@ beforeEach(async () => {
     showLoading: jest.fn(),
     showToast: showToastMock,
     openModal: jest.fn(),
-    closeModal: jest.fn()
+    closeModal: jest.fn(),
+    loadAndApplyColors: jest.fn()
   }));
   jest.unstable_mockModule('../config.js', () => ({
     apiEndpoints: { logExtraMeal: '/api' }

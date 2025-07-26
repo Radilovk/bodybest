@@ -30,6 +30,7 @@ beforeEach(async () => {
     hideTrackerTooltip: jest.fn(),
     handleTrackerTooltipShow: jest.fn(),
     handleTrackerTooltipHide: jest.fn(),
+    loadAndApplyColors: jest.fn(),
     showLoading: jest.fn(),
     showToast: showToastMock,
     updateTabsOverflowIndicator: jest.fn()

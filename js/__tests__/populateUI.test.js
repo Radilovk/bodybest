@@ -54,7 +54,8 @@ beforeEach(async () => {
     showLoading: jest.fn(),
     handleTrackerTooltipShow: jest.fn(),
     handleTrackerTooltipHide: jest.fn(),
-    showToast: jest.fn()
+    showToast: jest.fn(),
+    loadAndApplyColors: jest.fn()
   }));
   jest.unstable_mockModule('../extraMealForm.js', () => ({ openExtraMealModal: jest.fn() }));
   jest.unstable_mockModule('../app.js', () => ({

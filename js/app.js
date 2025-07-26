@@ -4,6 +4,7 @@ import { safeParseFloat, escapeHtml, fileToDataURL } from './utils.js';
 import { selectors, initializeSelectors, loadInfoTexts } from './uiElements.js';
 import {
     initializeTheme,
+    loadAndApplyColors,
     activateTab,
     openModal, closeModal,
     showLoading, showToast, updateTabsOverflowIndicator
@@ -323,6 +324,7 @@ async function initializeApp() {
         setupStaticEventListeners(); // from eventListeners.js
         initializeCollapsibleCards();
         initializeTheme(); // from uiHandlers.js
+        loadAndApplyColors();
         loadDashboardData();
         if (isLocalDevelopment) console.log("initializeApp finished successfully.");
     } catch (error) {

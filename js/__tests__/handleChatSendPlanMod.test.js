@@ -61,7 +61,8 @@ beforeEach(async () => {
     handleTrackerTooltipHide: jest.fn(),
     showLoading: jest.fn(),
     showToast: jest.fn(),
-    updateTabsOverflowIndicator: jest.fn()
+    updateTabsOverflowIndicator: jest.fn(),
+    loadAndApplyColors: jest.fn()
   }));
   jest.unstable_mockModule('../config.js', () => ({
     isLocalDevelopment: false,

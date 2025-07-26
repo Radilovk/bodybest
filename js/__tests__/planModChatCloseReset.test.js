@@ -75,6 +75,7 @@ beforeEach(async () => {
     hideTrackerTooltip: jest.fn(),
     handleTrackerTooltipShow: jest.fn(),
     handleTrackerTooltipHide: jest.fn(),
+    loadAndApplyColors: jest.fn(),
     showToast: jest.fn(),
     showLoading: jest.fn(),
     applyTheme: jest.fn(),
