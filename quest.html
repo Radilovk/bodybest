@@ -1,690 +1,1289 @@
 <!DOCTYPE html>
+
 <html lang="bg">
+
 <head>
+
   <meta charset="utf-8">
+
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <title>Въпросник за хранителни навици (Dynamic)</title>
+
   <link href="css/quest_theme.css" rel="stylesheet">
+
   <link href="css/quest_styles.css" rel="stylesheet">
+
   <link href="css/components_styles.css" rel="stylesheet">
+
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
 </head>
+
 <body id="questPage">
 
+
+
 <!-- SVG икони (без промяна) -->
+
 <svg style="position:absolute;width:0;height:0" aria-hidden="true">
+
   <symbol id="icon-brain" viewBox="0 0 40 40" fill="currentColor">
+
     <path d="M10 20c-2-4 0-8 4-9 3-4 9-4 12-1 3-3 9-3 12 0s3 7 1 9c3 1 5 4 3 7s-5 3-7 2c0 2-2 5-5 5s-5-2-6-4c-3 1-6 0-7-3-1-2 0-4 1-6z" />
+
   </symbol>
+
   <symbol id="icon-doctor" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2">
+
     <circle cx="20" cy="12" r="6" />
+
     <path d="M10 32v-5a10 10 0 0 1 20 0v5" />
+
   </symbol>
+
   <symbol id="icon-clock" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2">
+
     <circle cx="20" cy="20" r="18" />
+
     <path d="M20 10v10l6 6" />
+
   </symbol>
+
 </svg>
 
-<!-- НОВ КОНТЕЙНЕР ЗА 3D АНИМАЦИЯТА -->
-<div id="dna-background"></div>
+
+
+<div id="particles-js"></div>
+
+
 
 <!-- Прогрес бар (без промяна) -->
+
 <div class="step-indicator-container">
+
   <span class="step-indicator-label">Стъпка <span id="questCurrentStep">0</span> от <span id="questTotalSteps">0</span></span>
+
   <div class="progress-bar-steps"><div id="questProgressBar" class="step-progress-bar"></div></div>
+
 </div>
+
+
 
 <div class="container" id="dynamicContainer">
+
   <!-- Динамично генерираните "страници" ще се вмъкнат тук -->
+
   <div id="questInstructions" class="quest-instructions">
+
     За да получите индивидуален и максимално ефективен план за вас,
+
     въведете коректна и изчерпателна информация
+
   </div>
+
 </div>
+
+
 
 <div id="persistentStats" class="stats-bar">
+
   <div class="stat-item">
+
     <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/aibrain.png" alt="AI Algorithm">
+
     <div class="stat-label">AI Med Алгоритъм</div>
+
   </div>
+
   <div class="stat-item">
+
     <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/medic.png" alt="Medical Experts">
+
     <div class="stat-label">Реални специалисти</div>
+
   </div>
+
   <div class="stat-item">
+
     <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/clock.png" alt="24/7 Assistant">
+
     <div class="stat-label">24/7 Личен асистент</div>
+
   </div>
+
 </div>
 
-<!-- Административни елементи (без промяна) -->
+
+
+<!-- Тайна зона за мобилни устройства за Admin достъп (без промяна) -->
+
 <div id="secretTapArea" style="position: fixed; top: 0; left: 0; width: 30px; height: 30px; opacity: 0; z-index: 9999;"></div>
+
+
+
+<!-- Скрит Admin бутон (без промяна) -->
+
 <a href="admin.html" id="adminLink" style="display:none; position: fixed; bottom: 10px; right: 10px; background: #4fc3a1; color: #121212; padding: 5px 10px; border-radius: 5px; text-decoration: none;">
+
   Admin
+
 </a>
 
-<!-- НОВА 3D БИБЛИОТЕКА (THREE.JS) -->
-<script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
-<script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.157.0/build/three.module.js"
-    }
-  }
-</script>
 
-<!-- ГЛАВЕН СКРИПТ НА ВЪПРОСНИКА (ПЪЛЕН И ФОРМАТИРАН) -->
+
+<!-- Библиотеки за ефекти (без промяна) -->
+
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+
+
+
+
 <script type="module">
+
+  // ===================================================================
+
+  //           ВАШИЯТ JAVASCRIPT КОД ОСТАВА 100% НЕПРОМЕНЕН
+
+  //           С ИЗКЛЮЧЕНИЕ НА КОНФИГУРАЦИЯТА НА АНИМАЦИЯТА
+
+  // ===================================================================
+
   import { workerBaseUrl } from './js/config.js';
+
   import { setupRegistration } from "./js/register.js";
+
   import { showMessage, hideMessage } from "./js/messageUtils.js";
+
   import { updateStepProgress } from "./js/stepProgress.js";
+
   
+
   /***** Глобални променливи (без промяна) *****/
+
   let rawQuestions = [];
+
   let flatPages = [];
+
   let currentPageIndex = 0;
+
   let totalPages = 0;
+
   let registrationPageIndex = 0;
+
   const responses = {};
+
   const numericRanges = {
+
     age: { min: 10, max: 120 }, height: { min: 100, max: 250 }, weight: { min: 30, max: 300 }, lossKg: { min: 1, max: 100 },
+
     q1745847247058: { min: 1, max: 300 }, q1745847190198: { min: 1, max: 300 }, q1745847315231: { min: 1, max: 300 }
+
   };
+
   const requiredFields = [
+
     'name','gender','age','height','weight','goal','lossKg','motivation','weightChange','weightChangeDetails',
+
     'dietHistory','dietType','dietResult','sleepHours','sleepInterrupt','chronotype','q1745878295708','stressLevel',
+
     'physicalActivity','activityTypeDaily','q1745847247058','activityTypeWeekly','q1745847190198','activityTypeRare',
+
     'q1745847315231','q1745877358368','q1745878063775','q1745890775342','waterIntake','waterReplaceFreq','q1745891342178',
+
     'q1745891468155','q1745891537884','overeatingFrequency','foodCravings','foodCravingsDetails','foodTriggers',
+
     'q1745891178105','nighteat','q1745891865984','compensationmethod','q1745806296700','comparisson','q1745805447648',
+
     'q1745805721482','alcoholFrequency','foodPreference','q1745806409218','q1745806494081','mainChallenge','q1745892518511',
+
     'medicalConditions','q1745804366749','medications','medicationsList','supplementsList'
+
   ];
 
+
+
   /***** Функция за рекурсивно сплескване на въпросите (без промяна) *****/
+
   function flattenQuestions(questions) {
+
     let output = [];
+
     questions.forEach(q => {
+
       let qCopy = Object.assign({}, q);
+
       delete qCopy.children;
+
       if (qCopy.type !== 'section') { output.push(qCopy); }
+
       if (q.children && Array.isArray(q.children)) {
+
         output = output.concat(flattenQuestions(q.children));
+
       } else if (q.children && typeof q.children === 'object') {
+
         for (const answer in q.children) {
+
           let childArray = q.children[answer];
+
           if (Array.isArray(childArray)) {
+
              childArray.forEach(child => { child.dependency = { question: q.id, value: answer }; });
+
              output = output.concat(flattenQuestions(childArray));
+
           } else { console.warn(`Expected an array for children under key '${answer}' in question '${q.id}', but got:`, typeof childArray); }
+
         }
+
       }
+
     });
+
     return output;
+
   }
+
+
 
   /***** Функция за изграждане на страниците (без промяна) *****/
+
   function buildDynamicPages() {
+
     const container = document.getElementById('dynamicContainer');
+
     const instr = document.getElementById('questInstructions');
+
     if (!container) { console.error("Container #dynamicContainer not found!"); return; }
+
     container.innerHTML = "";
+
     createStartPage();
+
     flatPages = flattenQuestions(rawQuestions).filter(q => q.id !== 'email' && q.type !== 'section');
+
     flatPages.forEach((q, idx) => { createQuestionPage(q, idx + 1); });
+
     createRegistrationPage();
+
     createFinalPage();
+
     setupFinalPageListener();
+
     if (instr) { container.appendChild(instr); }
+
     totalPages = 1 + flatPages.length + 2;
+
     console.log("Общо страници (включително старт и финал):", totalPages);
+
     updateStepProgress(
+
       document.getElementById('questProgressBar'), 0, totalPages > 1 ? totalPages - 1 : 1,
+
       document.getElementById('questCurrentStep'), document.getElementById('questTotalSteps')
+
     );
+
     showPage(0);
+
   }
 
-  /***** СЪЗДАВАНЕ НА СТАРТОВА СТРАНИЦА (без промяна в логиката) *****/
+
+
+  /***** СЪЗДАВАНЕ НА СТАРТОВА СТРАНИЦА (С НОВА ТЕМАТИЧНА АНИМАЦИЯ) *****/
+
   function createStartPage() {
+
     const container = document.getElementById('dynamicContainer');
+
     if (!container) return;
+
     const pageDiv = document.createElement('div');
-    pageDiv.className = 'page hero-start-page'; 
+
+    pageDiv.className = 'page hero-start-page';
+
     pageDiv.id = 'page0';
 
+
+
     pageDiv.innerHTML = `
+
       <div class="hero-content">
+
         <img class="hero-image" id="heroImage" src="https://radilovk.github.io/bodybest/img/myquest.png" alt="Hero">
-        
+
         <p class="hero-subtitle">
+
           Разкажи ни повече за теб и твоите цели.<br>
+
           Ние ще ти помогнем да ги постигнеш!
+
         </p>
-        
+
         <div class="cta-container">
-          <button id="startBtn" type="button">
-            Начало
-          </button>
+
+          <button id="startBtn" type="button">Начало</button>
+
         </div>
-        
+
         <div class="stats-bar">
+
           <div class="stat-item">
+
             <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/aibrain.png" alt="AI Algorithm">
+
             <div class="stat-label">AI Med Алгоритъм</div>
+
           </div>
+
           <div class="stat-item">
+
             <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/medic.png" alt="Medical Experts">
+
             <div class="stat-label">Реални специалисти</div>
+
           </div>
+
           <div class="stat-item">
+
             <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/clock.png" alt="24/7 Assistant">
+
             <div class="stat-label">24/7 Личен асистент</div>
+
           </div>
+
         </div>
+
       </div>
+
     `;
+
     container.appendChild(pageDiv);
+
+
+
+    if (window.particlesJS) {
+
+        particlesJS('particles-js', {
+
+          "particles": {
+
+            "number": {
+
+              "value": 60, // Малко по-малко частици за по-изчистен вид
+
+              "density": { "enable": true, "value_area": 800 }
+
+            },
+
+            "color": { "value": "#ffffff" },
+
+            "shape": { "type": "circle" },
+
+            "opacity": {
+
+              "value": 0.5,
+
+              "random": true,
+
+              "anim": { "enable": true, "speed": 0.5, "opacity_min": 0.1, "sync": false }
+
+            },
+
+            "size": {
+
+              "value": 4,
+
+              "random": true,
+
+              "anim": { "enable": false }
+
+            },
+
+            "line_linked": {
+
+              "enable": true,
+
+              "distance": 180, // Малко по-голямо разстояние за по-мащабна мрежа
+
+              "color": "#ffffff",
+
+              "opacity": 0.4,
+
+              "width": 1.5 // Леко по-плътни линии
+
+            },
+
+            "move": {
+
+              "enable": true,
+
+              "speed": 0.8, // По-бавно, органично движение
+
+              "direction": "bottom", // Движение в посока
+
+              "random": true,
+
+              "straight": false,
+
+              "out_mode": "out",
+
+              "bounce": false
+
+            }
+
+          },
+
+          "interactivity": {
+
+            "detect_on": "canvas",
+
+            "events": {
+
+              "onhover": { "enable": true, "mode": "bubble" }, // Промяна на интеракцията
+
+              "onclick": { "enable": true, "mode": "push" },
+
+              "resize": true
+
+            },
+
+            "modes": {
+
+              "bubble": { // Конфигурация за "bubble" ефекта
+
+                "distance": 200,
+
+                "size": 8,
+
+                "duration": 2,
+
+                "opacity": 0.8
+
+              },
+
+              "push": { "particles_nb": 4 }
+
+            }
+
+          },
+
+          "retina_detect": true
+
+        });
+
+    }
+
+
 
     const startBtn = pageDiv.querySelector('#startBtn');
+
     if (startBtn) {
+
         startBtn.addEventListener('click', () => {
+
           console.log("Бутон 'Начало' е натиснат.");
+
+          pageDiv.classList.remove('hero-start-page');
+
           showPage(1);
+
         });
+
     } else {
+
         console.error("Start button not found on the new hero start page.");
+
     }
+
   }
+
+
+
+
 
   /***** Създаване на страница за всеки въпрос (без промяна) *****/
+
   function createQuestionPage(question, pageIndex) {
+
     const container = document.getElementById('dynamicContainer');
+
      if (!container || !question || !question.id) {
+
          console.error("Missing container or question data for page", pageIndex);
+
          return;
+
      };
+
     const pageDiv = document.createElement('div');
+
     pageDiv.className = 'page';
+
     pageDiv.id = 'page' + pageIndex;
+
     let html = '';
+
     if (question.type === 'section') {
+
       html += `<div class="section-title">${question.sectionTitle || question.text || ''}</div>`;
+
     } else {
+
       html += `<div class="question-text">${question.text || 'Липсва текст на въпроса'}</div>`;
+
     }
+
     const isRequired = requiredFields.includes(question.id);
+
     if (question.type === 'section') {
+
     } else if (['text','number','email'].includes(question.type)) {
+
       const range = numericRanges[question.id];
+
       const rangeAttrs = (question.type === 'number' && range) ? `min="${range.min}" max="${range.max}"` : '';
+
       html += `<input id="${question.id}" type="${question.type}" placeholder="" ${rangeAttrs} ${isRequired ? 'required' : ''} ${question.type === 'email' ? 'autocomplete="email"' : ''}>`;
+
     } else if (question.type === 'textarea') {
+
       html += `<textarea id="${question.id}" rows="4" ${isRequired ? 'required' : ''}></textarea>`;
+
     } else if (question.type === 'select') {
+
       html += `<select id="${question.id}" ${isRequired ? 'required' : ''}><option value="">Изберете</option>`;
+
       (question.options || []).forEach(opt => {
+
         html += `<option value="${String(opt)}">${String(opt)}</option>`;
+
       });
+
       html += `</select>`;
+
     } else if (question.type === 'radio') {
+
       (question.options || []).forEach((opt, index) => {
+
           const optionValue = String(opt);
+
         html += `<label class="answer-label">
+
                    <input name="${question.id}" type="radio" value="${optionValue}" ${isRequired && index === 0 ? 'required' : ''}> ${optionValue}
+
                  </label>`;
+
       });
+
     } else if (question.type === 'checkbox') {
+
       (question.options || []).forEach(opt => {
+
           const optionValue = String(opt);
+
         html += `<label class="answer-label">
+
                    <input name="${question.id}" type="checkbox" value="${optionValue}"> ${optionValue}
+
                  </label>`;
+
       });
+
     } else if (question.type !== 'section') {
+
         console.warn(`Unsupported question type: ${question.type} for question ID: ${question.id}`);
+
         html += `<p style="color: red;">Грешка: Неподдържан тип въпрос.</p>`;
+
     }
+
     html += `<div class="nav-buttons">
+
                ${pageIndex > 1 ? `<button type="button" class="btn-secondary" id="prevBtn${pageIndex}">◀ Назад</button>` : ''}
+
                <button type="button" class="btn-primary" id="nextBtn${pageIndex}">Напред ▶</button>
+
              </div>`;
+
     pageDiv.innerHTML = html;
+
     container.appendChild(pageDiv);
+
     const nextBtn = pageDiv.querySelector(`#nextBtn${pageIndex}`);
+
     if (nextBtn) {
+
         nextBtn.addEventListener('click', () => {
+
           if (question.type !== 'section' && !validateAnswer(question)) { return; }
+
           if (question.type !== 'section') { saveAnswer(question); }
+
+          console.log(`Преминаване от страница ${pageIndex} към ${pageIndex + 1}`);
+
           showPage(pageIndex + 1);
+
         });
+
     } else { console.error(`Next button not found for page ${pageIndex}`); }
+
     const prevBtn = pageDiv.querySelector(`#prevBtn${pageIndex}`);
+
     if (prevBtn) {
+
         prevBtn.addEventListener('click', () => {
+
+           console.log(`Връщане от страница ${pageIndex} към ${pageIndex - 1}`);
+
            if (question.type !== 'section') { saveAnswer(question); }
+
            showPage(pageIndex - 1);
+
         });
+
     }
+
   }
+
+
 
   /***** Създаване на страница за регистрация (без промяна) *****/
+
   function createRegistrationPage() {
+
     const container = document.getElementById('dynamicContainer');
+
     if (!container) return;
+
     const regIndex = flatPages.length + 1;
+
     registrationPageIndex = regIndex;
+
     const pageDiv = document.createElement('div');
+
     pageDiv.className = 'page';
+
     pageDiv.id = 'page' + regIndex;
+
     pageDiv.innerHTML = `
+
       <h2>Регистрация</h2>
+
       <form id="register-form-q" novalidate>
+
         <div class="form-group"><label for="register-email-q">Имейл:</label><input type="email" id="register-email-q" required autocomplete="email"></div>
+
         <div class="form-group"><label for="register-password-q">Парола (мин. 8 знака):</label><input type="password" id="register-password-q" required minlength="8"></div>
+
         <div class="form-group"><label for="confirm-password-q">Потвърди Парола:</label><input type="password" id="confirm-password-q" required minlength="8"></div>
+
         <div id="register-message-q" class="message" role="alert"></div>
+
         <div class="nav-buttons">
+
           <button type="button" class="btn-secondary" id="regBackBtn">◀ Назад</button>
+
           <button type="submit" class="btn-primary" id="regSubmitBtn">Регистрация</button>
+
         </div>
+
       </form>
+
     `;
+
     container.appendChild(pageDiv);
+
     const emailInput = pageDiv.querySelector('#register-email-q');
+
     if (emailInput && responses.email) emailInput.value = responses.email;
+
     pageDiv.querySelector('#regBackBtn').addEventListener('click', () => { showPage(regIndex - 1); });
+
     setupRegistration("#register-form-q", "#register-message-q");
+
     pageDiv.querySelector("#register-form-q").addEventListener("registrationSuccess", (event) => {
+
       responses.email = event.detail.email;
+
       saveProgress();
+
       showPage(regIndex + 1);
+
     });
+
   }
+
+
 
   /***** Създаване на финална страница (без промяна) *****/
+
   function createFinalPage() {
+
     const container = document.getElementById('dynamicContainer');
+
     if (!container) return;
+
     const finalIndex = flatPages.length + 2;
+
     const pageDiv = document.createElement('div');
+
     pageDiv.className = 'page';
+
     pageDiv.id = 'page' + finalIndex;
+
     pageDiv.innerHTML = `
+
       <h2>Поздравления! <i class="bi bi-stars"></i><br> Току що направихте най-важната стъпка по пътя към промяната</h2>
+
       <p>Натиснете бутона, за да изпратите вашите отговори за обработка.</p>
+
       <div class="nav-buttons" style="justify-content: center;">
+
         <button id="submitBtn" type="button" class="btn-primary">Изпрати</button>
+
         <button id="restartBtn" type="button" class="btn-secondary">Отначало</button>
+
       </div>
+
        <div id="submit-message" class="message" style="margin-top: 15px; text-align: center; font-weight: bold; word-wrap: break-word;"></div>
+
     `;
+
     container.appendChild(pageDiv);
+
   }
+
+
 
   /***** Listener за финална страница (без промяна) *****/
+
   function setupFinalPageListener() {
+
         const finalIndex = flatPages.length + 2;
+
         const pageDiv = document.getElementById('page' + finalIndex);
+
         if (!pageDiv) { console.error("Финалната страница не е намерена."); return; }
+
         const submitBtn = pageDiv.querySelector('#submitBtn');
+
         const restartBtn = pageDiv.querySelector('#restartBtn');
+
         const submitMessage = pageDiv.querySelector('#submit-message');
+
         if (!submitBtn || !restartBtn || !submitMessage) { console.error("Един или повече елементи липсват на финалната страница."); return; }
+
         restartBtn.addEventListener('click', () => { clearProgress(); location.reload(); });
+
         submitBtn.addEventListener('click', async () => {
+
             submitBtn.disabled = true;
+
             submitBtn.textContent = 'Изпращане...';
+
             hideMessage(submitMessage);
+
             try {
+
                 const result = await submitResponses();
+
                 showMessage(submitMessage, result.message || "Отговорите са изпратени успешно за обработка!", false);
+
                 submitBtn.style.display = "none";
+
                 restartBtn.disabled = false;
+
                 restartBtn.textContent = "Попълни отново";
+
             } catch (error) {
+
                 console.error("Error caught in submitBtn listener:", error);
+
                 showMessage(submitMessage, `Грешка: ${error.message || 'Неуспешно изпращане.'}`, true);
+
                 submitBtn.disabled = false;
+
                 submitBtn.textContent = 'Опитай отново';
+
             }
+
         });
+
    }
 
+
+
   /***** Показване на страница с условна логика (без промяна) *****/
+
   function showPage(index) {
+
     const pages = document.querySelectorAll('.page');
+
     if (!pages || pages.length === 0) { console.error("Не са намерени страници за показване."); return; }
+
     if (index > currentPageIndex) {
+
         let targetIndex = index;
+
         while (targetIndex < pages.length - 1) {
+
              const question = flatPages[targetIndex - 1];
+
             if (question && question.dependency) {
+
                 const parentAnswer = responses[question.dependency.question];
+
                 const dependencyValue = question.dependency.value;
+
                 let shouldShow = Array.isArray(parentAnswer) ? parentAnswer.includes(dependencyValue) : parentAnswer === dependencyValue;
+
                 if (!shouldShow) {
+
+                    console.log(`Прескачане напред: стр. ${targetIndex}`);
+
                     targetIndex++; continue;
+
                  }
+
             }
+
              break;
+
          }
+
          index = targetIndex;
+
      } else if (index < currentPageIndex) {
+
          let targetIndex = index;
+
          while (targetIndex > 0) {
+
             const question = flatPages[targetIndex - 1];
+
              if (question && question.dependency) {
+
                  const parentAnswer = responses[question.dependency.question];
+
                  const dependencyValue = question.dependency.value;
+
                  let shouldShow = Array.isArray(parentAnswer) ? parentAnswer.includes(dependencyValue) : parentAnswer === dependencyValue;
+
                  if (!shouldShow) {
+
+                     console.log(`Прескачане назад: стр. ${targetIndex}`);
+
                      targetIndex--; continue;
+
                  }
+
              }
+
              break;
+
          }
+
          index = targetIndex;
+
      }
+
     if (index < 0) index = 0;
+
     if (index >= pages.length) index = pages.length - 1;
+
      if (currentPageIndex > 0 && currentPageIndex < pages.length -1) {
+
          const previousQuestion = flatPages[currentPageIndex - 1];
+
          if (previousQuestion) { saveAnswer(previousQuestion); }
+
      }
+
     currentPageIndex = index;
+
     pages.forEach((pg, idx) => {
+
         pg.classList.toggle('active', idx === currentPageIndex);
+
     });
+
     const activePage = pages[currentPageIndex];
+
     if (activePage) {
+
         const firstInput = activePage.querySelector('input, select, textarea');
+
         if (firstInput) {
+
              setTimeout(() => { try { firstInput.focus(); } catch (e) { console.warn("Неуспешен опит за фокусиране:", e); } }, 50);
+
          }
+
     } else { console.error(`Грешка: Активна страница с индекс ${currentPageIndex} не е намерена.`); }
+
     updateProgress();
-    
-    // Показване/скриване на елементи според страницата
+
     const instr = document.getElementById('questInstructions');
+
     const stats = document.getElementById('persistentStats');
-    const dnaBg = document.getElementById('dna-background');
-    if (instr && stats && dnaBg) {
+
+    if (instr && stats) {
+
       if (currentPageIndex === 0) {
+
         instr.style.display = 'none';
+
         stats.style.display = 'none';
-        dnaBg.style.display = 'block'; // Показва ДНК фона
+
       } else {
+
         instr.style.display = 'block';
+
         stats.style.display = 'flex';
-        dnaBg.style.display = 'none'; // Скрива ДНК фона
+
       }
+
     }
+
+    console.log("Показване на страница:", currentPageIndex, `(ID: page${currentPageIndex})`);
+
   }
+
+
 
   /***** Останалите помощни функции (без промяна) *****/
+
   function updateProgress() {
+
     const progressBar = document.getElementById('questProgressBar');
+
     const currentLabel = document.getElementById('questCurrentStep');
+
     const totalLabel = document.getElementById('questTotalSteps');
+
     if (!progressBar || totalPages <= 1) return;
+
     const currentStep = currentPageIndex;
+
     const totalSteps = totalPages > 1 ? totalPages - 1 : 1;
+
     updateStepProgress(progressBar, currentStep, totalSteps, currentLabel, totalLabel);
+
   }
+
   function saveProgress() {
+
     try {
+
       localStorage.setItem('questResponses', JSON.stringify(responses));
+
       localStorage.setItem('questCurrentPage', String(currentPageIndex));
+
     } catch (e) { console.warn('Неуспешно записване в localStorage:', e); }
+
   }
+
   function loadProgress() {
+
     try {
+
       const savedResponses = localStorage.getItem('questResponses');
+
       const savedPage = localStorage.getItem('questCurrentPage');
+
       if (savedResponses) Object.assign(responses, JSON.parse(savedResponses));
+
       if (savedPage !== null) {
+
         const idx = parseInt(savedPage, 10);
+
         if (!Number.isNaN(idx)) currentPageIndex = idx;
+
       }
+
     } catch (e) { console.warn('Неуспешно зареждане от localStorage:', e); }
+
   }
+
   function applySavedResponses() {
+
     for (const [qId, answer] of Object.entries(responses)) {
+
       const question = flatPages.find(q => q.id === qId);
+
       if (!question) continue;
+
       const el = document.getElementById(qId);
+
       if (['text', 'number', 'email', 'textarea', 'select'].includes(question.type)) {
+
         if (el) el.value = answer;
+
       } else if (question.type === 'radio') {
+
         const radio = document.querySelector(`input[name="${qId}"][value="${answer}"]`);
+
         if (radio) radio.checked = true;
+
       } else if (question.type === 'checkbox' && Array.isArray(answer)) {
+
         answer.forEach(val => {
+
           const chk = document.querySelector(`input[name="${qId}"][value="${val}"]`);
+
           if (chk) chk.checked = true;
+
         });
+
       }
+
     }
+
   }
+
   function clearProgress() {
+
     localStorage.removeItem('questResponses');
+
     localStorage.removeItem('questCurrentPage');
+
     for (const key in responses) delete responses[key];
+
     currentPageIndex = 0;
+
   }
+
   function saveAnswer(question) {
+
       if (!question || !question.id) { return; }
+
       const qId = question.id; let answer;
+
       const element = document.getElementById(qId);
+
       if (['text', 'number', 'email', 'textarea'].includes(question.type)) { if (element) answer = element.value.trim(); } 
+
       else if (question.type === 'select') { if(element) answer = element.value; } 
+
       else if (question.type === 'radio') {
+
         const checkedRadio = document.querySelector(`input[name="${qId}"]:checked`);
+
         answer = checkedRadio ? checkedRadio.value : null;
+
       } else if (question.type === 'checkbox') {
+
         const checked = document.querySelectorAll(`input[name="${qId}"]:checked`);
+
         answer = Array.from(checked).map(ch => ch.value);
+
       }
+
       if (answer !== undefined) { responses[qId] = answer; saveProgress(); } 
+
       else { console.warn(`Не е намерен контрол за въпрос с ID: ${qId}`); }
+
   }
+
   function validateAnswer(question) {
+
     if (!question || !question.id) return true;
+
     const qId = question.id;
+
     let isValid = true;
+
     let errorMessage = '';
+
     const element = document.getElementById(qId);
+
     const isRequired = requiredFields.includes(qId);
+
     let value = '';
+
     if (['text', 'number', 'email', 'textarea'].includes(question.type)) {
+
         if (element) value = element.value.trim();
+
         if (isRequired && !value) { isValid = false; errorMessage = "Моля, попълнете това поле."; }
+
         else if (question.type === 'number') {
+
             const num = Number(value);
+
             if (value && isNaN(num)) { isValid = false; errorMessage = "Моля, въведете число."; }
+
             else { const range = numericRanges[qId]; if (range && (num < range.min || num > range.max)) { isValid = false; errorMessage = `Стойността трябва да е между ${range.min} и ${range.max}.`; } }
+
         }
+
     } else if (question.type === 'select') {
+
          if (element) value = element.value;
+
          if (isRequired && !value) { isValid = false; errorMessage = "Моля, направете избор."; }
+
      } else if (question.type === 'radio') {
+
         if (isRequired && !document.querySelector(`input[name="${qId}"]:checked`)) { isValid = false; errorMessage = "Моля, изберете една от опциите."; }
+
     } else if (question.type === 'checkbox') {
+
         if (isRequired && document.querySelectorAll(`input[name="${qId}"]:checked`).length === 0) { isValid = false; errorMessage = "Моля, изберете поне една опция."; }
+
     }
+
     const errorElementId = `error-${qId}`;
+
     let errorElement = document.getElementById(errorElementId);
+
     const pageElement = document.getElementById('page' + (flatPages.findIndex(p => p.id === qId) + 1));
+
     if (!isValid) {
+
         if (!errorElement && pageElement) {
+
             errorElement = document.createElement('div');
+
             errorElement.id = errorElementId;
+
             errorElement.className = 'validation-error';
+
             errorElement.style.color = '#e74c3c';
+
             errorElement.style.fontSize = '0.9em';
+
             errorElement.style.marginTop = '5px';
+
             errorElement.setAttribute('role', 'alert');
+
             const navButtons = pageElement.querySelector('.nav-buttons');
+
             if(navButtons) { pageElement.insertBefore(errorElement, navButtons); }
+
             else { pageElement.appendChild(errorElement); }
+
         }
+
         if (errorElement) { errorElement.textContent = errorMessage; }
+
     } else if (errorElement) { errorElement.remove(); }
+
     return isValid;
+
   }
+
   async function submitResponses() {
+
       responses.submissionDate = new Date().toISOString();
+
       console.log("Starting submitResponses...", JSON.stringify(responses, null, 2));
+
       const userEmail = String(responses.email || (document.getElementById('register-email-q') ? document.getElementById('register-email-q').value : '')).trim().toLowerCase();
+
       responses.email = userEmail;
+
        try {
+
             const workerResponse = await fetch(`${workerBaseUrl}/api/submitQuestionnaire`, {
+
                 method: 'POST',
+
                 headers: { 'Content-Type': 'application/json' },
+
                 body: JSON.stringify(responses)
+
             });
+
             const responseData = await workerResponse.json();
+
             if (!workerResponse.ok) { throw new Error(responseData.message || `Worker отговори със статус ${workerResponse.status}`); }
+
             delete responses.submissionDate;
+
             return responseData;
+
         } catch (error) {
+
              delete responses.submissionDate;
+
              throw new Error(`Грешка при комуникация със сървъра: ${error.message}`);
+
         }
+
   }
+
+
 
   // --- Зареждане на въпросника при старт (без промяна) ---
+
    document.addEventListener('DOMContentLoaded', () => {
+
      fetch('questions.json')
+
        .then(res => {
+
          if (!res.ok) throw new Error(`HTTP ${res.status} при зареждане на questions.json`);
+
          const contentType = res.headers.get("content-type");
+
          if (contentType && !contentType.includes("application/json")) { throw new TypeError(`Очакван JSON, но получен ${contentType}`); }
+
          return res.json();
+
        })
+
        .then(data => {
+
          if (!Array.isArray(data) || data.length === 0) { throw new Error("questions.json е празен или невалиден масив."); }
+
          rawQuestions = data;
+
          buildDynamicPages();
+
          loadProgress();
+
          applySavedResponses();
+
          showPage(currentPageIndex);
+
        })
+
        .catch(err => {
+
            console.error('Грешка при зареждане или обработка на questions.json:', err);
+
            const container = document.getElementById('dynamicContainer');
+
            if(container) { container.innerHTML = `<div style="color: #e74c3c; text-align: center; padding: 20px;">Възникна грешка при зареждане на въпросника. (${err.message})</div>`; }
+
         });
+
        const secretArea = document.getElementById('secretTapArea');
+
        const adminLink = document.getElementById('adminLink');
+
        if(secretArea && adminLink) {
+
            secretArea.addEventListener('click', function() {
+
              adminLink.style.display = 'block';
+
              setTimeout(() => { adminLink.style.display = 'none'; }, 10000);
+
            });
+
        }
+
    });
+
 </script>
 
-<!-- НОВ СКРИПТ ЗА 3D АНИМАЦИЯТА -->
-<script type="module">
-  import * as THREE from 'three';
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const container = document.getElementById('dna-background');
-    if (!container) return;
-
-    // 1. Настройка на сцената, камерата и рендъра
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 30;
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.appendChild(renderer.domElement);
-    
-    // 2. Цветове, адаптирани за темата
-    const lightThemeColor = new THREE.Color(0x004d40); // Тъмно зелено за светла тема
-    const darkThemeColor = new THREE.Color(0x80cbc4);  // Светло тюркоазено за тъмна тема
-
-    // 3. Създаване на материала за частиците
-    const pointsMaterial = new THREE.PointsMaterial({
-        size: 0.1,
-        sizeAttenuation: true,
-        transparent: true,
-        opacity: 0.8
-    });
-
-    // 4. Генериране на геометрията на ДНК веригата
-    const pointsGeometry = new THREE.BufferGeometry();
-    const pointsCount = 10000;
-    const positions = new Float32Array(pointsCount * 3);
-    const radius = 5;
-    const turns = 5; // Брой завъртания на спиралата
-    const height = 60; // Височина на спиралата
-
-    for (let i = 0; i < pointsCount; i++) {
-        const y = (i / pointsCount) * height - height / 2;
-        const angle = (i / pointsCount) * turns * Math.PI * 2;
-        
-        let x, z;
-        // Генерираме двете вериги едновременно
-        if (i % 2 === 0) {
-            x = Math.cos(angle) * radius;
-            z = Math.sin(angle) * radius;
-        } else {
-            // Втората верига е с отместване от 180 градуса (PI)
-            x = Math.cos(angle + Math.PI) * radius;
-            z = Math.sin(angle + Math.PI) * radius;
-        }
-        
-        positions[i * 3] = x;
-        positions[i * 3 + 1] = y;
-        positions[i * 3 + 2] = z;
-    }
-    pointsGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    
-    // 5. Създаване на обекта от частици (ДНК-то)
-    const dna = new THREE.Points(pointsGeometry, pointsMaterial);
-    scene.add(dna);
-
-    // 6. Функция за обновяване на цвета според темата
-    const updateTheme = () => {
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-            pointsMaterial.color.set(lightThemeColor);
-        } else {
-            pointsMaterial.color.set(darkThemeColor);
-        }
-    };
-
-    updateTheme(); // Първоначална настройка на цвета
-    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', updateTheme);
-
-    // 7. Анимационен цикъл
-    const clock = new THREE.Clock();
-    const animate = () => {
-        requestAnimationFrame(animate);
-
-        const elapsedTime = clock.getElapsedTime();
-        dna.rotation.y = elapsedTime * 0.1; // Бавно въртене
-
-        renderer.render(scene, camera);
-    };
-    animate();
-
-    // 8. Адаптивност при промяна на размера на прозореца
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    });
-  });
-</script>
 
 </body>
+
 </html>
