@@ -407,6 +407,32 @@ input[type="checkbox"] {
     margin: 0 auto 5px;
 }
 
+.persistent-stats {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px 15px;
+    background-color: rgba(18, 18, 18, 0.85);
+    backdrop-filter: blur(6px);
+    z-index: 1100;
+    margin-top: 0;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.instructions-text {
+    max-width: 600px;
+    margin: 20px auto 10px;
+    text-align: center;
+    color: #b0b0b0;
+    line-height: 1.4;
+}
+
+body#questPage {
+    padding-bottom: 110px;
+}
+
 @keyframes fadeInContent {
   to { opacity: 1; transform: translateY(0); }
 }
@@ -430,6 +456,16 @@ input[type="checkbox"] {
   .stats-bar {
     gap: 30px;
   }
+  .persistent-stats {
+    padding: 8px 10px;
+  }
+  .persistent-stats .stat-icon {
+    width: 60px;
+    height: 60px;
+  }
+  .persistent-stats .stat-label {
+    font-size: 0.8rem;
+  }
   #page0.hero-start-page #startBtn {
     width: 100%;
     padding: 16px 20px;
@@ -441,5 +477,8 @@ input[type="checkbox"] {
   .stats-bar {
     flex-direction: row;
     justify-content: center;
+  }
+  .persistent-stats {
+    padding: 10px 20px;
   }
 }
