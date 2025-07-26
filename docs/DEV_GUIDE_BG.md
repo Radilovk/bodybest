@@ -19,11 +19,15 @@ npm install       # инсталира зависимостите
 npm run dev       # стартира локалния сървър с Vite
 npm run lint      # проверява стила със ESLint
 npm test          # изпълнява Jest тестовете
+npm run test:watch # пуска само модифицираните тестове
 npm run build     # създава оптимизиран билд в папка dist/
 npm run docs      # генерира API документация в docs/api
 ```
 
 Преди да направите commit се уверете, че `npm run lint` и `npm test` минават успешно.
+
+За по-бърза обратна връзка използвайте `npm run test:watch`, който рестартира
+само променените тестове при запазване.
 
 
 1. Извикайте `npm run dev` и отворете `http://localhost:5173`.
