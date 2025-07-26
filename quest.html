@@ -4,7 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Въпросник за хранителни навици (Dynamic)</title>
-  <link href="css/base_styles.css" rel="stylesheet">
   <link href="css/quest_theme.css" rel="stylesheet">
   <link href="css/quest_styles.css" rel="stylesheet">
   <link href="css/components_styles.css" rel="stylesheet">
@@ -243,7 +242,6 @@
 <div class="step-indicator-container">
   <span class="step-indicator-label">Стъпка <span id="questCurrentStep">0</span> от <span id="questTotalSteps">0</span></span>
   <div class="progress-bar-steps"><div id="questProgressBar" class="step-progress-bar"></div></div>
-  <button id="theme-toggle" class="button button-secondary">Смени тема</button>
 </div>
 
 <div class="container" id="dynamicContainer">
@@ -286,7 +284,6 @@
   import { setupRegistration } from "./js/register.js";
   import { showMessage, hideMessage } from "./js/messageUtils.js";
   import { updateStepProgress } from "./js/stepProgress.js";
-  import { toggleTheme, initializeTheme } from "./js/uiHandlers.js";
   
   /***** Глобални променливи (без промяна) *****/
   let rawQuestions = [];
@@ -309,7 +306,6 @@
     'q1745805721482','alcoholFrequency','foodPreference','q1745806409218','q1745806494081','mainChallenge','q1745892518511',
     'medicalConditions','q1745804366749','medications','medicationsList','supplementsList'
   ];
-  const themeToggleBtn = document.getElementById('theme-toggle');
 
   /***** Функция за рекурсивно сплескване на въпросите (без промяна) *****/
   function flattenQuestions(questions) {
@@ -824,10 +820,7 @@
              setTimeout(() => { adminLink.style.display = 'none'; }, 10000);
            });
        }
-  });
-
-  initializeTheme();
-  if (themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
+   });
 </script>
 
 </body>
