@@ -551,11 +551,10 @@
     pageDiv.innerHTML = `
       <h2>Поздравления! <i class="bi bi-stars"></i><br> Току що направихте най-важната стъпка по пътя към промяната</h2>
       <p>Натиснете бутона, за да изпратите вашите отговори за обработка.</p>
-      <div class="nav-buttons" style="justify-content: center;">
-        <button id="finalBackBtn" type="button">◀ Назад</button>
-        <button id="submitBtn" type="button">Изпрати</button>
-        <button id="restartBtn" type="button">Отначало</button>
-      </div>
+        <div class="nav-buttons" style="justify-content: center;">
+          <button id="submitBtn" type="button">Изпрати</button>
+          <button id="restartBtn" type="button">Отначало</button>
+        </div>
        <div id="submit-message" class="message" style="margin-top: 15px; text-align: center; font-weight: bold; word-wrap: break-word;"></div>
     `;
     container.appendChild(pageDiv);
@@ -568,11 +567,9 @@
         if (!pageDiv) { console.error("Финалната страница не е намерена."); return; }
         const submitBtn = pageDiv.querySelector('#submitBtn');
         const restartBtn = pageDiv.querySelector('#restartBtn');
-        const backBtn = pageDiv.querySelector('#finalBackBtn');
         const submitMessage = pageDiv.querySelector('#submit-message');
-        if (!submitBtn || !restartBtn || !backBtn || !submitMessage) { console.error("Един или повече елементи липсват на финалната страница."); return; }
+        if (!submitBtn || !restartBtn || !submitMessage) { console.error("Един или повече елементи липсват на финалната страница."); return; }
         restartBtn.addEventListener('click', () => { clearProgress(); location.reload(); });
-        backBtn.addEventListener('click', () => { showPage(registrationPageIndex); });
         submitBtn.addEventListener('click', async () => {
             submitBtn.disabled = true;
             submitBtn.textContent = 'Изпращане...';
