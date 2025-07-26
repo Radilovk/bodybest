@@ -5,4 +5,9 @@
   --secondary-color: #5BC0BE;
   --surface-background: #1e1e1e;
   --radius-sm: 0.3rem;
+  --quest-bg-color: rgba(44, 62, 80, 0.65);
+}
+
+body.dark-theme {
+  --quest-bg-color: rgba(37, 42, 65, 0.75);
 }
