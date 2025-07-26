@@ -31,7 +31,7 @@ body {
 }
 
 :root {
-  --quest-bg-color: var(--card-bg);
+  --quest-bg-color: rgba(var(--primary-rgb), 0.5);
 }
 
 /* Специален контейнер за въпросника */
