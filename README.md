@@ -86,6 +86,8 @@ npm run test:watch
 npx jest
 # или пуснете конкретен тестов файл
 npm run test:file js/__tests__/adminConfig.test.js
+# или изпълнете тестове, свързани със стейджнатите файлове
+npm run test:related
 ```
 Препоръчително е за локална работа да използвате `npm run test:watch`,
 тъй като изпълнява само променените тестове и ускорява процеса.
