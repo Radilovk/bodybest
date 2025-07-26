@@ -11,6 +11,7 @@
   --bg-surface: #1e1e1e;
   --bg-surface-secondary: #2a2a2a;
   --bg-sticky-header: rgba(18, 18, 18, 0.85);
+  --box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 
   --text-primary: #E0E0E0;
   --text-highlight: #80cbc4;
@@ -42,33 +43,29 @@
 
 @media (prefers-color-scheme: light) {
   :root {
-    /* СВЕТЛА ТЕМА (АВТОМАТИЧНА) */
-    --bg-primary: #f9f9f9;
+    /* --- ПОДОБРЕНА ЦВЕТОВА ПАЛИТРА ЗА СВЕТЛА ТЕМА --- */
+    --bg-primary: #f0f2f5;
     --bg-surface: #ffffff;
-    --bg-surface-secondary: #f2f2f2;
+    --bg-surface-secondary: #f0f2f5;
     --bg-sticky-header: rgba(255, 255, 255, 0.85);
+    --box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 
-    --text-primary: #1a1a1a;
-    --text-highlight: #00695c; /* По-тъмен за контраст */
-    --text-accent: #00796b;
+    --text-primary: #333745;
+    --text-highlight: #004d40;
+    --text-accent: #00695c;
     --text-on-accent: #ffffff;
 
-    --border-primary: #cccccc;
+    --border-primary: #d1d9e0;
     --border-focus: #43a088;
-
-    /* Акцентът остава същият, защото е отличителен */
-    --accent-primary: #4fc3a1;
-    --accent-primary-hover: #43a088;
-    --accent-primary-lighten: #5dd4b5;
+    
     --accent-shadow: rgba(79, 195, 161, 0.4);
 
-    /* Hero страница */
-    --hero-bg-gradient: linear-gradient(135deg, #f0fdfa, #e6faf3, #f7f6f4);
-    --hero-text-primary: #1a1a1a;
-    --hero-text-secondary: #555555;
+    /* Нов, по-жив градиент */
+    --hero-bg-gradient: linear-gradient(135deg, #a8dff0, #b3f0db);
+    --hero-text-primary: #1c3b4d;
+    --hero-text-secondary: #4a5c6a;
 
-    /* Въпросник */
-    --quest-bg-color: rgba(230, 245, 250, 0.75);
+    --quest-bg-color: rgba(255, 255, 255, 0.6);
     --answer-hover-bg: rgba(79, 195, 161, 0.15);
   }
 }
@@ -91,7 +88,7 @@ body {
   padding: 20px;
   background-color: var(--bg-surface);
   border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  box-shadow: var(--box-shadow);
 }
 
 h1, h2 {
@@ -126,8 +123,8 @@ p {
   margin: 0 auto;
   padding: 10px;
   background-color: var(--quest-bg-color);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px); /* По-силен блър за по-добър ефект */
+  -webkit-backdrop-filter: blur(8px);
   border-radius: 10px;
 }
 
@@ -145,16 +142,17 @@ p {
   max-width: 500px;
   margin: 8px auto;
   padding: 12px 15px;
-  border-radius: 5px;
+  border-radius: 8px; /* Леко по-заоблени */
   border: 1px solid var(--border-primary);
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
+  transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
   background-color: var(--bg-surface);
 }
 
 .answer-label:hover {
     background-color: var(--answer-hover-bg);
     border-color: var(--border-focus);
+    transform: translateY(-2px);
 }
 
 .section-title {
@@ -253,7 +251,7 @@ button {
   cursor: pointer;
   transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
   min-height: 48px;
-  -webkit-tap-highlight-color: transparent; /* Премахва синия фон при докосване на мобилни */
+  -webkit-tap-highlight-color: transparent;
 }
 button:hover {
   box-shadow: 0 0 10px var(--accent-shadow);
@@ -383,7 +381,6 @@ button:not(.btn-secondary):hover:not(:disabled) {
   animation: gradientAnimation 15s ease infinite;
 }
 
-/* Премахваме стиловете на .container за първата страница */
 #page0.active.hero-start-page .container {
     max-width: 100%;
     margin: 0;
@@ -401,6 +398,13 @@ button:not(.btn-secondary):hover:not(:disabled) {
   left: 0;
   pointer-events: none;
   z-index: 1;
+}
+
+/* --- РЕШЕНИЕ ЗА АНИМИРАНИЯ ФОН --- */
+@media (prefers-color-scheme: light) {
+  #particles-js {
+    filter: invert(1);
+  }
 }
 
 .hero-content {
@@ -423,14 +427,14 @@ button:not(.btn-secondary):hover:not(:disabled) {
   font-size: 2.8rem;
   font-weight: 700;
   color: var(--hero-text-primary);
-  text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
   margin-bottom: 15px;
   line-height: 1.2;
 }
 
 .hero-subtitle {
   font-size: 1.3rem;
-  font-weight: 300;
+  font-weight: 400; /* Малко по-плътен шрифт за четимост */
   color: var(--hero-text-secondary);
   max-width: 550px;
   margin: 0 auto 40px auto;
@@ -471,12 +475,12 @@ button:not(.btn-secondary):hover:not(:disabled) {
     flex-direction: row;
     justify-content: center;
     gap: 20px;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--hero-text-secondary);
     user-select: none;
 }
 
 .stat-item { text-align: center; }
-.stat-label { font-size: 1rem; letter-spacing: 0.5px; }
+.stat-label { font-size: 1rem; letter-spacing: 0.5px; font-weight: 500;}
 .stat-icon { width: 80px; height: 80px; display: block; margin: 0 auto 5px; }
 
 
@@ -488,22 +492,18 @@ button:not(.btn-secondary):hover:not(:disabled) {
   from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes fadeInContent {
   to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes popIn {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
-
 @keyframes pulse {
   0% { transform: scale(0.95); opacity: 0.5; }
   70% { transform: scale(1.1); opacity: 0; }
   100% { transform: scale(0.95); opacity: 0; }
 }
-
 @keyframes gradientAnimation {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
