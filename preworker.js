@@ -34,6 +34,7 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
   await sendEmail(to, subject, body, phpEnv);
 }
 import { parseJsonSafe } from './utils/parseJsonSafe.js';
+import { generateProfile, generateMenu, generatePrinciples, generateGuidance } from "./worker_modules/planGenerationSteps.js";
 
 const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
 const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
@@ -261,6 +262,10 @@ const AI_CONFIG_KEYS = [
     'plan_token_limit',
     'plan_temperature',
     'prompt_chat',
+    'prompt_generate_profile',
+    'prompt_generate_menu',
+    'prompt_generate_principles',
+    'prompt_generate_guidance',
     'chat_token_limit',
     'chat_temperature',
     'prompt_plan_modification',
@@ -2353,11 +2358,11 @@ async function processSingleUserPlan(userId, env) {
         }
         console.log(`PROCESS_USER_PLAN (${userId}): Processing for email: ${initialAnswers.email || 'N/A'}`);
         const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, principlesWeek2_4: [], additionalGuidelines: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
-        const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, openaiApiKey, planModelName, unifiedPromptTemplate, pendingPlanModStr ] = await Promise.all([
+        const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, openaiApiKey, planModelName, pendingPlanModStr ] = await Promise.all([
             env.RESOURCES_KV.get('question_definitions'), env.RESOURCES_KV.get('base_diet_model'),
             env.RESOURCES_KV.get('allowed_meal_combinations'), env.RESOURCES_KV.get('eating_psychology'),
             env.RESOURCES_KV.get('recipe_data'), env[GEMINI_API_KEY_SECRET_NAME], env[OPENAI_API_KEY_SECRET_NAME],
-            env.RESOURCES_KV.get('model_plan_generation'), env.RESOURCES_KV.get('prompt_unified_plan_generation_v2'),
+            env.RESOURCES_KV.get('model_plan_generation'),
             env.USER_METADATA_KV.get(`pending_plan_mod_${userId}`)
         ]);
         const pendingPlanModData = safeParseJson(pendingPlanModStr, pendingPlanModStr);
@@ -2378,10 +2383,6 @@ async function processSingleUserPlan(userId, env) {
         if (!planModelName) {
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): CRITICAL: Plan generation model name ('model_plan_generation') not found in RESOURCES_KV.`);
             throw new Error("CRITICAL: Plan generation model name ('model_plan_generation') not found in RESOURCES_KV.");
-        }
-        if (!unifiedPromptTemplate) {
-            console.error(`PROCESS_USER_PLAN_ERROR (${userId}): CRITICAL: Unified prompt template ('prompt_unified_plan_generation_v2') is missing from RESOURCES_KV.`);
-            throw new Error("CRITICAL: Unified prompt template ('prompt_unified_plan_generation_v2') is missing from RESOURCES_KV.");
         }
         planBuilder.generationMetadata.modelUsed = planModelName;
         let questionTextMap = new Map();
@@ -2447,30 +2448,30 @@ async function processSingleUserPlan(userId, env) {
             '%%AVG_MOOD_LAST_7_DAYS%%': avgMood !== 'N/A' ? `${avgMood}/5` : 'N/A',
             '%%AVG_ENERGY_LAST_7_DAYS%%': avgEnergy !== 'N/A' ? `${avgEnergy}/5` : 'N/A'
         };
-        const populatedUnifiedPrompt = populatePrompt(unifiedPromptTemplate, replacements);
-        let finalPrompt = populatedUnifiedPrompt;
-        if (pendingPlanModText) {
-            finalPrompt += `\n\n[PLAN_MODIFICATION]\n${pendingPlanModText}`;
-        }
-        let generatedPlanObject = null; let rawAiResponse = "";
+        replacements["%%PLAN_MODIFICATION%%"] = pendingPlanModText;
         try {
-            console.log(`PROCESS_USER_PLAN (${userId}): Calling model ${planModelName} for unified plan. Prompt length: ${finalPrompt.length}`);
-            rawAiResponse = await callModel(planModelName, finalPrompt, env, { temperature: 0.1, maxTokens: 20000 });
-            const cleanedJson = cleanGeminiJson(rawAiResponse);
-            generatedPlanObject = safeParseJson(cleanedJson);
-            if (!generatedPlanObject || !generatedPlanObject.profileSummary || !generatedPlanObject.week1Menu || !generatedPlanObject.principlesWeek2_4 || !generatedPlanObject.detailedTargets) {
-                console.error(`PROCESS_USER_PLAN_ERROR (${userId}): Unified plan generation returned an invalid or incomplete JSON structure. Original response (start): ${rawAiResponse.substring(0,300)}`);
-                throw new Error("Unified plan generation returned an invalid or incomplete JSON structure.");
-            }
-            console.log(`PROCESS_USER_PLAN (${userId}): Unified plan JSON parsed successfully.`);
-            const { generationMetadata, ...restOfGeneratedPlan } = generatedPlanObject;
-            Object.assign(planBuilder, restOfGeneratedPlan);
-            if (generationMetadata && Array.isArray(generationMetadata.errors)) planBuilder.generationMetadata.errors.push(...generationMetadata.errors);
+            const profileRes = await generateProfile(replacements, env, planModelName);
+            Object.assign(planBuilder, profileRes);
         } catch (e) {
-            const errorMsg = `Unified Plan Generation Error for ${userId}: ${e.message}. Raw response (start): ${rawAiResponse.substring(0, 500)}...`;
-            console.error(errorMsg);
-            await env.USER_METADATA_KV.put(`${userId}_last_plan_raw_error`, rawAiResponse.substring(0, 300));
-            planBuilder.generationMetadata.errors.push(errorMsg);
+            planBuilder.generationMetadata.errors.push(`Profile gen error: ${e.message}`);
+        }
+        try {
+            const menuRes = await generateMenu(replacements, env, planModelName);
+            Object.assign(planBuilder, menuRes);
+        } catch (e) {
+            planBuilder.generationMetadata.errors.push(`Menu gen error: ${e.message}`);
+        }
+        try {
+            const principlesRes = await generatePrinciples(replacements, env, planModelName);
+            Object.assign(planBuilder, principlesRes);
+        } catch (e) {
+            planBuilder.generationMetadata.errors.push(`Principles gen error: ${e.message}`);
+        }
+        try {
+            const guidanceRes = await generateGuidance(replacements, env, planModelName);
+            Object.assign(planBuilder, guidanceRes);
+        } catch (e) {
+            planBuilder.generationMetadata.errors.push(`Guidance gen error: ${e.message}`);
         }
         
         console.log(`PROCESS_USER_PLAN (${userId}): Assembling and saving final plan. Recorded errors during generation: ${planBuilder.generationMetadata.errors.length}`);
