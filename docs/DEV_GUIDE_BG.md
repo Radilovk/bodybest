@@ -21,6 +21,7 @@ npm run lint      # проверява стила със ESLint
 npm test          # изпълнява Jest тестовете
 npm run test:watch # пуска само модифицираните тестове
 npm run test:file js/__tests__/adminConfig.test.js # пуска конкретен файл
+npm run test:related # пуска тестове за стейджнатите файлове
 npm run build     # създава оптимизиран билд в папка dist/
 npm run docs      # генерира API документация в docs/api
 ```
@@ -30,6 +31,7 @@ npm run docs      # генерира API документация в docs/api
 Препоръчително е за локална работа да използвате `npm run test:watch`,
 защото стартира само променените тестове и ускорява процеса.
 А ако искате да стартирате само конкретен файл, ползвайте `npm run test:file <път>`.
+За тестове, свързани със стейджнатите файлове, използвайте `npm run test:related`.
 
 
 1. Извикайте `npm run dev` и отворете `http://localhost:5173`.

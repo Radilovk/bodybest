@@ -11,6 +11,7 @@
     "test": "sh ./scripts/test.sh",
     "test:watch": "sh ./scripts/test.sh --watch",
     "test:file": "node scripts/test.sh --runTestsByPath",
+    "test:related": "node scripts/test-related.js",
     "coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "docs": "typedoc"
   },
