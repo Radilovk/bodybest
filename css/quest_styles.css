@@ -1,17 +1,8 @@
 /* =================================================================== */
-/*                                                                     */
-/*             ОСНОВЕН CSS ФАЙЛ ЗА ДИНАМИЧЕН ВЪПРОСНИК                */
-/*         (Версия с автоматична светла/тъмна тема и UX подобрения)    */
-/*                                                                     */
-/* =================================================================== */
-
-
-/* =================================================================== */
 /*                      ОСНОВНИ ПРОМЕНЛИВИ И ТЕМИ                     */
 /* =================================================================== */
 
 :root {
-  /* Тъмна тема (по подразбиране) */
   --font-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --bg-primary: #121212;
   --bg-surface: #1e1e1e;
@@ -35,16 +26,15 @@
   --hero-gradient: radial-gradient(ellipse at 50% 0%, rgba(44, 62, 80, 0.65) 0%, rgba(31, 44, 53, 0.65) 40%, transparent 80%);
 }
 
-/* Светла тема (активира се автоматично) */
 @media (prefers-color-scheme: light) {
   :root {
     --bg-primary: #f4f5f7;
     --bg-surface: #ffffff;
     --bg-surface-transparent: rgba(255, 255, 255, 0.65);
-    --bg-quest-container: rgba(240, 248, 250, 0.85);
+    --bg-quest-container: rgba(240, 248, 250, 0.88);
     --bg-sticky-header: rgba(255, 255, 255, 0.5);
     --text-primary: #1a1a1a;
-    --text-accent: #00796b; /* По-тъмен акцент за по-добър контраст */
+    --text-accent: #00796b;
     --accent-primary: #26a69a;
     --accent-primary-hover: #00897b;
     --accent-primary-light: #4db6ac;
@@ -65,18 +55,6 @@
 /*                           ОБЩИ СТИЛОВЕ                           */
 /* =================================================================== */
 
-/* Деактивиране на анимации при заявка от потребителя */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
 body {
   margin: 0;
   font-family: var(--font-primary);
@@ -94,7 +72,6 @@ body {
   box-shadow: 0 0 15px var(--shadow-color-light);
 }
 
-/* Прозрачни контейнери в страницата с въпросника */
 #questPage .container:not(#dynamicContainer) {
   width: 100%;
   max-width: none;
@@ -116,16 +93,10 @@ p {
   margin-bottom: 20px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 /* =================================================================== */
 /*                СТИЛОВЕ ЗА КОМПОНЕНТИ НА ВЪПРОСНИКА               */
 /* =================================================================== */
 
-/* Специален контейнер за въпросника */
 #dynamicContainer {
   max-width: 640px;
   margin: 0 auto;
@@ -158,7 +129,7 @@ p {
 }
 
 .answer-label:hover {
-    background-color: rgba(var(--accent-primary), 0.1);
+    background-color: rgba(79,195,161,0.07);
     border-color: var(--accent-primary);
 }
 
@@ -169,7 +140,6 @@ p {
   margin-bottom: 20px;
 }
 
-/* Всяка страница се състои от "екран" */
 .page {
   display: none;
   animation: fadeIn 0.4s ease-in-out;
@@ -187,7 +157,6 @@ p {
   display: block;
 }
 
-/* Навигационни бутони */
 .nav-buttons {
   display: flex;
   flex-direction: row;
@@ -215,13 +184,12 @@ button:hover {
   transform: translateY(-2px);
 }
 
-/* Стил за бутон "Назад" за по-добра йерархия */
 .nav-buttons button:first-child:not(:last-child) {
     background-color: transparent;
     color: var(--accent-primary);
     border: 2px solid var(--accent-primary);
 }
- .nav-buttons button:first-child:not(:last-child):hover {
+.nav-buttons button:first-child:not(:last-child):hover {
     background-color: var(--accent-primary);
     color: var(--bg-primary);
 }
@@ -276,12 +244,10 @@ input[type="checkbox"] {
 .form-group label { display: block; margin-bottom: 5px; }
 .form-group input { width: 100%; box-sizing: border-box; }
 
-
 /* =================================================================== */
 /*             СТИЛОВЕ ЗА НАЧАЛНА СТРАНИЦА И ХЕДЪР                   */
 /* =================================================================== */
 
-/* "Лепкав" прогрес бар */
 .step-indicator-container {
     position: sticky;
     top: 0;
@@ -294,24 +260,26 @@ input[type="checkbox"] {
     padding: 8px 15px;
 }
 
-/* Стил за прогрес бара от друг файл (предполага се) */
 .step-indicator-label { display: block; text-align: center; font-size: 0.8em; margin-bottom: 4px; }
 .progress-bar-steps { width: 100%; height: 6px; background-color: var(--border-color); border-radius: 3px; overflow: hidden; }
 .step-progress-bar { height: 100%; width: 0; background-color: var(--accent-primary); transition: width 0.4s ease-in-out; }
 
-
-/* Фон с частици - фиксиран за паралакс ефект */
 #particles-js {
-  position: fixed; /* ВАЖНО: Променено на fixed */
+  position: fixed;
   width: 100%;
   height: 100%;
   top: 0;
   left: 0;
   pointer-events: none;
-  z-index: 0; /* Под съдържанието, но над фона на body */
+  z-index: 0;
 }
 
-/* Начална Hero страница */
+@media (prefers-color-scheme: light) {
+  #particles-js {
+    display: none !important;
+  }
+}
+
 #page0.active.hero-start-page {
   min-height: 100vh;
   width: 100%;
@@ -323,36 +291,53 @@ input[type="checkbox"] {
   padding: 20px;
   box-sizing: border-box;
   color: #fff;
-  /* Статичен, но красив градиент */
   background: var(--hero-gradient), linear-gradient(35deg, #1f2c35, #2c3e50, #466368);
   background-blend-mode: overlay;
 }
+@media (prefers-color-scheme: light) {
+  #page0.active.hero-start-page {
+    background: radial-gradient(circle at 60% 10%, #e0f7fa 0%, #b2dfdb 70%, #e0f2f1 100%);
+    color: var(--text-primary);
+  }
+}
 
-/* Премахваме стиловете на .container за първата страница */
 #page0.active.hero-start-page .container {
     max-width: 100%; margin: 0; padding: 0; background-color: transparent; border-radius: 0; box-shadow: none;
 }
 
 .hero-content {
   position: relative;
-  z-index: 2; /* Съдържанието е над частиците */
+  z-index: 2;
   text-align: center;
   max-width: 900px;
   padding: 20px;
-  animation: fadeIn 1s ease-in-out 0.3s forwards;
-  opacity: 0;
-  transform: translateY(20px);
+  border-radius: 25px;
+  background: rgba(44,62,80,0.15);
+  box-shadow: 0 8px 24px rgba(30,30,60,0.18);
+  border: 2px solid rgba(44,62,80,0.18);
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
 }
-
-@keyframes fadeIn {
-  to { opacity: 1; transform: translateY(0); }
+@media (prefers-color-scheme: light) {
+  .hero-content {
+    background: rgba(255,255,255,0.88);
+    border: 2px solid #e0f2f1;
+    box-shadow: 0 4px 24px rgba(38,166,154,0.10);
+    color: var(--text-primary);
+  }
 }
 
 .hero-image { max-width: 250px; margin: 0 auto 20px auto; }
-.hero-title { font-size: 2.8rem; font-weight: 700; color: #FFFFFF; text-shadow: 2px 2px 8px rgba(0,0,0,0.3); margin-bottom: 15px; line-height: 1.2; }
+.hero-title { font-size: 2.8rem; font-weight: 700; color: var(--accent-primary); text-shadow: 2px 2px 8px rgba(0,0,0,0.3); margin-bottom: 15px; line-height: 1.2; }
+@media (prefers-color-scheme: light) {
+  .hero-title { color: var(--accent-primary-hover); text-shadow: 0 1px 8px #b2dfdb; }
+}
 .hero-subtitle { font-size: 1.3rem; font-weight: 300; color: #E0E0E0; max-width: 550px; margin: 0 auto 40px auto; line-height: 1.6; }
+@media (prefers-color-scheme: light) {
+  .hero-subtitle { color: var(--text-primary); }
+}
 
-/* Специфични стилове за бутона на началната страница */
 #page0.hero-start-page #startBtn {
   position: relative;
   background-color: var(--accent-primary);
@@ -372,7 +357,6 @@ input[type="checkbox"] {
   background-color: var(--accent-primary-light);
 }
 
-/* Пулсираща рамка за призив към действие */
 #page0.hero-start-page #startBtn::after {
   content: "";
   position: absolute;
@@ -399,7 +383,6 @@ input[type="checkbox"] {
 #persistentStats { display: none; justify-content: center; gap: 20px; padding: 10px 0; }
 #persistentStats .stat-icon { width: 60px; height: 60px; }
 
-
 /* =================================================================== */
 /*                         МОБИЛНА АДАПТАЦИЯ                         */
 /* =================================================================== */
@@ -409,7 +392,7 @@ input[type="checkbox"] {
   .hero-subtitle { font-size: 1.2rem; padding: 0 10px; }
   .stats-bar { gap: 30px; }
   #page0.hero-start-page #startBtn { width: 100%; padding: 16px 20px; justify-content: center; }
-  .quest-instructions { text-align: left; } /* По-добра четимост */
+  .quest-instructions { text-align: left; }
 }
 
 @media (min-width: 769px) {
@@ -419,14 +402,10 @@ input[type="checkbox"] {
 @media (max-width: 600px) {
   .container { margin: 60px 15px 20px; padding: 15px; }
   #dynamicContainer { margin: 0 10px; padding: 8px; }
-
-  .nav-buttons { flex-direction: column-reverse; } /* Бутон "Напред" е отгоре */
+  .nav-buttons { flex-direction: column-reverse; }
   .nav-buttons button { width: 100%; flex: 1; }
-
   .question-text { font-size: 18px; }
   button { font-size: 16px; min-height: 52px; }
-
-  /* Полетата заемат цялата ширина за по-лесно попълване */
   input[type="text"], input[type="number"], input[type="email"], input[type="password"], textarea, select, .answer-label {
     width: 100%;
   }
