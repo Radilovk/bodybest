@@ -1,13 +1,87 @@
 /* =================================================================== */
-/*            ОСНОВНИ СТИЛОВЕ ЗА ВЪПРОСНИКА (ОРИГИНАЛНИ)              */
+/*        ДЕФИНИЦИИ НА ТЕМИ И ЦВЕТОВИ ПРОМЕНЛИВИ (НОВО)              */
 /* =================================================================== */
 
-/* Основен стил – запазен от оригиналната версия с допълнения за мобилност */
+:root {
+  /* ТЪМНА ТЕМА (ПО ПОДРАЗБИРАНЕ) */
+  --font-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* Цветове */
+  --bg-primary: #121212;
+  --bg-surface: #1e1e1e;
+  --bg-surface-secondary: #2a2a2a;
+  --bg-sticky-header: rgba(18, 18, 18, 0.85);
+
+  --text-primary: #E0E0E0;
+  --text-highlight: #80cbc4;
+  --text-accent: #4fc3a1;
+  --text-on-accent: #121212;
+
+  --border-primary: #333;
+  --border-focus: #4fc3a1;
+
+  --accent-primary: #4fc3a1;
+  --accent-primary-hover: #43a088;
+  --accent-primary-lighten: #5dd4b5;
+  --accent-shadow: rgba(79, 195, 161, 0.5);
+
+  --color-error: #e74c3c;
+  --color-success: #2ecc71;
+  --color-error-bg: rgba(231, 76, 60, 0.1);
+  --color-success-bg: rgba(46, 204, 113, 0.1);
+
+  /* Hero страница */
+  --hero-bg-gradient: linear-gradient(35deg, rgba(31, 44, 53, 0.55), rgba(44, 62, 80, 0.55), rgba(70, 99, 104, 0.55));
+  --hero-text-primary: #FFFFFF;
+  --hero-text-secondary: #E0E0E0;
+
+  /* Въпросник */
+  --quest-bg-color: rgba(44, 62, 80, 0.65);
+  --answer-hover-bg: rgba(79, 195, 161, 0.1);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    /* СВЕТЛА ТЕМА (АВТОМАТИЧНА) */
+    --bg-primary: #f9f9f9;
+    --bg-surface: #ffffff;
+    --bg-surface-secondary: #f2f2f2;
+    --bg-sticky-header: rgba(255, 255, 255, 0.85);
+
+    --text-primary: #1a1a1a;
+    --text-highlight: #00695c; /* По-тъмен за контраст */
+    --text-accent: #00796b;
+    --text-on-accent: #ffffff;
+
+    --border-primary: #cccccc;
+    --border-focus: #43a088;
+
+    /* Акцентът остава същият, защото е отличителен */
+    --accent-primary: #4fc3a1;
+    --accent-primary-hover: #43a088;
+    --accent-primary-lighten: #5dd4b5;
+    --accent-shadow: rgba(79, 195, 161, 0.4);
+
+    /* Hero страница */
+    --hero-bg-gradient: linear-gradient(135deg, #f0fdfa, #e6faf3, #f7f6f4);
+    --hero-text-primary: #1a1a1a;
+    --hero-text-secondary: #555555;
+
+    /* Въпросник */
+    --quest-bg-color: rgba(230, 245, 250, 0.75);
+    --answer-hover-bg: rgba(79, 195, 161, 0.15);
+  }
+}
+
+/* =================================================================== */
+/*                      ОБЩИ СТИЛОВЕ ЗА СТРАНИЦАТА                     */
+/* =================================================================== */
+
 body {
   margin: 0;
-  font-family: var(--font-primary, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
-  background-color: #121212;
-  color: #E0E0E0;
+  font-family: var(--font-primary);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   overflow-x: hidden;
 }
 
@@ -15,10 +89,26 @@ body {
   max-width: 600px;
   margin: 60px auto 20px;
   padding: 20px;
-  background-color: #1e1e1e;
+  background-color: var(--bg-surface);
   border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.6);
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
 }
+
+h1, h2 {
+  text-align: center;
+  color: var(--text-highlight);
+  margin-bottom: 20px;
+}
+
+p {
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+/* =================================================================== */
+/*                       СТИЛОВЕ ЗА ВЪПРОСНИКА                        */
+/* =================================================================== */
 
 /* Прозрачни контейнери в страницата с въпросника */
 #questPage .container:not(#dynamicContainer) {
@@ -30,11 +120,6 @@ body {
   box-shadow: none;
 }
 
-:root {
-  /* Полупрозрачен син фон, съответстващ на началната страница */
-  --quest-bg-color: rgba(44, 62, 80, 0.65);
-}
-
 /* Специален контейнер за въпросника */
 #dynamicContainer {
   max-width: 640px;
@@ -42,58 +127,196 @@ body {
   padding: 10px;
   background-color: var(--quest-bg-color);
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border-radius: 10px;
 }
 
 .question-text {
   font-size: 20px;
   font-weight: 600;
-  color: #80cbc4;
+  color: var(--text-highlight);
   margin-bottom: 20px;
   line-height: 1.4;
 }
 
 .answer-label {
-  font-size: 16px;
-  line-height: 1.4;
-  margin: 8px auto;
   display: block;
-  padding: 10px;
-  width: 80%;
+  width: 90%;
+  max-width: 500px;
+  margin: 8px auto;
+  padding: 12px 15px;
   border-radius: 5px;
-  border: 1px solid #333;
+  border: 1px solid var(--border-primary);
   cursor: pointer;
   transition: background-color 0.2s, border-color 0.2s;
+  background-color: var(--bg-surface);
 }
 
 .answer-label:hover {
-    background-color: rgba(79, 195, 161, 0.1);
-    border-color: #4fc3a1;
+    background-color: var(--answer-hover-bg);
+    border-color: var(--border-focus);
 }
 
 .section-title {
   font-size: 22px;
   text-align: center;
-  color: #4fc3a1;
+  color: var(--text-accent);
   margin-bottom: 20px;
 }
 
-h1, h2 {
+.quest-instructions {
+  margin: 0 0 15px 0;
+  max-width: 600px;
   text-align: center;
-  color: #80cbc4;
-  margin-bottom: 20px;
+  line-height: 1.4;
+  font-size: 1rem;
+  color: var(--text-primary);
 }
 
-p {
-  text-align: center;
-  line-height: 1.5;
-  margin-bottom: 20px;
+#persistentStats {
+  display: none;
+  justify-content: center;
+  gap: 20px;
+  padding: 10px 0;
+}
+#persistentStats .stat-icon {
+  width: 60px;
+  height: 60px;
 }
 
-/* Прогрес бар - използва се общият компонент */
-/* Този стил е заменен с новия "sticky" стил по-долу */
+/* =================================================================== */
+/*                СТИЛОВЕ ЗА ФОРМУЛЯРИ И КОНТРОЛИ                     */
+/* =================================================================== */
 
-/* Всяка страница се състои от "екран" */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  display: block;
+  width: 90%;
+  max-width: 500px;
+  padding: 12px;
+  margin: 10px auto 20px;
+  border: 1px solid var(--border-primary);
+  border-radius: 5px;
+  background-color: var(--bg-surface-secondary);
+  color: var(--text-primary);
+  font-size: 16px;
+  box-sizing: border-box;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 8px var(--accent-shadow);
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  margin-right: 10px;
+  accent-color: var(--accent-primary);
+  transform: scale(1.2);
+}
+
+.form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  padding-left: 5%; /* Подравняване с полетата */
+}
+
+.form-group input {
+  width: 100%; /* Заема цялата ширина на групата */
+  max-width: 100%;
+  margin: 0;
+}
+
+
+/* =================================================================== */
+/*                       БУТОНИ И НАВИГАЦИЯ                            */
+/* =================================================================== */
+
+/* Общ стил за бутон */
+button {
+  border: none;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+  min-height: 48px;
+  -webkit-tap-highlight-color: transparent; /* Премахва синия фон при докосване на мобилни */
+}
+button:hover {
+  box-shadow: 0 0 10px var(--accent-shadow);
+  transform: translateY(-2px);
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Основен бутон (Напред, Регистрация, Изпрати) */
+.btn-primary,
+button:not(.btn-secondary) {
+  background-color: var(--accent-primary);
+  color: var(--text-on-accent);
+}
+.btn-primary:hover:not(:disabled),
+button:not(.btn-secondary):hover:not(:disabled) {
+  background-color: var(--accent-primary-hover);
+}
+
+/* Вторичен бутон (Назад, Отначало) */
+.btn-secondary {
+  background-color: transparent;
+  color: var(--accent-primary);
+  border: 2px solid var(--accent-primary);
+}
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--accent-primary);
+  color: var(--text-on-accent);
+}
+
+.nav-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+.nav-buttons button {
+  min-width: 120px;
+  flex: 1;
+  max-width: 250px;
+}
+
+/* =================================================================== */
+/*                 ПРОГРЕС БАР И СЪСТОЯНИЯ НА СТРАНИЦИ                 */
+/* =================================================================== */
+
+.step-indicator-container {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: var(--bg-sticky-header);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin: 0;
+    padding: 8px 15px;
+}
+
 .page {
   display: none;
   animation: fadeIn 0.4s ease-in-out;
@@ -111,67 +334,9 @@ p {
   display: block;
 }
 
-/* Навигационни бутони */
-.nav-buttons {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 20px;
-}
-.nav-buttons button {
-  min-width: 120px;
-  flex: 1;
-}
-
-button {
-  background-color: #4fc3a1;
-  color: #121212;
-  border: none;
-  padding: 12px 20px;
-  font-size: 16px;
-  font-weight: bold;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  min-height: 48px;
-}
-
-button:hover {
-  background-color: #43a088;
-  box-shadow: 0 0 10px rgba(128, 203, 196, 0.5);
-}
-
-input[type="text"],
-input[type="number"],
-input[type="email"],
-input[type="password"],
-textarea,
-select {
-  width: 80%;
-  padding: 12px;
-  margin: 10px auto 20px;
-  border: 1px solid #333;
-  border-radius: 5px;
-  background-color: #2a2a2a;
-  color: #E0E0E0;
-  font-size: 16px;
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-
-input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: #4fc3a1;
-    box-shadow: 0 0 8px rgba(79, 195, 161, 0.5);
-}
-
-
-input[type="radio"],
-input[type="checkbox"] {
-  margin-right: 10px;
-  accent-color: #4fc3a1;
-  transform: scale(1.2);
-}
+/* =================================================================== */
+/*                 СЪОБЩЕНИЯ ЗА ГРЕШКИ И УСПЕХ                      */
+/* =================================================================== */
 
 .message {
   padding: 0.8rem;
@@ -186,133 +351,36 @@ input[type="checkbox"] {
 
 .message.error {
   display: block;
-  color: #e74c3c;
-  background-color: rgba(231, 76, 60, 0.1);
-  border-color: #e74c3c;
+  color: var(--color-error);
+  background-color: var(--color-error-bg);
+  border-color: var(--color-error);
 }
 
 .message.success {
   display: block;
-  color: #2ecc71;
-  background-color: rgba(46, 204, 113, 0.1);
-  border-color: #2ecc71;
-}
-
-.form-group {
-  margin-bottom: 15px;
-  text-align: left;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-.form-group input {
-  width: 100%;
-  box-sizing: border-box; /* Важно за правилно оразмеряване */
-}
-
-@keyframes popIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.animate-success {
-  animation: popIn 0.6s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@media (max-width: 600px) {
-  .container {
-    margin: 60px 15px 20px;
-    padding: 15px;
-  }
-  #dynamicContainer {
-    margin: 0 10px;
-    padding: 8px;
-  }
-  .nav-buttons button {
-    width: auto;
-    min-width: 120px;
-    flex: 1;
-  }
-  .question-text {
-    font-size: 16px;
-  }
-  button {
-    font-size: 16px;
-    min-height: 52px;
-  }
+  color: var(--color-success);
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success);
 }
 
 /* =================================================================== */
-/*        СТИЛОВЕ ЗА НОВАТА НАЧАЛНА СТРАНИЦА И ПОДОБРЕНИЯ             */
+/*               СТИЛОВЕ ЗА HERO НАЧАЛНА СТРАНИЦА                     */
 /* =================================================================== */
 
-/* Подобрен, "лепкав" прогрес бар */
-.step-indicator-container {
-    position: sticky;
-    top: 0;
-    z-index: 1000; /* Висок z-index, за да е винаги отгоре */
-    background-color: rgba(18, 18, 18, 0.5);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    /* Уверяваме се, че оригиналните стилове за padding/margin са нулирани, ако има такива */
-    margin: 0;
-    padding: 8px 15px; /* Малко вътрешно отстояние */
-}
-
-/* 
-  Използваме .hero-start-page, за да приложим стиловете само към първата страница, 
-  без да засягаме останалите.
-*/
 #page0.active.hero-start-page {
-  /* Пълноекранен фон */
-  min-height: 100vh; /* Позволява адекватно скролиране на мобилни устройства */
+  min-height: 100vh;
   width: 100%;
-  position: relative; /* Премахваме фиксирането, за да не се блокира скролът */
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 20px;
   box-sizing: border-box;
-  color: #fff;
-  /* Динамичен градиентен фон */
-  background: linear-gradient(35deg,
-    rgba(31, 44, 53, 0.55),
-    rgba(44, 62, 80, 0.55),
-    rgba(70, 99, 104, 0.55)
-  );
+  color: var(--hero-text-primary);
+  background: var(--hero-bg-gradient);
   background-size: 200% 200%;
   animation: gradientAnimation 15s ease infinite;
-}
-
-@keyframes gradientAnimation {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* Контейнер за частиците от particles.js */
-#particles-js {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  z-index: 1;
-}
-
-#questPage .progress-bar-steps {
-    background-color: color-mix(in srgb, var(--secondary-color) 50%, var(--surface-background));
 }
 
 /* Премахваме стиловете на .container за първата страница */
@@ -325,9 +393,19 @@ input[type="checkbox"] {
     box-shadow: none;
 }
 
+#particles-js {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
 .hero-content {
   position: relative;
-  z-index: 2; /* Съдържанието е над частиците */
+  z-index: 2;
   text-align: center;
   max-width: 900px;
   padding: 20px;
@@ -335,7 +413,6 @@ input[type="checkbox"] {
   opacity: 0;
   transform: translateY(20px);
 }
-
 
 .hero-image {
   max-width: 250px;
@@ -345,53 +422,45 @@ input[type="checkbox"] {
 .hero-title {
   font-size: 2.8rem;
   font-weight: 700;
-  color: #FFFFFF;
-  text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+  color: var(--hero-text-primary);
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
   margin-bottom: 15px;
   line-height: 1.2;
 }
 
-
 .hero-subtitle {
   font-size: 1.3rem;
   font-weight: 300;
-  color: #E0E0E0;
+  color: var(--hero-text-secondary);
   max-width: 550px;
   margin: 0 auto 40px auto;
   line-height: 1.6;
 }
 
-/* Специфични стилове за бутона на началната страница */
 #page0.hero-start-page #startBtn {
-  position: relative;
-  background-color: #4fc3a1;
-  color: #121212;
+  background-color: var(--accent-primary);
+  color: var(--text-on-accent);
   font-size: 1.2rem;
-  font-weight: bold;
   padding: 16px 45px;
   border-radius: 50px;
-  border: none;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-  box-shadow: 0 5px 20px rgba(79, 195, 161, 0.3);
+  box-shadow: 0 5px 20px var(--accent-shadow);
   display: inline-flex;
   align-items: center;
   gap: 10px;
 }
-
 #page0.hero-start-page #startBtn:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(79, 195, 161, 0.5);
-  background-color: #5dd4b5; /* Леко по-светъл при hover */
+  box-shadow: 0 10px 25px var(--accent-shadow);
+  background-color: var(--accent-primary-lighten);
 }
 
-/* Пулсираща рамка за призив към действие */
 #page0.hero-start-page #startBtn::after {
   content: "";
   position: absolute;
   z-index: -1;
   top: -6px; left: -6px; right: -6px; bottom: -6px;
-  border: 2px solid rgba(79, 195, 161, 0.5);
+  border: 2px solid var(--accent-primary);
+  opacity: 0.5;
   border-radius: 50px;
   animation: pulse 2s infinite ease-out;
 }
@@ -399,32 +468,34 @@ input[type="checkbox"] {
 .stats-bar {
     margin-top: 50px;
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+    justify-content: center;
     gap: 20px;
     color: rgba(255, 255, 255, 0.8);
     user-select: none;
 }
 
-.stat-item {
-    text-align: center;
-}
+.stat-item { text-align: center; }
+.stat-label { font-size: 1rem; letter-spacing: 0.5px; }
+.stat-icon { width: 80px; height: 80px; display: block; margin: 0 auto 5px; }
 
-.stat-label {
-    font-size: 1rem;
-    letter-spacing: 0.5px;
-}
 
-/* Малки икони за статистиките */
-.stat-icon {
-    width: 80px;
-    height: 80px;
-    display: block;
-    margin: 0 auto 5px;
+/* =================================================================== */
+/*                            АНИМАЦИИ                                 */
+/* =================================================================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInContent {
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes popIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 @keyframes pulse {
@@ -433,7 +504,31 @@ input[type="checkbox"] {
   100% { transform: scale(0.95); opacity: 0; }
 }
 
-/* Адаптации за мобилни устройства */
+@keyframes gradientAnimation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* =================================================================== */
+/*                     ДОСТЪПНОСТ (НОВО)                             */
+/* =================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* =================================================================== */
+/*              АДАПТАЦИИ ЗА МОБИЛНИ УСТРОЙСТВА (MEDIA QUERIES)        */
+/* =================================================================== */
+
 @media (max-width: 768px) {
   .hero-title {
     font-size: 2.2rem;
@@ -444,6 +539,7 @@ input[type="checkbox"] {
     padding: 0 10px;
   }
   .stats-bar {
+    flex-direction: column;
     gap: 30px;
   }
   #page0.hero-start-page #startBtn {
@@ -453,9 +549,45 @@ input[type="checkbox"] {
   }
 }
 
-@media (min-width: 769px) {
-  .stats-bar {
-    flex-direction: row;
-    justify-content: center;
+@media (max-width: 600px) {
+  .container {
+    margin: 60px 15px 20px;
+    padding: 15px;
+  }
+  #dynamicContainer {
+    margin: 0 10px;
+    padding: 8px;
+  }
+  .nav-buttons {
+    flex-direction: column-reverse; /* Напред е отгоре, за по-лесен достъп */
+  }
+  .nav-buttons button {
+    width: 100%;
+    max-width: 100%;
+  }
+  .question-text {
+    font-size: 18px;
+  }
+  button {
+    font-size: 16px;
+    min-height: 52px;
+  }
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  textarea,
+  select,
+  .answer-label {
+    width: 100%; /* Полетата заемат цялата ширина */
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .form-group label {
+    padding-left: 0; /* Премахване на отстъпа на мобилни */
+  }
+  .quest-instructions {
+    text-align: left; /* По-добра четимост на малки екрани */
+    padding: 0 10px;
   }
 }
