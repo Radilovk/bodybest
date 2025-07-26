@@ -233,32 +233,32 @@
   <details id="emailSettingsSection" class="card">
     <summary>Настройки за имейли</summary>
     <form id="emailSettingsForm">
-      <label>Тема:<br><input id="welcomeEmailSubject" type="text"></label>
-      <label>Съдържание:<br><textarea id="welcomeEmailBody" rows="5"></textarea></label>
-      <div id="welcomeEmailPreview" class="email-preview"></div>
-      <label><input id="sendWelcomeEmail" type="checkbox" checked> Изпращай приветствен имейл</label>
-      <label>Тема на имейла след въпросник:<br><input id="questionnaireEmailSubject" type="text"></label>
-      <label>Съдържание:<br><textarea id="questionnaireEmailBody" rows="5"></textarea></label>
-      <div id="questionnaireEmailPreview" class="email-preview"></div>
-      <label><input id="sendQuestionnaireEmail" type="checkbox" checked> Изпращай имейл след въпросник</label>
-      <label>Тема на имейла за анализ:<br><input id="analysisEmailSubject" type="text"></label>
-      <label>Съдържание:<br><textarea id="analysisEmailBody" rows="5"></textarea></label>
-      <div id="analysisEmailPreview" class="email-preview"></div>
-      <label><input id="sendAnalysisEmail" type="checkbox" checked> Изпращай имейл при готов анализ</label>
-      <label><input id="sameEmailContent" type="checkbox"> Използвай същото съдържание за анализа</label>
+      <fieldset>
+        <legend>Приветствен имейл (след регистрация)</legend>
+        <label>Тема:<br><input id="welcomeEmailSubject" type="text" placeholder="Добре дошли в BodyBest!"></label>
+        <label>Съдържание:<br><textarea id="welcomeEmailBody" rows="5" placeholder="Здравейте {{name}}, благодарим за регистрацията..."></textarea></label>
+        <div id="welcomeEmailPreview" class="email-preview"></div>
+        <label><input id="sendWelcomeEmail" type="checkbox" checked> Изпращай приветствен имейл</label>
+      </fieldset>
+      <fieldset>
+        <legend>Потвърждение след въпросник</legend>
+        <label>Тема:<br><input id="questionnaireEmailSubject" type="text" placeholder="Благодарим за попълнения въпросник"></label>
+        <label>Съдържание:<br><textarea id="questionnaireEmailBody" rows="5" placeholder="Получихме отговорите и започваме обработка..."></textarea></label>
+        <div id="questionnaireEmailPreview" class="email-preview"></div>
+        <label><input id="sendQuestionnaireEmail" type="checkbox" checked> Изпращай имейл след въпросник</label>
+      </fieldset>
+      <fieldset>
+        <legend>Имейл при готов анализ</legend>
+        <label>Тема:<br><input id="analysisEmailSubject" type="text" placeholder="Вашият анализ е готов"></label>
+        <label>Съдържание:<br><textarea id="analysisEmailBody" rows="5" placeholder="Здравейте {{name}}, анализът ви е готов."></textarea></label>
+        <div id="analysisEmailPreview" class="email-preview"></div>
+        <label><input id="sendAnalysisEmail" type="checkbox" checked> Изпращай имейл при готов анализ</label>
+        <label><input id="sameEmailContent" type="checkbox"> Използвай същото съдържание за анализа</label>
+      </fieldset>
       <button type="submit">Запази</button>
     </form>
   </details>
 
-  <details id="contentThemeSection" class="card">
-    <summary>Съдържание и тема</summary>
-    <form id="contentThemeForm">
-      <label>Тема на имейла за анализ:<br><input id="contentAnalysisSubject" type="text"></label>
-      <label>Съдържание:<br><textarea id="contentAnalysisBody" rows="5"></textarea></label>
-      <div id="contentAnalysisPreview" class="email-preview"></div>
-      <button type="submit">Запази</button>
-    </form>
-  </details>
 
   <details id="colorSettings" class="card">
     <summary>Настройки на цветове</summary>
