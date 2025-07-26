@@ -100,6 +100,8 @@ const questionnaireEmailBodyInput = document.getElementById('questionnaireEmailB
 const analysisEmailSubjectInput = document.getElementById('analysisEmailSubject');
 const analysisEmailBodyInput = document.getElementById('analysisEmailBody');
 const sendQuestionnaireEmailCheckbox = document.getElementById('sendQuestionnaireEmail');
+const sendWelcomeEmailCheckbox = document.getElementById('sendWelcomeEmail');
+const sendAnalysisEmailCheckbox = document.getElementById('sendAnalysisEmail');
 const sameEmailContentCheckbox = document.getElementById('sameEmailContent');
 const contentThemeForm = document.getElementById('contentThemeForm');
 const contentAnalysisSubjectInput = document.getElementById('contentAnalysisSubject');
@@ -1281,7 +1283,9 @@ async function loadEmailSettings() {
             'questionnaire_email_body',
             'analysis_email_subject',
             'analysis_email_body',
-            'send_questionnaire_email'
+            'send_questionnaire_email',
+            'send_welcome_email',
+            'send_analysis_email'
         ])
         if (welcomeEmailSubjectInput) welcomeEmailSubjectInput.value = cfg.welcome_email_subject || ''
         if (welcomeEmailBodyInput) {
@@ -1302,6 +1306,14 @@ async function loadEmailSettings() {
             const val = cfg.send_questionnaire_email
             sendQuestionnaireEmailCheckbox.checked = val !== '0' && val !== 'false'
         }
+        if (sendWelcomeEmailCheckbox) {
+            const val = cfg.send_welcome_email
+            sendWelcomeEmailCheckbox.checked = val !== '0' && val !== 'false'
+        }
+        if (sendAnalysisEmailCheckbox) {
+            const val = cfg.send_analysis_email
+            sendAnalysisEmailCheckbox.checked = val !== '0' && val !== 'false'
+        }
     } catch (err) {
         console.error('Error loading email settings:', err)
     }
@@ -1316,7 +1328,9 @@ async function saveEmailSettings() {
             questionnaire_email_body: questionnaireEmailBodyInput ? questionnaireEmailBodyInput.value.trim() : '',
             analysis_email_subject: (sameEmailContentCheckbox?.checked ? questionnaireEmailSubjectInput?.value.trim() : analysisEmailSubjectInput?.value.trim()) || '',
             analysis_email_body: (sameEmailContentCheckbox?.checked ? questionnaireEmailBodyInput?.value.trim() : analysisEmailBodyInput?.value.trim()) || '',
-            send_questionnaire_email: sendQuestionnaireEmailCheckbox && sendQuestionnaireEmailCheckbox.checked ? '1' : '0'
+            send_questionnaire_email: sendQuestionnaireEmailCheckbox && sendQuestionnaireEmailCheckbox.checked ? '1' : '0',
+            send_welcome_email: sendWelcomeEmailCheckbox && sendWelcomeEmailCheckbox.checked ? '1' : '0',
+            send_analysis_email: sendAnalysisEmailCheckbox && sendAnalysisEmailCheckbox.checked ? '1' : '0'
     }
     try {
         await saveConfig(updates)
@@ -1807,6 +1821,8 @@ export {
     sendTestQuestionnaire,
     sendAdminQuery,
     attachEmailPreview,
+    loadEmailSettings,
+    saveEmailSettings,
     loadContentThemeSettings,
     saveContentThemeSettings
 };

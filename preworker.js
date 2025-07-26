@@ -274,6 +274,8 @@ const AI_CONFIG_KEYS = [
     'questionnaire_email_body',
     'analysis_email_subject',
     'analysis_email_body',
+    'send_welcome_email',
+    'send_analysis_email',
     'send_questionnaire_email',
     'colors'
 ];
