@@ -9,6 +9,7 @@
     "start": "vite preview",
     "lint": "eslint .",
     "test": "sh ./scripts/test.sh",
+    "test:watch": "sh ./scripts/test.sh --watch",
     "coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "docs": "typedoc"
   },
