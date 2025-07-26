@@ -16,6 +16,7 @@ beforeEach(async () => {
   jest.unstable_mockModule('../utils.js', () => ({ safeParseFloat: jest.fn(), escapeHtml: jest.fn(), fileToDataURL: jest.fn() }));
   jest.unstable_mockModule('../uiHandlers.js', () => ({
     initializeTheme: jest.fn(),
+    loadAndApplyColors: jest.fn(),
     activateTab: jest.fn(),
     openModal: jest.fn(),
     closeModal: jest.fn(),

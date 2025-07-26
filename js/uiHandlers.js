@@ -1,5 +1,6 @@
 // uiHandlers.js - Управление на UI елементи (Меню, Тема, Табове, Модали, Tooltips и др.)
 import { selectors } from './uiElements.js';
+import { loadConfig } from './adminConfig.js';
 import {
     fullDashboardData,
     activeTooltip, // state from app.js that this module will modify
@@ -87,6 +88,19 @@ export function updateThemeButtonText() {
     const isDark = document.body.classList.contains('dark-theme');
     if (themeTextSpan) themeTextSpan.textContent = isDark ? 'Светла Тема' : 'Тъмна Тема';
     if (themeIconSpan) themeIconSpan.innerHTML = isDark ? '<i class="bi bi-sun"></i>' : '<i class="bi bi-moon"></i>';
+}
+
+export async function loadAndApplyColors() {
+    try {
+        const { colors = {} } = await loadConfig(['colors']);
+        for (const [key, val] of Object.entries(colors)) {
+            if (!val) continue;
+            document.documentElement.style.setProperty(`--${key}-color`, val);
+            document.body.style.setProperty(`--${key}-color`, val);
+        }
+    } catch (err) {
+        console.warn('Неуспешно зареждане на цветовата конфигурация', err);
+    }
 }
 
 export function activateTab(activeTabButton) {
