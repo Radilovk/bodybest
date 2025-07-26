@@ -73,6 +73,11 @@
         .floating label { position: absolute; left: 0.8rem; top: 0.8rem; pointer-events: none; transition: transform 0.2s, color 0.2s; background: transparent; }
         .floating input:focus + label,
         .floating input:not(:placeholder-shown) + label { transform: translateY(-0.6rem) scale(0.85); color: var(--primary-color); }
+        /* Скриваме етикета за полетата във формата за вход, щом се въвежда текст */
+        #login-form .floating input:focus + label,
+        #login-form .floating input:not(:placeholder-shown) + label {
+            display: none;
+        }
         .password-strength { font-size: 0.75rem; margin-top: 0.3rem; }
         .strength-weak { color: var(--color-danger); }
         .strength-medium { color: var(--color-warning); }
