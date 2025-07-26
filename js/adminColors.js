@@ -1,13 +1,27 @@
 import { loadConfig, saveConfig } from './adminConfig.js';
 
-const inputSelectors = {
-  primary: '#primaryColorInput',
-  secondary: '#secondaryColorInput',
-  accent: '#accentColorInput',
-  tertiary: '#tertiaryColorInput'
-};
-
 const inputs = {};
+
+async function fetchColorVars() {
+  const res = await fetch('css/base_styles.css');
+  const css = await res.text();
+  const regex = /--([a-zA-Z0-9-]*(?:-color|-bg|-border)[a-zA-Z0-9-]*)\s*:/g;
+  const vars = new Set();
+  let m;
+  while ((m = regex.exec(css))) vars.add(m[1]);
+  return [...vars];
+}
+
+function createInput(name, container) {
+  const label = document.createElement('label');
+  label.textContent = name.replace(/-/g, ' ');
+  const input = document.createElement('input');
+  input.type = 'color';
+  input.id = `${name}Input`;
+  label.appendChild(input);
+  container.appendChild(label);
+  inputs[name] = input;
+}
 const themeSelectId = 'savedThemes';
 const themeNameId = 'themeNameInput';
 const saveThemeBtnId = 'saveThemeLocal';
@@ -15,16 +29,16 @@ const applyThemeBtnId = 'applyThemeLocal';
 const deleteThemeBtnId = 'deleteThemeLocal';
 
 function setCssVar(key, val) {
-  document.documentElement.style.setProperty(`--${key}-color`, val);
-  document.body.style.setProperty(`--${key}-color`, val);
+  document.documentElement.style.setProperty(`--${key}`, val);
+  document.body.style.setProperty(`--${key}`, val);
 }
 
 function getCurrentColor(key) {
   const bodyVal = getComputedStyle(document.body)
-    .getPropertyValue(`--${key}-color`).trim();
+    .getPropertyValue(`--${key}`).trim();
   if (bodyVal) return bodyVal;
   return getComputedStyle(document.documentElement)
-    .getPropertyValue(`--${key}-color`).trim();
+    .getPropertyValue(`--${key}`).trim();
 }
 
 function getSavedThemes() {
@@ -92,9 +106,9 @@ function deleteSelectedTheme() {
 }
 
 export async function initColorSettings() {
-  for (const [key, sel] of Object.entries(inputSelectors)) {
-    inputs[key] = document.querySelector(sel);
-  }
+  const container = document.getElementById('colorInputs');
+  const vars = await fetchColorVars();
+  if (container) vars.forEach(v => createInput(v, container));
   const saveBtn = document.getElementById('saveColorConfig');
   populateThemeSelect();
   const saveThemeBtn = document.getElementById(saveThemeBtnId);

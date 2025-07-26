@@ -95,8 +95,8 @@ export async function loadAndApplyColors() {
         const { colors = {} } = await loadConfig(['colors']);
         for (const [key, val] of Object.entries(colors)) {
             if (!val) continue;
-            document.documentElement.style.setProperty(`--${key}-color`, val);
-            document.body.style.setProperty(`--${key}-color`, val);
+            document.documentElement.style.setProperty(`--${key}`, val);
+            document.body.style.setProperty(`--${key}`, val);
         }
     } catch (err) {
         console.warn('Неуспешно зареждане на цветовата конфигурация', err);
