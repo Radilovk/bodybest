@@ -40,9 +40,7 @@ body {
   max-width: 640px;
   margin: 0 auto;
   padding: 10px;
-  background-color: var(--quest-bg-color);
-  backdrop-filter: blur(4px);
-  border-radius: 10px;
+  background-color: transparent;
 }
 
 .question-text {
