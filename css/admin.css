@@ -130,6 +130,11 @@ details[open] summary::after {
   border: 1px solid #ccc;
   padding: 8px;
 }
+#emailSettingsForm fieldset {
+  border: 1px solid #ccc;
+  padding: 8px;
+  margin-bottom: 10px;
+}
 #aiConfigForm input[type="text"] {
   width: 100%;
   max-width: 300px;

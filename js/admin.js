@@ -103,10 +103,6 @@ const sendQuestionnaireEmailCheckbox = document.getElementById('sendQuestionnair
 const sendWelcomeEmailCheckbox = document.getElementById('sendWelcomeEmail');
 const sendAnalysisEmailCheckbox = document.getElementById('sendAnalysisEmail');
 const sameEmailContentCheckbox = document.getElementById('sameEmailContent');
-const contentThemeForm = document.getElementById('contentThemeForm');
-const contentAnalysisSubjectInput = document.getElementById('contentAnalysisSubject');
-const contentAnalysisBodyInput = document.getElementById('contentAnalysisBody');
-const contentAnalysisPreview = document.getElementById('contentAnalysisPreview');
 const testEmailForm = document.getElementById('testEmailForm');
 const testEmailToInput = document.getElementById('testEmailTo');
 const testEmailSubjectInput = document.getElementById('testEmailSubject');
@@ -1341,36 +1337,6 @@ async function saveEmailSettings() {
     }
 }
 
-async function loadContentThemeSettings() {
-    try {
-        const cfg = await loadConfig([
-            'analysis_email_subject',
-            'analysis_email_body'
-        ]);
-        if (contentAnalysisSubjectInput) contentAnalysisSubjectInput.value = cfg.analysis_email_subject || '';
-        if (contentAnalysisBodyInput) {
-            contentAnalysisBodyInput.value = cfg.analysis_email_body || '';
-            if (contentAnalysisPreview) contentAnalysisPreview.innerHTML = sanitizeHTML(contentAnalysisBodyInput.value);
-        }
-    } catch (err) {
-        console.error('Error loading content settings:', err);
-    }
-}
-
-async function saveContentThemeSettings() {
-    if (!contentThemeForm) return;
-    const updates = {
-        analysis_email_subject: contentAnalysisSubjectInput ? contentAnalysisSubjectInput.value.trim() : '',
-        analysis_email_body: contentAnalysisBodyInput ? contentAnalysisBodyInput.value.trim() : ''
-    };
-    try {
-        await saveConfig(updates);
-        alert('Съдържанието е записано.');
-    } catch (err) {
-        console.error('Error saving content settings:', err);
-        alert('Грешка при запис на съдържанието.');
-    }
-}
 
 let testEmailTemplateLoaded = false
 
@@ -1699,7 +1665,6 @@ document.addEventListener('DOMContentLoaded', () => {
     attachEmailPreview(questionnaireEmailBodyInput, questionnaireEmailPreview);
     attachEmailPreview(analysisEmailBodyInput, analysisEmailPreview);
     attachEmailPreview(testEmailBodyInput, testEmailPreview);
-    attachEmailPreview(contentAnalysisBodyInput, contentAnalysisPreview);
 
     if (sameEmailContentCheckbox) {
         const updateAnalysisFields = () => {
@@ -1737,7 +1702,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadAdminToken();
         await loadAiConfig();
         await loadAiPresets();
-        if (contentThemeForm) await loadContentThemeSettings();
         if (emailSettingsForm) await loadEmailSettings();
         if (testEmailSection?.open) await loadTestEmailTemplate();
         setInterval(checkForNotifications, 60000);
@@ -1770,12 +1734,6 @@ if (emailSettingsForm) {
     });
 }
 
-if (contentThemeForm) {
-    contentThemeForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await saveContentThemeSettings();
-    });
-}
 
 if (testEmailSection) {
     testEmailSection.addEventListener('toggle', () => {
@@ -1822,7 +1780,5 @@ export {
     sendAdminQuery,
     attachEmailPreview,
     loadEmailSettings,
-    saveEmailSettings,
-    loadContentThemeSettings,
-    saveContentThemeSettings
+    saveEmailSettings
 };
