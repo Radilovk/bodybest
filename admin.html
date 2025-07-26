@@ -21,26 +21,28 @@
     <ul id="notificationsList"></ul>
   </section>
   <div class="layout">
-  <aside class="sidebar card" id="clientsSection">
-    <h2>Клиенти</h2>
-    <input id="clientSearch" placeholder="Търсене по име">
-    <select id="statusFilter">
-      <option value="all">Всички</option>
-      <option value="pending">pending</option>
-      <option value="processing">processing</option>
-      <option value="ready">ready</option>
-    </select>
-    <select id="tagFilter" multiple>
-      <option value="all">Всички етикети</option>
-    </select>
-    <select id="sortOrder">
-      <option value="name">Сортирай по име</option>
-      <option value="date">Сортирай по дата</option>
-    </select>
+  <details class="sidebar card" id="clientsSection">
+    <summary class="clients-summary">Клиенти</summary>
+    <div id="clientsControls" class="clients-controls">
+      <input id="clientSearch" placeholder="Търсене по име">
+      <select id="statusFilter">
+        <option value="all">Всички</option>
+        <option value="pending">pending</option>
+        <option value="processing">processing</option>
+        <option value="ready">ready</option>
+      </select>
+      <select id="tagFilter" multiple>
+        <option value="all">Всички етикети</option>
+      </select>
+      <select id="sortOrder">
+        <option value="name">Сортирай по име</option>
+        <option value="date">Сортирай по дата</option>
+      </select>
+      <button id="showStats">Покажи статистика</button>
+    </div>
     <p id="clientsCount"></p>
-    <button id="showStats">Покажи статистика</button>
     <ul id="clientsList"></ul>
-  </aside>
+  </details>
 
   <main id="clientDetails" class="main-content card hidden">
     <h2 id="clientName">Клиент</h2>
