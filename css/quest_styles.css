@@ -33,7 +33,6 @@
   --success-color: #2ecc71;
   --success-bg: rgba(46, 204, 113, 0.1);
   --hero-gradient: radial-gradient(ellipse at 50% 0%, rgba(44, 62, 80, 0.65) 0%, rgba(31, 44, 53, 0.65) 40%, transparent 80%);
-  --stats-color: rgba(255, 255, 255, 0.8);
 }
 
 /* Светла тема (активира се автоматично) */
@@ -59,7 +58,6 @@
     --success-color: #388e3c;
     --success-bg: rgba(56, 142, 60, 0.1);
     --hero-gradient: radial-gradient(ellipse at 50% 0%, rgba(178, 223, 219, 0.5) 0%, rgba(224, 242, 241, 0.5) 40%, transparent 80%);
-    --stats-color: rgba(0, 0, 0, 0.8);
   }
 }
 
@@ -392,7 +390,7 @@ input[type="checkbox"] {
   100% { transform: scale(0.95); opacity: 0; }
 }
 
-.stats-bar { margin-top: 50px; display: flex; flex-direction: column; align-items: center; gap: 20px; color: var(--stats-color); user-select: none; }
+.stats-bar { margin-top: 50px; display: flex; flex-direction: column; align-items: center; gap: 20px; color: rgba(255, 255, 255, 0.8); user-select: none; }
 .stat-item { text-align: center; }
 .stat-label { font-size: 1rem; letter-spacing: 0.5px; }
 .stat-icon { width: 80px; height: 80px; display: block; margin: 0 auto 5px; }
