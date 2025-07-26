@@ -438,7 +438,8 @@
         html += `<p style="color: red;">Грешка: Неподдържан тип въпрос.</p>`;
     }
     if (question.dependency) {
-      html += `<div class="fs-xs text-muted" style="margin-top: 10px;">(Показва се ако '${question.dependency.question}' е '${question.dependency.value}')</div>`;
+      // Допълнителен текст за разработчици, скрит от крайния потребител
+      // html += `<div class="fs-xs text-muted" style="margin-top: 10px;">(Показва се ако '${question.dependency.question}' е '${question.dependency.value}')</div>`;
     }
     html += `<div class="nav-buttons">
                ${pageIndex > 1 ? `<button type="button" id="prevBtn${pageIndex}">◀ Назад</button>` : ''}
