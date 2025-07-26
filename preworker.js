@@ -701,8 +701,16 @@ async function handleRegisterRequest(request, env, ctx) {
         await env.USER_METADATA_KV.put(`credential_${userId}`, credentialContent);
         await env.USER_METADATA_KV.put(`email_to_uuid_${trimmedEmail}`, userId);
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
-        const emailTask = sendWelcomeEmail(trimmedEmail, userId, env);
-        if (ctx) ctx.waitUntil(emailTask); else await emailTask;
+
+        let sendVal = env.SEND_WELCOME_EMAIL;
+        if (sendVal === undefined && env.RESOURCES_KV) {
+            try { sendVal = await env.RESOURCES_KV.get('send_welcome_email'); } catch {}
+        }
+        const skipWelcome = sendVal === '0' || String(sendVal).toLowerCase() === 'false';
+        if (!skipWelcome) {
+            const emailTask = sendWelcomeEmail(trimmedEmail, userId, env);
+            if (ctx) ctx.waitUntil(emailTask); else await emailTask;
+        }
         return { success: true, message: 'Регистрацията успешна!' };
      } catch (error) {
         console.error('Error in handleRegisterRequest:', error.message, error.stack);
@@ -1706,8 +1714,15 @@ async function handleAnalyzeInitialAnswers(userId, env, skipEmail = false) {
         url.searchParams.set('userId', userId);
         const link = url.toString();
         if (answers.email && !skipEmail) {
-            const name = answers.name || 'Клиент';
-            await sendAnalysisLinkEmail(answers.email, name, link, env);
+            let val = env.SEND_ANALYSIS_EMAIL;
+            if (val === undefined && env.RESOURCES_KV) {
+                try { val = await env.RESOURCES_KV.get('send_analysis_email'); } catch {}
+            }
+            const skipAnalysis = val === '0' || String(val).toLowerCase() === 'false';
+            if (!skipAnalysis) {
+                const name = answers.name || 'Клиент';
+                await sendAnalysisLinkEmail(answers.email, name, link, env);
+            }
         }
     } catch (error) {
         console.error(`Error in handleAnalyzeInitialAnswers (${userId}):`, error.message, error.stack);

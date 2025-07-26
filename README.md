@@ -860,6 +860,8 @@ To send a test email задайте `WORKER_ADMIN_TOKEN`. Може да посо
 | `QUESTIONNAIRE_EMAIL_SUBJECT` | Optional subject for the confirmation email sent след изпращане на въпросника. |
 | `QUESTIONNAIRE_EMAIL_BODY` | Optional HTML body template for the confirmation email. `{{name}}` ще бъде заменено с името на потребителя. |
 | `SEND_QUESTIONNAIRE_EMAIL` | Set to `false` or `0` to disable sending the confirmation email. |
+| `SEND_WELCOME_EMAIL` | Set to `false` or `0` to skip the welcome message after registration. |
+| `SEND_ANALYSIS_EMAIL` | Set to `false` or `0` to skip the email when the initial analysis is ready. |
 | `ANALYSIS_EMAIL_SUBJECT` | Subject for the email, sent when the personal analysis is ready. |
 | `ANALYSIS_EMAIL_BODY` | HTML body template for that email. Use `{{name}}` и `{{link}}` за персонализация. |
 | `ANALYSIS_PAGE_URL` | Base URL към `analyze.html` за генериране на линка в писмото. |
