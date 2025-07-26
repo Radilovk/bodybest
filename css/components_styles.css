@@ -348,19 +348,3 @@ body.dark-theme .chat-messages .message.bot { color: #e0e0e0; }
   #chat-fab .assistant-icon { animation: none; }
   .assistant-icon.wiggle { animation: none; }
 }
-
-.section-progress {
-  margin-top: var(--space-md);
-}
-
-.section-status-list {
-  list-style: none;
-  padding: 0;
-  margin-top: var(--space-sm);
-  font-size: var(--fs-sm);
-  color: var(--text-color-secondary);
-}
-
-.section-status-list li.ready {
-  color: var(--color-success);
-}
