@@ -36,6 +36,34 @@ describe('initial analysis handlers', () => {
     expect(global.fetch).toHaveBeenCalledWith('https://mail.example.com', expect.any(Object))
   })
 
+  test('skips analysis email when flag is off', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ result: { response: '{"ok":true}' } })
+    })
+    const env = {
+      SEND_ANALYSIS_EMAIL: '0',
+      MAILER_ENDPOINT_URL: 'https://mail.example.com',
+      ANALYSIS_PAGE_URL: 'https://app.example.com/analyze.html',
+      USER_METADATA_KV: {
+        get: jest.fn(key => key === 'u1_initial_answers' ? Promise.resolve('{"name":"A","email":"a@ex.bg"}') : Promise.resolve(null)),
+        put: jest.fn()
+      },
+      RESOURCES_KV: {
+        get: jest.fn(key => {
+          if (key === 'prompt_questionnaire_analysis') return 'Analyze %%ANSWERS_JSON%%'
+          if (key === 'model_questionnaire_analysis') return '@cf/test-model'
+          return null
+        })
+      },
+      CF_ACCOUNT_ID: 'acc',
+      CF_AI_TOKEN: 't'
+    }
+    await worker.handleAnalyzeInitialAnswers('u1', env)
+    const mailCall = global.fetch.mock.calls.find(c => c[0] === 'https://mail.example.com')
+    expect(mailCall).toBeUndefined()
+  })
+
   test('warns when ANALYSIS_EMAIL_BODY lacks link placeholder', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
