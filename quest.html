@@ -4,11 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Въпросник за хранителни навици (Dynamic)</title>
-  <link href="css/base_styles.css" rel="stylesheet">
   <link href="css/quest_theme.css" rel="stylesheet">
   <link href="css/quest_styles.css" rel="stylesheet">
   <link href="css/components_styles.css" rel="stylesheet">
-  <link href="css/responsive_styles.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <!-- === НАЧАЛО: НОВИ СТИЛОВЕ ЗА ВЪЗДЕЙСТВАЩА НАЧАЛНА СТРАНИЦА === -->
@@ -18,7 +16,7 @@
         position: sticky;
         top: 0;
         z-index: 1000; /* Висок z-index, за да е винаги отгоре */
-        background-color: rgba(var(--surface-background-rgb), 0.8); /* Леко прозрачен фон */
+        background-color: rgba(18, 18, 18, 0.8); /* Леко прозрачен фон */
         backdrop-filter: blur(5px); /* Модерен blur ефект */
         -webkit-backdrop-filter: blur(5px);
     }
@@ -254,8 +252,6 @@
   </div>
 </div>
 
-<button id="theme-toggle" type="button" class="button button-secondary" style="display:block;margin:20px auto;">Смени тема</button>
-
 <div id="persistentStats" class="stats-bar">
   <div class="stat-item">
     <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/aibrain.png" alt="AI Algorithm">
@@ -275,7 +271,7 @@
 <div id="secretTapArea" style="position: fixed; top: 0; left: 0; width: 30px; height: 30px; opacity: 0; z-index: 9999;"></div>
 
 <!-- Скрит Admin бутон -->
-<a href="admin.html" id="adminLink" style="display:none; position: fixed; bottom: 10px; right: 10px; background: var(--secondary-color); color: var(--text-color-on-secondary, #121212); padding: 5px 10px; border-radius: 5px; text-decoration: none;">
+<a href="admin.html" id="adminLink" style="display:none; position: fixed; bottom: 10px; right: 10px; background: #4fc3a1; color: #121212; padding: 5px 10px; border-radius: 5px; text-decoration: none;">
   Admin
 </a>
 
@@ -288,7 +284,6 @@
   import { setupRegistration } from "./js/register.js";
   import { showMessage, hideMessage } from "./js/messageUtils.js";
   import { updateStepProgress } from "./js/stepProgress.js";
-  import { toggleTheme, initializeTheme } from "./js/uiHandlers.js";
   
   /***** Глобални променливи (без промяна) *****/
   let rawQuestions = [];
@@ -797,11 +792,6 @@
 
   // --- Зареждане на въпросника при старт (без промяна) ---
    document.addEventListener('DOMContentLoaded', () => {
-     const themeToggleBtn = document.getElementById('theme-toggle');
-     if (themeToggleBtn) {
-       initializeTheme();
-       themeToggleBtn.addEventListener('click', toggleTheme);
-     }
      fetch('questions.json')
        .then(res => {
          if (!res.ok) throw new Error(`HTTP ${res.status} при зареждане на questions.json`);
