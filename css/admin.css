@@ -311,3 +311,11 @@ details[open] summary::after {
   padding: 8px;
   margin-top: 4px;
 }
+
+.theme-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: var(--space-sm);
+}
