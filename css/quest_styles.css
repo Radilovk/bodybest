@@ -30,8 +30,8 @@ body {
   box-shadow: none;
 }
 
-#:root {
-  --quest-bg-color: rgba(44, 62, 80, 0.45);
+:root {
+  --quest-bg-color: var(--card-bg);
 }
 
 /* Специален контейнер за въпросника */
