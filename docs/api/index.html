@@ -34,10 +34,7 @@
 <pre><code class="bash"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">test</span><span class="hl-1">         </span><span class="hl-4"># проверява синхронизацията и стартира Jest</span><br/><span class="hl-4"># или стартирайте директно</span><br/><span class="hl-0">npx</span><span class="hl-1"> </span><span class="hl-2">jest</span>
 </code><button type="button">Copy</button></pre>
 
-<p><code>npm test</code> изпълнява <code>scripts/check-worker-sync.js</code> преди Jest. Скриптът сравнява
-<code>worker.js</code> и <code>preworker.js</code> и прекъсва тестовете, ако файловете се различават.
-При несъответствие пуснете <code>npm run build</code> или копирайте ръчно съдържанието, за
-да синхронизирате файловете.
+<p><code>npm test</code> стартира <code>scripts/test.sh</code>, който изпълнява Jest.
 <code>npm test</code> автоматично изключва HTTP/HTTPS proxy променливите (както в горен,
 така и в долен регистър) и проверява дали е инсталиран Jest. Ако липсва,
 скриптът завършва с грешка, вместо да изчаква интерактивен отговор, затова

@@ -69,14 +69,10 @@ npm ci # или npm install
 Run unit tests with Jest:
 
 ```bash
-npm test         # проверява синхронизацията и стартира Jest
+npm test         # стартира Jest тестовете
 # или стартирайте директно
 npx jest
 ```
-`npm test` изпълнява `scripts/check-worker-sync.js` преди Jest. Скриптът сравнява
-`worker.js` и `preworker.js` и прекъсва тестовете, ако файловете се различават.
-При несъответствие пуснете `npm run build` или копирайте ръчно съдържанието, за
-да синхронизирате файловете.
 `npm test` автоматично изключва HTTP/HTTPS proxy променливите (както в горен,
 така и в долен регистър) и проверява дали е инсталиран Jest. Ако липсва,
 скриптът завършва с грешка, вместо да изчаква интерактивен отговор, затова
@@ -258,9 +254,7 @@ This script checks for placeholder values and for a provided `CF_API_TOKEN`.
 
 ### Worker Scripts
 
-The repository contains two Cloudflare workers.
-
-- `preworker.js` – used only for local development. Run `npm run dev` or `npm test` with this file, then `npm run build` generates `worker.js` from it.
+- The repository contains two Cloudflare workers.
 - `worker.js` – the main application worker defined in `wrangler.toml`. It gets deployed to Cloudflare through the GitHub workflow when you run the deployment manually.
 - `worker-backend.js` – a lightweight proxy used by the PHP backend to call Cloudflare AI. Deploy it separately, for example:
 

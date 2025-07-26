@@ -8,7 +8,7 @@
     "build": "vite build",
     "start": "vite preview",
     "lint": "eslint .",
-    "test": "node scripts/check-worker-sync.js && sh ./scripts/test.sh",
+    "test": "sh ./scripts/test.sh",
     "coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "docs": "typedoc"
   },
