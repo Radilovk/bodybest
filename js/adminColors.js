@@ -16,6 +16,15 @@ const deleteThemeBtnId = 'deleteThemeLocal';
 
 function setCssVar(key, val) {
   document.documentElement.style.setProperty(`--${key}-color`, val);
+  document.body.style.setProperty(`--${key}-color`, val);
+}
+
+function getCurrentColor(key) {
+  const bodyVal = getComputedStyle(document.body)
+    .getPropertyValue(`--${key}-color`).trim();
+  if (bodyVal) return bodyVal;
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(`--${key}-color`).trim();
 }
 
 function getSavedThemes() {
@@ -96,8 +105,7 @@ export async function initColorSettings() {
     const { colors = {} } = await loadConfig(['colors']);
     Object.entries(inputs).forEach(([k, el]) => {
       if (!el) return;
-      const current = getComputedStyle(document.documentElement)
-        .getPropertyValue(`--${k}-color`).trim();
+      const current = getCurrentColor(k);
       el.value = colors[k] || current;
       setCssVar(k, el.value);
       el.addEventListener('input', () => setCssVar(k, el.value));
@@ -106,8 +114,7 @@ export async function initColorSettings() {
     console.warn('Неуспешно зареждане на цветовете', err);
     Object.entries(inputs).forEach(([k, el]) => {
       if (!el) return;
-      const current = getComputedStyle(document.documentElement)
-        .getPropertyValue(`--${k}-color`).trim();
+      const current = getCurrentColor(k);
       el.value = current;
       el.addEventListener('input', () => setCssVar(k, el.value));
     });
