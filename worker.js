@@ -3341,14 +3341,14 @@ async function evaluatePlanChange(userId, requestData, env) {
 async function createUserEvent(eventType, userId, payload, env) {
     if (!eventType || !userId) return { success: false, message: 'Невалидни параметри.' };
 
-    if (['planMod', 'updateProfile', 'updateMenu'].includes(eventType)) {
+    if (eventType === 'planMod') {
         try {
-            const existing = await env.USER_METADATA_KV.list({ prefix: `event_${eventType}_${userId}` });
+            const existing = await env.USER_METADATA_KV.list({ prefix: `event_planMod_${userId}` });
             for (const { name } of existing.keys) {
                 const val = await env.USER_METADATA_KV.get(name);
                 const parsed = safeParseJson(val, null);
                 if (parsed && parsed.status === 'pending') {
-                    return { success: false, message: `Вече има чакаща заявка за ${eventType}.` };
+                    return { success: false, message: 'Вече има чакаща заявка за промяна на плана.' };
                 }
             }
         } catch (err) {
@@ -3365,11 +3365,9 @@ async function createUserEvent(eventType, userId, payload, env) {
         payload
     };
     await env.USER_METADATA_KV.put(key, JSON.stringify(data));
-    if (['planMod', 'updateProfile', 'updateMenu'].includes(eventType)) {
+    if (eventType === 'planMod') {
         try {
-            if (eventType === 'planMod') {
-                await env.USER_METADATA_KV.put(`pending_plan_mod_${userId}`, JSON.stringify(payload || {}));
-            }
+            await env.USER_METADATA_KV.put(`pending_plan_mod_${userId}`, JSON.stringify(payload || {}));
             await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata:{status:'pending'} });
         } catch (err) {
             console.error(`EVENT_SAVE_PENDING_MOD_ERROR (${userId}):`, err);
@@ -4193,16 +4191,6 @@ async function handleIrisDiagEvent(userId, payload, env) {
     await processSingleUserPlan(userId, env);
 }
 
-async function handleUpdateProfileEvent(userId, env) {
-    console.log(`[CRON-UserEvent] Processing updateProfile for ${userId}`);
-    await processSingleUserPlan(userId, env);
-}
-
-async function handleUpdateMenuEvent(userId, env) {
-    console.log(`[CRON-UserEvent] Processing updateMenu for ${userId}`);
-    await processSingleUserPlan(userId, env);
-}
-
 // ------------- START BLOCK: UserEventHandlers -------------
 const EVENT_HANDLERS = {
     planMod: async (userId, env) => {
@@ -4213,12 +4201,6 @@ const EVENT_HANDLERS = {
     },
     irisDiag: async (userId, env, payload) => {
         await handleIrisDiagEvent(userId, payload, env);
-    },
-    updateProfile: async (userId, env) => {
-        await handleUpdateProfileEvent(userId, env);
-    },
-    updateMenu: async (userId, env) => {
-        await handleUpdateMenuEvent(userId, env);
     }
 };
 
