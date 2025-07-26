@@ -9,5 +9,6 @@ if [ ! -x node_modules/.bin/jest ]; then
   exit 1
 fi
 
-# Run Jest with experimental VM modules
-NODE_OPTIONS=--experimental-vm-modules npx --no-install jest "$@"
+# Run Jest serially with experimental VM modules
+NODE_OPTIONS="${NODE_OPTIONS:-} --experimental-vm-modules" \
+  npx --no-install jest --runInBand "$@"
