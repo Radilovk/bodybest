@@ -581,34 +581,7 @@
                 const result = await submitResponses();
                 showMessage(submitMessage, result.message || "Отговорите са изпратени успешно за обработка!", false);
                 submitBtn.style.display = "none";
-                const lastQuestionPageIndex = totalPages - 3;
-                if (lastQuestionPageIndex >= 0) {
-                    const backToEditBtn = document.createElement('button');
-                    backToEditBtn.textContent = '◀ Назад';
-                    backToEditBtn.type = 'button';
-                    backToEditBtn.style.marginTop = '15px';
-                    backToEditBtn.style.backgroundColor = '#f39c12';
-                    backToEditBtn.style.color = '#1e1e1e';
-                    backToEditBtn.onclick = () => {
-                        if (submitMessage) { hideMessage(submitMessage); }
-                        backToEditBtn.remove();
-                        if (submitBtn) {
-                            submitBtn.style.display = 'block';
-                            submitBtn.disabled = false;
-                            submitBtn.textContent = 'Изпрати отново';
-                        }
-                        if (restartBtn) { restartBtn.disabled = false; }
-                        showPage(lastQuestionPageIndex);
-                    };
-                    submitMessage.parentNode.insertBefore(backToEditBtn, submitMessage.nextSibling);
-                    submitBtn.style.display = "none";
-                     restartBtn.disabled = false;
-                     restartBtn.textContent = "Започни наново";
-                } else {
-                     submitBtn.style.display = "none";
-                     restartBtn.disabled = false;
-                     restartBtn.textContent = "Започни наново";
-                }
+                restartBtn.disabled = false;
                 restartBtn.textContent = "Попълни отново";
             } catch (error) {
                 console.error("Error caught in submitBtn listener:", error);
