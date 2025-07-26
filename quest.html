@@ -551,11 +551,11 @@
     pageDiv.innerHTML = `
       <h2>Поздравления! <i class="bi bi-stars"></i><br> Току що направихте най-важната стъпка по пътя към промяната</h2>
       <p>Натиснете бутона, за да изпратите вашите отговори за обработка.</p>
-        <div class="nav-buttons" style="justify-content: center;">
-          <button id="finalBackBtn" type="button">◀ Назад</button>
-          <button id="submitBtn" type="button">Изпрати</button>
-          <button id="restartBtn" type="button">Отначало</button>
-        </div>
+      <div class="nav-buttons" style="justify-content: center;">
+        <button id="finalBackBtn" type="button">◀ Назад</button>
+        <button id="submitBtn" type="button">Изпрати</button>
+        <button id="restartBtn" type="button">Отначало</button>
+      </div>
        <div id="submit-message" class="message" style="margin-top: 15px; text-align: center; font-weight: bold; word-wrap: break-word;"></div>
     `;
     container.appendChild(pageDiv);
@@ -581,7 +581,34 @@
                 const result = await submitResponses();
                 showMessage(submitMessage, result.message || "Отговорите са изпратени успешно за обработка!", false);
                 submitBtn.style.display = "none";
-                restartBtn.disabled = false;
+                const lastQuestionPageIndex = totalPages - 3;
+                if (lastQuestionPageIndex >= 0) {
+                    const backToEditBtn = document.createElement('button');
+                    backToEditBtn.textContent = '◀ Назад';
+                    backToEditBtn.type = 'button';
+                    backToEditBtn.style.marginTop = '15px';
+                    backToEditBtn.style.backgroundColor = '#f39c12';
+                    backToEditBtn.style.color = '#1e1e1e';
+                    backToEditBtn.onclick = () => {
+                        if (submitMessage) { hideMessage(submitMessage); }
+                        backToEditBtn.remove();
+                        if (submitBtn) {
+                            submitBtn.style.display = 'block';
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Изпрати отново';
+                        }
+                        if (restartBtn) { restartBtn.disabled = false; }
+                        showPage(lastQuestionPageIndex);
+                    };
+                    submitMessage.parentNode.insertBefore(backToEditBtn, submitMessage.nextSibling);
+                    submitBtn.style.display = "none";
+                     restartBtn.disabled = false;
+                     restartBtn.textContent = "Започни наново";
+                } else {
+                     submitBtn.style.display = "none";
+                     restartBtn.disabled = false;
+                     restartBtn.textContent = "Започни наново";
+                }
                 restartBtn.textContent = "Попълни отново";
             } catch (error) {
                 console.error("Error caught in submitBtn listener:", error);
