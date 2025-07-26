@@ -36,12 +36,11 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
 import { parseJsonSafe } from './utils/parseJsonSafe.js';
 
 // ----- START GENERATED PLAN STEP FUNCTIONS -----
-async function generateProfile(replacements, env, modelName, userId, opts = {}) {
+async function generateProfile(replacements, env, modelName, userId) {
   const template = await env.RESOURCES_KV.get('prompt_generate_profile');
   if (!template) throw new Error('Missing prompt_generate_profile');
   const populated = populatePrompt(template, replacements);
-  const { temperature = 0.1, maxTokens = 4000 } = opts;
-  const raw = await callModel(modelName, populated, env, { temperature, maxTokens });
+  const raw = await callModel(modelName, populated, env, { temperature: 0.1, maxTokens: 4000 });
   const cleaned = cleanGeminiJson(raw);
   const parsed = safeParseJson(cleaned, {});
   await env.USER_METADATA_KV.put(
@@ -51,12 +50,11 @@ async function generateProfile(replacements, env, modelName, userId, opts = {}) 
   return parsed;
 }
 
-async function generateMenu(replacements, env, modelName, userId, opts = {}) {
+async function generateMenu(replacements, env, modelName, userId) {
   const template = await env.RESOURCES_KV.get('prompt_generate_menu');
   if (!template) throw new Error('Missing prompt_generate_menu');
   const populated = populatePrompt(template, replacements);
-  const { temperature = 0.1, maxTokens = 4000 } = opts;
-  const raw = await callModel(modelName, populated, env, { temperature, maxTokens });
+  const raw = await callModel(modelName, populated, env, { temperature: 0.1, maxTokens: 4000 });
   const cleaned = cleanGeminiJson(raw);
   const parsed = safeParseJson(cleaned, {});
   await env.USER_METADATA_KV.put(
@@ -66,12 +64,11 @@ async function generateMenu(replacements, env, modelName, userId, opts = {}) {
   return parsed;
 }
 
-async function generatePrinciples(replacements, env, modelName, userId, opts = {}) {
+async function generatePrinciples(replacements, env, modelName, userId) {
   const template = await env.RESOURCES_KV.get('prompt_generate_principles');
   if (!template) throw new Error('Missing prompt_generate_principles');
   const populated = populatePrompt(template, replacements);
-  const { temperature = 0.1, maxTokens = 4000 } = opts;
-  const raw = await callModel(modelName, populated, env, { temperature, maxTokens });
+  const raw = await callModel(modelName, populated, env, { temperature: 0.1, maxTokens: 4000 });
   const cleaned = cleanGeminiJson(raw);
   const parsed = safeParseJson(cleaned, {});
   await env.USER_METADATA_KV.put(
@@ -81,12 +78,11 @@ async function generatePrinciples(replacements, env, modelName, userId, opts = {
   return parsed;
 }
 
-async function generateGuidance(replacements, env, modelName, userId, opts = {}) {
+async function generateGuidance(replacements, env, modelName, userId) {
   const template = await env.RESOURCES_KV.get('prompt_generate_guidance');
   if (!template) throw new Error('Missing prompt_generate_guidance');
   const populated = populatePrompt(template, replacements);
-  const { temperature = 0.1, maxTokens = 4000 } = opts;
-  const raw = await callModel(modelName, populated, env, { temperature, maxTokens });
+  const raw = await callModel(modelName, populated, env, { temperature: 0.1, maxTokens: 4000 });
   const cleaned = cleanGeminiJson(raw);
   const parsed = safeParseJson(cleaned, {});
   await env.USER_METADATA_KV.put(
@@ -1178,13 +1174,6 @@ async function handleChatRequest(request, env) {
         const chatPromptTpl = promptOverride || await env.RESOURCES_KV.get('prompt_chat');
         const chatModel = await env.RESOURCES_KV.get('model_chat');
         const modelToUse = model || chatModel;
-        const [chatTokenLimitStr, chatTemperatureStr] = await Promise.all([
-            env.RESOURCES_KV.get('chat_token_limit'),
-            env.RESOURCES_KV.get('chat_temperature')
-        ]);
-        const chatTokenLimit = parseInt(chatTokenLimitStr, 10) || 800;
-        const chatTemperatureVal = parseFloat(chatTemperatureStr);
-        const chatTemperature = isNaN(chatTemperatureVal) ? 0.7 : chatTemperatureVal;
         const geminiKey = env[GEMINI_API_KEY_SECRET_NAME];
         const openaiKey = env[OPENAI_API_KEY_SECRET_NAME];
 
@@ -1223,7 +1212,7 @@ async function handleChatRequest(request, env) {
             '%%RECENT_LOGS_SUMMARY%%':recentLogsSummary
         };
         const populatedPrompt = populatePrompt(chatPromptTpl,r);
-        const aiRespRaw = await callModel(modelToUse, populatedPrompt, env, { temperature: chatTemperature, maxTokens: chatTokenLimit });
+        const aiRespRaw = await callModel(modelToUse, populatedPrompt, env, { temperature: 0.7, maxTokens: 800 });
 
         let respToUser = aiRespRaw.trim(); let planModReq=null; const sig='[PLAN_MODIFICATION_REQUEST]'; const sigIdx=respToUser.lastIndexOf(sig);
         if(sigIdx!==-1){
@@ -1725,13 +1714,6 @@ async function handleGeneratePraiseRequest(request, env) {
         const geminiKey = env[GEMINI_API_KEY_SECRET_NAME];
         const openaiKey = env[OPENAI_API_KEY_SECRET_NAME];
         const model = await env.RESOURCES_KV.get('model_chat') || await env.RESOURCES_KV.get('model_plan_generation');
-        const [chatTokenLimitStr, chatTemperatureStr] = await Promise.all([
-            env.RESOURCES_KV.get('chat_token_limit'),
-            env.RESOURCES_KV.get('chat_temperature')
-        ]);
-        const chatTokenLimit = parseInt(chatTokenLimitStr, 10) || 400;
-        const chatTemperatureVal = parseFloat(chatTemperatureStr);
-        const chatTemperature = isNaN(chatTemperatureVal) ? 0.6 : chatTemperatureVal;
 
         let title = 'Браво!';
         let message = 'Продължавай в същия дух!';
@@ -1741,7 +1723,7 @@ async function handleGeneratePraiseRequest(request, env) {
             const replacements = createPraiseReplacements(initialAnswers, logs, avgMetric, mealAdh);
             const populated = populatePrompt(promptTpl, replacements);
             try {
-                const raw = await callModel(model, populated, env, { temperature: chatTemperature, maxTokens: chatTokenLimit });
+                const raw = await callModel(model, populated, env, { temperature: 0.6, maxTokens: 400 });
                 const cleaned = cleanGeminiJson(raw);
                 const parsed = safeParseJson(cleaned, null);
                 if (parsed && parsed.title && parsed.message) {
@@ -2459,14 +2441,12 @@ async function processSingleUserPlan(userId, env) {
         }
         console.log(`PROCESS_USER_PLAN (${userId}): Processing for email: ${initialAnswers.email || 'N/A'}`);
         const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, principlesWeek2_4: [], additionalGuidelines: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
-        const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, openaiApiKey, planModelName, pendingPlanModStr, planTokenLimitStr, planTemperatureStr ] = await Promise.all([
+        const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, openaiApiKey, planModelName, pendingPlanModStr ] = await Promise.all([
             env.RESOURCES_KV.get('question_definitions'), env.RESOURCES_KV.get('base_diet_model'),
             env.RESOURCES_KV.get('allowed_meal_combinations'), env.RESOURCES_KV.get('eating_psychology'),
             env.RESOURCES_KV.get('recipe_data'), env[GEMINI_API_KEY_SECRET_NAME], env[OPENAI_API_KEY_SECRET_NAME],
             env.RESOURCES_KV.get('model_plan_generation'),
-            env.USER_METADATA_KV.get(`pending_plan_mod_${userId}`),
-            env.RESOURCES_KV.get('plan_token_limit'),
-            env.RESOURCES_KV.get('plan_temperature')
+            env.USER_METADATA_KV.get(`pending_plan_mod_${userId}`)
         ]);
         const pendingPlanModData = safeParseJson(pendingPlanModStr, pendingPlanModStr);
         let pendingPlanModText = '';
@@ -2488,9 +2468,6 @@ async function processSingleUserPlan(userId, env) {
             throw new Error("CRITICAL: Plan generation model name ('model_plan_generation') not found in RESOURCES_KV.");
         }
         planBuilder.generationMetadata.modelUsed = planModelName;
-        const planTokenLimit = parseInt(planTokenLimitStr, 10) || 4000;
-        const planTemperature = parseFloat(planTemperatureStr);
-        const planTemperatureSafe = isNaN(planTemperature) ? 0.1 : planTemperature;
         let questionTextMap = new Map();
         if (questionsJsonString) { try { const defs = JSON.parse(questionsJsonString); if (Array.isArray(defs)) defs.forEach(q => { if (q.id && q.text) questionTextMap.set(q.id, q.text); }); } catch (e) { console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Failed to parse question_definitions: ${e.message}`); } } else { console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Resource 'question_definitions' not found.`); }
         const recipeData = safeParseJson(recipeDataStr, {});
@@ -2573,25 +2550,25 @@ async function processSingleUserPlan(userId, env) {
         const needGuidance = !guidanceSec || guidanceSec.ts < lastUpdateTs;
 
         try {
-            const profileRes = needProfile ? await generateProfile(replacements, env, planModelName, userId, { temperature: planTemperatureSafe, maxTokens: planTokenLimit }) : profileSec.data;
+            const profileRes = needProfile ? await generateProfile(replacements, env, planModelName, userId) : profileSec.data;
             Object.assign(planBuilder, profileRes);
         } catch (e) {
             planBuilder.generationMetadata.errors.push(`Profile gen error: ${e.message}`);
         }
         try {
-            const menuRes = needMenu ? await generateMenu(replacements, env, planModelName, userId, { temperature: planTemperatureSafe, maxTokens: planTokenLimit }) : menuSec.data;
+            const menuRes = needMenu ? await generateMenu(replacements, env, planModelName, userId) : menuSec.data;
             Object.assign(planBuilder, menuRes);
         } catch (e) {
             planBuilder.generationMetadata.errors.push(`Menu gen error: ${e.message}`);
         }
         try {
-            const principlesRes = needPrinciples ? await generatePrinciples(replacements, env, planModelName, userId, { temperature: planTemperatureSafe, maxTokens: planTokenLimit }) : principlesSec.data;
+            const principlesRes = needPrinciples ? await generatePrinciples(replacements, env, planModelName, userId) : principlesSec.data;
             Object.assign(planBuilder, principlesRes);
         } catch (e) {
             planBuilder.generationMetadata.errors.push(`Principles gen error: ${e.message}`);
         }
         try {
-            const guidanceRes = needGuidance ? await generateGuidance(replacements, env, planModelName, userId, { temperature: planTemperatureSafe, maxTokens: planTokenLimit }) : guidanceSec.data;
+            const guidanceRes = needGuidance ? await generateGuidance(replacements, env, planModelName, userId) : guidanceSec.data;
             Object.assign(planBuilder, guidanceRes);
         } catch (e) {
             planBuilder.generationMetadata.errors.push(`Guidance gen error: ${e.message}`);
