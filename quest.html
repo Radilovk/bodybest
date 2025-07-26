@@ -8,9 +8,6 @@
   <link href="css/quest_styles.css" rel="stylesheet">
   <link href="css/components_styles.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-  <!-- СТИЛОВЕТЕ СА ИЗЦЯЛО ПРЕМЕСТЕНИ В quest_styles.css ЗА ЦЕНТРАЛИЗАЦИЯ И ПО-ДОБРА ОРГАНИЗАЦИЯ -->
-
 </head>
 <body id="questPage">
 
@@ -75,6 +72,7 @@
 <script type="module">
   // ===================================================================
   //           ВАШИЯТ JAVASCRIPT КОД ОСТАВА 100% НЕПРОМЕНЕН
+  //           С ИЗКЛЮЧЕНИЕ НА КОНФИГУРАЦИЯТА НА АНИМАЦИЯТА
   // ===================================================================
   import { workerBaseUrl } from './js/config.js';
   import { setupRegistration } from "./js/register.js";
@@ -147,29 +145,24 @@
     showPage(0);
   }
 
-  /***** СЪЗДАВАНЕ НА СТАРТОВА СТРАНИЦА (без промяна в логиката) *****/
+  /***** СЪЗДАВАНЕ НА СТАРТОВА СТРАНИЦА (С НОВА ТЕМАТИЧНА АНИМАЦИЯ) *****/
   function createStartPage() {
     const container = document.getElementById('dynamicContainer');
     if (!container) return;
     const pageDiv = document.createElement('div');
-    pageDiv.className = 'page hero-start-page'; 
+    pageDiv.className = 'page hero-start-page';
     pageDiv.id = 'page0';
 
     pageDiv.innerHTML = `
       <div class="hero-content">
         <img class="hero-image" id="heroImage" src="https://radilovk.github.io/bodybest/img/myquest.png" alt="Hero">
-        
         <p class="hero-subtitle">
           Разкажи ни повече за теб и твоите цели.<br>
           Ние ще ти помогнем да ги постигнеш!
         </p>
-        
         <div class="cta-container">
-          <button id="startBtn" type="button">
-            Начало
-          </button>
+          <button id="startBtn" type="button">Начало</button>
         </div>
-        
         <div class="stats-bar">
           <div class="stat-item">
             <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/aibrain.png" alt="AI Algorithm">
@@ -190,17 +183,58 @@
 
     if (window.particlesJS) {
         particlesJS('particles-js', {
-            "particles": {
-                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
-                "color": { "value": "#ffffff" },
-                "shape": { "type": "circle" },
-                "opacity": { "value": 0.8, "random": true },
-                "size": { "value": 3, "random": true },
-                "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.3, "width": 1 },
-                "move": { "enable": true, "speed": 1, "direction": "none", "out_mode": "out" }
+          "particles": {
+            "number": {
+              "value": 60, // Малко по-малко частици за по-изчистен вид
+              "density": { "enable": true, "value_area": 800 }
             },
-            "interactivity": { "detect_on": "canvas", "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" } }, "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 0.3 } }, "push": { "particles_nb": 4 } } },
-            "retina_detect": true
+            "color": { "value": "#ffffff" },
+            "shape": { "type": "circle" },
+            "opacity": {
+              "value": 0.5,
+              "random": true,
+              "anim": { "enable": true, "speed": 0.5, "opacity_min": 0.1, "sync": false }
+            },
+            "size": {
+              "value": 4,
+              "random": true,
+              "anim": { "enable": false }
+            },
+            "line_linked": {
+              "enable": true,
+              "distance": 180, // Малко по-голямо разстояние за по-мащабна мрежа
+              "color": "#ffffff",
+              "opacity": 0.4,
+              "width": 1.5 // Леко по-плътни линии
+            },
+            "move": {
+              "enable": true,
+              "speed": 0.8, // По-бавно, органично движение
+              "direction": "bottom", // Движение в посока
+              "random": true,
+              "straight": false,
+              "out_mode": "out",
+              "bounce": false
+            }
+          },
+          "interactivity": {
+            "detect_on": "canvas",
+            "events": {
+              "onhover": { "enable": true, "mode": "bubble" }, // Промяна на интеракцията
+              "onclick": { "enable": true, "mode": "push" },
+              "resize": true
+            },
+            "modes": {
+              "bubble": { // Конфигурация за "bubble" ефекта
+                "distance": 200,
+                "size": 8,
+                "duration": 2,
+                "opacity": 0.8
+              },
+              "push": { "particles_nb": 4 }
+            }
+          },
+          "retina_detect": true
         });
     }
 
@@ -215,6 +249,7 @@
         console.error("Start button not found on the new hero start page.");
     }
   }
+
 
   /***** Създаване на страница за всеки въпрос (без промяна) *****/
   function createQuestionPage(question, pageIndex) {
