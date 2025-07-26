@@ -429,8 +429,6 @@ export default {
                 responseBody = await handleReAnalyzeQuestionnaireRequest(request, env, ctx);
             } else if (method === 'GET' && path === '/api/planStatus') {
                 responseBody = await handlePlanStatusRequest(request, env);
-            } else if (method === 'GET' && path === '/api/plan-section-status') {
-                responseBody = await handlePlanSectionStatusRequest(request, env);
             } else if (method === 'GET' && path === '/api/analysisStatus') {
                 responseBody = await handleAnalysisStatusRequest(request, env);
             } else if (method === 'GET' && path === '/api/dashboardData') {
@@ -856,28 +854,6 @@ async function handlePlanStatusRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handlePlanStatusRequest -------------
-
-// ------------- START FUNCTION: handlePlanSectionStatusRequest -------------
-async function handlePlanSectionStatusRequest(request, env) {
-    const url = new URL(request.url);
-    const userId = url.searchParams.get('userId');
-    if (!userId) return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
-    try {
-        const sectionKeys = ['profile', 'menu', 'principles', 'guidance'];
-        const results = await Promise.all(
-            sectionKeys.map(name => env.USER_METADATA_KV.get(`plan_section_${name}_${userId}`))
-        );
-        const sections = {};
-        sectionKeys.forEach((name, idx) => {
-            sections[name] = results[idx] ? 'ready' : 'missing';
-        });
-        return { success: true, userId, sections };
-    } catch (error) {
-        console.error(`Error fetching plan section statuses for ${userId}:`, error.message, error.stack);
-        return { success: false, message: 'Грешка при проверка на секциите.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handlePlanSectionStatusRequest -------------
 
 // ------------- START FUNCTION: handleAnalysisStatusRequest -------------
 async function handleAnalysisStatusRequest(request, env) {
@@ -4341,4 +4317,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, handlePlanSectionStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, handleSubmitQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, handleSubmitQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
