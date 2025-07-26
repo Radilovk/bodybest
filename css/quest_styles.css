@@ -21,7 +21,7 @@ body {
 }
 
 /* Прозрачни контейнери в страницата с въпросника */
-#questPage .container {
+#questPage .container:not(#dynamicContainer) {
   width: 100%;
   max-width: none;
   margin: 0;
