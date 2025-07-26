@@ -31,6 +31,10 @@ The application will be available at `http://localhost:5173` by default.
 
 Интерфейсът следва системната светла/тъмна настройка. Ако в LocalStorage е избрана опцията "system", промяната на темата в операционната система се отразява моментално.
 
+### Цветови теми
+
+При първоначално зареждане админ панелът записва два шаблона "Light" и "Dark" в `localStorage.colorThemes`. Стойностите се извличат от `css/base_styles.css`. Ако има съществуващи теми със същите имена, те не се презаписват. Падащото меню `#savedThemes` се попълва автоматично с тези шаблони.
+
 ### Build
 
 Create an optimized production build in the `dist` folder:

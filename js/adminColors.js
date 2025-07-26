@@ -9,7 +9,27 @@ async function fetchColorVars() {
   const vars = new Set();
   let m;
   while ((m = regex.exec(css))) vars.add(m[1]);
-  return [...vars];
+  return { vars: [...vars], css };
+}
+
+function parseDefaultThemes(css, keys) {
+  const light = {};
+  const dark = {};
+  const rootMatch = css.match(/:root\s*{([^}]*)}/s);
+  const darkMatch = css.match(/body\.dark-theme\s*{([^}]*)}/s);
+  if (rootMatch) {
+    rootMatch[1].split(';').forEach(line => {
+      const m = line.match(/--([a-zA-Z0-9-]+)\s*:\s*([^;]+)/);
+      if (m && keys.includes(m[1])) light[m[1]] = m[2].trim();
+    });
+  }
+  if (darkMatch) {
+    darkMatch[1].split(';').forEach(line => {
+      const m = line.match(/--([a-zA-Z0-9-]+)\s*:\s*([^;]+)/);
+      if (m && keys.includes(m[1])) dark[m[1]] = m[2].trim();
+    });
+  }
+  return { light, dark };
 }
 
 function createInput(name, container) {
@@ -107,8 +127,14 @@ function deleteSelectedTheme() {
 
 export async function initColorSettings() {
   const container = document.getElementById('colorInputs');
-  const vars = await fetchColorVars();
+  const { vars, css } = await fetchColorVars();
   if (container) vars.forEach(v => createInput(v, container));
+  const defaults = parseDefaultThemes(css, vars);
+  const stored = getSavedThemes();
+  let changed = false;
+  if (!stored.Light) { stored.Light = defaults.light; changed = true; }
+  if (!stored.Dark) { stored.Dark = defaults.dark; changed = true; }
+  if (changed) storeThemes(stored);
   const saveBtn = document.getElementById('saveColorConfig');
   populateThemeSelect();
   const saveThemeBtn = document.getElementById(saveThemeBtnId);

@@ -22,7 +22,9 @@ beforeEach(async () => {
     loadConfig: mockLoad,
     saveConfig: mockSave
   }));
-  global.fetch = jest.fn().mockResolvedValue({ text: async () => ':root{--primary-color:#000;--secondary-color:#000;}' });
+  global.fetch = jest.fn().mockResolvedValue({
+    text: async () => ':root{--primary-color:#000;--secondary-color:#000;}body.dark-theme{--primary-color:#fff;--secondary-color:#fff;}'
+  });
   ({ initColorSettings } = await import('../adminColors.js'));
 });
 
@@ -71,4 +73,14 @@ test('themes can be saved and applied', async () => {
   document.getElementById('savedThemes').value = 't1';
   document.getElementById('applyThemeLocal').click();
   expect(document.getElementById('primary-colorInput').value).toBe('#aaaaaa');
+});
+
+test('initializes default themes', async () => {
+  mockLoad.mockResolvedValue({ colors: {} });
+  await initColorSettings();
+  const themes = JSON.parse(localStorage.getItem('colorThemes'));
+  expect(themes.Light['primary-color']).toBe('#000');
+  expect(themes.Dark['primary-color']).toBe('#fff');
+  const opts = Array.from(document.getElementById('savedThemes').options).map(o => o.value);
+  expect(opts).toEqual(expect.arrayContaining(['Light', 'Dark']));
 });
