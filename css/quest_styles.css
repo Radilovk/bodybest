@@ -76,10 +76,10 @@
 
   /* Специални настройки за иконите в светъл режим */
   .stat-icon {
-    background-color: var(--bg-secondary);
-    border-radius: 12px;
-    padding: 10px;
-    filter: drop-shadow(0 2px 4px var(--shadow-color));
+    background-color: var(--accent-secondary);
+    border-radius: 50%;
+    padding: 8px;
+    filter: drop-shadow(0 0 5px var(--accent-focus-shadow));
   }
 }
 
