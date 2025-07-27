@@ -517,31 +517,20 @@ async function loadClients() {
         const data = await resp.json();
         if (resp.ok && data.success) {
             const clientsArr = Array.isArray(data.clients) ? data.clients : [];
-            const withStatus = await Promise.all(
-                clientsArr.map(async c => {
-                    try {
-                        const dResp = await fetch(`${apiEndpoints.dashboard}?userId=${c.userId}`);
-                        const dData = await dResp.json();
-                        return {
-                            ...c,
-                            status: dData.planStatus || 'unknown',
-                            tags: dData.currentStatus?.adminTags || [],
-                            lastUpdated: dData.currentStatus?.lastUpdated || ''
-                        };
-                    } catch {
-                        return { ...c, status: 'unknown', tags: [] };
-                    }
-                })
-            );
-            allClients = withStatus;
+            allClients = clientsArr.map(c => ({
+                ...c,
+                status: c.status || 'unknown',
+                tags: c.tags || [],
+                lastUpdated: c.lastUpdated || ''
+            }));
             updateTagFilterOptions();
             populateTestQClientOptions();
             renderClients();
             const stats = {
-                clients: withStatus.length,
-                ready: withStatus.filter(c => c.status === 'ready').length,
-                pending: withStatus.filter(c => c.status === 'pending').length,
-                processing: withStatus.filter(c => c.status === 'processing').length
+                clients: allClients.length,
+                ready: allClients.filter(c => c.status === 'ready').length,
+                pending: allClients.filter(c => c.status === 'pending').length,
+                processing: allClients.filter(c => c.status === 'processing').length
             };
             if (statsOutput) statsOutput.textContent = JSON.stringify(stats, null, 2);
             updateStatusChart(stats);

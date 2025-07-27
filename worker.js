@@ -2040,16 +2040,24 @@ async function handleListClientsRequest(request, env) {
         }
         const clients = [];
         for (const id of ids) {
-            const ansStr = await env.USER_METADATA_KV.get(`${id}_initial_answers`);
+            const [ansStr, profileStr, planStatus, statusStr] = await Promise.all([
+                env.USER_METADATA_KV.get(`${id}_initial_answers`),
+                env.USER_METADATA_KV.get(`${id}_profile`),
+                env.USER_METADATA_KV.get(`plan_status_${id}`),
+                env.USER_METADATA_KV.get(`${id}_current_status`)
+            ]);
             if (!ansStr) continue;
             const ans = safeParseJson(ansStr, {});
-            const profileStr = await env.USER_METADATA_KV.get(`${id}_profile`);
             const profile = profileStr ? safeParseJson(profileStr, {}) : {};
+            const currentStatus = safeParseJson(statusStr, {});
             clients.push({
                 userId: id,
                 name: ans.name || 'Клиент',
                 email: profile.email || '',
-                registrationDate: ans.submissionDate || null
+                registrationDate: ans.submissionDate || null,
+                status: planStatus || 'unknown',
+                tags: currentStatus.adminTags || [],
+                lastUpdated: currentStatus.lastUpdated || ''
             });
         }
         return { success: true, clients };
