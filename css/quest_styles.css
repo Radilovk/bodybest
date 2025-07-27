@@ -567,6 +567,15 @@ button[id^="prevBtn"]:hover, button[id="regBackBtn"]:hover, button[id="restartBt
     font-size: 16px;
     min-height: 52px;
   }
+  /* Увеличени статистически икони за мобилни екрани */
+  .stats-bar .stat-icon {
+    width: 120px;
+    height: 120px;
+  }
+  #persistentStats .stat-icon {
+    width: 90px;
+    height: 90px;
+  }
 }
 
 @media (min-width: 769px) {
