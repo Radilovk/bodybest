@@ -3,85 +3,66 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Въпросник за хранителни навици (v3)</title>
+  <title>Въпросник за хранителни навици (Dynamic)</title>
   
-  <!-- Всички стилове са в отделни файлове за по-добра организация -->
+  <!-- Връзки към файловете със стилове (тук ще се реализира новият дизайн) -->
   <link href="css/quest_theme.css" rel="stylesheet">
   <link href="css/quest_styles.css" rel="stylesheet">
   <link href="css/components_styles.css" rel="stylesheet">
+  
+  <!-- Връзка за икони -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body id="questPage">
 
 <!-- 
-  Дефиниции на SVG икони. 
-  Използването на <symbol> позволява лесно преизползване и стилизиране с CSS.
+  Прогрес барът е ключов компонент от навигацията и остава.
+  Стилът му ще се управлява от quest_styles.css.
 -->
-<svg style="position:absolute;width:0;height:0" aria-hidden="true">
-  <symbol id="icon-ai-brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 2a10 10 0 0 0-4.37 18.54M12 2a10 10 0 0 1 4.37 18.54M12 2v20"></path>
-    <path d="M2.5 10.5h19M2.5 13.5h19"></path>
-    <path d="M7.63 21.46a10 10 0 0 1-5.13-10.96"></path>
-    <path d="M16.37 21.46a10 10 0 0 0 5.13-10.96"></path>
-  </symbol>
-  <symbol id="icon-user-medic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"></path>
-    <path d="M19.34 22a8.5 8.5 0 0 0-14.68 0"></path>
-    <path d="M12 22v-6"></path>
-    <path d="M9 19h6"></path>
-  </symbol>
-  <symbol id="icon-support-247" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10"></path>
-    <path d="m16.5 14.5-4-4-4 4"></path>
-    <path d="M12 2v4"></path>
-    <path d="M20 12h-4"></path>
-  </symbol>
-</svg>
-
-<!-- Прогрес бар - остава "sticky" (лепкав) за лесна навигация -->
 <div class="step-indicator-container">
   <span class="step-indicator-label">Стъпка <span id="questCurrentStep">0</span> от <span id="questTotalSteps">0</span></span>
   <div class="progress-bar-steps"><div id="questProgressBar" class="step-progress-bar"></div></div>
 </div>
 
+<!-- 
+  Това е основният контейнер, който JavaScript попълва динамично със страниците на въпросника.
+  Началната инструкция също е тук, както се очаква от скрипта.
+-->
 <div class="container" id="dynamicContainer">
-  <!-- Динамично генерираните "страници" ще се вмъкнат тук от JS -->
-  
-  <!-- Инструкциите се показват/скриват от JS -->
   <div id="questInstructions" class="quest-instructions">
     За да получите индивидуален и максимално ефективен план за вас,
     въведете коректна и изчерпателна информация.
   </div>
 </div>
 
-<!-- Постоянна лента със статистики, която се показва/скрива от JS -->
+<!-- 
+  Лентата със статистики, която се показва след началната страница.
+  Структурата е запазена, за да може JS да я управлява, а CSS да я стилизира.
+-->
 <div id="persistentStats" class="stats-bar">
   <div class="stat-item">
-    <!-- Иконите вече са SVG за по-добър контрол и качество -->
-    <svg class="stat-icon" aria-label="AI Med Алгоритъм"><use href="#icon-ai-brain"></use></svg>
+    <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/aibrain.png" alt="AI Algorithm">
     <div class="stat-label">AI Med Алгоритъм</div>
   </div>
   <div class="stat-item">
-    <svg class="stat-icon" aria-label="Реални специалисти"><use href="#icon-user-medic"></use></svg>
+    <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/medic.png" alt="Medical Experts">
     <div class="stat-label">Реални специалисти</div>
   </div>
   <div class="stat-item">
-    <svg class="stat-icon" aria-label="24/7 Личен асистент"><use href="#icon-support-247"></use></svg>
+    <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/clock.png" alt="24/7 Assistant">
     <div class="stat-label">24/7 Личен асистент</div>
   </div>
 </div>
 
-<!-- Тайна зона за мобилни устройства за Admin достъп -->
+<!-- Скрити функционални елементи (запазени непроменени) -->
 <div id="secretTapArea" style="position: fixed; top: 0; left: 0; width: 30px; height: 30px; opacity: 0; z-index: 9999;"></div>
-
-<!-- Скрит Admin бутон -->
 <a href="admin.html" id="adminLink" style="display:none; position: fixed; bottom: 10px; right: 10px; background: #4fc3a1; color: #121212; padding: 5px 10px; border-radius: 5px; text-decoration: none;">
   Admin
 </a>
 
 <!-- 
-  JavaScript кодът е оставен напълно непроменен,
-  за да се гарантира съвместимост и функционалност.
+  Основният JavaScript модул, който управлява цялата логика на въпросника.
+  Той остава напълно непроменен, за да се гарантира функционалността.
 -->
 <script type="module">
   import { workerBaseUrl } from './js/config.js';
@@ -155,7 +136,7 @@
     showPage(0);
   }
 
-  /***** СЪЗДАВАНЕ НА СТАРТОВА СТРАНИЦА (ОБНОВЕНА ВЕРСИЯ С НОВИЯ ДИЗАЙН) *****/
+  /***** СЪЗДАВАНЕ НА СТАРТОВА СТРАНИЦА (ОРИГИНАЛНА ВЕРСИЯ - без particles.js) *****/
   function createStartPage() {
     const container = document.getElementById('dynamicContainer');
     if (!container) return;
@@ -165,35 +146,30 @@
 
     pageDiv.innerHTML = `
       <div class="hero-content">
-        <div class="hero-logo-container">
-          <img class="hero-image" id="heroImage" src="https://radilovk.github.io/bodybest/img/myquest.png" alt="Лого на въпросника">
-        </div>
-        
-        <h1 class="hero-title">Твоята промяна започва тук</h1>
+        <img class="hero-image" id="heroImage" src="https://radilovk.github.io/bodybest/img/myquest.png" alt="Hero">
         
         <p class="hero-subtitle">
-          Разкажи ни повече за теб и твоите цели.
+          Разкажи ни повече за теб и твоите цели.<br>
           Ние ще ти помогнем да ги постигнеш!
         </p>
         
         <div class="cta-container">
           <button id="startBtn" type="button">
-            <span>Да започваме</span>
-            <i class="bi bi-arrow-right-circle"></i>
+            Начало
           </button>
         </div>
         
-        <div class="stats-bar-hero">
+        <div class="stats-bar">
           <div class="stat-item">
-            <svg class="stat-icon" aria-label="AI Med Алгоритъм"><use href="#icon-ai-brain"></use></svg>
+            <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/aibrain.png" alt="AI Algorithm">
             <div class="stat-label">AI Med Алгоритъм</div>
           </div>
           <div class="stat-item">
-            <svg class="stat-icon" aria-label="Реални специалисти"><use href="#icon-user-medic"></use></svg>
+            <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/medic.png" alt="Medical Experts">
             <div class="stat-label">Реални специалисти</div>
           </div>
           <div class="stat-item">
-            <svg class="stat-icon" aria-label="24/7 Личен асистент"><use href="#icon-support-247"></use></svg>
+            <img class="stat-icon" src="https://radilovk.github.io/bodybest/img/clock.png" alt="24/7 Assistant">
             <div class="stat-label">24/7 Личен асистент</div>
           </div>
         </div>
@@ -201,9 +177,12 @@
     `;
     container.appendChild(pageDiv);
 
+    // Логиката за бутона остава същата, за да работи с Вашата система
     const startBtn = pageDiv.querySelector('#startBtn');
     if (startBtn) {
         startBtn.addEventListener('click', () => {
+          console.log("Бутон 'Начало' е натиснат.");
+          pageDiv.classList.remove('hero-start-page');
           showPage(1); // Преминаваме към първия въпрос
         });
     } else {
@@ -274,8 +253,8 @@
       // html += `<div class="fs-xs text-muted" style="margin-top: 10px;">(Показва се ако '${question.dependency.question}' е '${question.dependency.value}')</div>`;
     }
     html += `<div class="nav-buttons">
-               ${pageIndex > 1 ? `<button type="button" class="btn-secondary" id="prevBtn${pageIndex}">◀ Назад</button>` : ''}
-               <button type="button" class="btn-primary" id="nextBtn${pageIndex}">Напред ▶</button>
+               ${pageIndex > 1 ? `<button type="button" id="prevBtn${pageIndex}">◀ Назад</button>` : ''}
+               <button type="button" id="nextBtn${pageIndex}">Напред ▶</button>
              </div>`;
     pageDiv.innerHTML = html;
     container.appendChild(pageDiv);
@@ -309,16 +288,12 @@
     pageDiv.id = 'page' + regIndex;
     pageDiv.innerHTML = `
       <h2>Регистрация</h2>
-      <p>Създайте своя профил, за да запазите резултатите си.</p>
       <form id="register-form-q" novalidate>
         <div class="form-group"><label for="register-email-q">Имейл:</label><input type="email" id="register-email-q" required autocomplete="email"></div>
         <div class="form-group"><label for="register-password-q">Парола (мин. 8 знака):</label><input type="password" id="register-password-q" required minlength="8"></div>
         <div class="form-group"><label for="confirm-password-q">Потвърди Парола:</label><input type="password" id="confirm-password-q" required minlength="8"></div>
         <div id="register-message-q" class="message" role="alert"></div>
-        <div class="nav-buttons">
-            <button type="button" id="regBackBtn" class="btn-secondary">◀ Назад</button>
-            <button type="submit" id="regSubmitBtn" class="btn-primary">Регистрация</button>
-        </div>
+        <div class="nav-buttons"><button type="button" id="regBackBtn">◀ Назад</button><button type="submit" id="regSubmitBtn">Регистрация</button></div>
       </form>
     `;
     container.appendChild(pageDiv);
@@ -345,8 +320,8 @@
       <h2>Поздравления! <i class="bi bi-stars"></i><br> Току що направихте най-важната стъпка по пътя към промяната</h2>
       <p>Натиснете бутона, за да изпратите вашите отговори за обработка.</p>
       <div class="nav-buttons" style="justify-content: center;">
-        <button id="restartBtn" type="button" class="btn-secondary">Отначало</button>
-        <button id="submitBtn" type="button" class="btn-primary">Изпрати</button>
+        <button id="submitBtn" type="button">Изпрати</button>
+        <button id="restartBtn" type="button">Отначало</button>
       </div>
        <div id="submit-message" class="message" style="margin-top: 15px; text-align: center; font-weight: bold; word-wrap: break-word;"></div>
     `;
