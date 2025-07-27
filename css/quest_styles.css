@@ -73,6 +73,14 @@
     --success-color: #388e3c;
     --success-bg: rgba(56, 142, 60, 0.1);
   }
+
+  /* Специални настройки за иконите в светъл режим */
+  .stat-icon {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 10px;
+    filter: drop-shadow(0 2px 4px var(--shadow-color));
+  }
 }
 
 
