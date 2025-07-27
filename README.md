@@ -377,6 +377,7 @@ node scripts/view-usage-logs.js sendTestEmail 5
 | `questionnaire_email_subject` | Тема на имейла след попълнен въпросник |
 | `questionnaire_email_body` | HTML съдържание за потвърждението на въпросника |
 | `send_questionnaire_email` | "1" или "0" за включване или изключване на потвърждението |
+| `from_email_name` | Име на подателя в изпращаните имейли |
 | `question_definitions` | JSON с дефиниции на всички въпроси |
 | `recipe_data` | Данни за примерни рецепти |
 
@@ -399,6 +400,7 @@ Before deploying, configure the following secrets in Cloudflare (via the dashboa
 - `CF_AI_TOKEN` – API token used for Cloudflare AI requests
 - `OPENAI_API_KEY` – set via `wrangler secret put OPENAI_API_KEY`, used by `worker.js`
 - `FROM_EMAIL` – optional sender address for outgoing emails
+- `FROM_NAME` – optional display name shown in the "From" header
 
 Без тази стойност част от AI функционалностите няма да работят.
 
@@ -874,6 +876,7 @@ To send a test email задайте `WORKER_ADMIN_TOKEN`. Може да посо
 | `MAIL_PHP_URL` | Legacy PHP endpoint if you prefer your own backend. Defaults to `https://mybody.best/mailer/mail.php`. |
 | `EMAIL_PASSWORD` | Password used by `mailer.js` when authenticating with the SMTP server. |
 | `FROM_EMAIL` | Sender address used by `mailer.js` and the PHP backend. |
+| `FROM_NAME` | Optional display name for the sender shown in outgoing emails. |
 | `WELCOME_EMAIL_SUBJECT` | Optional custom subject for welcome emails sent by `mailer.js`. |
 | `WELCOME_EMAIL_BODY` | Optional HTML body template for welcome emails. The string `{{name}}` will be replaced with the recipient's name. |
 | `QUESTIONNAIRE_EMAIL_SUBJECT` | Optional subject for the confirmation email sent след изпращане на въпросника. |
