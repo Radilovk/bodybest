@@ -13,6 +13,7 @@
   --bg-surface: #2a2a2a;
   --bg-progress-bar: rgba(18, 18, 18, 0.7);
   --bg-quest-container: rgba(44, 62, 80, 0.65);
+  --bg-stat-icon: #1a1a1a;
   --hero-gradient: linear-gradient(35deg, rgba(31, 44, 53, 0.8), rgba(44, 62, 80, 0.8), rgba(70, 99, 104, 0.8));
 
   /* ТЕКСТ */
@@ -49,6 +50,7 @@
     --bg-surface: #f2f2f2;
     --bg-progress-bar: rgba(255, 255, 255, 0.7);
     --bg-quest-container: rgba(255, 255, 255, 0.7);
+    --bg-stat-icon: #f0f0f0;
     --hero-gradient: linear-gradient(135deg, #eefdf7, #e8f9ed, #f7f6f4);
 
     /* ТЕКСТ */
@@ -76,7 +78,7 @@
 
   /* Специални настройки за иконите в светъл режим */
   .stat-icon {
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-stat-icon);
     border-radius: 12px;
     padding: 10px;
     filter: drop-shadow(0 2px 4px var(--shadow-color));
