@@ -50,9 +50,6 @@ function setupFetchWithNotifications(clients, now) {
     if (url.includes('getFeedbackMessages')) {
       return Promise.resolve({ ok: true, json: async () => ({ success: true, feedback: [{ message: 'f1', timestamp: now }] }) });
     }
-    if (url.includes('planStatus')) {
-      return Promise.resolve({ ok: true, json: async () => ({ planStatus: 'ready' }) });
-    }
     if (url.includes('profileTemplate.html')) {
       return Promise.resolve({
         ok: true,
@@ -72,7 +69,7 @@ async function importAdmin() {
 
 describe('admin notifications', () => {
   test('adds notification indicator for users with new items', async () => {
-    const clients = [{ userId: 'u1', name: 'User 1' }];
+    const clients = [{ userId: 'u1', name: 'User 1', status: 'ready', tags: [], lastUpdated: '' }];
     const now = new Date().toISOString();
     setupFetchWithNotifications(clients, now);
     await importAdmin();
@@ -85,7 +82,7 @@ describe('admin notifications', () => {
   });
 
   test('opening client clears notification indicator', async () => {
-    const clients = [{ userId: 'u2', name: 'User 2' }];
+    const clients = [{ userId: 'u2', name: 'User 2', status: 'pending', tags: [], lastUpdated: '' }];
     const now = new Date().toISOString();
     setupFetchWithNotifications(clients, now);
     await importAdmin();
