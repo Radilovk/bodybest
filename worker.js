@@ -17,11 +17,13 @@
 async function sendEmailUniversal(to, subject, body, env = {}) {
   const endpoint = env.MAILER_ENDPOINT_URL ||
     globalThis['process']?.env?.MAILER_ENDPOINT_URL;
+  const fromName = env.FROM_NAME || env.from_email_name ||
+    globalThis['process']?.env?.FROM_NAME;
   if (endpoint) {
     const resp = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, subject, message: body, body })
+      body: JSON.stringify({ to, subject, message: body, body, fromName })
     });
     if (!resp.ok) {
       throw new Error(`Mailer responded with ${resp.status}`);
@@ -30,7 +32,10 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
   }
 
   const { sendEmail } = await import('./sendEmailWorker.js');
-  const phpEnv = { MAIL_PHP_URL: env.MAIL_PHP_URL || globalThis['process']?.env?.MAIL_PHP_URL };
+  const phpEnv = {
+    MAIL_PHP_URL: env.MAIL_PHP_URL || globalThis['process']?.env?.MAIL_PHP_URL,
+    FROM_NAME: fromName
+  };
   await sendEmail(to, subject, body, phpEnv);
 }
 import { parseJsonSafe } from './utils/parseJsonSafe.js';
@@ -274,6 +279,7 @@ const AI_CONFIG_KEYS = [
     'questionnaire_email_body',
     'analysis_email_subject',
     'analysis_email_body',
+    'from_email_name',
     'send_welcome_email',
     'send_analysis_email',
     'send_questionnaire_email',

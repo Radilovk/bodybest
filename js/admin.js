@@ -93,6 +93,7 @@ const analysisModelInput = document.getElementById('analysisModel');
 const analysisPromptInput = document.getElementById('analysisPrompt');
 const testAnalysisBtn = document.getElementById('testAnalysisModel');
 const emailSettingsForm = document.getElementById('emailSettingsForm');
+const fromEmailNameInput = document.getElementById('fromEmailName');
 const welcomeEmailSubjectInput = document.getElementById('welcomeEmailSubject');
 const welcomeEmailBodyInput = document.getElementById('welcomeEmailBody');
 const questionnaireEmailSubjectInput = document.getElementById('questionnaireEmailSubject');
@@ -1261,6 +1262,7 @@ async function saveAiConfig() {
 async function loadEmailSettings() {
     try {
         const cfg = await loadConfig([
+            'from_email_name',
             'welcome_email_subject',
             'welcome_email_body',
             'questionnaire_email_subject',
@@ -1271,6 +1273,7 @@ async function loadEmailSettings() {
             'send_welcome_email',
             'send_analysis_email'
         ])
+        if (fromEmailNameInput) fromEmailNameInput.value = cfg.from_email_name || ''
         if (welcomeEmailSubjectInput) welcomeEmailSubjectInput.value = cfg.welcome_email_subject || ''
         if (welcomeEmailBodyInput) {
             welcomeEmailBodyInput.value = cfg.welcome_email_body || ''
@@ -1306,6 +1309,7 @@ async function loadEmailSettings() {
 async function saveEmailSettings() {
     if (!emailSettingsForm) return
     const updates = {
+            from_email_name: fromEmailNameInput ? fromEmailNameInput.value.trim() : '',
             welcome_email_subject: welcomeEmailSubjectInput ? welcomeEmailSubjectInput.value.trim() : '',
             welcome_email_body: welcomeEmailBodyInput ? welcomeEmailBodyInput.value.trim() : '',
             questionnaire_email_subject: questionnaireEmailSubjectInput ? questionnaireEmailSubjectInput.value.trim() : '',

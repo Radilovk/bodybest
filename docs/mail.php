@@ -44,7 +44,9 @@ if (preg_match("/[\r\n]/", $to) || preg_match("/[\r\n]/", $subject)) {
 $headers = "MIME-Version: 1.0\r\n";
 $headers .= "Content-type: text/html; charset=UTF-8\r\n";
 $fromEmail = getenv('FROM_EMAIL') ?: 'info@mybody.best';
-$headers .= "From: {$fromEmail}\r\n";
+$fromName = isset($data['fromName']) ? $data['fromName'] : (getenv('FROM_NAME') ?: '');
+$fromHeader = $fromName ? "$fromName <{$fromEmail}>" : $fromEmail;
+$headers .= "From: {$fromHeader}\r\n";
 $headers .= "Reply-To: {$fromEmail}\r\n";
 
 // Изпращане

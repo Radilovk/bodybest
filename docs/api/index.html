@@ -286,6 +286,7 @@ the page.</p>
 <li><code>CF_AI_TOKEN</code> – API token used for Cloudflare AI requests</li>
 <li><code>OPENAI_API_KEY</code> – set via <code>wrangler secret put OPENAI_API_KEY</code>, used by <code>worker.js</code></li>
 <li><code>FROM_EMAIL</code> – optional sender address for outgoing emails</li>
+<li><code>FROM_NAME</code> – optional display name for the sender</li>
 </ul>
 <p>Без тази стойност част от AI функционалностите няма да работят.</p>
 <p>Optionally set <code>CF_ACCOUNT_ID</code> via <code>wrangler secret put</code> if it differs from the value in <code>wrangler.toml</code>. Ако липсва, работникът използва стойността от <code>wrangler.toml</code>.</p>
@@ -631,6 +632,10 @@ Requests to this endpoint also require the admin token and are rate limited.</p>
 <tr>
 <td><code>FROM_EMAIL</code></td>
 <td>Sender address used by <code>mailer.js</code> and the PHP backend.</td>
+</tr>
+<tr>
+<td><code>FROM_NAME</code></td>
+<td>Optional display name for the sender used in outgoing emails.</td>
 </tr>
 <tr>
 <td><code>WELCOME_EMAIL_SUBJECT</code></td>

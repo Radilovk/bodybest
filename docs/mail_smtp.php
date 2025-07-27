@@ -51,7 +51,12 @@ try {
     $mail->Password = getenv('EMAIL_PASSWORD');
 
     $fromEmail = getenv('FROM_EMAIL') ?: 'info@mybody.best';
-    $mail->setFrom($fromEmail);
+    $fromName = $data['fromName'] ?? (getenv('FROM_NAME') ?: '');
+    if ($fromName) {
+        $mail->setFrom($fromEmail, $fromName);
+    } else {
+        $mail->setFrom($fromEmail);
+    }
     $mail->addAddress($to);
     $mail->Subject = $subject;
     $mail->isHTML(true);
