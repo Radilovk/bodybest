@@ -767,12 +767,20 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         await env.USER_METADATA_KV.put(`${userId}_initial_answers`, JSON.stringify(questionnaireData));
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
-        let val = env.SEND_QUESTIONNAIRE_EMAIL;
-        if (val === undefined && env.RESOURCES_KV) {
-            try { val = await env.RESOURCES_KV.get('send_questionnaire_email'); } catch {}
-        }
-        const skipEmail = val === '0' || String(val).toLowerCase() === 'false'; // пропускай при изключен флаг
-        const analysisTask = handleAnalyzeInitialAnswers(userId, env, skipEmail);
+
+        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] ||
+            'https://radilovk.github.io/bodybest/reganalize/analyze.html';
+        const url = new URL(baseUrl);
+        url.searchParams.set('userId', userId);
+        const link = url.toString();
+        await sendAnalysisLinkEmail(
+            questionnaireData.email,
+            questionnaireData.name || 'Клиент',
+            link,
+            env
+        );
+
+        const analysisTask = handleAnalyzeInitialAnswers(userId, env);
         if (ctx) {
             ctx.waitUntil(analysisTask);
             await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
@@ -1713,17 +1721,7 @@ async function handleAnalyzeInitialAnswers(userId, env, skipEmail = false) {
         const url = new URL(baseUrl);
         url.searchParams.set('userId', userId);
         const link = url.toString();
-        if (answers.email && !skipEmail) {
-            let val = env.SEND_ANALYSIS_EMAIL;
-            if (val === undefined && env.RESOURCES_KV) {
-                try { val = await env.RESOURCES_KV.get('send_analysis_email'); } catch {}
-            }
-            const skipAnalysis = val === '0' || String(val).toLowerCase() === 'false';
-            if (!skipAnalysis) {
-                const name = answers.name || 'Клиент';
-                await sendAnalysisLinkEmail(answers.email, name, link, env);
-            }
-        }
+        // Имейлът с линк към анализа вече се изпраща при подаване на въпросника.
     } catch (error) {
         console.error(`Error in handleAnalyzeInitialAnswers (${userId}):`, error.message, error.stack);
         try {
