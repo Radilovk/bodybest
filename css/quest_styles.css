@@ -283,6 +283,11 @@ button:hover {
   margin-top: 25px;
 }
 
+/* Специални бутони за финалната страница */
+.nav-buttons.final-buttons {
+  flex-direction: column;
+}
+
 /* --- Йерархия на бутоните --- */
 /* Основен бутон (Напред, Изпрати) */
 button[id^="nextBtn"], button[id="regSubmitBtn"], button[id="submitBtn"] {
@@ -303,6 +308,15 @@ button[id^="prevBtn"], button[id="regBackBtn"], button[id="restartBtn"] {
 button[id^="prevBtn"]:hover, button[id="regBackBtn"]:hover, button[id="restartBtn"]:hover {
   background-color: var(--accent-primary);
   color: var(--text-on-accent);
+}
+
+/* Допълнително оцветяване за бутона за рестарт */
+#restartBtn {
+  color: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+#restartBtn:hover {
+  background-color: var(--accent-secondary);
 }
 
 /* =================================================================== */
@@ -534,6 +548,9 @@ button[id^="prevBtn"]:hover, button[id="regBackBtn"]:hover, button[id="restartBt
   }
   .nav-buttons {
       flex-direction: column-reverse; /* Назад е отгоре, Напред отдолу - по-удобно */
+  }
+  .nav-buttons.final-buttons {
+      flex-direction: column;
   }
   .question-text {
     font-size: 18px;
