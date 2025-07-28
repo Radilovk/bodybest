@@ -33,6 +33,9 @@ const Config = {
     }
 };
 
+// URL на таблото след успешен вход
+const dashboardUrl = 'code.html';
+
 /**
  * @description Универсални функции за съобщения (от messageUtils.js)
  */
@@ -411,8 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // В този случай, за целите на демото, просто показваме успех.
                 MessageUtils.showMessage(loginMessage, "Успешен вход! Пренасочване...", false);
                 setTimeout(() => {
-                    // TODO: Променете 'code.html' с реалния URL на таблото, ако е различен.
-                    window.location.href = 'code.html'; 
+                    window.location.href = dashboardUrl;
                 }, 1500);
 
             } catch (error) {
