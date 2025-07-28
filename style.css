@@ -95,7 +95,9 @@ header { position: fixed; top: 0; left: 0; width: 100%; padding: 25px 0; z-index
 header.scrolled { padding: 15px 0; background: var(--card-bg); backdrop-filter: blur(var(--glass-blur)); box-shadow: var(--shadow-md); }
 .header-container { display: flex; justify-content: space-between; align-items: center; }
 .logo-link { text-decoration: none; }
-.logo { width: 150px; height: auto; display: block; }
+.logo-placeholder { width: 150px; height: 50px; display: flex; align-items: center; justify-content: center; border: 2px dashed var(--accent-color); border-radius: var(--radius-md); color: var(--accent-color); font-family: 'Montserrat', sans-serif; font-size: 1rem; transition: var(--transition); font-weight: 600; }
+.logo-placeholder:hover { border-style: solid; background: rgba(var(--primary-rgb), 0.1); }
+.dark-theme .logo-placeholder { border-color: var(--accent-color); color: var(--accent-color); }
 nav { display: flex; align-items: center; }
 nav ul { display: flex; list-style: none; align-items: center; }
 nav ul li { margin-left: 35px; }
@@ -223,7 +225,7 @@ footer { background: var(--dark-bg); color: var(--light-text); padding: 80px 0 3
     .hero-btns { flex-direction: column; gap: 15px; }
     .btn { width: 100%; padding: 16px 20px; }
     .section-title h2 { font-size: 1.8rem; }
-    .logo { width: 120px; }
+    .logo-placeholder { width: 120px; font-size: 0.9rem; }
     .slider-item { font-size: clamp(1.8rem, 8vw, 2.5rem); }
 }
 
