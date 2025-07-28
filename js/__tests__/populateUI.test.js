@@ -13,6 +13,7 @@ beforeEach(async () => {
     <div id="engagementProgressFill"></div><div id="engagementProgressBar"></div><span id="engagementProgressText"></span>
     <div id="healthProgressFill"></div><div id="healthProgressBar"></div><span id="healthProgressText"></span>
     <div id="streakGrid"></div>
+    <div id="macroAnalyticsCard"><div id="macroMetricsGrid"></div></div>
     <h3 id="dailyPlanTitle"></h3>
     <ul id="dailyMealList"></ul>
   `;
@@ -33,6 +34,8 @@ beforeEach(async () => {
     healthProgressBar: document.getElementById('healthProgressBar'),
     healthProgressText: document.getElementById('healthProgressText'),
     streakGrid: document.getElementById('streakGrid'),
+    macroAnalyticsCard: document.getElementById('macroAnalyticsCard'),
+    macroMetricsGrid: document.getElementById('macroMetricsGrid'),
     dailyPlanTitle: document.getElementById('dailyPlanTitle'),
     dailyMealList: document.getElementById('dailyMealList')
   };
@@ -84,6 +87,27 @@ test('populates dashboard sections', () => {
   expect(document.getElementById('engagementProgressText').textContent).toBe('80%');
   expect(document.getElementById('healthProgressText').textContent).toBe('70%');
   expect(document.querySelectorAll('#streakGrid .streak-day.logged').length).toBe(1);
+});
+
+test('renders macro analytics card', async () => {
+  jest.resetModules();
+  const fullData = {
+    userName: 'Иван',
+    analytics: { current: {}, streak: {} },
+    planData: {
+      caloriesMacros: { calories: 1800, protein_grams: 120, protein_percent: 40, carbs_grams: 200, carbs_percent: 40, fat_grams: 50, fat_percent: 20 }
+    },
+    dailyLogs: [],
+    currentStatus: {},
+    initialData: {},
+    initialAnswers: {}
+  };
+  jest.unstable_mockModule('../app.js', () => ({ fullDashboardData: fullData, todaysMealCompletionStatus: {}, planHasRecContent: false }));
+  ({ populateUI } = await import('../populateUI.js'));
+  populateUI();
+  const metrics = document.querySelectorAll('#macroMetricsGrid .macro-metric');
+  expect(metrics.length).toBe(4);
+  expect(metrics[0].textContent).toContain('Калории');
 });
 
 test('hides modules when values are zero', async () => {

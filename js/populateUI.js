@@ -13,6 +13,7 @@ export function populateUI() {
     try { populateUserInfo(data.userName); } catch(e) { console.error("Error in populateUserInfo:", e); }
     try { populateDashboardMainIndexes(data.analytics?.current); } catch(e) { console.error("Error in populateDashboardMainIndexes:", e); }
     try { populateDashboardDetailedAnalytics(data.analytics); } catch(e) { console.error("Error in populateDashboardDetailedAnalytics:", e); }
+    try { populateDashboardMacros(data.planData?.caloriesMacros); } catch(e) { console.error("Error in populateDashboardMacros:", e); }
     try { populateDashboardStreak(data.analytics?.streak); } catch(e) { console.error("Error in populateDashboardStreak:", e); }
     try { populateDashboardDailyPlan(data.planData?.week1Menu, data.dailyLogs, data.recipeData); } catch(e) { console.error("Error in populateDashboardDailyPlan:", e); }
     try { populateDashboardLog(data.dailyLogs, data.currentStatus, data.initialData); } catch(e) { console.error("Error in populateDashboardLog:", e); }
@@ -104,6 +105,11 @@ function populateDashboardDetailedAnalytics(analyticsData) {
     }
     cardsContainer.innerHTML = '';
     textualAnalysisContainer.innerHTML = '';
+
+    const macros = safeGet(fullDashboardData, 'planData.caloriesMacros');
+    if (macros) {
+        cardsContainer.appendChild(renderMacroAnalyticsCard(macros));
+    }
 
     const detailedMetrics = safeGet(analyticsData, 'detailed', []);
     const textualAnalysis = safeGet(analyticsData, 'textualAnalysis');
@@ -217,6 +223,42 @@ function populateDashboardDetailedAnalytics(analyticsData) {
                 accordionContent.classList.remove('open-active');
             }
         }
+    }
+}
+
+function renderMacroAnalyticsCard(macros) {
+    const card = document.createElement('div');
+    card.id = 'macroAnalyticsCard';
+    card.className = 'analytics-card';
+    const header = document.createElement('h5');
+    header.innerHTML = `<svg class="icon" style="width:1em;height:1em;margin-right:0.3em"><use href="#icon-scale"></use></svg> Калории и Макроси`;
+    card.appendChild(header);
+    const grid = document.createElement('div');
+    grid.id = 'macroMetricsGrid';
+    grid.className = 'macro-metrics-grid';
+    const list = [
+        { l: 'Калории', v: macros.calories, s: 'kcal дневно' },
+        { l: 'Протеини', v: macros.protein_grams, s: macros.protein_percent ? `${macros.protein_percent}%` : '' },
+        { l: 'Въглехидрати', v: macros.carbs_grams, s: macros.carbs_percent ? `${macros.carbs_percent}%` : '' },
+        { l: 'Мазнини', v: macros.fat_grams, s: macros.fat_percent ? `${macros.fat_percent}%` : '' }
+    ];
+    list.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'macro-metric';
+        div.innerHTML = `<div class="macro-label">${item.l}</div><div class="macro-value">${item.v ?? '--'}</div><div class="macro-subtitle">${item.s}</div>`;
+        grid.appendChild(div);
+    });
+    card.appendChild(grid);
+    return card;
+}
+
+function populateDashboardMacros(macros) {
+    if (!selectors.analyticsCardsContainer) return;
+    const existing = document.getElementById('macroAnalyticsCard');
+    if (existing) existing.remove();
+    if (macros) {
+        const card = renderMacroAnalyticsCard(macros);
+        selectors.analyticsCardsContainer.prepend(card);
     }
 }
 

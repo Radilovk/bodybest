@@ -185,6 +185,33 @@
   margin-top: var(--space-sm);
 }
 
+/* Macros Analytics Card */
+#macroAnalyticsCard .macro-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+#macroAnalyticsCard .macro-metric {
+  background: var(--surface-background);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+#macroAnalyticsCard .macro-label {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+#macroAnalyticsCard .macro-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+#macroAnalyticsCard .macro-subtitle {
+  color: var(--text-color-muted);
+  font-size: var(--fs-sm);
+}
+
 /* Box with extra info for each metric */
 .metric-info-container {
   background: var(--color-info-bg);
