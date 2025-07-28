@@ -53,6 +53,14 @@ const exportThemeBtnId = 'exportTheme';
 const importThemeInputId = 'importTheme';
 const importThemeBtnId = 'importThemeBtn';
 
+const vividTheme = {
+  'primary-color': '#00FFFF',
+  'secondary-color': '#FFFF00',
+  'accent-color': '#008080',
+  'tertiary-color': '#AAAA55',
+  'progress-end-color': '#80FF80'
+};
+
 function setCssVar(key, val) {
   document.documentElement.style.setProperty(`--${key}`, val);
   document.body.style.setProperty(`--${key}`, val);
@@ -83,7 +91,7 @@ function populateThemeSelect() {
   if (!select) return;
   select.innerHTML = '';
   const themes = getSavedThemes();
-  Object.keys(themes).forEach(name => {
+  Object.keys(themes).sort().forEach(name => {
     const opt = document.createElement('option');
     opt.value = name;
     opt.textContent = name;
@@ -183,6 +191,7 @@ export async function initColorSettings() {
   let changed = false;
   if (!stored.Light) { stored.Light = defaults.light; changed = true; }
   if (!stored.Dark) { stored.Dark = defaults.dark; changed = true; }
+  if (!stored.Vivid) { stored.Vivid = vividTheme; changed = true; }
   if (changed) storeThemes(stored);
   const saveBtn = document.getElementById('saveColorConfig');
   populateThemeSelect();
