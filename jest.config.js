@@ -1,4 +1,9 @@
 export default {
-  testEnvironment: 'node',
+  // Use jsdom for DOM APIs in tests
+  testEnvironment: 'jsdom',
+  // Treat TypeScript files as ES modules (future-proof)
+  extensionsToTreatAsEsm: ['.ts'],
+  // Disable Babel; rely on native ESM support
+  transform: {},
   setupFilesAfterEnv: ['./jest.setup.js']
 };
