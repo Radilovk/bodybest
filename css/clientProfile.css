@@ -244,3 +244,22 @@ body {
 .menu-table th {
   background: #f9f9f9;
 }
+
+.macro-chart-container {
+  min-height: 220px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(90deg,
+      var(--macro-protein-color),
+      var(--macro-carbs-color),
+      var(--macro-fat-color));
+  color: var(--text-color-on-primary);
+  border-radius: 8px;
+}
+
+.macro-chart-container canvas {
+  max-width: 250px;
+  max-height: 250px;
+}
