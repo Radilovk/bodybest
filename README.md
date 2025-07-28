@@ -42,10 +42,11 @@ The application will be available at `http://localhost:5173` by default.
 Така настройките засягат само публичната част на сайта и са по-лесни за управление.
 
 #### Персонализация за потребители
-От страницата `personalization.html` всеки може да настрои основните цветове чрез
-цветови палитри и плъзгачи за нюанс и яркост. Избраните стойности се записват в
-`localStorage.colorThemes['Custom']` и се прилагат при следващо посещение на
-таблото.
+В `personalization.html` цветoвите настройки са разделени по табове – Dashboard,
+Index и Quest. Всеки таб съдържа полета от съответната група от `themeConfig.js`.
+Промените се съхраняват отделно в `localStorage.dashboardColorThemes`,
+`localStorage.indexColorThemes` и `localStorage.questColorThemes`. При зареждане
+на всяка страница избраните стойности се прилагат автоматично.
 
 ### Build
 
