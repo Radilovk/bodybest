@@ -10,6 +10,7 @@ import {
 import { handleLogout } from './auth.js';
 import { openExtraMealModal } from './extraMealForm.js';
 import { apiEndpoints } from './config.js';
+import { macroChartInstance, progressChartInstance } from './populateUI.js';
 import {
     handleSaveLog, handleFeedbackFormSubmit, // from app.js
     handleChatSend, handleChatInputKeypress, // from app.js / chat.js
@@ -124,6 +125,7 @@ export function setupStaticEventListeners() {
                 this.setAttribute('aria-expanded', !isOpen); this.classList.toggle('open', !isOpen);
                 const arrow = this.querySelector('.arrow'); if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
                 if (accContent) { accContent.style.display = isOpen ? 'none' : 'block'; accContent.classList.toggle('open-active', !isOpen); }
+                if (!isOpen) { macroChartInstance?.resize(); progressChartInstance?.resize(); }
              });
              header.addEventListener('keydown', function(e) {
                 if(e.key === 'Enter' || e.key === ' ') {
@@ -131,6 +133,7 @@ export function setupStaticEventListeners() {
                     this.setAttribute('aria-expanded', !isOpen); this.classList.toggle('open', !isOpen);
                     const arrow = this.querySelector('.arrow'); if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
                     if (accContent) { accContent.style.display = isOpen ? 'none' : 'block'; accContent.classList.toggle('open-active', !isOpen); }
+                    if (!isOpen) { macroChartInstance?.resize(); progressChartInstance?.resize(); }
                 }
             });
         }

@@ -5,6 +5,9 @@ import { generateId } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, planHasRecContent } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 
+export let macroChartInstance = null;
+export let progressChartInstance = null;
+
 export function populateUI() {
     const data = fullDashboardData; // Access global state
     if (!data || Object.keys(data).length === 0) {
@@ -232,6 +235,7 @@ function renderMacroAnalyticsCard(macros) {
 
     const chartContainer = document.createElement('div');
     chartContainer.className = 'chart-container';
+
     const canvas = document.createElement('canvas');
     canvas.id = 'macroChart';
     chartContainer.appendChild(canvas);
@@ -256,7 +260,7 @@ function renderMacroAnalyticsCard(macros) {
 
     if (typeof Chart !== 'undefined') {
         const ctx = canvas.getContext('2d');
-        new Chart(ctx, {
+        macroChartInstance = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 labels: [
@@ -289,7 +293,13 @@ function renderMacroAnalyticsCard(macros) {
 function populateDashboardMacros(macros) {
     if (!selectors.analyticsCardsContainer) return;
     const existing = document.getElementById('macroAnalyticsCard');
-    if (existing) existing.remove();
+    if (existing) {
+        existing.remove();
+        if (macroChartInstance) {
+            macroChartInstance.destroy();
+            macroChartInstance = null;
+        }
+    }
     if (macros) {
         const card = renderMacroAnalyticsCard(macros);
         selectors.analyticsCardsContainer.prepend(card);
@@ -796,6 +806,10 @@ export function handleAccordionToggle(event) {
     this.setAttribute('aria-expanded', !isOpen); this.classList.toggle('open', !isOpen);
     const arrow = this.querySelector('.arrow'); if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
     if (content) { content.style.display = isOpen ? 'none' : 'block'; content.classList.toggle('open-active', !isOpen); }
+    if (!isOpen && this.closest('#detailedAnalyticsAccordion')) {
+        macroChartInstance?.resize();
+        progressChartInstance?.resize();
+    }
 }
 
 function populateProgressHistory(dailyLogs, initialData) {
@@ -837,6 +851,11 @@ function populateProgressHistory(dailyLogs, initialData) {
     card.classList.remove('hidden');
     card.innerHTML = '';
 
+    if (progressChartInstance) {
+        progressChartInstance.destroy();
+        progressChartInstance = null;
+    }
+
     const canvas = document.createElement('canvas');
     canvas.id = 'progressChart';
     const chartContainer = document.createElement('div');
@@ -845,7 +864,7 @@ function populateProgressHistory(dailyLogs, initialData) {
     card.appendChild(chartContainer);
 
     const ctx = canvas.getContext('2d');
-    new Chart(ctx, {
+    progressChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
