@@ -212,6 +212,19 @@
   font-size: var(--fs-sm);
 }
 
+#macroAnalyticsCard .chart-container {
+  min-height: 150px;
+  position: relative;
+  padding: var(--space-sm);
+  text-align: center;
+}
+
+#macroAnalyticsCard canvas {
+  max-width: 250px;
+  max-height: 250px;
+  margin: 0 auto;
+}
+
 /* Box with extra info for each metric */
 .metric-info-container {
   background: var(--color-info-bg);
