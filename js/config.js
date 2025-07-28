@@ -13,6 +13,7 @@ export const workerBaseUrl = isLocalDevelopment
 export const apiEndpoints = {
     login: `${workerBaseUrl}/api/login`,
     register: `${workerBaseUrl}/api/register`,
+    registerDemo: `${workerBaseUrl}/api/registerDemo`,
     dashboard: `${workerBaseUrl}/api/dashboardData`,
     log: `${workerBaseUrl}/api/log`,
     chat: `${workerBaseUrl}/api/chat`,
@@ -50,6 +51,7 @@ export const apiEndpoints = {
     analyzeImage: `${workerBaseUrl}/api/analyzeImage`,
     sendTestEmail: `${workerBaseUrl}/api/sendTestEmail`,
     submitQuestionnaire: `${workerBaseUrl}/api/submitQuestionnaire`,
+    submitDemoQuestionnaire: `${workerBaseUrl}/api/submitDemoQuestionnaire`,
     reAnalyzeQuestionnaire: `${workerBaseUrl}/api/reAnalyzeQuestionnaire`,
     analysisStatus: `${workerBaseUrl}/api/analysisStatus`,
     getInitialAnalysis: `${workerBaseUrl}/api/getInitialAnalysis`
