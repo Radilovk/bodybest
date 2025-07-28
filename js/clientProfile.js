@@ -158,7 +158,7 @@ function fillDashboard(data) {
   const macrosContainer = $('macroCards');
   if (macrosContainer) {
     macrosContainer.innerHTML = '';
-    const macros = data.planData?.caloriesMacros || {};
+    const macros = data.planData?.caloriesMacros || data.planData?.calories_macros || {};
     const list = [
       { l: 'Калории', v: macros.calories, s: 'kcal дневно' },
       { l: 'Протеини', v: macros.protein_grams, s: macros.protein_percent ? `${macros.protein_percent}% от калориите` : '' },
@@ -176,10 +176,11 @@ function fillDashboard(data) {
     });
   }
 
-  if (data.planData?.caloriesMacros) {
+  const macroData = data.planData?.caloriesMacros || data.planData?.calories_macros;
+  if (macroData) {
     if (macroChartPlan) macroChartPlan.destroy();
     if (macroChartAnalytics) macroChartAnalytics.destroy();
-    const m = data.planData.caloriesMacros;
+    const m = macroData;
     const ctxPlan = document.getElementById('macro-chart-plan');
     if (ctxPlan && typeof Chart !== 'undefined') {
       macroChartPlan = new Chart(ctxPlan, {
