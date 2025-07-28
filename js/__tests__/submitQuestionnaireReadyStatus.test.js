@@ -25,7 +25,16 @@ describe('analysis status ready when ctx missing', () => {
       AI: { run: jest.fn().mockResolvedValue({ response: '{"score":1}' }) }
     }
     kvStore['email_to_uuid_a@b.bg'] = 'u1'
-    const req = { json: async () => ({ email: 'a@b.bg', name: 'A' }) }
+    const req = { json: async () => ({
+      email: 'a@b.bg',
+      name: 'A',
+      gender: 'm',
+      age: 28,
+      height: 175,
+      weight: 70,
+      goal: 'gain',
+      medicalConditions: ['Нямам']
+    }) }
     const res = await worker.handleSubmitQuestionnaire(req, env)
     expect(res.success).toBe(true)
     expect(kvStore['u1_analysis_status']).toBe('ready')
@@ -50,7 +59,16 @@ describe('analysis status ready when ctx missing', () => {
       AI: { run: jest.fn().mockResolvedValue({ response: '{"score":1}' }) }
     }
     kvStore['email_to_uuid_a@b.bg'] = 'u1'
-    const req = { json: async () => ({ email: 'a@b.bg', name: 'A' }) }
+    const req = { json: async () => ({
+      email: 'a@b.bg',
+      name: 'A',
+      gender: 'f',
+      age: 29,
+      height: 165,
+      weight: 60,
+      goal: 'tone',
+      medicalConditions: ['Нямам']
+    }) }
     const res = await worker.handleSubmitDemoQuestionnaire(req, env)
     expect(res.success).toBe(true)
     expect(kvStore['u1_analysis_status']).toBe('ready')

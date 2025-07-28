@@ -23,7 +23,16 @@ test('sends analysis email on questionnaire submit', async () => {
       put: jest.fn()
     }
   }
-  const req = { json: async () => ({ email: 'user@site.bg', name: 'Иван' }) }
+  const req = { json: async () => ({
+    email: 'user@site.bg',
+    name: 'Иван',
+    gender: 'm',
+    age: 30,
+    height: 180,
+    weight: 80,
+    goal: 'gain',
+    medicalConditions: ['Нямам']
+  }) }
   const res = await handleSubmitQuestionnaire(req, env)
   expect(res.success).toBe(true)
   expect(fetch).toHaveBeenCalledWith('https://mail.example.com', expect.any(Object))
@@ -37,7 +46,15 @@ test('works without explicit mail configuration', async () => {
       put: jest.fn()
     }
   }
-  const req = { json: async () => ({ email: 'x@x.bg' }) }
+  const req = { json: async () => ({
+    email: 'x@x.bg',
+    gender: 'f',
+    age: 22,
+    height: 165,
+    weight: 55,
+    goal: 'tone',
+    medicalConditions: ['Нямам']
+  }) }
   const res = await handleSubmitQuestionnaire(req, env)
   expect(res.success).toBe(true)
   expect(fetch).toHaveBeenCalled()
@@ -52,7 +69,15 @@ test('ignores SEND_QUESTIONNAIRE_EMAIL flag', async () => {
       put: jest.fn()
     }
   }
-  const req = { json: async () => ({ email: 'a@b.bg' }) }
+  const req = { json: async () => ({
+    email: 'a@b.bg',
+    gender: 'f',
+    age: 35,
+    height: 170,
+    weight: 70,
+    goal: 'lose',
+    medicalConditions: ['Нямам']
+  }) }
   const res = await handleSubmitQuestionnaire(req, env)
   expect(res.success).toBe(true)
   expect(fetch).toHaveBeenCalled()
