@@ -820,7 +820,7 @@
 
             // --- Генериране на съдържанието ---
             const reportContent = generateReportContent();
-            // console.log("---- REPORT CONTENT ----\n", reportContent); // За дебъг
+
 
             // --- Проверка дали файлът съществува и избор на метод (POST/PUT) ---
             feedbackDiv.innerHTML = 'Проверка за съществуващ файл... <div class="loader"></div>';
@@ -868,7 +868,7 @@
                     throw new Error(`API грешка ${response.status}: ${responseData.error || response.statusText}`);
                 }
 
-                console.log('API Response:', responseData);
+
                 feedbackDiv.textContent = successMessage;
                 feedbackDiv.className = 'success';
                 // form.reset(); // По желание
