@@ -4,6 +4,12 @@ import { loadAndApplyColors } from './uiHandlers.js';
 
 const inputs = {};
 let activeGroup = 'Dashboard';
+let activeVariant = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+
+const variants = {
+  light: 'Светла',
+  dark: 'Тъмна'
+};
 
 const storageMap = {
   Index: 'indexColorThemes',
@@ -11,8 +17,14 @@ const storageMap = {
   Dashboard: 'dashboardColorThemes'
 };
 
-function getStorageKey(groupName) {
-  return storageMap[groupName] || storageMap.Dashboard;
+function getGroups(name) {
+  if (name === 'Dashboard') return colorGroups.filter(g => !['Index', 'Quest'].includes(g.name));
+  return colorGroups.filter(g => g.name === name);
+}
+
+function getStorageKey(groupName, variant) {
+  const base = storageMap[groupName] || storageMap.Dashboard;
+  return `${base}.${variant}`;
 }
 
 function getCurrentColor(key) {
@@ -23,8 +35,8 @@ function getCurrentColor(key) {
     .getPropertyValue(`--${key}`).trim();
 }
 
-function getSavedThemes(groupName) {
-  const key = getStorageKey(groupName);
+function getSavedThemes(groupName, variant = activeVariant) {
+  const key = getStorageKey(groupName, variant);
   try {
     return JSON.parse(localStorage.getItem(key) || '{}');
   } catch {
@@ -32,16 +44,16 @@ function getSavedThemes(groupName) {
   }
 }
 
-function storeThemes(groupName, themes) {
-  const key = getStorageKey(groupName);
+function storeThemes(groupName, variant, themes) {
+  const key = getStorageKey(groupName, variant);
   localStorage.setItem(key, JSON.stringify(themes));
 }
 
-export function populateThemeSelect(groupName) {
+export function populateThemeSelect(groupName, variant = activeVariant) {
   const select = document.getElementById('themeSelect');
   if (!select) return;
   select.innerHTML = '';
-  const themes = getSavedThemes(groupName);
+  const themes = getSavedThemes(groupName, variant);
   Object.keys(themes).sort().forEach(name => {
     const opt = document.createElement('option');
     opt.value = name;
@@ -50,46 +62,50 @@ export function populateThemeSelect(groupName) {
   });
 }
 
-export function saveNamedTheme(groupName, name) {
+export function saveNamedTheme(groupName, name, variant = activeVariant) {
   if (!name) return;
-  const group = colorGroups.find(g => g.name === groupName);
-  if (!group) return;
-  const themes = getSavedThemes(groupName);
+  const groups = getGroups(groupName);
+  if (groups.length === 0) return;
+  const themes = getSavedThemes(groupName, variant);
   const theme = {};
-  group.items.forEach(item => {
-    const el = inputs[`${groupName}-${item.var}`];
-    if (el) theme[item.var] = el.value;
+  groups.forEach(g => {
+    g.items.forEach(item => {
+      const el = inputs[`${groupName}-${item.var}-${variant}`];
+      if (el) theme[item.var] = el.value;
+    });
   });
   themes[name] = theme;
-  storeThemes(groupName, themes);
-  populateThemeSelect(groupName);
+  storeThemes(groupName, variant, themes);
+  populateThemeSelect(groupName, variant);
 }
 
-export function loadNamedTheme(groupName, name) {
-  const group = colorGroups.find(g => g.name === groupName);
-  if (!group) return;
-  const themes = getSavedThemes(groupName);
+export function loadNamedTheme(groupName, name, variant = activeVariant) {
+  const groups = getGroups(groupName);
+  if (groups.length === 0) return;
+  const themes = getSavedThemes(groupName, variant);
   const theme = themes[name];
   if (!theme) return;
-  group.items.forEach(item => {
-    const val = theme[item.var];
-    const el = inputs[`${groupName}-${item.var}`];
-    if (val) {
-      document.documentElement.style.setProperty(`--${item.var}`, val);
-      document.body.style.setProperty(`--${item.var}`, val);
-      if (el) el.value = val;
-    }
+  groups.forEach(g => {
+    g.items.forEach(item => {
+      const val = theme[item.var];
+      const el = inputs[`${groupName}-${item.var}-${variant}`];
+      if (val) {
+        document.documentElement.style.setProperty(`--${item.var}`, val);
+        document.body.style.setProperty(`--${item.var}`, val);
+        if (el) el.value = val;
+      }
+    });
   });
   themes.Custom = theme;
-  storeThemes(groupName, themes);
+  storeThemes(groupName, variant, themes);
 }
 
-export function deleteNamedTheme(groupName, name) {
-  const themes = getSavedThemes(groupName);
+export function deleteNamedTheme(groupName, name, variant = activeVariant) {
+  const themes = getSavedThemes(groupName, variant);
   if (themes[name]) {
     delete themes[name];
-    storeThemes(groupName, themes);
-    populateThemeSelect(groupName);
+    storeThemes(groupName, variant, themes);
+    populateThemeSelect(groupName, variant);
   }
 }
 
@@ -100,58 +116,64 @@ function ensureSampleThemes() {
     Quest: sampleThemes.quest
   };
   Object.entries(map).forEach(([group, samples]) => {
-    const themes = getSavedThemes(group);
-    let changed = false;
-    Object.entries(samples || {}).forEach(([name, t]) => {
-      if (!themes[name]) {
-        themes[name] = t;
-        changed = true;
-      }
+    ['light', 'dark'].forEach(variant => {
+      const themes = getSavedThemes(group, variant);
+      let changed = false;
+      Object.entries(samples || {}).forEach(([name, t]) => {
+        if (!themes[name]) {
+          themes[name] = t;
+          changed = true;
+        }
+      });
+      if (changed) storeThemes(group, variant, themes);
     });
-    if (changed) storeThemes(group, themes);
   });
 }
 
-export function applyAndStore(groupName) {
-  const group = colorGroups.find(g => g.name === groupName);
-  if (!group) return;
+export function applyAndStore(groupName, variant = activeVariant) {
+  const groups = getGroups(groupName);
+  if (groups.length === 0) return;
   const theme = {};
-  group.items.forEach(item => {
-    const el = inputs[`${groupName}-${item.var}`];
-    if (el) {
-      document.documentElement.style.setProperty(`--${item.var}`, el.value);
-      document.body.style.setProperty(`--${item.var}`, el.value);
-      theme[item.var] = el.value;
-    }
+  groups.forEach(g => {
+    g.items.forEach(item => {
+      const el = inputs[`${groupName}-${item.var}-${variant}`];
+      if (el) {
+        document.documentElement.style.setProperty(`--${item.var}`, el.value);
+        document.body.style.setProperty(`--${item.var}`, el.value);
+        theme[item.var] = el.value;
+      }
+    });
   });
-  const key = getStorageKey(groupName);
+  const key = getStorageKey(groupName, variant);
   const stored = JSON.parse(localStorage.getItem(key) || '{}');
   stored.Custom = theme;
   localStorage.setItem(key, JSON.stringify(stored));
 }
 
-export function populate(groupName) {
-  const group = colorGroups.find(g => g.name === groupName);
-  if (!group) return;
-  const key = getStorageKey(groupName);
+export function populate(groupName, variant = activeVariant) {
+  const groups = getGroups(groupName);
+  if (groups.length === 0) return;
+  const key = getStorageKey(groupName, variant);
   const themes = JSON.parse(localStorage.getItem(key) || '{}');
   const custom = themes.Custom || {};
-  group.items.forEach(item => {
-    const el = inputs[`${groupName}-${item.var}`];
-    if (!el) return;
-    el.value = custom[item.var] || getCurrentColor(item.var);
+  groups.forEach(g => {
+    g.items.forEach(item => {
+      const el = inputs[`${groupName}-${item.var}-${variant}`];
+      if (!el) return;
+      el.value = custom[item.var] || getCurrentColor(item.var);
+    });
   });
-  applyAndStore(groupName);
+  applyAndStore(groupName, variant);
 }
 
 function createTabNavigation(parent) {
   const nav = document.createElement('div');
   nav.className = 'tab-buttons';
-  colorGroups.forEach((group, idx) => {
+  ['Dashboard', 'Index', 'Quest'].forEach((name, idx) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.textContent = group.name;
-    btn.addEventListener('click', () => switchTab(group.name));
+    btn.textContent = name;
+    btn.addEventListener('click', () => switchTab(name));
     if (idx === 0) btn.classList.add('active-tab');
     nav.appendChild(btn);
   });
@@ -162,25 +184,52 @@ function createTabNavigation(parent) {
 function createTabContents(parent) {
   const contents = document.createElement('div');
   contents.className = 'tab-contents';
-  colorGroups.forEach((group, idx) => {
+  ['Dashboard', 'Index', 'Quest'].forEach((name, idx) => {
     const panel = document.createElement('div');
-    panel.id = `panel-${group.name}`;
+    panel.id = `panel-${name}`;
     panel.className = 'tab-panel';
     if (idx !== 0) panel.style.display = 'none';
-    group.items.forEach(item => {
-      const wrap = document.createElement('div');
-      wrap.className = 'form-group';
-      const label = document.createElement('label');
-      label.textContent = item.label || item.var;
-      const input = document.createElement('input');
-      input.type = 'color';
-      input.id = `${group.name}-${item.var}`;
-      wrap.appendChild(label);
-      wrap.appendChild(input);
-      panel.appendChild(wrap);
-      inputs[input.id] = input;
-      input.addEventListener('input', () => applyAndStore(group.name));
+
+    const variantNav = document.createElement('div');
+    variantNav.className = 'variant-buttons';
+    Object.entries(variants).forEach(([key, label]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.variant = key;
+      b.textContent = label;
+      if (key === activeVariant) b.classList.add('active-tab');
+      b.addEventListener('click', () => switchVariant(name, key));
+      variantNav.appendChild(b);
     });
+    panel.appendChild(variantNav);
+
+    Object.keys(variants).forEach(v => {
+      const varPanel = document.createElement('div');
+      varPanel.id = `panel-${name}-${v}`;
+      varPanel.className = 'variant-panel';
+      if (v !== activeVariant) varPanel.style.display = 'none';
+      const groups = name === 'Dashboard'
+        ? colorGroups.filter(g => !['Index', 'Quest'].includes(g.name))
+        : colorGroups.filter(g => g.name === name);
+      groups.forEach(g => {
+        g.items.forEach(item => {
+          const wrap = document.createElement('div');
+          wrap.className = 'form-group';
+          const label = document.createElement('label');
+          label.textContent = item.label || item.var;
+          const input = document.createElement('input');
+          input.type = 'color';
+          input.id = `${name}-${item.var}-${v}`;
+          wrap.appendChild(label);
+          wrap.appendChild(input);
+          varPanel.appendChild(wrap);
+          inputs[input.id] = input;
+          input.addEventListener('input', () => applyAndStore(name, v));
+        });
+      });
+      panel.appendChild(varPanel);
+    });
+
     contents.appendChild(panel);
   });
   parent.appendChild(contents);
@@ -198,24 +247,45 @@ export function switchTab(name) {
     panel.style.display = show ? 'block' : 'none';
     if (show) {
       activeGroup = name;
-      populate(name);
-      populateThemeSelect(name);
+      switchVariant(name, activeVariant);
+    }
+  });
+}
+
+export function switchVariant(groupName, variant) {
+  activeVariant = variant;
+  const panel = document.getElementById(`panel-${groupName}`);
+  if (!panel) return;
+  const buttons = panel.querySelectorAll('.variant-buttons button');
+  buttons.forEach(b => {
+    const isActive = b.dataset.variant === variant;
+    b.classList.toggle('active-tab', isActive);
+  });
+  panel.querySelectorAll('.variant-panel').forEach(p => {
+    const show = p.id === `panel-${groupName}-${variant}`;
+    p.style.display = show ? 'block' : 'none';
+    if (show) {
+      populate(groupName, variant);
+      populateThemeSelect(groupName, variant);
     }
   });
 }
 
 export function applyStoredTheme(groupName) {
-  const group = colorGroups.find(g => g.name === groupName);
-  if (!group) return;
-  const key = getStorageKey(groupName);
+  const groups = getGroups(groupName);
+  if (groups.length === 0) return;
+  const variant = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+  const key = getStorageKey(groupName, variant);
   const themes = JSON.parse(localStorage.getItem(key) || '{}');
   const custom = themes.Custom || {};
-  group.items.forEach(item => {
-    const val = custom[item.var];
-    if (val) {
-      document.documentElement.style.setProperty(`--${item.var}`, val);
-      document.body.style.setProperty(`--${item.var}`, val);
-    }
+  groups.forEach(g => {
+    g.items.forEach(item => {
+      const val = custom[item.var];
+      if (val) {
+        document.documentElement.style.setProperty(`--${item.var}`, val);
+        document.body.style.setProperty(`--${item.var}`, val);
+      }
+    });
   });
 }
 
@@ -235,13 +305,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (saveBtn) {
     saveBtn.addEventListener('click', () => {
       const name = prompt('Име на шаблон:');
-      if (name) saveNamedTheme(activeGroup, name);
+      if (name) saveNamedTheme(activeGroup, name, activeVariant);
     });
   }
   if (loadBtn && select) {
-    loadBtn.addEventListener('click', () => loadNamedTheme(activeGroup, select.value));
+    loadBtn.addEventListener('click', () => loadNamedTheme(activeGroup, select.value, activeVariant));
   }
   if (deleteBtn && select) {
-    deleteBtn.addEventListener('click', () => deleteNamedTheme(activeGroup, select.value));
+    deleteBtn.addEventListener('click', () => deleteNamedTheme(activeGroup, select.value, activeVariant));
   }
 });

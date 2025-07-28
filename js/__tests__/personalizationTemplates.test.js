@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 import { jest } from '@jest/globals';
 
-let saveNamedTheme, loadNamedTheme, deleteNamedTheme, switchTab;
+let saveNamedTheme, loadNamedTheme, deleteNamedTheme, switchTab, switchVariant;
 
 beforeEach(async () => {
   jest.resetModules();
@@ -17,10 +17,11 @@ beforeEach(async () => {
     colorGroups: [{ name: 'Dashboard', items: [{ var: 'primary-color', label: '' }] }],
     sampleThemes: { dashboard: { Light: { 'primary-color': '#010101' } } }
   }));
-  ({ saveNamedTheme, loadNamedTheme, deleteNamedTheme, switchTab } = await import('../personalization.js'));
+  ({ saveNamedTheme, loadNamedTheme, deleteNamedTheme, switchTab, switchVariant } = await import('../personalization.js'));
   document.dispatchEvent(new Event('DOMContentLoaded'));
   await Promise.resolve();
   switchTab('Dashboard');
+  switchVariant('Dashboard', 'light');
 });
 
 afterEach(() => {
@@ -30,13 +31,13 @@ afterEach(() => {
 });
 
 test('saves, loads and deletes theme', () => {
-  const input = document.getElementById('Dashboard-primary-color');
+  const input = document.getElementById('Dashboard-primary-color-light');
   input.value = '#aaaaaa';
-  saveNamedTheme('Dashboard', 't1');
-  expect(JSON.parse(localStorage.getItem('dashboardColorThemes')).t1['primary-color']).toBe('#aaaaaa');
+  saveNamedTheme('Dashboard', 't1', 'light');
+  expect(JSON.parse(localStorage.getItem('dashboardColorThemes.light')).t1['primary-color']).toBe('#aaaaaa');
   input.value = '#bbbbbb';
-  loadNamedTheme('Dashboard', 't1');
+  loadNamedTheme('Dashboard', 't1', 'light');
   expect(input.value).toBe('#aaaaaa');
-  deleteNamedTheme('Dashboard', 't1');
-  expect(JSON.parse(localStorage.getItem('dashboardColorThemes')).t1).toBeUndefined();
+  deleteNamedTheme('Dashboard', 't1', 'light');
+  expect(JSON.parse(localStorage.getItem('dashboardColorThemes.light')).t1).toBeUndefined();
 });
