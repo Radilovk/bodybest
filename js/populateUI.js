@@ -106,10 +106,6 @@ function populateDashboardDetailedAnalytics(analyticsData) {
     cardsContainer.innerHTML = '';
     textualAnalysisContainer.innerHTML = '';
 
-    const macros = safeGet(fullDashboardData, 'planData.caloriesMacros');
-    if (macros) {
-        cardsContainer.appendChild(renderMacroAnalyticsCard(macros));
-    }
 
     const detailedMetrics = safeGet(analyticsData, 'detailed', []);
     const textualAnalysis = safeGet(analyticsData, 'textualAnalysis');
