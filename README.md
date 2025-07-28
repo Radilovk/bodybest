@@ -254,6 +254,8 @@ origin as the application. The helper `loadTemplateInto(url, containerId)`
 rejects cross-origin URLs and sanitizes the response before inserting it into
 the page.
 
+Файлът `profileTemplate.dev.js`, който зарежда макети за тази страница в режим на разработка, вече се намира в `scripts/`.
+
 ## Deployment to Cloudflare
 
 A GitHub Action workflow at `.github/workflows/deploy.yml` deploys the worker manually. Use the **Run workflow** button in the Actions tab to start a deployment. It runs `wrangler deploy` using the secret `CF_API_TOKEN` for authentication. Pull requests from forks cannot access the secrets, so those builds will skip deployment.
