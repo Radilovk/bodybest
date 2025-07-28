@@ -213,7 +213,7 @@
 }
 
 #macroAnalyticsCard .chart-container {
-  min-height: 150px;
+  min-height: 180px;
   position: relative;
   padding: var(--space-sm);
   text-align: center;
@@ -223,6 +223,12 @@
   max-width: 250px;
   max-height: 250px;
   margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  #macroAnalyticsCard {
+    grid-column: span 2;
+  }
 }
 
 /* Box with extra info for each metric */
