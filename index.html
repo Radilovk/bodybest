@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyBody.Best - Вашата Индивидуална Здравна Система</title>
+    
+    <!-- Икони (Bootstrap & FontAwesome) - Запазени от оригиналния файл -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Шрифтове - Те ще бъдат управлявани от новия CSS файл, но за всеки случай оставяме връзката. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <!-- НОВ, ОБЕДИНЕН CSS ФАЙЛ (ще го създадем в следващата стъпка) -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body id="body">
+
+    <!-- Хедър - Непроменен -->
+    <header id="header">
+        <div class="container header-container">
+            <a href="#hero" class="logo-link">
+                <div class="logo-placeholder">MyBody.Best</div>
+            </a>
+            <nav id="nav">
+                <ul>
+                    <li><a href="#hero" class="nav-link">Начало</a></li>
+                    <li><a href="#process" class="nav-link">Процесът</a></li>
+                    <li><a href="#tech" class="nav-link">Технология</a></li>
+                    <li><a href="#features" class="nav-link">Предимства</a></li>
+                    <li><a href="#programs" class="nav-link">Програми</a></li>
+                    <li id="theme-toggle-li">
+                        <button id="theme-toggle" aria-label="Смени темата">
+                            <i class="bi bi-moon-stars-fill"></i>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+            <button class="mobile-menu-btn" aria-label="Toggle Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Основно съдържание - Непроменено, с изключение на бутоните -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero" id="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <div class="identity-slider reveal">
+                        <div class="slider-inner">
+                            <div class="slider-item active">Не програма, <span>а система.</span></div>
+                            <div class="slider-item">Не съвет, <span>а анализ.</span></div>
+                            <div class="slider-item">Не диета, <span>а стратегия.</span></div>
+                        </div>
+                    </div>
+                    
+                    <p class="reveal" style="transition-delay: 0.2s;">MED-AI + експерти = твоята индивидуална стратегия за траен успех.</p>
+                    
+                    <div class="hero-btns">
+                        <!-- ПРОМЯНА: Този бутон вече е линк към въпросника -->
+                        <a href="quest.html" class="btn reveal pulse" style="transition-delay: 0.4s;">Създай своята система</a>
+                        <!-- ПРОМЯНА: Този бутон вече няма клас 'open-modal-btn' и е неактивен -->
+                        <button class="btn btn-secondary reveal" style="transition-delay: 0.5s;" disabled>Пробвай Демо</button>
+                    </div>
+
+                    <div class="reveal" style="margin-top: 2rem; font-size: 1rem; transition-delay: 0.6s;">
+                        <p>Вече си част от нас? <a href="#" class="open-modal-btn" style="color: var(--primary-color); font-weight: 600; text-decoration: underline;">Влез от тук.</a></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Process, Tech, Features, Programs, CTA Sections - остават непроменени -->
+        <section class="process" id="process">
+            <div class="container">
+                <div class="section-title reveal">
+                    <h2>Вашият път към <span>успеха</span></h2>
+                    <p>Прозрачен и научнообоснован процес в 4 лесни стъпки.</p>
+                </div>
+                <div class="timeline">
+                    <div class="timeline-item left reveal">
+                        <div class="timeline-content">
+                            <h3>Стъпка 1: Попълваш въпросник</h3>
+                            <p>Само за няколко минути ни даваш ключова информация за твоите цели, начин на живот и предпочитания.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item right reveal">
+                        <div class="timeline-content">
+                            <h3>Стъпка 2: AI създава твоя план</h3>
+                            <p>Нашият алгоритъм анализира данните и генерира хипер-персонализиран хранителен и тренировъчен план.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item left reveal">
+                        <div class="timeline-content">
+                            <h3>Стъпка 3: Започваш веднага</h3>
+                            <p>Получаваш достъп до плана си и започваш трансформацията с подкрепата на нашия екип от експерти 24/7.</p>
+                        </div>
+                    </div>
+                     <div class="timeline-item right reveal">
+                        <div class="timeline-content">
+                            <h3>Стъпка 4: Оптимизация и подкрепа</h3>
+                            <p>Следим напредъка ти и редовно адаптираме плана, за да гарантираме, че винаги си на прав път към целите си.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="tech-showcase" id="tech">
+            <div class="container">
+                 <div class="tech-showcase">
+                    <div class="text-content reveal">
+                        <div class="section-title">
+                             <h2>MED-AI анализ.</h2>
+                             <h2><span>Експертна проверка.</span></h2>
+                        </div>
+                        <div class="tech-icons">
+                            <span class="icon-wrapper" title="Профил"><i class="fas fa-dna"></i></span>
+                            <span class="icon-wrapper" title="Поведение"><i class="fas fa-brain"></i></span>
+                            <span class="icon-wrapper" title="Екип"><i class="fas fa-user-md"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" id="features">
+            <div class="container">
+                <div class="section-title reveal">
+                    <h2>Нашите <span>обещания</span></h2>
+                    <p>Защо нашият подход е различен и по-ефективен.</p>
+                </div>
+                <div class="features-grid">
+                    <div class="feature-card collapsible-item reveal">
+                        <div class="collapsible-trigger">
+                            <div class="collapsible-trigger-info">
+                                <div class="feature-icon"><i class="bi bi-fingerprint"></i></div>
+                                <h3>Хипер-Персонализация</h3>
+                            </div>
+                            <i class="fas fa-plus collapsible-indicator"></i>
+                        </div>
+                        <div class="collapsible-content"><p>Планът ти се адаптира не само към целите, но и към твоите генетични особености, ежедневен ритъм и хранителни предпочитания. Ние не вярваме в универсалните решения.</p></div>
+                    </div>
+                    <div class="feature-card collapsible-item reveal" style="transition-delay: 0.1s;">
+                        <div class="collapsible-trigger">
+                            <div class="collapsible-trigger-info">
+                                <div class="feature-icon"><i class="bi bi-robot"></i></div>
+                                <h3>AI Анализ и Психопрофил</h3>
+                            </div>
+                            <i class="fas fa-plus collapsible-indicator"></i>
+                        </div>
+                        <div class="collapsible-content"><p>Разбираме не само какво ядеш, но и защо. Анализираме навиците ти, за да предложим устойчиви промени, които работят за теб в дългосрочен план, а не временни ограничения.</p></div>
+                    </div>
+                    <div class="feature-card collapsible-item reveal" style="transition-delay: 0.2s;">
+                        <div class="collapsible-trigger">
+                            <div class="collapsible-trigger-info">
+                                <div class="feature-icon"><i class="bi bi-person-check"></i></div>
+                                <h3>Реални експерти, не ботове</h3>
+                            </div>
+                            <i class="fas fa-plus collapsible-indicator"></i>
+                        </div>
+                        <div class="collapsible-content"><p>Зад всяка AI препоръка стои екип от диетолози и треньори, които преглеждат и одобряват твоя план. Те са готови да ти помогнат с човешко отношение и професионален съвет.</p></div>
+                    </div>
+                    <div class="feature-card collapsible-item reveal" style="transition-delay: 0.3s;">
+                        <div class="collapsible-trigger">
+                            <div class="collapsible-trigger-info">
+                                <div class="feature-icon"><i class="fas fa-flask"></i></div>
+                                <h3>Научна Обосновка</h3>
+                            </div>
+                            <i class="fas fa-plus collapsible-indicator"></i>
+                        </div>
+                        <div class="collapsible-content"><p>Нашите методи са базирани на последните научни изследвания в областта на храненето и фитнеса. Ние не следваме трендове, а доказани принципи.</p></div>
+                    </div>
+                    <div class="feature-card collapsible-item reveal" style="transition-delay: 0.4s;">
+                        <div class="collapsible-trigger">
+                            <div class="collapsible-trigger-info">
+                                <div class="feature-icon"><i class="fas fa-sync-alt"></i></div>
+                                <h3>Динамична Адаптация</h3>
+                            </div>
+                            <i class="fas fa-plus collapsible-indicator"></i>
+                        </div>
+                        <div class="collapsible-content"><p>Вашият план не е статичен. Той се адаптира в реално време според напредъка ви, обратната ви връзка и промените в целите ви, за да бъде винаги актуален и ефективен.</p></div>
+                    </div>
+                    <div class="feature-card collapsible-item reveal" style="transition-delay: 0.5s;">
+                        <div class="collapsible-trigger">
+                            <div class="collapsible-trigger-info">
+                                <div class="feature-icon"><i class="fas fa-heart"></i></div>
+                                <h3>Фокус върху Устойчивост</h3>
+                            </div>
+                            <i class="fas fa-plus collapsible-indicator"></i>
+                        </div>
+                        <div class="collapsible-content"><p>Ние ви учим как да изградите здравословни навици, които остават за цял живот. Целта ни не са временни резултати, а дългосрочна промяна в начина ви на живот.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="programs" id="programs">
+            <div class="container">
+                <div class="section-title reveal">
+                    <h2>Нашите <span>Програми</span></h2>
+                    <p>Цялостен подход към твоето здраве, разделен на три ключови стълба.</p>
+                </div>
+                <div class="tabs-container reveal">
+                    <button class="tab-btn active" data-tab="1">Хранене</button>
+                    <button class="tab-btn" data-tab="2">Тренировки и Навици</button>
+                    <button class="tab-btn" data-tab="3">Добавки и Подкрепа</button>
+                </div>
+                <div class="tabs-content-container">
+                    <div id="tab-1" class="tab-content active"><div class="collapsible-item reveal"><div class="collapsible-trigger"><div class="collapsible-trigger-info"><div class="tab-icon"><i class="fas fa-utensils"></i></div><h3>Индивидуални Хранителни Планове</h3></div><i class="fas fa-plus collapsible-indicator"></i></div><div class="collapsible-content"><p>Забравете за универсалните диети. Ние анализираме вашия метаболизъм, предпочитания и цели, за да създадем хранителен режим, който е вкусен, засищащ и ефективен. Получавате рецепти, списъци за пазаруване и гъвкавост.</p></div></div></div>
+                    <div id="tab-2" class="tab-content"><div class="collapsible-item reveal"><div class="collapsible-trigger"><div class="collapsible-trigger-info"><div class="tab-icon"><i class="fas fa-dumbbell"></i></div><h3>Адаптивни Тренировки и Навици</h3></div><i class="fas fa-plus collapsible-indicator"></i></div><div class="collapsible-content"><p>Истинската промяна идва от малките ежедневни действия. Програмата ви помага да изградите устойчиви навици за движение, сън и управление на стреса, които подкрепят вашето физическо и ментално здраве. Това е ключът към дългосрочен успех.</p></div></div></div>
+                    <div id="tab-3" class="tab-content"><div class="collapsible-item reveal"><div class="collapsible-trigger"><div class="collapsible-trigger-info"><div class="tab-icon"><i class="fas fa-pills"></i></div><h3>Подбрани Добавки и Консултации</h3></div><i class="fas fa-plus collapsible-indicator"></i></div><div class="collapsible-content"><p>За да подсилим вашата трансформация, ние предлагаме препоръки за внимателно подбрани хранителни добавки. Всеки продукт е съобразен с нашите принципи за чистота и ефективност, и се препоръчва само при реална нужда.</p></div></div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section - Бутонът 'open-modal-btn' е запазен -->
+        <section class="cta" id="contact">
+            <div class="container reveal">
+                <h2>План, създаден за твоето тяло. Не за масата.</h2>
+                <p>Без клишета. Само реална стратегия. Само за теб.</p>
+                <button class="btn open-modal-btn pulse" style="background:white; color:#1A1A2E; font-weight:700;">Влез или се регистрирай</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer - Непроменен -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h3>MyBody.Best</h3>
+                    <p>Научно обосновани решения за оптимално здраве и физическа форма.</p>
+                    <div class="social-links">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Услуги</h3><ul><li><a href="#programs">Персонализирано хранене</a></li><li><a href="#programs">AI Тренировъчни програми</a></li><li><a href="#programs">Психопрофил и навици</a></li><li><a href="#tech">Експертни консултации</a></li></ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Полезни връзки</h3><ul><li><a href="#">За нас</a></li><li><a href="#">Често задавани въпроси</a></li><li><a href="#">Блог</a></li></ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Контакти</h3><ul><li><i class="fas fa-map-marker-alt"></i> София, България</li><li><a href="tel:+359888123456" style="color: var(--light-text);"><i class="fas fa-phone"></i> +359 888 123 456</a></li><li><a href="mailto:info@mybody.best" style="color: var(--light-text);"><i class="fas fa-envelope"></i> info@mybody.best</a></li></ul>
+                </div>
+            </div>
+            <div class="copyright"><p>&copy; 2025 MyBody.Best Всички права запазени.</p></div>
+        </div>
+    </footer>
+
+    <!-- ******** НАПЪЛНО ОБНОВЕН МОДАЛЕН ПРОЗОРЕЦ ******** -->
+    <div id="auth-modal" class="modal-container">
+        <div class="modal-content">
+            <button class="close-modal" aria-label="Затвори прозореца">&times;</button>
+            
+            <!-- Секция за Вход - Взета от index.html -->
+            <div id="login-section" class="form-section">
+                <h2>Вход</h2>
+                <form id="login-form" novalidate>
+                    <div class="form-group floating with-icon">
+                        <input placeholder=" " type="email" id="login-email" name="email" required autocomplete="email" class="input-focus-animate">
+                        <label for="login-email">Имейл</label>
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                    <div class="form-group floating with-icon password-group">
+                        <input placeholder=" " type="password" id="login-password" name="password" required autocomplete="current-password" class="input-focus-animate">
+                        <label for="login-password">Парола</label>
+                        <button type="button" class="toggle-pass" aria-label="Покажи паролата"><i class="bi bi-eye"></i></button>
+                    </div>
+                    <div id="login-message" class="message error" role="alert"></div>
+                    <button type="submit" class="button">Вход</button>
+                    <!-- Линк за забравена парола -->
+                    <a href="forgot-password.html" class="toggle-link" id="forgot-password-link"><i class="bi bi-question-circle"></i> Забравена парола?</a>
+                </form>
+                <button id="show-register" class="toggle-link">Нямате акаунт? Регистрирайте се</button>
+            </div>
+
+            <!-- Секция за Регистрация - Взета от index.html -->
+            <div id="register-section" class="form-section hidden">
+                <h2>Регистрация</h2>
+                <div class="step-indicator-container">
+                    <div class="progress-bar-steps"><div id="registerProgressBar" class="step-progress-bar"></div></div>
+                </div>
+                <form id="register-form" novalidate>
+                    <div class="form-group floating with-icon">
+                        <input placeholder=" " type="email" id="register-email" name="register_email" required autocomplete="email" class="input-focus-animate">
+                        <label for="register-email">Имейл</label>
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                    <div class="form-group floating with-icon password-group">
+                        <input placeholder=" " type="password" id="register-password" name="register_password" required minlength="8" autocomplete="new-password" class="input-focus-animate">
+                        <label for="register-password">Парола (мин. 8 знака)</label>
+                        <button type="button" class="toggle-pass" aria-label="Покажи паролата"><i class="bi bi-eye"></i></button>
+                        <div id="register-strength" class="password-strength"></div>
+                    </div>
+                    <div class="form-group floating with-icon password-group">
+                        <input placeholder=" " type="password" id="confirm-password" name="confirm_password" required minlength="8" autocomplete="new-password" class="input-focus-animate">
+                        <label for="confirm-password">Потвърди Парола</label>
+                        <button type="button" class="toggle-pass" aria-label="Покажи паролата"><i class="bi bi-eye"></i></button>
+                    </div>
+                    <div id="register-message" class="message" role="alert"></div>
+                    <button type="submit" class="button button-secondary">Регистрация</button>
+                </form>
+                <button id="show-login" class="toggle-link">Имате акаунт? Влезте</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- НОВ, ОБЕДИНЕН JS ФАЙЛ (ще го създадем в следващата стъпка) -->
+    <script src="script.js" type="module"></script>
+</body>
+</html>
