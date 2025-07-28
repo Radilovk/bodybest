@@ -818,13 +818,12 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
             env
         );
 
+        await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         const analysisTask = handleAnalyzeInitialAnswers(userId, env);
         if (ctx) {
             ctx.waitUntil(analysisTask);
-            await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         } else {
             await analysisTask;
-            await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         }
         return { success: true, message: 'Данните са приети. Вашият индивидуален план ще бъде генериран скоро.' };
     } catch (error) {
@@ -868,13 +867,12 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
             env
         );
 
+        await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         const analysisTask = handleAnalyzeInitialAnswers(userId, env);
         if (ctx) {
             ctx.waitUntil(analysisTask);
-            await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         } else {
             await analysisTask;
-            await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         }
         return { success: true, message: 'Данните са приети. Анализът ще бъде готов скоро.' };
     } catch (error) {
