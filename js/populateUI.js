@@ -7,6 +7,7 @@ import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAna
 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
+let pendingMacroData = null;
 
 export function populateUI() {
     const data = fullDashboardData; // Access global state
@@ -259,40 +260,49 @@ function renderMacroAnalyticsCard(macros) {
     });
     card.appendChild(grid);
 
-    if (typeof Chart !== 'undefined') {
-        const ctx = canvas.getContext('2d');
-        macroChartInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: [
-                    `Протеини (${macros.protein_percent}%)`,
-                    `Въглехидрати (${macros.carbs_percent}%)`,
-                    `Мазнини (${macros.fat_percent}%)`
-                ],
-                datasets: [{
-                    label: 'Разпределение на макроси',
-                    data: [macros.protein_grams, macros.carbs_grams, macros.fat_grams],
-                    backgroundColor: [
-                        getCssVar('--macro-protein-color', 'rgb(54,162,235)'),
-                        getCssVar('--macro-carbs-color', 'rgb(255,205,86)'),
-                        getCssVar('--macro-fat-color', 'rgb(255,99,132)')
-                    ],
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'top' },
-                    title: { display: true, text: `Дневен прием (${macros.calories} kcal)` }
-                }
-            }
-        });
-    } else {
-        console.warn('Chart.js is not loaded.');
-    }
+    // Chart will be initialized when the accordion is opened
 
     return card;
+}
+
+export function renderPendingMacroChart() {
+    if (!pendingMacroData) return;
+    const canvas = document.getElementById('macroChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+    if (macroChartInstance) {
+        macroChartInstance.destroy();
+        macroChartInstance = null;
+    }
+    const m = pendingMacroData;
+    const ctx = canvas.getContext('2d');
+    macroChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [
+                `Протеини (${m.protein_percent}%)`,
+                `Въглехидрати (${m.carbs_percent}%)`,
+                `Мазнини (${m.fat_percent}%)`
+            ],
+            datasets: [{
+                label: 'Разпределение на макроси',
+                data: [m.protein_grams, m.carbs_grams, m.fat_grams],
+                backgroundColor: [
+                    getCssVar('--macro-protein-color', 'rgb(54,162,235)'),
+                    getCssVar('--macro-carbs-color', 'rgb(255,205,86)'),
+                    getCssVar('--macro-fat-color', 'rgb(255,99,132)')
+                ],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                title: { display: true, text: `Дневен прием (${m.calories} kcal)` }
+            }
+        }
+    });
+    macroChartInstance.resize();
 }
 
 function populateDashboardMacros(macros) {
@@ -305,9 +315,14 @@ function populateDashboardMacros(macros) {
             macroChartInstance = null;
         }
     }
+    pendingMacroData = macros || null;
     if (macros) {
         const card = renderMacroAnalyticsCard(macros);
         selectors.analyticsCardsContainer.prepend(card);
+        const header = selectors.detailedAnalyticsAccordion?.querySelector('.accordion-header');
+        if (header && header.getAttribute('aria-expanded') === 'true') {
+            renderPendingMacroChart();
+        }
     }
 }
 
