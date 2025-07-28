@@ -797,6 +797,13 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         if (!userEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
             return { success: false, message: 'Липсва/невалиден имейл.', statusHint: 400 };
         }
+        const required = ['gender', 'age', 'height', 'weight', 'goal', 'medicalConditions'];
+        for (const field of required) {
+            const val = questionnaireData[field];
+            if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '') || (Array.isArray(val) && val.length === 0)) {
+                return { success: false, statusHint: 400 };
+            }
+        }
         const userId = await env.USER_METADATA_KV.get(`email_to_uuid_${userEmail}`);
         if (!userId) {
             return { success: false, message: 'Потребителят не е регистриран.', statusHint: 403 };
@@ -846,6 +853,13 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
         const userEmail = questionnaireData.email ? String(questionnaireData.email).trim().toLowerCase() : null;
         if (!userEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
             return { success: false, message: 'Липсва/невалиден имейл.', statusHint: 400 };
+        }
+        const required = ['gender', 'age', 'height', 'weight', 'goal', 'medicalConditions'];
+        for (const field of required) {
+            const val = questionnaireData[field];
+            if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '') || (Array.isArray(val) && val.length === 0)) {
+                return { success: false, statusHint: 400 };
+            }
         }
         const userId = await env.USER_METADATA_KV.get(`email_to_uuid_${userEmail}`);
         if (!userId) {
