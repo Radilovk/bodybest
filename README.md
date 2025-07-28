@@ -755,6 +755,7 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
   ```
   Полетата `recipient`, `subject` и `body` са задължителни. Като алтернатива
   могат да се използват имената `to`, `text` или `message`.
+  По желание може да зададете име на подателя чрез поле `fromName`.
 
   ```bash
   curl -X POST https://<your-domain>/api/sendTestEmail \

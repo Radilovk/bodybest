@@ -1349,6 +1349,7 @@ async function sendTestEmail() {
     const recipient = testEmailToInput ? testEmailToInput.value.trim() : '';
     const subject = testEmailSubjectInput ? testEmailSubjectInput.value.trim() : '';
     const body = testEmailBodyInput ? testEmailBodyInput.value : '';
+    const fromName = fromEmailNameInput ? fromEmailNameInput.value.trim() : '';
     if (!recipient || !subject || !body) {
         alert('Моля попълнете всички полета.');
         return;
@@ -1360,7 +1361,7 @@ async function sendTestEmail() {
         const resp = await fetch(apiEndpoints.sendTestEmail, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ recipient, subject, body })
+            body: JSON.stringify({ recipient, subject, body, fromName })
         });
 
         const ct = resp.headers.get('Content-Type') || '';

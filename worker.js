@@ -2341,6 +2341,15 @@ async function handleSendTestEmailRequest(request, env) {
         const recipient = data.recipient ?? data.to;
         const subject = data.subject;
         const body = data.body ?? data.text ?? data.message;
+        let fromName = data.fromName ?? data.from_email_name;
+        if (!fromName && env.RESOURCES_KV) {
+            try {
+                fromName = await env.RESOURCES_KV.get('from_email_name');
+            } catch {
+                fromName = undefined;
+            }
+        }
+        if (fromName) env.from_email_name = fromName;
 
         if (typeof recipient !== 'string' || !recipient) {
             return { success: false, message: 'Missing field: recipient (use "recipient" or "to")', statusHint: 400 };

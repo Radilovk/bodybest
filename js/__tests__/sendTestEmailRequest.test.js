@@ -98,6 +98,28 @@ test('uses PHP endpoint when MAILER_ENDPOINT_URL missing', async () => {
   expect(fetch).toHaveBeenCalledWith('https://mybody.best/mailer/mail.php', expect.any(Object));
 });
 
+test('forwards fromName to mailer', async () => {
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ success: true }),
+    clone: () => ({ text: async () => '{}' }),
+    headers: { get: () => 'application/json' }
+  });
+  const request = {
+    headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
+    json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b', fromName: 'Tester' })
+  };
+  const env = { WORKER_ADMIN_TOKEN: 'secret', MAILER_ENDPOINT_URL: 'https://mail.example.com' };
+  const res = await handleSendTestEmailRequest(request, env);
+  expect(res.success).toBe(true);
+  expect(fetch).toHaveBeenCalledWith(
+    'https://mail.example.com',
+    expect.objectContaining({
+      body: JSON.stringify({ to: 't@e.com', subject: 's', message: 'b', body: 'b', fromName: 'Tester' })
+    })
+  );
+});
+
 test('records usage in USER_METADATA_KV', async () => {
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
