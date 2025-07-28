@@ -229,6 +229,14 @@ function renderMacroAnalyticsCard(macros) {
     const header = document.createElement('h5');
     header.innerHTML = `<svg class="icon" style="width:1em;height:1em;margin-right:0.3em"><use href="#icon-scale"></use></svg> Калории и Макроси`;
     card.appendChild(header);
+
+    const chartContainer = document.createElement('div');
+    chartContainer.className = 'chart-container';
+    const canvas = document.createElement('canvas');
+    canvas.id = 'macroChart';
+    chartContainer.appendChild(canvas);
+    card.appendChild(chartContainer);
+
     const grid = document.createElement('div');
     grid.id = 'macroMetricsGrid';
     grid.className = 'macro-metrics-grid';
@@ -245,6 +253,36 @@ function renderMacroAnalyticsCard(macros) {
         grid.appendChild(div);
     });
     card.appendChild(grid);
+
+    if (typeof Chart !== 'undefined') {
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    `Протеини (${macros.protein_percent}%)`,
+                    `Въглехидрати (${macros.carbs_percent}%)`,
+                    `Мазнини (${macros.fat_percent}%)`
+                ],
+                datasets: [{
+                    label: 'Разпределение на макроси',
+                    data: [macros.protein_grams, macros.carbs_grams, macros.fat_grams],
+                    backgroundColor: ['rgb(54,162,235)', 'rgb(255,205,86)', 'rgb(255,99,132)'],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    title: { display: true, text: `Дневен прием (${macros.calories} kcal)` }
+                }
+            }
+        });
+    } else {
+        console.warn('Chart.js is not loaded.');
+    }
+
     return card;
 }
 

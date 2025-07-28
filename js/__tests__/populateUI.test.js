@@ -108,6 +108,8 @@ test('renders macro analytics card', async () => {
   const metrics = document.querySelectorAll('#macroMetricsGrid .macro-metric');
   expect(metrics.length).toBe(4);
   expect(metrics[0].textContent).toContain('Калории');
+  const canvas = document.querySelector('#macroAnalyticsCard canvas');
+  expect(canvas).not.toBeNull();
 });
 
 test('hides modules when values are zero', async () => {
