@@ -135,6 +135,7 @@ npm run coverage
 ```
 
 Файловете се намират в `coverage/lcov-report`.
+Папката `coverage/` е добавена в `.gitignore` и се генерира локално при нужда.
 ### Registration Module Example
 
 Include the common registration logic by importing `setupRegistration`:
@@ -237,6 +238,7 @@ Create API documentation using Typedoc:
 npm run docs
 ```
 The output is placed in `docs/api`. Open `docs/api/index.html` in your browser to view the API documentation.
+Папката `docs/api` не се проследява от Git. Генерирайте документацията локално при необходимост.
 Тестовите файлове се пропускат чрез настройката
 
 ```json
