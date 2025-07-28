@@ -1778,7 +1778,7 @@ async function handleGeneratePraiseRequest(request, env) {
 // ------------- END FUNCTION: handleGeneratePraiseRequest -------------
 
 // ------------- START FUNCTION: handleAnalyzeInitialAnswers -------------
-async function handleAnalyzeInitialAnswers(userId, env, skipEmail = false) {
+async function handleAnalyzeInitialAnswers(userId, env) {
     try {
         if (!userId) {
             console.warn('INITIAL_ANALYSIS_ERROR: Missing userId.');
@@ -1805,11 +1805,8 @@ async function handleAnalyzeInitialAnswers(userId, env, skipEmail = false) {
         await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'ready');
         console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
-        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] || 'https://radilovk.github.io/bodybest/reganalize/analyze.html';
-        const url = new URL(baseUrl);
-        url.searchParams.set('userId', userId);
-        const link = url.toString();
-        // Имейлът с линк към анализа вече се изпраща при подаване на въпросника.
+        // Имейлът с линк към анализа вече се изпраща при подаване на въпросника,
+        // затова тук не се изпраща повторно.
     } catch (error) {
         console.error(`Error in handleAnalyzeInitialAnswers (${userId}):`, error.message, error.stack);
         try {
