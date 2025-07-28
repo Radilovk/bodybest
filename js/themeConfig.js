@@ -43,5 +43,80 @@ export const colorGroups = [
       { var: 'progress-end-color', label: 'Краен цвят на прогрес' },
       { var: 'progress-bar-bg-empty', label: 'Празен прогрес бар' }
     ]
+  },
+  {
+    name: 'Index',
+    items: [
+      { var: 'primary-color', label: 'Основен цвят' },
+      { var: 'secondary-color', label: 'Втори цвят' },
+      { var: 'accent-color', label: 'Акцентен цвят' },
+      { var: 'bg-color', label: 'Фон на страницата' },
+      { var: 'card-bg', label: 'Фон на карти' },
+      { var: 'text-color-primary', label: 'Основен текст' },
+      { var: 'text-color-secondary', label: 'Втори текст' },
+      { var: 'border-color', label: 'Рамки' },
+      { var: 'color-danger', label: 'Грешки' },
+      { var: 'color-success', label: 'Успехи' }
+    ]
+  },
+  {
+    name: 'Quest',
+    items: [
+      { var: 'bg-primary', label: 'Фон основен' },
+      { var: 'bg-secondary', label: 'Фон втори' },
+      { var: 'bg-surface', label: 'Фон на съдържание' },
+      { var: 'accent-primary', label: 'Акцент' },
+      { var: 'accent-secondary', label: 'Допълнителен акцент' },
+      { var: 'text-primary', label: 'Основен текст' },
+      { var: 'text-secondary', label: 'Втори текст' },
+      { var: 'border-color', label: 'Рамки' },
+      { var: 'error-color', label: 'Грешки' },
+      { var: 'success-color', label: 'Успехи' }
+    ]
   }
 ];
+
+export const sampleThemes = {
+  dashboard: {
+    Light: {
+      'primary-color': '#3A506B',
+      'secondary-color': '#5BC0BE'
+    },
+    Dark: {
+      'primary-color': '#5BC0BE',
+      'secondary-color': '#3A506B'
+    },
+    Vivid: {
+      'primary-color': '#ff0066',
+      'secondary-color': '#ffcc00'
+    }
+  },
+  index: {
+    Light: {
+      'primary-color': '#3A506B',
+      'secondary-color': '#5BC0BE'
+    },
+    Dark: {
+      'primary-color': '#5BC0BE',
+      'secondary-color': '#3A506B'
+    },
+    Vivid: {
+      'primary-color': '#ff3366',
+      'secondary-color': '#00e0ff'
+    }
+  },
+  quest: {
+    Light: {
+      'accent-primary': '#43a088',
+      'bg-primary': '#f4f7f6'
+    },
+    Dark: {
+      'accent-primary': '#4fc3a1',
+      'bg-primary': '#121212'
+    },
+    Vivid: {
+      'accent-primary': '#ff3399',
+      'bg-primary': '#222244'
+    }
+  }
+};
