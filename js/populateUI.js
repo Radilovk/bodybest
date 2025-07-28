@@ -1,6 +1,6 @@
 // populateUI.js - Попълване на UI с данни
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
-import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, getProgressColor, animateProgressFill } from './utils.js';
+import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, getProgressColor, animateProgressFill, getCssVar } from './utils.js';
 import { generateId } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, planHasRecContent } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
@@ -271,7 +271,11 @@ function renderMacroAnalyticsCard(macros) {
                 datasets: [{
                     label: 'Разпределение на макроси',
                     data: [macros.protein_grams, macros.carbs_grams, macros.fat_grams],
-                    backgroundColor: ['rgb(54,162,235)', 'rgb(255,205,86)', 'rgb(255,99,132)'],
+                    backgroundColor: [
+                        getCssVar('--macro-protein-color', 'rgb(54,162,235)'),
+                        getCssVar('--macro-carbs-color', 'rgb(255,205,86)'),
+                        getCssVar('--macro-fat-color', 'rgb(255,99,132)')
+                    ],
                     hoverOffset: 4
                 }]
             },

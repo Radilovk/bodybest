@@ -146,3 +146,15 @@ export function animateProgressFill(el, percent) {
     }, { once: true });
 }
 
+/**
+ * Взема стойност на CSS променлива от :root.
+ * @param {string} name Името на променливата (например '--primary-color').
+ * @param {string} [fallback=''] Резервна стойност при липса.
+ * @returns {string} Стойността на променливата или fallback.
+ */
+export function getCssVar(name, fallback = '') {
+    if (typeof window === 'undefined') return fallback;
+    const val = getComputedStyle(document.documentElement).getPropertyValue(name);
+    return val ? val.trim() : fallback;
+}
+
