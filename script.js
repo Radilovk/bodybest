@@ -8,6 +8,8 @@
 
 // --- ЧАСТ 1: ИНТЕГРИРАНИ МОДУЛИ (от отделните JS файлове) ---
 
+import { toggleTheme, initializeTheme } from './js/uiHandlers.js';
+
 /**
  * @description Конфигурация и глобални променливи (от config.js)
  */
@@ -141,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- ⚙️ СЕЛЕКТОРИ НА ЕЛЕМЕНТИ ---
     const header = document.getElementById('header');
-    const body = document.getElementById('body');
+    const body = document.body;
     const nav = document.getElementById('nav');
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     const themeToggleBtn = document.getElementById('theme-toggle');
@@ -276,32 +278,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 💡 НОВА ЛОГИКА ЗА МОДАЛ И ФОРМИ ---
 
-    // 9. Превключвател за тема (Комбинирана логика)
+    // 9. Превключвател за тема с унифицирана логика
     if (themeToggleBtn) {
         const sunIcon = '<i class="bi bi-brightness-high-fill"></i>';
         const moonIcon = '<i class="bi bi-moon-stars-fill"></i>';
-        
-        const applyTheme = (theme) => {
-            document.body.classList.remove('light-theme', 'dark-theme');
-            document.body.classList.add(theme === 'dark' ? 'dark-theme' : 'light-theme');
-            themeToggleBtn.innerHTML = theme === 'dark' ? sunIcon : moonIcon;
+
+        const updateIcon = () => {
+            const isDark = document.body.classList.contains('dark-theme');
+            themeToggleBtn.innerHTML = isDark ? sunIcon : moonIcon;
         };
 
-        const toggleTheme = () => {
-            const isDarkMode = body.classList.contains('dark-theme');
-            const newTheme = isDarkMode ? 'light' : 'dark';
-            localStorage.setItem('theme', newTheme);
-            applyTheme(newTheme);
-        };
-        
-        const initializeTheme = () => {
-            const savedTheme = localStorage.getItem('theme');
-            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            applyTheme(savedTheme || (systemPrefersDark ? 'dark' : 'light'));
-        };
+        themeToggleBtn.addEventListener('click', () => {
+            toggleTheme();
+            updateIcon();
+        });
 
-        themeToggleBtn.addEventListener('click', toggleTheme);
         initializeTheme();
+        updateIcon();
     }
 
     // 10. Логика за модален прозорец
