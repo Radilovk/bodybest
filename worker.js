@@ -367,10 +367,14 @@ export default {
         try {
             if (method === 'POST' && path === '/api/register') {
                 responseBody = await handleRegisterRequest(request, env, ctx);
+            } else if (method === 'POST' && path === '/api/registerDemo') {
+                responseBody = await handleRegisterDemoRequest(request, env, ctx);
             } else if (method === 'POST' && path === '/api/login') {
                  responseBody = await handleLoginRequest(request, env);
             } else if (method === 'POST' && path === '/api/submitQuestionnaire') {
                responseBody = await handleSubmitQuestionnaire(request, env, ctx);
+            } else if (method === 'POST' && path === '/api/submitDemoQuestionnaire') {
+               responseBody = await handleSubmitDemoQuestionnaire(request, env, ctx);
             } else if (method === 'POST' && path === '/api/reAnalyzeQuestionnaire') {
                 responseBody = await handleReAnalyzeQuestionnaireRequest(request, env, ctx);
             } else if (method === 'GET' && path === '/api/planStatus') {
@@ -728,6 +732,34 @@ async function handleRegisterRequest(request, env, ctx) {
 }
 // ------------- END FUNCTION: handleRegisterRequest -------------
 
+// ------------- START FUNCTION: handleRegisterDemoRequest -------------
+/**
+ * Регистрира потребител в демо режим.
+ * Идентична на handleRegisterRequest, но статусът на плана се задава на 'demo'.
+ * @param {Request} request
+ * @param {Object} env
+ * @returns {Promise<Object>}
+ */
+async function handleRegisterDemoRequest(request, env, ctx) {
+    const result = await handleRegisterRequest(request, env, ctx);
+    if (result?.success) {
+        try {
+            const { email } = await request.json();
+            const trimmedEmail = email ? String(email).trim().toLowerCase() : null;
+            if (trimmedEmail) {
+                const userId = await env.USER_METADATA_KV.get(`email_to_uuid_${trimmedEmail}`);
+                if (userId) {
+                    await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'demo', { metadata: { status: 'demo' } });
+                }
+            }
+        } catch (err) {
+            console.error('handleRegisterDemoRequest status update failed', err);
+        }
+    }
+    return result;
+}
+// ------------- END FUNCTION: handleRegisterDemoRequest -------------
+
 // ------------- START FUNCTION: handleLoginRequest -------------
 /**
  * Валидира вход на потребител чрез записите в KV.
@@ -801,6 +833,56 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
     }
 }
 // ------------- END FUNCTION: handleSubmitQuestionnaire -------------
+
+// ------------- START FUNCTION: handleSubmitDemoQuestionnaire -------------
+/**
+ * Приема демо въпросник без да променя състоянието на плана.
+ * Базира се на handleSubmitQuestionnaire.
+ * @param {Request} request
+ * @param {Object} env
+ */
+async function handleSubmitDemoQuestionnaire(request, env, ctx) {
+    try {
+        const questionnaireData = await request.json();
+        const userEmail = questionnaireData.email ? String(questionnaireData.email).trim().toLowerCase() : null;
+        if (!userEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
+            return { success: false, message: 'Липсва/невалиден имейл.', statusHint: 400 };
+        }
+        const userId = await env.USER_METADATA_KV.get(`email_to_uuid_${userEmail}`);
+        if (!userId) {
+            return { success: false, message: 'Потребителят не е регистриран.', statusHint: 403 };
+        }
+        questionnaireData.submissionDate = new Date().toISOString();
+        await env.USER_METADATA_KV.put(`${userId}_initial_answers`, JSON.stringify(questionnaireData));
+        console.log(`SUBMIT_DEMO_QUESTIONNAIRE (${userId}): Saved initial answers.`);
+
+        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] ||
+            'https://radilovk.github.io/bodybest/reganalize/analyze.html';
+        const url = new URL(baseUrl);
+        url.searchParams.set('userId', userId);
+        const link = url.toString();
+        await sendAnalysisLinkEmail(
+            questionnaireData.email,
+            questionnaireData.name || 'Клиент',
+            link,
+            env
+        );
+
+        const analysisTask = handleAnalyzeInitialAnswers(userId, env);
+        if (ctx) {
+            ctx.waitUntil(analysisTask);
+            await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
+        } else {
+            await analysisTask;
+            await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
+        }
+        return { success: true, message: 'Данните са приети. Анализът ще бъде готов скоро.' };
+    } catch (error) {
+        console.error('Error in handleSubmitDemoQuestionnaire:', error.message, error.stack);
+        return { success: false, message: 'Грешка при обработка на данните.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleSubmitDemoQuestionnaire -------------
 
 // ------------- START FUNCTION: handlePlanStatusRequest -------------
 async function handlePlanStatusRequest(request, env) {
@@ -4258,4 +4340,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, handleSubmitQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
