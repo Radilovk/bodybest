@@ -1,0 +1,63 @@
+[
+    {
+        "id": "secDemo",
+        "type": "section",
+        "sectionTitle": "Демо въпроси"
+    },
+    {
+        "id": "name",
+        "text": "Въведете вашето име:",
+        "type": "text",
+        "options": [],
+        "children": []
+    },
+    {
+        "id": "email",
+        "text": "Въведете вашия имейл адрес:",
+        "type": "email",
+        "options": [],
+        "children": []
+    },
+    {
+        "id": "sleepHours",
+        "text": "Средно колко часа спите на денонощие?",
+        "type": "number",
+        "options": [],
+        "children": []
+    },
+    {
+        "id": "stressLevel",
+        "text": "Оценете нивото си на стрес:",
+        "type": "radio",
+        "options": ["Ниско", "Средно", "Високо"],
+        "children": []
+    },
+    {
+        "id": "physicalActivity",
+        "text": "Ниво на физическа активност:",
+        "type": "radio",
+        "options": ["Без активност", "Лека", "Умерена", "Интензивна"],
+        "children": []
+    },
+    {
+        "id": "waterIntake",
+        "text": "Колко чаши вода пиете дневно?",
+        "type": "number",
+        "options": [],
+        "children": []
+    },
+    {
+        "id": "overeatingFrequency",
+        "text": "Колко често преяждате?",
+        "type": "radio",
+        "options": ["Никога", "Понякога", "Често"],
+        "children": []
+    },
+    {
+        "id": "comparisson",
+        "text": "Сравнете сегашното си хранене с това от миналата година:",
+        "type": "textarea",
+        "options": [],
+        "children": []
+    }
+]
