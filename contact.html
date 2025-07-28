@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Често задавани въпроси</title>
+  <title>Свържете се с нас</title>
   <link rel="stylesheet" href="css/base_styles.css">
   <link rel="stylesheet" href="css/components_styles.css">
   <link rel="stylesheet" href="style.css">
@@ -31,28 +31,23 @@
     </div>
   </header>
 
-  <main>
-    <section class="container" style="padding-top:120px; padding-bottom:60px;">
-      <h1>Често задавани въпроси</h1>
-      <div class="faq-list">
-        <details class="card">
-          <summary>Какво представлява MyBody.Best?</summary>
-          <p>Това е платформа, която чрез изкуствен интелект и експертен опит генерира индивидуални хранителни и тренировъчни планове.</p>
-        </details>
-        <details class="card">
-          <summary>Колко струва услугата?</summary>
-          <p>Предлагаме различни абонаментни планове в зависимост от нуждите ви. Можете да започнете с безплатен анализ чрез въпросника.</p>
-        </details>
-        <details class="card">
-          <summary>Какви данни са необходими?</summary>
-          <p>Нуждаем се от информация за вашето здраве, начин на живот и цели, за да изградим персонализирана стратегия.</p>
-        </details>
-        <details class="card">
-          <summary>Мога ли да получавам консултации с експерт?</summary>
-          <p>Да. Екипът ни от специалисти е на разположение за допълнителни съвети и адаптация на вашия план.</p>
-        </details>
+  <main class="container" style="padding-top:120px; padding-bottom:60px;">
+    <h1>Свържете се с нас</h1>
+    <form id="contact-form">
+      <div class="form-group">
+        <label for="name">Име</label>
+        <input type="text" id="name" name="name" required>
       </div>
-    </section>
+      <div class="form-group">
+        <label for="email">Имейл</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      <div class="form-group">
+        <label for="message">Съобщение</label>
+        <textarea id="message" name="message" required></textarea>
+      </div>
+      <button type="submit" class="btn">Изпрати</button>
+    </form>
   </main>
 
   <footer>
