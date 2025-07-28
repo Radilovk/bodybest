@@ -2,7 +2,8 @@ import { apiEndpoints } from './config.js';
 import { labelMap, statusMap } from './labelMap.js';
 import { initPlanEditor, gatherPlanFormData } from './planEditor.js';
 
-let macroChart;
+let macroChartPlan;
+let macroChartAnalytics;
 
 function $(id) {
   return document.getElementById(id);
@@ -176,11 +177,34 @@ function fillDashboard(data) {
   }
 
   if (data.planData?.caloriesMacros) {
-    if (macroChart) macroChart.destroy();
-    const ctx = document.getElementById('macro-chart');
-    if (ctx && typeof Chart !== 'undefined') {
-      const m = data.planData.caloriesMacros;
-      macroChart = new Chart(ctx, {
+    if (macroChartPlan) macroChartPlan.destroy();
+    if (macroChartAnalytics) macroChartAnalytics.destroy();
+    const m = data.planData.caloriesMacros;
+    const ctxPlan = document.getElementById('macro-chart-plan');
+    if (ctxPlan && typeof Chart !== 'undefined') {
+      macroChartPlan = new Chart(ctxPlan, {
+        type: 'doughnut',
+        data: {
+          labels: [`Протеини (${m.protein_percent}%)`, `Въглехидрати (${m.carbs_percent}%)`, `Мазнини (${m.fat_percent}%)`],
+          datasets: [{
+            label: 'Разпределение на макроси',
+            data: [m.protein_grams, m.carbs_grams, m.fat_grams],
+            backgroundColor: ['rgb(54,162,235)', 'rgb(255,205,86)', 'rgb(255,99,132)'],
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: `Дневен прием (${m.calories} kcal)` }
+          }
+        }
+      });
+    }
+    const ctxAnal = document.getElementById('macro-chart-analytics');
+    if (ctxAnal && typeof Chart !== 'undefined') {
+      macroChartAnalytics = new Chart(ctxAnal, {
         type: 'doughnut',
         data: {
           labels: [`Протеини (${m.protein_percent}%)`, `Въглехидрати (${m.carbs_percent}%)`, `Мазнини (${m.fat_percent}%)`],

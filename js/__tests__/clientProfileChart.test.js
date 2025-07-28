@@ -8,7 +8,8 @@ beforeEach(() => {
     <span id="planStatus"></span>
     <span id="planStatusBadge"></span>
     <div id="macroCards"></div>
-    <canvas id="macro-chart"></canvas>
+    <canvas id="macro-chart-plan"></canvas>
+    <canvas id="macro-chart-analytics"></canvas>
     <textarea id="planJson"></textarea>
     <div id="planMenu"></div>
     <div id="allowedFoodsContainer"></div>
@@ -31,10 +32,19 @@ beforeEach(() => {
   jest.unstable_mockModule('../planEditor.js', () => ({ initPlanEditor: jest.fn(), gatherPlanFormData: jest.fn(() => ({})) }));
 });
 
-test('fillDashboard initializes doughnut chart and destroys previous', async () => {
-  const first = { destroy: jest.fn() };
-  const second = { destroy: jest.fn() };
-  global.Chart = jest.fn().mockReturnValueOnce(first).mockReturnValueOnce(second);
+test('fillDashboard initializes doughnut charts and destroys previous', async () => {
+  const charts = [
+    { destroy: jest.fn() },
+    { destroy: jest.fn() },
+    { destroy: jest.fn() },
+    { destroy: jest.fn() }
+  ];
+  global.Chart = jest
+    .fn()
+    .mockReturnValueOnce(charts[0])
+    .mockReturnValueOnce(charts[1])
+    .mockReturnValueOnce(charts[2])
+    .mockReturnValueOnce(charts[3]);
   const { fillDashboard } = await import('../clientProfile.js');
   const data = {
     planData: {
@@ -58,7 +68,8 @@ test('fillDashboard initializes doughnut chart and destroys previous', async () 
 
   fillDashboard(data);
   fillDashboard(data);
-  expect(first.destroy).toHaveBeenCalled();
+  expect(charts[0].destroy).toHaveBeenCalled();
+  expect(charts[1].destroy).toHaveBeenCalled();
   expect(global.Chart.mock.calls[0][1].type).toBe('doughnut');
-  expect(global.Chart).toHaveBeenCalledTimes(2);
+  expect(global.Chart).toHaveBeenCalledTimes(4);
 });
