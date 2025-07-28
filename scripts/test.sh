@@ -9,6 +9,6 @@ if [ ! -x node_modules/.bin/jest ]; then
   exit 1
 fi
 
-# Run Jest serially with experimental VM modules
-NODE_OPTIONS="${NODE_OPTIONS:-} --experimental-vm-modules" \
+# Run Jest serially with increased memory limit and experimental VM modules
+NODE_OPTIONS="--max-old-space-size=4096 ${NODE_OPTIONS:-} --experimental-vm-modules" \
   npx --no-install jest --runInBand "$@"
