@@ -368,8 +368,7 @@ export default {
             return new Response(null, { status: 204, headers: corsHeaders });
         }
 
-        const kvFlag = env.RESOURCES_KV ? await env.RESOURCES_KV.get('maintenance_mode') : null;
-        if (env.MAINTENANCE_MODE === '1' || kvFlag === '1') {
+        if (env.MAINTENANCE_MODE === '1') {
             const maint = env.RESOURCES_KV ? await env.RESOURCES_KV.get('maintenance_page') : null;
             const html = maint || MAINTENANCE_FALLBACK_HTML;
             return new Response(html, {
@@ -483,10 +482,6 @@ export default {
                 responseBody = await handleTestAiModelRequest(request, env);
             } else if (method === 'POST' && path === '/api/sendTestEmail') {
                 responseBody = await handleSendTestEmailRequest(request, env);
-            } else if (method === 'GET' && path === '/api/getMaintenanceMode') {
-                responseBody = await handleGetMaintenanceMode(request, env);
-            } else if (method === 'POST' && path === '/api/setMaintenanceMode') {
-                responseBody = await handleSetMaintenanceMode(request, env);
             } else if (method === 'GET' && path === '/api/getFeedbackMessages') {
                 responseBody = await handleGetFeedbackMessagesRequest(request, env);
             } else {
@@ -2482,39 +2477,6 @@ async function handleSendTestEmailRequest(request, env) {
 }
 // ------------- END FUNCTION: handleSendTestEmailRequest -------------
 
-// ------------- START FUNCTION: handleGetMaintenanceMode -------------
-async function handleGetMaintenanceMode(request, env) {
-    try {
-        const val = env.RESOURCES_KV ? await env.RESOURCES_KV.get('maintenance_mode') : null;
-        const enabled = (val === '1') || env.MAINTENANCE_MODE === '1';
-        return { success: true, enabled };
-    } catch (error) {
-        console.error('Error in handleGetMaintenanceMode:', error.message, error.stack);
-        return { success: false, message: 'Грешка при зареждане.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleGetMaintenanceMode -------------
-
-// ------------- START FUNCTION: handleSetMaintenanceMode -------------
-async function handleSetMaintenanceMode(request, env) {
-    try {
-        const auth = request.headers.get('Authorization') || '';
-        const token = auth.replace(/^Bearer\s+/i, '').trim();
-        const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
-        if (expected && token !== expected) {
-            return { success: false, message: 'Невалиден токен.', statusHint: 403 };
-        }
-        const { enabled } = await request.json();
-        const val = enabled ? '1' : '0';
-        if (env.RESOURCES_KV) await env.RESOURCES_KV.put('maintenance_mode', val);
-        return { success: true };
-    } catch (error) {
-        console.error('Error in handleSetMaintenanceMode:', error.message, error.stack);
-        return { success: false, message: 'Грешка при запис.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleSetMaintenanceMode -------------
-
 
 // ------------- START BLOCK: PlanGenerationHeaderComment -------------
 // ===============================================
@@ -4403,4 +4365,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
