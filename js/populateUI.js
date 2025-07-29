@@ -9,26 +9,6 @@ export let macroChartInstance = null;
 export let progressChartInstance = null;
 let pendingMacroData = null;
 
-// Chart.js plugin to draw text in the center of the doughnut
-const centerTextPlugin = {
-    id: 'centerText',
-    beforeDraw(chart, args, opts) {
-        const text = opts?.text;
-        if (!text) return;
-        const { ctx, chartArea } = chart;
-        if (!chartArea) return;
-        const x = chartArea.left + chartArea.width / 2;
-        const y = chartArea.top + chartArea.height / 2;
-        ctx.save();
-        ctx.font = '600 1.1rem sans-serif';
-        ctx.fillStyle = getCssVar('--text-color-primary', '#333');
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(text, x, y);
-        ctx.restore();
-    }
-};
-
 export function populateUI() {
     const data = fullDashboardData; // Access global state
     if (!data || Object.keys(data).length === 0) {
@@ -260,13 +240,6 @@ function renderMacroAnalyticsCard(macros) {
     const canvas = document.createElement('canvas');
     canvas.id = 'macroChart';
     chartContainer.appendChild(canvas);
-
-    const centerDiv = document.createElement('div');
-    centerDiv.id = 'macroCenterLabel';
-    centerDiv.className = 'macro-center-label';
-    centerDiv.textContent = `${macros.calories} kcal`;
-    chartContainer.appendChild(centerDiv);
-
     card.appendChild(chartContainer);
 
     const grid = document.createElement('div');
@@ -332,7 +305,6 @@ export function renderPendingMacroChart() {
     }
     const m = pendingMacroData;
     const ctx = canvas.getContext('2d');
-    Chart.register(centerTextPlugin);
     macroChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -354,11 +326,9 @@ export function renderPendingMacroChart() {
         },
         options: {
             responsive: true,
-            animation: { easing: 'easeOutElastic', duration: 1200 },
             plugins: {
                 legend: { display: false },
-                title: { display: true, text: `Дневен прием (${m.calories} kcal)` },
-                centerText: { text: `${m.calories} kcal` }
+                title: { display: true, text: `Дневен прием (${m.calories} kcal)` }
             }
         }
     });
@@ -372,14 +342,7 @@ export function highlightMacro(metricElement) {
     metricElement.classList.add('active');
     const centerLabel = document.getElementById('macroCenterLabel');
     const label = metricElement.querySelector('.macro-label');
-    const value = metricElement.querySelector('.macro-value');
-    const sub = metricElement.querySelector('.macro-subtitle');
-    const text = label ? `${label.textContent}: ${value?.textContent ?? ''} ${sub?.textContent ?? ''}`.trim() : '';
-    if (centerLabel) centerLabel.textContent = text;
-    if (macroChartInstance && macroChartInstance.options.plugins?.centerText) {
-        macroChartInstance.options.plugins.centerText.text = text;
-        macroChartInstance.update();
-    }
+    if (centerLabel && label) centerLabel.textContent = label.textContent;
 }
 
 function populateDashboardMacros(macros) {
