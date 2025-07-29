@@ -276,6 +276,7 @@ function renderMacroAnalyticsCard(macros) {
         div.appendChild(label);
         div.appendChild(valueDiv);
         div.appendChild(subDiv);
+        div.addEventListener('click', () => highlightMacro(div));
         grid.appendChild(div);
     });
     card.appendChild(grid);
@@ -323,6 +324,16 @@ export function renderPendingMacroChart() {
         }
     });
     macroChartInstance.resize();
+}
+
+export function highlightMacro(metricElement) {
+    const grid = document.getElementById('macroMetricsGrid');
+    if (!grid || !metricElement) return;
+    grid.querySelectorAll('.macro-metric').forEach(el => el.classList.remove('active'));
+    metricElement.classList.add('active');
+    const centerLabel = document.getElementById('macroCenterLabel');
+    const label = metricElement.querySelector('.macro-label');
+    if (centerLabel && label) centerLabel.textContent = label.textContent;
 }
 
 function populateDashboardMacros(macros) {

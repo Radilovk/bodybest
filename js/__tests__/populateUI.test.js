@@ -13,7 +13,7 @@ beforeEach(async () => {
     <div id="engagementProgressFill"></div><div id="engagementProgressBar"></div><span id="engagementProgressText"></span>
     <div id="healthProgressFill"></div><div id="healthProgressBar"></div><span id="healthProgressText"></span>
     <div id="streakGrid"></div>
-    <div id="macroAnalyticsCard"><div id="macroMetricsGrid"></div></div>
+    <div id="macroAnalyticsCard"><div id="macroMetricsGrid"></div><div id="macroCenterLabel"></div></div>
     <h3 id="dailyPlanTitle"></h3>
     <ul id="dailyMealList"></ul>
   `;
@@ -36,6 +36,7 @@ beforeEach(async () => {
     streakGrid: document.getElementById('streakGrid'),
     macroAnalyticsCard: document.getElementById('macroAnalyticsCard'),
     macroMetricsGrid: document.getElementById('macroMetricsGrid'),
+    macroCenterLabel: document.getElementById('macroCenterLabel'),
     dailyPlanTitle: document.getElementById('dailyPlanTitle'),
     dailyMealList: document.getElementById('dailyMealList')
   };
@@ -110,6 +111,28 @@ test('renders macro analytics card', async () => {
   expect(metrics[0].textContent).toContain('Калории');
   const canvas = document.querySelector('#macroAnalyticsCard canvas');
   expect(canvas).not.toBeNull();
+});
+
+test('macro metric click highlights element and updates center label', async () => {
+  jest.resetModules();
+  const fullData = {
+    userName: 'Иван',
+    analytics: { current: {}, streak: {} },
+    planData: {
+      caloriesMacros: { calories: 2000, protein_grams: 150, protein_percent: 30, carbs_grams: 250, carbs_percent: 50, fat_grams: 70, fat_percent: 20 }
+    },
+    dailyLogs: [],
+    currentStatus: {},
+    initialData: {},
+    initialAnswers: {}
+  };
+  jest.unstable_mockModule('../app.js', () => ({ fullDashboardData: fullData, todaysMealCompletionStatus: {}, planHasRecContent: false }));
+  ({ populateUI } = await import('../populateUI.js'));
+  populateUI();
+  const metric = document.querySelector('#macroMetricsGrid .macro-metric');
+  metric.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  expect(metric.classList.contains('active')).toBe(true);
+  expect(document.getElementById('macroCenterLabel').textContent).toBe('Калории');
 });
 
 test('hides modules when values are zero', async () => {
