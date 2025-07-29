@@ -1,6 +1,7 @@
 // personalization.js - Настройки на основни цветове за потребителя
 import { colorGroups, sampleThemes } from './themeConfig.js';
 import { loadAndApplyColors } from './uiHandlers.js';
+import { saveConfig } from './adminConfig.js';
 
 const inputs = {};
 let activeGroup = 'Dashboard';
@@ -168,6 +169,25 @@ export function applyAndStore(groupName, variant = activeVariant) {
   localStorage.setItem(key, JSON.stringify(stored));
 }
 
+export async function saveGlobalTheme(groupName, variant = activeVariant) {
+  const groups = getGroups(groupName);
+  if (groups.length === 0) return;
+  const colors = {};
+  groups.forEach(g => {
+    g.items.forEach(item => {
+      const el = inputs[`${groupName}-${item.var}-${variant}`];
+      if (el) colors[item.var] = el.value;
+    });
+  });
+  try {
+    await saveConfig({ colors });
+    alert('Темата е запазена глобално.');
+  } catch (err) {
+    console.error('Грешка при глобален запис', err);
+    alert('Грешка при запис.');
+  }
+}
+
 export function populate(groupName, variant = activeVariant) {
   const groups = getGroups(groupName);
   if (groups.length === 0) return;
@@ -236,8 +256,13 @@ function createTabContents(parent) {
           const label = document.createElement('label');
           label.textContent = item.label || item.var;
           const input = document.createElement('input');
-          input.type = 'color';
           input.id = `${name}-${item.var}-${v}`;
+          input.type = item.type || 'color';
+          if (item.type === 'range') {
+            if (item.min !== undefined) input.min = item.min;
+            if (item.max !== undefined) input.max = item.max;
+            if (item.step !== undefined) input.step = item.step;
+          }
           wrap.appendChild(label);
           wrap.appendChild(input);
           varPanel.appendChild(wrap);
@@ -321,6 +346,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const loadBtn = document.getElementById('loadTheme');
   const deleteBtn = document.getElementById('deleteTheme');
   const resetBtn = document.getElementById('resetTheme');
+  const globalBtn = document.getElementById('saveGlobal');
   const select = document.getElementById('themeSelect');
   if (saveBtn) {
     saveBtn.addEventListener('click', () => {
@@ -336,5 +362,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   if (resetBtn) {
     resetBtn.addEventListener('click', () => resetTheme(activeGroup, activeVariant));
+  }
+  if (globalBtn) {
+    globalBtn.addEventListener('click', () => saveGlobalTheme(activeGroup, activeVariant));
   }
 });
