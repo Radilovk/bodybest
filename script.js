@@ -188,8 +188,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Мобилно меню
     if (mobileMenuBtn && nav) {
         const toggleNav = () => {
-            body.classList.toggle('nav-open');
-            mobileMenuBtn.setAttribute('aria-expanded', body.classList.contains('nav-open'));
+            const open = body.classList.toggle('nav-open');
+            mobileMenuBtn.setAttribute('aria-expanded', open);
+            if (open) window.scrollTo({ top: 0 });
         };
         mobileMenuBtn.addEventListener('click', toggleNav);
         nav.addEventListener('click', (e) => { if (e.target === nav) toggleNav(); });
