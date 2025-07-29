@@ -73,12 +73,16 @@ export function applyTheme(theme) {
     document.body.classList.add(theme === 'dark' ? 'dark-theme' : 'light-theme');
 }
 
-export function toggleTheme() {
+export async function toggleTheme() {
     const currentThemeIsDark = document.body.classList.contains('dark-theme');
     const newTheme = currentThemeIsDark ? 'light' : 'dark';
     localStorage.setItem('theme', newTheme);
     applyTheme(newTheme);
     updateThemeButtonText();
+    const { applyStoredTheme } = await import('./personalization.js');
+    applyStoredTheme('Dashboard');
+    if (document.body.id === 'body') applyStoredTheme('Index');
+    if (document.body.id === 'questPage') applyStoredTheme('Quest');
 }
 
 export function updateThemeButtonText() {
