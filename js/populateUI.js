@@ -231,7 +231,7 @@ function renderMacroAnalyticsCard(macros) {
     card.id = 'macroAnalyticsCard';
     card.className = 'analytics-card';
     const header = document.createElement('h5');
-    header.innerHTML = `<svg class="icon" style="width:1em;height:1em;margin-right:0.3em"><use href="#icon-scale"></use></svg> Калории и Макронутриенти`;
+    header.textContent = 'Калории и Макронутриенти';
     card.appendChild(header);
 
     const chartContainer = document.createElement('div');

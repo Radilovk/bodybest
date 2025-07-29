@@ -130,6 +130,9 @@
   margin-bottom: var(--space-sm);
   font-size: 1.05rem;
 }
+#macroAnalyticsCard h5 {
+  justify-content: flex-start;
+}
 .analytics-card .mini-progress-bar {
   background: var(--surface-background);
   border-radius: var(--progress-bar-radius);
