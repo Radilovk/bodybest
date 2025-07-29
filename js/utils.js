@@ -158,3 +158,34 @@ export function getCssVar(name, fallback = '') {
     return val ? val.trim() : fallback;
 }
 
+/**
+ * Олекотява hex цвят със зададен процент.
+ * При невалиден вход връща fallback или оригиналния низ.
+ * @param {string} color Цветът (#rrggbb или #rgb).
+ * @param {number} [percent=0.1] Степен на олекотяване 0-1.
+ * @param {string} [fallback] Резервен цвят при грешка.
+ * @returns {string} Новият цвят или подаденият оригинал/fallback.
+ */
+export function lightenColor(color, percent = 0.1, fallback) {
+    if (typeof color !== 'string') return fallback ?? color;
+    const match = color.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+    if (!match) return fallback ?? color;
+
+    let hex = match[1];
+    if (hex.length === 3) {
+        hex = hex.split('').map((ch) => ch + ch).join('');
+    }
+
+    const num = parseInt(hex, 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+
+    const p = Math.max(0, Math.min(1, percent));
+    const nr = Math.min(255, Math.round(r + (255 - r) * p));
+    const ng = Math.min(255, Math.round(g + (255 - g) * p));
+    const nb = Math.min(255, Math.round(b + (255 - b) * p));
+
+    return `#${[nr, ng, nb].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
