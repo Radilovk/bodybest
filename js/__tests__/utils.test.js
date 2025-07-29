@@ -1,4 +1,4 @@
-import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml } from '../utils.js';
+import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, lightenColor } from '../utils.js';
 
 describe('utils', () => {
   test('safeGet returns nested value', () => {
@@ -34,5 +34,17 @@ describe('utils', () => {
   test('escapeHtml handles null and undefined', () => {
     expect(escapeHtml(null)).toBe('');
     expect(escapeHtml(undefined)).toBe('');
+  });
+
+  test('lightenColor supports short hex', () => {
+    expect(lightenColor('#abc', 0.1)).toBe('#b3c2d1');
+  });
+
+  test('lightenColor returns fallback for invalid', () => {
+    expect(lightenColor('invalid', 0.1, '#fff')).toBe('#fff');
+  });
+
+  test('lightenColor returns original when no fallback', () => {
+    expect(lightenColor('invalid')).toBe('invalid');
   });
 });
