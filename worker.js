@@ -285,6 +285,13 @@ const AI_CONFIG_KEYS = [
     'send_questionnaire_email',
     'colors'
 ];
+const MAINTENANCE_FALLBACK_HTML = `<!DOCTYPE html>
+<html lang="bg">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyBody.Best – Поддръжка</title>
+</head>
+<body><h1>В момента обновяваме сайта</h1><p>Опитайте отново след малко.</p></body>
+</html>`;
 // ------------- END BLOCK: GlobalConstantsAndBindings -------------
 
 // ------------- START BLOCK: HelperFunctions -------------
@@ -359,6 +366,15 @@ export default {
 
         if (method === 'OPTIONS') {
             return new Response(null, { status: 204, headers: corsHeaders });
+        }
+
+        if (env.MAINTENANCE_MODE === '1') {
+            const maint = env.RESOURCES_KV ? await env.RESOURCES_KV.get('maintenance_page') : null;
+            const html = maint || MAINTENANCE_FALLBACK_HTML;
+            return new Response(html, {
+                status: 503,
+                headers: { ...corsHeaders, 'Content-Type': 'text/html' }
+            });
         }
 
         let responseBody = {};
