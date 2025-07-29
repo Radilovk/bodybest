@@ -3,18 +3,11 @@ import { jest } from '@jest/globals';
 
 describe('handleChatSend plan modification', () => {
   let handleChatSend;
-  let openPlanModificationChatMock;
   let selectors;
   let chatMessages;
   beforeEach(async () => {
     jest.resetModules();
-    openPlanModificationChatMock = jest.fn();
-    jest.unstable_mockModule('../planModChat.js', () => ({
-      openPlanModificationChat: openPlanModificationChatMock,
-      clearPlanModChat: jest.fn(),
-      handlePlanModChatSend: jest.fn(),
-      handlePlanModChatInputKeypress: jest.fn()
-    }));
+    
     jest.unstable_mockModule('../chat.js', () => ({
       toggleChatWidget: jest.fn(),
       closeChatWidget: jest.fn(),
@@ -80,7 +73,9 @@ describe('handleChatSend plan modification', () => {
 
   test('does not open plan modification chat without confirmation', async () => {
     await handleChatSend();
-    expect(openPlanModificationChatMock).not.toHaveBeenCalled();
+    // Should not fetch the plan modification prompt automatically
+    const calls = global.fetch.mock.calls.map(c => c[0]);
+    expect(calls.some(url => String(url).includes('getPlanModificationPrompt'))).toBe(false);
   });
 
   test('confirmation button is not duplicated', async () => {
@@ -173,12 +168,6 @@ describe('plan modification chat modal close/reset', () => {
     }));
     jest.unstable_mockModule('../auth.js', () => ({ handleLogout: jest.fn() }));
     jest.unstable_mockModule('../extraMealForm.js', () => ({ openExtraMealModal: jest.fn() }));
-    jest.unstable_mockModule('../planModChat.js', () => ({
-      openPlanModificationChat: jest.fn(),
-      clearPlanModChat: jest.fn(),
-      handlePlanModChatSend: jest.fn(),
-      handlePlanModChatInputKeypress: jest.fn()
-    }));
     jest.unstable_mockModule('../chat.js', () => ({
       toggleChatWidget: jest.fn(),
       closeChatWidget: jest.fn(),
