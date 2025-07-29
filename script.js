@@ -149,6 +149,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const body = document.body;
     const nav = document.getElementById('nav');
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    if (!mobileMenuBtn || !nav) {
+        console.warn('script.js: липсва елемент за мобилно меню', {
+            btnExists: !!mobileMenuBtn,
+            navExists: !!nav
+        });
+    }
     const themeToggleBtn = document.getElementById('theme-toggle');
     
     // Модален прозорец
