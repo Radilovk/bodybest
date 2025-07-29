@@ -247,14 +247,26 @@ function renderMacroAnalyticsCard(macros) {
     grid.className = 'macro-metrics-grid';
     const list = [
         { l: 'Калории', v: macros.calories, s: 'kcal дневно' },
-        { l: 'Протеини', v: macros.protein_grams, s: macros.protein_percent ? `${macros.protein_percent}%` : '' },
-        { l: 'Въглехидрати', v: macros.carbs_grams, s: macros.carbs_percent ? `${macros.carbs_percent}%` : '' },
-        { l: 'Мазнини', v: macros.fat_grams, s: macros.fat_percent ? `${macros.fat_percent}%` : '' }
+        { l: 'Белтъчини', v: macros.protein_grams, s: macros.protein_percent ? `${macros.protein_percent}%` : '', c: '--macro-protein-color' },
+        { l: 'Въглехидрати', v: macros.carbs_grams, s: macros.carbs_percent ? `${macros.carbs_percent}%` : '', c: '--macro-carbs-color' },
+        { l: 'Мазнини', v: macros.fat_grams, s: macros.fat_percent ? `${macros.fat_percent}%` : '', c: '--macro-fat-color' }
     ];
     list.forEach(item => {
         const div = document.createElement('div');
         div.className = 'macro-metric';
-        div.innerHTML = `<div class="macro-label">${item.l}</div><div class="macro-value">${item.v ?? '--'}</div><div class="macro-subtitle">${item.s}</div>`;
+        const label = document.createElement('div');
+        label.className = 'macro-label';
+        if (item.c) label.style.color = getCssVar(item.c);
+        label.textContent = item.l;
+        const valueDiv = document.createElement('div');
+        valueDiv.className = 'macro-value';
+        valueDiv.textContent = item.v ?? '--';
+        const subDiv = document.createElement('div');
+        subDiv.className = 'macro-subtitle';
+        subDiv.textContent = item.s;
+        div.appendChild(label);
+        div.appendChild(valueDiv);
+        div.appendChild(subDiv);
         grid.appendChild(div);
     });
     card.appendChild(grid);
@@ -278,7 +290,7 @@ export function renderPendingMacroChart() {
         type: 'doughnut',
         data: {
             labels: [
-                `Протеини (${m.protein_percent}%)`,
+                `Белтъчини (${m.protein_percent}%)`,
                 `Въглехидрати (${m.carbs_percent}%)`,
                 `Мазнини (${m.fat_percent}%)`
             ],
@@ -296,7 +308,7 @@ export function renderPendingMacroChart() {
         options: {
             responsive: true,
             plugins: {
-                legend: { position: 'top' },
+                legend: { display: false },
                 title: { display: true, text: `Дневен прием (${m.calories} kcal)` }
             }
         }
