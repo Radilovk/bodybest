@@ -369,13 +369,22 @@ export default {
         }
 
         const kvFlag = env.RESOURCES_KV ? await env.RESOURCES_KV.get('maintenance_mode') : null;
+        const skipPaths = new Set([
+            '/admin.html',
+            '/js/admin.js',
+            '/js/maintenanceMode.js',
+            '/api/getMaintenanceMode',
+            '/api/setMaintenanceMode'
+        ]);
         if (env.MAINTENANCE_MODE === '1' || kvFlag === '1') {
-            const maint = env.RESOURCES_KV ? await env.RESOURCES_KV.get('maintenance_page') : null;
-            const html = maint || MAINTENANCE_FALLBACK_HTML;
-            return new Response(html, {
-                status: 503,
-                headers: { ...corsHeaders, 'Content-Type': 'text/html' }
-            });
+            if (!skipPaths.has(path)) {
+                const maint = env.RESOURCES_KV ? await env.RESOURCES_KV.get('maintenance_page') : null;
+                const html = maint || MAINTENANCE_FALLBACK_HTML;
+                return new Response(html, {
+                    status: 503,
+                    headers: { ...corsHeaders, 'Content-Type': 'text/html' }
+                });
+            }
         }
 
         let responseBody = {};
