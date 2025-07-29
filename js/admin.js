@@ -4,6 +4,7 @@ import { labelMap, statusMap } from './labelMap.js';
 import { fileToDataURL, fileToText, getProgressColor, animateProgressFill } from './utils.js';
 import { loadTemplateInto } from './templateLoader.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
+import { loadMaintenanceFlag, setMaintenanceFlag } from './maintenanceMode.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -38,6 +39,8 @@ const clientRepliesList = document.getElementById('clientRepliesList');
 const feedbackList = document.getElementById('feedbackList');
 const statsOutput = document.getElementById('statsOutput');
 const showStatsBtn = document.getElementById('showStats');
+const maintenanceBtn = document.getElementById('toggleMaintenance');
+const maintenanceStatus = document.getElementById('maintenanceStatus');
 const sortOrderSelect = document.getElementById('sortOrder');
 const initialAnswersPre = document.getElementById('initialAnswers');
 const planMenuPre = document.getElementById('planMenu');
@@ -1513,6 +1516,30 @@ async function sendTestQuestionnaire() {
     }
 }
 
+async function refreshMaintenanceStatus() {
+    if (!maintenanceBtn) return;
+    try {
+        const enabled = await loadMaintenanceFlag();
+        maintenanceBtn.dataset.enabled = enabled ? '1' : '0';
+        if (maintenanceStatus) maintenanceStatus.textContent = enabled ? 'включен' : 'изключен';
+    } catch (err) {
+        console.error('Error loading maintenance mode:', err);
+    }
+}
+
+async function toggleMaintenanceMode() {
+    if (!maintenanceBtn) return;
+    const enabled = maintenanceBtn.dataset.enabled === '1';
+    try {
+        await setMaintenanceFlag(!enabled);
+        maintenanceBtn.dataset.enabled = enabled ? '0' : '1';
+        if (maintenanceStatus) maintenanceStatus.textContent = !enabled ? 'включен' : 'изключен';
+    } catch (err) {
+        console.error('Error toggling maintenance mode:', err);
+        alert('Грешка при промяна на режима.');
+    }
+}
+
 async function loadAiPresets() {
     if (!presetSelect) return;
     try {
@@ -1727,6 +1754,11 @@ if (testQuestionnaireForm) {
         e.preventDefault();
         await sendTestQuestionnaire();
     });
+}
+
+if (maintenanceBtn) {
+    maintenanceBtn.addEventListener('click', toggleMaintenanceMode);
+    refreshMaintenanceStatus();
 }
 
 export {
