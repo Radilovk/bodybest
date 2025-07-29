@@ -457,6 +457,27 @@ ALLOWED_ORIGINS = "https://admin.example.com,https://myapp.example.com"
 
 This list is combined with the defaults when building the CORS headers.
 
+### Maintenance Mode
+
+Set `MAINTENANCE_MODE=1` to show a static maintenance page for every request.
+The worker looks for a KV entry `maintenance_page` and falls back to
+`maintenance.html` when the key is missing.
+
+Example `.env` value:
+
+```env
+MAINTENANCE_MODE=1
+```
+
+Or in `wrangler.toml`:
+
+```toml
+[vars]
+MAINTENANCE_MODE = "1"
+```
+
+Set to `0` or remove the variable to disable the mode.
+
 ### PHP API Environment Variables
 
 The PHP helper scripts expect the following variables set in the server environment:
