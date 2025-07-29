@@ -258,6 +258,15 @@ function renderMacroAnalyticsCard(macros) {
         const icon = document.createElement('span');
         icon.className = 'macro-icon';
         icon.setAttribute('aria-label', item.l);
+        const iconMap = {
+            'Калории': 'bi-fire',
+            'Белтъчини': 'bi-egg-fried',
+            'Въглехидрати': 'bi-basket',
+            'Мазнини': 'bi-droplet'
+        };
+        const i = document.createElement('i');
+        i.className = `bi ${iconMap[item.l] || 'bi-circle'}`;
+        icon.appendChild(i);
 
         const label = document.createElement('div');
         label.className = 'macro-label';
