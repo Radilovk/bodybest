@@ -214,15 +214,6 @@
   border-color: var(--accent-color);
 }
 
-#macroAnalyticsCard .macro-metric.active {
-  box-shadow: 0 0 8px var(--accent-color);
-  background: color-mix(in srgb, var(--surface-background) 80%, var(--accent-color));
-}
-
-body.dark-theme #macroAnalyticsCard .macro-metric.active {
-  background: color-mix(in srgb, var(--surface-background) 60%, var(--accent-color) 40%);
-}
-
 body.dark-theme #macroAnalyticsCard .macro-metric {
   background: color-mix(in srgb, var(--surface-background) 60%, var(--primary-color) 10%);
   border-color: color-mix(in srgb, var(--border-color) 70%, transparent);
@@ -254,21 +245,9 @@ body.dark-theme #macroAnalyticsCard .macro-metric {
   text-align: center;
 }
 
-#macroAnalyticsCard .macro-center-label {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-weight: 600;
-  font-size: 1.1rem;
-  color: var(--text-color-primary);
-  pointer-events: none;
-}
-
 #macroAnalyticsCard canvas {
-  max-width: 280px;
-  max-height: 280px;
-  width: 100%;
+  max-width: 250px;
+  max-height: 250px;
   margin: 0 auto;
 }
 
