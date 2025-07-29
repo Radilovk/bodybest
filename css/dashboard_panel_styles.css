@@ -643,3 +643,20 @@ body.dark-theme .detailed-metric-item .value-current {
     padding: var(--space-md);
   }
 }
+@keyframes ring-grow {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.chart-ring-animate {
+  animation: ring-grow 1.2s ease-in-out;
+}
+
+#macroAnalyticsCard canvas.ring-active {
+  box-shadow: 0 0 0 3px var(--macro-ring-highlight);
+}
+
+#macroAnalyticsCard .macro-metric:hover,
+#macroAnalyticsCard .macro-metric.active {
+  box-shadow: 0 0 0 3px var(--macro-ring-highlight);
+}
