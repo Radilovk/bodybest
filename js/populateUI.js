@@ -254,16 +254,25 @@ function renderMacroAnalyticsCard(macros) {
     list.forEach(item => {
         const div = document.createElement('div');
         div.className = 'macro-metric';
+
+        const icon = document.createElement('span');
+        icon.className = 'macro-icon';
+        icon.setAttribute('aria-label', item.l);
+
         const label = document.createElement('div');
         label.className = 'macro-label';
         if (item.c) label.style.color = getCssVar(item.c);
         label.textContent = item.l;
+
         const valueDiv = document.createElement('div');
         valueDiv.className = 'macro-value';
         valueDiv.textContent = item.v ?? '--';
+
         const subDiv = document.createElement('div');
         subDiv.className = 'macro-subtitle';
         subDiv.textContent = item.s;
+
+        div.appendChild(icon);
         div.appendChild(label);
         div.appendChild(valueDiv);
         div.appendChild(subDiv);
