@@ -54,7 +54,9 @@ export const apiEndpoints = {
     submitDemoQuestionnaire: `${workerBaseUrl}/api/submitDemoQuestionnaire`,
     reAnalyzeQuestionnaire: `${workerBaseUrl}/api/reAnalyzeQuestionnaire`,
     analysisStatus: `${workerBaseUrl}/api/analysisStatus`,
-    getInitialAnalysis: `${workerBaseUrl}/api/getInitialAnalysis`
+    getInitialAnalysis: `${workerBaseUrl}/api/getInitialAnalysis`,
+    getMaintenanceMode: `${workerBaseUrl}/api/getMaintenanceMode`,
+    setMaintenanceMode: `${workerBaseUrl}/api/setMaintenanceMode`
 };
 
 // Cloudflare Account ID за използване в чат асистента
