@@ -476,6 +476,10 @@ Or in `wrangler.toml`:
 MAINTENANCE_MODE = "1"
 ```
 
+В админ панела има бутон „Режим на поддръжка", който използва
+ендпойнтите `/api/getMaintenanceMode` и `/api/setMaintenanceMode` за
+динамично включване или изключване на режима без промяна на конфигурационни файлове.
+
 Set to `0` or remove the variable to disable the mode.
 
 ### PHP API Environment Variables
