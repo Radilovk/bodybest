@@ -167,7 +167,8 @@
 .analytics-card .mini-progress-fill.animate-progress {
   animation: progress-grow 0.8s forwards;
 }
-.analytics-card { cursor: pointer; }
+.analytics-card { cursor: pointer; transition: transform 0.3s ease; }
+.analytics-card.open { transform: scale(1.03); }
 .metric-current-text {
   margin-bottom: var(--space-sm);
   font-weight: 600;
@@ -177,7 +178,7 @@
   overflow: hidden;
   max-height: 0;
   opacity: 0;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
+  transition: max-height 0.4s ease, opacity 0.4s ease;
 }
 .analytics-card.open .analytics-card-details {
   max-height: 500px;
