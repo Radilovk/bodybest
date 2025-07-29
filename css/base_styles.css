@@ -25,7 +25,8 @@
   --bg-gradient: linear-gradient(135deg, #e6eff5 0%, #f0f4f8 100%);
   --surface-background: #FFFFFF;
   --surface-background-rgb: 255,255,255; /* За rgba overlay */
-  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-bg-opacity: 0.85;
+  --card-bg: rgba(var(--surface-background-rgb), var(--card-bg-opacity));
   --glass-blur: 8px;
 
   --border-color: #d0d8e0;
@@ -87,7 +88,8 @@
   --progress-bar-radius: var(--radius-sm);
 
   --toast-bg: rgba(44, 62, 80, 0.95); --toast-text: #fff; --toast-radius: var(--radius-md);
-  --modal-overlay-bg: rgba(0, 0, 0, 0.65);
+  --modal-overlay-opacity: 0.65;
+  --modal-overlay-bg: rgba(0, 0, 0, var(--modal-overlay-opacity));
   --scrollbar-thumb: var(--accent-color); --scrollbar-track: var(--bg-color);
 
   --icon-color-default: var(--accent-color);
@@ -95,7 +97,8 @@
 
   --menu-bg: rgba(255, 255, 255, 0.95);
   --menu-blur: 10px;
-  --menu-overlay-bg: rgba(0, 0, 0, 0.5);
+  --menu-overlay-opacity: 0.5;
+  --menu-overlay-bg: rgba(0, 0, 0, var(--menu-overlay-opacity));
   --menu-hover-bg: color-mix(in srgb, var(--primary-color) 12%, transparent);
 
   --fab-bg: var(--primary-color); --fab-icon: #fff;
@@ -146,7 +149,8 @@ body.dark-theme {
   --bg-gradient: linear-gradient(135deg, #1C1F2E 0%, #252A41 100%);
   --surface-background: #252A41;
   --surface-background-rgb: 37,42,65; /* За rgba overlay */
-  --card-bg: rgba(37, 42, 65, 0.75);
+  --card-bg-opacity: 0.75;
+  --card-bg: rgba(var(--surface-background-rgb), var(--card-bg-opacity));
   --glass-blur: 12px;
 
   --border-color: #34374B;
@@ -166,13 +170,15 @@ body.dark-theme {
   --progress-bar-bg-empty: #393E57;
 
   --toast-bg: rgba(37, 42, 65, 0.95); --toast-text: #F0F2F5;
-  --modal-overlay-bg: rgba(0,0,0, 0.75);
+  --modal-overlay-opacity: 0.75;
+  --modal-overlay-bg: rgba(0,0,0, var(--modal-overlay-opacity));
   --scrollbar-thumb: var(--primary-color); --scrollbar-track: #333;
 
   --icon-color-default: var(--accent-color);
 
   --menu-bg: rgba(37, 42, 65, 0.9);
-  --menu-overlay-bg: rgba(0, 0, 0, 0.65);
+  --menu-overlay-opacity: 0.65;
+  --menu-overlay-bg: rgba(0, 0, 0, var(--menu-overlay-opacity));
   --menu-hover-bg: color-mix(in srgb, var(--primary-color) 35%, transparent);
 
   --fab-bg: var(--primary-color); --fab-icon: #1C1F2E;
