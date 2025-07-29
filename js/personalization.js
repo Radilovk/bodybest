@@ -109,6 +109,24 @@ export function deleteNamedTheme(groupName, name, variant = activeVariant) {
   }
 }
 
+export function resetTheme(groupName, variant = activeVariant) {
+  const themes = getSavedThemes(groupName, variant);
+  if (themes.Custom) {
+    delete themes.Custom;
+    storeThemes(groupName, variant, themes);
+  }
+  const groups = getGroups(groupName);
+  groups.forEach(g => {
+    g.items.forEach(item => {
+      document.documentElement.style.removeProperty(`--${item.var}`);
+      document.body.style.removeProperty(`--${item.var}`);
+      const el = inputs[`${groupName}-${item.var}-${variant}`];
+      if (el) el.value = getCurrentColor(item.var);
+    });
+  });
+  populateThemeSelect(groupName, variant);
+}
+
 function ensureSampleThemes() {
   const map = {
     Dashboard: sampleThemes.dashboard,
@@ -301,6 +319,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const saveBtn = document.getElementById('saveTheme');
   const loadBtn = document.getElementById('loadTheme');
   const deleteBtn = document.getElementById('deleteTheme');
+  const resetBtn = document.getElementById('resetTheme');
   const select = document.getElementById('themeSelect');
   if (saveBtn) {
     saveBtn.addEventListener('click', () => {
@@ -313,5 +332,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   if (deleteBtn && select) {
     deleteBtn.addEventListener('click', () => deleteNamedTheme(activeGroup, select.value, activeVariant));
+  }
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => resetTheme(activeGroup, activeVariant));
   }
 });
