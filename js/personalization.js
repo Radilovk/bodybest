@@ -309,6 +309,7 @@ export function applyStoredTheme(groupName) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadAndApplyColors();
+  ['Dashboard', 'Index', 'Quest'].forEach(applyStoredTheme);
   const container = document.getElementById('colorControls');
   if (!container) return;
   ensureSampleThemes();
