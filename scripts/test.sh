@@ -10,5 +10,15 @@ if [ ! -x node_modules/.bin/jest ]; then
 fi
 
 # Run Jest serially with increased memory limit and experimental VM modules
-NODE_OPTIONS="--max-old-space-size=4096 ${NODE_OPTIONS:-} --experimental-vm-modules" \
-  npx --no-install jest --runInBand "$@"
+# Execute each test file in a separate process to avoid memory leaks
+export NODE_OPTIONS="--max-old-space-size=4096 ${NODE_OPTIONS:-} --experimental-vm-modules"
+
+if [ "$#" -eq 0 ]; then
+  set -- $(npx --no-install jest --listTests)
+fi
+
+exit_code=0
+for test_file in "$@"; do
+  npx --no-install jest --runInBand "$test_file" || exit_code=1
+done
+exit $exit_code

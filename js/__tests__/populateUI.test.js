@@ -81,6 +81,10 @@ beforeEach(async () => {
   ({ populateUI } = await import('../populateUI.js'));
 });
 
+afterEach(() => {
+  document.body.innerHTML = '';
+});
+
 test('populates dashboard sections', () => {
   populateUI();
   expect(document.getElementById('headerTitle').textContent).toBe('Табло: Иван');
