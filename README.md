@@ -462,9 +462,12 @@ This list is combined with the defaults when building the CORS headers.
 
 ### Maintenance Mode
 
-Set `MAINTENANCE_MODE=1` to show a static maintenance page for every request.
+Set `MAINTENANCE_MODE=1` to show a static maintenance page for most requests.
 The worker looks for a KV entry `maintenance_page` and falls back to
-`maintenance.html` when the key is missing.
+`maintenance.html` when the key is missing. Requests to the admin panel
+(`admin.html`, `js/admin.js`, `js/maintenanceMode.js`) and the endpoints
+`/api/getMaintenanceMode` and `/api/setMaintenanceMode` remain accessible so you
+can disable maintenance from the UI.
 
 Example `.env` value:
 
