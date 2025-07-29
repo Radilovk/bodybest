@@ -41,6 +41,8 @@
   --macro-protein-color: #36A2EB; /* Синьо за белтъчини */
   --macro-fat-color: #FFCD56;     /* Жълто за мазнини */
   --macro-carbs-color: #FF6384;   /* Червено за въглехидрати */
+  --macro-ring-highlight: #ffffff; /* Подчертаване на кръга */
+  --macro-stroke-color: #e0e0e0;   /* Рамка на диаграмата */
 
   --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07);
@@ -164,6 +166,13 @@ body.dark-theme {
   --shadow-soft: 0px 6px 18px rgba(var(--surface-background-rgb), 0.5), 0px 2px 7px rgba(var(--surface-background-rgb), 0.3);
 
   --progress-bar-bg-empty: #393E57;
+
+  /* Макро диаграма - тъмна тема */
+  --macro-protein-color: #36A2EB;
+  --macro-fat-color: #FFCD56;
+  --macro-carbs-color: #FF6384;
+  --macro-ring-highlight: #1C1F2E;
+  --macro-stroke-color: #444444;
 
   --toast-bg: rgba(37, 42, 65, 0.95); --toast-text: #F0F2F5;
   --modal-overlay-bg: rgba(0,0,0, 0.75);
