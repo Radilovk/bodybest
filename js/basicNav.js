@@ -6,6 +6,7 @@ export function initBasicNav() {
     const toggle = () => {
       const open = body.classList.toggle('nav-open');
       mobileMenuBtn.setAttribute('aria-expanded', open);
+      if (open) window.scrollTo({ top: 0 });
     };
     mobileMenuBtn.addEventListener('click', toggle);
     nav.querySelectorAll('.nav-link').forEach(link => {
