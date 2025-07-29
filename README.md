@@ -37,6 +37,12 @@ The application will be available at `http://localhost:5173` by default.
 ### Мобилна навигация
 
 Менюто вече превърта страницата до горе при отваряне и се показва над заглавката благодарение на `z-index: 1100`. Уверете се, че всяка страница зарежда `script.js` или `js/basicNav.js`.
+Общият код за управлението му е изнесен в `js/navMenu.js`. Може да го използвате така:
+
+```javascript
+import { initNavMenu } from './js/navMenu.js';
+initNavMenu();
+```
 
 ### Динамична тема
 
