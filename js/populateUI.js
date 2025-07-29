@@ -251,10 +251,9 @@ function renderMacroAnalyticsCard(macros) {
         { l: 'Въглехидрати', v: macros.carbs_grams, s: macros.carbs_percent ? `${macros.carbs_percent}%` : '', c: '--macro-carbs-color' },
         { l: 'Мазнини', v: macros.fat_grams, s: macros.fat_percent ? `${macros.fat_percent}%` : '', c: '--macro-fat-color' }
     ];
-    list.forEach((item, idx) => {
+    list.forEach(item => {
         const div = document.createElement('div');
         div.className = 'macro-metric';
-        div.dataset.index = idx;
 
         const icon = document.createElement('span');
         icon.className = 'macro-icon';
@@ -318,20 +317,6 @@ export function renderPendingMacroChart() {
         },
         options: {
             responsive: true,
-            onHover: (evt, els) => {
-                if (els.length) {
-                    const idx = els[0].index;
-                    const el = document.querySelector(`.macro-metric[data-index="${idx}"]`);
-                    if (el) highlightMacro(el);
-                }
-            },
-            onClick: (evt, els) => {
-                if (els.length) {
-                    const idx = els[0].index;
-                    const el = document.querySelector(`.macro-metric[data-index="${idx}"]`);
-                    if (el) highlightMacro(el);
-                }
-            },
             plugins: {
                 legend: { display: false },
                 title: { display: true, text: `Дневен прием (${m.calories} kcal)` }
@@ -339,24 +324,13 @@ export function renderPendingMacroChart() {
         }
     });
     macroChartInstance.resize();
-    canvas.classList.add('chart-ring-animate');
 }
 
 export function highlightMacro(metricElement) {
     const grid = document.getElementById('macroMetricsGrid');
-    const canvas = document.getElementById('macroChart');
-    if (!grid || !metricElement || !canvas) return;
+    if (!grid || !metricElement) return;
     grid.querySelectorAll('.macro-metric').forEach(el => el.classList.remove('active'));
     metricElement.classList.add('active');
-
-    const index = Number(metricElement.dataset.index);
-    if (macroChartInstance && Number.isInteger(index)) {
-        macroChartInstance.setActiveElements([{ datasetIndex: 0, index }]);
-        macroChartInstance.update();
-    }
-
-    canvas.classList.add('ring-active', 'chart-ring-animate');
-
     const centerLabel = document.getElementById('macroCenterLabel');
     const label = metricElement.querySelector('.macro-label');
     if (centerLabel && label) centerLabel.textContent = label.textContent;

@@ -113,10 +113,8 @@ test('renders macro analytics card', async () => {
   const metrics = document.querySelectorAll('#macroMetricsGrid .macro-metric');
   expect(metrics.length).toBe(4);
   expect(metrics[0].textContent).toContain('Калории');
-  expect(metrics[0].dataset.index).toBe('0');
   const canvas = document.querySelector('#macroAnalyticsCard canvas');
   expect(canvas).not.toBeNull();
-  expect(canvas.classList.contains('chart-ring-animate')).toBe(true);
 });
 
 test('macro metric click highlights element and updates center label', async () => {
@@ -139,8 +137,6 @@ test('macro metric click highlights element and updates center label', async () 
   metric.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   expect(metric.classList.contains('active')).toBe(true);
   expect(document.getElementById('macroCenterLabel').textContent).toBe('Калории');
-  const canvas = document.querySelector('#macroAnalyticsCard canvas');
-  expect(canvas.classList.contains('ring-active')).toBe(true);
 });
 
 test('hides modules when values are zero', async () => {
