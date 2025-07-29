@@ -45,6 +45,16 @@ export const colorGroups = [
     ]
   },
   {
+    name: 'Цветове на макроси',
+    items: [
+      { var: 'macro-protein-color', label: 'Белтъчини' },
+      { var: 'macro-carbs-color', label: 'Въглехидрати' },
+      { var: 'macro-fat-color', label: 'Мазнини' },
+      { var: 'macro-ring-highlight', label: 'Акцент на пръстен' },
+      { var: 'macro-stroke-color', label: 'Цвят на рамка' }
+    ]
+  },
+  {
     name: 'Index',
     items: [
       { var: 'primary-color', label: 'Основен цвят' },
@@ -80,15 +90,30 @@ export const sampleThemes = {
   dashboard: {
     Light: {
       'primary-color': '#3A506B',
-      'secondary-color': '#5BC0BE'
+      'secondary-color': '#5BC0BE',
+      'macro-protein-color': '#36A2EB',
+      'macro-carbs-color': '#FF6384',
+      'macro-fat-color': '#FFCD56',
+      'macro-ring-highlight': '#ffffff',
+      'macro-stroke-color': '#e0e0e0'
     },
     Dark: {
       'primary-color': '#5BC0BE',
-      'secondary-color': '#3A506B'
+      'secondary-color': '#3A506B',
+      'macro-protein-color': '#36A2EB',
+      'macro-carbs-color': '#FF6384',
+      'macro-fat-color': '#FFCD56',
+      'macro-ring-highlight': '#1C1F2E',
+      'macro-stroke-color': '#444444'
     },
     Vivid: {
       'primary-color': '#ff0066',
-      'secondary-color': '#ffcc00'
+      'secondary-color': '#ffcc00',
+      'macro-protein-color': '#0099ff',
+      'macro-carbs-color': '#ff0066',
+      'macro-fat-color': '#ffcc00',
+      'macro-ring-highlight': '#ffffff',
+      'macro-stroke-color': '#333333'
     }
   },
   index: {
