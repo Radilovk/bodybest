@@ -6,7 +6,7 @@
   :root {
     --space-lg: 1.2rem; --space-md: 0.8rem;
     --header-height: 55px;
-    --tabs-height: 60px;
+    --tabs-height: 55px;
     /* --chat-font-size: 1rem; */ /* Chat specific, should be with chat styles or here if truly global */
   }
   body:has(.chat-widget) { /* Example: If chat font size affects body, keep it here */
@@ -58,10 +58,10 @@
   }
   nav.tabs.styled-tabs .tab-btn .tab-icon {
     font-size: 1.2em;
-    margin-bottom: 0.05rem;
+    margin-bottom: 0;
   }
   nav.tabs.styled-tabs .tab-btn .tab-label {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
   }
 
   .note-base { flex-direction: column; gap: var(--space-xs); align-items: flex-start;}
@@ -159,7 +159,7 @@
   :root {
     --radius-lg: 0.6rem; --radius-md: 0.4rem;
     --header-height: 50px;
-    --tabs-height: 55px;
+    --tabs-height: 50px;
     /* --chat-font-size: 0.95rem; */ /* Chat specific */
   }
   body:has(.chat-widget) {
@@ -189,10 +189,10 @@
   }
   nav.tabs.styled-tabs .tab-btn .tab-icon {
     font-size: 1.1em;
-    margin-bottom: 0.05rem;
+    margin-bottom: 0;
   }
   nav.tabs.styled-tabs .tab-btn .tab-label {
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     letter-spacing: 0.2px;
   }
 
