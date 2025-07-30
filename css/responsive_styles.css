@@ -54,7 +54,7 @@
   body { padding-bottom: var(--tabs-height); }
 
   nav.tabs.styled-tabs .tab-btn {
-    padding: 0.45rem 0.25rem;
+    padding: 0.3rem 0.15rem;
   }
   nav.tabs.styled-tabs .tab-btn .tab-icon {
     font-size: 1.2em;
