@@ -53,9 +53,16 @@
   }
   body { padding-bottom: var(--tabs-height); }
 
-  nav.tabs.styled-tabs .tab-btn { padding: 0.5rem 0.3rem; } 
-  nav.tabs.styled-tabs .tab-btn .tab-icon { font-size: 1.2em; }
-  nav.tabs.styled-tabs .tab-btn .tab-label { font-size: 0.6rem; }
+  nav.tabs.styled-tabs .tab-btn {
+    padding: 0.45rem 0.25rem;
+  }
+  nav.tabs.styled-tabs .tab-btn .tab-icon {
+    font-size: 1.2em;
+    margin-bottom: 0.05rem;
+  }
+  nav.tabs.styled-tabs .tab-btn .tab-label {
+    font-size: 0.65rem;
+  }
 
   .note-base { flex-direction: column; gap: var(--space-xs); align-items: flex-start;}
   .note-base .icon.prefix-icon { margin-bottom: var(--space-xs); } 
@@ -177,9 +184,17 @@
     grid-template-columns: 1fr;
   }
 
-  nav.tabs.styled-tabs .tab-btn { padding: 0.4rem 0.2rem; } 
-  nav.tabs.styled-tabs .tab-btn .tab-icon { font-size: 1.1em; }
-  nav.tabs.styled-tabs .tab-btn .tab-label { font-size: 0.55rem; letter-spacing: 0.2px; }
+  nav.tabs.styled-tabs .tab-btn {
+    padding: 0.35rem 0.15rem;
+  }
+  nav.tabs.styled-tabs .tab-btn .tab-icon {
+    font-size: 1.1em;
+    margin-bottom: 0.05rem;
+  }
+  nav.tabs.styled-tabs .tab-btn .tab-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2px;
+  }
 
   .rating-square { width: 28px; height: 14px; /* gap: 4px; Това е за rating-squares container */ }
   .rating-squares { gap: 4px; }
