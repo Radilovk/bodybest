@@ -336,3 +336,22 @@ details[open] summary::after {
   align-items: center;
   margin-top: var(--space-sm);
 }
+
+.info-btn {
+  padding: 0 var(--space-xs);
+  color: var(--icon-color-muted);
+  line-height: 1;
+  margin-left: var(--space-xs);
+  background: none;
+  border: none;
+  cursor: help;
+}
+
+.info-btn svg.icon {
+  width: 1em;
+  height: 1em;
+}
+
+.info-btn:hover {
+  color: var(--primary-color);
+}
