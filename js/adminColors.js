@@ -46,6 +46,7 @@ const themeNameId = 'themeNameInput';
 const saveThemeBtnId = 'saveThemeLocal';
 const applyThemeBtnId = 'applyThemeLocal';
 const deleteThemeBtnId = 'deleteThemeLocal';
+const renameThemeBtnId = 'renameThemeLocal';
 const previewThemeBtnId = 'previewTheme';
 const exportThemeBtnId = 'exportTheme';
 const importThemeInputId = 'importTheme';
@@ -137,6 +138,25 @@ function deleteSelectedTheme() {
   }
 }
 
+function renameSelectedTheme() {
+  const select = document.getElementById(themeSelectId);
+  if (!select) return;
+  const themes = getSavedThemes();
+  const oldName = select.value;
+  if (!themes[oldName]) return;
+  const newName = prompt('Ново име на тема:', oldName);
+  if (!newName || newName === oldName) return;
+  if (themes[newName]) {
+    alert('Вече съществува тема с това име.');
+    return;
+  }
+  themes[newName] = themes[oldName];
+  delete themes[oldName];
+  storeThemes(themes);
+  populateThemeSelect();
+  select.value = newName;
+}
+
 function previewCurrentTheme() {
   Object.entries(inputs).forEach(([k, el]) => {
     if (el) setCssVar(k, el.value);
@@ -202,6 +222,7 @@ export async function initColorSettings() {
   const saveThemeBtn = document.getElementById(saveThemeBtnId);
   const applyThemeBtn = document.getElementById(applyThemeBtnId);
   const deleteThemeBtn = document.getElementById(deleteThemeBtnId);
+  const renameThemeBtn = document.getElementById(renameThemeBtnId);
   const previewBtn = document.getElementById(previewThemeBtnId);
   const exportBtn = document.getElementById(exportThemeBtnId);
   const importInput = document.getElementById(importThemeInputId);
@@ -245,6 +266,7 @@ export async function initColorSettings() {
   if (saveThemeBtn) saveThemeBtn.addEventListener('click', saveTheme);
   if (applyThemeBtn) applyThemeBtn.addEventListener('click', applyThemeFromSelect);
   if (deleteThemeBtn) deleteThemeBtn.addEventListener('click', deleteSelectedTheme);
+  if (renameThemeBtn) renameThemeBtn.addEventListener('click', renameSelectedTheme);
   if (previewBtn) previewBtn.addEventListener('click', previewCurrentTheme);
   if (exportBtn) exportBtn.addEventListener('click', exportThemeToFile);
   if (importBtn && importInput) {
