@@ -159,10 +159,6 @@ body.dark-theme {
   --font-color-secondary: var(--text-color-secondary);
   --font-color-muted: var(--text-color-muted);
   --font-color-on-primary: var(--text-color-on-primary);
-  --font-color-primary: var(--text-color-primary);
-  --font-color-secondary: var(--text-color-secondary);
-  --font-color-muted: var(--text-color-muted);
-  --font-color-on-primary: var(--text-color-on-primary);
 
   --bg-color: #1C1F2E;
   --bg-gradient: linear-gradient(135deg, #1C1F2E 0%, #252A41 100%);
