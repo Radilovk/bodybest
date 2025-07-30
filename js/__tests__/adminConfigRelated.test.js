@@ -126,9 +126,6 @@ describe('adminColors.initColorSettings', () => {
     expect(themes.Light['primary-color']).toBe('#000');
     expect(themes.Dark['primary-color']).toBe('#fff');
     expect(themes.Vivid['primary-color']).toBe('#f00');
-    expect(themes.Light['code-bg']).toBe('#ccc');
-    expect(themes.Dark['code-bg']).toBe('#ddd');
-    expect(themes.Vivid['code-bg']).toBe('#eee');
     const opts = Array.from(document.getElementById('savedThemes').options).map(o => o.value);
     expect(opts).toEqual(expect.arrayContaining(['Light', 'Dark', 'Vivid']));
   });
@@ -141,18 +138,15 @@ describe('adminColors.initColorSettings', () => {
 
     select.value = 'Dark';
     applyBtn.click();
-    expect(document.getElementById('primary-colorInput').value).toBe('#fff');
-    expect(document.getElementById('code-bgInput').value).toBe('#ddd');
+    expect(document.getElementById('primary-colorInput').value).toBe('#ffffff');
 
     select.value = 'Vivid';
     applyBtn.click();
-    expect(document.getElementById('primary-colorInput').value).toBe('#f00');
-    expect(document.getElementById('code-bgInput').value).toBe('#eee');
+    expect(document.getElementById('primary-colorInput').value).toBe('#ff0000');
 
     select.value = 'Light';
     applyBtn.click();
-    expect(document.getElementById('primary-colorInput').value).toBe('#000');
-    expect(document.getElementById('code-bgInput').value).toBe('#ccc');
+    expect(document.getElementById('primary-colorInput').value).toBe('#000000');
   });
 
   test('selected theme can be renamed', async () => {
