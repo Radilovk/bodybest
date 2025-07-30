@@ -1,19 +1,19 @@
         :root {
-            --primary-color: #00FFFF; --secondary-color: #FFFF00; --accent-color: #008080;
-            --bg-color: #F0F4F8; --bg-gradient: linear-gradient(135deg, #00FFFF 0%, #FFFF00 100%);
+            --primary-color: #3A506B; --secondary-color: #5BC0BE; --accent-color: #778DA9;
+            --bg-color: #F0F4F8; --bg-gradient: linear-gradient(135deg, #e0e8f0 0%, #f0f4f8 100%);
             --card-bg: rgba(255, 255, 255, 0.8); --text-color-primary: #333; --text-color-secondary: #555;
             --border-color: #d0d8e0; --glass-blur: 9px; --space-lg: 1.5rem; --radius-lg: 0.8rem;
             --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07); --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.12);
             --color-danger: #e74c3c; --color-success: #2ecc71;
-            --primary-rgb: 0, 255, 255; /* Добавено за :focus стила */
+            --primary-rgb: 58, 80, 107; /* Добавено за :focus стила */
         }
         .dark-theme {
-            --primary-color: #00FFFF; --secondary-color: #FFFF00; --accent-color: #008080;
+            --primary-color: #5BC0BE; --secondary-color: #3A506B; --accent-color: #88a1c4;
             --text-color-primary: #E0E0E0; --text-color-secondary: #bdc3c7;
-            --bg-color: #1A1A2E; --bg-gradient: linear-gradient(135deg, #008080 0%, #AAAA55 100%);
+            --bg-color: #1A1A2E; --bg-gradient: linear-gradient(135deg, #16213E 0%, #1A1A2E 100%);
             --card-bg: rgba(40, 40, 60, 0.75); --glass-blur: 12px; --border-color: #444;
             --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.20); --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.25);
-            --primary-rgb: 0, 255, 255;
+            --primary-rgb: 91, 192, 190;
         }
         *, *::before, *::after { box-sizing: border-box; }
         html { font-size: 100%; }
