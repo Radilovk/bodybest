@@ -1,4 +1,4 @@
-import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, lightenColor } from '../utils.js';
+import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, lightenColor, hexToRgb, calcLuminance, contrastRatio } from '../utils.js';
 
 describe('utils', () => {
   test('safeGet returns nested value', () => {
@@ -46,5 +46,19 @@ describe('utils', () => {
 
   test('lightenColor returns original when no fallback', () => {
     expect(lightenColor('invalid')).toBe('invalid');
+  });
+
+  test('hexToRgb parses colors', () => {
+    expect(hexToRgb('#fff')).toEqual({ r: 255, g: 255, b: 255 });
+    expect(hexToRgb('#123456')).toEqual({ r: 18, g: 52, b: 86 });
+  });
+
+  test('calcLuminance returns values between 0 and 1', () => {
+    expect(calcLuminance('#000')).toBeCloseTo(0);
+    expect(calcLuminance('#fff')).toBeCloseTo(1);
+  });
+
+  test('contrastRatio calculates ratio', () => {
+    expect(contrastRatio('#000', '#fff')).toBeCloseTo(21);
   });
 });
