@@ -3,41 +3,24 @@ import { colorGroups } from './themeConfig.js';
 
 const inputs = {};
 
-async function fetchBaseStyles() {
-  const res = await fetch('css/base_styles.css');
-  return res.text();
-}
-
 function getAllVars() {
   return colorGroups.flatMap(g => g.items.filter(it => it.type !== 'range').map(it => it.var));
 }
 
-function parseDefaultThemes(css, keys) {
-  const light = {};
-  const dark = {};
-  const vivid = {};
-  const rootMatch = css.match(/:root\s*{([^}]*)}/s);
-  const darkMatch = css.match(/body\.dark-theme\s*{([^}]*)}/s);
-  const vividMatch = css.match(/body\.vivid-theme\s*{([^}]*)}/s);
-  if (rootMatch) {
-    rootMatch[1].split(';').forEach(line => {
-      const m = line.match(/--([a-zA-Z0-9-]+)\s*:\s*([^;]+)/);
-      if (m && keys.includes(m[1])) light[m[1]] = m[2].trim();
-    });
-  }
-  if (darkMatch) {
-    darkMatch[1].split(';').forEach(line => {
-      const m = line.match(/--([a-zA-Z0-9-]+)\s*:\s*([^;]+)/);
-      if (m && keys.includes(m[1])) dark[m[1]] = m[2].trim();
-    });
-  }
-  if (vividMatch) {
-    vividMatch[1].split(';').forEach(line => {
-      const m = line.match(/--([a-zA-Z0-9-]+)\s*:\s*([^;]+)/);
-      if (m && keys.includes(m[1])) vivid[m[1]] = m[2].trim();
-    });
-  }
-  return { light, dark, vivid };
+function readDefaultTheme(variant) {
+  const className = variant === 'dark'
+    ? 'dark-theme'
+    : variant === 'vivid'
+      ? 'vivid-theme'
+      : null;
+  if (className) document.body.classList.add(className);
+  const styles = getComputedStyle(document.body);
+  const theme = {};
+  getAllVars().forEach(key => {
+    theme[key] = styles.getPropertyValue(`--${key}`).trim();
+  });
+  if (className) document.body.classList.remove(className);
+  return theme;
 }
 
 function createInput(item, container) {
@@ -190,8 +173,6 @@ function importThemeFile(file) {
 
 export async function initColorSettings() {
   const container = document.getElementById('colorInputs');
-  const css = await fetchBaseStyles();
-  const vars = getAllVars();
   if (container) {
     colorGroups.forEach(group => {
       const fs = document.createElement('fieldset');
@@ -202,7 +183,11 @@ export async function initColorSettings() {
       container.appendChild(fs);
     });
   }
-  const defaults = parseDefaultThemes(css, vars);
+  const defaults = {
+    light: readDefaultTheme('light'),
+    dark: readDefaultTheme('dark'),
+    vivid: readDefaultTheme('vivid')
+  };
   const stored = getSavedThemes();
   let changed = false;
   if (!stored.Light) { stored.Light = defaults.light; changed = true; }

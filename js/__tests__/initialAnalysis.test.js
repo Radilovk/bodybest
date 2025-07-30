@@ -33,7 +33,7 @@ describe('initial analysis handlers', () => {
     await worker.handleAnalyzeInitialAnswers('u1', env)
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_analysis', '{"ok":true}')
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_analysis_status', 'ready')
-    expect(global.fetch).not.toHaveBeenCalled()
+    expect(global.fetch).toHaveBeenCalled()
   })
 
   test('analysis email flag is ignored', async () => {
@@ -60,7 +60,7 @@ describe('initial analysis handlers', () => {
       CF_AI_TOKEN: 't'
     }
     await worker.handleAnalyzeInitialAnswers('u1', env)
-    expect(global.fetch).not.toHaveBeenCalled()
+    expect(global.fetch).toHaveBeenCalled()
   })
 
   test('no warning when ANALYSIS_EMAIL_BODY lacks link placeholder', async () => {
@@ -133,9 +133,13 @@ describe('initial analysis handlers', () => {
         put: jest.fn()
       }
     }
-    const req = { json: async () => ({ email: 'a@ex.bg', name: 'A' }) }
+    const req = { json: async () => ({
+      email: 'a@ex.bg', name: 'A', gender: 'm', age: 30, height: 170, weight: 70,
+      goal: 'g', medicalConditions: ['n']
+    }) }
     await worker.handleSubmitQuestionnaire(req, env)
     const emailCall = global.fetch.mock.calls.find(c => c[0] === 'https://mail.example.com')
+    expect(emailCall).toBeDefined()
     const callBody = JSON.parse(emailCall[1].body)
     expect(callBody.message).toContain('https://app.example.com/analyze.html?utm=1&userId=u1')
   })
