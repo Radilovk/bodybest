@@ -9,7 +9,6 @@
 // --- ЧАСТ 1: ИНТЕГРИРАНИ МОДУЛИ (от отделните JS файлове) ---
 
 import { toggleTheme, initializeTheme } from './js/uiHandlers.js';
-import { initNavMenu } from './js/navMenu.js';
 
 /**
  * @description Конфигурация и глобални променливи (от config.js)
@@ -147,7 +146,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- ⚙️ СЕЛЕКТОРИ НА ЕЛЕМЕНТИ ---
     const header = document.getElementById('header');
-    // Навигационно меню
+    const body = document.body;
+    const nav = document.getElementById('nav');
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    if (!mobileMenuBtn || !nav) {
+        console.warn('script.js: липсва елемент за мобилно меню', {
+            btnExists: !!mobileMenuBtn,
+            navExists: !!nav
+        });
+    }
     const themeToggleBtn = document.getElementById('theme-toggle');
     
     // Модален прозорец
@@ -179,7 +186,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 2. Мобилно меню
-    initNavMenu();
+    if (mobileMenuBtn && nav) {
+        const toggleNav = () => {
+            const open = body.classList.toggle('nav-open');
+            mobileMenuBtn.setAttribute('aria-expanded', open);
+            if (open) window.scrollTo({ top: 0 });
+        };
+        mobileMenuBtn.addEventListener('click', toggleNav);
+        nav.addEventListener('click', (e) => { if (e.target === nav) toggleNav(); });
+        nav.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => { if(body.classList.contains('nav-open')) toggleNav(); });
+        });
+    }
 
     // 3. Плавно превъртане
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {

@@ -1,7 +1,22 @@
-import { initNavMenu } from './navMenu.js';
-
 export function initBasicNav() {
-  initNavMenu();
+  const body = document.body;
+  const nav = document.getElementById('nav');
+  const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+  if (mobileMenuBtn && nav) {
+    const toggle = () => {
+      const open = body.classList.toggle('nav-open');
+      mobileMenuBtn.setAttribute('aria-expanded', open);
+      if (open) window.scrollTo({ top: 0 });
+    };
+    mobileMenuBtn.addEventListener('click', toggle);
+    nav.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (body.classList.contains('nav-open')) {
+          toggle();
+        }
+      });
+    });
+  }
   const themeToggleBtn = document.getElementById('theme-toggle');
   if (themeToggleBtn) {
     const updateIcon = () => {
