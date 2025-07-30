@@ -2,7 +2,8 @@
 import { selectors } from './uiElements.js';
 import { showLoading, showToast, openModal as genericOpenModal, closeModal as genericCloseModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
-import { currentUserId } from './app.js'; // Accessing currentUserId from app.js
+import { currentUserId, refreshDashboardData, fullDashboardData } from './app.js'; // Accessing currentUserId from app.js
+import { updateMacroChart } from './macroChart.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 
 let extraMealFormLoaded = false;
@@ -350,6 +351,12 @@ export async function handleExtraMealFormSubmit(event) {
         const result = await response.json();
         if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
         showToast(result.message || "Храненето е записано!", false);
+        await refreshDashboardData();
+        updateMacroChart({
+            target: fullDashboardData.planData?.caloriesMacros,
+            plan: fullDashboardData.planData?.caloriesMacros,
+            current: fullDashboardData.planData?.caloriesMacros
+        });
         genericCloseModal('extraMealEntryModal');
     } catch (error) {
         showToast(`Грешка: ${error.message}`, true);
