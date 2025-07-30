@@ -1,5 +1,10 @@
 import { loadConfig, saveConfig } from './adminConfig.js';
 import { colorGroups } from './themeConfig.js';
+import {
+  getSavedThemes as loadThemes,
+  storeThemes as saveThemes,
+  populateThemeSelect as fillThemeSelect
+} from './themeStorage.js';
 
 const inputs = {};
 
@@ -74,28 +79,15 @@ function getCurrentColor(key) {
 }
 
 function getSavedThemes() {
-  try {
-    return JSON.parse(localStorage.getItem('colorThemes') || '{}');
-  } catch {
-    return {};
-  }
+  return loadThemes();
 }
 
 function storeThemes(themes) {
-  localStorage.setItem('colorThemes', JSON.stringify(themes));
+  saveThemes(themes);
 }
 
 function populateThemeSelect() {
-  const select = document.getElementById(themeSelectId);
-  if (!select) return;
-  select.innerHTML = '';
-  const themes = getSavedThemes();
-  Object.keys(themes).sort().forEach(name => {
-    const opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = name;
-    select.appendChild(opt);
-  });
+  fillThemeSelect(themeSelectId);
 }
 
 function saveTheme() {
