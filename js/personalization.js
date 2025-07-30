@@ -1,6 +1,11 @@
 // personalization.js - Настройки на основни цветове за потребителя
 import { colorGroups, sampleThemes } from './themeConfig.js';
 import { loadAndApplyColors } from './uiHandlers.js';
+import {
+  getSavedThemes as loadThemes,
+  storeThemes as saveThemes,
+  populateThemeSelect as fillThemeSelect
+} from './themeStorage.js';
 
 const inputs = {};
 let activeGroup = 'Dashboard';
@@ -42,30 +47,15 @@ function getCurrentColor(key) {
 }
 
 function getSavedThemes(groupName, variant = activeVariant) {
-  const key = getStorageKey(groupName, variant);
-  try {
-    return JSON.parse(localStorage.getItem(key) || '{}');
-  } catch {
-    return {};
-  }
+  return loadThemes(getStorageKey(groupName, variant));
 }
 
 function storeThemes(groupName, variant, themes) {
-  const key = getStorageKey(groupName, variant);
-  localStorage.setItem(key, JSON.stringify(themes));
+  saveThemes(getStorageKey(groupName, variant), themes);
 }
 
 export function populateThemeSelect(groupName, variant = activeVariant) {
-  const select = document.getElementById('themeSelect');
-  if (!select) return;
-  select.innerHTML = '';
-  const themes = getSavedThemes(groupName, variant);
-  Object.keys(themes).sort().forEach(name => {
-    const opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = name;
-    select.appendChild(opt);
-  });
+  fillThemeSelect('themeSelect', getStorageKey(groupName, variant));
 }
 
 export function saveNamedTheme(groupName, name, variant = activeVariant) {
