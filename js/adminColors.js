@@ -15,8 +15,10 @@ function getAllVars() {
 function parseDefaultThemes(css, keys) {
   const light = {};
   const dark = {};
+  const vivid = {};
   const rootMatch = css.match(/:root\s*{([^}]*)}/s);
   const darkMatch = css.match(/body\.dark-theme\s*{([^}]*)}/s);
+  const vividMatch = css.match(/body\.vivid-theme\s*{([^}]*)}/s);
   if (rootMatch) {
     rootMatch[1].split(';').forEach(line => {
       const m = line.match(/--([a-zA-Z0-9-]+)\s*:\s*([^;]+)/);
@@ -29,7 +31,13 @@ function parseDefaultThemes(css, keys) {
       if (m && keys.includes(m[1])) dark[m[1]] = m[2].trim();
     });
   }
-  return { light, dark };
+  if (vividMatch) {
+    vividMatch[1].split(';').forEach(line => {
+      const m = line.match(/--([a-zA-Z0-9-]+)\s*:\s*([^;]+)/);
+      if (m && keys.includes(m[1])) vivid[m[1]] = m[2].trim();
+    });
+  }
+  return { light, dark, vivid };
 }
 
 function createInput(item, container) {
@@ -199,7 +207,10 @@ export async function initColorSettings() {
   let changed = false;
   if (!stored.Light) { stored.Light = defaults.light; changed = true; }
   if (!stored.Dark) { stored.Dark = defaults.dark; changed = true; }
-  if (!stored.Vivid) { stored.Vivid = vividTheme; changed = true; }
+  if (!stored.Vivid) {
+    stored.Vivid = Object.keys(defaults.vivid).length ? defaults.vivid : vividTheme;
+    changed = true;
+  }
   if (changed) storeThemes(stored);
   const saveBtn = document.getElementById('saveColorConfig');
   populateThemeSelect();
