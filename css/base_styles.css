@@ -12,6 +12,7 @@
   --primary-color: #3A506B;
   --secondary-color: #5BC0BE;
   --accent-color: #778DA9;
+  --accent-opacity: 1;
   --tertiary-color: #CBBADD;
 
   --text-color-primary: #2c3e50;
@@ -20,12 +21,18 @@
   --text-color-on-primary: #FFFFFF;
   --text-color-on-secondary: #FFFFFF;
   --text-color-disabled: #6c757d;
+  --font-color-primary: var(--text-color-primary);
+  --font-color-secondary: var(--text-color-secondary);
+  --font-color-muted: var(--text-color-muted);
+  --font-color-on-primary: var(--text-color-on-primary);
 
   --bg-color: #F0F4F8;
   --bg-gradient: linear-gradient(135deg, #e6eff5 0%, #f0f4f8 100%);
   --surface-background: #FFFFFF;
   --surface-background-rgb: 255,255,255; /* За rgba overlay */
-  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-bg: #ffffff;
+  --card-bg-rgb: 255,255,255;
+  --card-bg-opacity: 0.85;
   --glass-blur: 8px;
 
   --border-color: #d0d8e0;
@@ -135,6 +142,7 @@ body.dark-theme {
   --primary-color: #84A98C;
   --secondary-color: #E4725C;
   --accent-color: #B5A3C3;
+  --accent-opacity: 1;
   --tertiary-color: #8E6CC3;
 
   --text-color-primary: #F0F2F5;
@@ -143,12 +151,22 @@ body.dark-theme {
   --text-color-on-primary: #1C1F2E;
   --text-color-on-secondary: #FFFFFF;
   --text-color-disabled: #adb5bd;
+  --font-color-primary: var(--text-color-primary);
+  --font-color-secondary: var(--text-color-secondary);
+  --font-color-muted: var(--text-color-muted);
+  --font-color-on-primary: var(--text-color-on-primary);
+  --font-color-primary: var(--text-color-primary);
+  --font-color-secondary: var(--text-color-secondary);
+  --font-color-muted: var(--text-color-muted);
+  --font-color-on-primary: var(--text-color-on-primary);
 
   --bg-color: #1C1F2E;
   --bg-gradient: linear-gradient(135deg, #1C1F2E 0%, #252A41 100%);
   --surface-background: #252A41;
   --surface-background-rgb: 37,42,65; /* За rgba overlay */
-  --card-bg: rgba(37, 42, 65, 0.75);
+  --card-bg: #252A41;
+  --card-bg-rgb: 37,42,65;
+  --card-bg-opacity: 0.75;
   --glass-blur: 12px;
 
   --border-color: #34374B;
@@ -213,6 +231,7 @@ body.vivid-theme {
   --primary-color: #5BC0BE;
   --secondary-color: #FFD166;
   --accent-color: #FF6B6B;
+  --accent-opacity: 1;
   --tertiary-color: #FF9C9C;
 
   --text-color-primary: #F0F2F5;
@@ -226,7 +245,9 @@ body.vivid-theme {
   --bg-gradient: linear-gradient(135deg, #1C1F2E 0%, #252A41 100%);
   --surface-background: #252A41;
   --surface-background-rgb: 37,42,65; /* За rgba overlay */
-  --card-bg: rgba(37, 42, 65, 0.75);
+  --card-bg: #252A41;
+  --card-bg-rgb: 37,42,65;
+  --card-bg-opacity: 0.75;
   --glass-blur: 12px;
 
   --border-color: #34374B;

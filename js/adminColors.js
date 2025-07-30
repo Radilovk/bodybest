@@ -9,7 +9,7 @@ async function fetchBaseStyles() {
 }
 
 function getAllVars() {
-  return colorGroups.flatMap(g => g.items.map(it => it.var));
+  return colorGroups.flatMap(g => g.items.filter(it => it.type !== 'range').map(it => it.var));
 }
 
 function parseDefaultThemes(css, keys) {
@@ -37,7 +37,14 @@ function createInput(item, container) {
   label.textContent = item.label || item.var;
   if (item.description) label.title = item.description;
   const input = document.createElement('input');
-  input.type = 'color';
+  if (item.type === 'range') {
+    input.type = 'range';
+    input.min = '0';
+    input.max = '1';
+    input.step = '0.05';
+  } else {
+    input.type = 'color';
+  }
   input.id = `${item.var}Input`;
   label.appendChild(input);
   container.appendChild(label);
@@ -210,6 +217,7 @@ export async function initColorSettings() {
       if (!el) return;
       const current = getCurrentColor(k);
       el.value = colors[k] || current;
+      if (el.type === 'range' && !el.value) el.value = 1;
       setCssVar(k, el.value);
       el.addEventListener('input', () => setCssVar(k, el.value));
     });
@@ -219,6 +227,7 @@ export async function initColorSettings() {
       if (!el) return;
       const current = getCurrentColor(k);
       el.value = current;
+      if (el.type === 'range' && !el.value) el.value = 1;
       el.addEventListener('input', () => setCssVar(k, el.value));
     });
   }

@@ -186,6 +186,7 @@ export function populate(groupName, variant = activeVariant) {
       const el = inputs[`${groupName}-${item.var}-${variant}`];
       if (!el) return;
       el.value = custom[item.var] || getCurrentColor(item.var);
+      if (el.type === 'range' && !el.value) el.value = 1;
     });
   });
   applyAndStore(groupName, variant);
@@ -243,7 +244,14 @@ function createTabContents(parent) {
           const label = document.createElement('label');
           label.textContent = item.label || item.var;
           const input = document.createElement('input');
-          input.type = 'color';
+          if (item.type === 'range') {
+            input.type = 'range';
+            input.min = '0';
+            input.max = '1';
+            input.step = '0.05';
+          } else {
+            input.type = 'color';
+          }
           input.id = `${name}-${item.var}-${v}`;
           wrap.appendChild(label);
           wrap.appendChild(input);
