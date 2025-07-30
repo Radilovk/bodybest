@@ -62,7 +62,11 @@ describe('adminColors.initColorSettings', () => {
       saveConfig: mockSave
     }));
     global.fetch = jest.fn().mockResolvedValue({
-      text: async () => ':root{--primary-color:#000;--secondary-color:#000;--code-bg:#ccc;--code-text-primary:#111;--code-accent:#222;}body.dark-theme{--primary-color:#fff;--secondary-color:#fff;--code-bg:#ddd;--code-text-primary:#eee;--code-accent:#bbb;}'
+      text: async () => (
+        ':root{--primary-color:#000;--code-bg:#ccc;}' +
+        'body.dark-theme{--primary-color:#fff;--code-bg:#ddd;}' +
+        'body.vivid-theme{--primary-color:#f00;--code-bg:#eee;}'
+      )
     });
     ({ initColorSettings } = await import('../adminColors.js'));
   });
@@ -121,11 +125,34 @@ describe('adminColors.initColorSettings', () => {
     const themes = JSON.parse(localStorage.getItem('colorThemes'));
     expect(themes.Light['primary-color']).toBe('#000');
     expect(themes.Dark['primary-color']).toBe('#fff');
-    expect(themes.Vivid['primary-color']).toBe('#5BC0BE');
+    expect(themes.Vivid['primary-color']).toBe('#f00');
     expect(themes.Light['code-bg']).toBe('#ccc');
     expect(themes.Dark['code-bg']).toBe('#ddd');
+    expect(themes.Vivid['code-bg']).toBe('#eee');
     const opts = Array.from(document.getElementById('savedThemes').options).map(o => o.value);
     expect(opts).toEqual(expect.arrayContaining(['Light', 'Dark', 'Vivid']));
+  });
+
+  test('apply built-in themes updates inputs', async () => {
+    mockLoad.mockResolvedValue({ colors: {} });
+    await initColorSettings();
+    const select = document.getElementById('savedThemes');
+    const applyBtn = document.getElementById('applyThemeLocal');
+
+    select.value = 'Dark';
+    applyBtn.click();
+    expect(document.getElementById('primary-colorInput').value).toBe('#fff');
+    expect(document.getElementById('code-bgInput').value).toBe('#ddd');
+
+    select.value = 'Vivid';
+    applyBtn.click();
+    expect(document.getElementById('primary-colorInput').value).toBe('#f00');
+    expect(document.getElementById('code-bgInput').value).toBe('#eee');
+
+    select.value = 'Light';
+    applyBtn.click();
+    expect(document.getElementById('primary-colorInput').value).toBe('#000');
+    expect(document.getElementById('code-bgInput').value).toBe('#ccc');
   });
 });
 
