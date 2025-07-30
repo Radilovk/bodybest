@@ -31,6 +31,11 @@
         color: var(--code-accent);
       }
     </style>
+    <!-- Прилагаме записаните в админ панела цветове -->
+    <script type="module">
+      import { loadAndApplyColors } from './js/uiHandlers.js';
+      loadAndApplyColors();
+    </script>
     <!-- Chart.js - зарежда се в края на body за по-добра производителност -->
   </head>
   <body class="code-page">
