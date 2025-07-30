@@ -3,17 +3,26 @@ export function initBasicNav() {
   const nav = document.getElementById('nav');
   const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
   if (mobileMenuBtn && nav) {
+    const close = () => {
+      body.classList.remove('nav-open');
+      mobileMenuBtn.setAttribute('aria-expanded', 'false');
+    };
     const toggle = () => {
       const open = body.classList.toggle('nav-open');
       mobileMenuBtn.setAttribute('aria-expanded', open);
     };
     mobileMenuBtn.addEventListener('click', toggle);
+    document.addEventListener('click', e => {
+      if (
+        body.classList.contains('nav-open') &&
+        !nav.contains(e.target) &&
+        e.target !== mobileMenuBtn
+      ) {
+        close();
+      }
+    });
     nav.querySelectorAll('.nav-link').forEach(link => {
-      link.addEventListener('click', () => {
-        if (body.classList.contains('nav-open')) {
-          toggle();
-        }
-      });
+      link.addEventListener('click', close);
     });
   }
   const themeToggleBtn = document.getElementById('theme-toggle');
