@@ -2,7 +2,8 @@
    5. КАРТИ И АКОРДЕОНИ
    ========================================================================== */
 .card {
-  background: var(--card-bg); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
+  background: rgba(var(--card-bg-rgb), var(--card-bg-opacity));
+  backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--radius-lg); box-shadow: var(--shadow-soft);
   padding: var(--space-lg); border: 1px solid var(--border-color-soft);
   margin-bottom: var(--space-lg);
