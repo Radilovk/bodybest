@@ -12,7 +12,8 @@ let activeVariant = document.body.classList.contains('dark-theme')
 
 const variants = {
   light: 'Светла',
-  dark: 'Тъмна'
+  dark: 'Тъмна',
+  vivid: 'Ярка'
 };
 
 const storageMap = {
@@ -138,7 +139,7 @@ function ensureSampleThemes() {
     Quest: sampleThemes.quest
   };
   Object.entries(map).forEach(([group, samples]) => {
-    ['light', 'dark'].forEach(variant => {
+    Object.keys(variants).forEach(variant => {
       const themes = getSavedThemes(group, variant);
       let changed = false;
       Object.entries(samples || {}).forEach(([name, t]) => {
