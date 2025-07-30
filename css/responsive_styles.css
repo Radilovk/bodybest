@@ -55,6 +55,7 @@
 
   nav.tabs.styled-tabs .tab-btn {
     padding: 0.3rem 0.15rem;
+    gap: 0.1rem;
   }
   nav.tabs.styled-tabs .tab-btn .tab-icon {
     font-size: 1.2em;
@@ -186,6 +187,7 @@
 
   nav.tabs.styled-tabs .tab-btn {
     padding: 0.35rem 0.15rem;
+    gap: 0.1rem;
   }
   nav.tabs.styled-tabs .tab-btn .tab-icon {
     font-size: 1.1em;
