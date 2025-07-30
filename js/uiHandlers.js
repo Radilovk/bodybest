@@ -7,6 +7,7 @@ import {
     setActiveTooltip // function from app.js to update activeTooltip state
 } from './app.js';
 import { trackerInfoTexts, detailedMetricInfoTexts, mainIndexInfoTexts } from './uiElements.js';
+import { colorGroups } from './themeConfig.js';
 import { capitalizeFirstLetter, safeGet, escapeHtml } from './utils.js';
 
 // Продължителност на анимацията при скриване/показване на модали
@@ -14,6 +15,18 @@ const MODAL_TRANSITION_MS = 300;
 
 // Variable to hold the toast timeout ID, managed locally within this module
 let toastTimeoutUiHandlers;
+
+const colorInfoTexts = {};
+colorGroups.forEach(group => {
+    group.items.forEach(item => {
+        if (item.description) {
+            colorInfoTexts[item.var] = {
+                title: item.label || item.var,
+                text: item.description
+            };
+        }
+    });
+});
 
 
 export function toggleMenu() {
@@ -235,6 +248,10 @@ export function openInfoModalWithDetails(key, type) {
         if (metricInfo?.levels) {
             body += "\n\nСтойности:\n" + Object.values(metricInfo.levels).join("\n");
         }
+    } else if (type === 'colorVar') {
+        const info = colorInfoTexts[key];
+        title = info?.title || key;
+        body = info?.text || 'Няма допълнителна информация.';
     }
     const escapedTitle = escapeHtml(title);
     const escapedBody = escapeHtml(body).replace(/\n/g, '<br>');

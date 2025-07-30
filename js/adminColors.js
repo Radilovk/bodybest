@@ -69,7 +69,9 @@ function createInput(item, container) {
   infoBtn.type = 'button';
   infoBtn.className = 'button-icon-only info-btn';
   infoBtn.innerHTML = '<svg class="icon"><use href="#icon-info"></use></svg>';
-  infoBtn.title = item.description || 'Цвят на елемент';
+  infoBtn.dataset.key = item.var;
+  infoBtn.dataset.type = 'colorVar';
+  infoBtn.setAttribute('aria-label', `Информация за ${item.label || item.var}`);
   label.appendChild(infoBtn);
   const input = document.createElement('input');
   if (item.type === 'range') {

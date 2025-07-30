@@ -284,7 +284,7 @@ function handleDelegatedClicks(event) {
     const target = event.target;
     if (target.closest('.modal-content') && !target.closest('[data-modal-close]')) return;
 
-    const infoButton = target.closest('button.info, button.metric-info-btn');
+    const infoButton = target.closest('button.info, button.metric-info-btn, button.info-btn');
     if (infoButton) {
         event.stopPropagation();
         let type = null; let key = null;
@@ -295,6 +295,9 @@ function handleDelegatedClicks(event) {
                 type = 'trackerMetricInfo';
                 key = label.dataset.tooltipKey;
             }
+        } else if (infoButton.classList.contains('info-btn')) {
+            type = infoButton.dataset.type || 'colorVar';
+            key = infoButton.dataset.key;
         }
         if (type && key) openInfoModalWithDetails(key, type);
         return;
