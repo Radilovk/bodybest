@@ -107,8 +107,32 @@ nav ul li a.active::after { width: 100%; }
 #theme-toggle { background: none; border: none; color: var(--secondary-color); width: 40px; height: 40px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; display: grid; place-items: center; transition: var(--transition); }
 #theme-toggle:hover { color: var(--primary-color); transform: scale(1.1) rotate(-15deg); background-color: rgba(var(--primary-rgb), 0.1); }
 .dark-theme #theme-toggle { color: var(--light-text); }
-.mobile-menu-btn { display: none; background: none; border: none; font-size: 1.8rem; color: var(--secondary-color); cursor: pointer; z-index: 1001; }
+.mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    color: var(--secondary-color);
+    cursor: pointer;
+    z-index: 1200;
+}
 .dark-theme .mobile-menu-btn { color: var(--light-text); }
+
+.nav-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    z-index: 1000;
+}
+.nav-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
 
 /* 5. СЕКЦИИ НА СТРАНИЦАТА (Hero, Process, Tech, Features, Programs, CTA) - ОТ ai_studio_code.css */
 /* Hero */
@@ -202,14 +226,21 @@ footer { background: var(--dark-bg); color: var(--light-text); padding: 80px 0 3
     body.nav-open { overflow: hidden; }
     .section-title h2 { font-size: 2rem; }
     .cta h2 { font-size: 2.2rem; }
-    .mobile-menu-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; }
+    .mobile-menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        z-index: 1200;
+    }
     nav {
         position: fixed;
-        inset: 0;
-        left: -100%;
-        width: 100%;
-        height: 100vh;
-        height: 100dvh;
+        top: 0;
+        bottom: 0;
+        left: -80%;
+        width: 80%;
+        max-width: 320px;
         background: var(--card-bg);
         backdrop-filter: blur(10px);
         display: flex;
