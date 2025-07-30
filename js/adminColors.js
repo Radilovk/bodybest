@@ -6,6 +6,7 @@ import {
   populateThemeSelect as fillThemeSelect
 } from './themeStorage.js';
 import { hexToRgb, contrastRatio } from './utils.js';
+import { showTrackerTooltip, hideTrackerTooltip } from './uiHandlers.js';
 
 const inputs = {};
 const contrastPairs = [
@@ -70,6 +71,17 @@ function createInput(item, container) {
   infoBtn.className = 'button-icon-only info-btn';
   infoBtn.innerHTML = '<svg class="icon"><use href="#icon-info"></use></svg>';
   infoBtn.title = item.description || 'Цвят на елемент';
+  if (item.description) {
+    const showTip = () => showTrackerTooltip(infoBtn, item.description);
+    infoBtn.addEventListener('pointerenter', showTip);
+    infoBtn.addEventListener('focus', showTip);
+    infoBtn.addEventListener('touchstart', showTip, { passive: true });
+    const hideTip = () => hideTrackerTooltip();
+    infoBtn.addEventListener('pointerleave', hideTip);
+    infoBtn.addEventListener('blur', hideTip);
+    infoBtn.addEventListener('touchend', hideTip);
+    infoBtn.addEventListener('touchcancel', hideTip);
+  }
   label.appendChild(infoBtn);
   const input = document.createElement('input');
   if (item.type === 'range') {
