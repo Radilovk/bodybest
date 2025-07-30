@@ -55,7 +55,8 @@ describe('adminColors.initColorSettings', () => {
       <button id="saveThemeLocal"></button>
       <select id="savedThemes"></select>
       <button id="applyThemeLocal"></button>
-      <button id="deleteThemeLocal"></button>`;
+      <button id="deleteThemeLocal"></button>
+      <button id="renameThemeLocal"></button>`;
     mockLoad = jest.fn().mockResolvedValue({ colors: { 'primary-color': '#111111', 'secondary-color': '#222222' } });
     mockSave = jest.fn().mockResolvedValue({});
     jest.unstable_mockModule('../adminConfig.js', () => ({
@@ -76,6 +77,7 @@ describe('adminColors.initColorSettings', () => {
     if (styleEl) styleEl.remove();
     document.documentElement.style.cssText = '';
     document.body.style.cssText = '';
+    delete global.prompt;
   });
 
   test('initColorSettings loads config and sets CSS vars', async () => {
@@ -151,6 +153,20 @@ describe('adminColors.initColorSettings', () => {
     applyBtn.click();
     expect(document.getElementById('primary-colorInput').value).toBe('#000');
     expect(document.getElementById('code-bgInput').value).toBe('#ccc');
+  });
+
+  test('selected theme can be renamed', async () => {
+    mockLoad.mockResolvedValue({ colors: {} });
+    await initColorSettings();
+    const select = document.getElementById('savedThemes');
+    const renameBtn = document.getElementById('renameThemeLocal');
+    select.value = 'Light';
+    global.prompt = jest.fn().mockReturnValue('Bright');
+    renameBtn.click();
+    const themes = JSON.parse(localStorage.getItem('colorThemes'));
+    expect(themes.Bright).toBeDefined();
+    expect(themes.Light).toBeUndefined();
+    expect(select.querySelector('option[value="Bright"]')).not.toBeNull();
   });
 });
 
