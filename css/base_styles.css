@@ -429,6 +429,19 @@ button:disabled, .button:disabled {
 body.dark-theme .button-icon-only:hover { background-color: rgba(255,255,255,0.08); }
 .button-icon-only svg.icon { width: 1.5em; height: 1.5em; }
 
+.info-btn {
+  padding: 0 var(--space-xs);
+  color: var(--icon-color-muted);
+  line-height: 1;
+  margin-left: var(--space-xs);
+  background: none;
+  border: none;
+  cursor: help;
+}
+
+.info-btn svg.icon { width: 1em; height: 1em; }
+.info-btn:hover { color: var(--primary-color); }
+
 .admin-reply-btn {
   padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--primary-color);

@@ -504,7 +504,7 @@ function populateDashboardLog(dailyLogs, currentStatus, initialData) {
     weightMetricDiv.innerHTML = `
         <label for="dailyLogWeightInput" data-tooltip-key="weight" title="${weightLabelTooltip}">
             <span class="metric-icon"><svg class="icon"><use href="#icon-scale"></use></svg></span> Тегло (кг):
-            <button class="button-icon-only metric-info-btn" aria-label="Информация за тегло">
+            <button class="button-icon-only info-btn metric-info-btn" aria-label="Информация за тегло">
                 <svg class="icon"><use href="#icon-info"></use></svg>
             </button>
         </label>
@@ -529,7 +529,7 @@ function populateDashboardLog(dailyLogs, currentStatus, initialData) {
             <label for="${metric.key}-rating-input" data-tooltip-key="${metric.key}" title="${labelTooltipText}">
                 <span class="metric-icon">${metric.icon}</span> ${metric.label}:
                 <span class="rating-value" id="${metric.key}-value">${currentValue}</span>
-                 <button class="button-icon-only metric-info-btn" aria-label="Информация за ${metric.label}">
+                 <button class="button-icon-only info-btn metric-info-btn" aria-label="Информация за ${metric.label}">
                     <svg class="icon"><use href="#icon-info"></use></svg>
                 </button>
             </label>
