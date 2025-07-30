@@ -79,10 +79,6 @@ export async function toggleTheme() {
     localStorage.setItem('theme', newTheme);
     applyTheme(newTheme);
     updateThemeButtonText();
-    const { applyStoredTheme } = await import('./personalization.js');
-    applyStoredTheme('Dashboard');
-    if (document.body.id === 'body') applyStoredTheme('Index');
-    if (document.body.id === 'questPage') applyStoredTheme('Quest');
 }
 
 export function updateThemeButtonText() {
