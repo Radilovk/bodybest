@@ -84,7 +84,7 @@ export const colorGroups = [
     items: [
       { var: 'bg-primary', label: 'Фон основен' },
       { var: 'bg-secondary', label: 'Фон втори' },
-      { var: 'surface-background', label: 'Фон на съдържание' },
+      { var: 'bg-surface', label: 'Фон на съдържание' },
       { var: 'accent-primary', label: 'Акцент' },
       { var: 'accent-secondary', label: 'Допълнителен акцент' },
       { var: 'text-primary', label: 'Основен текст' },
