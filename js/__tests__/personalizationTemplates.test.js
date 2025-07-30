@@ -41,3 +41,9 @@ test('saves, loads and deletes theme', () => {
   deleteNamedTheme('Dashboard', 't1', 'light');
   expect(JSON.parse(localStorage.getItem('dashboardColorThemes.light')).t1).toBeUndefined();
 });
+
+test('variant navigation lists all three variants', () => {
+  const buttons = document.querySelectorAll('.variant-buttons button');
+  const labels = Array.from(buttons).map(b => b.textContent);
+  expect(labels).toEqual(expect.arrayContaining(['Светла', 'Тъмна', 'Ярка']));
+});
