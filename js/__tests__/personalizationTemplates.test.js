@@ -15,11 +15,17 @@ beforeEach(async () => {
   jest.unstable_mockModule('../uiHandlers.js', () => ({ loadAndApplyColors: jest.fn() }));
   jest.unstable_mockModule('../themeConfig.js', () => ({
     colorGroups: [
-      { name: 'Dashboard', items: [{ var: 'primary-color', label: '' }] },
+      { name: 'Dashboard', items: [
+        { var: 'primary-color', label: '' },
+        { var: 'progress-end-color', label: '' }
+      ] },
       { name: 'Code', items: [{ var: 'code-bg', label: '' }] }
     ],
     sampleThemes: {
-      dashboard: { Light: { 'primary-color': '#010101' } },
+      dashboard: { Light: {
+        'primary-color': '#010101',
+        'progress-end-color': '#030303'
+      } },
       code: { Light: { 'code-bg': '#020202' } }
     }
   }));
