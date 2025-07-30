@@ -5,8 +5,41 @@ import {
   storeThemes as saveThemes,
   populateThemeSelect as fillThemeSelect
 } from './themeStorage.js';
+import { hexToRgb, contrastRatio } from './utils.js';
 
 const inputs = {};
+const contrastPairs = [
+  ['text-color-primary', 'bg-color'],
+  ['text-color-secondary', 'bg-color'],
+  ['text-color-on-primary', 'primary-color'],
+  ['text-color-on-secondary', 'secondary-color']
+];
+
+function showContrastWarning(input, ratio) {
+  let span = input.parentNode.querySelector('.contrast-warning');
+  if (ratio < 4.5) {
+    if (!span) {
+      span = document.createElement('span');
+      span.className = 'contrast-warning';
+      span.style.color = 'red';
+      span.style.marginLeft = '6px';
+      input.insertAdjacentElement('afterend', span);
+    }
+    span.textContent = `\u26A0 Нисък контраст (${ratio.toFixed(1)})`;
+  } else if (span) {
+    span.remove();
+  }
+}
+
+function checkAllContrast() {
+  contrastPairs.forEach(([textVar, bgVar]) => {
+    const textInput = inputs[textVar];
+    const bgInput = inputs[bgVar];
+    if (!textInput || !bgInput) return;
+    const ratio = contrastRatio(hexToRgb(textInput.value), hexToRgb(bgInput.value));
+    if (ratio !== null) showContrastWarning(textInput, ratio);
+  });
+}
 
 function getAllVars() {
   return colorGroups.flatMap(g => g.items.filter(it => it.type !== 'range').map(it => it.var));
@@ -246,7 +279,10 @@ export async function initColorSettings() {
       el.value = colors[k] || current;
       if (el.type === 'range' && !el.value) el.value = 1;
       setCssVar(k, el.value);
-      el.addEventListener('input', () => setCssVar(k, el.value));
+      el.addEventListener('input', () => {
+        setCssVar(k, el.value);
+        checkAllContrast();
+      });
     });
   } catch (err) {
     console.warn('Неуспешно зареждане на цветовете', err);
@@ -255,9 +291,14 @@ export async function initColorSettings() {
       const current = getCurrentColor(k);
       el.value = current;
       if (el.type === 'range' && !el.value) el.value = 1;
-      el.addEventListener('input', () => setCssVar(k, el.value));
+      el.addEventListener('input', () => {
+        setCssVar(k, el.value);
+        checkAllContrast();
+      });
     });
   }
+
+  checkAllContrast();
 
   saveBtn.addEventListener('click', async () => {
     const colors = {};

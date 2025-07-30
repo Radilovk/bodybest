@@ -189,3 +189,55 @@ export function lightenColor(color, percent = 0.1, fallback) {
     return `#${[nr, ng, nb].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
 
+
+/**
+ * Преобразува hex цвят към RGB обект.
+ * @param {string} hex Стойност като #rrggbb или #rgb.
+ * @returns {{r:number,g:number,b:number}|null} RGB компонентите или null.
+ */
+export function hexToRgb(hex) {
+    if (typeof hex !== 'string') return null;
+    const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
+    if (!m) return null;
+    let h = m[1];
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    const num = parseInt(h, 16);
+    return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255
+    };
+}
+
+/**
+ * Изчислява относителната яркост на RGB цвят.
+ * @param {string|{r:number,g:number,b:number}} color Hex низ или RGB обект.
+ * @returns {number|null} Яркост от 0 до 1 или null при невалиден вход.
+ */
+export function calcLuminance(color) {
+    const rgb = typeof color === 'string' ? hexToRgb(color) : color;
+    if (!rgb) return null;
+    const conv = v => {
+        const c = v / 255;
+        return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    };
+    const r = conv(rgb.r);
+    const g = conv(rgb.g);
+    const b = conv(rgb.b);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/**
+ * Изчислява контрастното съотношение между два цвята.
+ * @param {string|{r:number,g:number,b:number}} c1 Първият цвят.
+ * @param {string|{r:number,g:number,b:number}} c2 Вторият цвят.
+ * @returns {number|null} Съотношение или null при грешка.
+ */
+export function contrastRatio(c1, c2) {
+    const L1 = calcLuminance(c1);
+    const L2 = calcLuminance(c2);
+    if (L1 === null || L2 === null) return null;
+    const lighter = Math.max(L1, L2);
+    const darker = Math.min(L1, L2);
+    return (lighter + 0.05) / (darker + 0.05);
+}
