@@ -49,7 +49,7 @@ describe('handleSendEmailRequest and sendEmailUniversal', () => {
     expect(fetch).toHaveBeenCalledWith(
       'https://mybody.best/mailer/mail.php',
       expect.objectContaining({
-        body: JSON.stringify({ to: 'a@b.bg', subject: 'S', message: 'B', body: 'B' }),
+        body: JSON.stringify({ to: 'a@b.bg', subject: 'S', message: 'B', body: 'B', fromName: '' }),
         headers: { 'Content-Type': 'application/json' }
       })
     );
@@ -68,7 +68,7 @@ describe('handleSendEmailRequest and sendEmailUniversal', () => {
     expect(fetch).toHaveBeenCalledWith(
       'https://mybody.best/mailer/mail.php',
       expect.objectContaining({
-        body: JSON.stringify({ to: 't@e.com', subject: 'Hi', message: 'Body', body: 'Body' }),
+        body: JSON.stringify({ to: 't@e.com', subject: 'Hi', message: 'Body', body: 'Body', fromName: '' }),
         headers: { 'Content-Type': 'application/json' }
       })
     );

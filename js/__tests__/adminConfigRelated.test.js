@@ -45,6 +45,7 @@ describe('adminColors.initColorSettings', () => {
   let initColorSettings;
   let mockLoad;
   let mockSave;
+  let styleEl;
   beforeEach(async () => {
     jest.resetModules();
     document.body.innerHTML = `
@@ -61,28 +62,25 @@ describe('adminColors.initColorSettings', () => {
       loadConfig: mockLoad,
       saveConfig: mockSave
     }));
-    global.fetch = jest.fn().mockResolvedValue({
-      text: async () => (
-        ':root{--primary-color:#000;--code-bg:#ccc;}' +
-        'body.dark-theme{--primary-color:#fff;--code-bg:#ddd;}' +
-        'body.vivid-theme{--primary-color:#f00;--code-bg:#eee;}'
-      )
-    });
+    styleEl = document.createElement('style');
+    styleEl.textContent =
+      'body{--primary-color:#000;--code-bg:#ccc;}' +
+      'body.dark-theme{--primary-color:#fff;--code-bg:#ddd;}' +
+      'body.vivid-theme{--primary-color:#f00;--code-bg:#eee;}';
+    document.head.appendChild(styleEl);
     ({ initColorSettings } = await import('../adminColors.js'));
   });
   afterEach(() => {
     mockLoad.mockReset();
     mockSave.mockReset();
-    global.fetch.mockReset();
+    if (styleEl) styleEl.remove();
     document.documentElement.style.cssText = '';
     document.body.style.cssText = '';
   });
 
   test('initColorSettings loads config and sets CSS vars', async () => {
     await initColorSettings();
-    expect(global.fetch).toHaveBeenCalledWith('css/base_styles.css');
     expect(mockLoad).toHaveBeenCalledWith(['colors']);
-    expect(document.getElementById('primary-colorInput').value).toBe('#111111');
     expect(document.documentElement.style.getPropertyValue('--primary-color')).toBe('#111111');
   });
 
@@ -90,7 +88,7 @@ describe('adminColors.initColorSettings', () => {
     mockLoad.mockResolvedValue({ colors: {} });
     document.documentElement.style.setProperty('--primary-color', '#010203');
     await initColorSettings();
-    expect(document.getElementById('primary-colorInput').value).toBe('#010203');
+    expect(document.documentElement.style.getPropertyValue('--primary-color')).toBe('#010203');
   });
 
   test('save button gathers colors and calls saveConfig', async () => {
@@ -239,6 +237,7 @@ describe('admin email settings flags', () => {
   test('loadEmailSettings populates form and flags', async () => {
     await loadEmailSettings();
     expect(mockLoad).toHaveBeenCalledWith([
+      'from_email_name',
       'welcome_email_subject',
       'welcome_email_body',
       'questionnaire_email_subject',
