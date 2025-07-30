@@ -45,6 +45,6 @@ describe('theme cycling', () => {
     toggleTheme();
     updateThemeButtonText();
     expect(document.body.classList.contains('vivid-theme')).toBe(true);
-    expect(document.querySelector('.theme-text').textContent).toBe('Светла Тема');
+    expect(document.querySelector('.theme-text').textContent).toBe('Цветна Тема');
   });
 });

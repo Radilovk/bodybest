@@ -107,8 +107,13 @@ export function updateThemeButtonText() {
         dark: '<i class="bi bi-palette-fill"></i>',
         vivid: '<i class="bi bi-sun"></i>'
     };
-    if (themeTextSpan) themeTextSpan.textContent = labels[nextTheme];
-    if (themeIconSpan) themeIconSpan.innerHTML = icons[nextTheme];
+    if (current === 'vivid') {
+        if (themeTextSpan) themeTextSpan.textContent = 'Цветна Тема';
+        if (themeIconSpan) themeIconSpan.innerHTML = '<i class="bi bi-palette"></i>';
+    } else {
+        if (themeTextSpan) themeTextSpan.textContent = labels[nextTheme];
+        if (themeIconSpan) themeIconSpan.innerHTML = icons[nextTheme];
+    }
 }
 
 export async function loadAndApplyColors() {
