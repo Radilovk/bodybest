@@ -23,8 +23,7 @@ export const colorGroups = [
       { var: 'bg-color', label: 'Фон на страницата' },
       { var: 'surface-background', label: 'Фон на съдържание' },
       { var: 'card-bg', label: 'Фон на карти' },
-      { var: 'input-bg', label: 'Фон на полета' },
-      { var: 'bg-gradient', label: 'Градиент на фон', type: 'text' }
+      { var: 'input-bg', label: 'Фон на полета' }
     ]
   },
   {
@@ -42,16 +41,7 @@ export const colorGroups = [
     name: 'Прогрес барове',
     items: [
       { var: 'progress-end-color', label: 'Краен цвят на прогрес' },
-      { var: 'progress-bar-bg-empty', label: 'Празен прогрес бар' },
-      { var: 'progress-gradient', label: 'Градиент на прогрес', type: 'text' }
-    ]
-  },
-  {
-    name: 'Прозрачности',
-    items: [
-      { var: 'card-bg-opacity', label: 'Прозрачност на карти', type: 'range', min: 0, max: 1, step: 0.05 },
-      { var: 'menu-overlay-opacity', label: 'Навигационно затъмнение', type: 'range', min: 0, max: 1, step: 0.05 },
-      { var: 'modal-overlay-opacity', label: 'Модално затъмнение', type: 'range', min: 0, max: 1, step: 0.05 }
+      { var: 'progress-bar-bg-empty', label: 'Празен прогрес бар' }
     ]
   },
   {
