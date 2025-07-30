@@ -53,11 +53,12 @@ const exportThemeBtnId = 'exportTheme';
 const importThemeInputId = 'importTheme';
 const importThemeBtnId = 'importThemeBtn';
 
+// По-ярка тема, базирана на основните цветове на таблото
 const vividTheme = {
-  'primary-color': '#00FFFF',
-  'secondary-color': '#FFFF00',
-  'accent-color': '#008080',
-  'tertiary-color': '#AAAA55',
+  'primary-color': '#5BC0BE',
+  'secondary-color': '#FFD166',
+  'accent-color': '#FF6B6B',
+  'tertiary-color': '#FF9C9C',
   'progress-end-color': '#80FF80'
 };
 

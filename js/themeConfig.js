@@ -107,11 +107,11 @@ export const sampleThemes = {
       'macro-stroke-color': '#444444'
     },
     Vivid: {
-      'primary-color': '#ff0066',
-      'secondary-color': '#ffcc00',
-      'macro-protein-color': '#0099ff',
-      'macro-carbs-color': '#ff0066',
-      'macro-fat-color': '#ffcc00',
+      'primary-color': '#5BC0BE',
+      'secondary-color': '#FFD166',
+      'macro-protein-color': '#5BC0BE',
+      'macro-carbs-color': '#FF6B6B',
+      'macro-fat-color': '#FFD166',
       'macro-ring-highlight': '#ffffff',
       'macro-stroke-color': '#333333'
     }
