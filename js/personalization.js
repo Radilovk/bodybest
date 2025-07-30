@@ -4,11 +4,16 @@ import { loadAndApplyColors } from './uiHandlers.js';
 
 const inputs = {};
 let activeGroup = 'Dashboard';
-let activeVariant = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+let activeVariant = document.body.classList.contains('dark-theme')
+  ? 'dark'
+  : document.body.classList.contains('vivid-theme')
+    ? 'vivid'
+    : 'light';
 
 const variants = {
   light: 'Светла',
-  dark: 'Тъмна'
+  dark: 'Тъмна',
+  vivid: 'Ярка'
 };
 
 const storageMap = {
@@ -134,7 +139,7 @@ function ensureSampleThemes() {
     Quest: sampleThemes.quest
   };
   Object.entries(map).forEach(([group, samples]) => {
-    ['light', 'dark'].forEach(variant => {
+    Object.keys(variants).forEach(variant => {
       const themes = getSavedThemes(group, variant);
       let changed = false;
       Object.entries(samples || {}).forEach(([name, t]) => {
@@ -292,7 +297,11 @@ export function switchVariant(groupName, variant) {
 export function applyStoredTheme(groupName) {
   const groups = getGroups(groupName);
   if (groups.length === 0) return;
-  const variant = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+  const variant = document.body.classList.contains('dark-theme')
+    ? 'dark'
+    : document.body.classList.contains('vivid-theme')
+      ? 'vivid'
+      : 'light';
   const key = getStorageKey(groupName, variant);
   const themes = JSON.parse(localStorage.getItem(key) || '{}');
   const custom = themes.Custom || {};
