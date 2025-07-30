@@ -184,14 +184,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Мобилно меню
     if (mobileMenuBtn && nav) {
+        const closeNav = () => {
+            body.classList.remove('nav-open');
+            mobileMenuBtn.setAttribute('aria-expanded', 'false');
+        };
         const toggleNav = () => {
-            body.classList.toggle('nav-open');
-            mobileMenuBtn.setAttribute('aria-expanded', body.classList.contains('nav-open'));
+            const open = body.classList.toggle('nav-open');
+            mobileMenuBtn.setAttribute('aria-expanded', open);
         };
         mobileMenuBtn.addEventListener('click', toggleNav);
-        nav.addEventListener('click', (e) => { if (e.target === nav) toggleNav(); });
+        document.addEventListener('click', (e) => {
+            if (body.classList.contains('nav-open') && !nav.contains(e.target) && e.target !== mobileMenuBtn) {
+                closeNav();
+            }
+        });
+        nav.addEventListener('click', (e) => { if (e.target === nav) closeNav(); });
         nav.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', () => { if(body.classList.contains('nav-open')) toggleNav(); });
+            link.addEventListener('click', closeNav);
         });
     }
 
