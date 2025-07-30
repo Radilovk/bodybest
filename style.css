@@ -238,8 +238,8 @@ footer { background: var(--dark-bg); color: var(--light-text); padding: 80px 0 3
         position: fixed;
         top: 0;
         bottom: 0;
-        right: -65%;
-        width: 65%;
+        left: -80%;
+        width: 80%;
         max-width: 320px;
         background: var(--card-bg);
         backdrop-filter: blur(10px);
@@ -249,11 +249,10 @@ footer { background: var(--dark-bg); color: var(--light-text); padding: 80px 0 3
         overflow-y: auto;
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.4s ease, right 0.4s ease, visibility 0.4s;
+        transition: opacity 0.4s ease, left 0.4s ease, visibility 0.4s;
         z-index: 1100;
-        left: auto;
     }
-    .nav-open nav { right: 0; opacity: 1; visibility: visible; }
+    .nav-open nav { left: 0; opacity: 1; visibility: visible; }
     nav ul { flex-direction: column; text-align: center; }
     nav ul li { margin: 15px 0; }
     nav ul li a { font-size: 1.8rem; }
