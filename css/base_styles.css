@@ -287,6 +287,15 @@ body.vivid-theme {
   --metric-value-group-bg-current: color-mix(in srgb, var(--surface-background) 90%, var(--secondary-color) 30%);
 }
 
+/* По-ярките основни цветове правят заглавията трудни за четене.
+   Смесваме ги с основния текстов цвят за по-добър контраст */
+body.vivid-theme h1,
+body.vivid-theme h2,
+body.vivid-theme h3,
+body.vivid-theme h4 {
+  color: color-mix(in srgb, var(--primary-color) 75%, var(--text-color-primary));
+}
+
 /* Глобален box-sizing */
 *, *::before, *::after { box-sizing: border-box; }
 html { font-size: 100%; scroll-behavior: smooth; }
