@@ -180,10 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 📜 ЛОГИКА ОТ ОРИГИНАЛНИЯ ЛЕНДИНГ (ai_studio_code.js) ---
 
-    // 1. Хедър ефект при скрол
-    window.addEventListener('scroll', () => {
-        if (header) header.classList.toggle('scrolled', window.scrollY > 50);
-    });
+    // 1. Премахнат скрол слушател, добавяме класа директно в HTML
 
     // 2. Мобилно меню
     if (mobileMenuBtn && nav) {
