@@ -6,9 +6,10 @@ import { apiEndpoints } from './config.js';
 (function applySavedTheme() {
   const saved = localStorage.getItem('theme') || 'system';
   const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  const theme = saved === 'system' ? system : saved;
-  document.body.classList.remove('light-theme', 'dark-theme');
-  document.body.classList.add(theme === 'dark' ? 'dark-theme' : 'light-theme');
+  let theme = saved === 'system' ? system : saved;
+  if (!['light', 'dark', 'vivid'].includes(theme)) theme = 'light';
+  document.body.classList.remove('light-theme', 'dark-theme', 'vivid-theme');
+  document.body.classList.add(theme === 'dark' ? 'dark-theme' : theme === 'vivid' ? 'vivid-theme' : 'light-theme');
 })();
 
 const form = document.getElementById('profileEditForm');

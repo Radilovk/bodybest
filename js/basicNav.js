@@ -27,22 +27,36 @@ export function initBasicNav() {
   }
   const themeToggleBtn = document.getElementById('theme-toggle');
   if (themeToggleBtn) {
+    const icons = {
+      light: '<i class="bi bi-moon-stars-fill"></i>',
+      dark: '<i class="bi bi-palette-fill"></i>',
+      vivid: '<i class="bi bi-brightness-high-fill"></i>'
+    };
+    const themeOrder = ['light', 'dark', 'vivid'];
+    const getCurrent = () =>
+      document.body.classList.contains('dark-theme')
+        ? 'dark'
+        : document.body.classList.contains('vivid-theme')
+        ? 'vivid'
+        : 'light';
+    const apply = t => {
+      document.body.classList.remove('light-theme', 'dark-theme', 'vivid-theme');
+      document.body.classList.add(
+        t === 'dark' ? 'dark-theme' : t === 'vivid' ? 'vivid-theme' : 'light-theme'
+      );
+    };
     const updateIcon = () => {
-      const dark = document.body.classList.contains('dark-theme');
-      themeToggleBtn.innerHTML = dark
-        ? '<i class="bi bi-brightness-high-fill"></i>'
-        : '<i class="bi bi-moon-stars-fill"></i>';
+      const next = themeOrder[(themeOrder.indexOf(getCurrent()) + 1) % themeOrder.length];
+      themeToggleBtn.innerHTML = icons[next];
     };
     const stored = localStorage.getItem('theme');
-    if (stored === 'dark' || stored === 'light') {
-      document.body.classList.add(stored === 'dark' ? 'dark-theme' : 'light-theme');
-    }
+    if (['light', 'dark', 'vivid'].includes(stored)) apply(stored);
     updateIcon();
     themeToggleBtn.addEventListener('click', () => {
-      document.body.classList.toggle('dark-theme');
-      document.body.classList.toggle('light-theme');
-      const isDark = document.body.classList.contains('dark-theme');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      const current = getCurrent();
+      const next = themeOrder[(themeOrder.indexOf(current) + 1) % themeOrder.length];
+      localStorage.setItem('theme', next);
+      apply(next);
       updateIcon();
     });
   }
