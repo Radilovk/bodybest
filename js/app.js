@@ -11,7 +11,6 @@ import {
     showLoading, showToast, updateTabsOverflowIndicator
 } from './uiHandlers.js';
 import { populateUI } from './populateUI.js';
-import { updateMacroChart } from './macroChart.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
 import { setupStaticEventListeners, setupDynamicEventListeners, initializeCollapsibleCards } from './eventListeners.js';
 import {
@@ -646,12 +645,6 @@ export async function handleSaveLog() { // Exported for eventListeners.js
                 }
             }
         }
-        await refreshDashboardData();
-        updateMacroChart({
-            target: fullDashboardData.planData?.caloriesMacros,
-            plan: fullDashboardData.planData?.caloriesMacros,
-            current: fullDashboardData.planData?.caloriesMacros
-        });
         populateUI();
         initializeAchievements(currentUserId);
         showToast(result.message || "Логът е запазен!", false);
@@ -692,21 +685,6 @@ export async function handleFeedbackFormSubmit(event) { // Exported for eventLis
     } finally {
         showLoading(false);
     }
-}
-
-export async function refreshDashboardData() {
-    if (!currentUserId) return null;
-    try {
-        const resp = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}`);
-        const data = await resp.json();
-        if (resp.ok && data.success) {
-            fullDashboardData = data;
-            return data;
-        }
-    } catch (err) {
-        console.error('refreshDashboardData error:', err);
-    }
-    return null;
 }
 
 

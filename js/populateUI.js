@@ -4,12 +4,10 @@ import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, getProgress
 import { generateId } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, planHasRecContent } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
-import { setChartInstance, setTargetData, setPlanData, setCurrentData, updateMacroChart } from './macroChart.js';
 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
 let pendingMacroData = null;
-let pendingMenuMacroData = null;
 
 export function populateUI() {
     const data = fullDashboardData; // Access global state
@@ -306,7 +304,6 @@ export function renderPendingMacroChart() {
         macroChartInstance = null;
     }
     const m = pendingMacroData;
-    const plan = pendingMenuMacroData || m;
     const ctx = canvas.getContext('2d');
     macroChartInstance = new Chart(ctx, {
         type: 'doughnut',
@@ -316,44 +313,16 @@ export function renderPendingMacroChart() {
                 `Въглехидрати (${m.carbs_percent}%)`,
                 `Мазнини (${m.fat_percent}%)`
             ],
-            datasets: [
-                {
-                    label: 'Цел (гр)',
-                    data: [m.protein_grams, m.carbs_grams, m.fat_grams],
-                    backgroundColor: [
-                        getCssVar('--macro-protein-color', 'rgb(54,162,235)') + '40',
-                        getCssVar('--macro-carbs-color', 'rgb(255,205,86)') + '40',
-                        getCssVar('--macro-fat-color', 'rgb(255,99,132)') + '40'
-                    ],
-                    borderWidth: 0,
-                    cutout: '80%'
-                },
-                {
-                    label: 'Меню (гр)',
-                    data: [plan.protein_grams, plan.carbs_grams, plan.fat_grams],
-                    backgroundColor: [
-                        getCssVar('--macro-protein-color', 'rgb(54,162,235)') + '80',
-                        getCssVar('--macro-carbs-color', 'rgb(255,205,86)') + '80',
-                        getCssVar('--macro-fat-color', 'rgb(255,99,132)') + '80'
-                    ],
-                    borderWidth: 0,
-                    cutout: '72%'
-                },
-                {
-                    label: 'Прием (гр)',
-                    data: [m.protein_grams, m.carbs_grams, m.fat_grams],
-                    backgroundColor: [
-                        getCssVar('--macro-protein-color', 'rgb(54,162,235)'),
-                        getCssVar('--macro-carbs-color', 'rgb(255,205,86)'),
-                        getCssVar('--macro-fat-color', 'rgb(255,99,132)')
-                    ],
-                    borderColor: getCssVar('--card-bg'),
-                    borderWidth: 4,
-                    borderRadius: 8,
-                    cutout: '65%',
-                    hoverOffset: 12
-                }
-            ]
+            datasets: [{
+                label: 'Разпределение на макроси',
+                data: [m.protein_grams, m.carbs_grams, m.fat_grams],
+                backgroundColor: [
+                    getCssVar('--macro-protein-color', 'rgb(54,162,235)'),
+                    getCssVar('--macro-carbs-color', 'rgb(255,205,86)'),
+                    getCssVar('--macro-fat-color', 'rgb(255,99,132)')
+                ],
+                hoverOffset: 4
+            }]
         },
         options: {
             responsive: true,
@@ -363,10 +332,6 @@ export function renderPendingMacroChart() {
             }
         }
     });
-    setChartInstance(macroChartInstance);
-    setTargetData(m);
-    setPlanData(plan);
-    setCurrentData(m);
     macroChartInstance.resize();
 }
 
@@ -391,11 +356,6 @@ function populateDashboardMacros(macros) {
         }
     }
     pendingMacroData = macros || null;
-    pendingMenuMacroData = macros || null;
-    if (macros) {
-        setTargetData(macros);
-        setPlanData(macros);
-    }
     if (macros) {
         const card = renderMacroAnalyticsCard(macros);
         selectors.analyticsCardsContainer.prepend(card);
