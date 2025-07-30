@@ -10,11 +10,11 @@
 
 /* 1. ПРОМЕНЛИВИ И ТЕМИ - ОТ ai_studio_code.css */
 :root {
-    --primary-color: #5BC0BE;
-    --secondary-color: #3A506B;
-    --accent-color: #7D9D9C; 
+    --primary-color: #00FFFF;
+    --secondary-color: #FFFF00;
+    --accent-color: #008080;
     --bg-color: #F0F4F8;
-    --bg-gradient: linear-gradient(135deg, #e9eff5 0%, #f0f4f8 100%);
+    --bg-gradient: linear-gradient(135deg, #00FFFF 0%, #FFFF00 100%);
     --card-bg: rgba(255, 255, 255, 0.8);
     --text-color-primary: #1b263b;
     --text-color-secondary: #415a77;
@@ -25,7 +25,7 @@
     --shadow-sm: 0 4px 8px rgba(58, 80, 107, 0.08);
     --shadow-md: 0 8px 20px rgba(58, 80, 107, 0.12);
     --shadow-lg: 0 15px 30px rgba(58, 80, 107, 0.18);
-    --primary-rgb: 91, 192, 190;
+    --primary-rgb: 0, 255, 255;
     --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     --radius-md: 16px;
     --radius-lg: 24px;
@@ -36,10 +36,11 @@
 }
 
 .dark-theme {
-    --secondary-color: #8fa6c9; 
-    --accent-color: #7D9D9C;
+    --primary-color: #00FFFF;
+    --secondary-color: #FFFF00;
+    --accent-color: #008080;
     --bg-color: #16213E;
-    --bg-gradient: linear-gradient(135deg, #16213E 0%, #1A1A2E 100%);
+    --bg-gradient: linear-gradient(135deg, #008080 0%, #AAAA55 100%);
     --card-bg: rgba(40, 40, 60, 0.75);
     --text-color-primary: #e0e6f0;
     --text-color-secondary: #a0b0c5;
