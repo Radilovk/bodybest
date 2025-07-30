@@ -240,6 +240,11 @@ function renderMacroAnalyticsCard(macros) {
     const canvas = document.createElement('canvas');
     canvas.id = 'macroChart';
     chartContainer.appendChild(canvas);
+
+    const centerLabel = document.createElement('div');
+    centerLabel.id = 'macroCenterLabel';
+    centerLabel.textContent = 'Калории';
+    chartContainer.appendChild(centerLabel);
     card.appendChild(chartContainer);
 
     const grid = document.createElement('div');
@@ -251,7 +256,7 @@ function renderMacroAnalyticsCard(macros) {
         { l: 'Въглехидрати', v: macros.carbs_grams, s: macros.carbs_percent ? `${macros.carbs_percent}%` : '', c: '--macro-carbs-color' },
         { l: 'Мазнини', v: macros.fat_grams, s: macros.fat_percent ? `${macros.fat_percent}%` : '', c: '--macro-fat-color' }
     ];
-    list.forEach(item => {
+    list.forEach((item, idx) => {
         const div = document.createElement('div');
         div.className = 'macro-metric';
 
@@ -285,7 +290,7 @@ function renderMacroAnalyticsCard(macros) {
         div.appendChild(label);
         div.appendChild(valueDiv);
         div.appendChild(subDiv);
-        div.addEventListener('click', () => highlightMacro(div));
+        div.addEventListener('click', () => highlightMacro(div, idx - 1));
         grid.appendChild(div);
     });
     card.appendChild(grid);
@@ -329,20 +334,36 @@ export function renderPendingMacroChart() {
             plugins: {
                 legend: { display: false },
                 title: { display: true, text: `Дневен прием (${m.calories} kcal)` }
+            },
+            onClick: (evt, elements) => {
+                if (elements.length > 0) {
+                    const idx = elements[0].index;
+                    const metric = document.querySelectorAll('#macroMetricsGrid .macro-metric')[idx + 1];
+                    highlightMacro(metric, idx);
+                } else {
+                    highlightMacro(null, -1);
+                }
             }
         }
     });
     macroChartInstance.resize();
 }
 
-export function highlightMacro(metricElement) {
+export function highlightMacro(metricElement, index) {
     const grid = document.getElementById('macroMetricsGrid');
-    if (!grid || !metricElement) return;
+    if (!grid) return;
     grid.querySelectorAll('.macro-metric').forEach(el => el.classList.remove('active'));
-    metricElement.classList.add('active');
+    if (metricElement) metricElement.classList.add('active');
     const centerLabel = document.getElementById('macroCenterLabel');
-    const label = metricElement.querySelector('.macro-label');
-    if (centerLabel && label) centerLabel.textContent = label.textContent;
+    const label = metricElement?.querySelector('.macro-label');
+    if (centerLabel) centerLabel.textContent = label ? label.textContent : 'Калории';
+    if (macroChartInstance) {
+        macroChartInstance.setActiveElements([]);
+        if (index !== undefined && index > -1) {
+            macroChartInstance.setActiveElements([{ datasetIndex: 0, index }]);
+        }
+        macroChartInstance.update();
+    }
 }
 
 function populateDashboardMacros(macros) {

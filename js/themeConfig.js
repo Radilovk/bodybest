@@ -91,18 +91,18 @@ export const sampleThemes = {
     Light: {
       'primary-color': '#3A506B',
       'secondary-color': '#5BC0BE',
-      'macro-protein-color': '#36A2EB',
-      'macro-carbs-color': '#FF6384',
-      'macro-fat-color': '#FFCD56',
+      'macro-protein-color': '#5BC0BE',
+      'macro-carbs-color': '#FF6B6B',
+      'macro-fat-color': '#FFD166',
       'macro-ring-highlight': '#ffffff',
       'macro-stroke-color': '#e0e0e0'
     },
     Dark: {
       'primary-color': '#5BC0BE',
       'secondary-color': '#3A506B',
-      'macro-protein-color': '#36A2EB',
-      'macro-carbs-color': '#FF6384',
-      'macro-fat-color': '#FFCD56',
+      'macro-protein-color': '#5BC0BE',
+      'macro-carbs-color': '#FF6B6B',
+      'macro-fat-color': '#FFD166',
       'macro-ring-highlight': '#1C1F2E',
       'macro-stroke-color': '#444444'
     },
