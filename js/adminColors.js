@@ -37,12 +37,7 @@ function createInput(item, container) {
   label.textContent = item.label || item.var;
   if (item.description) label.title = item.description;
   const input = document.createElement('input');
-  input.type = item.type || 'color';
-  if (item.type === 'range') {
-    if (item.min !== undefined) input.min = item.min;
-    if (item.max !== undefined) input.max = item.max;
-    if (item.step !== undefined) input.step = item.step;
-  }
+  input.type = 'color';
   input.id = `${item.var}Input`;
   label.appendChild(input);
   container.appendChild(label);
