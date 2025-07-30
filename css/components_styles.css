@@ -64,6 +64,9 @@
   justify-content: space-between; align-items: center;
   border-bottom: 1px solid transparent; transition: background-color 0.2s, border-color 0.2s;
 }
+.vivid-theme .accordion-header {
+  color: color-mix(in srgb, var(--primary-color) 75%, var(--text-color-primary));
+}
 .accordion-header:hover { background-color: color-mix(in srgb, var(--surface-background) 90%, var(--primary-color)); }
 .accordion-header.open { border-bottom-color: var(--primary-color); }
 .accordion-header .arrow { transition: transform 0.3s ease; font-size: 0.8em; } 
