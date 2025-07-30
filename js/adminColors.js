@@ -31,7 +31,13 @@ function readDefaultTheme(variant) {
 function createInput(item, container) {
   const label = document.createElement('label');
   label.textContent = item.label || item.var;
-  if (item.description) label.title = item.description;
+
+  const infoBtn = document.createElement('button');
+  infoBtn.type = 'button';
+  infoBtn.className = 'button-icon-only info-btn';
+  infoBtn.innerHTML = '<svg class="icon"><use href="#icon-info"></use></svg>';
+  infoBtn.title = item.description || 'Цвят на елемент';
+  label.appendChild(infoBtn);
   const input = document.createElement('input');
   if (item.type === 'range') {
     input.type = 'range';
