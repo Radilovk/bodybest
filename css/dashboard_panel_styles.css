@@ -558,7 +558,7 @@ body.vivid-theme .meal-list li .meal-name {
   cursor: default; 
 }
 .tracker .metric-rating label[data-tooltip-key]:hover,
-.tracker .metric-rating label[data-tooltip-key]:focus-within .metric-info-btn { 
+.tracker .metric-rating label[data-tooltip-key]:focus-within .info-btn {
     cursor: help;
 }
 .tracker .metric-rating label .metric-icon {
@@ -580,21 +580,12 @@ body.vivid-theme .tracker .metric-rating .rating-value {
   color: color-mix(in srgb, var(--primary-color) 75%, var(--text-color-primary));
   background: color-mix(in srgb, var(--primary-color) 20%, transparent);
 }
-.tracker .metric-rating .metric-info-btn { 
-    padding: 0 var(--space-xs);
-    color: var(--icon-color-muted);
-    line-height: 1;
+.tracker .metric-rating .metric-info-btn {
     margin-left: var(--space-sm); /* Повече отстояние */
-    background: none;
-    border: none;
-    cursor: help;
 }
 .tracker .metric-rating .metric-info-btn svg.icon {
     width: 1.1em; /* Малко по-голяма икона */
     height: 1.1em;
-}
-.tracker .metric-rating .metric-info-btn:hover {
-    color: var(--primary-color);
 }
 
 
