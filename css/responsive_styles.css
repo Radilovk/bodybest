@@ -48,6 +48,9 @@
     width: 100%;
     z-index: 999;
   }
+  nav.tabs.styled-tabs {
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.15);
+  }
   body { padding-bottom: var(--tabs-height); }
 
   nav.tabs.styled-tabs .tab-btn { padding: 0.5rem 0.3rem; } 
