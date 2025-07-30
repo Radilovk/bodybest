@@ -208,6 +208,14 @@ body.dark-theme {
   --metric-value-group-bg-current: color-mix(in srgb, var(--surface-background) 90%, var(--secondary-color) 30%);
 }
 
+body.vivid-theme {
+  --primary-color: #5BC0BE;
+  --secondary-color: #FFD166;
+  --accent-color: #FF6B6B;
+  --tertiary-color: #FF9C9C;
+  --progress-end-color: #80FF80;
+}
+
 /* Глобален box-sizing */
 *, *::before, *::after { box-sizing: border-box; }
 html { font-size: 100%; scroll-behavior: smooth; }

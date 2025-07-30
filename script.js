@@ -295,12 +295,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 9. Превключвател за тема с унифицирана логика
     if (themeToggleBtn) {
-        const sunIcon = '<i class="bi bi-brightness-high-fill"></i>';
-        const moonIcon = '<i class="bi bi-moon-stars-fill"></i>';
+        const icons = {
+            light: '<i class="bi bi-moon-stars-fill"></i>',
+            dark: '<i class="bi bi-palette-fill"></i>',
+            vivid: '<i class="bi bi-brightness-high-fill"></i>'
+        };
+
+        const themeOrder = ['light', 'dark', 'vivid'];
+        const getCurrent = () =>
+            document.body.classList.contains('dark-theme')
+                ? 'dark'
+                : document.body.classList.contains('vivid-theme')
+                ? 'vivid'
+                : 'light';
 
         const updateIcon = () => {
-            const isDark = document.body.classList.contains('dark-theme');
-            themeToggleBtn.innerHTML = isDark ? sunIcon : moonIcon;
+            const current = getCurrent();
+            const next = themeOrder[(themeOrder.indexOf(current) + 1) % themeOrder.length];
+            themeToggleBtn.innerHTML = icons[next];
         };
 
         themeToggleBtn.addEventListener('click', () => {

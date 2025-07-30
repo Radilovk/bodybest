@@ -57,6 +57,8 @@ function handleSystemThemeChange(e) {
     }
 }
 
+const themes = ['light', 'dark', 'vivid'];
+
 export function initializeTheme() {
     const savedTheme = localStorage.getItem('theme') || 'system';
     systemThemeMediaQuery = systemThemeMediaQuery || window.matchMedia('(prefers-color-scheme: dark)');
@@ -64,20 +66,28 @@ export function initializeTheme() {
     if (!systemThemeMediaQuery.onchange) {
         systemThemeMediaQuery.addEventListener('change', handleSystemThemeChange);
     }
-    applyTheme(savedTheme === 'system' ? systemTheme : savedTheme);
+    let theme = savedTheme === 'system' ? systemTheme : savedTheme;
+    if (!themes.includes(theme)) theme = 'light';
+    applyTheme(theme);
     updateThemeButtonText();
 }
 
 export function applyTheme(theme) {
-    document.body.classList.remove('light-theme', 'dark-theme');
-    document.body.classList.add(theme === 'dark' ? 'dark-theme' : 'light-theme');
+    document.body.classList.remove('light-theme', 'dark-theme', 'vivid-theme');
+    const cls = theme === 'dark' ? 'dark-theme' : theme === 'vivid' ? 'vivid-theme' : 'light-theme';
+    document.body.classList.add(cls);
 }
 
 export function toggleTheme() {
-    const currentThemeIsDark = document.body.classList.contains('dark-theme');
-    const newTheme = currentThemeIsDark ? 'light' : 'dark';
-    localStorage.setItem('theme', newTheme);
-    applyTheme(newTheme);
+    const current = document.body.classList.contains('dark-theme')
+        ? 'dark'
+        : document.body.classList.contains('vivid-theme')
+        ? 'vivid'
+        : 'light';
+    const idx = themes.indexOf(current);
+    const nextTheme = themes[(idx + 1) % themes.length];
+    localStorage.setItem('theme', nextTheme);
+    applyTheme(nextTheme);
     updateThemeButtonText();
 }
 
@@ -85,9 +95,20 @@ export function updateThemeButtonText() {
     if (!selectors.themeToggleMenu) return;
     const themeTextSpan = selectors.themeToggleMenu.querySelector('.theme-text');
     const themeIconSpan = selectors.themeToggleMenu.querySelector('.menu-icon');
-    const isDark = document.body.classList.contains('dark-theme');
-    if (themeTextSpan) themeTextSpan.textContent = isDark ? 'Светла Тема' : 'Тъмна Тема';
-    if (themeIconSpan) themeIconSpan.innerHTML = isDark ? '<i class="bi bi-sun"></i>' : '<i class="bi bi-moon"></i>';
+    const current = document.body.classList.contains('dark-theme')
+        ? 'dark'
+        : document.body.classList.contains('vivid-theme')
+        ? 'vivid'
+        : 'light';
+    const nextTheme = themes[(themes.indexOf(current) + 1) % themes.length];
+    const labels = { light: 'Светла Тема', dark: 'Тъмна Тема', vivid: 'Ярка Тема' };
+    const icons = {
+        light: '<i class="bi bi-moon"></i>',
+        dark: '<i class="bi bi-palette-fill"></i>',
+        vivid: '<i class="bi bi-sun"></i>'
+    };
+    if (themeTextSpan) themeTextSpan.textContent = labels[nextTheme];
+    if (themeIconSpan) themeIconSpan.innerHTML = icons[nextTheme];
 }
 
 export async function loadAndApplyColors() {
