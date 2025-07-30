@@ -73,7 +73,7 @@ export function applyTheme(theme) {
     document.body.classList.add(theme === 'dark' ? 'dark-theme' : 'light-theme');
 }
 
-export async function toggleTheme() {
+export function toggleTheme() {
     const currentThemeIsDark = document.body.classList.contains('dark-theme');
     const newTheme = currentThemeIsDark ? 'light' : 'dark';
     localStorage.setItem('theme', newTheme);
