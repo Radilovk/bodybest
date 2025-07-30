@@ -107,6 +107,10 @@
       border: 2px solid var(--text-secondary-color); /* Представлява външния пръстен */
     }
 
+    .legend-dot.dot-menu {
+      background-color: var(--accent-main); opacity: 0.6;
+    }
+
     .legend-dot.dot-intake {
       background-color: var(--accent-main); /* Представлява вътрешния, плътен пръстен */
     }
@@ -219,7 +223,7 @@
     <summary>Описание и логика (обновена)</summary>
     <p>Модулът визуализира препоръчан дневен прием (цел) и текущ прием на макронутриенти. Добавена е легенда за по-добра яснота.</p>
     <ul>
-      <li><code>renderMacroAnalyticsCard(target, current)</code> – създава HTML структурата, попълва стойностите и генерира легендата за диаграмата.</li>
+      <li><code>renderMacroAnalyticsCard(target, menu, current)</code> – създава HTML структурата, попълва стойностите и генерира легендата за диаграмата.</li>
       <li><code>renderMacroChart()</code> – инициализира двойна кръгова диаграма. Външният пръстен е целта, вътрешният е текущия прием.</li>
       <li><code>highlightMacro(el, index)</code> – маркира избрания елемент в решетката и съответния сегмент в диаграмата.</li>
     </ul>
@@ -237,6 +241,12 @@
       carbs_percent: 45,
       fat_percent: 30
     };
+    const menuData = {
+      calories: 1800,
+      protein_grams: 120,
+      carbs_grams: 200,
+      fat_grams: 60,
+    };
     const currentData = {
       calories: 950,
       protein_grams: 70,
@@ -247,6 +257,7 @@
     // --- ГЛОБАЛНИ ПРОМЕНЛИВИ ---
     let macroChartInstance = null;
     let pendingTargetData = null;
+    let pendingMenuData = null;
     let pendingCurrentData = null;
     let activeMacroIndex = null;
 
@@ -277,13 +288,13 @@
       }
 
       if (macroChartInstance && index !== null && index > -1) {
-        macroChartInstance.setActiveElements([{ datasetIndex: 1, index: index }]);
+        macroChartInstance.setActiveElements([{ datasetIndex: 2, index: index }]);
       }
 
       if (macroChartInstance) macroChartInstance.update();
     }
 
-    function renderMacroAnalyticsCard(target, current) {
+    function renderMacroAnalyticsCard(target, menu, current) {
       const grid = document.getElementById('macroMetricsGrid');
       const centerText = document.getElementById('chartCenterText');
       const legendContainer = document.getElementById('chartLegendContainer'); // НОВО
@@ -298,6 +309,7 @@
       legendContainer.innerHTML = `
         <div class="chart-legend">
           <span class="legend-item"><span class="legend-dot dot-goal"></span> Цел</span>
+          <span class="legend-item"><span class="legend-dot dot-menu"></span> Меню</span>
           <span class="legend-item"><span class="legend-dot dot-intake"></span> Прием</span>
         </div>
       `;
@@ -335,11 +347,12 @@
       });
 
       pendingTargetData = target;
+      pendingMenuData = menu;
       pendingCurrentData = current;
     }
 
     function renderMacroChart() {
-      if (!pendingTargetData || !pendingCurrentData) return;
+      if (!pendingTargetData || !pendingMenuData || !pendingCurrentData) return;
       const canvas = document.getElementById('macroChart');
       if (!canvas || typeof Chart === 'undefined') return;
       if (macroChartInstance) {
@@ -347,6 +360,7 @@
       }
       
       const target = pendingTargetData;
+      const menu = pendingMenuData;
       const current = pendingCurrentData;
       const ctx = canvas.getContext('2d');
 
@@ -371,6 +385,13 @@
               backgroundColor: macroColors.map(color => `${color}40`),
               borderWidth: 0,
               cutout: '80%',
+            },
+            {
+              label: 'Меню (гр)',
+              data: [menu.protein_grams, menu.carbs_grams, menu.fat_grams],
+              backgroundColor: macroColors.map(color => `${color}80`),
+              borderWidth: 0,
+              cutout: '72%',
             },
             {
               label: 'Прием (гр)',
@@ -419,7 +440,7 @@
     }
 
     // --- ИНИЦИАЛИЗАЦИЯ НА ПРИМЕРА ---
-    renderMacroAnalyticsCard(targetData, currentData);
+    renderMacroAnalyticsCard(targetData, menuData, currentData);
     renderMacroChart();
   </script>
 </body>
