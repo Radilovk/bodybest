@@ -121,7 +121,7 @@ describe('adminColors.initColorSettings', () => {
     const themes = JSON.parse(localStorage.getItem('colorThemes'));
     expect(themes.Light['primary-color']).toBe('#000');
     expect(themes.Dark['primary-color']).toBe('#fff');
-    expect(themes.Vivid['primary-color']).toBe('#00FFFF');
+    expect(themes.Vivid['primary-color']).toBe('#5BC0BE');
     const opts = Array.from(document.getElementById('savedThemes').options).map(o => o.value);
     expect(opts).toEqual(expect.arrayContaining(['Light', 'Dark', 'Vivid']));
   });
