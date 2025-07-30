@@ -14,13 +14,6 @@ For a quick overview in Bulgarian, see [docs/DEV_GUIDE_BG.md](docs/DEV_GUIDE_BG.
 npm install
 ```
 
-3. Проверете кода и тестовете:
-
-```bash
-npm run lint
-npm test
-```
-
 ### Start Development Server
 
 Run the Vite dev server which provides hot reload:
@@ -33,10 +26,6 @@ API requests to paths starting with `/api` are automatically proxied to
 `https://openapichatbot.radilov-k.workers.dev` when running the dev server.
 
 The application will be available at `http://localhost:5173` by default.
-
-### Мобилна навигация
-
-Менюто вече превърта страницата до горе при отваряне и се показва над заглавката благодарение на `z-index: 1100`. Уверете се, че всяка страница зарежда `script.js` или `js/basicNav.js`.
 
 ### Динамична тема
 
