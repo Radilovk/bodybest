@@ -7,6 +7,8 @@ import {
 } from './themeStorage.js';
 
 const inputs = {};
+let initialColors = {};
+let defaultLight = {};
 
 function getAllVars() {
   return colorGroups.flatMap(g => g.items.filter(it => it.type !== 'range').map(it => it.var));
@@ -62,6 +64,7 @@ const previewThemeBtnId = 'previewTheme';
 const exportThemeBtnId = 'exportTheme';
 const importThemeInputId = 'importTheme';
 const importThemeBtnId = 'importThemeBtn';
+const resetColorsBtnId = 'resetColors';
 
 // По-ярка тема, базирана на основните цветове на таблото
 const vividTheme = {
@@ -198,6 +201,19 @@ function importThemeFile(file) {
   reader.readAsText(file);
 }
 
+function resetColors() {
+  const themes = getSavedThemes();
+  const light = themes.Light || defaultLight;
+  const source = Object.keys(initialColors).length ? initialColors : light;
+  Object.entries(inputs).forEach(([k, el]) => {
+    if (!el) return;
+    const val = source[k] || light[k] || getCurrentColor(k);
+    const norm = normalizeColor(val);
+    el.value = norm;
+    setCssVar(k, norm);
+  });
+}
+
 export async function initColorSettings() {
   const container = document.getElementById('colorInputs');
   if (container) {
@@ -218,6 +234,7 @@ export async function initColorSettings() {
     dark: readDefaultTheme('dark'),
     vivid: readDefaultTheme('vivid')
   };
+  defaultLight = defaults.light;
   const stored = getSavedThemes();
   let changed = false;
   if (!stored.Light) { stored.Light = defaults.light; changed = true; }
@@ -237,9 +254,11 @@ export async function initColorSettings() {
   const exportBtn = document.getElementById(exportThemeBtnId);
   const importInput = document.getElementById(importThemeInputId);
   const importBtn = document.getElementById(importThemeBtnId);
+  const resetBtn = document.getElementById(resetColorsBtnId);
   if (!saveBtn) return;
   try {
     const { colors = {} } = await loadConfig(['colors']);
+    initialColors = colors;
     Object.entries(inputs).forEach(([k, el]) => {
       if (!el) return;
       const current = getCurrentColor(k);
@@ -250,6 +269,7 @@ export async function initColorSettings() {
     });
   } catch (err) {
     console.warn('Неуспешно зареждане на цветовете', err);
+    initialColors = {};
     Object.entries(inputs).forEach(([k, el]) => {
       if (!el) return;
       const current = getCurrentColor(k);
@@ -286,6 +306,7 @@ export async function initColorSettings() {
       importInput.value = '';
     });
   }
+  if (resetBtn) resetBtn.addEventListener('click', resetColors);
 }
 
 document.addEventListener('DOMContentLoaded', initColorSettings);
