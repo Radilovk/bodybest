@@ -19,11 +19,12 @@ const variants = {
 const storageMap = {
   Index: 'indexColorThemes',
   Quest: 'questColorThemes',
+  Code: 'codeColorThemes',
   Dashboard: 'dashboardColorThemes'
 };
 
 function getGroups(name) {
-  if (name === 'Dashboard') return colorGroups.filter(g => !['Index', 'Quest'].includes(g.name));
+  if (name === 'Dashboard') return colorGroups.filter(g => !['Index', 'Quest', 'Code'].includes(g.name));
   return colorGroups.filter(g => g.name === name);
 }
 
@@ -136,7 +137,8 @@ function ensureSampleThemes() {
   const map = {
     Dashboard: sampleThemes.dashboard,
     Index: sampleThemes.index,
-    Quest: sampleThemes.quest
+    Quest: sampleThemes.quest,
+    Code: sampleThemes.code
   };
   Object.entries(map).forEach(([group, samples]) => {
     Object.keys(variants).forEach(variant => {
@@ -192,7 +194,7 @@ export function populate(groupName, variant = activeVariant) {
 function createTabNavigation(parent) {
   const nav = document.createElement('div');
   nav.className = 'tab-buttons';
-  ['Dashboard', 'Index', 'Quest'].forEach((name, idx) => {
+  ['Dashboard', 'Index', 'Quest', 'Code'].forEach((name, idx) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.textContent = name;
@@ -207,7 +209,7 @@ function createTabNavigation(parent) {
 function createTabContents(parent) {
   const contents = document.createElement('div');
   contents.className = 'tab-contents';
-  ['Dashboard', 'Index', 'Quest'].forEach((name, idx) => {
+  ['Dashboard', 'Index', 'Quest', 'Code'].forEach((name, idx) => {
     const panel = document.createElement('div');
     panel.id = `panel-${name}`;
     panel.className = 'tab-panel';
@@ -232,7 +234,7 @@ function createTabContents(parent) {
       varPanel.className = 'variant-panel';
       if (v !== activeVariant) varPanel.style.display = 'none';
       const groups = name === 'Dashboard'
-        ? colorGroups.filter(g => !['Index', 'Quest'].includes(g.name))
+        ? colorGroups.filter(g => !['Index', 'Quest', 'Code'].includes(g.name))
         : colorGroups.filter(g => g.name === name);
       groups.forEach(g => {
         g.items.forEach(item => {
@@ -318,7 +320,7 @@ export function applyStoredTheme(groupName) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadAndApplyColors();
-  ['Dashboard', 'Index', 'Quest'].forEach(applyStoredTheme);
+  ['Dashboard', 'Index', 'Quest', 'Code'].forEach(applyStoredTheme);
   const container = document.getElementById('colorControls');
   if (!container) return;
   ensureSampleThemes();

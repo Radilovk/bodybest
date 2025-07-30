@@ -14,8 +14,14 @@ beforeEach(async () => {
   `;
   jest.unstable_mockModule('../uiHandlers.js', () => ({ loadAndApplyColors: jest.fn() }));
   jest.unstable_mockModule('../themeConfig.js', () => ({
-    colorGroups: [{ name: 'Dashboard', items: [{ var: 'primary-color', label: '' }] }],
-    sampleThemes: { dashboard: { Light: { 'primary-color': '#010101' } } }
+    colorGroups: [
+      { name: 'Dashboard', items: [{ var: 'primary-color', label: '' }] },
+      { name: 'Code', items: [{ var: 'code-bg', label: '' }] }
+    ],
+    sampleThemes: {
+      dashboard: { Light: { 'primary-color': '#010101' } },
+      code: { Light: { 'code-bg': '#020202' } }
+    }
   }));
   ({ saveNamedTheme, loadNamedTheme, deleteNamedTheme, switchTab, switchVariant } = await import('../personalization.js'));
   document.dispatchEvent(new Event('DOMContentLoaded'));
@@ -46,4 +52,16 @@ test('variant navigation lists all three variants', () => {
   const buttons = document.querySelectorAll('.variant-buttons button');
   const labels = Array.from(buttons).map(b => b.textContent);
   expect(labels).toEqual(expect.arrayContaining(['Светла', 'Тъмна', 'Ярка']));
+});
+
+test('saves and loads theme for Code group', () => {
+  switchTab('Code');
+  switchVariant('Code', 'light');
+  const input = document.getElementById('Code-code-bg-light');
+  input.value = '#cccccc';
+  saveNamedTheme('Code', 'c1', 'light');
+  expect(JSON.parse(localStorage.getItem('codeColorThemes.light')).c1['code-bg']).toBe('#cccccc');
+  input.value = '#dddddd';
+  loadNamedTheme('Code', 'c1', 'light');
+  expect(input.value).toBe('#cccccc');
 });

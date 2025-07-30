@@ -83,6 +83,14 @@ export const colorGroups = [
       { var: 'error-color', label: 'Грешки' },
       { var: 'success-color', label: 'Успехи' }
     ]
+  },
+  {
+    name: 'Code',
+    items: [
+      { var: 'code-bg', label: 'Фон' },
+      { var: 'code-text-primary', label: 'Основен текст' },
+      { var: 'code-accent', label: 'Акцент' }
+    ]
   }
 ];
 
@@ -142,6 +150,23 @@ export const sampleThemes = {
     Vivid: {
       'accent-primary': '#ff3399',
       'bg-primary': '#222244'
+    }
+  },
+  code: {
+    Light: {
+      'code-bg': '#f5f5f5',
+      'code-text-primary': '#333333',
+      'code-accent': '#5BC0BE'
+    },
+    Dark: {
+      'code-bg': '#1e1e1e',
+      'code-text-primary': '#e0e0e0',
+      'code-accent': '#ff3366'
+    },
+    Vivid: {
+      'code-bg': '#001122',
+      'code-text-primary': '#ffffff',
+      'code-accent': '#ff6600'
     }
   }
 };

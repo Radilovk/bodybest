@@ -59,9 +59,9 @@ The application will be available at `http://localhost:5173` by default.
 
 #### Персонализация за потребители
 В `personalization.html` цветoвите настройки са разделени по табове – Dashboard,
-Index и Quest. Всеки таб съдържа полета от съответната група от `themeConfig.js`.
+Index, Quest и Code. Всеки таб съдържа полета от съответната група от `themeConfig.js`.
 Промените се съхраняват отделно в `localStorage.dashboardColorThemes`,
-`localStorage.indexColorThemes` и `localStorage.questColorThemes`. При зареждане
+`localStorage.indexColorThemes`, `localStorage.questColorThemes` и `localStorage.codeColorThemes`. При зареждане
 на всяка страница избраните стойности се прилагат автоматично.
 
 ### Build
