@@ -10,7 +10,8 @@ const state = {
   registrationPageIndex: 0,
   responses: {},
   submitUrl: '',
-  questionsUrl: ''
+  questionsUrl: '',
+  submitted: false
 };
 
 const numericRanges = {
@@ -231,8 +232,7 @@ function createFinalPage() {
     <h2>Поздравления! <i class="bi bi-stars"></i><br> Току що направихте най-важната стъпка по пътя към промяната</h2>
     <p>Благодарим ви, че отделихте време да попълните въпросника.</p>
     <div class="nav-buttons">
-      <button type="button" id="submitBtn">Изпрати</button>
-      <button type="button" id="restartBtn" disabled>Попълни отново</button>
+      <button type="button" id="finalBackBtn">◀ Назад</button>
     </div>
     <div id="submit-message" class="message" role="alert"></div>`;
   container.appendChild(pageDiv);
@@ -242,28 +242,10 @@ function setupFinalPageListener() {
   const finalIndex = state.flatPages.length + 2;
   const pageDiv = document.getElementById('page' + finalIndex);
   if (!pageDiv) return;
-  const submitBtn = pageDiv.querySelector('#submitBtn');
-  const restartBtn = pageDiv.querySelector('#restartBtn');
+  const backBtn = pageDiv.querySelector('#finalBackBtn');
   const submitMessage = pageDiv.querySelector('#submit-message');
-  if (!submitBtn || !restartBtn || !submitMessage) return;
-  restartBtn.addEventListener('click', () => { clearProgress(); location.reload(); });
-  submitBtn.addEventListener('click', async () => {
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Изпращане...';
-    hideMessage(submitMessage);
-    try {
-      const result = await submitResponses();
-      showMessage(submitMessage, result.message || 'Отговорите са изпратени успешно за обработка!', false);
-      submitBtn.style.display = 'none';
-      restartBtn.disabled = false;
-      restartBtn.textContent = 'Попълни отново';
-    } catch (error) {
-      console.error('Error caught in submitBtn listener:', error);
-      showMessage(submitMessage, `Грешка: ${error.message || 'Неуспешно изпращане.'}`, true);
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Опитай отново';
-    }
-  });
+  if (backBtn) backBtn.addEventListener('click', () => showPage(finalIndex - 1));
+  if (submitMessage) hideMessage(submitMessage);
 }
 
 export function showPage(index) {
@@ -323,6 +305,32 @@ export function showPage(index) {
       instr.style.display = 'block';
       stats.style.display = 'flex';
     }
+  }
+  if (state.currentPageIndex === pages.length - 1 && !state.submitted) {
+    const submitMessage = document.getElementById('submit-message');
+    if (submitMessage) hideMessage(submitMessage);
+    state.submitted = true;
+    submitResponses()
+      .then(result => {
+        if (submitMessage) {
+          showMessage(
+            submitMessage,
+            result.message || 'Отговорите са изпратени успешно за обработка!',
+            false
+          );
+        }
+      })
+      .catch(error => {
+        state.submitted = false;
+        console.error('Auto submit error:', error);
+        if (submitMessage) {
+          showMessage(
+            submitMessage,
+            `Грешка: ${error.message || 'Неуспешно изпращане.'}`,
+            true
+          );
+        }
+      });
   }
 }
 
