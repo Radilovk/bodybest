@@ -314,6 +314,33 @@ body.vivid-theme #macroAnalyticsCard .macro-label {
   }
 }
 
+/* Основни контейнери на таблото */
+#detailedAnalyticsAccordion { margin-bottom: var(--space-xl); }
+#dailyMenuCard   { margin-bottom: var(--space-xl); }
+
+#detailedAnalyticsAccordion {
+  background: color-mix(in srgb, var(--primary-color) 8%, var(--card-bg));
+}
+#dailyMenuCard {
+  background: color-mix(in srgb, var(--secondary-color) 8%, var(--card-bg));
+}
+#dailyLogCard {
+  background: color-mix(in srgb, var(--accent-color) 8%, var(--card-bg));
+}
+
+body.dark-theme #detailedAnalyticsAccordion,
+body.vivid-theme #detailedAnalyticsAccordion {
+  background: color-mix(in srgb, var(--primary-color) 8%, var(--card-bg));
+}
+body.dark-theme #dailyMenuCard,
+body.vivid-theme #dailyMenuCard {
+  background: color-mix(in srgb, var(--secondary-color) 8%, var(--card-bg));
+}
+body.dark-theme #dailyLogCard,
+body.vivid-theme #dailyLogCard {
+  background: color-mix(in srgb, var(--accent-color) 8%, var(--card-bg));
+}
+
 /* Box with extra info for each metric */
 .metric-info-container {
   background: var(--color-info-bg);
