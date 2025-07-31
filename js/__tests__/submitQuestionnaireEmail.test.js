@@ -1,10 +1,11 @@
 import { jest } from '@jest/globals'
 
 let handleSubmitQuestionnaire
+let handleSubmitDemoQuestionnaire
 
 beforeEach(async () => {
   jest.resetModules()
-  ;({ handleSubmitQuestionnaire } = await import('../../worker.js'))
+  ;({ handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire } = await import('../../worker.js'))
 })
 
 afterEach(() => {
@@ -81,4 +82,27 @@ test('ignores SEND_QUESTIONNAIRE_EMAIL flag', async () => {
   const res = await handleSubmitQuestionnaire(req, env)
   expect(res.success).toBe(true)
   expect(fetch).toHaveBeenCalled()
+})
+
+test('handleSubmitDemoQuestionnaire fails when email send fails', async () => {
+  global.fetch = jest.fn().mockRejectedValue(new Error('SMTP down'))
+  const env = {
+    MAILER_ENDPOINT_URL: 'https://mail.example.com',
+    USER_METADATA_KV: {
+      get: jest.fn(async key => key === 'email_to_uuid_a@b.bg' ? 'u1' : null),
+      put: jest.fn()
+    }
+  }
+  const req = { json: async () => ({
+    email: 'a@b.bg',
+    gender: 'f',
+    age: 35,
+    height: 170,
+    weight: 70,
+    goal: 'lose',
+    medicalConditions: ['Нямам']
+  }) }
+  const res = await handleSubmitDemoQuestionnaire(req, env)
+  expect(res.success).toBe(false)
+  expect(res.message).toBe('Неуспешно изпращане на имейла.')
 })

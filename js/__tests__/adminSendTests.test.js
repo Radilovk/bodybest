@@ -234,7 +234,7 @@ describe('sendTestQuestionnaire', () => {
     expect(text.startsWith(JSON.stringify(responseData, null, 2))).toBe(true);
     const link = document.getElementById('openTestQAnalysis');
     expect(link.classList.contains('hidden')).toBe(false);
-    expect(link.getAttribute('href')).toBe('https://radilovk.github.io/bodybest/reganalize/analyze.html?userId=u5');
+    expect(link.getAttribute('href')).toBe('https://mybody.best/reganalize/analyze.html?userId=u5');
   });
 
   test('calls reAnalyzeQuestionnaire when no JSON is provided', async () => {
@@ -245,6 +245,6 @@ describe('sendTestQuestionnaire', () => {
     expect(global.fetch).toHaveBeenCalledWith('/api/reAnalyzeQuestionnaire', expect.any(Object));
     const link = document.getElementById('openTestQAnalysis');
     expect(link.classList.contains('hidden')).toBe(false);
-    expect(link.getAttribute('href')).toBe('https://radilovk.github.io/bodybest/reganalize/analyze.html?userId=u1');
+    expect(link.getAttribute('href')).toBe('https://mybody.best/reganalize/analyze.html?userId=u1');
   });
 });

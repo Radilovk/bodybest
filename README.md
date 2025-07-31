@@ -897,6 +897,9 @@ The worker can send emails in two ways:
 2. Otherwise the worker calls `sendEmailWorker.js`, който изпраща
    заявката към `MAIL_PHP_URL`.
 
+If neither `MAILER_ENDPOINT_URL` nor `MAIL_PHP_URL` is configured,
+the worker cannot send real emails.
+
 In both cases the `/api/sendTestEmail` endpoint behaves the same and returns a
 JSON response indicating success or failure.
 A status **500** typically means the PHP backend or your external service
