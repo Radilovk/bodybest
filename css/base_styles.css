@@ -210,9 +210,9 @@ body.dark-theme {
 
   --chat-widget-bg: color-mix(in srgb, var(--surface-background) 90%, black);
   --chat-header-bg: var(--primary-color);
-  --chat-header-text: #1C1F2E;
-  --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 25%, var(--surface-background));
-  --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 25%, var(--surface-background));
+  --chat-header-text: #FFFFFF;
+  --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 40%, var(--surface-background));
+  --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 40%, var(--surface-background));
   --chat-input-field-bg: color-mix(in srgb, var(--surface-background) 70%, #1A1A2E);
 
   --note-critical-bg: rgba(183, 28, 28, 0.3); --note-critical-text: #ef9a9a; --note-critical-border: #c62828;
@@ -296,9 +296,9 @@ body.vivid-theme {
 
   --chat-widget-bg: color-mix(in srgb, var(--surface-background) 90%, black);
   --chat-header-bg: var(--primary-color);
-  --chat-header-text: #1C1F2E;
-  --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 25%, var(--surface-background));
-  --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 25%, var(--surface-background));
+  --chat-header-text: #FFFFFF;
+  --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 40%, var(--surface-background));
+  --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 40%, var(--surface-background));
   --chat-input-field-bg: color-mix(in srgb, var(--surface-background) 70%, #1A1A2E);
 
   --note-critical-bg: rgba(183, 28, 28, 0.3); --note-critical-text: #ef9a9a; --note-critical-border: #c62828;
