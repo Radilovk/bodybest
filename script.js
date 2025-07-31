@@ -184,11 +184,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Мобилно меню
     if (mobileMenuBtn && nav) {
+        const applyHeaderColor = () => {
+            const bg = header ? getComputedStyle(header).backgroundColor : '';
+            if (bg) nav.style.backgroundColor = bg;
+        };
         const closeNav = () => {
             body.classList.remove('nav-open');
             mobileMenuBtn.setAttribute('aria-expanded', 'false');
         };
         const toggleNav = () => {
+            applyHeaderColor();
             const open = body.classList.toggle('nav-open');
             mobileMenuBtn.setAttribute('aria-expanded', open);
         };
