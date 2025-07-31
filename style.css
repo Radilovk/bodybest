@@ -34,6 +34,8 @@
     --color-danger: #e74c3c;
     --color-success: #2ecc71;
     --color-warning: #f39c12;
+    /* Заглавия в хедъра */
+    --header-title-color: var(--secondary-color);
 }
 
 .dark-theme {
@@ -49,6 +51,7 @@
     --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.2);
     --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.25);
     --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.3);
+    --header-title-color: var(--light-text);
 }
 
 /* 2. БАЗОВИ СТИЛОВЕ И ДОСТЪПНОСТ - ОТ ai_studio_code.css */

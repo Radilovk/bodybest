@@ -156,7 +156,7 @@ body.dark-theme {
   --text-color-on-primary: #1C1F2E;
   --text-color-on-secondary: #FFFFFF;
   --text-color-disabled: #adb5bd;
-  --header-title-color: #FFFFFF;
+  --header-title-color: var(--text-color-on-primary);
   --font-color-primary: var(--text-color-primary);
   --font-color-secondary: var(--text-color-secondary);
   --font-color-muted: var(--text-color-muted);
@@ -245,7 +245,7 @@ body.vivid-theme {
   --text-color-on-primary: #1C1F2E;
   --text-color-on-secondary: #FFFFFF;
   --text-color-disabled: #adb5bd;
-  --header-title-color: #FFFFFF;
+  --header-title-color: var(--text-color-on-primary);
 
   --bg-color: #1C1F2E;
   --bg-gradient: linear-gradient(135deg, #1C1F2E 0%, #252A41 100%);
