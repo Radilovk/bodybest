@@ -239,6 +239,8 @@ function createTabContents(parent) {
             input.min = '0';
             input.max = '1';
             input.step = '0.05';
+          } else if (item.type === 'text') {
+            input.type = 'text';
           } else {
             input.type = 'color';
           }
