@@ -4,12 +4,12 @@ import { openModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
 
 const medalIcons = [
-    '<i class="bi bi-award-fill"></i>',
-    '<i class="bi bi-trophy-fill"></i>',
-    '<i class="bi bi-fire"></i>',
-    '<i class="bi bi-stars"></i>',
-    '<i class="bi bi-patch-check-fill"></i>',
-    '<i class="bi bi-emoji-smile"></i>'
+    '🏅',
+    '🏆',
+    '🔥',
+    '⭐',
+    '✅',
+    '😄'
 ];
 
 // Анимирано показване на иконка в модала за постижение
