@@ -329,7 +329,6 @@ body.dark-theme .chat-messages .message.bot { color: #e0e0e0; }
   0%,100% { transform: scale(1); }
   50%     { transform: scale(1.05); }
 }
-.assistant-icon { fill: currentColor; }
 #chat-fab .assistant-icon {
   width: 32px;
   height: 32px;
