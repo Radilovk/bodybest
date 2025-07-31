@@ -203,8 +203,10 @@ async function sendAnalysisLinkEmail(to, name, link, env) {
     const html = tpl.replace(/{{\s*name\s*}}/g, name).replace(/{{\s*link\s*}}/g, link);
     try {
         await sendEmailUniversal(to, subject, html, env);
+        return true;
     } catch (err) {
         console.error('Failed to send analysis link email:', err);
+        return false;
     }
 }
 
@@ -844,7 +846,7 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
 
         const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] ||
-            'https://radilovk.github.io/bodybest/reganalize/analyze.html';
+            'https://mybody.best/reganalize/analyze.html';
         const url = new URL(baseUrl);
         url.searchParams.set('userId', userId);
         const link = url.toString();
@@ -900,16 +902,19 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
         console.log(`SUBMIT_DEMO_QUESTIONNAIRE (${userId}): Saved initial answers.`);
 
         const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] ||
-            'https://radilovk.github.io/bodybest/reganalize/analyze.html';
+            'https://mybody.best/reganalize/analyze.html';
         const url = new URL(baseUrl);
         url.searchParams.set('userId', userId);
         const link = url.toString();
-        await sendAnalysisLinkEmail(
+        const mailOk = await sendAnalysisLinkEmail(
             questionnaireData.email,
             questionnaireData.name || 'Клиент',
             link,
             env
         );
+        if (!mailOk) {
+            return { success: false, message: 'Неуспешно изпращане на имейла.' };
+        }
 
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         const analysisTask = handleAnalyzeInitialAnswers(userId, env);
@@ -1899,7 +1904,7 @@ async function handleReAnalyzeQuestionnaireRequest(request, env, ctx) {
             await handleAnalyzeInitialAnswers(userId, env);
             await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         }
-        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] || 'https://radilovk.github.io/bodybest/reganalize/analyze.html';
+        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] || 'https://mybody.best/reganalize/analyze.html';
         const url = new URL(baseUrl);
         url.searchParams.set('userId', userId);
         return { success: true, userId, link: url.toString() };
