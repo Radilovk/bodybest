@@ -10,9 +10,7 @@ import { hexToRgb, contrastRatio } from './utils.js';
 const inputs = {};
 // Контрастните двойки вече важат само за code.html
 const contrastPairs = [
-  ['code-text-primary', 'code-bg'],
-  ['code-link-color', 'code-bg'],
-  ['code-accent', 'code-header-bg']
+  ['code-text-primary', 'code-bg']
 ];
 
 function showContrastWarning(input, ratio) {
@@ -107,8 +105,6 @@ function createInput(item, container) {
     input.min = '0';
     input.max = '1';
     input.step = '0.05';
-  } else if (item.type === 'text') {
-    input.type = 'text';
   } else {
     input.type = 'color';
   }

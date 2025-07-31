@@ -90,17 +90,12 @@ export const colorGroups = [
       { var: 'success-color', label: 'Успехи' }
     ]
   },
-  { 
+  {
     name: 'Code',
     items: [
       { var: 'code-bg', label: 'Фон' },
       { var: 'code-text-primary', label: 'Основен текст' },
-      { var: 'code-accent', label: 'Акцент' },
-      { var: 'code-link-color', label: 'Цвят на линкове' },
-      { var: 'code-header-bg', label: 'Фон на заглавие' },
-      { var: 'code-font-family', label: 'Шрифт', type: 'text' },
-      { var: 'code-font-size', label: 'Размер шрифт', type: 'text' },
-      { var: 'code-font-weight', label: 'Дебелина шрифт', type: 'text' }
+      { var: 'code-accent', label: 'Акцент' }
     ]
   }
 ];
@@ -287,32 +282,17 @@ export const sampleThemes = {
     "Light": {
       "code-bg": "#f5f5f5",
       "code-text-primary": "#333333",
-      "code-accent": "#5BC0BE",
-      "code-link-color": "#3A506B",
-      "code-header-bg": "#e9ecef",
-      "code-font-family": "'Courier New', monospace",
-      "code-font-size": "16px",
-      "code-font-weight": "500"
+      "code-accent": "#5BC0BE"
     },
     "Dark": {
       "code-bg": "#1e1e1e",
       "code-text-primary": "#e0e0e0",
-      "code-accent": "#ff3366",
-      "code-link-color": "#89CFF0",
-      "code-header-bg": "#333333",
-      "code-font-family": "'Courier New', monospace",
-      "code-font-size": "16px",
-      "code-font-weight": "500"
+      "code-accent": "#ff3366"
     },
     "Vivid": {
       "code-bg": "#001122",
       "code-text-primary": "#ffffff",
-      "code-accent": "#ff6600",
-      "code-link-color": "#ff9900",
-      "code-header-bg": "#06182b",
-      "code-font-family": "'Courier New', monospace",
-      "code-font-size": "16px",
-      "code-font-weight": "500"
+      "code-accent": "#ff6600"
     }
   }
 };

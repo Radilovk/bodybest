@@ -57,15 +57,7 @@ describe('adminColors.initColorSettings', () => {
       <button id="applyThemeLocal"></button>
       <button id="deleteThemeLocal"></button>
       <button id="renameThemeLocal"></button>`;
-    mockLoad = jest.fn().mockResolvedValue({ colors: {
-      'code-bg': '#111111',
-      'code-text-primary': '#222222',
-      'code-link-color': '#333333',
-      'code-header-bg': '#444444',
-      'code-font-family': 'monospace',
-      'code-font-size': '18px',
-      'code-font-weight': '700'
-    } });
+    mockLoad = jest.fn().mockResolvedValue({ colors: { 'code-bg': '#111111', 'code-text-primary': '#222222' } });
     mockSave = jest.fn().mockResolvedValue({});
     jest.unstable_mockModule('../adminConfig.js', () => ({
       loadConfig: mockLoad,
@@ -73,9 +65,9 @@ describe('adminColors.initColorSettings', () => {
     }));
     styleEl = document.createElement('style');
     styleEl.textContent =
-      'body{--code-bg:#ccc;--code-text-primary:#111;--code-link-color:#aaa;--code-header-bg:#bbb;--code-font-family:monospace;--code-font-size:14px;--code-font-weight:400;}' +
-      'body.dark-theme{--code-bg:#ddd;--code-text-primary:#222;--code-link-color:#bbb;--code-header-bg:#ccc;--code-font-family:monospace;--code-font-size:14px;--code-font-weight:400;}' +
-      'body.vivid-theme{--code-bg:#eee;--code-text-primary:#333;--code-link-color:#ccc;--code-header-bg:#ddd;--code-font-family:monospace;--code-font-size:14px;--code-font-weight:400;}';
+      'body{--code-bg:#ccc;--code-text-primary:#111;}' +
+      'body.dark-theme{--code-bg:#ddd;--code-text-primary:#222;}' +
+      'body.vivid-theme{--code-bg:#eee;--code-text-primary:#333;}';
     document.head.appendChild(styleEl);
     ({ initColorSettings } = await import('../adminColors.js'));
   });
@@ -105,21 +97,11 @@ describe('adminColors.initColorSettings', () => {
     await initColorSettings();
     document.getElementById('code-bgInput').value = '#333333';
     document.getElementById('code-text-primaryInput').value = '#444444';
-    document.getElementById('code-link-colorInput').value = '#555555';
-    document.getElementById('code-header-bgInput').value = '#666666';
-    document.getElementById('code-font-familyInput').value = 'monospace';
-    document.getElementById('code-font-sizeInput').value = '15px';
-    document.getElementById('code-font-weightInput').value = '600';
     document.getElementById('saveColorConfig').click();
     expect(mockSave).toHaveBeenCalledWith(expect.objectContaining({
       colors: expect.objectContaining({
         'code-bg': '#333333',
-        'code-text-primary': '#444444',
-        'code-link-color': '#555555',
-        'code-header-bg': '#666666',
-        'code-font-family': 'monospace',
-        'code-font-size': '15px',
-        'code-font-weight': '600'
+        'code-text-primary': '#444444'
       })
     }));
   });
@@ -128,18 +110,13 @@ describe('adminColors.initColorSettings', () => {
     mockLoad.mockResolvedValue({ colors: {} });
     await initColorSettings();
     document.getElementById('code-bgInput').value = '#aaaaaa';
-    document.getElementById('code-link-colorInput').value = '#bbbbcc';
     document.getElementById('themeNameInput').value = 't1';
     document.getElementById('saveThemeLocal').click();
-    const saved = JSON.parse(localStorage.getItem('colorThemes')).t1;
-    expect(saved['code-bg']).toBe('#aaaaaa');
-    expect(saved['code-link-color']).toBe('#bbbbcc');
+    expect(JSON.parse(localStorage.getItem('colorThemes')).t1['code-bg']).toBe('#aaaaaa');
     document.getElementById('code-bgInput').value = '#bbbbbb';
-    document.getElementById('code-link-colorInput').value = '#000000';
     document.getElementById('savedThemes').value = 't1';
     document.getElementById('applyThemeLocal').click();
     expect(document.getElementById('code-bgInput').value).toBe('#aaaaaa');
-    expect(document.getElementById('code-link-colorInput').value).toBe('#bbbbcc');
   });
 
   test('initializes default themes', async () => {
@@ -149,9 +126,6 @@ describe('adminColors.initColorSettings', () => {
     expect(themes.Light['code-bg']).toBe('#ccc');
     expect(themes.Dark['code-bg']).toBe('#ddd');
     expect(themes.Vivid['code-bg']).toBe('#eee');
-    expect(themes.Light['code-link-color']).toBe('#aaa');
-    expect(themes.Dark['code-link-color']).toBe('#bbb');
-    expect(themes.Vivid['code-link-color']).toBe('#ccc');
     const opts = Array.from(document.getElementById('savedThemes').options).map(o => o.value);
     expect(opts).toEqual(expect.arrayContaining(['Light', 'Dark', 'Vivid']));
   });
@@ -165,17 +139,14 @@ describe('adminColors.initColorSettings', () => {
     select.value = 'Dark';
     applyBtn.click();
     expect(document.getElementById('code-bgInput').value).toBe('#ddd');
-    expect(document.getElementById('code-link-colorInput').value).toBe('#bbb');
 
     select.value = 'Vivid';
     applyBtn.click();
     expect(document.getElementById('code-bgInput').value).toBe('#eee');
-    expect(document.getElementById('code-link-colorInput').value).toBe('#ccc');
 
     select.value = 'Light';
     applyBtn.click();
     expect(document.getElementById('code-bgInput').value).toBe('#ccc');
-    expect(document.getElementById('code-link-colorInput').value).toBe('#aaa');
   });
 
   test('selected theme can be renamed', async () => {
@@ -218,11 +189,6 @@ describe('uiHandlers.loadAndApplyColors', () => {
     expect(mockLoad).toHaveBeenCalledWith(['colors']);
     expect(document.documentElement.style.getPropertyValue('--code-bg')).toBe('#111111');
     expect(document.body.style.getPropertyValue('--code-text-primary')).toBe('#222222');
-    expect(document.body.style.getPropertyValue('--code-link-color')).toBe('#333333');
-    expect(document.body.style.getPropertyValue('--code-header-bg')).toBe('#444444');
-    expect(document.body.style.getPropertyValue('--code-font-family')).toBe('monospace');
-    expect(document.body.style.getPropertyValue('--code-font-size')).toBe('18px');
-    expect(document.body.style.getPropertyValue('--code-font-weight')).toBe('700');
   });
 
   test('не променя цветовете при грешка', async () => {
