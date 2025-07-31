@@ -13,8 +13,7 @@ beforeEach(async () => {
     <div id="engagementProgressFill"></div><div id="engagementProgressBar"></div><span id="engagementProgressText"></span>
     <div id="healthProgressFill"></div><div id="healthProgressBar"></div><span id="healthProgressText"></span>
     <div id="streakGrid"></div>
-    <div id="detailedAnalyticsAccordion"><div id="macroMetricsGrid" class="macro-metrics-grid"></div></div>
-    <div id="macroAnalyticsCard"><div id="macroCenterLabel"></div></div>
+    <div id="macroAnalyticsCard"><div id="macroMetricsGrid"></div><div id="macroCenterLabel"></div></div>
     <h3 id="dailyPlanTitle"></h3>
     <ul id="dailyMealList"></ul>
   `;
