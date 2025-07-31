@@ -49,6 +49,7 @@ export function initializeSelectors() {
         analyticsCardsContainer: 'analyticsCardsContainer',
         macroAnalyticsCard: 'macroAnalyticsCard',
         macroMetricsGrid: 'macroMetricsGrid',
+        macroMetricsPreview: 'macroMetricsPreview',
         tooltipTracker: 'tooltip-tracker',
         toast: 'toast', chatFab: 'chat-fab', chatWidget: 'chat-widget', chatClose: 'chat-close',
         chatClear: 'chat-clear',
@@ -75,6 +76,7 @@ export function initializeSelectors() {
                 'streakGrid', 'analyticsCardsContainer', 'achievementShareBtn',
                 'goalCard', 'engagementCard', 'healthCard', 'streakCard',
                 'macroAnalyticsCard', 'macroMetricsGrid',
+                'macroMetricsPreview',
                 'recFoodAllowedCard', 'recFoodLimitCard', 'recHydrationCard',
                 'recCookingMethodsCard', 'recSupplementsCard'
             ];

@@ -109,6 +109,8 @@ export function setupStaticEventListeners() {
 
     if (selectors.detailedAnalyticsAccordion) {
         const header = selectors.detailedAnalyticsAccordion.querySelector('.accordion-header');
+        const accContent = selectors.detailedAnalyticsContent;
+        const preview = selectors.macroMetricsPreview;
         if (header) {
             // Assuming handleAccordionToggle is imported or available globally if needed outside populateUI
             // For now, it's used by renderAccordionGroup in populateUI.js
@@ -119,12 +121,13 @@ export function setupStaticEventListeners() {
             // Let's assume handleAccordionToggle from populateUI.js can be used if it's made more generic
             // or this specific one can be handled here.
             // Re-using the logic from populateUI's handleAccordionToggle:
-             const accContent = header.nextElementSibling;
              header.addEventListener('click', function() {
                 const isOpen = this.getAttribute('aria-expanded') === 'true';
                 this.setAttribute('aria-expanded', !isOpen); this.classList.toggle('open', !isOpen);
                 const arrow = this.querySelector('.arrow'); if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
                 if (accContent) { accContent.style.display = isOpen ? 'none' : 'block'; accContent.classList.toggle('open-active', !isOpen); }
+                if (preview) preview.style.display = isOpen ? 'grid' : 'none';
+                selectors.detailedAnalyticsAccordion.classList.toggle('index-card', isOpen);
                 if (!isOpen) {
                     renderPendingMacroChart();
                     macroChartInstance?.resize();
@@ -137,6 +140,8 @@ export function setupStaticEventListeners() {
                     this.setAttribute('aria-expanded', !isOpen); this.classList.toggle('open', !isOpen);
                     const arrow = this.querySelector('.arrow'); if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
                     if (accContent) { accContent.style.display = isOpen ? 'none' : 'block'; accContent.classList.toggle('open-active', !isOpen); }
+                    if (preview) preview.style.display = isOpen ? 'grid' : 'none';
+                    selectors.detailedAnalyticsAccordion.classList.toggle('index-card', isOpen);
                     if (!isOpen) {
                         renderPendingMacroChart();
                         macroChartInstance?.resize();
