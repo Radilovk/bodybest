@@ -1,20 +1,17 @@
+import { readFileSync } from 'fs';
+
+const dietModelPath = new URL('../kv/DIET_RESOURCES/base_diet_model.json', import.meta.url);
+const dietModel = JSON.parse(readFileSync(dietModelPath, 'utf8'));
+
 // Създаваме речник за бързо търсене на макроси по id или име
 const macrosByIdOrName = new Map();
-let dietModelLoaded = false;
-
-export async function loadDietModel() {
-  if (dietModelLoaded || macrosByIdOrName.size > 0) return;
-  const resp = await fetch(new URL('../kv/DIET_RESOURCES/base_diet_model.json', import.meta.url));
-  const dietModel = await resp.json();
-  (dietModel['ястия'] || []).forEach((meal) => {
-    const macros = meal['хранителни_стойности'];
-    if (macros) {
-      macrosByIdOrName.set(meal.id, macros);
-      macrosByIdOrName.set((meal.име || '').toLowerCase(), macros);
-    }
-  });
-  dietModelLoaded = true;
-}
+(dietModel['ястия'] || []).forEach((meal) => {
+  const macros = meal['хранителни_стойности'];
+  if (macros) {
+    macrosByIdOrName.set(meal.id, macros);
+    macrosByIdOrName.set((meal.име || '').toLowerCase(), macros);
+  }
+});
 
 /**
  * Изчислява общите макроси за изпълнените хранения и извънредни хранения.
@@ -23,8 +20,7 @@ export async function loadDietModel() {
  * @param {Array} extraMeals - Допълнителни хранения с макроси { calories, protein, carbs, fat }.
  * @returns {{ calories:number, protein:number, carbs:number, fat:number }}
  */
-export async function calculateCurrentMacros(planMenu = {}, completionStatus = {}, extraMeals = []) {
-  if (!dietModelLoaded && macrosByIdOrName.size === 0) await loadDietModel();
+export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, extraMeals = []) {
   let calories = 0;
   let protein = 0;
   let carbs = 0;

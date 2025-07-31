@@ -1,22 +1,7 @@
 /** @jest-environment jsdom */
-import { readFileSync } from 'fs';
-import { calculateCurrentMacros, loadDietModel } from '../macroUtils.js';
+import { calculateCurrentMacros } from '../macroUtils.js';
 
-const dietModel = JSON.parse(
-  readFileSync(new URL('../../kv/DIET_RESOURCES/base_diet_model.json', import.meta.url))
-);
-
-beforeEach(() => {
-  global.fetch = jest.fn(() =>
-    Promise.resolve({ ok: true, json: () => Promise.resolve(dietModel) })
-  );
-});
-
-afterEach(() => {
-  jest.resetAllMocks();
-});
-
-test('calculateCurrentMacros sums macros from completed meals and extras', async () => {
+test('calculateCurrentMacros sums macros from completed meals and extras', () => {
   const planMenu = {
     monday: [
       { id: 'z-01', meal_name: 'Протеинов шейк' },
@@ -37,7 +22,6 @@ test('calculateCurrentMacros sums macros from completed meals and extras', async
     { calories: 100, protein: 5, carbs: 10, fat: 2 }
   ];
 
-  await loadDietModel();
-  const result = await calculateCurrentMacros(planMenu, completionStatus, extraMeals);
+  const result = calculateCurrentMacros(planMenu, completionStatus, extraMeals);
   expect(result).toEqual({ calories: 880, protein: 67, carbs: 48, fat: 42 });
 });

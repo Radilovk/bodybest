@@ -20,7 +20,7 @@ import {
     fullDashboardData, activeTooltip, currentUserId,
     setChatModelOverride, setChatPromptOverride
 } from './app.js';
-import { calculateCurrentMacros, loadDietModel } from './macroUtils.js';
+import { calculateCurrentMacros } from './macroUtils.js';
 import {
     openPlanModificationChat,
     clearPlanModChat,
@@ -287,7 +287,7 @@ export function setupDynamicEventListeners() {
     }
 }
 
-async function handleDelegatedClicks(event) {
+function handleDelegatedClicks(event) {
     const target = event.target;
     if (target.closest('.modal-content') && !target.closest('[data-modal-close]')) return;
 
@@ -339,10 +339,9 @@ async function handleDelegatedClicks(event) {
         if (day && index !== undefined) {
             const isCompleted = mealCard.classList.toggle('completed');
             todaysMealCompletionStatus[`${day}_${index}`] = isCompleted;
-            await loadDietModel();
             Object.assign(
                 currentIntakeMacros,
-                await calculateCurrentMacros(
+                calculateCurrentMacros(
                     fullDashboardData.planData?.week1Menu,
                     todaysMealCompletionStatus,
                     todaysExtraMeals
