@@ -366,6 +366,52 @@ export function highlightMacro(metricElement, index) {
     }
 }
 
+function renderMacroPreviewGrid(macros) {
+    const preview = selectors.macroMetricsPreview;
+    if (!preview) return;
+    preview.innerHTML = '';
+    if (!macros) {
+        preview.classList.add('hidden');
+        return;
+    }
+    preview.classList.remove('hidden');
+    const list = [
+        { l: 'Калории', v: macros.calories, s: 'kcal' },
+        { l: 'Белтъчини', v: macros.protein_grams, s: 'g' },
+        { l: 'Въглехидрати', v: macros.carbs_grams, s: 'g' },
+        { l: 'Мазнини', v: macros.fat_grams, s: 'g' }
+    ];
+    const iconMap = {
+        'Калории': 'bi-fire',
+        'Белтъчини': 'bi-egg-fried',
+        'Въглехидрати': 'bi-basket',
+        'Мазнини': 'bi-droplet'
+    };
+    list.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'macro-metric';
+        const icon = document.createElement('span');
+        icon.className = 'macro-icon';
+        const i = document.createElement('i');
+        i.className = `bi ${iconMap[item.l] || 'bi-circle'}`;
+        icon.appendChild(i);
+        const label = document.createElement('div');
+        label.className = 'macro-label';
+        label.textContent = item.l;
+        const value = document.createElement('div');
+        value.className = 'macro-value';
+        value.textContent = item.v ?? '--';
+        const sub = document.createElement('div');
+        sub.className = 'macro-subtitle';
+        sub.textContent = item.s;
+        div.appendChild(icon);
+        div.appendChild(label);
+        div.appendChild(value);
+        div.appendChild(sub);
+        preview.appendChild(div);
+    });
+}
+
 function populateDashboardMacros(macros) {
     if (!selectors.analyticsCardsContainer) return;
     const existing = document.getElementById('macroAnalyticsCard');
@@ -377,6 +423,7 @@ function populateDashboardMacros(macros) {
         }
     }
     pendingMacroData = macros || null;
+    renderMacroPreviewGrid(macros);
     if (macros) {
         const card = renderMacroAnalyticsCard(macros);
         selectors.analyticsCardsContainer.prepend(card);

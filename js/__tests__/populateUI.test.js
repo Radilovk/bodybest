@@ -13,6 +13,7 @@ beforeEach(async () => {
     <div id="engagementProgressFill"></div><div id="engagementProgressBar"></div><span id="engagementProgressText"></span>
     <div id="healthProgressFill"></div><div id="healthProgressBar"></div><span id="healthProgressText"></span>
     <div id="streakGrid"></div>
+    <div id="macroMetricsPreview"></div>
     <div id="macroAnalyticsCard"><div id="macroMetricsGrid"></div><div id="macroCenterLabel"></div></div>
     <h3 id="dailyPlanTitle"></h3>
     <ul id="dailyMealList"></ul>
@@ -36,6 +37,7 @@ beforeEach(async () => {
     streakGrid: document.getElementById('streakGrid'),
     macroAnalyticsCard: document.getElementById('macroAnalyticsCard'),
     macroMetricsGrid: document.getElementById('macroMetricsGrid'),
+    macroMetricsPreview: document.getElementById('macroMetricsPreview'),
     macroCenterLabel: document.getElementById('macroCenterLabel'),
     dailyPlanTitle: document.getElementById('dailyPlanTitle'),
     dailyMealList: document.getElementById('dailyMealList')

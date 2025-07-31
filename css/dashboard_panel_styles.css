@@ -260,6 +260,30 @@ body.vivid-theme #macroAnalyticsCard .macro-label {
   padding: var(--space-sm);
   text-align: center;
 }
+#macroMetricsPreview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+#detailedAnalyticsAccordion:not(.index-card) #macroMetricsPreview {
+  display: none;
+}
+#macroMetricsPreview .macro-metric {
+  padding: var(--space-xs);
+}
+#macroMetricsPreview .macro-icon {
+  font-size: 1rem;
+}
+#macroMetricsPreview .macro-label {
+  font-size: 0.75rem;
+}
+#macroMetricsPreview .macro-value {
+  font-size: 0.9rem;
+}
+#macroMetricsPreview .macro-subtitle {
+  font-size: 0.7rem;
+}
 #macroCenterLabel {
   position: absolute;
   top: 50%;
