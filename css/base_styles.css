@@ -325,6 +325,9 @@ body.vivid-theme h3,
 body.vivid-theme h4 {
   color: color-mix(in srgb, var(--primary-color) 75%, var(--text-color-primary));
 }
+body.vivid-theme header h1 {
+  color: var(--header-title-color);
+}
 
 /* Глобален box-sizing */
 *, *::before, *::after { box-sizing: border-box; }
