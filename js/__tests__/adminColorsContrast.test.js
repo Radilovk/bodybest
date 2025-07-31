@@ -24,9 +24,9 @@ describe('adminColors contrast warnings', () => {
     }));
     jest.unstable_mockModule('../themeConfig.js', () => ({
       colorGroups: [
-        { name: 'Test', items: [
-          { var: 'text-color-primary', label: 'T' },
-          { var: 'bg-color', label: 'B' }
+        { name: 'Code', items: [
+          { var: 'code-text-primary', label: 'T' },
+          { var: 'code-bg', label: 'B' }
         ] }
       ]
     }));
@@ -40,8 +40,8 @@ describe('adminColors contrast warnings', () => {
   });
 
   test('shows and removes contrast warning', () => {
-    const textInput = document.getElementById('text-color-primaryInput');
-    const bgInput = document.getElementById('bg-colorInput');
+    const textInput = document.getElementById('code-text-primaryInput');
+    const bgInput = document.getElementById('code-bgInput');
     // Low contrast
     textInput.value = '#777777';
     bgInput.value = '#777777';

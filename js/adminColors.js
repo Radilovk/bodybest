@@ -8,11 +8,9 @@ import {
 import { hexToRgb, contrastRatio } from './utils.js';
 
 const inputs = {};
+// Контрастните двойки вече важат само за code.html
 const contrastPairs = [
-  ['text-color-primary', 'bg-color'],
-  ['text-color-secondary', 'bg-color'],
-  ['text-color-on-primary', 'primary-color'],
-  ['text-color-on-secondary', 'secondary-color']
+  ['code-text-primary', 'code-bg']
 ];
 
 function showContrastWarning(input, ratio) {
@@ -264,9 +262,8 @@ function importThemeFile(file) {
 export async function initColorSettings() {
   const container = document.getElementById('colorInputs');
   if (container) {
-    const filteredGroups = colorGroups.filter(
-      g => !['Index', 'Quest', 'Code'].includes(g.name)
-    );
+    // Показваме само групата за code.html
+    const filteredGroups = colorGroups.filter(g => g.name === 'Code');
     filteredGroups.forEach(group => {
       const fs = document.createElement('fieldset');
       const lg = document.createElement('legend');
