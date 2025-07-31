@@ -21,7 +21,11 @@ describe('theme cycling', () => {
     jest.unstable_mockModule('../app.js', () => ({
       fullDashboardData: {},
       activeTooltip: null,
-      setActiveTooltip: jest.fn()
+      setActiveTooltip: jest.fn(),
+      todaysMealCompletionStatus: {},
+      todaysExtraMeals: [],
+      currentIntakeMacros: {},
+      planHasRecContent: false
     }));
     ({ toggleTheme, applyTheme, updateThemeButtonText, initializeTheme } = await import('../uiHandlers.js'));
   });

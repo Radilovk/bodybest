@@ -23,7 +23,11 @@ describe('uiHandlers escapeHtml usage', () => {
     jest.unstable_mockModule('../app.js', () => ({
       fullDashboardData: { recipeData: { r1: { title: 'T <b>', body: 'B <i>\nline' } } },
       activeTooltip: null,
-      setActiveTooltip: jest.fn()
+      setActiveTooltip: jest.fn(),
+      todaysMealCompletionStatus: {},
+      todaysExtraMeals: [],
+      currentIntakeMacros: {},
+      planHasRecContent: false
     }));
 
     const { openInfoModalWithDetails } = await import('../uiHandlers.js');
@@ -54,7 +58,11 @@ describe('uiHandlers escapeHtml usage', () => {
     jest.unstable_mockModule('../app.js', () => ({
       fullDashboardData: {},
       activeTooltip: null,
-      setActiveTooltip: jest.fn()
+      setActiveTooltip: jest.fn(),
+      todaysMealCompletionStatus: {},
+      todaysExtraMeals: [],
+      currentIntakeMacros: {},
+      planHasRecContent: false
     }));
 
     const { openMainIndexInfo } = await import('../uiHandlers.js');

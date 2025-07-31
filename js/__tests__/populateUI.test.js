@@ -78,6 +78,8 @@ beforeEach(async () => {
       initialAnswers: {}
     },
     todaysMealCompletionStatus: {},
+    todaysExtraMeals: [],
+    currentIntakeMacros: {},
     planHasRecContent: false
   }));
   ({ populateUI } = await import('../populateUI.js'));
@@ -109,7 +111,13 @@ test('renders macro analytics card', async () => {
     initialData: {},
     initialAnswers: {}
   };
-  jest.unstable_mockModule('../app.js', () => ({ fullDashboardData: fullData, todaysMealCompletionStatus: {}, planHasRecContent: false }));
+  jest.unstable_mockModule('../app.js', () => ({
+    fullDashboardData: fullData,
+    todaysMealCompletionStatus: {},
+    todaysExtraMeals: [],
+    currentIntakeMacros: {},
+    planHasRecContent: false
+  }));
   ({ populateUI } = await import('../populateUI.js'));
   populateUI();
   const metrics = document.querySelectorAll('#macroMetricsGrid .macro-metric');
@@ -132,13 +140,47 @@ test('macro metric click highlights element and updates center label', async () 
     initialData: {},
     initialAnswers: {}
   };
-  jest.unstable_mockModule('../app.js', () => ({ fullDashboardData: fullData, todaysMealCompletionStatus: {}, planHasRecContent: false }));
+  jest.unstable_mockModule('../app.js', () => ({
+    fullDashboardData: fullData,
+    todaysMealCompletionStatus: {},
+    todaysExtraMeals: [],
+    currentIntakeMacros: {},
+    planHasRecContent: false
+  }));
   ({ populateUI } = await import('../populateUI.js'));
   populateUI();
   const metric = document.querySelector('#macroMetricsGrid .macro-metric');
   metric.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   expect(metric.classList.contains('active')).toBe(true);
   expect(document.getElementById('macroCenterLabel').textContent).toBe('Калории');
+});
+
+test('macro chart renders two datasets when current macros are available', async () => {
+  jest.resetModules();
+  const fullData = {
+    userName: 'Иван',
+    analytics: { current: {}, streak: {} },
+    planData: {
+      caloriesMacros: { calories: 1800, protein_grams: 120, protein_percent: 40, carbs_grams: 200, carbs_percent: 40, fat_grams: 50, fat_percent: 20 }
+    },
+    dailyLogs: [],
+    currentStatus: {},
+    initialData: {},
+    initialAnswers: {}
+  };
+  global.Chart = jest.fn().mockImplementation(() => ({ destroy: jest.fn(), resize: jest.fn() }));
+  jest.unstable_mockModule('../app.js', () => ({
+    fullDashboardData: fullData,
+    todaysMealCompletionStatus: {},
+    todaysExtraMeals: [],
+    currentIntakeMacros: { calories: 200, protein: 20, carbs: 30, fat: 10 },
+    planHasRecContent: false
+  }));
+  const { populateUI, renderPendingMacroChart } = await import('../populateUI.js');
+  populateUI();
+  renderPendingMacroChart();
+  const cfg = global.Chart.mock.calls[0][1];
+  expect(cfg.data.datasets.length).toBe(2);
 });
 
 test('hides modules when values are zero', async () => {
@@ -156,7 +198,11 @@ test('hides modules when values are zero', async () => {
     todaysMealCompletionStatus: {},
     planHasRecContent: false
   };
-  jest.unstable_mockModule('../app.js', () => zeroData);
+  jest.unstable_mockModule('../app.js', () => ({
+    ...zeroData,
+    todaysExtraMeals: [],
+    currentIntakeMacros: {}
+  }));
   ({ populateUI } = await import('../populateUI.js'));
   populateUI();
   expect(document.getElementById('goalCard').classList.contains('hidden')).toBe(true);
@@ -189,6 +235,8 @@ test('populates daily plan with color bars and meal types', async () => {
   jest.unstable_mockModule('../app.js', () => ({
     fullDashboardData: fullData,
     todaysMealCompletionStatus: {},
+    todaysExtraMeals: [],
+    currentIntakeMacros: {},
     planHasRecContent: false
   }));
   ({ populateUI } = await import('../populateUI.js'));
@@ -230,6 +278,8 @@ test('handles meal type variations', async () => {
   jest.unstable_mockModule('../app.js', () => ({
     fullDashboardData: fullData,
     todaysMealCompletionStatus: {},
+    todaysExtraMeals: [],
+    currentIntakeMacros: {},
     planHasRecContent: false
   }));
   ({ populateUI } = await import('../populateUI.js'));
@@ -263,6 +313,8 @@ test('applies success color to completed meal bar', async () => {
   jest.unstable_mockModule('../app.js', () => ({
     fullDashboardData: fullData,
     todaysMealCompletionStatus: {},
+    todaysExtraMeals: [],
+    currentIntakeMacros: {},
     planHasRecContent: false
   }));
   ({ populateUI } = await import('../populateUI.js'));
@@ -304,6 +356,8 @@ test('clicking a meal card toggles completion status', async () => {
       ...realApp,
       fullDashboardData: fullData,
       todaysMealCompletionStatus: {},
+      todaysExtraMeals: [],
+      currentIntakeMacros: {},
       planHasRecContent: false
     };
   });
@@ -342,6 +396,8 @@ describe('progress bar width handling', () => {
         initialAnswers: {}
       },
       todaysMealCompletionStatus: {},
+      todaysExtraMeals: [],
+      currentIntakeMacros: {},
       planHasRecContent: false
     }));
     ({ populateUI } = await import('../populateUI.js'));
