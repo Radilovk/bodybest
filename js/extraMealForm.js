@@ -106,6 +106,14 @@ export function initializeExtraMealFormLogic(formContainerElement) {
             replacedDisplay += ` (Засегнато: ${skippedMealVal})`;
         }
         summaryContainer.querySelector('[data-summary="replacedPlanned"]').textContent = replacedDisplay;
+
+        ['calories','protein','carbs','fat'].forEach(field => {
+            const el = summaryContainer.querySelector(`[data-summary="${field}"]`);
+            if (el) {
+                const val = getElValue(field);
+                el.textContent = val ? val : '-';
+            }
+        });
     }
 
     function showCurrentStep() {
@@ -312,9 +320,13 @@ export async function handleExtraMealFormSubmit(event) {
 
     const dataToSend = { userId: currentUserId, timestamp: new Date().toISOString() };
 
+    const numericFields = ['calories','protein','carbs','fat'];
     for (let [key, value] of formData.entries()) {
         if (key === 'quantityEstimateVisual') {
             dataToSend['quantityEstimate'] = value;
+        } else if (numericFields.includes(key)) {
+            const num = parseFloat(value);
+            if (!isNaN(num)) dataToSend[key] = num;
         } else {
             dataToSend[key] = value;
         }

@@ -31,3 +31,21 @@ test('показва съобщение при липса на количест�
   expect(showToastMock).toHaveBeenCalled();
   expect(fetch).not.toHaveBeenCalled();
 });
+
+test('изпраща макро стойности при попълнени полета', async () => {
+  document.body.innerHTML = `<form id="f">
+    <input type="radio" name="quantityEstimateVisual" value="малко" checked>
+    <input name="calories" value="120">
+    <input name="protein" value="10">
+    <input name="carbs" value="15">
+    <input name="fat" value="5">
+  </form>`;
+  const form = document.getElementById('f');
+  const e = { preventDefault: jest.fn(), target: form };
+  await handleExtraMealFormSubmit(e);
+  const body = JSON.parse(fetch.mock.calls[0][1].body);
+  expect(body.calories).toBe(120);
+  expect(body.protein).toBe(10);
+  expect(body.carbs).toBe(15);
+  expect(body.fat).toBe(5);
+});

@@ -1371,6 +1371,10 @@ async function handleLogExtraMealRequest(request, env) {
             feelingAfter: inputData.feelingAfter || "не е посочено", // e.g., "добре", "виновен", "подут"
             replacedPlanned: inputData.replacedPlanned || "не", // "да_напълно", "да_частично", "не"
             skippedMeal: inputData.skippedMeal || null, // Кое планирано хранене е пропуснато, ако има такова
+            calories: (inputData.calories !== undefined && !isNaN(parseFloat(inputData.calories))) ? parseFloat(inputData.calories) : null,
+            protein: (inputData.protein !== undefined && !isNaN(parseFloat(inputData.protein))) ? parseFloat(inputData.protein) : null,
+            carbs: (inputData.carbs !== undefined && !isNaN(parseFloat(inputData.carbs))) ? parseFloat(inputData.carbs) : null,
+            fat: (inputData.fat !== undefined && !isNaN(parseFloat(inputData.fat))) ? parseFloat(inputData.fat) : null,
             type: "extra_meal" // Маркер за типа запис
         };
 
