@@ -6,7 +6,7 @@ export function initBasicNav() {
     const applyHeaderColor = () => {
       const header = document.getElementById('header');
       const bg = header ? getComputedStyle(header).backgroundColor : '';
-      if (bg) nav.style.backgroundColor = bg;
+      if (bg) nav.style.background = bg;
     };
     const close = () => {
       body.classList.remove('nav-open');

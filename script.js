@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mobileMenuBtn && nav) {
         const applyHeaderColor = () => {
             const bg = header ? getComputedStyle(header).backgroundColor : '';
-            if (bg) nav.style.backgroundColor = bg;
+            if (bg) nav.style.background = bg;
         };
         const closeNav = () => {
             body.classList.remove('nav-open');
