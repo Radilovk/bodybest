@@ -3,11 +3,17 @@ export function initBasicNav() {
   const nav = document.getElementById('nav');
   const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
   if (mobileMenuBtn && nav) {
+    const applyHeaderColor = () => {
+      const header = document.getElementById('header');
+      const bg = header ? getComputedStyle(header).backgroundColor : '';
+      if (bg) nav.style.backgroundColor = bg;
+    };
     const close = () => {
       body.classList.remove('nav-open');
       mobileMenuBtn.setAttribute('aria-expanded', 'false');
     };
     const toggle = () => {
+      applyHeaderColor();
       const open = body.classList.toggle('nav-open');
       mobileMenuBtn.setAttribute('aria-expanded', open);
     };
