@@ -188,9 +188,8 @@ function applyThemeFromSelect() {
   Object.entries(theme).forEach(([k, val]) => {
     const el = inputs[k];
     if (el) {
-      const norm = normalizeColor(val);
-      el.value = norm;
-      setCssVar(k, norm);
+      el.value = val;
+      setCssVar(k, val);
     }
   });
 }

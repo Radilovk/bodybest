@@ -275,6 +275,10 @@ body.vivid-theme #macroAnalyticsCard .macro-label {
 #macroMetricsPreview .macro-icon {
   font-size: 1rem;
 }
+#macroAnalyticsCard .macro-metric.calories .macro-icon,
+#macroMetricsPreview .macro-metric.calories .macro-icon {
+  color: var(--text-color-primary);
+}
 #macroMetricsPreview .macro-label {
   font-size: 0.75rem;
 }
@@ -284,6 +288,12 @@ body.vivid-theme #macroAnalyticsCard .macro-label {
 #macroMetricsPreview .macro-subtitle {
   font-size: 0.7rem;
 }
+#macroMetricsPreview .macro-value,
+#macroMetricsPreview .macro-subtitle {
+  display: inline-block;
+  vertical-align: baseline;
+}
+#macroMetricsPreview .macro-value { margin-right: 0.1em; }
 #macroCenterLabel {
   position: absolute;
   top: 50%;
