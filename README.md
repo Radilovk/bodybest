@@ -184,7 +184,7 @@ means the Node dependencies haven't been installed. Run `npm install` and then
 try again. Recent versions of the worker rely on the `MAILER_ENDPOINT_URL`
 environment variable instead of dynamic imports. If this variable is missing, the
 worker uses the helper from `sendEmailWorker.js` and posts directly to
-`MAIL_PHP_URL` (defaults to `https://mybody.best/mailer/mail.php`). A **500** error from
+`MAIL_PHP_URL` (defaults to `https://radilovk.github.io/bodybest/mailer/mail.php`). A **500** error from
 `/api/sendTestEmail` usually indicates a problem with the PHP backend. Inspect
 the worker logs for details.
 
@@ -942,7 +942,7 @@ To send a test email задайте `WORKER_ADMIN_TOKEN`. Може да посо
 | Variable | Purpose |
 |----------|---------|
 | `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If omitted, the worker posts to `sendEmailWorker.js`. The request payload includes both `message` and `body` fields for compatibility. |
-| `MAIL_PHP_URL` | Legacy PHP endpoint if you prefer your own backend. Defaults to `https://mybody.best/mailer/mail.php`. |
+| `MAIL_PHP_URL` | Legacy PHP endpoint if you prefer your own backend. Defaults to `https://radilovk.github.io/bodybest/mailer/mail.php`. |
 | `EMAIL_PASSWORD` | Password used by `mailer.js` when authenticating with the SMTP server. |
 | `FROM_EMAIL` | Sender address used by `mailer.js` and the PHP backend. |
 | `FROM_NAME` | Optional display name for the sender shown in outgoing emails. |
