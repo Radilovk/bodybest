@@ -251,7 +251,7 @@ function renderMacroAnalyticsCard(macros) {
     grid.id = 'macroMetricsGrid';
     grid.className = 'macro-metrics-grid';
     const list = [
-        { l: 'Калории', v: macros.calories, s: 'kcal дневно' },
+        { l: 'Калории', v: macros.calories, s: 'kcal дневно', cls: 'calories' },
         {
             l: 'Белтъчини',
             v: macros.protein_grams,
@@ -273,7 +273,7 @@ function renderMacroAnalyticsCard(macros) {
     ];
     list.forEach((item, idx) => {
         const div = document.createElement('div');
-        div.className = 'macro-metric';
+        div.className = 'macro-metric' + (item.cls ? ` ${item.cls}` : '');
 
         const icon = document.createElement('span');
         icon.className = 'macro-icon';
@@ -290,7 +290,7 @@ function renderMacroAnalyticsCard(macros) {
 
         const label = document.createElement('div');
         label.className = 'macro-label';
-        const color = item.c ? getCssVar(item.c) : getCssVar('--primary-color');
+        const color = item.c ? getCssVar(item.c) : null;
         if (color) {
             label.style.color = color;
             icon.style.color = color;
@@ -395,7 +395,7 @@ function renderMacroPreviewGrid(macros) {
     }
     preview.classList.remove('hidden');
     const list = [
-        { l: 'Калории', v: macros.calories, s: 'kcal' },
+        { l: 'Калории', v: macros.calories, s: 'kcal', cls: 'calories' },
         { l: 'Белтъчини', v: macros.protein_percent, s: '%' },
         { l: 'Въглехидрати', v: macros.carbs_percent, s: '%' },
         { l: 'Мазнини', v: macros.fat_percent, s: '%' }
@@ -413,7 +413,7 @@ function renderMacroPreviewGrid(macros) {
     };
     list.forEach(item => {
         const div = document.createElement('div');
-        div.className = 'macro-metric';
+        div.className = 'macro-metric' + (item.cls ? ` ${item.cls}` : '');
         const icon = document.createElement('span');
         icon.className = 'macro-icon';
         const i = document.createElement('i');
@@ -422,7 +422,7 @@ function renderMacroPreviewGrid(macros) {
         const label = document.createElement('div');
         label.className = 'macro-label';
         const clrVar = colorMap[item.l];
-        const clr = clrVar ? getCssVar(clrVar) : getCssVar('--primary-color');
+        const clr = clrVar ? getCssVar(clrVar) : null;
         if (clr) {
             label.style.color = clr;
             icon.style.color = clr;
