@@ -3,20 +3,13 @@ import { selectors } from './uiElements.js';
 import { openModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
 
-const medalIcons = [
-    '<i class="bi bi-award-fill"></i>',
-    '<i class="bi bi-trophy-fill"></i>',
-    '<i class="bi bi-fire"></i>',
-    '<i class="bi bi-stars"></i>',
-    '<i class="bi bi-patch-check-fill"></i>',
-    '<i class="bi bi-emoji-smile"></i>'
-];
+const medalIcons = ['🏅', '🥇', '🔥', '✨', '✅', '😊'];
 
 // Анимирано показване на иконка в модала за постижение
-function showAchievementEmoji(iconHtml) {
+function showAchievementEmoji(emoji) {
     const emojiEl = document.getElementById('achievementModalEmoji');
     if (!emojiEl) return;
-    emojiEl.innerHTML = iconHtml;
+    emojiEl.textContent = emoji;
     emojiEl.setAttribute('aria-hidden', 'false');
     emojiEl.style.animation = 'none';
     // Trigger reflow to restart animation
@@ -97,7 +90,7 @@ function renderAchievements(newIndex = -1) {
         const el = document.createElement('div');
         el.className = 'achievement-medal';
         if (index === newIndex) el.classList.add('new');
-        el.innerHTML = a.emoji || '<i class="bi bi-award"></i>';
+        el.textContent = a.emoji || '🏅';
         el.dataset.index = index;
         selectors.streakGrid.appendChild(el);
     });
@@ -128,7 +121,7 @@ export function handleAchievementClick(e) {
     const modalTitle = document.getElementById('achievementModalTitle');
     if (body) body.textContent = ach.message;
     if (modalTitle) modalTitle.textContent = ach.title;
-    showAchievementEmoji(ach.emoji || '<i class="bi bi-award"></i>');
+    showAchievementEmoji(ach.emoji || '🏅');
     openModal('achievementModal');
 }
 
