@@ -1,17 +1,17 @@
-import { readFileSync } from 'fs';
-
-const dietModelPath = new URL('../kv/DIET_RESOURCES/base_diet_model.json', import.meta.url);
-const dietModel = JSON.parse(readFileSync(dietModelPath, 'utf8'));
+import dietModel from '../kv/DIET_RESOURCES/base_diet_model.json' with { type: 'json' };
 
 // Създаваме речник за бързо търсене на макроси по id или име
-const macrosByIdOrName = new Map();
-(dietModel['ястия'] || []).forEach((meal) => {
-  const macros = meal['хранителни_стойности'];
-  if (macros) {
-    macrosByIdOrName.set(meal.id, macros);
-    macrosByIdOrName.set((meal.име || '').toLowerCase(), macros);
-  }
-});
+const macrosByIdOrName = new Map(
+  (dietModel['ястия'] || [])
+    .filter((m) => m['хранителни_стойности'])
+    .flatMap((meal) => {
+      const macros = meal['хранителни_стойности'];
+      return [
+        [meal.id, macros],
+        [(meal.име || '').toLowerCase(), macros]
+      ];
+    })
+);
 
 /**
  * Изчислява общите макроси за изпълнените хранения и извънредни хранения.
