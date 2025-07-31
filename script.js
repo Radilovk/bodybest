@@ -185,11 +185,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Мобилно меню
     if (mobileMenuBtn && nav) {
         const applyHeaderColor = () => {
-            const bg = header ? getComputedStyle(header).backgroundColor : '';
+            const rootStyles = getComputedStyle(document.documentElement);
+            const bg =
+                rootStyles.getPropertyValue('--mobile-menu-bg').trim() ||
+                rootStyles.getPropertyValue('--header-bg-solid').trim();
             if (bg) nav.style.background = bg;
         };
         const closeNav = () => {
             body.classList.remove('nav-open');
+            nav.style.background = '';
             mobileMenuBtn.setAttribute('aria-expanded', 'false');
         };
         const toggleNav = () => {
