@@ -22,15 +22,15 @@
    3. ХЕДЪР И ГЛАВНО МЕНЮ
    ========================================================================== */
 header {
-  background: var(--primary-color); color: var(--text-color-on-primary);
+  background: var(--primary-color); color: var(--header-title-color);
   padding: var(--space-md) var(--space-lg); display: flex;
   align-items: center; justify-content: space-between; box-shadow: var(--shadow-md);
   position: sticky; top: 0; z-index: 1000;
   height: var(--header-height); 
 }
-header h1 { color: var(--text-color-on-primary); margin: 0; font-size: clamp(1.3rem, 3.5vw, 1.7rem); }
+header h1 { color: var(--header-title-color); margin: 0; font-size: clamp(1.3rem, 3.5vw, 1.7rem); }
 #menu-toggle {
-  color: var(--text-color-on-primary); padding: var(--space-sm); margin-left: var(--space-md);
+  color: var(--header-title-color); padding: var(--space-sm); margin-left: var(--space-md);
   background: transparent; border: none; cursor: pointer;
 }
 #menu-toggle svg { width: 28px; height: 28px; display: block; }
