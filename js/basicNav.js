@@ -4,8 +4,9 @@ export function initBasicNav() {
   const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
   if (mobileMenuBtn && nav) {
     const applyHeaderColor = () => {
-      const header = document.getElementById('header');
-      const bg = header ? getComputedStyle(header).backgroundColor : '';
+      const bg = getComputedStyle(document.documentElement)
+        .getPropertyValue('--header-bg-solid')
+        .trim();
       if (bg) nav.style.background = bg;
     };
     const close = () => {

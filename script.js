@@ -185,7 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Мобилно меню
     if (mobileMenuBtn && nav) {
         const applyHeaderColor = () => {
-            const bg = header ? getComputedStyle(header).backgroundColor : '';
+            const bg = getComputedStyle(document.documentElement)
+                .getPropertyValue('--header-bg-solid')
+                .trim();
             if (bg) nav.style.background = bg;
         };
         const closeNav = () => {
