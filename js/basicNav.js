@@ -16,7 +16,7 @@ export function initBasicNav() {
       if (
         body.classList.contains('nav-open') &&
         !nav.contains(e.target) &&
-        e.target !== mobileMenuBtn
+        !mobileMenuBtn.contains(e.target)
       ) {
         close();
       }

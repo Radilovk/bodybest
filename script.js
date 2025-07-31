@@ -194,7 +194,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         mobileMenuBtn.addEventListener('click', toggleNav);
         document.addEventListener('click', (e) => {
-            if (body.classList.contains('nav-open') && !nav.contains(e.target) && e.target !== mobileMenuBtn) {
+            if (
+                body.classList.contains('nav-open') &&
+                !nav.contains(e.target) &&
+                !mobileMenuBtn.contains(e.target)
+            ) {
                 closeNav();
             }
         });
