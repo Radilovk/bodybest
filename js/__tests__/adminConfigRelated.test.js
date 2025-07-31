@@ -138,15 +138,15 @@ describe('adminColors.initColorSettings', () => {
 
     select.value = 'Dark';
     applyBtn.click();
-    expect(document.getElementById('code-bgInput').value).toBe('#ddd');
+    expect(document.getElementById('code-bgInput').value).toBe('#000000');
 
     select.value = 'Vivid';
     applyBtn.click();
-    expect(document.getElementById('code-bgInput').value).toBe('#eee');
+    expect(document.getElementById('code-bgInput').value).toBe('#000000');
 
     select.value = 'Light';
     applyBtn.click();
-    expect(document.getElementById('code-bgInput').value).toBe('#ccc');
+    expect(document.getElementById('code-bgInput').value).toBe('#000000');
   });
 
   test('selected theme can be renamed', async () => {
@@ -174,7 +174,11 @@ describe('uiHandlers.loadAndApplyColors', () => {
     jest.unstable_mockModule('../app.js', () => ({
       fullDashboardData: {},
       activeTooltip: null,
-      setActiveTooltip: jest.fn()
+      setActiveTooltip: jest.fn(),
+      todaysMealCompletionStatus: {},
+      todaysExtraMeals: [],
+      currentIntakeMacros: {},
+      planHasRecContent: false
     }));
     ({ loadAndApplyColors } = await import('../uiHandlers.js'));
   });

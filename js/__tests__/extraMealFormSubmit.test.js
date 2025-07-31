@@ -17,7 +17,14 @@ beforeEach(async () => {
   jest.unstable_mockModule('../config.js', () => ({
     apiEndpoints: { logExtraMeal: '/api' }
   }));
-  jest.unstable_mockModule('../app.js', () => ({ currentUserId: 'u1' }));
+  jest.unstable_mockModule('../app.js', () => ({
+    currentUserId: 'u1',
+    todaysMealCompletionStatus: {},
+    todaysExtraMeals: [],
+    currentIntakeMacros: {},
+    fullDashboardData: { planData: { week1Menu: {} } },
+    planHasRecContent: false
+  }));
   global.fetch = jest.fn().mockResolvedValue({ json: async () => [] });
   ({ handleExtraMealFormSubmit } = await import('../extraMealForm.js'));
   fetch.mockClear();

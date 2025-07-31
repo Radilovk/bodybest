@@ -16,9 +16,11 @@ import {
     handleChatSend, handleChatInputKeypress, // from app.js / chat.js
     _handlePrevQuizQuestion, _handleNextQuizQuestion, _handleSubmitQuizAnswersClientSide, // from app.js
     _handleTriggerAdaptiveQuizClientSide, // from app.js
-    todaysMealCompletionStatus, activeTooltip, currentUserId,
+    todaysMealCompletionStatus, todaysExtraMeals, currentIntakeMacros,
+    fullDashboardData, activeTooltip, currentUserId,
     setChatModelOverride, setChatPromptOverride
 } from './app.js';
+import { calculateCurrentMacros } from './macroUtils.js';
 import {
     openPlanModificationChat,
     clearPlanModChat,
@@ -337,6 +339,15 @@ function handleDelegatedClicks(event) {
         if (day && index !== undefined) {
             const isCompleted = mealCard.classList.toggle('completed');
             todaysMealCompletionStatus[`${day}_${index}`] = isCompleted;
+            Object.assign(
+                currentIntakeMacros,
+                calculateCurrentMacros(
+                    fullDashboardData.planData?.week1Menu,
+                    todaysMealCompletionStatus,
+                    todaysExtraMeals
+                )
+            );
+            renderPendingMacroChart();
             showToast(`Храненето е ${isCompleted ? 'отбелязано' : 'размаркирано'}.`, false, 2000);
         }
         return;

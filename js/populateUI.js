@@ -2,7 +2,7 @@
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, getProgressColor, animateProgressFill, getCssVar } from './utils.js';
 import { generateId } from './config.js';
-import { fullDashboardData, todaysMealCompletionStatus, planHasRecContent } from './app.js';
+import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 
 export let macroChartInstance = null;
@@ -328,6 +328,9 @@ export function renderPendingMacroChart() {
         macroChartInstance = null;
     }
     const m = pendingMacroData;
+    const current = currentIntakeMacros && Object.keys(currentIntakeMacros).length > 0
+        ? currentIntakeMacros
+        : null;
     const ctx = canvas.getContext('2d');
     macroChartInstance = new Chart(ctx, {
         type: 'doughnut',
@@ -337,21 +340,35 @@ export function renderPendingMacroChart() {
                 `Въглехидрати (${m.carbs_percent}%)`,
                 `Мазнини (${m.fat_percent}%)`
             ],
-            datasets: [{
-                label: 'Разпределение на макроси',
-                data: [m.protein_grams, m.carbs_grams, m.fat_grams],
-                backgroundColor: [
-                    getCssVar('--macro-protein-color', 'rgb(54,162,235)'),
-                    getCssVar('--macro-carbs-color', 'rgb(255,205,86)'),
-                    getCssVar('--macro-fat-color', 'rgb(255,99,132)')
-                ],
-                hoverOffset: 4
-            }]
+            datasets: [
+                {
+                    label: 'Цел',
+                    data: [m.protein_grams, m.carbs_grams, m.fat_grams],
+                    backgroundColor: [
+                        getCssVar('--macro-protein-color', 'rgb(54,162,235)'),
+                        getCssVar('--macro-carbs-color', 'rgb(255,205,86)'),
+                        getCssVar('--macro-fat-color', 'rgb(255,99,132)')
+                    ],
+                    hoverOffset: 4,
+                    weight: 2
+                },
+                current ? {
+                    label: 'Консумирано',
+                    data: [current.protein, current.carbs, current.fat],
+                    backgroundColor: [
+                        getCssVar('--macro-protein-color', 'rgb(54,162,235)'),
+                        getCssVar('--macro-carbs-color', 'rgb(255,205,86)'),
+                        getCssVar('--macro-fat-color', 'rgb(255,99,132)')
+                    ],
+                    hoverOffset: 4,
+                    weight: 1
+                } : null
+            ].filter(Boolean)
         },
         options: {
             responsive: true,
             plugins: {
-                legend: { display: false },
+                legend: { position: 'bottom' },
                 title: { display: true, text: `Дневен прием (${m.calories} kcal)` }
             },
             onClick: (evt, elements) => {
@@ -365,6 +382,8 @@ export function renderPendingMacroChart() {
             }
         }
     });
+    const centerLabel = document.getElementById('macroCenterLabel');
+    if (centerLabel) centerLabel.textContent = 'Външен: цели | Вътрешен: консумирано';
     macroChartInstance.resize();
 }
 
@@ -379,7 +398,11 @@ export function highlightMacro(metricElement, index) {
     if (macroChartInstance) {
         macroChartInstance.setActiveElements([]);
         if (index !== undefined && index > -1) {
-            macroChartInstance.setActiveElements([{ datasetIndex: 0, index }]);
+            const elements = [{ datasetIndex: 0, index }];
+            if (macroChartInstance.data.datasets.length > 1) {
+                elements.push({ datasetIndex: 1, index });
+            }
+            macroChartInstance.setActiveElements(elements);
         }
         macroChartInstance.update();
     }

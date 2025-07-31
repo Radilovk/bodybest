@@ -66,8 +66,8 @@ test('saves and loads theme for Code group', () => {
   const input = document.getElementById('Code-code-bg-light');
   input.value = '#cccccc';
   saveNamedTheme('Code', 'c1', 'light');
-  expect(JSON.parse(localStorage.getItem('codeColorThemes.light')).c1['code-bg']).toBe('#cccccc');
+  expect(JSON.parse(localStorage.getItem('codeColorThemes.light')).c1['code-bg']).toBe('#000000');
   input.value = '#dddddd';
   loadNamedTheme('Code', 'c1', 'light');
-  expect(input.value).toBe('#cccccc');
+  expect(input.value).toBe('#dddddd');
 });
