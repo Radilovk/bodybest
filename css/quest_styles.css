@@ -301,12 +301,12 @@ button[id^="nextBtn"]:hover, button[id="regSubmitBtn"]:hover, button[id="submitB
 }
 
 /* Второстепенен бутон (Назад) */
-button[id^="prevBtn"], button[id="regBackBtn"], button[id="restartBtn"] {
+button[id^="prevBtn"], button[id="regBackBtn"], button[id="restartBtn"], button[id="finalBackBtn"] {
   background-color: transparent;
   color: var(--accent-primary);
   border: 2px solid var(--accent-primary);
 }
-button[id^="prevBtn"]:hover, button[id="regBackBtn"]:hover, button[id="restartBtn"]:hover {
+button[id^="prevBtn"]:hover, button[id="regBackBtn"]:hover, button[id="restartBtn"]:hover, button[id="finalBackBtn"]:hover {
   background-color: var(--accent-primary);
   color: var(--text-on-accent);
 }
