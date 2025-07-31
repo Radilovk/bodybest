@@ -162,6 +162,20 @@ describe('adminColors.initColorSettings', () => {
     expect(themes.Light).toBeUndefined();
     expect(select.querySelector('option[value="Bright"]')).not.toBeNull();
   });
+
+  test('selected theme can be renamed', async () => {
+    mockLoad.mockResolvedValue({ colors: {} });
+    await initColorSettings();
+    const select = document.getElementById('savedThemes');
+    const renameBtn = document.getElementById('renameThemeLocal');
+    select.value = 'Light';
+    global.prompt = jest.fn().mockReturnValue('Bright');
+    renameBtn.click();
+    const themes = JSON.parse(localStorage.getItem('colorThemes'));
+    expect(themes.Bright).toBeDefined();
+    expect(themes.Light).toBeUndefined();
+    expect(select.querySelector('option[value="Bright"]')).not.toBeNull();
+  });
 });
 
 describe('uiHandlers.loadAndApplyColors', () => {
