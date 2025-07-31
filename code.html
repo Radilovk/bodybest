@@ -454,70 +454,65 @@
                   </div>
                 </div>
               </div>
-              <div class="card index-card" id="streakCard">
-              <h4><i class="bi bi-award"></i> Моите успехи</h4>
-                <div id="streakGrid" class="streak-grid"></div>
+              <div
+                id="detailedAnalyticsAccordion"
+                class="card index-card accordion-container"
+              >
+                <div
+                  class="accordion-header"
+                  role="button"
+                  tabindex="0"
+                  aria-expanded="false"
+                  aria-controls="detailedAnalyticsContent"
+                >
+                  <span>📊 Детайлни Показатели и Анализ</span>
+                  <svg class="icon arrow">
+                    <use href="#icon-chevron-right"></use>
+                  </svg>
+                </div>
+                <div id="macroMetricsGrid" class="macro-metrics-grid"></div>
+                <div
+                  id="detailedAnalyticsContent"
+                  class="accordion-content"
+                  role="region"
+                >
+                  <div
+                    id="dashboardTextualAnalysis"
+                    style="margin-bottom: var(--space-lg)"
+                  >
+                    <p class="placeholder">Генериране на текстов анализ...</p>
+                  </div>
+                  <div class="card index-card" id="progressHistoryCard">
+                    <h4>
+                      <svg
+                        class="icon"
+                        style="width: 1em; height: 1em; margin-right: 0.3em"
+                      >
+                        <use href="#icon-chart-line"></use>
+                      </svg>
+                      История на Напредъка
+                    </h4>
+                    <div class="chart-container">
+                      <p class="placeholder">
+                        Зареждане на историята на напредъка...
+                      </p>
+                    </div>
+                  </div>
+                  <div id="analyticsCardsContainer" class="analytics-cards-grid">
+                    <div id="macroAnalyticsCard" class="analytics-card">
+                      <h5>Калории и Макронутриенти</h5>
+                      <div class="chart-container">
+                        <canvas id="macroChart"></canvas>
+                      </div>
+                    </div>
+                    <p class="placeholder">Зареждане на детайлните показатели...</p>
+                  </div>
+                </div>
               </div>
             </div>
             <!-- Край Основни Индекси -->
 
-            <!-- Акордеон за детайлни показатели -->
-            <div
-              id="detailedAnalyticsAccordion"
-              class="card accordion-container"
-            >
-              <div
-                class="accordion-header"
-                role="button"
-                tabindex="0"
-                aria-expanded="false"
-                aria-controls="detailedAnalyticsContent"
-              >
-                <span>📊 Детайлни Показатели и Анализ</span>
-                <svg class="icon arrow">
-                  <use href="#icon-chevron-right"></use>
-                </svg>
-              </div>
-              <div
-                id="detailedAnalyticsContent"
-                class="accordion-content"
-                role="region"
-              >
-                <div
-                  id="dashboardTextualAnalysis"
-                  style="margin-bottom: var(--space-lg)"
-                >
-                  <p class="placeholder">Генериране на текстов анализ...</p>
-                </div>
-                <div class="card index-card" id="progressHistoryCard">
-                  <h4>
-                    <svg
-                      class="icon"
-                      style="width: 1em; height: 1em; margin-right: 0.3em"
-                    >
-                      <use href="#icon-chart-line"></use>
-                    </svg>
-                    История на Напредъка
-                  </h4>
-                  <div class="chart-container">
-                    <p class="placeholder">
-                      Зареждане на историята на напредъка...
-                    </p>
-                  </div>
-                </div>
-                <div id="analyticsCardsContainer" class="analytics-cards-grid">
-                  <div id="macroAnalyticsCard" class="analytics-card">
-                    <h5>Калории и Макронутриенти</h5>
-                    <div class="chart-container">
-                      <canvas id="macroChart"></canvas>
-                    </div>
-                    <div id="macroMetricsGrid" class="macro-metrics-grid"></div>
-                  </div>
-                  <p class="placeholder">Зареждане на детайлните показатели...</p>
-                </div>
-              </div>
-            </div>
-            <!-- Край Акордеон детайлни показатели -->
+
 
             <!-- Меню -->
             <div class="card">
@@ -596,6 +591,10 @@
               <ul id="profileGoals" class="profile-data-list">
                 <li class="placeholder">Зареждане на целите...</li>
               </ul>
+            </div>
+            <div class="card" id="streakCard">
+              <h3><span class="streak-emoji" aria-hidden="true">🏅</span> Моите успехи</h3>
+              <div id="streakGrid" class="streak-grid"></div>
             </div>
             <div class="card">
               <h3><i class="bi bi-clipboard-check"></i> Ключови Съображения от Въпросника</h3>

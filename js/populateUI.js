@@ -226,27 +226,7 @@ function populateDashboardDetailedAnalytics(analyticsData) {
     }
 }
 
-function renderMacroAnalyticsCard(macros) {
-    const card = document.createElement('div');
-    card.id = 'macroAnalyticsCard';
-    card.className = 'analytics-card';
-    const header = document.createElement('h5');
-    header.textContent = 'Калории и Макронутриенти';
-    card.appendChild(header);
-
-    const chartContainer = document.createElement('div');
-    chartContainer.className = 'chart-container';
-
-    const canvas = document.createElement('canvas');
-    canvas.id = 'macroChart';
-    chartContainer.appendChild(canvas);
-
-    const centerLabel = document.createElement('div');
-    centerLabel.id = 'macroCenterLabel';
-    centerLabel.textContent = 'Калории';
-    chartContainer.appendChild(centerLabel);
-    card.appendChild(chartContainer);
-
+function createMacroMetricsGrid(macros) {
     const grid = document.createElement('div');
     grid.id = 'macroMetricsGrid';
     grid.className = 'macro-metrics-grid';
@@ -293,7 +273,29 @@ function renderMacroAnalyticsCard(macros) {
         div.addEventListener('click', () => highlightMacro(div, idx - 1));
         grid.appendChild(div);
     });
-    card.appendChild(grid);
+    return grid;
+}
+
+function renderMacroAnalyticsCard() {
+    const card = document.createElement('div');
+    card.id = 'macroAnalyticsCard';
+    card.className = 'analytics-card';
+    const header = document.createElement('h5');
+    header.textContent = 'Калории и Макронутриенти';
+    card.appendChild(header);
+
+    const chartContainer = document.createElement('div');
+    chartContainer.className = 'chart-container';
+
+    const canvas = document.createElement('canvas');
+    canvas.id = 'macroChart';
+    chartContainer.appendChild(canvas);
+
+    const centerLabel = document.createElement('div');
+    centerLabel.id = 'macroCenterLabel';
+    centerLabel.textContent = 'Калории';
+    chartContainer.appendChild(centerLabel);
+    card.appendChild(chartContainer);
 
     // Chart will be initialized when the accordion is opened
 
@@ -378,7 +380,13 @@ function populateDashboardMacros(macros) {
     }
     pendingMacroData = macros || null;
     if (macros) {
-        const card = renderMacroAnalyticsCard(macros);
+        const gridContainer = document.getElementById('macroMetricsGrid');
+        if (gridContainer) {
+            const newGrid = createMacroMetricsGrid(macros);
+            gridContainer.className = newGrid.className;
+            gridContainer.replaceChildren(...newGrid.children);
+        }
+        const card = renderMacroAnalyticsCard();
         selectors.analyticsCardsContainer.prepend(card);
         const header = selectors.detailedAnalyticsAccordion?.querySelector('.accordion-header');
         if (header && header.getAttribute('aria-expanded') === 'true') {
