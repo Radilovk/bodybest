@@ -3,7 +3,7 @@ import { selectors } from './uiElements.js';
 import { showLoading, showToast, openModal as genericOpenModal, closeModal as genericCloseModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
 import { currentUserId, todaysExtraMeals, todaysMealCompletionStatus, currentIntakeMacros, fullDashboardData } from './app.js';
-import { calculateCurrentMacros } from './macroUtils.js';
+import { calculateCurrentMacros, loadDietModel } from './macroUtils.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 
 let extraMealFormLoaded = false;
@@ -369,9 +369,10 @@ export async function handleExtraMealFormSubmit(event) {
             carbs: dataToSend.carbs || 0,
             fat: dataToSend.fat || 0
         });
+        await loadDietModel();
         Object.assign(
             currentIntakeMacros,
-            calculateCurrentMacros(
+            await calculateCurrentMacros(
                 fullDashboardData.planData?.week1Menu,
                 todaysMealCompletionStatus,
                 todaysExtraMeals
