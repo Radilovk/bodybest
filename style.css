@@ -17,6 +17,8 @@
     --bg-gradient: linear-gradient(135deg, #e9eff5 0%, #f0f4f8 100%);
     --card-bg: rgba(255, 255, 255, 0.8);
     --header-bg: rgba(255, 255, 255, 0.7);
+    /* Цвят на мобилното меню - следва хедъра */
+    --mobile-menu-bg: var(--header-bg);
     --text-color-primary: #1b263b;
     --text-color-secondary: #415a77;
     --border-color: rgba(58, 80, 107, 0.15);
@@ -45,6 +47,8 @@
     --bg-gradient: linear-gradient(135deg, #16213E 0%, #1A1A2E 100%);
     --card-bg: rgba(40, 40, 60, 0.75);
     --header-bg: rgba(40, 40, 60, 0.65);
+    /* Цвят на мобилното меню - следва хедъра */
+    --mobile-menu-bg: var(--header-bg);
     --text-color-primary: #e0e6f0;
     --text-color-secondary: #a0b0c5;
     --border-color: rgba(91, 192, 190, 0.2);
@@ -209,7 +213,7 @@ footer { background: var(--dark-bg); color: var(--light-text); padding: 80px 0 3
     .section-title h2 { font-size: 2rem; }
     .cta h2 { font-size: 2.2rem; }
     .mobile-menu-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; }
-    nav { position: fixed; top: 0; right: -75%; width: 75%; height: 100%; background: var(--header-bg); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; padding-top: 80px; opacity: 0; visibility: hidden; transition: opacity 0.4s ease, right 0.4s ease, visibility 0.4s; z-index: 1000; }
+    nav { position: fixed; top: 0; right: -75%; width: 75%; height: 100%; background: var(--mobile-menu-bg); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; padding-top: 80px; opacity: 0; visibility: hidden; transition: opacity 0.4s ease, right 0.4s ease, visibility 0.4s; z-index: 1000; }
     .nav-open nav { right: 0; opacity: 1; visibility: visible; }
     nav ul { flex-direction: column; text-align: center; }
     nav ul li { margin: 15px 0; }
