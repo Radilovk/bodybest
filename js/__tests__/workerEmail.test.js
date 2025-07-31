@@ -47,7 +47,7 @@ describe('handleSendEmailRequest and sendEmailUniversal', () => {
     const env = { WORKER_ADMIN_TOKEN: 'secret' };
     const res = await handleSendEmailRequest(req, env);
     expect(fetch).toHaveBeenCalledWith(
-      'https://mybody.best/mailer/mail.php',
+      'https://radilovk.github.io/bodybest/mailer/mail.php',
       expect.objectContaining({
         body: JSON.stringify({ to: 'a@b.bg', subject: 'S', message: 'B', body: 'B', fromName: '' }),
         headers: { 'Content-Type': 'application/json' }
@@ -66,7 +66,7 @@ describe('handleSendEmailRequest and sendEmailUniversal', () => {
     });
     await sendEmailUniversal('t@e.com', 'Hi', 'Body', {});
     expect(fetch).toHaveBeenCalledWith(
-      'https://mybody.best/mailer/mail.php',
+      'https://radilovk.github.io/bodybest/mailer/mail.php',
       expect.objectContaining({
         body: JSON.stringify({ to: 't@e.com', subject: 'Hi', message: 'Body', body: 'Body', fromName: '' }),
         headers: { 'Content-Type': 'application/json' }
@@ -176,7 +176,7 @@ describe('handleSendTestEmailRequest', () => {
     const env = { WORKER_ADMIN_TOKEN: 'secret' };
     const res = await handleSendTestEmailRequest(request, env);
     expect(res.success).toBe(true);
-    expect(fetch).toHaveBeenCalledWith('https://mybody.best/mailer/mail.php', expect.any(Object));
+    expect(fetch).toHaveBeenCalledWith('https://radilovk.github.io/bodybest/mailer/mail.php', expect.any(Object));
   });
 
   test('forwards fromName to mailer', async () => {
@@ -222,7 +222,7 @@ describe('handleSendTestEmailRequest', () => {
       expect.any(String)
     );
     expect(fetch).toHaveBeenCalledWith(
-      'https://mybody.best/mailer/mail.php',
+      'https://radilovk.github.io/bodybest/mailer/mail.php',
       expect.any(Object)
     );
   });

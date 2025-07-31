@@ -53,7 +53,7 @@ async function checkRateLimit(env, identifier, limit = 3, windowMs = 60000) {
 }
 
 async function sendViaPhp(to, subject, message, env = {}) {
-  const url = env[MAIL_PHP_URL_VAR_NAME] || 'https://mybody.best/mailer/mail.php';
+  const url = env[MAIL_PHP_URL_VAR_NAME] || 'https://radilovk.github.io/bodybest/mailer/mail.php';
   const fromName = env.FROM_NAME || '';
   const resp = await fetch(url, {
     method: 'POST',

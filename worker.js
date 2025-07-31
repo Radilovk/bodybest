@@ -116,7 +116,7 @@ const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
                   <table border="0" cellspacing="0" cellpadding="0">
                     <tr>
                       <td align="center" style="border-radius: 50px; background: linear-gradient(135deg, #4A90E2 0%, #50E3C2 100%);">
-                        <a href="https://mybody.best/quest.html" target="_blank" class="email-font" style="font-size: 16px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 50px; padding: 18px 40px; border: 1px solid #4A90E2; display: inline-block;">Попълнете въпросника</a>
+                        <a href="https://radilovk.github.io/bodybest/quest.html" target="_blank" class="email-font" style="font-size: 16px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 50px; padding: 18px 40px; border: 1px solid #4A90E2; display: inline-block;">Попълнете въпросника</a>
                       </td>
                     </tr>
                   </table>
@@ -213,7 +213,7 @@ async function sendAnalysisLinkEmail(to, name, link, env) {
 async function sendPasswordResetEmail(to, token, env) {
     const subject = env?.[PASSWORD_RESET_EMAIL_SUBJECT_VAR_NAME] || PASSWORD_RESET_SUBJECT;
     const tpl = env?.[PASSWORD_RESET_EMAIL_BODY_VAR_NAME] || PASSWORD_RESET_BODY_TEMPLATE;
-    const base = env?.[PASSWORD_RESET_PAGE_URL_VAR_NAME] || 'https://mybody.best/reset-password.html';
+    const base = env?.[PASSWORD_RESET_PAGE_URL_VAR_NAME] || 'https://radilovk.github.io/bodybest/reset-password.html';
     const url = new URL(base);
     url.searchParams.set('token', token);
     const html = tpl.replace(/{{\s*link\s*}}/g, url.toString());
@@ -846,7 +846,7 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
 
         const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] ||
-            'https://mybody.best/reganalize/analyze.html';
+            'https://radilovk.github.io/bodybest/reganalize/analyze.html';
         const url = new URL(baseUrl);
         url.searchParams.set('userId', userId);
         const link = url.toString();
@@ -902,7 +902,7 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
         console.log(`SUBMIT_DEMO_QUESTIONNAIRE (${userId}): Saved initial answers.`);
 
         const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] ||
-            'https://mybody.best/reganalize/analyze.html';
+            'https://radilovk.github.io/bodybest/reganalize/analyze.html';
         const url = new URL(baseUrl);
         url.searchParams.set('userId', userId);
         const link = url.toString();
@@ -1904,7 +1904,7 @@ async function handleReAnalyzeQuestionnaireRequest(request, env, ctx) {
             await handleAnalyzeInitialAnswers(userId, env);
             await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         }
-        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] || 'https://mybody.best/reganalize/analyze.html';
+        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] || 'https://radilovk.github.io/bodybest/reganalize/analyze.html';
         const url = new URL(baseUrl);
         url.searchParams.set('userId', userId);
         return { success: true, userId, link: url.toString() };
