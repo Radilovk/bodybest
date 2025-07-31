@@ -57,7 +57,7 @@ describe('adminColors.initColorSettings', () => {
       <button id="applyThemeLocal"></button>
       <button id="deleteThemeLocal"></button>
       <button id="renameThemeLocal"></button>`;
-    mockLoad = jest.fn().mockResolvedValue({ colors: { 'primary-color': '#111111', 'secondary-color': '#222222' } });
+    mockLoad = jest.fn().mockResolvedValue({ colors: { 'code-bg': '#111111', 'code-text-primary': '#222222' } });
     mockSave = jest.fn().mockResolvedValue({});
     jest.unstable_mockModule('../adminConfig.js', () => ({
       loadConfig: mockLoad,
@@ -65,9 +65,9 @@ describe('adminColors.initColorSettings', () => {
     }));
     styleEl = document.createElement('style');
     styleEl.textContent =
-      'body{--primary-color:#000;--code-bg:#ccc;}' +
-      'body.dark-theme{--primary-color:#fff;--code-bg:#ddd;}' +
-      'body.vivid-theme{--primary-color:#f00;--code-bg:#eee;}';
+      'body{--code-bg:#ccc;--code-text-primary:#111;}' +
+      'body.dark-theme{--code-bg:#ddd;--code-text-primary:#222;}' +
+      'body.vivid-theme{--code-bg:#eee;--code-text-primary:#333;}';
     document.head.appendChild(styleEl);
     ({ initColorSettings } = await import('../adminColors.js'));
   });
@@ -83,25 +83,25 @@ describe('adminColors.initColorSettings', () => {
   test('initColorSettings loads config and sets CSS vars', async () => {
     await initColorSettings();
     expect(mockLoad).toHaveBeenCalledWith(['colors']);
-    expect(document.documentElement.style.getPropertyValue('--primary-color')).toBe('#111111');
+    expect(document.documentElement.style.getPropertyValue('--code-bg')).toBe('#111111');
   });
 
   test('falls back to computed colors when config missing', async () => {
     mockLoad.mockResolvedValue({ colors: {} });
-    document.documentElement.style.setProperty('--primary-color', '#010203');
+    document.documentElement.style.setProperty('--code-bg', '#010203');
     await initColorSettings();
-    expect(document.documentElement.style.getPropertyValue('--primary-color')).toBe('#010203');
+    expect(document.documentElement.style.getPropertyValue('--code-bg')).toBe('#010203');
   });
 
   test('save button gathers colors and calls saveConfig', async () => {
     await initColorSettings();
-    document.getElementById('primary-colorInput').value = '#333333';
-    document.getElementById('secondary-colorInput').value = '#444444';
+    document.getElementById('code-bgInput').value = '#333333';
+    document.getElementById('code-text-primaryInput').value = '#444444';
     document.getElementById('saveColorConfig').click();
     expect(mockSave).toHaveBeenCalledWith(expect.objectContaining({
       colors: expect.objectContaining({
-        'primary-color': '#333333',
-        'secondary-color': '#444444'
+        'code-bg': '#333333',
+        'code-text-primary': '#444444'
       })
     }));
   });
@@ -109,23 +109,23 @@ describe('adminColors.initColorSettings', () => {
   test('themes can be saved and applied', async () => {
     mockLoad.mockResolvedValue({ colors: {} });
     await initColorSettings();
-    document.getElementById('primary-colorInput').value = '#aaaaaa';
+    document.getElementById('code-bgInput').value = '#aaaaaa';
     document.getElementById('themeNameInput').value = 't1';
     document.getElementById('saveThemeLocal').click();
-    expect(JSON.parse(localStorage.getItem('colorThemes')).t1['primary-color']).toBe('#aaaaaa');
-    document.getElementById('primary-colorInput').value = '#bbbbbb';
+    expect(JSON.parse(localStorage.getItem('colorThemes')).t1['code-bg']).toBe('#aaaaaa');
+    document.getElementById('code-bgInput').value = '#bbbbbb';
     document.getElementById('savedThemes').value = 't1';
     document.getElementById('applyThemeLocal').click();
-    expect(document.getElementById('primary-colorInput').value).toBe('#aaaaaa');
+    expect(document.getElementById('code-bgInput').value).toBe('#aaaaaa');
   });
 
   test('initializes default themes', async () => {
     mockLoad.mockResolvedValue({ colors: {} });
     await initColorSettings();
     const themes = JSON.parse(localStorage.getItem('colorThemes'));
-    expect(themes.Light['primary-color']).toBe('#000');
-    expect(themes.Dark['primary-color']).toBe('#fff');
-    expect(themes.Vivid['primary-color']).toBe('#f00');
+    expect(themes.Light['code-bg']).toBe('#ccc');
+    expect(themes.Dark['code-bg']).toBe('#ddd');
+    expect(themes.Vivid['code-bg']).toBe('#eee');
     const opts = Array.from(document.getElementById('savedThemes').options).map(o => o.value);
     expect(opts).toEqual(expect.arrayContaining(['Light', 'Dark', 'Vivid']));
   });
@@ -138,15 +138,15 @@ describe('adminColors.initColorSettings', () => {
 
     select.value = 'Dark';
     applyBtn.click();
-    expect(document.getElementById('primary-colorInput').value).toBe('#ffffff');
+    expect(document.getElementById('code-bgInput').value).toBe('#ddd');
 
     select.value = 'Vivid';
     applyBtn.click();
-    expect(document.getElementById('primary-colorInput').value).toBe('#ff0000');
+    expect(document.getElementById('code-bgInput').value).toBe('#eee');
 
     select.value = 'Light';
     applyBtn.click();
-    expect(document.getElementById('primary-colorInput').value).toBe('#000000');
+    expect(document.getElementById('code-bgInput').value).toBe('#ccc');
   });
 
   test('selected theme can be renamed', async () => {
@@ -169,7 +169,7 @@ describe('uiHandlers.loadAndApplyColors', () => {
   let mockLoad;
   beforeEach(async () => {
     jest.resetModules();
-    mockLoad = jest.fn().mockResolvedValue({ colors: { 'primary-color': '#111111', 'accent-color': '#222222' } });
+    mockLoad = jest.fn().mockResolvedValue({ colors: { 'code-bg': '#111111', 'code-text-primary': '#222222' } });
     jest.unstable_mockModule('../adminConfig.js', () => ({ loadConfig: mockLoad }));
     jest.unstable_mockModule('../app.js', () => ({
       fullDashboardData: {},
@@ -187,16 +187,16 @@ describe('uiHandlers.loadAndApplyColors', () => {
   test('зарежда и прилага цветовете', async () => {
     await loadAndApplyColors();
     expect(mockLoad).toHaveBeenCalledWith(['colors']);
-    expect(document.documentElement.style.getPropertyValue('--primary-color')).toBe('#111111');
-    expect(document.body.style.getPropertyValue('--accent-color')).toBe('#222222');
+    expect(document.documentElement.style.getPropertyValue('--code-bg')).toBe('#111111');
+    expect(document.body.style.getPropertyValue('--code-text-primary')).toBe('#222222');
   });
 
   test('не променя цветовете при грешка', async () => {
-    document.documentElement.style.setProperty('--primary-color', '#000000');
-    document.body.style.setProperty('--primary-color', '#000000');
+    document.documentElement.style.setProperty('--code-bg', '#000000');
+    document.body.style.setProperty('--code-bg', '#000000');
     mockLoad.mockRejectedValue(new Error('fail'));
     await loadAndApplyColors();
-    expect(document.documentElement.style.getPropertyValue('--primary-color')).toBe('#000000');
+    expect(document.documentElement.style.getPropertyValue('--code-bg')).toBe('#000000');
   });
 });
 
