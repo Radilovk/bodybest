@@ -252,9 +252,24 @@ function renderMacroAnalyticsCard(macros) {
     grid.className = 'macro-metrics-grid';
     const list = [
         { l: 'Калории', v: macros.calories, s: 'kcal дневно' },
-        { l: 'Белтъчини', v: macros.protein_grams, s: macros.protein_percent ? `${macros.protein_percent}%` : '', c: '--macro-protein-color' },
-        { l: 'Въглехидрати', v: macros.carbs_grams, s: macros.carbs_percent ? `${macros.carbs_percent}%` : '', c: '--macro-carbs-color' },
-        { l: 'Мазнини', v: macros.fat_grams, s: macros.fat_percent ? `${macros.fat_percent}%` : '', c: '--macro-fat-color' }
+        {
+            l: 'Белтъчини',
+            v: macros.protein_grams,
+            s: macros.protein_percent ? `${macros.protein_percent}%` : '',
+            c: '--macro-protein-color'
+        },
+        {
+            l: 'Въглехидрати',
+            v: macros.carbs_grams,
+            s: macros.carbs_percent ? `${macros.carbs_percent}%` : '',
+            c: '--macro-carbs-color'
+        },
+        {
+            l: 'Мазнини',
+            v: macros.fat_grams,
+            s: macros.fat_percent ? `${macros.fat_percent}%` : '',
+            c: '--macro-fat-color'
+        }
     ];
     list.forEach((item, idx) => {
         const div = document.createElement('div');
@@ -275,7 +290,11 @@ function renderMacroAnalyticsCard(macros) {
 
         const label = document.createElement('div');
         label.className = 'macro-label';
-        if (item.c) label.style.color = getCssVar(item.c);
+        const color = item.c ? getCssVar(item.c) : getCssVar('--primary-color');
+        if (color) {
+            label.style.color = color;
+            icon.style.color = color;
+        }
         label.textContent = item.l;
 
         const valueDiv = document.createElement('div');
@@ -377,15 +396,20 @@ function renderMacroPreviewGrid(macros) {
     preview.classList.remove('hidden');
     const list = [
         { l: 'Калории', v: macros.calories, s: 'kcal' },
-        { l: 'Белтъчини', v: macros.protein_grams, s: 'g' },
-        { l: 'Въглехидрати', v: macros.carbs_grams, s: 'g' },
-        { l: 'Мазнини', v: macros.fat_grams, s: 'g' }
+        { l: 'Белтъчини', v: macros.protein_percent, s: '%' },
+        { l: 'Въглехидрати', v: macros.carbs_percent, s: '%' },
+        { l: 'Мазнини', v: macros.fat_percent, s: '%' }
     ];
     const iconMap = {
         'Калории': 'bi-fire',
         'Белтъчини': 'bi-egg-fried',
         'Въглехидрати': 'bi-basket',
         'Мазнини': 'bi-droplet'
+    };
+    const colorMap = {
+        'Белтъчини': '--macro-protein-color',
+        'Въглехидрати': '--macro-carbs-color',
+        'Мазнини': '--macro-fat-color'
     };
     list.forEach(item => {
         const div = document.createElement('div');
@@ -397,6 +421,12 @@ function renderMacroPreviewGrid(macros) {
         icon.appendChild(i);
         const label = document.createElement('div');
         label.className = 'macro-label';
+        const clrVar = colorMap[item.l];
+        const clr = clrVar ? getCssVar(clrVar) : getCssVar('--primary-color');
+        if (clr) {
+            label.style.color = clr;
+            icon.style.color = clr;
+        }
         label.textContent = item.l;
         const value = document.createElement('div');
         value.className = 'macro-value';
