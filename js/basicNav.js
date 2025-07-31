@@ -4,15 +4,12 @@ export function initBasicNav() {
   const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
   if (mobileMenuBtn && nav) {
     const applyHeaderColor = () => {
-      const rootStyles = getComputedStyle(document.documentElement);
-      const bg =
-        rootStyles.getPropertyValue('--mobile-menu-bg').trim() ||
-        rootStyles.getPropertyValue('--header-bg-solid').trim();
+      const header = document.getElementById('header');
+      const bg = header ? getComputedStyle(header).backgroundColor : '';
       if (bg) nav.style.background = bg;
     };
     const close = () => {
       body.classList.remove('nav-open');
-      nav.style.background = '';
       mobileMenuBtn.setAttribute('aria-expanded', 'false');
     };
     const toggle = () => {
