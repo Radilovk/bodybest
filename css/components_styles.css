@@ -136,7 +136,7 @@
 }
 .modal-content .close-button:hover { color: var(--text-color-primary); }
 .achievement-emoji {
-  font-size: 3rem;
+  font-size: 4rem;
   text-align: center;
   animation: celebrate 0.8s ease-out;
   margin-bottom: var(--space-sm);
