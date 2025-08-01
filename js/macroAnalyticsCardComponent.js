@@ -1,21 +1,4 @@
-const localeCache = {};
-
-async function loadLocale(locale) {
-  if (localeCache[locale]) return localeCache[locale];
-  const fetchLocale = async (lng) => {
-    const res = await fetch(`./locales/macroCard.${lng}.json`);
-    if (!res.ok) throw new Error('Missing locale');
-    return res.json();
-  };
-  let data;
-  try {
-    data = await fetchLocale(locale);
-  } catch {
-    data = await fetchLocale('bg');
-  }
-  localeCache[locale] = data;
-  return data;
-}
+import { loadLocale } from './macroCardLocales.js';
 
 const template = document.createElement('template');
 template.innerHTML = `
@@ -147,9 +130,9 @@ export class MacroAnalyticsCard extends HTMLElement {
     this.targetData = null;
     this.currentData = null;
     this.observer = null;
-    this.refreshTimer = null;
-    this.locale = this.getAttribute('locale') || 'bg';
-    this.labels = {
+      this.refreshTimer = null;
+      this.locale = this.getAttribute('locale') || document.documentElement.lang || 'bg';
+      this.labels = {
       title: '',
       caloriesLabel: '',
       macros: { protein: '', carbs: '', fat: '' },
@@ -158,23 +141,22 @@ export class MacroAnalyticsCard extends HTMLElement {
     };
   }
 
-  static get observedAttributes() {
-    return ['target-data', 'current-data', 'locale', 'data-endpoint', 'refresh-interval'];
-  }
+    static get observedAttributes() {
+      return ['target-data', 'current-data', 'locale', 'data-endpoint', 'refresh-interval'];
+    }
 
-  async connectedCallback() {
-    this.classList.add('loaded');
-    await this.updateLocale();
-    this.lazyLoadChart();
-    this.setupAutoRefresh();
-  }
+    async connectedCallback() {
+      this.classList.add('loaded');
+      await this.updateLocale(document.documentElement.lang);
+      this.lazyLoadChart();
+      this.setupAutoRefresh();
+    }
 
   attributeChangedCallback(name, _oldVal, newVal) {
-    if (name === 'locale') {
-      this.locale = newVal;
-      this.updateLocale();
-      return;
-    }
+      if (name === 'locale') {
+        this.updateLocale(newVal);
+        return;
+      }
     if (name === 'data-endpoint' || name === 'refresh-interval') {
       this.setupAutoRefresh();
       return;
@@ -190,12 +172,14 @@ export class MacroAnalyticsCard extends HTMLElement {
     }
   }
 
-  async updateLocale() {
-    this.labels = await loadLocale(this.locale);
-    if (this.titleEl) this.titleEl.textContent = this.labels.title;
-    this.renderMetrics();
-    this.renderChart();
-  }
+    async updateLocale(lng) {
+      const locale = lng || this.locale || document.documentElement.lang || 'bg';
+      this.locale = locale;
+      this.labels = await loadLocale(locale);
+      if (this.titleEl) this.titleEl.textContent = this.labels.title;
+      this.renderMetrics();
+      this.renderChart();
+    }
 
   disconnectedCallback() {
     if (this.refreshTimer) clearInterval(this.refreshTimer);
