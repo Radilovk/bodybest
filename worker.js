@@ -11,33 +11,8 @@
 // - Попълнени липсващи части от предходни версии.
 // - Запазени всички предходни функционалности.
 
-// Вградена функция за изпращане на имейли, за да работи скриптът
-// като самостоятелен файл в Cloudflare.
-// Тялото се изпраща като `message` и `body` за съвместимост с различни услуги
-async function sendEmailUniversal(to, subject, body, env = {}) {
-  const endpoint = env.MAILER_ENDPOINT_URL ||
-    globalThis['process']?.env?.MAILER_ENDPOINT_URL;
-  const fromName = env.FROM_NAME || env.from_email_name ||
-    globalThis['process']?.env?.FROM_NAME;
-  if (endpoint) {
-    const resp = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, subject, message: body, body, fromName })
-    });
-    if (!resp.ok) {
-      throw new Error(`Mailer responded with ${resp.status}`);
-    }
-    return;
-  }
-
-  const { sendEmail } = await import('./sendEmailWorker.js');
-  const phpEnv = {
-    MAIL_PHP_URL: env.MAIL_PHP_URL || globalThis['process']?.env?.MAIL_PHP_URL,
-    FROM_NAME: fromName
-  };
-  await sendEmail(to, subject, body, phpEnv);
-}
+// Използва се унифициран модул за изпращане на имейли
+import { sendEmailUniversal } from './utils/emailSender.js';
 import { parseJsonSafe } from './utils/parseJsonSafe.js';
 
 const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
@@ -210,6 +185,45 @@ async function sendAnalysisLinkEmail(to, name, link, env) {
     }
 }
 
+async function sendContactEmail(to, name, env) {
+    let sendFlag = env?.send_contact_email;
+    if (sendFlag === undefined && env.RESOURCES_KV) {
+        try {
+            sendFlag = await env.RESOURCES_KV.get('send_contact_email');
+        } catch {
+            sendFlag = null;
+        }
+    }
+    if (sendFlag === '0' || sendFlag === 'false') return;
+
+    let subject = env?.contact_email_subject;
+    if (!subject && env.RESOURCES_KV) {
+        try { subject = await env.RESOURCES_KV.get('contact_email_subject'); } catch { subject = null; }
+    }
+    if (!subject) subject = 'Благодарим за връзката';
+
+    let tpl = env?.contact_email_body;
+    if (!tpl && env.RESOURCES_KV) {
+        try { tpl = await env.RESOURCES_KV.get('contact_email_body'); } catch { tpl = null; }
+    }
+    tpl = tpl || 'Получихме вашето съобщение от {{form_label}}.';
+
+    let formLabel = env?.contact_form_label;
+    if (!formLabel && env.RESOURCES_KV) {
+        try { formLabel = await env.RESOURCES_KV.get('contact_form_label'); } catch { formLabel = null; }
+    }
+    formLabel = formLabel || 'форма за контакт';
+
+    const html = tpl
+        .replace(/{{\s*name\s*}}/g, name)
+        .replace(/{{\s*form_label\s*}}/g, formLabel);
+    try {
+        await sendEmailUniversal(to, subject, html, env);
+    } catch (err) {
+        console.error('Failed to send contact email:', err);
+    }
+}
+
 async function sendPasswordResetEmail(to, token, env) {
     const subject = env?.[PASSWORD_RESET_EMAIL_SUBJECT_VAR_NAME] || PASSWORD_RESET_SUBJECT;
     const tpl = env?.[PASSWORD_RESET_EMAIL_BODY_VAR_NAME] || PASSWORD_RESET_BODY_TEMPLATE;
@@ -279,10 +293,14 @@ const AI_CONFIG_KEYS = [
     'welcome_email_body',
     'questionnaire_email_subject',
     'questionnaire_email_body',
+    'contact_email_subject',
+    'contact_email_body',
+    'contact_form_label',
     'analysis_email_subject',
     'analysis_email_body',
     'from_email_name',
     'send_welcome_email',
+    'send_contact_email',
     'send_analysis_email',
     'send_questionnaire_email',
     'colors'
@@ -492,6 +510,8 @@ export default {
                 responseBody = await handleSaveAiPreset(request, env);
             } else if (method === 'POST' && path === '/api/testAiModel') {
                 responseBody = await handleTestAiModelRequest(request, env);
+            } else if (method === 'POST' && path === '/api/contact') {
+                responseBody = await handleContactFormRequest(request, env);
             } else if (method === 'POST' && path === '/api/sendTestEmail') {
                 responseBody = await handleSendTestEmailRequest(request, env);
             } else if (method === 'GET' && path === '/api/getMaintenanceMode') {
@@ -2444,6 +2464,38 @@ async function handleTestAiModelRequest(request, env) {
 }
 // ------------- END FUNCTION: handleTestAiModelRequest -------------
 
+// ------------- START FUNCTION: handleContactFormRequest -------------
+async function handleContactFormRequest(request, env) {
+    try {
+        const identifier = request.headers?.get?.('CF-Connecting-IP') || '';
+        if (await checkRateLimit(env, 'contactForm', identifier)) {
+            return { success: false, message: 'Прекалено много заявки. Опитайте по-късно.', statusHint: 429 };
+        }
+        await recordUsage(env, 'contactForm', identifier);
+        let data;
+        try {
+            data = await request.json();
+        } catch {
+            return { success: false, message: 'Invalid JSON.', statusHint: 400 };
+        }
+        const email = data.email;
+        const name = data.name || '';
+        if (typeof email !== 'string' || !email.trim()) {
+            return { success: false, message: 'Missing field: email', statusHint: 400 };
+        }
+        try {
+            await sendContactEmail(email.trim(), name.trim(), env);
+        } catch (err) {
+            console.error('Failed to send contact confirmation:', err.message);
+        }
+        return { success: true };
+    } catch (error) {
+        console.error('Error in handleContactFormRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при изпращане.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleContactFormRequest -------------
+
 // ------------- START FUNCTION: handleSendTestEmailRequest -------------
 async function handleSendTestEmailRequest(request, env) {
     try {
@@ -3637,32 +3689,37 @@ const SALT_LENGTH_CONST = 16; // bytes
 const DERIVED_KEY_LENGTH_CONST = 32; // bytes
 
 async function hashPassword(password) {
-    const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH_CONST));
-    const passwordBuffer = new TextEncoder().encode(password);
-    // Key material for PBKDF2
-    const keyMaterial = await crypto.subtle.importKey(
-        'raw',
-        passwordBuffer,
-        { name: 'PBKDF2' },
-        false, // not extractable
-        ['deriveBits']
-    );
-    // Derive key bits
-    const derivedKeyBuffer = await crypto.subtle.deriveBits(
-        {
-            name: 'PBKDF2',
-            salt: salt,
-            iterations: PBKDF2_ITERATIONS_CONST,
-            hash: PBKDF2_HASH_ALGORITHM_CONST
-        },
-        keyMaterial,
-        DERIVED_KEY_LENGTH_CONST * 8 // length in bits
-    );
-    const hashBuffer = new Uint8Array(derivedKeyBuffer);
-    // Convert salt and hash to hex strings for storage
-    const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
-    const hashHex = Array.from(hashBuffer).map(b => b.toString(16).padStart(2, '0')).join('');
-    return `${saltHex}:${hashHex}`;
+    try {
+        const cryptoObj = globalThis.crypto || (await import('crypto')).webcrypto;
+        const salt = cryptoObj.getRandomValues(new Uint8Array(SALT_LENGTH_CONST));
+        const passwordBuffer = new TextEncoder().encode(password);
+        const keyMaterial = await cryptoObj.subtle.importKey(
+            'raw',
+            passwordBuffer,
+            { name: 'PBKDF2' },
+            false,
+            ['deriveBits']
+        );
+        const derivedKeyBuffer = await cryptoObj.subtle.deriveBits(
+            {
+                name: 'PBKDF2',
+                salt,
+                iterations: PBKDF2_ITERATIONS_CONST,
+                hash: PBKDF2_HASH_ALGORITHM_CONST
+            },
+            keyMaterial,
+            DERIVED_KEY_LENGTH_CONST * 8
+        );
+        const hashBuffer = new Uint8Array(derivedKeyBuffer);
+        const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+        const hashHex = Array.from(hashBuffer).map(b => b.toString(16).padStart(2, '0')).join('');
+        return `${saltHex}:${hashHex}`;
+    } catch {
+        const nodeCrypto = await import('crypto');
+        const salt = nodeCrypto.randomBytes(SALT_LENGTH_CONST);
+        const hash = nodeCrypto.createHash('sha256').update(password).digest('hex');
+        return `${salt.toString('hex')}:${hash}`;
+    }
 }
 
 async function verifyPassword(password, storedSaltAndHash) {
@@ -4421,4 +4478,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
