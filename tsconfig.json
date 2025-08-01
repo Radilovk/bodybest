@@ -7,13 +7,18 @@
     "resolveJsonModule": true,
     "types": ["@cloudflare/workers-types"],
     "lib": ["es2020", "dom"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@utils/*": ["utils/*"]
+    }
   },
   "include": [
     "worker.js",
     "worker-backend.js",
     "mailer.js",
     "mailer.d.ts",
-    "js/**/*"
+    "js/**/*",
+    "utils/**/*"
   ]
 }

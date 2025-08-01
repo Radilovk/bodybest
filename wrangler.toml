@@ -5,6 +5,10 @@ compatibility_date = "2025-06-20"
 compatibility_flags = ["nodejs_compat"]
 main = "worker.js"
 
+[[rules]]
+globs = ["utils/**/*.js"]
+type = "ESModule"
+
 [[kv_namespaces]]
 binding = "RESOURCES_KV"
 id = "8ebf65a6ed0a44e7b7d1b4bc6f24465e"
