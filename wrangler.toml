@@ -14,3 +14,8 @@ preview_id = "8ebf65a6ed0a44e7b7d1b4bc6f24465e"
 binding = "USER_METADATA_KV"
 id = "${USER_METADATA_KV_ID}"
 preview_id = "${USER_METADATA_KV_PREVIEW_ID}"
+
+[[kv_namespaces]]
+binding = "CONTACT_REQUESTS_KV"
+id = "${CONTACT_REQUESTS_KV_ID}"
+preview_id = "${CONTACT_REQUESTS_KV_PREVIEW_ID}"
