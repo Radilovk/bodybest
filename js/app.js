@@ -359,7 +359,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
             if(selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
             if(selectors.appWrapper) selectors.appWrapper.style.display = 'block';
 
-            populateUI();
+            await populateUI();
             initializeAchievements(currentUserId);
             setupDynamicEventListeners();
             await checkAdminQueries(currentUserId);
@@ -447,7 +447,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
             triggerAssistantWiggle();
         }
 
-        populateUI();
+        await populateUI();
 
         const plan = fullDashboardData.planData;
         const hasRecs = planHasRecContent(plan);
@@ -647,7 +647,7 @@ export async function handleSaveLog() { // Exported for eventListeners.js
                 }
             }
         }
-        populateUI();
+        await populateUI();
         initializeAchievements(currentUserId);
         showToast(result.message || "Логът е запазен!", false);
     } catch (error) {

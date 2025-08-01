@@ -8,7 +8,7 @@ import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAna
 export let macroChartInstance = null;
 export let progressChartInstance = null;
 
-export function populateUI() {
+export async function populateUI() {
     const data = fullDashboardData; // Access global state
     if (!data || Object.keys(data).length === 0) {
         showToast("Липсват данни за показване.", true); return;
@@ -16,7 +16,7 @@ export function populateUI() {
     try { populateUserInfo(data.userName); } catch(e) { console.error("Error in populateUserInfo:", e); }
     try { populateDashboardMainIndexes(data.analytics?.current); } catch(e) { console.error("Error in populateDashboardMainIndexes:", e); }
     try { populateDashboardDetailedAnalytics(data.analytics); } catch(e) { console.error("Error in populateDashboardDetailedAnalytics:", e); }
-    try { populateDashboardMacros(data.planData?.caloriesMacros); } catch(e) { console.error("Error in populateDashboardMacros:", e); }
+    try { await populateDashboardMacros(data.planData?.caloriesMacros); } catch(e) { console.error("Error in populateDashboardMacros:", e); }
     try { populateDashboardStreak(data.analytics?.streak); } catch(e) { console.error("Error in populateDashboardStreak:", e); }
     try { populateDashboardDailyPlan(data.planData?.week1Menu, data.dailyLogs, data.recipeData); } catch(e) { console.error("Error in populateDashboardDailyPlan:", e); }
     try { populateDashboardLog(data.dailyLogs, data.currentStatus, data.initialData); } catch(e) { console.error("Error in populateDashboardLog:", e); }
@@ -289,8 +289,19 @@ function renderMacroPreviewGrid(macros) {
     });
 }
 
-function populateDashboardMacros(macros) {
+async function ensureMacroCard() {
+    if (!customElements.get('macro-analytics-card')) {
+        await import('./macroAnalyticsCardComponent.js');
+    }
+}
+
+export async function populateDashboardMacros(macros) {
     renderMacroPreviewGrid(macros);
+    await ensureMacroCard();
+    if (!customElements.get('macro-analytics-card')) {
+        console.warn('macro-analytics-card component is missing.');
+        return;
+    }
     const container = selectors.analyticsCardsContainer;
     let card = document.getElementById('macroAnalyticsCard');
     if (!card && container) {
@@ -302,7 +313,6 @@ function populateDashboardMacros(macros) {
     const current = currentIntakeMacros && Object.keys(currentIntakeMacros).length > 0
         ? currentIntakeMacros
         : null;
-    if (!customElements.get('macro-analytics-card')) return;
     card.setData(macros, current);
     renderPendingMacroChart();
 }
