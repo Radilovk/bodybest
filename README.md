@@ -217,6 +217,33 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 }
 ```
 
+**Локализация**
+
+```js
+import { loadLocale } from './js/macroCardLocales.js';
+const labels = await loadLocale(document.documentElement.lang);
+```
+
+Модулът кешира преводите и ако файлът липсва, връща българската версия. Файловете са в `locales/`:
+
+```
+locales/
+  macroCard.bg.json
+  macroCard.en.json
+```
+
+Структура на всеки JSON:
+
+```json
+{
+  "title": "Калории и Макронутриенти",
+  "caloriesLabel": "Приети Калории",
+  "macros": { "protein": "", "carbs": "", "fat": "" },
+  "fromGoal": "от целта",
+  "totalCaloriesLabel": "от {calories} kcal"
+}
+```
+
 **Динамични данни**
 
 ```js
