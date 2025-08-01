@@ -18,6 +18,9 @@ beforeEach(async () => {
     <h3 id="dailyPlanTitle"></h3>
     <ul id="dailyMealList"></ul>
   `;
+  if (!customElements.get('macro-analytics-card')) {
+    customElements.define('macro-analytics-card', class extends HTMLElement {});
+  }
 
   const selectors = {
     headerTitle: document.getElementById('headerTitle'),
