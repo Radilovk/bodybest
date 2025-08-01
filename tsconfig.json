@@ -18,6 +18,7 @@
     "worker-backend.js",
     "mailer.js",
     "mailer.d.ts",
+    "global.d.ts",
     "js/**/*",
     "utils/**/*"
   ]
