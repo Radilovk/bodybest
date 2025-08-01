@@ -389,6 +389,15 @@ footer { background: var(--dark-bg); color: var(--light-text); padding: 80px 0 3
 .modal-content #forgot-password-link { margin-top: 0.5rem; width: 100%; justify-content: flex-end; }
 
 
+/* Общи съобщения за статус */
+.message {
+    padding: 0.8rem; border-radius: 0.5rem; margin-top: 1rem;
+    font-size: 0.9rem; display: none; border: 1px solid transparent;
+    text-align: left; word-wrap: break-word;
+}
+.message.error { color: var(--color-danger); background-color: rgba(231, 76, 60, 0.1); border-color: var(--color-danger); }
+.message.success { color: var(--color-success); background-color: rgba(46, 204, 113, 0.1); border-color: var(--color-success); }
+
 /* Съобщения за грешки/успех */
 .modal-content .message {
     padding: 0.8rem; border-radius: 0.5rem; margin-top: 1rem;
