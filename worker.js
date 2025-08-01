@@ -11,8 +11,33 @@
 // - Попълнени липсващи части от предходни версии.
 // - Запазени всички предходни функционалности.
 
-// Използва се унифициран модул за изпращане на имейли
-import { sendEmailUniversal } from './utils/emailSender.js';
+// Вградена функция за изпращане на имейли, за да работи скриптът
+// като самостоятелен файл в Cloudflare.
+// Тялото се изпраща като `message` и `body` за съвместимост с различни услуги
+async function sendEmailUniversal(to, subject, body, env = {}) {
+  const endpoint = env.MAILER_ENDPOINT_URL ||
+    globalThis['process']?.env?.MAILER_ENDPOINT_URL;
+  const fromName = env.FROM_NAME || env.from_email_name ||
+    globalThis['process']?.env?.FROM_NAME;
+  if (endpoint) {
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, message: body, body, fromName })
+    });
+    if (!resp.ok) {
+      throw new Error(`Mailer responded with ${resp.status}`);
+    }
+    return;
+  }
+
+  const { sendEmail } = await import('./sendEmailWorker.js');
+  const phpEnv = {
+    MAIL_PHP_URL: env.MAIL_PHP_URL || globalThis['process']?.env?.MAIL_PHP_URL,
+    FROM_NAME: fromName
+  };
+  await sendEmail(to, subject, body, phpEnv);
+}
 import { parseJsonSafe } from './utils/parseJsonSafe.js';
 
 const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
@@ -254,13 +279,10 @@ const AI_CONFIG_KEYS = [
     'welcome_email_body',
     'questionnaire_email_subject',
     'questionnaire_email_body',
-    'contact_email_subject',
-    'contact_email_body',
     'analysis_email_subject',
     'analysis_email_body',
     'from_email_name',
     'send_welcome_email',
-    'send_contact_email',
     'send_analysis_email',
     'send_questionnaire_email',
     'colors'
@@ -3615,37 +3637,32 @@ const SALT_LENGTH_CONST = 16; // bytes
 const DERIVED_KEY_LENGTH_CONST = 32; // bytes
 
 async function hashPassword(password) {
-    try {
-        const cryptoObj = globalThis.crypto || (await import('crypto')).webcrypto;
-        const salt = cryptoObj.getRandomValues(new Uint8Array(SALT_LENGTH_CONST));
-        const passwordBuffer = new TextEncoder().encode(password);
-        const keyMaterial = await cryptoObj.subtle.importKey(
-            'raw',
-            passwordBuffer,
-            { name: 'PBKDF2' },
-            false,
-            ['deriveBits']
-        );
-        const derivedKeyBuffer = await cryptoObj.subtle.deriveBits(
-            {
-                name: 'PBKDF2',
-                salt,
-                iterations: PBKDF2_ITERATIONS_CONST,
-                hash: PBKDF2_HASH_ALGORITHM_CONST
-            },
-            keyMaterial,
-            DERIVED_KEY_LENGTH_CONST * 8
-        );
-        const hashBuffer = new Uint8Array(derivedKeyBuffer);
-        const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
-        const hashHex = Array.from(hashBuffer).map(b => b.toString(16).padStart(2, '0')).join('');
-        return `${saltHex}:${hashHex}`;
-    } catch {
-        const nodeCrypto = await import('crypto');
-        const salt = nodeCrypto.randomBytes(SALT_LENGTH_CONST);
-        const hash = nodeCrypto.createHash('sha256').update(password).digest('hex');
-        return `${salt.toString('hex')}:${hash}`;
-    }
+    const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH_CONST));
+    const passwordBuffer = new TextEncoder().encode(password);
+    // Key material for PBKDF2
+    const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        passwordBuffer,
+        { name: 'PBKDF2' },
+        false, // not extractable
+        ['deriveBits']
+    );
+    // Derive key bits
+    const derivedKeyBuffer = await crypto.subtle.deriveBits(
+        {
+            name: 'PBKDF2',
+            salt: salt,
+            iterations: PBKDF2_ITERATIONS_CONST,
+            hash: PBKDF2_HASH_ALGORITHM_CONST
+        },
+        keyMaterial,
+        DERIVED_KEY_LENGTH_CONST * 8 // length in bits
+    );
+    const hashBuffer = new Uint8Array(derivedKeyBuffer);
+    // Convert salt and hash to hex strings for storage
+    const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+    const hashHex = Array.from(hashBuffer).map(b => b.toString(16).padStart(2, '0')).join('');
+    return `${saltHex}:${hashHex}`;
 }
 
 async function verifyPassword(password, storedSaltAndHash) {
