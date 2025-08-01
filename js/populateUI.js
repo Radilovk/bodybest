@@ -302,6 +302,7 @@ function populateDashboardMacros(macros) {
     const current = currentIntakeMacros && Object.keys(currentIntakeMacros).length > 0
         ? currentIntakeMacros
         : null;
+    if (!customElements.get('macro-analytics-card')) return;
     card.setData(macros, current);
     renderPendingMacroChart();
 }
