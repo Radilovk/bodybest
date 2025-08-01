@@ -90,8 +90,8 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-test('populates dashboard sections', () => {
-  populateUI();
+test('populates dashboard sections', async () => {
+  await populateUI();
   expect(document.getElementById('headerTitle').textContent).toBe('Табло: Иван');
   expect(document.getElementById('goalProgressText').textContent).toBe('50%');
   expect(document.getElementById('engagementProgressText').textContent).toBe('80%');
@@ -130,7 +130,7 @@ test('обновява макро картата чрез setData', async () => 
   ({ populateUI } = await import('../populateUI.js'));
   const card = document.getElementById('macroAnalyticsCard');
   card.setData = jest.fn();
-  populateUI();
+  await populateUI();
   expect(card.setData).toHaveBeenCalledWith(
     expect.objectContaining({ calories: 1800 }),
     null,
@@ -158,7 +158,7 @@ test('hides modules when values are zero', async () => {
     currentIntakeMacros: {}
   }));
   ({ populateUI } = await import('../populateUI.js'));
-  populateUI();
+  await populateUI();
   expect(document.getElementById('goalCard').classList.contains('hidden')).toBe(true);
   expect(document.getElementById('engagementCard').classList.contains('hidden')).toBe(true);
   expect(document.getElementById('healthCard').classList.contains('hidden')).toBe(true);
@@ -194,7 +194,7 @@ test('populates daily plan with color bars and meal types', async () => {
     planHasRecContent: false
   }));
   ({ populateUI } = await import('../populateUI.js'));
-  populateUI();
+  await populateUI();
   const cards = document.querySelectorAll('#dailyMealList .meal-card');
   expect(cards.length).toBe(3);
   cards.forEach(card => {
@@ -237,7 +237,7 @@ test('handles meal type variations', async () => {
     planHasRecContent: false
   }));
   ({ populateUI } = await import('../populateUI.js'));
-  populateUI();
+  await populateUI();
   const cards = document.querySelectorAll('#dailyMealList .meal-card');
   expect(cards[0].dataset.mealType).toBe('breakfast');
   expect(cards[1].dataset.mealType).toBe('lunch');
@@ -277,7 +277,7 @@ test('applies success color to completed meal bar', async () => {
   style.textContent = `#dailyMealList li.completed .meal-color-bar { background-color: rgb(46, 204, 113); }`;
   document.head.appendChild(style);
 
-  populateUI();
+  await populateUI();
   const li = document.querySelector('#dailyMealList li.completed');
   expect(li).not.toBeNull();
   const color = getComputedStyle(li.querySelector('.meal-color-bar')).backgroundColor;
@@ -321,7 +321,7 @@ test('clicking a meal card toggles completion status', async () => {
   ({ populateUI } = await import('../populateUI.js'));
   const { setupDynamicEventListeners } = await import('../eventListeners.js');
 
-  populateUI();
+  await populateUI();
   setupDynamicEventListeners();
 
   const card = document.querySelector('#dailyMealList .meal-card');
@@ -355,7 +355,7 @@ describe('progress bar width handling', () => {
       planHasRecContent: false
     }));
     ({ populateUI } = await import('../populateUI.js'));
-    populateUI();
+    await populateUI();
   };
 
   test.each([
