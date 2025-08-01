@@ -294,20 +294,6 @@ body.vivid-theme #macroAnalyticsCard .macro-label {
   vertical-align: baseline;
 }
 #macroMetricsPreview .macro-value { margin-right: 0.1em; }
-#macroCenterLabel {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-weight: 700;
-}
-
-#macroAnalyticsCard canvas {
-  max-width: 250px;
-  max-height: 250px;
-  margin: 0 auto;
-}
-
 @media (min-width: 768px) {
   #macroAnalyticsCard {
     grid-column: span 2;

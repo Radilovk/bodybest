@@ -14,7 +14,7 @@ beforeEach(async () => {
     <div id="healthProgressFill"></div><div id="healthProgressBar"></div><span id="healthProgressText"></span>
     <div id="streakGrid"></div>
     <div id="macroMetricsPreview"></div>
-    <div id="macroAnalyticsCard"><div id="macroMetricsGrid"></div><div id="macroCenterLabel"></div></div>
+    <macro-analytics-card id="macroAnalyticsCard"></macro-analytics-card>
     <h3 id="dailyPlanTitle"></h3>
     <ul id="dailyMealList"></ul>
   `;
@@ -36,9 +36,7 @@ beforeEach(async () => {
     healthProgressText: document.getElementById('healthProgressText'),
     streakGrid: document.getElementById('streakGrid'),
     macroAnalyticsCard: document.getElementById('macroAnalyticsCard'),
-    macroMetricsGrid: document.getElementById('macroMetricsGrid'),
     macroMetricsPreview: document.getElementById('macroMetricsPreview'),
-    macroCenterLabel: document.getElementById('macroCenterLabel'),
     dailyPlanTitle: document.getElementById('dailyPlanTitle'),
     dailyMealList: document.getElementById('dailyMealList')
   };
@@ -98,7 +96,7 @@ test('populates dashboard sections', () => {
   expect(document.querySelectorAll('#streakGrid .streak-day.logged').length).toBe(1);
 });
 
-test('renders macro analytics card', async () => {
+test('sets macro card data attributes', async () => {
   jest.resetModules();
   const fullData = {
     userName: 'Иван',
@@ -120,67 +118,8 @@ test('renders macro analytics card', async () => {
   }));
   ({ populateUI } = await import('../populateUI.js'));
   populateUI();
-  const metrics = document.querySelectorAll('#macroMetricsGrid .macro-metric');
-  expect(metrics.length).toBe(4);
-  expect(metrics[0].textContent).toContain('Калории');
-  const canvas = document.querySelector('#macroAnalyticsCard canvas');
-  expect(canvas).not.toBeNull();
-});
-
-test('macro metric click highlights element and updates center label', async () => {
-  jest.resetModules();
-  const fullData = {
-    userName: 'Иван',
-    analytics: { current: {}, streak: {} },
-    planData: {
-      caloriesMacros: { calories: 2000, protein_grams: 150, protein_percent: 30, carbs_grams: 250, carbs_percent: 50, fat_grams: 70, fat_percent: 20 }
-    },
-    dailyLogs: [],
-    currentStatus: {},
-    initialData: {},
-    initialAnswers: {}
-  };
-  jest.unstable_mockModule('../app.js', () => ({
-    fullDashboardData: fullData,
-    todaysMealCompletionStatus: {},
-    todaysExtraMeals: [],
-    currentIntakeMacros: {},
-    planHasRecContent: false
-  }));
-  ({ populateUI } = await import('../populateUI.js'));
-  populateUI();
-  const metric = document.querySelector('#macroMetricsGrid .macro-metric');
-  metric.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  expect(metric.classList.contains('active')).toBe(true);
-  expect(document.getElementById('macroCenterLabel').textContent).toBe('Калории');
-});
-
-test('macro chart renders two datasets when current macros are available', async () => {
-  jest.resetModules();
-  const fullData = {
-    userName: 'Иван',
-    analytics: { current: {}, streak: {} },
-    planData: {
-      caloriesMacros: { calories: 1800, protein_grams: 120, protein_percent: 40, carbs_grams: 200, carbs_percent: 40, fat_grams: 50, fat_percent: 20 }
-    },
-    dailyLogs: [],
-    currentStatus: {},
-    initialData: {},
-    initialAnswers: {}
-  };
-  global.Chart = jest.fn().mockImplementation(() => ({ destroy: jest.fn(), resize: jest.fn() }));
-  jest.unstable_mockModule('../app.js', () => ({
-    fullDashboardData: fullData,
-    todaysMealCompletionStatus: {},
-    todaysExtraMeals: [],
-    currentIntakeMacros: { calories: 200, protein: 20, carbs: 30, fat: 10 },
-    planHasRecContent: false
-  }));
-  const { populateUI, renderPendingMacroChart } = await import('../populateUI.js');
-  populateUI();
-  renderPendingMacroChart();
-  const cfg = global.Chart.mock.calls[0][1];
-  expect(cfg.data.datasets.length).toBe(2);
+  const card = document.getElementById('macroAnalyticsCard');
+  expect(card.getAttribute('target-data')).toContain('"calories":1800');
 });
 
 test('hides modules when values are zero', async () => {
