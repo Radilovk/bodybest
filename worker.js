@@ -11,10 +11,74 @@
 // - Попълнени липсващи части от предходни версии.
 // - Запазени всички предходни функционалности.
 
-// Използва се унифициран модул за изпращане на имейли
-import { sendEmailUniversal } from './utils/emailSender.js';
-import { parseJsonSafe } from './utils/parseJsonSafe.js';
-import { renderTemplate } from './utils/templateRenderer.js';
+// Помощни функции (всичко е в този файл за Cloudflare средата)
+
+/**
+ * Рендерира шаблонен низ, като замества {{key}} плейсхолдерите
+ * с данни от подадения обект.
+ * @param {string} str
+ * @param {Record<string, unknown>} [data]
+ * @returns {string}
+ */
+function renderTemplate(str, data = {}) {
+  return String(str).replace(/{{\s*(\w+)\s*}}/g, (_, key) =>
+    Object.prototype.hasOwnProperty.call(data, key) ? String(data[key]) : ''
+  );
+}
+
+/**
+ * Безопасно парсиране на JSON от Response. При грешка логваме
+ * съдържанието и хвърляме изключение.
+ * @param {Response} resp
+ * @param {string} [label='response']
+ * @returns {Promise<any>}
+ */
+async function parseJsonSafe(resp, label = 'response') {
+  try {
+    return await resp.json();
+  } catch {
+    const bodyText = await resp.clone().text().catch(() => '[unavailable]');
+    console.error(`Failed to parse JSON from ${label}:`, bodyText);
+    throw new Error('Invalid JSON response');
+  }
+}
+
+/**
+ * Унифицирана функция за изпращане на имейл. Използва
+ * MAILER_ENDPOINT_URL, ако е наличен, иначе изпраща към PHP крайна точка.
+ * @param {string} to
+ * @param {string} subject
+ * @param {string} body
+ * @param {Record<string,string>} [env]
+ */
+async function sendEmailUniversal(to, subject, body, env = {}) {
+  const endpoint = env.MAILER_ENDPOINT_URL ||
+    globalThis['process']?.env?.MAILER_ENDPOINT_URL;
+  const fromName = env.FROM_NAME || env.from_email_name ||
+    globalThis['process']?.env?.FROM_NAME || '';
+  if (endpoint) {
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, message: body, body, fromName })
+    });
+    if (!resp.ok) {
+      throw new Error(`Mailer responded with ${resp.status}`);
+    }
+    return;
+  }
+  const url = env.MAIL_PHP_URL ||
+    globalThis['process']?.env?.MAIL_PHP_URL ||
+    'https://radilovk.github.io/bodybest/mailer/mail.php';
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to, subject, message: body, body, fromName })
+  });
+  if (!resp.ok) {
+    throw new Error(`PHP mailer error ${resp.status}`);
+  }
+}
 
 const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
 const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
@@ -3717,37 +3781,30 @@ const SALT_LENGTH_CONST = 16; // bytes
 const DERIVED_KEY_LENGTH_CONST = 32; // bytes
 
 async function hashPassword(password) {
-    try {
-        const cryptoObj = globalThis.crypto ?? (await import('node:crypto')).webcrypto;
-        const salt = cryptoObj.getRandomValues(new Uint8Array(SALT_LENGTH_CONST));
-        const passwordBuffer = new TextEncoder().encode(password);
-        const keyMaterial = await cryptoObj.subtle.importKey(
-            'raw',
-            passwordBuffer,
-            { name: 'PBKDF2' },
-            false,
-            ['deriveBits']
-        );
-        const derivedKeyBuffer = await cryptoObj.subtle.deriveBits(
-            {
-                name: 'PBKDF2',
-                salt,
-                iterations: PBKDF2_ITERATIONS_CONST,
-                hash: PBKDF2_HASH_ALGORITHM_CONST
-            },
-            keyMaterial,
-            DERIVED_KEY_LENGTH_CONST * 8
-        );
-        const hashBuffer = new Uint8Array(derivedKeyBuffer);
-        const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
-        const hashHex = Array.from(hashBuffer).map(b => b.toString(16).padStart(2, '0')).join('');
-        return `${saltHex}:${hashHex}`;
-    } catch {
-        const nodeCrypto = await import('node:crypto');
-        const salt = nodeCrypto.randomBytes(SALT_LENGTH_CONST);
-        const hash = nodeCrypto.createHash('sha256').update(password).digest('hex');
-        return `${salt.toString('hex')}:${hash}`;
-    }
+    const cryptoObj = globalThis['crypto'];
+    const salt = cryptoObj.getRandomValues(new Uint8Array(SALT_LENGTH_CONST));
+    const passwordBuffer = new TextEncoder().encode(password);
+    const keyMaterial = await cryptoObj.subtle.importKey(
+        'raw',
+        passwordBuffer,
+        { name: 'PBKDF2' },
+        false,
+        ['deriveBits']
+    );
+    const derivedKeyBuffer = await cryptoObj.subtle.deriveBits(
+        {
+            name: 'PBKDF2',
+            salt,
+            iterations: PBKDF2_ITERATIONS_CONST,
+            hash: PBKDF2_HASH_ALGORITHM_CONST
+        },
+        keyMaterial,
+        DERIVED_KEY_LENGTH_CONST * 8
+    );
+    const hashBuffer = new Uint8Array(derivedKeyBuffer);
+    const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+    const hashHex = Array.from(hashBuffer).map(b => b.toString(16).padStart(2, '0')).join('');
+    return `${saltHex}:${hashHex}`;
 }
 
 async function verifyPassword(password, storedSaltAndHash) {
@@ -3764,9 +3821,10 @@ async function verifyPassword(password, storedSaltAndHash) {
         }
         // Convert hex salt back to Uint8Array
         const salt = new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        const cryptoObj = globalThis['crypto'];
         const passwordBuffer = new TextEncoder().encode(password);
-        const keyMaterial = await crypto.subtle.importKey('raw', passwordBuffer, { name: 'PBKDF2' }, false, ['deriveBits']);
-        const derivedKeyBuffer = await crypto.subtle.deriveBits(
+        const keyMaterial = await cryptoObj.subtle.importKey('raw', passwordBuffer, { name: 'PBKDF2' }, false, ['deriveBits']);
+        const derivedKeyBuffer = await cryptoObj.subtle.deriveBits(
             { name: 'PBKDF2', salt: salt, iterations: PBKDF2_ITERATIONS_CONST, hash: PBKDF2_HASH_ALGORITHM_CONST },
             keyMaterial,
             DERIVED_KEY_LENGTH_CONST * 8
@@ -4506,4 +4564,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, sendEmailUniversal };
