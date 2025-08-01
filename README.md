@@ -81,6 +81,12 @@ Check the source code with ESLint (see `eslint.config.js` for configuration):
 npm run lint
 ```
 
+To automatically fix fixable issues:
+
+```bash
+npm run lint:fix
+```
+
 ### Type Check
 
 Make sure dependencies are installed (`npm ci` or `npm install`) before running the TypeScript compiler in check mode:

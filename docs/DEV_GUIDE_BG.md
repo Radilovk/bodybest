@@ -18,6 +18,7 @@
 npm install       # инсталира зависимостите
 npm run dev       # стартира локалния сървър с Vite
 npm run lint      # проверява стила със ESLint
+npm run lint:fix  # автоматично поправя откритите проблеми
 npm test          # изпълнява Jest тестовете
 npm run test:watch # пуска само модифицираните тестове
 npm run test:file js/__tests__/adminConfig.test.js # пуска конкретен файл
