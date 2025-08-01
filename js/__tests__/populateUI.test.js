@@ -96,30 +96,42 @@ test('populates dashboard sections', () => {
   expect(document.querySelectorAll('#streakGrid .streak-day.logged').length).toBe(1);
 });
 
-test('sets macro card data attributes', async () => {
+test('обновява макро картата чрез setData', async () => {
   jest.resetModules();
   const fullData = {
     userName: 'Иван',
     analytics: { current: {}, streak: {} },
     planData: {
-      caloriesMacros: { calories: 1800, protein_grams: 120, protein_percent: 40, carbs_grams: 200, carbs_percent: 40, fat_grams: 50, fat_percent: 20 }
+      caloriesMacros: {
+        calories: 1800,
+        protein_grams: 120,
+        protein_percent: 40,
+        carbs_grams: 200,
+        carbs_percent: 40,
+        fat_grams: 50,
+        fat_percent: 20,
+      },
     },
     dailyLogs: [],
     currentStatus: {},
     initialData: {},
-    initialAnswers: {}
+    initialAnswers: {},
   };
   jest.unstable_mockModule('../app.js', () => ({
     fullDashboardData: fullData,
     todaysMealCompletionStatus: {},
     todaysExtraMeals: [],
     currentIntakeMacros: {},
-    planHasRecContent: false
+    planHasRecContent: false,
   }));
   ({ populateUI } = await import('../populateUI.js'));
-  populateUI();
   const card = document.getElementById('macroAnalyticsCard');
-  expect(card.getAttribute('target-data')).toContain('"calories":1800');
+  card.setData = jest.fn();
+  populateUI();
+  expect(card.setData).toHaveBeenCalledWith(
+    expect.objectContaining({ calories: 1800 }),
+    null,
+  );
 });
 
 test('hides modules when values are zero', async () => {

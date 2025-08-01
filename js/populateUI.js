@@ -290,15 +290,19 @@ function renderMacroPreviewGrid(macros) {
 }
 
 function populateDashboardMacros(macros) {
-    const card = document.getElementById('macroAnalyticsCard');
     renderMacroPreviewGrid(macros);
-    if (!card || !macros) return;
-    card.setAttribute('target-data', JSON.stringify(macros));
-    if (currentIntakeMacros && Object.keys(currentIntakeMacros).length > 0) {
-        card.setAttribute('current-data', JSON.stringify(currentIntakeMacros));
-    } else {
-        card.removeAttribute('current-data');
+    const container = selectors.analyticsCardsContainer;
+    let card = document.getElementById('macroAnalyticsCard');
+    if (!card && container) {
+        card = document.createElement('macro-analytics-card');
+        card.id = 'macroAnalyticsCard';
+        container.appendChild(card);
     }
+    if (!card || !macros) return;
+    const current = currentIntakeMacros && Object.keys(currentIntakeMacros).length > 0
+        ? currentIntakeMacros
+        : null;
+    card.setData(macros, current);
     renderPendingMacroChart();
 }
 
