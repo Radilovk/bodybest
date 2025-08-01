@@ -1,5 +1,12 @@
 import { loadLocale } from './macroCardLocales.js';
 
+let Chart;
+async function ensureChart() {
+  if (!Chart) {
+    Chart = (await import('https://cdn.jsdelivr.net/npm/chart.js')).default;
+  }
+}
+
 const template = document.createElement('template');
 template.innerHTML = `
   <style>
@@ -30,6 +37,19 @@ template.innerHTML = `
       max-width: 250px;
       height: 250px;
     }
+    .loading-indicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 32px;
+      height: 32px;
+      margin: -16px 0 0 -16px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: var(--macro-protein-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .chart-center-text {
       position: absolute;
       top: 50%;
@@ -104,6 +124,7 @@ template.innerHTML = `
     <h5></h5>
     <div class="chart-container">
       <div class="chart-skeleton skeleton"></div>
+      <div class="loading-indicator" hidden></div>
       <canvas hidden aria-label="Диаграма на макронутриенти" role="img"></canvas>
       <div class="chart-center-text"></div>
     </div>
@@ -124,6 +145,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     this.grid = this.shadowRoot.querySelector('.macro-metrics-grid');
     this.centerText = this.shadowRoot.querySelector('.chart-center-text');
     this.canvas = this.shadowRoot.querySelector('canvas');
+    this.loadingIndicator = this.shadowRoot.querySelector('.loading-indicator');
     this.titleEl = this.shadowRoot.querySelector('h5');
     this.chart = null;
     this.activeMacroIndex = null;
@@ -185,33 +207,36 @@ export class MacroAnalyticsCard extends HTMLElement {
     if (this.refreshTimer) clearInterval(this.refreshTimer);
   }
 
-  async ensureChartJs() {
-    if (window.Chart) return;
-    // Prevent duplicate script tags by sharing a global loading promise
-    if (!window._chartPromise) {
-      window._chartPromise = new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-      });
-    }
-    await window._chartPromise;
+  showLoading() {
+    if (this.loadingIndicator) this.loadingIndicator.hidden = false;
+  }
+
+  hideLoading() {
+    if (this.loadingIndicator) this.loadingIndicator.hidden = true;
   }
 
   lazyLoadChart() {
     if (this.observer) return;
+    const load = async () => {
+      this.showLoading();
+      try {
+        await ensureChart();
+        this.renderChart();
+      } catch (e) {
+        console.error('Failed to load Chart.js', e);
+      } finally {
+        this.hideLoading();
+      }
+    };
     if (!('IntersectionObserver' in window)) {
-      this.ensureChartJs().then(() => this.renderChart());
+      load();
       return;
     }
-    this.observer = new IntersectionObserver(async (entries) => {
-      entries.forEach(async (entry) => {
+    this.observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
         if (entry.isIntersecting) {
           this.observer.disconnect();
-          await this.ensureChartJs();
-          this.renderChart();
+          load();
         }
       });
     }, { threshold: 0.1 });
@@ -325,6 +350,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     const target = this.targetData;
     const current = this.currentData;
     if (!target || !current || !this.canvas || typeof Chart === 'undefined') return;
+    this.hideLoading();
     const skeleton = this.shadowRoot.querySelector('.chart-skeleton');
     if (skeleton) skeleton.remove();
     if (this.canvas.hasAttribute('hidden')) this.canvas.removeAttribute('hidden');
