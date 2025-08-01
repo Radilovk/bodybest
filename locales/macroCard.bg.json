@@ -1,0 +1,11 @@
+{
+  "title": "Калории и Макронутриенти",
+  "caloriesLabel": "Приети Калории",
+  "macros": {
+    "protein": "Белтъчини",
+    "carbs": "Въглехидрати",
+    "fat": "Мазнини"
+  },
+  "fromGoal": "от целта",
+  "totalCaloriesLabel": "от {calories} kcal"
+}
