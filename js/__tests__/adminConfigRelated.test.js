@@ -261,18 +261,18 @@ describe('admin email settings flags', () => {
     await loadEmailSettings();
     expect(mockLoad).toHaveBeenCalledWith([
       'from_email_name',
+      'contact_form_label',
       'welcome_email_subject',
       'welcome_email_body',
+      'send_welcome_email',
       'questionnaire_email_subject',
       'questionnaire_email_body',
+      'send_questionnaire_email',
       'contact_email_subject',
       'contact_email_body',
-      'contact_form_label',
+      'send_contact_email',
       'analysis_email_subject',
       'analysis_email_body',
-      'send_questionnaire_email',
-      'send_welcome_email',
-      'send_contact_email',
       'send_analysis_email'
     ]);
     expect(document.getElementById('sendWelcomeEmail').checked).toBe(true);

@@ -97,30 +97,89 @@ const analysisPromptInput = document.getElementById('analysisPrompt');
 const testAnalysisBtn = document.getElementById('testAnalysisModel');
 const emailSettingsForm = document.getElementById('emailSettingsForm');
 const fromEmailNameInput = document.getElementById('fromEmailName');
-const welcomeEmailSubjectInput = document.getElementById('welcomeEmailSubject');
-const welcomeEmailBodyInput = document.getElementById('welcomeEmailBody');
-const questionnaireEmailSubjectInput = document.getElementById('questionnaireEmailSubject');
-const questionnaireEmailBodyInput = document.getElementById('questionnaireEmailBody');
-const analysisEmailSubjectInput = document.getElementById('analysisEmailSubject');
-const analysisEmailBodyInput = document.getElementById('analysisEmailBody');
-const contactEmailSubjectInput = document.getElementById('contactEmailSubject');
-const contactEmailBodyInput = document.getElementById('contactEmailBody');
-const contactFormLabelInput = document.getElementById('contactFormLabel');
-const sendQuestionnaireEmailCheckbox = document.getElementById('sendQuestionnaireEmail');
-const sendWelcomeEmailCheckbox = document.getElementById('sendWelcomeEmail');
-const sendAnalysisEmailCheckbox = document.getElementById('sendAnalysisEmail');
-const sendContactEmailCheckbox = document.getElementById('sendContactEmail');
+const emailTypesContainer = document.getElementById('emailTypesContainer');
+const emailFieldsetTemplate = document.getElementById('emailFieldsetTemplate');
 const testEmailForm = document.getElementById('testEmailForm');
 const testEmailToInput = document.getElementById('testEmailTo');
 const testEmailSubjectInput = document.getElementById('testEmailSubject');
 const testEmailBodyInput = document.getElementById('testEmailBody');
 const testEmailSection = document.getElementById('testEmailSection');
-const welcomeEmailPreview = document.getElementById('welcomeEmailPreview');
-const questionnaireEmailPreview = document.getElementById('questionnaireEmailPreview');
-const analysisEmailPreview = document.getElementById('analysisEmailPreview');
-const contactEmailPreview = document.getElementById('contactEmailPreview');
 const testEmailPreview = document.getElementById('testEmailPreview');
 const testImageForm = document.getElementById('testImageForm');
+
+const emailTypes = [
+    {
+        keyPrefix: 'welcome',
+        legend: 'Приветствен имейл (след регистрация)',
+        subjectPlaceholder: 'Добре дошли в BodyBest!',
+        bodyPlaceholder: 'Здравейте {{name}}, благодарим за регистрацията...',
+        sendLabel: 'Изпращай приветствен имейл',
+        sampleVars: { name: 'Иван' }
+    },
+    {
+        keyPrefix: 'questionnaire',
+        legend: 'Потвърждение след въпросник',
+        subjectPlaceholder: 'Благодарим за попълнения въпросник',
+        bodyPlaceholder: 'Получихме отговорите и започваме обработка...',
+        sendLabel: 'Изпращай имейл след въпросник',
+        sampleVars: { name: 'Иван' }
+    },
+    {
+        keyPrefix: 'contact',
+        legend: 'Имейл при контакт',
+        subjectPlaceholder: 'Благодарим за връзката',
+        bodyPlaceholder: 'Здравейте {{name}}, получихме вашето съобщение...',
+        sendLabel: 'Изпращай имейл при контакт',
+        sampleVars: { name: 'Иван', form_label: 'форма за контакт' }
+    },
+    {
+        keyPrefix: 'analysis',
+        legend: 'Имейл при готов анализ',
+        subjectPlaceholder: 'Вашият анализ е готов',
+        bodyPlaceholder: 'Здравейте {{name}}, анализът ви е готов.',
+        sendLabel: 'Изпращай имейл при готов анализ',
+        sampleVars: { name: 'Иван', link: 'https://example.com' }
+    }
+];
+
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function generateEmailFieldsets() {
+    if (!emailTypesContainer || !emailFieldsetTemplate) return;
+    emailTypes.forEach(({ keyPrefix, legend, subjectPlaceholder, bodyPlaceholder, sendLabel }) => {
+        const clone = emailFieldsetTemplate.content.cloneNode(true);
+        const fieldset = clone.querySelector('fieldset');
+        fieldset.querySelector('legend').textContent = legend;
+        const subjectInput = fieldset.querySelector('[data-subject]');
+        subjectInput.id = `${keyPrefix}EmailSubject`;
+        subjectInput.placeholder = subjectPlaceholder;
+        const bodyTextarea = fieldset.querySelector('[data-body]');
+        bodyTextarea.id = `${keyPrefix}EmailBody`;
+        bodyTextarea.placeholder = bodyPlaceholder;
+        const previewDiv = fieldset.querySelector('[data-preview]');
+        previewDiv.id = `${keyPrefix}EmailPreview`;
+        const sendCheckbox = fieldset.querySelector('[data-send]');
+        sendCheckbox.id = `send${cap(keyPrefix)}Email`;
+        const sendLabelSpan = fieldset.querySelector('[data-send-label]');
+        sendLabelSpan.textContent = sendLabel;
+        const extraDiv = fieldset.querySelector('[data-extra]');
+        if (keyPrefix === 'contact') {
+            const extraLabel = document.createElement('label');
+            extraLabel.innerHTML = 'Етикет на формата:<br><input id="contactFormLabel" type="text" placeholder="форма за контакт">';
+            extraDiv.appendChild(extraLabel);
+        }
+        emailTypesContainer.appendChild(clone);
+    });
+}
+
+function initEmailPreviews() {
+    emailTypes.forEach(({ keyPrefix, sampleVars }) => {
+        const body = document.getElementById(`${keyPrefix}EmailBody`);
+        const preview = document.getElementById(`${keyPrefix}EmailPreview`);
+        attachEmailPreview(body, preview, sampleVars);
+    });
+    attachEmailPreview(testEmailBodyInput, testEmailPreview, { name: 'Иван' });
+}
 const testImageFileInput = document.getElementById('testImageFile');
 const testImagePromptInput = document.getElementById('testImagePrompt');
 const testImageResultPre = document.getElementById('testImageResult');
@@ -1217,8 +1276,6 @@ async function loadAiConfig() {
         if (modTemperatureInput) modTemperatureInput.value = cfg.mod_temperature || '';
         if (imageTokensInput) imageTokensInput.value = cfg.image_token_limit || '';
         if (imageTemperatureInput) imageTemperatureInput.value = cfg.image_temperature || '';
-        if (welcomeEmailSubjectInput) welcomeEmailSubjectInput.value = cfg.welcome_email_subject || '';
-        if (welcomeEmailBodyInput) welcomeEmailBodyInput.value = cfg.welcome_email_body || '';
         updateHints(planModelInput, planHints);
         updateHints(chatModelInput, chatHints);
         updateHints(modModelInput, modHints);
@@ -1250,8 +1307,7 @@ async function saveAiConfig() {
             mod_temperature: modTemperatureInput ? modTemperatureInput.value.trim() : '',
             image_token_limit: imageTokensInput ? imageTokensInput.value.trim() : '',
             image_temperature: imageTemperatureInput ? imageTemperatureInput.value.trim() : '',
-            welcome_email_subject: welcomeEmailSubjectInput ? welcomeEmailSubjectInput.value.trim() : '',
-            welcome_email_body: welcomeEmailBodyInput ? welcomeEmailBodyInput.value.trim() : ''
+            // имейл настройките се зареждат/записват отделно
     };
     try {
         if (adminTokenInput) {
@@ -1274,89 +1330,56 @@ async function saveAiConfig() {
 
 async function loadEmailSettings() {
     try {
-        const cfg = await loadConfig([
-            'from_email_name',
-            'welcome_email_subject',
-            'welcome_email_body',
-            'questionnaire_email_subject',
-            'questionnaire_email_body',
-            'contact_email_subject',
-            'contact_email_body',
-            'contact_form_label',
-            'analysis_email_subject',
-            'analysis_email_body',
-            'send_questionnaire_email',
-            'send_welcome_email',
-            'send_contact_email',
-            'send_analysis_email'
-        ])
-        if (fromEmailNameInput) fromEmailNameInput.value = cfg.from_email_name || ''
-        if (welcomeEmailSubjectInput) welcomeEmailSubjectInput.value = cfg.welcome_email_subject || ''
-        if (welcomeEmailBodyInput) {
-            welcomeEmailBodyInput.value = cfg.welcome_email_body || ''
-            if (welcomeEmailPreview) welcomeEmailPreview.innerHTML = sanitizeHTML(welcomeEmailBodyInput.value)
-        }
-        if (questionnaireEmailSubjectInput) questionnaireEmailSubjectInput.value = cfg.questionnaire_email_subject || ''
-        if (questionnaireEmailBodyInput) {
-            questionnaireEmailBodyInput.value = cfg.questionnaire_email_body || ''
-            if (questionnaireEmailPreview) questionnaireEmailPreview.innerHTML = sanitizeHTML(questionnaireEmailBodyInput.value)
-        }
-        if (contactEmailSubjectInput) contactEmailSubjectInput.value = cfg.contact_email_subject || ''
-        if (contactEmailBodyInput) {
-            contactEmailBodyInput.value = cfg.contact_email_body || ''
-            if (contactEmailPreview) contactEmailPreview.innerHTML = sanitizeHTML(contactEmailBodyInput.value)
-        }
-        if (contactFormLabelInput) contactFormLabelInput.value = cfg.contact_form_label || ''
-        if (analysisEmailSubjectInput) analysisEmailSubjectInput.value = cfg.analysis_email_subject || ''
-        if (analysisEmailBodyInput) {
-            analysisEmailBodyInput.value = cfg.analysis_email_body || ''
-            if (analysisEmailPreview) analysisEmailPreview.innerHTML = sanitizeHTML(analysisEmailBodyInput.value)
-        }
-        if (sendQuestionnaireEmailCheckbox) {
-            const val = cfg.send_questionnaire_email
-            sendQuestionnaireEmailCheckbox.checked = val !== '0' && val !== 'false'
-        }
-        if (sendWelcomeEmailCheckbox) {
-            const val = cfg.send_welcome_email
-            sendWelcomeEmailCheckbox.checked = val !== '0' && val !== 'false'
-        }
-        if (sendContactEmailCheckbox) {
-            const val = cfg.send_contact_email
-            sendContactEmailCheckbox.checked = val !== '0' && val !== 'false'
-        }
-        if (sendAnalysisEmailCheckbox) {
-            const val = cfg.send_analysis_email
-            sendAnalysisEmailCheckbox.checked = val !== '0' && val !== 'false'
-        }
+        const keys = ['from_email_name', 'contact_form_label'];
+        emailTypes.forEach(({ keyPrefix }) => {
+            keys.push(`${keyPrefix}_email_subject`);
+            keys.push(`${keyPrefix}_email_body`);
+            keys.push(`send_${keyPrefix}_email`);
+        });
+        const cfg = await loadConfig(keys);
+        if (fromEmailNameInput) fromEmailNameInput.value = cfg.from_email_name || '';
+        emailTypes.forEach(({ keyPrefix }) => {
+            const subjectInput = document.getElementById(`${keyPrefix}EmailSubject`);
+            const bodyInput = document.getElementById(`${keyPrefix}EmailBody`);
+            const preview = document.getElementById(`${keyPrefix}EmailPreview`);
+            const sendCheckbox = document.getElementById(`send${cap(keyPrefix)}Email`);
+            if (subjectInput) subjectInput.value = cfg[`${keyPrefix}_email_subject`] || '';
+            if (bodyInput) {
+                bodyInput.value = cfg[`${keyPrefix}_email_body`] || '';
+                if (preview) preview.innerHTML = sanitizeHTML(bodyInput.value);
+            }
+            if (sendCheckbox) {
+                const val = cfg[`send_${keyPrefix}_email`];
+                sendCheckbox.checked = val !== '0' && val !== 'false';
+            }
+        });
+        const contactLabel = document.getElementById('contactFormLabel');
+        if (contactLabel) contactLabel.value = cfg.contact_form_label || '';
     } catch (err) {
-        console.error('Error loading email settings:', err)
+        console.error('Error loading email settings:', err);
     }
 }
 
 async function saveEmailSettings() {
-    if (!emailSettingsForm) return
+    if (!emailSettingsForm) return;
     const updates = {
-            from_email_name: fromEmailNameInput ? fromEmailNameInput.value.trim() : '',
-            welcome_email_subject: welcomeEmailSubjectInput ? welcomeEmailSubjectInput.value.trim() : '',
-            welcome_email_body: welcomeEmailBodyInput ? welcomeEmailBodyInput.value.trim() : '',
-            questionnaire_email_subject: questionnaireEmailSubjectInput ? questionnaireEmailSubjectInput.value.trim() : '',
-            questionnaire_email_body: questionnaireEmailBodyInput ? questionnaireEmailBodyInput.value.trim() : '',
-            contact_email_subject: contactEmailSubjectInput ? contactEmailSubjectInput.value.trim() : '',
-            contact_email_body: contactEmailBodyInput ? contactEmailBodyInput.value.trim() : '',
-            contact_form_label: contactFormLabelInput ? contactFormLabelInput.value.trim() : '',
-            analysis_email_subject: analysisEmailSubjectInput?.value.trim() || '',
-            analysis_email_body: analysisEmailBodyInput?.value.trim() || '',
-            send_questionnaire_email: sendQuestionnaireEmailCheckbox && sendQuestionnaireEmailCheckbox.checked ? '1' : '0',
-            send_welcome_email: sendWelcomeEmailCheckbox && sendWelcomeEmailCheckbox.checked ? '1' : '0',
-            send_contact_email: sendContactEmailCheckbox && sendContactEmailCheckbox.checked ? '1' : '0',
-            send_analysis_email: sendAnalysisEmailCheckbox && sendAnalysisEmailCheckbox.checked ? '1' : '0'
-    }
+        from_email_name: fromEmailNameInput ? fromEmailNameInput.value.trim() : '',
+        contact_form_label: document.getElementById('contactFormLabel')?.value.trim() || ''
+    };
+    emailTypes.forEach(({ keyPrefix }) => {
+        const subjectInput = document.getElementById(`${keyPrefix}EmailSubject`);
+        const bodyInput = document.getElementById(`${keyPrefix}EmailBody`);
+        const sendCheckbox = document.getElementById(`send${cap(keyPrefix)}Email`);
+        updates[`${keyPrefix}_email_subject`] = subjectInput?.value.trim() || '';
+        updates[`${keyPrefix}_email_body`] = bodyInput?.value.trim() || '';
+        updates[`send_${keyPrefix}_email`] = sendCheckbox && sendCheckbox.checked ? '1' : '0';
+    });
     try {
-        await saveConfig(updates)
-        alert('Имейл настройките са записани.')
+        await saveConfig(updates);
+        alert('Имейл настройките са записани.');
     } catch (err) {
-        console.error('Error saving email settings:', err)
-        alert('Грешка при запис на имейл настройките.')
+        console.error('Error saving email settings:', err);
+        alert('Грешка при запис на имейл настройките.');
     }
 }
 
@@ -1709,11 +1732,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Инициализира табовете веднага
     setupTabs();
 
-    attachEmailPreview(welcomeEmailBodyInput, welcomeEmailPreview, { name: 'Иван' });
-    attachEmailPreview(questionnaireEmailBodyInput, questionnaireEmailPreview, { name: 'Иван' });
-    attachEmailPreview(analysisEmailBodyInput, analysisEmailPreview, { name: 'Иван', link: 'https://example.com' });
-    attachEmailPreview(contactEmailBodyInput, contactEmailPreview, { name: 'Иван', form_label: 'форма за контакт' });
-    attachEmailPreview(testEmailBodyInput, testEmailPreview, { name: 'Иван' });
+    generateEmailFieldsets();
+    initEmailPreviews();
 
     // Стартира асинхронните операции в отделен IIFE,
     // за да не блокират работата на интерфейса

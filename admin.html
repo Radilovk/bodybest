@@ -435,35 +435,17 @@
     <summary>Настройки за имейли</summary>
     <form id="emailSettingsForm">
       <label>Име на подател:<br><input id="fromEmailName" type="text" placeholder="MyBody"></label>
-      <fieldset>
-        <legend>Приветствен имейл (след регистрация)</legend>
-        <label>Тема:<br><input id="welcomeEmailSubject" type="text" placeholder="Добре дошли в BodyBest!"></label>
-        <label>Съдържание:<br><textarea id="welcomeEmailBody" rows="5" placeholder="Здравейте {{name}}, благодарим за регистрацията..."></textarea></label>
-        <div id="welcomeEmailPreview" class="email-preview"></div>
-        <label><input id="sendWelcomeEmail" type="checkbox" checked> Изпращай приветствен имейл</label>
-      </fieldset>
-      <fieldset>
-        <legend>Потвърждение след въпросник</legend>
-        <label>Тема:<br><input id="questionnaireEmailSubject" type="text" placeholder="Благодарим за попълнения въпросник"></label>
-        <label>Съдържание:<br><textarea id="questionnaireEmailBody" rows="5" placeholder="Получихме отговорите и започваме обработка..."></textarea></label>
-        <div id="questionnaireEmailPreview" class="email-preview"></div>
-        <label><input id="sendQuestionnaireEmail" type="checkbox" checked> Изпращай имейл след въпросник</label>
-      </fieldset>
-      <fieldset>
-        <legend>Имейл при контакт</legend>
-        <label>Етикет на формата:<br><input id="contactFormLabel" type="text" placeholder="форма за контакт"></label>
-        <label>Тема:<br><input id="contactEmailSubject" type="text" placeholder="Благодарим за връзката"></label>
-        <label>Съдържание:<br><textarea id="contactEmailBody" rows="5" placeholder="Здравейте {{name}}, получихме вашето съобщение..."></textarea></label>
-        <div id="contactEmailPreview" class="email-preview"></div>
-        <label><input id="sendContactEmail" type="checkbox" checked> Изпращай имейл при контакт</label>
-      </fieldset>
-      <fieldset>
-        <legend>Имейл при готов анализ</legend>
-        <label>Тема:<br><input id="analysisEmailSubject" type="text" placeholder="Вашият анализ е готов"></label>
-        <label>Съдържание:<br><textarea id="analysisEmailBody" rows="5" placeholder="Здравейте {{name}}, анализът ви е готов."></textarea></label>
-        <div id="analysisEmailPreview" class="email-preview"></div>
-        <label><input id="sendAnalysisEmail" type="checkbox" checked> Изпращай имейл при готов анализ</label>
-      </fieldset>
+      <div id="emailTypesContainer"></div>
+      <template id="emailFieldsetTemplate">
+        <fieldset>
+          <legend></legend>
+          <div data-extra></div>
+          <label>Тема:<br><input type="text" data-subject></label>
+          <label>Съдържание:<br><textarea rows="5" data-body></textarea></label>
+          <div class="email-preview" data-preview></div>
+          <label><input type="checkbox" data-send> <span data-send-label></span></label>
+        </fieldset>
+      </template>
       <button type="submit">Запази</button>
     </form>
   </details>
