@@ -245,3 +245,64 @@ describe('handleSendTestEmailRequest', () => {
     expect(res.statusHint).toBe(429);
   });
 });
+
+describe('sendAnalysisLinkEmail and sendContactEmail', () => {
+  let sendAnalysisLinkEmail, sendContactEmail, sendEmailUniversal;
+  beforeEach(async () => {
+    jest.resetModules();
+    jest.unstable_mockModule('../../utils/emailSender.js', () => ({
+      sendEmailUniversal: jest.fn().mockResolvedValue(true)
+    }));
+    ({ sendAnalysisLinkEmail, sendContactEmail } = await import('../../worker.js'));
+    ({ sendEmailUniversal } = await import('../../utils/emailSender.js'));
+  });
+  afterEach(() => {
+    jest.resetModules();
+  });
+
+  test('sendAnalysisLinkEmail loads subject/body from KV', async () => {
+    const kv = {
+      get: jest.fn(async key => {
+        if (key === 'analysis_email_subject') return 'KV subject';
+        if (key === 'analysis_email_body') return 'Hi {{name}} {{link}}';
+        if (key === 'send_analysis_email') return '1';
+        return null;
+      })
+    };
+    const env = { RESOURCES_KV: kv };
+    await sendAnalysisLinkEmail('a@b.bg', 'Иван', 'http://link', env);
+    expect(sendEmailUniversal).toHaveBeenCalledWith(
+      'a@b.bg',
+      'KV subject',
+      'Hi Иван http://link',
+      env
+    );
+  });
+
+  test('sendAnalysisLinkEmail respects send flag', async () => {
+    const env = { send_analysis_email: '0' };
+    const ok = await sendAnalysisLinkEmail('a@b.bg', 'Иван', 'http://link', env);
+    expect(ok).toBe(false);
+    expect(sendEmailUniversal).not.toHaveBeenCalled();
+  });
+
+  test('sendContactEmail uses contact_form_label from KV', async () => {
+    const kv = {
+      get: jest.fn(async key => (key === 'contact_form_label' ? 'форма X' : null))
+    };
+    const env = { RESOURCES_KV: kv };
+    await sendContactEmail('c@e.bg', 'Петър', env);
+    expect(sendEmailUniversal).toHaveBeenCalledWith(
+      'c@e.bg',
+      'Благодарим за връзката',
+      'Получихме вашето съобщение от форма X.',
+      env
+    );
+  });
+
+  test('sendContactEmail respects send flag', async () => {
+    const env = { send_contact_email: '0' };
+    await sendContactEmail('c@e.bg', 'Петър', env);
+    expect(sendEmailUniversal).not.toHaveBeenCalled();
+  });
+});
