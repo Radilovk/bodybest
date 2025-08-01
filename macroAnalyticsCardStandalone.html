@@ -250,13 +250,17 @@
 
       async ensureChartJs() {
         if (window.Chart) return;
-        await new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-          script.onload = resolve;
-          script.onerror = reject;
-          document.head.appendChild(script);
-        });
+        // Prevent duplicate script tags by sharing a global loading promise
+        if (!window._chartPromise) {
+          window._chartPromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+        }
+        await window._chartPromise;
       }
 
       lazyLoadChart() {
