@@ -1,4 +1,4 @@
-import { renderTemplate } from '../../utils/template.js';
+import { renderTemplate } from '../../utils/templateRenderer.js';
 
 describe('renderTemplate', () => {
   test('замества всички плейсхолдери', () => {

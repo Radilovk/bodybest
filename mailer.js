@@ -1,6 +1,7 @@
 import dotenv from 'dotenv'
 import fs from 'fs/promises'
 import { sendEmailUniversal } from './utils/emailSender.js'
+import { renderTemplate } from './utils/templateRenderer.js'
 
 dotenv.config()
 
@@ -66,7 +67,10 @@ export async function sendEmail(toEmail, subject, html) {
 
 export async function sendWelcomeEmail(toEmail, userName) {
     const tpl = await getEmailTemplate()
-    const html = tpl.body.replace(/{{\s*name\s*}}/g, userName)
+    const html = renderTemplate(tpl.body, {
+        name: userName,
+        current_year: new Date().getFullYear()
+    })
     try {
         await sendEmail(toEmail, tpl.subject, html)
     } catch (error) {

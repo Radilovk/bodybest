@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals'
 import { readFileSync } from 'fs'
+import { renderTemplate } from '../../utils/templateRenderer.js'
 
 let sendWelcomeEmail
 
@@ -16,7 +17,10 @@ afterEach(() => {
 })
 
 test('sends welcome email with correct options', async () => {
-    const expected = readFileSync('data/welcomeEmailTemplate.html', 'utf8').replace(/{{\s*name\s*}}/g, 'Иван')
+    const expected = renderTemplate(
+        readFileSync('data/welcomeEmailTemplate.html', 'utf8'),
+        { name: 'Иван', current_year: new Date().getFullYear() }
+    )
     await sendWelcomeEmail('client@example.com', 'Иван')
     expect(global.fetch).toHaveBeenCalledWith('https://mail', expect.objectContaining({
         method: 'POST',
@@ -25,7 +29,8 @@ test('sends welcome email with correct options', async () => {
             to: 'client@example.com',
             subject: 'Добре дошъл в MyBody!',
             message: expected,
-            body: expected
+            body: expected,
+            fromName: ''
         })
     }))
 })
