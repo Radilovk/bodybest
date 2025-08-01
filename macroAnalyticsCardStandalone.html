@@ -6,7 +6,9 @@
   - копирайте файла или го вградете с <iframe>;
   - подайте данни чрез атрибутите "current-data" и "target-data" (JSON) или
     използвайте "data-endpoint" и "refresh-interval" за автоматично опресняване;
-  - цветовете се настройват чрез CSS променливите в :root.
+  - цветовете се настройват чрез CSS променливите в :root;
+  - преводите се зареждат от locales/macroCard.{lang}.json според атрибута "locale".
+    За нов език копирайте съществуващ файл и преведете стойностите на ключовете.
 -->
 <html lang="bg">
 <head>
@@ -43,30 +45,24 @@
   ></macro-analytics-card>
 
   <script type="module">
-    const macroCardLocales = {
-      bg: {
-        title: 'Калории и Макронутриенти',
-        caloriesLabel: 'Приети Калории',
-        macros: {
-          protein: 'Белтъчини',
-          carbs: 'Въглехидрати',
-          fat: 'Мазнини'
-        },
-        fromGoal: 'от целта',
-        totalCaloriesLabel: (calories) => `от ${calories} kcal`
-      },
-      en: {
-        title: 'Calories & Macros',
-        caloriesLabel: 'Calories Consumed',
-        macros: {
-          protein: 'Protein',
-          carbs: 'Carbohydrates',
-          fat: 'Fat'
-        },
-        fromGoal: 'of goal',
-        totalCaloriesLabel: (calories) => `of ${calories} kcal`
+    const localeCache = {};
+
+    async function loadLocale(locale) {
+      if (localeCache[locale]) return localeCache[locale];
+      const fetchLocale = async (lng) => {
+        const res = await fetch(`./locales/macroCard.${lng}.json`);
+        if (!res.ok) throw new Error('Missing locale');
+        return res.json();
+      };
+      let data;
+      try {
+        data = await fetchLocale(locale);
+      } catch {
+        data = await fetchLocale('bg');
       }
-    };
+      localeCache[locale] = data;
+      return data;
+    }
 
     const template = document.createElement('template');
     template.innerHTML = `
@@ -200,16 +196,22 @@
         this.observer = null;
         this.refreshTimer = null;
         this.locale = this.getAttribute('locale') || 'bg';
-        this.labels = macroCardLocales[this.locale] || macroCardLocales.bg;
+        this.labels = {
+          title: '',
+          caloriesLabel: '',
+          macros: { protein: '', carbs: '', fat: '' },
+          fromGoal: '',
+          totalCaloriesLabel: ''
+        };
       }
 
       static get observedAttributes() {
         return ['target-data', 'current-data', 'locale', 'data-endpoint', 'refresh-interval'];
       }
 
-      connectedCallback() {
+      async connectedCallback() {
         this.classList.add('loaded');
-        this.titleEl.textContent = this.labels.title;
+        await this.updateLocale();
         this.lazyLoadChart();
         this.setupAutoRefresh();
       }
@@ -217,9 +219,7 @@
       attributeChangedCallback(name, _oldVal, newVal) {
         if (name === 'locale') {
           this.locale = newVal;
-          this.labels = macroCardLocales[this.locale] || macroCardLocales.bg;
-          if (this.titleEl) this.titleEl.textContent = this.labels.title;
-          this.renderMetrics();
+          this.updateLocale();
           return;
         }
         if (name === 'data-endpoint' || name === 'refresh-interval') {
@@ -235,6 +235,13 @@
         } catch (e) {
           console.error(`Invalid JSON for ${name}`, e);
         }
+      }
+
+      async updateLocale() {
+        this.labels = await loadLocale(this.locale);
+        if (this.titleEl) this.titleEl.textContent = this.labels.title;
+        this.renderMetrics();
+        this.renderChart();
       }
 
       disconnectedCallback() {
@@ -331,11 +338,11 @@
         this.grid.innerHTML = '';
         this.centerText.innerHTML = `
           <div class="consumed-calories">${current.calories}</div>
-          <div class="total-calories-label">${this.labels.totalCaloriesLabel(target.calories)}</div>`;
+          <div class="total-calories-label">${this.labels.totalCaloriesLabel.replace('{calories}', target.calories)}</div>`;
         const calDiv = document.createElement('div');
         calDiv.className = 'macro-metric calories';
         calDiv.setAttribute('role', 'listitem');
-        calDiv.setAttribute('aria-label', `${this.labels.caloriesLabel}: ${current.calories} от ${target.calories} килокалории`);
+        calDiv.setAttribute('aria-label', `${this.labels.caloriesLabel}: ${current.calories} ${this.labels.totalCaloriesLabel.replace('{calories}', target.calories)}`);
         calDiv.innerHTML = `
           <span class="macro-icon"><i class="bi bi-fire"></i></span>
           <div class="macro-label">${this.labels.caloriesLabel}</div>
