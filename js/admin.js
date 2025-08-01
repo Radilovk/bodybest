@@ -5,6 +5,7 @@ import { fileToDataURL, fileToText, getProgressColor, animateProgressFill } from
 import { loadTemplateInto } from './templateLoader.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 import { loadMaintenanceFlag, setMaintenanceFlag } from './maintenanceMode.js';
+import { renderTemplate } from '../utils/template.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -235,11 +236,7 @@ function updateHints(modelInput, descElem) {
 export function attachEmailPreview(textarea, previewElem, sample = {}) {
     if (!textarea || !previewElem) return;
     const update = () => {
-        let html = textarea.value;
-        for (const [key, val] of Object.entries(sample)) {
-            const re = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
-            html = html.replace(re, val);
-        }
+        const html = renderTemplate(textarea.value, sample);
         previewElem.innerHTML = sanitizeHTML(html);
     };
     textarea.addEventListener('input', update);
