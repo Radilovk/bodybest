@@ -11,10 +11,51 @@
 // - Попълнени липсващи части от предходни версии.
 // - Запазени всички предходни функционалности.
 
-// Използва се унифициран модул за изпращане на имейли
-import { sendEmailUniversal } from './utils/emailSender.js';
-import { parseJsonSafe } from './utils/parseJsonSafe.js';
-import { renderTemplate } from './utils/templateRenderer.js';
+// Вградените помощни функции позволяват deployment само с този файл
+async function sendEmailUniversal(to, subject, body, env = {}) {
+  const endpoint = env.MAILER_ENDPOINT_URL ||
+    globalThis['process']?.env?.MAILER_ENDPOINT_URL;
+  const fromName = env.FROM_NAME || env.from_email_name ||
+    globalThis['process']?.env?.FROM_NAME;
+  if (endpoint) {
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, message: body, body, fromName })
+    });
+    if (!resp.ok) {
+      throw new Error(`Mailer responded with ${resp.status}`);
+    }
+    return;
+  }
+  const url = env.MAIL_PHP_URL ||
+    globalThis['process']?.env?.MAIL_PHP_URL ||
+    'https://radilovk.github.io/bodybest/mailer/mail.php';
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to, subject, message: body, body, fromName })
+  });
+  if (!resp.ok) {
+    throw new Error(`PHP mailer error ${resp.status}`);
+  }
+}
+
+function renderTemplate(str, data = {}) {
+  return String(str).replace(/{{\s*(\w+)\s*}}/g, (_, key) =>
+    Object.prototype.hasOwnProperty.call(data, key) ? String(data[key]) : ''
+  );
+}
+
+async function parseJsonSafe(resp, label = 'response') {
+  try {
+    return await resp.json();
+  } catch {
+    const bodyText = await resp.clone().text().catch(() => '[unavailable]');
+    console.error(`Failed to parse JSON from ${label}:`, bodyText);
+    throw new Error('Invalid JSON response');
+  }
+}
 
 const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
 const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
@@ -752,7 +793,7 @@ async function handleRegisterRequest(request, env, ctx) {
         if (previousUserId) {
             console.log(`REGISTER_OVERRIDE: ${trimmedEmail} was linked to ${previousUserId}. Overwriting with new account.`);
         }
-        const userId = crypto.randomUUID();
+        const userId = globalThis['crypto'].randomUUID();
         const hashedPasswordWithSalt = await hashPassword(password);
         const credentialContent = JSON.stringify({ userId, email: trimmedEmail, passwordHash: hashedPasswordWithSalt });
         await env.USER_METADATA_KV.put(`credential_${userId}`, credentialContent);
@@ -1482,7 +1523,7 @@ async function handleRequestPasswordReset(request, env) {
         if (!userId) {
             return { success: true, message: 'Ако имейлът съществува, ще получите линк за смяна на паролата.' };
         }
-        const token = crypto.randomUUID();
+        const token = globalThis['crypto'].randomUUID();
         await env.USER_METADATA_KV.put(`pwreset_${token}`, userId, { expirationTtl: 3600 });
         await sendPasswordResetEmail(clean, token, env);
         return { success: true, message: 'Изпратихме линк за смяна на паролата.' };
@@ -3288,7 +3329,7 @@ async function generateAndStoreAdaptiveQuiz(userId, initialAnswers, env) {
             await env.USER_METADATA_KV.put(`${userId}_adaptive_quiz_error`, "Грешка при валидиране на генерирания от AI въпросник."); return;
         }
 
-        const quizId = crypto.randomUUID();
+        const quizId = globalThis['crypto'].randomUUID();
         const quizToStore = {
             quizId: quizId,
             title: "Вашият Персонализиран Адаптивен Въпросник", 
@@ -3717,40 +3758,41 @@ const SALT_LENGTH_CONST = 16; // bytes
 const DERIVED_KEY_LENGTH_CONST = 32; // bytes
 
 async function hashPassword(password) {
-    try {
-        const cryptoObj = globalThis.crypto ?? (await import('node:crypto')).webcrypto;
-        const salt = cryptoObj.getRandomValues(new Uint8Array(SALT_LENGTH_CONST));
-        const passwordBuffer = new TextEncoder().encode(password);
-        const keyMaterial = await cryptoObj.subtle.importKey(
-            'raw',
-            passwordBuffer,
-            { name: 'PBKDF2' },
-            false,
-            ['deriveBits']
-        );
-        const derivedKeyBuffer = await cryptoObj.subtle.deriveBits(
-            {
-                name: 'PBKDF2',
-                salt,
-                iterations: PBKDF2_ITERATIONS_CONST,
-                hash: PBKDF2_HASH_ALGORITHM_CONST
-            },
-            keyMaterial,
-            DERIVED_KEY_LENGTH_CONST * 8
-        );
-        const hashBuffer = new Uint8Array(derivedKeyBuffer);
-        const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
-        const hashHex = Array.from(hashBuffer).map(b => b.toString(16).padStart(2, '0')).join('');
-        return `${saltHex}:${hashHex}`;
-    } catch {
-        const nodeCrypto = await import('node:crypto');
-        const salt = nodeCrypto.randomBytes(SALT_LENGTH_CONST);
-        const hash = nodeCrypto.createHash('sha256').update(password).digest('hex');
-        return `${salt.toString('hex')}:${hash}`;
+    const cryptoObj = globalThis['crypto'];
+    if (!cryptoObj) {
+        throw new Error('Crypto API not available');
     }
+    const salt = cryptoObj.getRandomValues(new Uint8Array(SALT_LENGTH_CONST));
+    const passwordBuffer = new TextEncoder().encode(password);
+    const keyMaterial = await cryptoObj.subtle.importKey(
+        'raw',
+        passwordBuffer,
+        { name: 'PBKDF2' },
+        false,
+        ['deriveBits']
+    );
+    const derivedKeyBuffer = await cryptoObj.subtle.deriveBits(
+        {
+            name: 'PBKDF2',
+            salt,
+            iterations: PBKDF2_ITERATIONS_CONST,
+            hash: PBKDF2_HASH_ALGORITHM_CONST
+        },
+        keyMaterial,
+        DERIVED_KEY_LENGTH_CONST * 8
+    );
+    const hashBuffer = new Uint8Array(derivedKeyBuffer);
+    const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+    const hashHex = Array.from(hashBuffer).map(b => b.toString(16).padStart(2, '0')).join('');
+    return `${saltHex}:${hashHex}`;
 }
 
 async function verifyPassword(password, storedSaltAndHash) {
+    const cryptoObj = globalThis['crypto'];
+    if (!cryptoObj) {
+        console.error('Crypto API not available');
+        return false;
+    }
     try {
         const parts = storedSaltAndHash.split(':');
         if (parts.length !== 2) {
@@ -3765,8 +3807,8 @@ async function verifyPassword(password, storedSaltAndHash) {
         // Convert hex salt back to Uint8Array
         const salt = new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
         const passwordBuffer = new TextEncoder().encode(password);
-        const keyMaterial = await crypto.subtle.importKey('raw', passwordBuffer, { name: 'PBKDF2' }, false, ['deriveBits']);
-        const derivedKeyBuffer = await crypto.subtle.deriveBits(
+        const keyMaterial = await cryptoObj.subtle.importKey('raw', passwordBuffer, { name: 'PBKDF2' }, false, ['deriveBits']);
+        const derivedKeyBuffer = await cryptoObj.subtle.deriveBits(
             { name: 'PBKDF2', salt: salt, iterations: PBKDF2_ITERATIONS_CONST, hash: PBKDF2_HASH_ALGORITHM_CONST },
             keyMaterial,
             DERIVED_KEY_LENGTH_CONST * 8
