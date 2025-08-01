@@ -3718,7 +3718,7 @@ const DERIVED_KEY_LENGTH_CONST = 32; // bytes
 
 async function hashPassword(password) {
     try {
-        const cryptoObj = globalThis.crypto || (await import('crypto')).webcrypto;
+        const cryptoObj = globalThis.crypto ?? (await import('node:crypto')).webcrypto;
         const salt = cryptoObj.getRandomValues(new Uint8Array(SALT_LENGTH_CONST));
         const passwordBuffer = new TextEncoder().encode(password);
         const keyMaterial = await cryptoObj.subtle.importKey(
@@ -3743,7 +3743,7 @@ async function hashPassword(password) {
         const hashHex = Array.from(hashBuffer).map(b => b.toString(16).padStart(2, '0')).join('');
         return `${saltHex}:${hashHex}`;
     } catch {
-        const nodeCrypto = await import('crypto');
+        const nodeCrypto = await import('node:crypto');
         const salt = nodeCrypto.randomBytes(SALT_LENGTH_CONST);
         const hash = nodeCrypto.createHash('sha256').update(password).digest('hex');
         return `${salt.toString('hex')}:${hash}`;
