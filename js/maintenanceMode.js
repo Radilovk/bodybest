@@ -8,7 +8,7 @@ export async function loadMaintenanceFlag() {
     const resp = await fetch(apiEndpoints.getMaintenanceMode);
     const data = await resp.json();
     if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
-    return data.enabled === true || data.enabled === '1';
+    return data.enabled === true || data.enabled === 1 || data.enabled === '1';
 }
 
 /**
