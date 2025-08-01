@@ -1,4 +1,21 @@
 <!doctype html>
+<!--
+  Компонентът „Начално табло“ използва css/dashboard_panel_styles.css за визията
+  и js/populateUI.js за динамичното зареждане на стойности.
+  При промени синхронизирайте:
+    • .main-indexes ↔ populateDashboardMainIndexes
+    • #detailedAnalyticsAccordion, .macro-metrics-grid ↔ populateDashboardDetailedAnalytics
+    • .progress-bar/.progress-fill ↔ getProgressColor, animateProgressFill
+  Пример в code.html:
+    <link rel="stylesheet" href="css/dashboard_panel_styles.css">
+    <script type="module">
+      import { populateUI } from './js/populateUI.js';
+      populateUI();
+    </script>
+  Прехвърлете CSS променливи: --space-lg, --space-sm, --space-xs,
+    --text-color-secondary, --surface-background,
+    --progress-start-color, --progress-end-color.
+-->
 <html lang="bg">
   <head>
     <meta charset="utf-8" />
