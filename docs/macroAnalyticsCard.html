@@ -2,133 +2,26 @@
 <html lang="bg">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Шаблон MacroAnalyticsCard</title>
-  <link rel="stylesheet" href="../css/base_styles.css">
-  <link rel="stylesheet" href="../css/components_styles.css">
-  <link rel="stylesheet" href="../css/dashboard_panel_styles.css">
-  <link rel="stylesheet" href="../css/responsive_styles.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <title>MacroAnalyticsCard – автономен пример</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 1rem; }
+    iframe { width: 100%; max-width: 500px; height: 560px; border: 1px solid #ccc; border-radius: 8px; }
+  </style>
 </head>
 <body>
-  <div class="card" style="max-width:600px;margin:2rem auto;">
-    <div id="macroAnalyticsCard" class="analytics-card">
-      <h5>Калории и Макронутриенти</h5>
-      <div class="chart-container">
-        <canvas id="macroChart"></canvas>
-      </div>
-      <div id="macroMetricsGrid" class="macro-metrics-grid"></div>
-    </div>
-  </div>
-
+  <h1>Standalone MacroAnalyticsCard</h1>
+  <p>
+    Файлът <code>macroAnalyticsCardStandalone.html</code> съдържа всички нужни стилове и логика.
+    Може да бъде вграден чрез &lt;iframe&gt; или чрез копиране на Web Component кода.
+  </p>
+  <iframe src="../macroAnalyticsCardStandalone.html" title="Macro Analytics Card"></iframe>
   <details>
-    <summary>Описание и логика</summary>
-    <p>Модулът визуализира препоръчан дневен прием на макронутриенти.</p>
-    <ul>
-      <li><code>renderMacroAnalyticsCard(macros)</code> – създава HTML структурата и попълва стойностите.</li>
-      <li><code>renderPendingMacroChart()</code> – инициализира кръговата диаграма с помощта на <code>Chart.js</code>.</li>
-      <li><code>highlightMacro(el)</code> – маркира избрания елемент в решетката.</li>
-    </ul>
-    <p>Функциите се намират в <code>js/populateUI.js</code> и се изпълняват при зареждане на таблото. Диаграмата се рисува при отваряне на секцията за детайлни показатели.</p>
+    <summary>Интеграция</summary>
+    <ol>
+      <li>Копирайте файла или го вградете с <code>&lt;iframe&gt;</code>.</li>
+      <li>Подайте данни чрез атрибутите <code>target-data</code> и <code>current-data</code> (JSON) или използвайте <code>data-endpoint</code> с <code>refresh-interval</code>.</li>
+      <li>Променете цветовете чрез CSS променливите в <code>:root</code>.</li>
+    </ol>
   </details>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script type="module">
-    const demoData = {
-      calories: 2200,
-      protein_grams: 140,
-      protein_percent: 25,
-      carbs_grams: 230,
-      carbs_percent: 45,
-      fat_grams: 70,
-      fat_percent: 30
-    };
-
-    let macroChartInstance = null;
-    let pendingMacroData = null;
-
-    const getCssVar = (name, fallback = '') =>
-      getComputedStyle(document.documentElement).getPropertyValue(name) || fallback;
-
-    function highlightMacro(el) {
-      const grid = document.getElementById('macroMetricsGrid');
-      if (!grid || !el) return;
-      grid.querySelectorAll('.macro-metric').forEach(div => div.classList.remove('active'));
-      el.classList.add('active');
-    }
-
-    function renderMacroAnalyticsCard(macros) {
-      const grid = document.getElementById('macroMetricsGrid');
-      grid.innerHTML = '';
-      const list = [
-        { l: 'Калории', v: macros.calories, s: 'kcal дневно' },
-        { l: 'Белтъчини', v: macros.protein_grams, s: `${macros.protein_percent}%`, c: '--macro-protein-color' },
-        { l: 'Въглехидрати', v: macros.carbs_grams, s: `${macros.carbs_percent}%`, c: '--macro-carbs-color' },
-        { l: 'Мазнини', v: macros.fat_grams, s: `${macros.fat_percent}%`, c: '--macro-fat-color' }
-      ];
-      const iconMap = {
-        'Калории': 'bi-fire',
-        'Белтъчини': 'bi-egg-fried',
-        'Въглехидрати': 'bi-basket',
-        'Мазнини': 'bi-droplet'
-      };
-      list.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'macro-metric';
-
-        div.innerHTML = `
-          <span class="macro-icon"><i class="bi ${iconMap[item.l] || 'bi-circle'}"></i></span>
-          <div class="macro-label" style="color:${item.c ? getCssVar(item.c) : ''}">${item.l}</div>
-          <div class="macro-value">${item.v}</div>
-          <div class="macro-subtitle">${item.s}</div>`;
-        div.addEventListener('click', () => highlightMacro(div));
-        grid.appendChild(div);
-      });
-      pendingMacroData = macros;
-    }
-
-    function renderPendingMacroChart() {
-      if (!pendingMacroData) return;
-      const canvas = document.getElementById('macroChart');
-      if (!canvas || typeof Chart === 'undefined') return;
-      if (macroChartInstance) {
-        macroChartInstance.destroy();
-        macroChartInstance = null;
-      }
-      const m = pendingMacroData;
-      const ctx = canvas.getContext('2d');
-      macroChartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: [
-            `Белтъчини (${m.protein_percent}%)`,
-            `Въглехидрати (${m.carbs_percent}%)`,
-            `Мазнини (${m.fat_percent}%)`
-          ],
-          datasets: [{
-            label: 'Разпределение на макроси',
-            data: [m.protein_grams, m.carbs_grams, m.fat_grams],
-            backgroundColor: [
-              getCssVar('--macro-protein-color', 'rgb(54,162,235)'),
-              getCssVar('--macro-carbs-color', 'rgb(255,205,86)'),
-              getCssVar('--macro-fat-color', 'rgb(255,99,132)')
-            ],
-            hoverOffset: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            title: { display: true, text: `Дневен прием (${m.calories} kcal)` }
-          }
-        }
-      });
-    }
-
-    // Инициализация на примера
-    renderMacroAnalyticsCard(demoData);
-    renderPendingMacroChart();
-  </script>
 </body>
 </html>
