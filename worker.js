@@ -14,6 +14,7 @@
 // Използва се унифициран модул за изпращане на имейли
 import { sendEmailUniversal } from './utils/emailSender.js';
 import { parseJsonSafe } from './utils/parseJsonSafe.js';
+import { renderTemplate } from './utils/template.js';
 
 const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
 const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
@@ -186,7 +187,7 @@ async function sendAnalysisLinkEmail(to, name, link, env) {
     if (!tpl.includes('{{link}}')) {
         console.warn('ANALYSIS_EMAIL_BODY missing {{link}} placeholder');
     }
-    const html = tpl.replace(/{{\s*name\s*}}/g, name).replace(/{{\s*link\s*}}/g, link);
+    const html = renderTemplate(tpl, { name, link });
     try {
         await sendEmailUniversal(to, subject, html, env);
         return true;
@@ -205,9 +206,7 @@ async function sendContactEmail(to, name, env) {
     });
     if (send === '0' || send === 'false') return;
     const formLabel = extras.contact_form_label;
-    const html = tpl
-        .replace(/{{\s*name\s*}}/g, name)
-        .replace(/{{\s*form_label\s*}}/g, formLabel);
+    const html = renderTemplate(tpl, { name, form_label: formLabel });
     try {
         await sendEmailUniversal(to, subject, html, env);
     } catch (err) {
