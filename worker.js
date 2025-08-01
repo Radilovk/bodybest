@@ -140,6 +140,30 @@ const PASSWORD_RESET_EMAIL_SUBJECT_VAR_NAME = 'PASSWORD_RESET_EMAIL_SUBJECT';
 const PASSWORD_RESET_EMAIL_BODY_VAR_NAME = 'PASSWORD_RESET_EMAIL_BODY';
 const PASSWORD_RESET_PAGE_URL_VAR_NAME = 'PASSWORD_RESET_PAGE_URL';
 
+async function getEmailConfig(kind, env, defaults = {}) {
+    const kv = env.RESOURCES_KV;
+    const read = async key => {
+        let val = env?.[key] ?? env?.[key.toUpperCase()] ?? env?.[key.toLowerCase()];
+        if (val === undefined && kv) {
+            try { val = await kv.get(key.toLowerCase()); } catch { val = undefined; }
+        }
+        return val;
+    };
+    let send = await read(`send_${kind}_email`);
+    if (send === undefined || send === null) send = defaults.send;
+    let subject = await read(`${kind}_email_subject`);
+    if (!subject) subject = defaults.subject;
+    let tpl = await read(`${kind}_email_body`);
+    if (!tpl) tpl = defaults.tpl;
+    const extras = {};
+    const extraDefs = defaults.extras || {};
+    for (const [key, defVal] of Object.entries(extraDefs)) {
+        let val = await read(key);
+        extras[key] = val ?? defVal;
+    }
+    return { send, subject, tpl, extras };
+}
+
 async function sendWelcomeEmail(to, name, env) {
     const html = WELCOME_BODY_TEMPLATE.replace(/{{\s*name\s*}}/g, name);
     try {
@@ -150,25 +174,12 @@ async function sendWelcomeEmail(to, name, env) {
 }
 
 async function sendAnalysisLinkEmail(to, name, link, env) {
-    let subject = env?.ANALYSIS_EMAIL_SUBJECT;
-    if (!subject && env.RESOURCES_KV) {
-        try {
-            subject = await env.RESOURCES_KV.get('analysis_email_subject');
-        } catch {
-            subject = null;
-        }
-    }
-    if (!subject) subject = ANALYSIS_READY_SUBJECT;
-
-    let tpl = env?.ANALYSIS_EMAIL_BODY;
-    if (!tpl && env.RESOURCES_KV) {
-        try {
-            tpl = await env.RESOURCES_KV.get('analysis_email_body');
-        } catch {
-            tpl = null;
-        }
-    }
-    tpl = tpl || ANALYSIS_READY_BODY_TEMPLATE;
+    const { send, subject, tpl } = await getEmailConfig('analysis', env, {
+        send: '1',
+        subject: ANALYSIS_READY_SUBJECT,
+        tpl: ANALYSIS_READY_BODY_TEMPLATE
+    });
+    if (send === '0' || send === 'false') return false;
     if (!tpl.includes('{{name}}')) {
         console.warn('ANALYSIS_EMAIL_BODY missing {{name}} placeholder');
     }
@@ -186,34 +197,14 @@ async function sendAnalysisLinkEmail(to, name, link, env) {
 }
 
 async function sendContactEmail(to, name, env) {
-    let sendFlag = env?.send_contact_email;
-    if (sendFlag === undefined && env.RESOURCES_KV) {
-        try {
-            sendFlag = await env.RESOURCES_KV.get('send_contact_email');
-        } catch {
-            sendFlag = null;
-        }
-    }
-    if (sendFlag === '0' || sendFlag === 'false') return;
-
-    let subject = env?.contact_email_subject;
-    if (!subject && env.RESOURCES_KV) {
-        try { subject = await env.RESOURCES_KV.get('contact_email_subject'); } catch { subject = null; }
-    }
-    if (!subject) subject = 'Благодарим за връзката';
-
-    let tpl = env?.contact_email_body;
-    if (!tpl && env.RESOURCES_KV) {
-        try { tpl = await env.RESOURCES_KV.get('contact_email_body'); } catch { tpl = null; }
-    }
-    tpl = tpl || 'Получихме вашето съобщение от {{form_label}}.';
-
-    let formLabel = env?.contact_form_label;
-    if (!formLabel && env.RESOURCES_KV) {
-        try { formLabel = await env.RESOURCES_KV.get('contact_form_label'); } catch { formLabel = null; }
-    }
-    formLabel = formLabel || 'форма за контакт';
-
+    const { send, subject, tpl, extras } = await getEmailConfig('contact', env, {
+        send: '1',
+        subject: 'Благодарим за връзката',
+        tpl: 'Получихме вашето съобщение от {{form_label}}.',
+        extras: { contact_form_label: 'форма за контакт' }
+    });
+    if (send === '0' || send === 'false') return;
+    const formLabel = extras.contact_form_label;
     const html = tpl
         .replace(/{{\s*name\s*}}/g, name)
         .replace(/{{\s*form_label\s*}}/g, formLabel);
@@ -4478,4 +4469,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig };
