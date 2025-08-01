@@ -14,7 +14,7 @@
 // Използва се унифициран модул за изпращане на имейли
 import { sendEmailUniversal } from './utils/emailSender.js';
 import { parseJsonSafe } from './utils/parseJsonSafe.js';
-import { renderTemplate } from './utils/template.js';
+import { renderTemplate } from './utils/templateRenderer.js';
 
 const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
 const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
@@ -166,7 +166,10 @@ async function getEmailConfig(kind, env, defaults = {}) {
 }
 
 async function sendWelcomeEmail(to, name, env) {
-    const html = WELCOME_BODY_TEMPLATE.replace(/{{\s*name\s*}}/g, name);
+    const html = renderTemplate(WELCOME_BODY_TEMPLATE, {
+        name,
+        current_year: new Date().getFullYear()
+    });
     try {
         await sendEmailUniversal(to, WELCOME_SUBJECT, html, env);
     } catch (err) {
@@ -220,7 +223,7 @@ async function sendPasswordResetEmail(to, token, env) {
     const base = env?.[PASSWORD_RESET_PAGE_URL_VAR_NAME] || 'https://radilovk.github.io/bodybest/reset-password.html';
     const url = new URL(base);
     url.searchParams.set('token', token);
-    const html = tpl.replace(/{{\s*link\s*}}/g, url.toString());
+    const html = renderTemplate(tpl, { link: url.toString() });
     try {
         await sendEmailUniversal(to, subject, html, env);
     } catch (err) {

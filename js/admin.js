@@ -5,7 +5,7 @@ import { fileToDataURL, fileToText, getProgressColor, animateProgressFill } from
 import { loadTemplateInto } from './templateLoader.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 import { loadMaintenanceFlag, setMaintenanceFlag } from './maintenanceMode.js';
-import { renderTemplate } from '../utils/template.js';
+import { renderTemplate } from '../utils/templateRenderer.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {

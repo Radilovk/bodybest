@@ -27,7 +27,18 @@ describe('submit questionnaire workflow', () => {
       AI: { run: jest.fn().mockResolvedValue({ response: '{"score":1}' }) }
     }
     kvStore['email_to_uuid_user@example.com'] = 'u1'
-    const req = { json: async () => ({ email: 'user@example.com', name: 'Иван' }) }
+    const req = {
+      json: async () => ({
+        email: 'user@example.com',
+        name: 'Иван',
+        gender: 'm',
+        age: 30,
+        height: 180,
+        weight: 80,
+        goal: 'fit',
+        medicalConditions: 'none'
+      })
+    }
     const res = await worker.handleSubmitQuestionnaire(req, env)
     expect(res.success).toBe(true)
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_initial_answers', expect.any(String))
