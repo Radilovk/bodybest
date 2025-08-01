@@ -329,6 +329,12 @@ details[open] summary::after {
   margin-top: 4px;
 }
 
+.email-preview-subject {
+  margin-top: 4px;
+  color: var(--text-color-muted, #666);
+  font-style: italic;
+}
+
 .theme-controls {
   display: flex;
   flex-wrap: wrap;

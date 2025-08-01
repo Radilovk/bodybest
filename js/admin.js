@@ -153,6 +153,8 @@ function generateEmailFieldsets() {
         fieldset.querySelector('legend').textContent = legend;
         const subjectInput = fieldset.querySelector('[data-subject]');
         subjectInput.id = `${keyPrefix}EmailSubject`;
+        const subjectPreview = fieldset.querySelector('[data-subject-preview]');
+        subjectPreview.id = `${keyPrefix}EmailSubjectPreview`;
         subjectInput.placeholder = subjectPlaceholder;
         const bodyTextarea = fieldset.querySelector('[data-body]');
         bodyTextarea.id = `${keyPrefix}EmailBody`;
@@ -175,6 +177,9 @@ function generateEmailFieldsets() {
 
 function initEmailPreviews() {
     emailTypes.forEach(({ keyPrefix, sampleVars }) => {
+        const subject = document.getElementById(`${keyPrefix}EmailSubject`);
+        const subjectPreview = document.getElementById(`${keyPrefix}EmailSubjectPreview`);
+        attachSubjectPreview(subject, subjectPreview, sampleVars);
         const body = document.getElementById(`${keyPrefix}EmailBody`);
         const preview = document.getElementById(`${keyPrefix}EmailPreview`);
         attachEmailPreview(body, preview, sampleVars);
@@ -240,6 +245,16 @@ export function attachEmailPreview(textarea, previewElem, sample = {}) {
         previewElem.innerHTML = sanitizeHTML(html);
     };
     textarea.addEventListener('input', update);
+    update();
+}
+
+export function attachSubjectPreview(inputElem, previewElem, sample = {}) {
+    if (!inputElem || !previewElem) return;
+    const update = () => {
+        const text = renderTemplate(inputElem.value, sample);
+        previewElem.textContent = text;
+    };
+    inputElem.addEventListener('input', update);
     update();
 }
 
@@ -1304,7 +1319,8 @@ async function saveAiConfig() {
             mod_temperature: modTemperatureInput ? modTemperatureInput.value.trim() : '',
             image_token_limit: imageTokensInput ? imageTokensInput.value.trim() : '',
             image_temperature: imageTemperatureInput ? imageTemperatureInput.value.trim() : '',
-            // имейл настройките се зареждат/записват отделно
+            welcome_email_subject: '',
+            welcome_email_body: ''
     };
     try {
         if (adminTokenInput) {
@@ -1328,19 +1344,23 @@ async function saveAiConfig() {
 async function loadEmailSettings() {
     try {
         const keys = ['from_email_name', 'contact_form_label'];
-        emailTypes.forEach(({ keyPrefix }) => {
+        emailTypes.forEach(({ keyPrefix, sampleVars }) => {
             keys.push(`${keyPrefix}_email_subject`);
             keys.push(`${keyPrefix}_email_body`);
             keys.push(`send_${keyPrefix}_email`);
         });
         const cfg = await loadConfig(keys);
         if (fromEmailNameInput) fromEmailNameInput.value = cfg.from_email_name || '';
-        emailTypes.forEach(({ keyPrefix }) => {
+        emailTypes.forEach(({ keyPrefix, sampleVars }) => {
             const subjectInput = document.getElementById(`${keyPrefix}EmailSubject`);
             const bodyInput = document.getElementById(`${keyPrefix}EmailBody`);
             const preview = document.getElementById(`${keyPrefix}EmailPreview`);
+            const subjectPreview = document.getElementById(`${keyPrefix}EmailSubjectPreview`);
             const sendCheckbox = document.getElementById(`send${cap(keyPrefix)}Email`);
             if (subjectInput) subjectInput.value = cfg[`${keyPrefix}_email_subject`] || '';
+            if (subjectPreview && subjectInput) {
+                subjectPreview.textContent = renderTemplate(subjectInput.value, sampleVars);
+            }
             if (bodyInput) {
                 bodyInput.value = cfg[`${keyPrefix}_email_body`] || '';
                 if (preview) preview.innerHTML = sanitizeHTML(bodyInput.value);
