@@ -250,12 +250,13 @@ describe('sendAnalysisLinkEmail and sendContactEmail', () => {
   let sendAnalysisLinkEmail, sendContactEmail, sendEmailUniversal;
   beforeEach(async () => {
     jest.resetModules();
-    const mod = await import('../../worker.js');
-    jest.spyOn(mod, 'sendEmailUniversal').mockResolvedValue(true);
-    ({ sendAnalysisLinkEmail, sendContactEmail, sendEmailUniversal } = mod);
+    jest.unstable_mockModule('../../utils/emailSender.js', () => ({
+      sendEmailUniversal: jest.fn().mockResolvedValue(true)
+    }));
+    ({ sendAnalysisLinkEmail, sendContactEmail } = await import('../../worker.js'));
+    ({ sendEmailUniversal } = await import('../../utils/emailSender.js'));
   });
   afterEach(() => {
-    if (sendEmailUniversal?.mockRestore) sendEmailUniversal.mockRestore();
     jest.resetModules();
   });
 
