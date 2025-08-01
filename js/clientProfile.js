@@ -654,5 +654,6 @@ export {
   fillForbiddenFoods,
   fillPrinciples,
   fillHydration,
-  fillCookingMethods
+  fillCookingMethods,
+  fillDashboard
 };
