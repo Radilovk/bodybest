@@ -215,13 +215,17 @@ describe('admin email settings flags', () => {
       <textarea id="welcomeEmailBody"></textarea>
       <input id="questionnaireEmailSubject">
       <textarea id="questionnaireEmailBody"></textarea>
+      <input id="contactEmailSubject">
+      <textarea id="contactEmailBody"></textarea>
       <input id="analysisEmailSubject">
       <textarea id="analysisEmailBody"></textarea>
       <div id="welcomeEmailPreview"></div>
       <div id="questionnaireEmailPreview"></div>
+      <div id="contactEmailPreview"></div>
       <div id="analysisEmailPreview"></div>
       <input id="sendQuestionnaireEmail" type="checkbox">
       <input id="sendWelcomeEmail" type="checkbox">
+      <input id="sendContactEmail" type="checkbox">
       <input id="sendAnalysisEmail" type="checkbox">
       <button id="showStats"></button>
     `;
@@ -230,10 +234,13 @@ describe('admin email settings flags', () => {
       welcome_email_body: '<b>w</b>',
       questionnaire_email_subject: 's2',
       questionnaire_email_body: '<i>q</i>',
+      contact_email_subject: 'sC',
+      contact_email_body: '<em>c</em>',
       analysis_email_subject: 's3',
       analysis_email_body: '<u>a</u>',
       send_questionnaire_email: '0',
       send_welcome_email: '1',
+      send_contact_email: '1',
       send_analysis_email: '0'
     });
     mockSave = jest.fn().mockResolvedValue({});
@@ -256,25 +263,43 @@ describe('admin email settings flags', () => {
       'welcome_email_body',
       'questionnaire_email_subject',
       'questionnaire_email_body',
+      'contact_email_subject',
+      'contact_email_body',
       'analysis_email_subject',
       'analysis_email_body',
       'send_questionnaire_email',
       'send_welcome_email',
+      'send_contact_email',
       'send_analysis_email'
     ]);
     expect(document.getElementById('sendWelcomeEmail').checked).toBe(true);
+    expect(document.getElementById('sendContactEmail').checked).toBe(true);
     expect(document.getElementById('sendAnalysisEmail').checked).toBe(false);
   });
 
   test('saveEmailSettings sends updated flags', async () => {
     document.getElementById('sendQuestionnaireEmail').checked = true;
     document.getElementById('sendWelcomeEmail').checked = false;
+    document.getElementById('sendContactEmail').checked = false;
     document.getElementById('sendAnalysisEmail').checked = true;
     await saveEmailSettings();
     expect(mockSave).toHaveBeenCalledWith(expect.objectContaining({
       send_questionnaire_email: '1',
       send_welcome_email: '0',
+      send_contact_email: '0',
       send_analysis_email: '1'
     }));
+  });
+});
+
+describe('attachEmailPreview', () => {
+  test('replaces placeholders with sample data', async () => {
+    jest.resetModules();
+    const textarea = document.createElement('textarea');
+    const preview = document.createElement('div');
+    textarea.value = 'Здравей, {{name}}!';
+    const { attachEmailPreview } = await import('../admin.js');
+    attachEmailPreview(textarea, preview, { name: 'Иван' });
+    expect(preview.innerHTML).toBe('Здравей, Иван!');
   });
 });

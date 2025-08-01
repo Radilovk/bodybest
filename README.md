@@ -478,6 +478,12 @@ node scripts/view-usage-logs.js sendTestEmail 5
 | `questionnaire_email_subject` | Тема на имейла след попълнен въпросник |
 | `questionnaire_email_body` | HTML съдържание за потвърждението на въпросника |
 | `send_questionnaire_email` | "1" или "0" за включване или изключване на потвърждението |
+| `contact_email_subject` | Тема на имейла след изпратена контактна форма |
+| `contact_email_body` | HTML съдържание за отговора при контакт |
+| `send_contact_email` | "1" или "0" за включване или изключване на имейла при контакт |
+| `analysis_email_subject` | Тема на имейла при готов анализ |
+| `analysis_email_body` | HTML съдържание за имейла при готов анализ |
+| `send_analysis_email` | "1" или "0" за изпращане на имейл при готов анализ |
 | `from_email_name` | Име на подателя в изпращаните имейли |
 | `question_definitions` | JSON с дефиниции на всички въпроси |
 | `recipe_data` | Данни за примерни рецепти |
