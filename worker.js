@@ -503,6 +503,8 @@ export default {
                 responseBody = await handleSaveAiPreset(request, env);
             } else if (method === 'POST' && path === '/api/testAiModel') {
                 responseBody = await handleTestAiModelRequest(request, env);
+            } else if (method === 'GET' && path === '/api/listContactRequests') {
+                responseBody = await handleGetContactRequestsRequest(request, env);
             } else if (method === 'POST' && path === '/api/contact') {
                 responseBody = await handleContactFormRequest(request, env);
             } else if (method === 'POST' && path === '/api/sendTestEmail') {
@@ -2473,8 +2475,18 @@ async function handleContactFormRequest(request, env) {
         }
         const email = data.email;
         const name = data.name || '';
+        const message = typeof data.message === 'string' ? data.message : '';
         if (typeof email !== 'string' || !email.trim()) {
             return { success: false, message: 'Missing field: email', statusHint: 400 };
+        }
+        const ts = Date.now();
+        try {
+            await env.CONTACT_REQUESTS_KV.put(
+                `contact_${ts}`,
+                JSON.stringify({ email: email.trim(), name: name.trim(), message: message.trim(), ts })
+            );
+        } catch (err) {
+            console.error('Failed to store contact request:', err.message);
         }
         try {
             await sendContactEmail(email.trim(), name.trim(), env);
@@ -2488,6 +2500,29 @@ async function handleContactFormRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleContactFormRequest -------------
+
+// ------------- START FUNCTION: handleGetContactRequestsRequest -------------
+async function handleGetContactRequestsRequest(request, env) {
+    try {
+        const auth = request.headers?.get?.('Authorization') || '';
+        const token = auth.replace(/^Bearer\s+/i, '').trim();
+        const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
+        if (expected && token !== expected) {
+            return { success: false, message: 'Невалиден токен.', statusHint: 403 };
+        }
+        const { keys } = await env.CONTACT_REQUESTS_KV.list({ prefix: 'contact_' });
+        const requests = [];
+        for (const { name: key } of keys) {
+            const val = await env.CONTACT_REQUESTS_KV.get(key);
+            if (val) requests.push(safeParseJson(val, null));
+        }
+        return { success: true, requests };
+    } catch (error) {
+        console.error('Error in handleGetContactRequestsRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при зареждане на заявките.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleGetContactRequestsRequest -------------
 
 // ------------- START FUNCTION: handleSendTestEmailRequest -------------
 async function handleSendTestEmailRequest(request, env) {
@@ -4471,4 +4506,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig };
