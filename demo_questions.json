@@ -72,6 +72,163 @@
         "dependsOn": null
     },
     {
+        "id": "physicalActivity",
+        "text": "Ниво на физическа активност:",
+        "type": "radio",
+        "options": ["Без активност", "Лека", "Умерена", "Интензивна"],
+        "children": []
+    },
+    {
+        "id": "sleepHours",
+        "text": "Средно колко часа спите на денонощие?",
+        "type": "number",
+        "options": [],
+        "children": []
+    },
+    {
+        "id": "stressLevel",
+        "text": "Оценете нивото си на стрес:",
+        "type": "radio",
+        "options": ["Ниско", "Средно", "Високо"],
+        "children": []
+    },
+    {
+        "id": "waterIntake",
+        "text": "Колко вода пиете дневно?",
+        "type": "radio",
+        "options": [
+            "<1л",
+            "1-1.5л",
+            "1.5-2л",
+            ">2л"
+        ],
+        "dependsOn": null
+    },
+    {
+        "id": "waterReplaceFreq",
+        "text": "Колко често заменяте водата с други напитки?",
+        "type": "radio",
+        "options": [
+            "Не",
+            "Рядко",
+            "Понякога",
+            "Често"
+        ],
+        "children": {
+            "Рядко": [
+                {
+                    "id": "q1745891342178",
+                    "text": "С какви напитки замествате приема на вода?",
+                    "type": "checkbox",
+                    "options": [
+                        "Сокове",
+                        "Кафе",
+                        "Газирани",
+                        "Друго"
+                    ],
+                    "dependsOn": {
+                        "question": "waterReplaceFreq",
+                        "value": "Рядко"
+                    },
+                    "children": {
+                        "Друго": [
+                            {
+                                "id": "q1745891416176",
+                                "text": "Уточнете",
+                                "type": "text",
+                                "options": [],
+                                "dependsOn": {
+                                    "question": "q1745891342178",
+                                    "value": "Друго"
+                                },
+                                "children": []
+                            }
+                        ]
+                    }
+                }
+            ],
+            "Понякога": [
+                {
+                    "id": "q1745891468155",
+                    "text": "С какви напитки замествате приема на вода?",
+                    "type": "checkbox",
+                    "options": [
+                        "Сокове",
+                        "Кафе",
+                        "Газирани",
+                        "Друго"
+                    ],
+                    "dependsOn": {
+                        "question": "waterReplaceFreq",
+                        "value": "Понякога"
+                    },
+                    "children": {
+                        "Друго": [
+                            {
+                                "id": "q1745891643967",
+                                "text": "Уточнете",
+                                "type": "text",
+                                "options": [],
+                                "dependsOn": {
+                                    "question": "q1745891468155",
+                                    "value": "Друго"
+                                },
+                                "children": []
+                            }
+                        ]
+                    }
+                }
+            ],
+            "Често": [
+                {
+                    "id": "q1745891537884",
+                    "text": "С какви напитки замествате приема на вода?",
+                    "type": "checkbox",
+                    "options": [
+                        "Сокове",
+                        "Кафе",
+                        "Газирани",
+                        "Друго"
+                    ],
+                    "dependsOn": {
+                        "question": "waterReplaceFreq",
+                        "value": "Често"
+                    },
+                    "children": {
+                        "Друго": [
+                            {
+                                "id": "q1745891620471",
+                                "text": "Уточнете",
+                                "type": "text",
+                                "options": [],
+                                "dependsOn": {
+                                    "question": "q1745891537884",
+                                    "value": "Друго"
+                                },
+                                "children": []
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "dependsOn": null
+    },
+    {
+        "id": "overeatingFrequency",
+        "text": "Колко често преяждате?",
+        "type": "radio",
+        "options": ["Никога", "Понякога", "Често"],
+        "children": []
+    },
+    {
+        "id": "comparisson",
+        "text": "Сравнете сегашното си хранене с това от миналата година:",
+        "type": "textarea",
+        "options": [],
+        "children": []
+    },
+    {
         "id": "secMedical",
         "type": "section",
         "sectionTitle": "Медицинско състояние"
@@ -120,47 +277,5 @@
                 }
             ]
         }
-    },
-    {
-        "id": "sleepHours",
-        "text": "Средно колко часа спите на денонощие?",
-        "type": "number",
-        "options": [],
-        "children": []
-    },
-    {
-        "id": "stressLevel",
-        "text": "Оценете нивото си на стрес:",
-        "type": "radio",
-        "options": ["Ниско", "Средно", "Високо"],
-        "children": []
-    },
-    {
-        "id": "physicalActivity",
-        "text": "Ниво на физическа активност:",
-        "type": "radio",
-        "options": ["Без активност", "Лека", "Умерена", "Интензивна"],
-        "children": []
-    },
-    {
-        "id": "waterIntake",
-        "text": "Колко чаши вода пиете дневно?",
-        "type": "number",
-        "options": [],
-        "children": []
-    },
-    {
-        "id": "overeatingFrequency",
-        "text": "Колко често преяждате?",
-        "type": "radio",
-        "options": ["Никога", "Понякога", "Често"],
-        "children": []
-    },
-    {
-        "id": "comparisson",
-        "text": "Сравнете сегашното си хранене с това от миналата година:",
-        "type": "textarea",
-        "options": [],
-        "children": []
     }
 ]
