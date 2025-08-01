@@ -502,13 +502,11 @@
                   </div>
                 </div>
                 <div id="analyticsCardsContainer" class="analytics-cards-grid">
-                  <div id="macroAnalyticsCard" class="analytics-card">
-                    <h5>Калории и Макронутриенти</h5>
-                    <div class="chart-container">
-                      <canvas id="macroChart"></canvas>
-                    </div>
-                    <div id="macroMetricsGrid" class="macro-metrics-grid"></div>
-                  </div>
+                  <macro-analytics-card
+                    id="macroAnalyticsCard"
+                    target-data='{"calories":0,"protein_grams":0,"protein_percent":0,"carbs_grams":0,"carbs_percent":0,"fat_grams":0,"fat_percent":0}'
+                    current-data='{"calories":0,"protein_grams":0,"carbs_grams":0,"fat_grams":0}'
+                  ></macro-analytics-card>
                   <p class="placeholder">Зареждане на детайлните показатели...</p>
                 </div>
               </div>

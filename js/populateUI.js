@@ -7,7 +7,6 @@ import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAna
 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
-let pendingMacroData = null;
 
 export function populateUI() {
     const data = fullDashboardData; // Access global state
@@ -226,186 +225,11 @@ function populateDashboardDetailedAnalytics(analyticsData) {
     }
 }
 
-function renderMacroAnalyticsCard(macros) {
-    const card = document.createElement('div');
-    card.id = 'macroAnalyticsCard';
-    card.className = 'analytics-card';
-    const header = document.createElement('h5');
-    header.textContent = 'Калории и Макронутриенти';
-    card.appendChild(header);
-
-    const chartContainer = document.createElement('div');
-    chartContainer.className = 'chart-container';
-
-    const canvas = document.createElement('canvas');
-    canvas.id = 'macroChart';
-    chartContainer.appendChild(canvas);
-
-    const centerLabel = document.createElement('div');
-    centerLabel.id = 'macroCenterLabel';
-    centerLabel.textContent = 'Калории';
-    chartContainer.appendChild(centerLabel);
-    card.appendChild(chartContainer);
-
-    const grid = document.createElement('div');
-    grid.id = 'macroMetricsGrid';
-    grid.className = 'macro-metrics-grid';
-    const list = [
-        { l: 'Калории', v: macros.calories, s: 'kcal дневно', cls: 'calories' },
-        {
-            l: 'Белтъчини',
-            v: macros.protein_grams,
-            s: macros.protein_percent ? `${macros.protein_percent}%` : '',
-            c: '--macro-protein-color'
-        },
-        {
-            l: 'Въглехидрати',
-            v: macros.carbs_grams,
-            s: macros.carbs_percent ? `${macros.carbs_percent}%` : '',
-            c: '--macro-carbs-color'
-        },
-        {
-            l: 'Мазнини',
-            v: macros.fat_grams,
-            s: macros.fat_percent ? `${macros.fat_percent}%` : '',
-            c: '--macro-fat-color'
-        }
-    ];
-    list.forEach((item, idx) => {
-        const div = document.createElement('div');
-        div.className = 'macro-metric' + (item.cls ? ` ${item.cls}` : '');
-
-        const icon = document.createElement('span');
-        icon.className = 'macro-icon';
-        icon.setAttribute('aria-label', item.l);
-        const iconMap = {
-            'Калории': 'bi-fire',
-            'Белтъчини': 'bi-egg-fried',
-            'Въглехидрати': 'bi-basket',
-            'Мазнини': 'bi-droplet'
-        };
-        const i = document.createElement('i');
-        i.className = `bi ${iconMap[item.l] || 'bi-circle'}`;
-        icon.appendChild(i);
-
-        const label = document.createElement('div');
-        label.className = 'macro-label';
-        const color = item.c ? getCssVar(item.c) : null;
-        if (color) {
-            label.style.color = color;
-            icon.style.color = color;
-        }
-        label.textContent = item.l;
-
-        const valueDiv = document.createElement('div');
-        valueDiv.className = 'macro-value';
-        valueDiv.textContent = item.v ?? '--';
-
-        const subDiv = document.createElement('div');
-        subDiv.className = 'macro-subtitle';
-        subDiv.textContent = item.s;
-
-        div.appendChild(icon);
-        div.appendChild(label);
-        div.appendChild(valueDiv);
-        div.appendChild(subDiv);
-        div.addEventListener('click', () => highlightMacro(div, idx - 1));
-        grid.appendChild(div);
-    });
-    card.appendChild(grid);
-
-    // Chart will be initialized when the accordion is opened
-
-    return card;
-}
-
 export function renderPendingMacroChart() {
-    if (!pendingMacroData) return;
-    const canvas = document.getElementById('macroChart');
-    if (!canvas || typeof Chart === 'undefined') return;
-    if (macroChartInstance) {
-        macroChartInstance.destroy();
-        macroChartInstance = null;
-    }
-    const m = pendingMacroData;
-    const current = currentIntakeMacros && Object.keys(currentIntakeMacros).length > 0
-        ? currentIntakeMacros
-        : null;
-    const ctx = canvas.getContext('2d');
-    macroChartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: [
-                `Белтъчини (${m.protein_percent}%)`,
-                `Въглехидрати (${m.carbs_percent}%)`,
-                `Мазнини (${m.fat_percent}%)`
-            ],
-            datasets: [
-                {
-                    label: 'Цел',
-                    data: [m.protein_grams, m.carbs_grams, m.fat_grams],
-                    backgroundColor: [
-                        getCssVar('--macro-protein-color', 'rgb(54,162,235)'),
-                        getCssVar('--macro-carbs-color', 'rgb(255,205,86)'),
-                        getCssVar('--macro-fat-color', 'rgb(255,99,132)')
-                    ],
-                    hoverOffset: 4,
-                    weight: 2
-                },
-                current ? {
-                    label: 'Консумирано',
-                    data: [current.protein, current.carbs, current.fat],
-                    backgroundColor: [
-                        getCssVar('--macro-protein-color', 'rgb(54,162,235)'),
-                        getCssVar('--macro-carbs-color', 'rgb(255,205,86)'),
-                        getCssVar('--macro-fat-color', 'rgb(255,99,132)')
-                    ],
-                    hoverOffset: 4,
-                    weight: 1
-                } : null
-            ].filter(Boolean)
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'bottom' },
-                title: { display: true, text: `Дневен прием (${m.calories} kcal)` }
-            },
-            onClick: (evt, elements) => {
-                if (elements.length > 0) {
-                    const idx = elements[0].index;
-                    const metric = document.querySelectorAll('#macroMetricsGrid .macro-metric')[idx + 1];
-                    highlightMacro(metric, idx);
-                } else {
-                    highlightMacro(null, -1);
-                }
-            }
-        }
-    });
-    const centerLabel = document.getElementById('macroCenterLabel');
-    if (centerLabel) centerLabel.textContent = 'Външен: цели | Вътрешен: консумирано';
-    macroChartInstance.resize();
-}
-
-export function highlightMacro(metricElement, index) {
-    const grid = document.getElementById('macroMetricsGrid');
-    if (!grid) return;
-    grid.querySelectorAll('.macro-metric').forEach(el => el.classList.remove('active'));
-    if (metricElement) metricElement.classList.add('active');
-    const centerLabel = document.getElementById('macroCenterLabel');
-    const label = metricElement?.querySelector('.macro-label');
-    if (centerLabel) centerLabel.textContent = label ? label.textContent : 'Калории';
-    if (macroChartInstance) {
-        macroChartInstance.setActiveElements([]);
-        if (index !== undefined && index > -1) {
-            const elements = [{ datasetIndex: 0, index }];
-            if (macroChartInstance.data.datasets.length > 1) {
-                elements.push({ datasetIndex: 1, index });
-            }
-            macroChartInstance.setActiveElements(elements);
-        }
-        macroChartInstance.update();
-    }
+    const macroCard = document.getElementById('macroAnalyticsCard');
+    if (!macroCard || typeof macroCard.renderChart !== 'function') return;
+    macroCard.renderChart();
+    macroChartInstance = macroCard.chart || null;
 }
 
 function renderMacroPreviewGrid(macros) {
@@ -466,25 +290,16 @@ function renderMacroPreviewGrid(macros) {
 }
 
 function populateDashboardMacros(macros) {
-    if (!selectors.analyticsCardsContainer) return;
-    const existing = document.getElementById('macroAnalyticsCard');
-    if (existing) {
-        existing.remove();
-        if (macroChartInstance) {
-            macroChartInstance.destroy();
-            macroChartInstance = null;
-        }
-    }
-    pendingMacroData = macros || null;
+    const card = document.getElementById('macroAnalyticsCard');
     renderMacroPreviewGrid(macros);
-    if (macros) {
-        const card = renderMacroAnalyticsCard(macros);
-        selectors.analyticsCardsContainer.prepend(card);
-        const header = selectors.detailedAnalyticsAccordion?.querySelector('.accordion-header');
-        if (header && header.getAttribute('aria-expanded') === 'true') {
-            renderPendingMacroChart();
-        }
+    if (!card || !macros) return;
+    card.setAttribute('target-data', JSON.stringify(macros));
+    if (currentIntakeMacros && Object.keys(currentIntakeMacros).length > 0) {
+        card.setAttribute('current-data', JSON.stringify(currentIntakeMacros));
+    } else {
+        card.removeAttribute('current-data');
     }
+    renderPendingMacroChart();
 }
 
 function populateDashboardStreak(streakData) {
