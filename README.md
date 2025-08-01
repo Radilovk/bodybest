@@ -165,6 +165,70 @@ Include the common registration logic by importing `setupRegistration`:
 ```
 
 
+### MacroAnalyticsCard
+
+Компонентът визуализира целеви и текущ прием на макронутриенти чрез карта и двойна кръгова диаграма.
+
+**Данни**
+
+```js
+const targetData = {
+  calories: 2200,
+  protein_grams: 140,
+  carbs_grams: 248,
+  fat_grams: 73,
+  protein_percent: 25,
+  carbs_percent: 45,
+  fat_percent: 30
+};
+
+const currentData = {
+  calories: 950,
+  protein_grams: 70,
+  carbs_grams: 90,
+  fat_grams: 30
+};
+```
+
+**Функции**
+
+- `renderMacroAnalyticsCard(target, current)` изгражда HTML картата и легендата.
+- `renderMacroChart()` рисува двойната диаграма с `Chart.js`.
+- `highlightMacro(el, index)` подсветява избрания сегмент в картата и диаграмата.
+
+**Зависимости**
+
+```bash
+npm install chart.js bootstrap-icons
+```
+
+```js
+import Chart from 'chart.js/auto';
+import 'bootstrap-icons/font/bootstrap-icons.css';
+```
+
+**CSS променливи**
+
+```css
+:root {
+  --macro-protein-color: #5BC0BE;
+  --macro-carbs-color: #FFD166;
+  --macro-fat-color: #FF6B6B;
+}
+```
+
+**Динамични данни**
+
+```js
+const targetData = await fetch('/api/target').then(r => r.json());
+const currentData = await fetch('/api/current').then(r => r.json());
+renderMacroAnalyticsCard(targetData, currentData);
+renderMacroChart();
+```
+
+**Оптимизация**
+
+Използвайте `IntersectionObserver` за лениво инициализиране на диаграмата и кеширайте изчисленията за по-бързо зареждане.
 ### Отстраняване на проблеми
 
 Ако изграждането на GitHub Action или локална задача спре на стъпка
