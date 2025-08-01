@@ -103,12 +103,9 @@ const questionnaireEmailSubjectInput = document.getElementById('questionnaireEma
 const questionnaireEmailBodyInput = document.getElementById('questionnaireEmailBody');
 const analysisEmailSubjectInput = document.getElementById('analysisEmailSubject');
 const analysisEmailBodyInput = document.getElementById('analysisEmailBody');
-const contactEmailSubjectInput = document.getElementById('contactEmailSubject');
-const contactEmailBodyInput = document.getElementById('contactEmailBody');
 const sendQuestionnaireEmailCheckbox = document.getElementById('sendQuestionnaireEmail');
 const sendWelcomeEmailCheckbox = document.getElementById('sendWelcomeEmail');
 const sendAnalysisEmailCheckbox = document.getElementById('sendAnalysisEmail');
-const sendContactEmailCheckbox = document.getElementById('sendContactEmail');
 const testEmailForm = document.getElementById('testEmailForm');
 const testEmailToInput = document.getElementById('testEmailTo');
 const testEmailSubjectInput = document.getElementById('testEmailSubject');
@@ -117,7 +114,6 @@ const testEmailSection = document.getElementById('testEmailSection');
 const welcomeEmailPreview = document.getElementById('welcomeEmailPreview');
 const questionnaireEmailPreview = document.getElementById('questionnaireEmailPreview');
 const analysisEmailPreview = document.getElementById('analysisEmailPreview');
-const contactEmailPreview = document.getElementById('contactEmailPreview');
 const testEmailPreview = document.getElementById('testEmailPreview');
 const testImageForm = document.getElementById('testImageForm');
 const testImageFileInput = document.getElementById('testImageFile');
@@ -172,15 +168,10 @@ function updateHints(modelInput, descElem) {
     descElem.textContent = parts.join(' • ');
 }
 
-export function attachEmailPreview(textarea, previewElem, sample = {}) {
+function attachEmailPreview(textarea, previewElem) {
     if (!textarea || !previewElem) return;
     const update = () => {
-        let html = textarea.value;
-        for (const [key, val] of Object.entries(sample)) {
-            const re = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
-            html = html.replace(re, val);
-        }
-        previewElem.innerHTML = sanitizeHTML(html);
+        previewElem.innerHTML = sanitizeHTML(textarea.value);
     };
     textarea.addEventListener('input', update);
     update();
@@ -1279,13 +1270,10 @@ async function loadEmailSettings() {
             'welcome_email_body',
             'questionnaire_email_subject',
             'questionnaire_email_body',
-            'contact_email_subject',
-            'contact_email_body',
             'analysis_email_subject',
             'analysis_email_body',
             'send_questionnaire_email',
             'send_welcome_email',
-            'send_contact_email',
             'send_analysis_email'
         ])
         if (fromEmailNameInput) fromEmailNameInput.value = cfg.from_email_name || ''
@@ -1299,11 +1287,6 @@ async function loadEmailSettings() {
             questionnaireEmailBodyInput.value = cfg.questionnaire_email_body || ''
             if (questionnaireEmailPreview) questionnaireEmailPreview.innerHTML = sanitizeHTML(questionnaireEmailBodyInput.value)
         }
-        if (contactEmailSubjectInput) contactEmailSubjectInput.value = cfg.contact_email_subject || ''
-        if (contactEmailBodyInput) {
-            contactEmailBodyInput.value = cfg.contact_email_body || ''
-            if (contactEmailPreview) contactEmailPreview.innerHTML = sanitizeHTML(contactEmailBodyInput.value)
-        }
         if (analysisEmailSubjectInput) analysisEmailSubjectInput.value = cfg.analysis_email_subject || ''
         if (analysisEmailBodyInput) {
             analysisEmailBodyInput.value = cfg.analysis_email_body || ''
@@ -1316,10 +1299,6 @@ async function loadEmailSettings() {
         if (sendWelcomeEmailCheckbox) {
             const val = cfg.send_welcome_email
             sendWelcomeEmailCheckbox.checked = val !== '0' && val !== 'false'
-        }
-        if (sendContactEmailCheckbox) {
-            const val = cfg.send_contact_email
-            sendContactEmailCheckbox.checked = val !== '0' && val !== 'false'
         }
         if (sendAnalysisEmailCheckbox) {
             const val = cfg.send_analysis_email
@@ -1338,13 +1317,10 @@ async function saveEmailSettings() {
             welcome_email_body: welcomeEmailBodyInput ? welcomeEmailBodyInput.value.trim() : '',
             questionnaire_email_subject: questionnaireEmailSubjectInput ? questionnaireEmailSubjectInput.value.trim() : '',
             questionnaire_email_body: questionnaireEmailBodyInput ? questionnaireEmailBodyInput.value.trim() : '',
-            contact_email_subject: contactEmailSubjectInput ? contactEmailSubjectInput.value.trim() : '',
-            contact_email_body: contactEmailBodyInput ? contactEmailBodyInput.value.trim() : '',
             analysis_email_subject: analysisEmailSubjectInput?.value.trim() || '',
             analysis_email_body: analysisEmailBodyInput?.value.trim() || '',
             send_questionnaire_email: sendQuestionnaireEmailCheckbox && sendQuestionnaireEmailCheckbox.checked ? '1' : '0',
             send_welcome_email: sendWelcomeEmailCheckbox && sendWelcomeEmailCheckbox.checked ? '1' : '0',
-            send_contact_email: sendContactEmailCheckbox && sendContactEmailCheckbox.checked ? '1' : '0',
             send_analysis_email: sendAnalysisEmailCheckbox && sendAnalysisEmailCheckbox.checked ? '1' : '0'
     }
     try {
@@ -1705,11 +1681,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Инициализира табовете веднага
     setupTabs();
 
-    attachEmailPreview(welcomeEmailBodyInput, welcomeEmailPreview, { name: 'Иван' });
-    attachEmailPreview(questionnaireEmailBodyInput, questionnaireEmailPreview, { name: 'Иван' });
-    attachEmailPreview(analysisEmailBodyInput, analysisEmailPreview, { name: 'Иван', link: 'https://example.com' });
-    attachEmailPreview(contactEmailBodyInput, contactEmailPreview, { name: 'Иван' });
-    attachEmailPreview(testEmailBodyInput, testEmailPreview, { name: 'Иван' });
+    attachEmailPreview(welcomeEmailBodyInput, welcomeEmailPreview);
+    attachEmailPreview(questionnaireEmailBodyInput, questionnaireEmailPreview);
+    attachEmailPreview(analysisEmailBodyInput, analysisEmailPreview);
+    attachEmailPreview(testEmailBodyInput, testEmailPreview);
 
     // Стартира асинхронните операции в отделен IIFE,
     // за да не блокират работата на интерфейса
@@ -1802,6 +1777,7 @@ export {
     sendTestImage,
     sendTestQuestionnaire,
     sendAdminQuery,
+    attachEmailPreview,
     loadEmailSettings,
     saveEmailSettings
 };

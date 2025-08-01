@@ -1,9 +1,4 @@
 import { jest } from '@jest/globals';
-import crypto from 'node:crypto';
-
-// осигуряваме webcrypto преди зареждане на worker логиката
-global.crypto = crypto.webcrypto;
-
 import { handleRequestPasswordReset, handlePerformPasswordReset } from '../../worker.js';
 
 function createStore(initial = {}) {
