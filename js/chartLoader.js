@@ -5,8 +5,7 @@ export async function ensureChart() {
         || (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test')) {
       ChartLib = () => ({ destroy() {} });
     } else {
-      const mod = await import('https://cdn.jsdelivr.net/npm/chart.js/auto');
-      ChartLib = mod.default || mod.Chart;
+      ChartLib = (await import('https://cdn.jsdelivr.net/npm/chart.js')).default;
       console.debug('Chart.js loaded');
     }
   }
