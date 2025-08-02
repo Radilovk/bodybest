@@ -1077,9 +1077,26 @@ async function handleDashboardDataRequest(request, env) {
             logKeys.push(`${userId}_log_${date.toISOString().split('T')[0]}`);
         }
         const logStrings = await Promise.all(logKeys.map(key => env.USER_METADATA_KV.get(key)));
-        const logEntries = logStrings.map((logStr, i) => {
-            if (logStr) { const date = new Date(today); date.setDate(today.getDate() - i); return { date: date.toISOString().split('T')[0], data: safeParseJson(logStr, {}) }; } return null;
-        }).filter(entry => entry !== null && entry.data && Object.keys(entry.data).length > 0).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        let logEntries = logStrings.map((logStr, i) => {
+            if (!logStr) return null;
+            const date = new Date(today);
+            date.setDate(today.getDate() - i);
+            const parsed = safeParseJson(logStr, {});
+            const entry = {
+                date: date.toISOString().split('T')[0],
+                data: parsed.data ? parsed.data : parsed
+            };
+            if (parsed.weight !== undefined) entry.weight = parsed.weight;
+            return entry;
+        }).filter(entry => entry !== null && entry.data && Object.keys(entry.data).length > 0);
+
+        logEntries.forEach(entry => {
+            if (entry.data.weight === undefined && entry.weight !== undefined) {
+                entry.data.weight = entry.weight;
+            }
+        });
+
+        logEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         let isFirstLoginWithReadyPlan = false;
         if (actualPlanStatus === 'ready' && !firstLoginFlagStr) {
