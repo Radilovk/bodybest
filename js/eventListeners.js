@@ -20,7 +20,7 @@ import {
     fullDashboardData, activeTooltip, currentUserId,
     setChatModelOverride, setChatPromptOverride
 } from './app.js';
-import { calculateCurrentMacros } from './macroUtils.js';
+import { addMealMacros, removeMealMacros } from './macroUtils.js';
 import {
     openPlanModificationChat,
     clearPlanModChat,
@@ -339,14 +339,10 @@ function handleDelegatedClicks(event) {
         if (day && index !== undefined) {
             const isCompleted = mealCard.classList.toggle('completed');
             todaysMealCompletionStatus[`${day}_${index}`] = isCompleted;
-            Object.assign(
-                currentIntakeMacros,
-                calculateCurrentMacros(
-                    fullDashboardData.planData?.week1Menu,
-                    todaysMealCompletionStatus,
-                    todaysExtraMeals
-                )
-            );
+            const meal = fullDashboardData.planData?.week1Menu?.[day]?.[index];
+            if (meal) {
+                (isCompleted ? addMealMacros : removeMealMacros)(meal, currentIntakeMacros);
+            }
             renderPendingMacroChart();
             showToast(`Храненето е ${isCompleted ? 'отбелязано' : 'размаркирано'}.`, false, 2000);
         }

@@ -3,7 +3,7 @@ import { selectors } from './uiElements.js';
 import { showLoading, showToast, openModal as genericOpenModal, closeModal as genericCloseModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
 import { currentUserId, todaysExtraMeals, todaysMealCompletionStatus, currentIntakeMacros, fullDashboardData } from './app.js';
-import { calculateCurrentMacros } from './macroUtils.js';
+import { addMealMacros, removeMealMacros } from './macroUtils.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 
 let extraMealFormLoaded = false;
@@ -363,25 +363,28 @@ export async function handleExtraMealFormSubmit(event) {
         const result = await response.json();
         if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
         showToast(result.message || "Храненето е записано!", false);
-        todaysExtraMeals.push({
+        const entry = {
             calories: dataToSend.calories || 0,
             protein: dataToSend.protein || 0,
             carbs: dataToSend.carbs || 0,
             fat: dataToSend.fat || 0
-        });
-        Object.assign(
-            currentIntakeMacros,
-            calculateCurrentMacros(
-                fullDashboardData.planData?.week1Menu,
-                todaysMealCompletionStatus,
-                todaysExtraMeals
-            )
-        );
+        };
+        todaysExtraMeals.push(entry);
+        addMealMacros(entry, currentIntakeMacros);
         renderPendingMacroChart();
         genericCloseModal('extraMealEntryModal');
     } catch (error) {
         showToast(`Грешка: ${error.message}`, true);
     } finally {
         showLoading(false);
+    }
+}
+
+export function deleteExtraMeal(index) {
+    const [removed] = todaysExtraMeals.splice(index, 1);
+    if (removed) {
+        removeMealMacros(removed, currentIntakeMacros);
+        renderPendingMacroChart();
+        showToast('Храненето е изтрито.', false, 2000);
     }
 }

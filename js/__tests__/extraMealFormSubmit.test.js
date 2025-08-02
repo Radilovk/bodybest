@@ -3,10 +3,13 @@ import { jest } from '@jest/globals';
 
 let handleExtraMealFormSubmit;
 let showToastMock;
+let addMealMacrosMock;
+let currentIntakeMacrosRef;
 
 beforeEach(async () => {
   jest.resetModules();
   showToastMock = jest.fn();
+  addMealMacrosMock = jest.fn();
   jest.unstable_mockModule('../uiHandlers.js', () => ({
     showLoading: jest.fn(),
     showToast: showToastMock,
@@ -17,15 +20,22 @@ beforeEach(async () => {
   jest.unstable_mockModule('../config.js', () => ({
     apiEndpoints: { logExtraMeal: '/api' }
   }));
-  jest.unstable_mockModule('../app.js', () => ({
-    currentUserId: 'u1',
-    todaysMealCompletionStatus: {},
-    todaysExtraMeals: [],
-    currentIntakeMacros: {},
-    fullDashboardData: { planData: { week1Menu: {} } },
-    planHasRecContent: false
+  jest.unstable_mockModule('../macroUtils.js', () => ({
+    addMealMacros: addMealMacrosMock,
+    removeMealMacros: jest.fn()
   }));
-  global.fetch = jest.fn().mockResolvedValue({ json: async () => [] });
+  jest.unstable_mockModule('../app.js', () => {
+    currentIntakeMacrosRef = {};
+    return {
+      currentUserId: 'u1',
+      todaysMealCompletionStatus: {},
+      todaysExtraMeals: [],
+      currentIntakeMacros: currentIntakeMacrosRef,
+      fullDashboardData: { planData: { week1Menu: {} } },
+      planHasRecContent: false
+    };
+  });
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
   ({ handleExtraMealFormSubmit } = await import('../extraMealForm.js'));
   fetch.mockClear();
 });
@@ -37,6 +47,7 @@ test('показва съобщение при липса на количест�
   await handleExtraMealFormSubmit(e);
   expect(showToastMock).toHaveBeenCalled();
   expect(fetch).not.toHaveBeenCalled();
+  expect(addMealMacrosMock).not.toHaveBeenCalled();
 });
 
 test('изпраща макро стойности при попълнени полета', async () => {
@@ -55,4 +66,8 @@ test('изпраща макро стойности при попълнени п�
   expect(body.protein).toBe(10);
   expect(body.carbs).toBe(15);
   expect(body.fat).toBe(5);
+  expect(addMealMacrosMock).toHaveBeenCalledWith(
+    { calories: 120, protein: 10, carbs: 15, fat: 5 },
+    currentIntakeMacrosRef
+  );
 });

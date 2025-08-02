@@ -13,6 +13,45 @@ const macrosByIdOrName = new Map(
     })
 );
 
+function resolveMacros(meal) {
+  if (!meal) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  if ('calories' in meal) {
+    return {
+      calories: Number(meal.calories) || 0,
+      protein: Number(meal.protein) || 0,
+      carbs: Number(meal.carbs) || 0,
+      fat: Number(meal.fat) || 0
+    };
+  }
+  const macros =
+    macrosByIdOrName.get(meal.id) ||
+    macrosByIdOrName.get((meal.meal_name || meal.name || '').toLowerCase());
+  return {
+    calories: Number(macros?.['калории']) || 0,
+    protein: Number(macros?.['белтъчини']) || 0,
+    carbs: Number(macros?.['въглехидрати']) || 0,
+    fat: Number(macros?.['мазнини']) || 0
+  };
+}
+
+export function addMealMacros(meal, acc) {
+  const m = resolveMacros(meal);
+  acc.calories = (acc.calories || 0) + m.calories;
+  acc.protein = (acc.protein || 0) + m.protein;
+  acc.carbs = (acc.carbs || 0) + m.carbs;
+  acc.fat = (acc.fat || 0) + m.fat;
+  return acc;
+}
+
+export function removeMealMacros(meal, acc) {
+  const m = resolveMacros(meal);
+  acc.calories = (acc.calories || 0) - m.calories;
+  acc.protein = (acc.protein || 0) - m.protein;
+  acc.carbs = (acc.carbs || 0) - m.carbs;
+  acc.fat = (acc.fat || 0) - m.fat;
+  return acc;
+}
+
 /**
  * Изчислява общите макроси за изпълнените хранения и извънредни хранения.
  * @param {Object} planMenu - Менюто по дни със списъци от хранения.
