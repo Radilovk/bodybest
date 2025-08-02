@@ -7,5 +7,6 @@
     "fat": "Мазнини"
   },
   "fromGoal": "от целта",
-  "totalCaloriesLabel": "от {calories} kcal"
+  "totalCaloriesLabel": "от {calories} kcal",
+  "exceedWarning": "Превишение над 15%: {items}"
 }

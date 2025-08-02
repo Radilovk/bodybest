@@ -74,7 +74,7 @@ export default {
       let cached = await env.USER_METADATA_KV.get(cacheKey, 'json');
       if (!cached) {
         cached = await lookupNutrients(food, env);
-        await env.USER_METADATA_KV.put(cacheKey, JSON.stringify(cached));
+        await env.USER_METADATA_KV.put(cacheKey, JSON.stringify(cached), { expirationTtl: 86400 });
       }
       return new Response(JSON.stringify(cached), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders }

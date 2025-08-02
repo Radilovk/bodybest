@@ -94,6 +94,14 @@ template.innerHTML = `
     .macro-value { font-size: 1.1rem; font-weight: 600; }
     .macro-subtitle { font-size: 0.75rem; color: var(--text-secondary-color); }
 
+    .macro-warning {
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--color-warning, #f39c12);
+      display: none;
+    }
+    .macro-warning.show { display: block; }
+
     /* Skeleton loading */
     .skeleton {
       position: relative;
@@ -128,6 +136,7 @@ template.innerHTML = `
       <canvas hidden aria-label="Диаграма на макронутриенти" role="img"></canvas>
       <div class="chart-center-text"></div>
     </div>
+    <div class="macro-warning" role="alert"></div>
     <div class="macro-metrics-grid" role="list">
       <div class="macro-metric metric-skeleton skeleton"></div>
       <div class="macro-metric metric-skeleton skeleton"></div>
@@ -147,6 +156,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     this.canvas = this.shadowRoot.querySelector('canvas');
     this.loadingIndicator = this.shadowRoot.querySelector('.loading-indicator');
     this.titleEl = this.shadowRoot.querySelector('h5');
+    this.warningEl = this.shadowRoot.querySelector('.macro-warning');
     this.chart = null;
     this.activeMacroIndex = null;
     this.targetData = null;
@@ -160,7 +170,8 @@ export class MacroAnalyticsCard extends HTMLElement {
       caloriesLabel: '',
       macros: { protein: '', carbs: '', fat: '' },
       fromGoal: '',
-      totalCaloriesLabel: ''
+      totalCaloriesLabel: '',
+      exceedWarning: ''
     };
   }
 
@@ -310,6 +321,10 @@ export class MacroAnalyticsCard extends HTMLElement {
     const current = this.currentData;
     if (!target || !current) return;
     this.grid.innerHTML = '';
+    if (this.warningEl) {
+      this.warningEl.classList.remove('show');
+      this.warningEl.textContent = '';
+    }
     const planLine = plan ? `<div class="plan-vs-target">План: ${plan.calories} kcal / Препоръка: ${target.calories} kcal</div>` : '';
     this.centerText.innerHTML = `
       <div class="consumed-calories">${current.calories}</div>
@@ -324,6 +339,10 @@ export class MacroAnalyticsCard extends HTMLElement {
       <div class="macro-label">${this.labels.caloriesLabel}</div>
       <div class="macro-value">${current.calories} / ${target.calories} kcal</div>`;
     this.grid.appendChild(calDiv);
+    const overMacros = [];
+    if (target.calories && current.calories > target.calories * 1.15) {
+      overMacros.push(this.labels.caloriesLabel);
+    }
     const macros = [
       { key: 'protein', icon: 'bi-egg-fried' },
       { key: 'carbs', icon: 'bi-basket' },
@@ -353,7 +372,14 @@ export class MacroAnalyticsCard extends HTMLElement {
         }
       });
       this.grid.appendChild(div);
+      if (targetVal && currentVal > targetVal * 1.15) {
+        overMacros.push(label);
+      }
     });
+    if (this.warningEl && overMacros.length > 0) {
+      this.warningEl.textContent = this.labels.exceedWarning.replace('{items}', overMacros.join(', '));
+      this.warningEl.classList.add('show');
+    }
   }
 
   renderChart() {
