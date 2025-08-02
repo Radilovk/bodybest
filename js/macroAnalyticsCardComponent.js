@@ -220,6 +220,10 @@ export class MacroAnalyticsCard extends HTMLElement {
         this.renderChart();
       } catch (e) {
         console.error('Failed to load Chart.js', e);
+        const container = this.shadowRoot.querySelector('.chart-container');
+        if (container) {
+          container.innerHTML = '<div class="alert alert-warning" role="alert">Диаграмата не може да се зареди.</div>';
+        }
       } finally {
         this.hideLoading();
       }
