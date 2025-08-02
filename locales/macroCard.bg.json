@@ -4,7 +4,8 @@
   "macros": {
     "protein": "Белтъчини",
     "carbs": "Въглехидрати",
-    "fat": "Мазнини"
+    "fat": "Мазнини",
+    "fiber": "Фибри"
   },
   "fromGoal": "от целта",
   "totalCaloriesLabel": "от {calories} kcal",

@@ -269,12 +269,14 @@ function renderMacroPreviewGrid(macros) {
         'Калории': 'bi-fire',
         'Белтъчини': 'bi-egg-fried',
         'Въглехидрати': 'bi-basket',
-        'Мазнини': 'bi-droplet'
+        'Мазнини': 'bi-droplet',
+        'Фибри': 'bi-flower1'
     };
     const colorMap = {
         'Белтъчини': '--macro-protein-color',
         'Въглехидрати': '--macro-carbs-color',
-        'Мазнини': '--macro-fat-color'
+        'Мазнини': '--macro-fat-color',
+        'Фибри': '--macro-fiber-color'
     };
     list.forEach(item => {
         const div = document.createElement('div');

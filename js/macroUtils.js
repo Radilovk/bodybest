@@ -20,7 +20,7 @@ const MAX_OVERRIDE_CACHE = 50;
 
 /**
  * Регистрира overrides за хранителни стойности.
- * @param {Record<string, {calories:number, protein:number, carbs:number, fat:number}>} overrides
+ * @param {Record<string, {calories:number, protein:number, carbs:number, fat:number, fiber:number}>} overrides
  */
 export function registerNutrientOverrides(overrides = {}) {
   nutrientOverrides = overrides || {};
@@ -30,7 +30,7 @@ export function registerNutrientOverrides(overrides = {}) {
 /**
  * Връща хранителни стойности за име на храна с кеширане.
  * @param {string} name
- * @returns {{calories:number, protein:number, carbs:number, fat:number}|null}
+ * @returns {{calories:number, protein:number, carbs:number, fat:number, fiber:number}|null}
  */
 export function getNutrientOverride(name = '') {
   const key = name.toLowerCase().trim();
@@ -49,7 +49,7 @@ export function getNutrientOverride(name = '') {
 
 /**
  * Зарежда продуктови макроси от product_macros.json и регистрира overrides.
- * @returns {Promise<Record<string, {calories:number, protein:number, carbs:number, fat:number}>>}
+ * @returns {Promise<{overrides: Record<string, {calories:number, protein:number, carbs:number, fat:number, fiber:number}>, products: Array}>}
  */
 export async function loadProductMacros() {
   const { default: products } = await import(
@@ -63,18 +63,19 @@ export async function loadProductMacros() {
       calories: Number(p.calories) || 0,
       protein: Number(p.protein) || 0,
       carbs: Number(p.carbs) || 0,
-      fat: Number(p.fat) || 0
+      fat: Number(p.fat) || 0,
+      fiber: Number(p.fiber) || 0
     };
   });
   registerNutrientOverrides(overrides);
-  return overrides;
+  return { overrides, products };
 }
 
 /**
  * Скалира макросите спрямо грамовете.
- * @param {{calories:number, protein:number, carbs:number, fat:number}} macros
+ * @param {{calories:number, protein:number, carbs:number, fat:number, fiber:number}} macros
  * @param {number} grams
- * @returns {{calories:number, protein:number, carbs:number, fat:number}}
+ * @returns {{calories:number, protein:number, carbs:number, fat:number, fiber:number}}
  */
 export function scaleMacros(macros = {}, grams = 100) {
   const factor = grams / 100;
@@ -82,19 +83,21 @@ export function scaleMacros(macros = {}, grams = 100) {
     calories: (Number(macros.calories) || 0) * factor,
     protein: (Number(macros.protein) || 0) * factor,
     carbs: (Number(macros.carbs) || 0) * factor,
-    fat: (Number(macros.fat) || 0) * factor
+    fat: (Number(macros.fat) || 0) * factor,
+    fiber: (Number(macros.fiber) || 0) * factor
   };
 }
 
 function resolveMacros(meal, grams) {
-  if (!meal) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  if (!meal) return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
   let macros;
   if ('calories' in meal) {
     macros = {
       calories: Number(meal.calories) || 0,
       protein: Number(meal.protein) || 0,
       carbs: Number(meal.carbs) || 0,
-      fat: Number(meal.fat) || 0
+      fat: Number(meal.fat) || 0,
+      fiber: Number(meal.fiber) || 0
     };
   } else {
     const override = getNutrientOverride(meal.meal_name || meal.name);
@@ -107,7 +110,8 @@ function resolveMacros(meal, grams) {
         calories: Number(baseMacros?.['калории']) || 0,
         protein: Number(baseMacros?.['белтъчини']) || 0,
         carbs: Number(baseMacros?.['въглехидрати']) || 0,
-        fat: Number(baseMacros?.['мазнини']) || 0
+        fat: Number(baseMacros?.['мазнини']) || 0,
+        fiber: Number(baseMacros?.['фибри']) || 0
       };
     }
   }
@@ -120,6 +124,7 @@ export function addMealMacros(meal, acc) {
   acc.protein = (acc.protein || 0) + m.protein;
   acc.carbs = (acc.carbs || 0) + m.carbs;
   acc.fat = (acc.fat || 0) + m.fat;
+  acc.fiber = (acc.fiber || 0) + m.fiber;
   return acc;
 }
 
@@ -129,16 +134,17 @@ export function removeMealMacros(meal, acc) {
   acc.protein = (acc.protein || 0) - m.protein;
   acc.carbs = (acc.carbs || 0) - m.carbs;
   acc.fat = (acc.fat || 0) - m.fat;
+  acc.fiber = (acc.fiber || 0) - m.fiber;
   return acc;
 }
 
 /**
  * Сумира макросите на всички хранения за деня.
  * @param {Array} dayMenu - Масив от хранения за текущия ден.
- * @returns {{ calories:number, protein:number, carbs:number, fat:number }}
+ * @returns {{ calories:number, protein:number, carbs:number, fat:number, fiber:number }}
  */
 export function calculatePlanMacros(dayMenu = []) {
-  const acc = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
   if (!Array.isArray(dayMenu)) return acc;
   dayMenu.forEach((meal) => addMealMacros(meal, acc));
   return acc;
@@ -148,14 +154,15 @@ export function calculatePlanMacros(dayMenu = []) {
  * Изчислява общите макроси за изпълнените хранения и извънредни хранения.
  * @param {Object} planMenu - Менюто по дни със списъци от хранения.
  * @param {Object} completionStatus - Обект със статуси дали храненето е изпълнено (day_index ключове).
- * @param {Array} extraMeals - Допълнителни хранения с макроси { calories, protein, carbs, fat }.
- * @returns {{ calories:number, protein:number, carbs:number, fat:number }}
+ * @param {Array} extraMeals - Допълнителни хранения с макроси { calories, protein, carbs, fat, fiber }.
+ * @returns {{ calories:number, protein:number, carbs:number, fat:number, fiber:number }}
  */
 export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, extraMeals = []) {
   let calories = 0;
   let protein = 0;
   let carbs = 0;
   let fat = 0;
+  let fiber = 0;
 
   Object.entries(planMenu).forEach(([day, meals]) => {
     (meals || []).forEach((meal, idx) => {
@@ -167,6 +174,7 @@ export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, ext
           protein += Number(macros['белтъчини']) || 0;
           carbs += Number(macros['въглехидрати']) || 0;
           fat += Number(macros['мазнини']) || 0;
+          fiber += Number(macros['фибри']) || 0;
         }
       }
     });
@@ -178,10 +186,11 @@ export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, ext
       protein += Number(m.protein) || 0;
       carbs += Number(m.carbs) || 0;
       fat += Number(m.fat) || 0;
+      fiber += Number(m.fiber) || 0;
     });
   }
 
-  return { calories, protein, carbs, fat };
+  return { calories, protein, carbs, fat, fiber };
 }
 
 export const __testExports = { macrosByIdOrName, nutrientCache, resolveMacros };

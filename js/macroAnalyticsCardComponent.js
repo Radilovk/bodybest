@@ -90,6 +90,7 @@ template.innerHTML = `
     .macro-metric.protein.active { border-color: var(--macro-protein-color); }
     .macro-metric.carbs.active { border-color: var(--macro-carbs-color); }
     .macro-metric.fat.active { border-color: var(--macro-fat-color); }
+    .macro-metric.fiber.active { border-color: var(--macro-fiber-color); }
     .macro-icon { font-size: 1.2rem; }
     .macro-label { font-size: 0.85rem; margin-top: 0.25rem; }
     .macro-value { font-size: 1.1rem; font-weight: 600; }
@@ -143,6 +144,7 @@ template.innerHTML = `
       <div class="macro-metric metric-skeleton skeleton"></div>
       <div class="macro-metric metric-skeleton skeleton"></div>
       <div class="macro-metric metric-skeleton skeleton"></div>
+      <div class="macro-metric metric-skeleton skeleton"></div>
     </div>
   </div>
 `;
@@ -169,7 +171,7 @@ export class MacroAnalyticsCard extends HTMLElement {
       this.labels = {
       title: '',
       caloriesLabel: '',
-      macros: { protein: '', carbs: '', fat: '' },
+      macros: { protein: '', carbs: '', fat: '', fiber: '' },
       fromGoal: '',
       totalCaloriesLabel: '',
       exceedWarning: ''
@@ -340,7 +342,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     const plan = this.planData;
     const current = this.currentData || {};
     const hasCurrent = !!this.currentData;
-    const hasMacroData = hasCurrent && ['calories','protein_grams','carbs_grams','fat_grams'].some(k => typeof current[k] === 'number');
+    const hasMacroData = hasCurrent && ['calories','protein_grams','carbs_grams','fat_grams','fiber_grams'].some(k => typeof current[k] === 'number');
     if (!target) return;
     this.grid.innerHTML = '';
     if (this.warningEl) {
@@ -370,7 +372,8 @@ export class MacroAnalyticsCard extends HTMLElement {
     const macros = [
       { key: 'protein', icon: 'bi-egg-fried' },
       { key: 'carbs', icon: 'bi-basket' },
-      { key: 'fat', icon: 'bi-droplet-half' }
+      { key: 'fat', icon: 'bi-droplet-half' },
+      { key: 'fiber', icon: 'bi-flower1' }
     ];
     macros.forEach((item, idx) => {
       const label = this.labels.macros[item.key];
@@ -430,12 +433,13 @@ export class MacroAnalyticsCard extends HTMLElement {
     const macroColors = [
       this.getCssVar('--macro-protein-color'),
       this.getCssVar('--macro-carbs-color'),
-      this.getCssVar('--macro-fat-color')
+      this.getCssVar('--macro-fat-color'),
+      this.getCssVar('--macro-fiber-color')
     ];
     const datasets = [
       {
         label: this.locale === 'en' ? 'Target (g)' : 'Цел (гр)',
-        data: [target.protein_grams, target.carbs_grams, target.fat_grams],
+        data: [target.protein_grams, target.carbs_grams, target.fat_grams, target.fiber_grams],
         backgroundColor: current ? macroColors.map((c) => `${c}40`) : macroColors,
         borderWidth: 0,
         cutout: current ? '80%' : '65%'
@@ -444,7 +448,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     if (current) {
       datasets.push({
         label: this.locale === 'en' ? 'Intake (g)' : 'Прием (гр)',
-        data: [current.protein_grams, current.carbs_grams, current.fat_grams],
+        data: [current.protein_grams, current.carbs_grams, current.fat_grams, current.fiber_grams],
         backgroundColor: macroColors,
         borderColor: this.getCssVar('--card-bg'),
         borderWidth: 4,
@@ -459,7 +463,8 @@ export class MacroAnalyticsCard extends HTMLElement {
         labels: [
           `${this.labels.macros.protein} (${target.protein_percent}%)`,
           `${this.labels.macros.carbs} (${target.carbs_percent}%)`,
-          `${this.labels.macros.fat} (${target.fat_percent}%)`
+          `${this.labels.macros.fat} (${target.fat_percent}%)`,
+          `${this.labels.macros.fiber} (${target.fiber_percent}%)`
         ],
         datasets
       },

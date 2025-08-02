@@ -13,11 +13,13 @@ registerNutrientOverrides(dynamicNutrientOverrides);
 const nutrientLookupCache = {};
 
 let productMacrosLoaded = false;
+let productList = [];
 async function ensureProductMacrosLoaded() {
     if (productMacrosLoaded) return;
     try {
-        const overrides = await loadProductMacros();
+        const { overrides, products } = await loadProductMacros();
         Object.assign(dynamicNutrientOverrides, overrides);
+        productList = Array.isArray(products) ? products : [];
         registerNutrientOverrides(dynamicNutrientOverrides);
     } catch (e) {
         console.error('Неуспешно зареждане на продуктови макроси', e);
@@ -131,7 +133,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         }
         summaryContainer.querySelector('[data-summary="replacedPlanned"]').textContent = replacedDisplay;
 
-        ['calories','protein','carbs','fat'].forEach(field => {
+        ['calories','protein','carbs','fat','fiber'].forEach(field => {
             const el = summaryContainer.querySelector(`[data-summary="${field}"]`);
             if (el) {
                 const val = getElValue(field);
@@ -190,7 +192,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         const macros = getNutrientOverride(name);
         if (!macros) return;
         let filled = false;
-        ['calories','protein','carbs','fat'].forEach(field => {
+        ['calories','protein','carbs','fat','fiber'].forEach(field => {
             const input = form.querySelector(`input[name="${field}"]`);
             if (input && !input.value) {
                 input.value = macros[field] ?? '';
@@ -224,16 +226,34 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (!suggestionsDropdown || !foodDescriptionInput) return;
         suggestionsDropdown.innerHTML = '';
         if (!inputValue || inputValue.length < 1) { suggestionsDropdown.classList.add('hidden'); return; }
-        const filteredFoods = commonFoods.filter(food => food.toLowerCase().includes(inputValue.toLowerCase()));
-        if (filteredFoods.length === 0) { suggestionsDropdown.classList.add('hidden'); return; }
+        const filtered = productList.filter(p => p.name.toLowerCase().includes(inputValue.toLowerCase()));
+        if (filtered.length === 0) { suggestionsDropdown.classList.add('hidden'); return; }
         activeSuggestionIndex = -1;
-        filteredFoods.slice(0, 5).forEach((food) => {
-            const div = document.createElement('div'); div.textContent = food; div.setAttribute('role', 'option'); div.tabIndex = -1;
-            div.addEventListener('click', () => {
-                foodDescriptionInput.value = food; suggestionsDropdown.classList.add('hidden'); foodDescriptionInput.focus();
-                foodDescriptionInput.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+        const grouped = filtered.reduce((acc, p) => {
+            const cat = p.category || 'Друго';
+            (acc[cat] = acc[cat] || []).push(p);
+            return acc;
+        }, {});
+        Object.entries(grouped).forEach(([cat, items]) => {
+            const header = document.createElement('div');
+            header.textContent = cat;
+            header.className = 'suggestion-category';
+            header.setAttribute('role', 'presentation');
+            header.style.cssText = 'font-weight:600;padding:0.25rem 0.5rem;background:var(--surface-background);';
+            suggestionsDropdown.appendChild(header);
+            items.slice(0, 5).forEach((item) => {
+                const div = document.createElement('div');
+                div.textContent = item.name;
+                div.setAttribute('role', 'option');
+                div.tabIndex = -1;
+                div.addEventListener('click', () => {
+                    foodDescriptionInput.value = item.name;
+                    suggestionsDropdown.classList.add('hidden');
+                    foodDescriptionInput.focus();
+                    foodDescriptionInput.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+                });
+                suggestionsDropdown.appendChild(div);
             });
-            suggestionsDropdown.appendChild(div);
         });
         suggestionsDropdown.classList.remove('hidden');
     }
@@ -395,7 +415,7 @@ export async function handleExtraMealFormSubmit(event) {
 
     const dataToSend = { userId: currentUserId, timestamp: new Date().toISOString() };
 
-    const numericFields = ['calories','protein','carbs','fat'];
+    const numericFields = ['calories','protein','carbs','fat','fiber'];
     for (let [key, value] of formData.entries()) {
         if (key === 'quantityEstimateVisual') {
             dataToSend['quantityEstimate'] = value;

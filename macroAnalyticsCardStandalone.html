@@ -26,6 +26,7 @@
     --macro-protein-color: #5BC0BE;
     --macro-carbs-color: #FFD166;
     --macro-fat-color: #FF6B6B;
+    --macro-fiber-color: #6FCF97;
   }
   body {
     background: var(--main-bg);
@@ -41,8 +42,8 @@
 <body>
   <macro-analytics-card
     locale="bg"
-    target-data='{"calories":2200,"protein_grams":140,"protein_percent":25,"carbs_grams":248,"carbs_percent":45,"fat_grams":73,"fat_percent":30}'
-    current-data='{"calories":950,"protein_grams":70,"carbs_grams":90,"fat_grams":40}'
+    target-data='{"calories":2200,"protein_grams":140,"protein_percent":25,"carbs_grams":248,"carbs_percent":45,"fat_grams":73,"fat_percent":30,"fiber_grams":30,"fiber_percent":100}'
+    current-data='{"calories":950,"protein_grams":70,"carbs_grams":90,"fat_grams":40,"fiber_grams":15}'
   ></macro-analytics-card>
 
   <script type="module">
@@ -135,6 +136,7 @@
         .macro-metric.protein.active { border-color: var(--macro-protein-color); }
         .macro-metric.carbs.active { border-color: var(--macro-carbs-color); }
         .macro-metric.fat.active { border-color: var(--macro-fat-color); }
+        .macro-metric.fiber.active { border-color: var(--macro-fiber-color); }
         .macro-icon { font-size: 1.2rem; }
         .macro-label { font-size: 0.85rem; margin-top: 0.25rem; }
         .macro-value { font-size: 1.1rem; font-weight: 600; }
@@ -174,6 +176,7 @@
           <div class="chart-center-text"></div>
         </div>
         <div class="macro-metrics-grid" role="list">
+          <div class="macro-metric metric-skeleton skeleton"></div>
           <div class="macro-metric metric-skeleton skeleton"></div>
           <div class="macro-metric metric-skeleton skeleton"></div>
           <div class="macro-metric metric-skeleton skeleton"></div>
@@ -344,7 +347,8 @@
         const macros = [
           { key: 'protein', icon: 'bi-egg-fried' },
           { key: 'carbs', icon: 'bi-basket' },
-          { key: 'fat', icon: 'bi-droplet-half' }
+          { key: 'fat', icon: 'bi-droplet-half' },
+          { key: 'fiber', icon: 'bi-flower1' }
         ];
         macros.forEach((item, idx) => {
           const label = this.labels.macros[item.key];
@@ -385,7 +389,8 @@
         const macroColors = [
           this.getCssVar('--macro-protein-color'),
           this.getCssVar('--macro-carbs-color'),
-          this.getCssVar('--macro-fat-color')
+          this.getCssVar('--macro-fat-color'),
+          this.getCssVar('--macro-fiber-color')
         ];
         this.chart = new Chart(ctx, {
           type: 'doughnut',
@@ -393,19 +398,20 @@
             labels: [
               `${this.labels.macros.protein} (${target.protein_percent}%)`,
               `${this.labels.macros.carbs} (${target.carbs_percent}%)`,
-              `${this.labels.macros.fat} (${target.fat_percent}%)`
+              `${this.labels.macros.fat} (${target.fat_percent}%)`,
+              `${this.labels.macros.fiber} (${target.fiber_percent}%)`
             ],
             datasets: [
               {
                 label: this.locale === 'en' ? 'Target (g)' : 'Цел (гр)',
-                data: [target.protein_grams, target.carbs_grams, target.fat_grams],
+                data: [target.protein_grams, target.carbs_grams, target.fat_grams, target.fiber_grams],
                 backgroundColor: macroColors.map((c) => `${c}40`),
                 borderWidth: 0,
                 cutout: '80%'
               },
               {
                 label: this.locale === 'en' ? 'Intake (g)' : 'Прием (гр)',
-                data: [current.protein_grams, current.carbs_grams, current.fat_grams],
+                data: [current.protein_grams, current.carbs_grams, current.fat_grams, current.fiber_grams],
                 backgroundColor: macroColors,
                 borderColor: this.getCssVar('--card-bg'),
                 borderWidth: 4,

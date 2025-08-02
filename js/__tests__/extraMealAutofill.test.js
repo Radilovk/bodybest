@@ -40,6 +40,7 @@ test('автопопълва макросите при разпозната хр
       <input name="protein">
       <input name="carbs">
       <input name="fat">
+      <input name="fiber">
       <div class="form-step"></div>
     </form>
   </div>`;

@@ -9,7 +9,7 @@ beforeEach(async () => {
     if (typeof url === 'string' && url === '/nutrient-lookup') {
       return Promise.resolve({
         ok: true,
-        json: async () => ({ calories: 100, protein: 20, carbs: 10, fat: 5 })
+        json: async () => ({ calories: 100, protein: 20, carbs: 10, fat: 5, fiber: 3 })
       });
     }
     return Promise.resolve({ json: async () => [] });
@@ -48,6 +48,7 @@ test('извиква nutrient lookup при непозната храна', asyn
       <input name="protein">
       <input name="carbs">
       <input name="fat">
+      <input name="fiber">
       <div class="form-step"></div>
     </form>
   </div>`;
@@ -59,4 +60,5 @@ test('извиква nutrient lookup при непозната храна', asyn
   await new Promise(r => setTimeout(r, 0));
   expect(global.fetch).toHaveBeenCalledWith('/nutrient-lookup', expect.objectContaining({ method: 'POST' }));
   expect(container.querySelector('input[name="calories"]').value).toBe('100');
+  expect(container.querySelector('input[name="fiber"]').value).toBe('3');
 });

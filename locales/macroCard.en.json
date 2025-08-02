@@ -4,7 +4,8 @@
   "macros": {
     "protein": "Protein",
     "carbs": "Carbohydrates",
-    "fat": "Fat"
+    "fat": "Fat",
+    "fiber": "Fiber"
   },
   "fromGoal": "of goal",
   "totalCaloriesLabel": "of {calories} kcal",

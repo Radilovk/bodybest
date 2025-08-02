@@ -59,6 +59,7 @@ test('изпраща макро стойности при попълнени п�
     <input name="protein" value="10">
     <input name="carbs" value="15">
     <input name="fat" value="5">
+    <input name="fiber" value="3">
   </form>`;
   const form = document.getElementById('f');
   const e = { preventDefault: jest.fn(), target: form };
@@ -68,8 +69,9 @@ test('изпраща макро стойности при попълнени п�
   expect(body.protein).toBe(10);
   expect(body.carbs).toBe(15);
   expect(body.fat).toBe(5);
+  expect(body.fiber).toBe(3);
   expect(addMealMacrosMock).toHaveBeenCalledWith(
-    { calories: 120, protein: 10, carbs: 15, fat: 5 },
+    { calories: 120, protein: 10, carbs: 15, fat: 5, fiber: 3 },
     currentIntakeMacrosRef
   );
 });
