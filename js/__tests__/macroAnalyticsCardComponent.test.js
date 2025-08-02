@@ -18,7 +18,8 @@ beforeEach(async () => {
       caloriesLabel: 'Приети Калории',
       macros: { protein: 'Белтъчини', carbs: 'Въглехидрати', fat: 'Мазнини' },
       fromGoal: 'от целта',
-      totalCaloriesLabel: 'от {calories} kcal'
+      totalCaloriesLabel: 'от {calories} kcal',
+      exceedWarning: 'Превишение над 15%: {items}'
     })
   });
   global.IntersectionObserver = class { observe() {} disconnect() {} };
@@ -63,22 +64,47 @@ test('рендерира метриките и реагира на highlightMacr
   expect(proteinDiv.classList.contains('active')).toBe(false);
 });
 
+test('показва предупреждение при превишаване на макросите', async () => {
+  const card = document.createElement('macro-analytics-card');
+  document.body.appendChild(card);
+  const target = {
+    calories: 2000,
+    protein_grams: 100,
+    protein_percent: 40,
+    carbs_grams: 200,
+    carbs_percent: 40,
+    fat_grams: 50,
+    fat_percent: 20
+  };
+  const current = {
+    calories: 2500,
+    protein_grams: 130,
+    carbs_grams: 150,
+    fat_grams: 40
+  };
+  card.setData({ target, current });
+  const utils = within(card.shadowRoot);
+  await waitFor(() => utils.getByText(/Превишение над 15%/));
+  expect(utils.getByText(/Превишение над 15%/)).toBeTruthy();
+});
+
 test('data-endpoint и refresh-interval извикват fetch периодично', async () => {
   jest.useFakeTimers();
   const endpoint = '/macros';
   global.fetch = jest.fn((url) => {
-    if (url.includes('macroCard')) {
-      return Promise.resolve({
-        ok: true,
-        json: async () => ({
-          title: 'Калории и Макронутриенти',
-          caloriesLabel: 'Приети Калории',
-          macros: { protein: 'Белтъчини', carbs: 'Въглехидрати', fat: 'Мазнини' },
-          fromGoal: 'от целта',
-          totalCaloriesLabel: 'от {calories} kcal'
-        })
-      });
-    }
+      if (url.includes('macroCard')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            title: 'Калории и Макронутриенти',
+            caloriesLabel: 'Приети Калории',
+            macros: { protein: 'Белтъчини', carbs: 'Въглехидрати', fat: 'Мазнини' },
+            fromGoal: 'от целта',
+            totalCaloriesLabel: 'от {calories} kcal',
+            exceedWarning: 'Превишение над 15%: {items}'
+          })
+        });
+      }
     return Promise.resolve({
       ok: true,
       json: async () => ({
