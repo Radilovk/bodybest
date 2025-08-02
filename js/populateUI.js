@@ -862,7 +862,6 @@ async function populateProgressHistory(dailyLogs, initialData) {
         Chart = await ensureChart();
     } catch (e) {
         console.warn('Chart.js is not loaded.', e);
-        showToast('Графиката не може да се зареди.', true, 4000);
         card.innerHTML = '<div class="alert alert-warning" role="alert">Графиката не може да се зареди.</div>';
         return;
     }
