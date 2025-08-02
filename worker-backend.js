@@ -49,6 +49,37 @@ export default {
       }
       return new Response('Method Not Allowed', { status: 405 });
     }
+
+    if (pathname === '/nutrient-lookup') {
+      if (request.method !== 'POST') {
+        return new Response('Method Not Allowed', { status: 405, headers: corsHeaders });
+      }
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return new Response('Invalid JSON', { status: 400, headers: corsHeaders });
+      }
+      const food = (body.food || '').trim();
+      if (!food) {
+        return new Response(JSON.stringify({ error: 'Missing food' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        });
+      }
+      const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(food));
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      const cacheKey = `nutrient_cache_${hash}`;
+      let cached = await env.USER_METADATA_KV.get(cacheKey, 'json');
+      if (!cached) {
+        cached = await lookupNutrients(food, env);
+        await env.USER_METADATA_KV.put(cacheKey, JSON.stringify(cached));
+      }
+      return new Response(JSON.stringify(cached), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      });
+    }
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         status: 204,
@@ -123,3 +154,62 @@ export default {
     });
   }
 };
+
+async function lookupNutrients(food, env) {
+  if (env.NUTRITION_API_URL) {
+    try {
+      const url = `${env.NUTRITION_API_URL}${encodeURIComponent(food)}`;
+      const headers = env.NUTRITION_API_KEY ? { 'X-Api-Key': env.NUTRITION_API_KEY } : {};
+      const apiResp = await fetch(url, { headers });
+      if (apiResp.ok) {
+        const arr = await apiResp.json();
+        const item = Array.isArray(arr) ? arr[0] : arr;
+        if (item) {
+          return {
+            calories: Number(item.calories) || 0,
+            protein: Number(item.protein_g) || 0,
+            carbs: Number(item.carbohydrates_total_g || item.carbs_g) || 0,
+            fat: Number(item.fat_total_g || item.fat_g) || 0
+          };
+        }
+      }
+    } catch (e) {
+      console.error('Nutrient API error', e);
+    }
+  }
+  if (env.CF_ACCOUNT_ID && env.CF_AI_TOKEN && env.MODEL) {
+    try {
+      const cfEndpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/run/${env.MODEL}`;
+      const messages = [
+        { role: 'system', content: 'Give nutrition data as JSON {calories, protein, carbs, fat} for the given food.' },
+        { role: 'user', content: food }
+      ];
+      const resp = await fetch(cfEndpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.CF_AI_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ messages })
+      });
+      const text = await resp.text();
+      try {
+        const parsed = JSON.parse(text);
+        const data = parsed.result || parsed;
+        const payload = data.output || data.response || data;
+        const obj = typeof payload === 'string' ? JSON.parse(payload) : payload;
+        return {
+          calories: Number(obj.calories) || 0,
+          protein: Number(obj.protein) || 0,
+          carbs: Number(obj.carbs) || 0,
+          fat: Number(obj.fat) || 0
+        };
+      } catch {
+        return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+      }
+    } catch (e) {
+      console.error('AI nutrient lookup error', e);
+    }
+  }
+  return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+}
