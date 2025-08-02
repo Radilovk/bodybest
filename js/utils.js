@@ -49,6 +49,16 @@ export const escapeHtml = (text) => {
 };
 
 /**
+ * Форматира дата в кратък български формат (напр. "1 ян").
+ * @param {string|number|Date} date - Датата за форматиране.
+ * @returns {string} Форматираната дата.
+ */
+export function formatDateBgShort(date) {
+    return new Date(date)
+        .toLocaleDateString('bg-BG', { day: 'numeric', month: 'short' });
+}
+
+/**
  * Преобразува File обект към base64 низ без data префикс.
  * @param {File} file - Изображението за конвертиране.
  * @returns {Promise<string>} Обещание с base64 съдържанието.

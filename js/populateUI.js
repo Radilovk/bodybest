@@ -1,6 +1,6 @@
 // populateUI.js - Попълване на UI с данни
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
-import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, getProgressColor, animateProgressFill, getCssVar } from './utils.js';
+import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, getProgressColor, animateProgressFill, getCssVar, formatDateBgShort } from './utils.js';
 import { generateId } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
@@ -833,7 +833,7 @@ export async function populateProgressHistory(dailyLogs, initialData) {
     const initialWeight = safeParseFloat(initialData?.weight);
     if (initialWeight !== null) {
         const submissionDate = safeGet(fullDashboardData.initialAnswers, 'submissionDate', new Date().toISOString());
-        labels.push(new Date(submissionDate).toLocaleDateString('bg-BG', { day: 'numeric', month: 'short' }));
+        labels.push(formatDateBgShort(submissionDate));
         weightData.push(initialWeight);
     }
 
@@ -844,14 +844,14 @@ export async function populateProgressHistory(dailyLogs, initialData) {
                 log.data?.weight ?? log.weight
             );
             if (loggedWeight !== null) {
-                labels.push(new Date(log.date).toLocaleDateString('bg-BG', { day: 'numeric', month: 'short' }));
+                labels.push(formatDateBgShort(log.date));
                 weightData.push(loggedWeight);
             }
         }
     });
 
     if (weightData.length === 1) {
-        labels.push(new Date().toLocaleDateString('bg-BG', { day: 'numeric', month: 'short' }));
+        labels.push(formatDateBgShort(new Date()));
         weightData.push(weightData[0]); // права линия
     }
 
