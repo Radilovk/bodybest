@@ -5,7 +5,7 @@ import { generateId } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
-import { calculatePlanMacros, getNutrientOverride, addMealMacros } from './macroUtils.js';
+import { calculatePlanMacros, getNutrientOverride, addMealMacros, scaleMacros } from './macroUtils.js';
 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
@@ -233,14 +233,18 @@ export function renderPendingMacroChart() {
     macroChartInstance = macroCard.chart || null;
 }
 
-export function addExtraMealWithOverride(name = '', macros = {}) {
+export function addExtraMealWithOverride(name = '', macros = {}, grams) {
+    const hasMacros = macros && Object.keys(macros).length > 0;
+    let gramValue = typeof grams === 'number' ? grams : undefined;
+    if (!hasMacros) {
+        const input = typeof prompt !== 'undefined' ? prompt('Въведете грамаж (г):', '100') : '100';
+        const parsed = parseFloat(input);
+        gramValue = !isNaN(parsed) && parsed > 0 ? parsed : 100;
+    }
     const override = getNutrientOverride(name) || {};
-    const entry = {
-        calories: macros.calories ?? override.calories ?? 0,
-        protein: macros.protein ?? override.protein ?? 0,
-        carbs: macros.carbs ?? override.carbs ?? 0,
-        fat: macros.fat ?? override.fat ?? 0
-    };
+    const base = hasMacros ? macros : override;
+    const scaled = gramValue ? scaleMacros(base, gramValue) : base;
+    const entry = gramValue ? { ...scaled, grams: gramValue } : scaled;
     todaysExtraMeals.push(entry);
     addMealMacros(entry, currentIntakeMacros);
     renderPendingMacroChart();
