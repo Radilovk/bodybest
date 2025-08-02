@@ -1,5 +1,5 @@
 /** @jest-environment jsdom */
-import { calculateCurrentMacros, addMealMacros, removeMealMacros, registerNutrientOverrides, getNutrientOverride, calculatePlanMacros, __testExports } from '../macroUtils.js';
+import { calculateCurrentMacros, addMealMacros, removeMealMacros, registerNutrientOverrides, getNutrientOverride, calculatePlanMacros, loadProductMacros, __testExports } from '../macroUtils.js';
 
 test('calculateCurrentMacros sums macros from completed meals and extras', () => {
   const planMenu = {
@@ -52,4 +52,12 @@ test('getNutrientOverride кешира резултатите', () => {
   expect(__testExports.nutrientCache.size).toBe(1);
   getNutrientOverride('ябълка');
   expect(__testExports.nutrientCache.size).toBe(1);
+});
+
+test('loadProductMacros позволява търсене на продукт по име', async () => {
+  await loadProductMacros();
+  const acc = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  addMealMacros({ name: 'ябълка' }, acc);
+  expect(acc).toEqual({ calories: 52, protein: 0.3, carbs: 13.8, fat: 0.2 });
+  registerNutrientOverrides({});
 });

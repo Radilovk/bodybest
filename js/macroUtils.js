@@ -47,6 +47,29 @@ export function getNutrientOverride(name = '') {
   return data;
 }
 
+/**
+ * Зарежда продуктови макроси от product_macros.json и регистрира overrides.
+ * @returns {Promise<Record<string, {calories:number, protein:number, carbs:number, fat:number}>>}
+ */
+export async function loadProductMacros() {
+  const { default: products } = await import(
+    '../kv/DIET_RESOURCES/product_macros.json',
+    { with: { type: 'json' } }
+  );
+  const overrides = {};
+  (products || []).forEach((p) => {
+    if (!p?.name) return;
+    overrides[p.name.toLowerCase()] = {
+      calories: Number(p.calories) || 0,
+      protein: Number(p.protein) || 0,
+      carbs: Number(p.carbs) || 0,
+      fat: Number(p.fat) || 0
+    };
+  });
+  registerNutrientOverrides(overrides);
+  return overrides;
+}
+
 function resolveMacros(meal) {
   if (!meal) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
   if ('calories' in meal) {
@@ -57,6 +80,8 @@ function resolveMacros(meal) {
       fat: Number(meal.fat) || 0
     };
   }
+  const override = getNutrientOverride(meal.meal_name || meal.name);
+  if (override) return override;
   const macros =
     macrosByIdOrName.get(meal.id) ||
     macrosByIdOrName.get((meal.meal_name || meal.name || '').toLowerCase());
