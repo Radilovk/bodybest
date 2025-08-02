@@ -1911,6 +1911,40 @@ async function handleGeneratePraiseRequest(request, env) {
 }
 // ------------- END FUNCTION: handleGeneratePraiseRequest -------------
 
+// ------------- START FUNCTION: estimateMacros -------------
+function calcMacroGrams(calories, percent, calsPerGram) {
+    const cal = Number(calories);
+    const pct = Number(percent);
+    if (!cal || !pct) return 0;
+    return Math.round((cal * pct) / 100 / calsPerGram);
+}
+
+function estimateMacros(initial = {}) {
+    const weight = Number(initial.weight);
+    const height = Number(initial.height);
+    const age = Number(initial.age);
+    if (!weight || !height || !age) return null;
+    const gender = (initial.gender || '').toLowerCase().startsWith('м') ? 'male' : 'female';
+    const activity = (initial.q1745878295708 || '').toLowerCase();
+    const activityFactors = {
+        'ниско': 1.2, 'sedentary': 1.2, 'седящ': 1.2,
+        'средно': 1.375, 'умерено': 1.375,
+        'високо': 1.55, 'активно': 1.55,
+        'много високо': 1.725
+    };
+    const factor = activityFactors[activity] || 1.375;
+    const bmr = 10 * weight + 6.25 * height - 5 * age + (gender === 'male' ? 5 : -161);
+    const calories = Math.round(bmr * factor);
+    const protein_percent = 30;
+    const carbs_percent = 40;
+    const fat_percent = 30;
+    const protein_grams = calcMacroGrams(calories, protein_percent, 4);
+    const carbs_grams = calcMacroGrams(calories, carbs_percent, 4);
+    const fat_grams = calcMacroGrams(calories, fat_percent, 9);
+    return { calories, protein_percent, carbs_percent, fat_percent, protein_grams, carbs_grams, fat_grams };
+}
+// ------------- END FUNCTION: estimateMacros -------------
+
 // ------------- START FUNCTION: handleAnalyzeInitialAnswers -------------
 async function handleAnalyzeInitialAnswers(userId, env) {
     try {
@@ -1924,6 +1958,7 @@ async function handleAnalyzeInitialAnswers(userId, env) {
             return;
         }
         const answers = safeParseJson(answersStr, {});
+        const macros = estimateMacros(answers);
         const promptTpl = await env.RESOURCES_KV.get('prompt_questionnaire_analysis');
         const modelName = await env.RESOURCES_KV.get('model_questionnaire_analysis');
         const provider = getModelProvider(modelName);
@@ -1937,6 +1972,7 @@ async function handleAnalyzeInitialAnswers(userId, env) {
         const raw = await callModel(modelName, populated, env, { temperature: 0.5, maxTokens: 2500 });
         const cleaned = cleanGeminiJson(raw);
         await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
+        await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macros));
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'ready');
         console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
         // Имейлът с линк към анализа вече се изпраща при подаване на въпросника,
@@ -2831,6 +2867,7 @@ async function processSingleUserPlan(userId, env) {
         planBuilder.generationMetadata.timestamp = planBuilder.generationMetadata.timestamp || new Date().toISOString();
         const finalPlanString = JSON.stringify(planBuilder, null, 2);
         await env.USER_METADATA_KV.put(`${userId}_final_plan`, finalPlanString);
+        await env.USER_METADATA_KV.put(`${userId}_caloriesMacros`, JSON.stringify(planBuilder.caloriesMacros), { expirationTtl: 86400 });
         
         if (planBuilder.generationMetadata.errors.length > 0) {
             await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
