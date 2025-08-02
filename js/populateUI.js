@@ -304,13 +304,22 @@ export async function populateDashboardMacros(macros) {
         return;
     }
     const container = selectors.analyticsCardsContainer;
+    if (!container) {
+        console.warn('Analytics cards container not found.');
+        return;
+    }
+
     let card = document.getElementById('macroAnalyticsCard');
-    if (!card && container) {
+    if (!card) {
         card = document.createElement('macro-analytics-card');
         card.id = 'macroAnalyticsCard';
         container.appendChild(card);
     }
-    if (!card || !macros) return;
+
+    if (!macros) {
+        console.warn('Macros data is missing.');
+        return;
+    }
     const current = currentIntakeMacros && Object.keys(currentIntakeMacros).length > 0
         ? currentIntakeMacros
         : null;
