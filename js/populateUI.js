@@ -4,6 +4,7 @@ import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, getProgress
 import { generateId } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
+import { ensureChart } from './chartLoader.js';
 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
@@ -27,7 +28,7 @@ export async function populateUI() {
         data.planData?.additionalGuidelines ||
         data.additionalGuidelines;
     try { populateRecsTab(data.planData, data.initialAnswers, guidelinesData); } catch(e) { console.error("Error in populateRecsTab:", e); }
-    try { populateProgressHistory(data.dailyLogs, data.initialData); } catch(e) { console.error("Error in populateProgressHistory:", e); }
+    try { await populateProgressHistory(data.dailyLogs, data.initialData); } catch(e) { console.error("Error in populateProgressHistory:", e); }
 }
 
 function populateUserInfo(userName) {
@@ -823,15 +824,9 @@ export function handleAccordionToggle(event) {
     }
 }
 
-function populateProgressHistory(dailyLogs, initialData) {
+async function populateProgressHistory(dailyLogs, initialData) {
     const card = selectors.progressHistoryCard;
     if (!card) return;
-
-    if (typeof Chart === 'undefined') {
-        card.classList.add('hidden');
-        console.warn("Chart.js is not loaded.");
-        return;
-    }
 
     const weightData = [];
     const labels = [];
@@ -860,13 +855,24 @@ function populateProgressHistory(dailyLogs, initialData) {
     }
 
     card.classList.remove('hidden');
-    card.innerHTML = '';
+    card.innerHTML = '<div class="spinner-border" role="status"></div>';
+
+    let Chart;
+    try {
+        Chart = await ensureChart();
+    } catch (e) {
+        console.warn('Chart.js is not loaded.', e);
+        card.classList.add('hidden');
+        card.innerHTML = '';
+        return;
+    }
 
     if (progressChartInstance) {
         progressChartInstance.destroy();
         progressChartInstance = null;
     }
 
+    card.innerHTML = '';
     const canvas = document.createElement('canvas');
     canvas.id = 'progressChart';
     const chartContainer = document.createElement('div');

@@ -1,4 +1,5 @@
 import { apiEndpoints } from './config.js';
+import { ensureChart } from './chartLoader.js';
 
 let macroChart;
 let weightChart;
@@ -537,16 +538,16 @@ export async function initEditClient(userId) {
       await savePlan();
       editingCards.forEach(id => toggleEditMode(id, false));
       populateUI(planData);
-      initCharts(planData);
+      await initCharts(planData);
     });
   }
 
   const globalCancelBtn = document.getElementById('global-cancel-btn');
   if (globalCancelBtn) {
-    globalCancelBtn.addEventListener('click', () => {
+    globalCancelBtn.addEventListener('click', async () => {
       editingCards.forEach(id => toggleEditMode(id, false));
       populateUI(planData);
-      initCharts(planData);
+      await initCharts(planData);
     });
   }
 
@@ -655,18 +656,19 @@ export async function initEditClient(userId) {
       await savePlan();
       populateUI(planData);
       toggleEditMode(card.id, false);
-      if (card.id === 'caloriesMacros-card') initCharts(planData);
+      if (card.id === 'caloriesMacros-card') await initCharts(planData);
     });
   });
 
   await loadData();
   setupMacroAutoCalc();
   populateUI(planData);
-  initCharts(planData);
+  await initCharts(planData);
   updateGlobalButtonsVisibility();
 }
 
-export function initCharts(data) {
+export async function initCharts(data) {
+  const Chart = await ensureChart();
   if (macroChart) macroChart.destroy();
   if (weightChart) weightChart.destroy();
   const macroCtx = document.getElementById('macro-chart');

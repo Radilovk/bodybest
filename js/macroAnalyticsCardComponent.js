@@ -1,11 +1,7 @@
 import { loadLocale } from './macroCardLocales.js';
+import { ensureChart } from './chartLoader.js';
 
 let Chart;
-async function ensureChart() {
-  if (!Chart) {
-    Chart = (await import('https://cdn.jsdelivr.net/npm/chart.js')).default;
-  }
-}
 
 const template = document.createElement('template');
 template.innerHTML = `
@@ -220,7 +216,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     const load = async () => {
       this.showLoading();
       try {
-        await ensureChart();
+        Chart = await ensureChart();
         this.renderChart();
       } catch (e) {
         console.error('Failed to load Chart.js', e);
