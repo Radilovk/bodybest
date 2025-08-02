@@ -3,22 +3,27 @@ import { selectors } from './uiElements.js';
 import { showLoading, showToast, openModal as genericOpenModal, closeModal as genericCloseModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
 import { currentUserId, todaysExtraMeals, todaysMealCompletionStatus, currentIntakeMacros, fullDashboardData } from './app.js';
-import { addMealMacros, removeMealMacros } from './macroUtils.js';
+import nutrientOverrides from '../kv/DIET_RESOURCES/nutrient_overrides.json' with { type: 'json' };
+import { addMealMacros, removeMealMacros, registerNutrientOverrides, getNutrientOverride } from './macroUtils.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
+
+registerNutrientOverrides(nutrientOverrides);
 
 let extraMealFormLoaded = false;
 let commonFoods = [];
 let commonFoodsErrorShown = false;
-fetch(new URL("../data/commonFoods.json", import.meta.url))
-    .then(r => r.json())
-    .then(d => { if (Array.isArray(d)) commonFoods = d; })
-    .catch(e => {
-        console.error("Failed to load foods", e);
-        if (!commonFoodsErrorShown) {
-            showToast("Неуспешно зареждане на списъка с храни", true);
-            commonFoodsErrorShown = true;
-        }
-    });
+if (typeof fetch !== 'undefined') {
+    fetch(new URL("../data/commonFoods.json", import.meta.url))
+        .then(r => r.json())
+        .then(d => { if (Array.isArray(d)) commonFoods = d; })
+        .catch(e => {
+            console.error("Failed to load foods", e);
+            if (!commonFoodsErrorShown) {
+                showToast("Неуспешно зареждане на списъка с храни", true);
+                commonFoodsErrorShown = true;
+            }
+        });
+}
 
 export function initializeExtraMealFormLogic(formContainerElement) {
     const form = formContainerElement.querySelector('#extraMealEntryFormActual');
@@ -151,6 +156,17 @@ export function initializeExtraMealFormLogic(formContainerElement) {
 
     let activeSuggestionIndex = -1;
 
+    function applyMacroOverrides(name) {
+        const macros = getNutrientOverride(name);
+        if (!macros) return;
+        ['calories','protein','carbs','fat'].forEach(field => {
+            const input = form.querySelector(`input[name="${field}"]`);
+            if (input && !input.value) {
+                input.value = macros[field] ?? '';
+            }
+        });
+    }
+
     function showSuggestions(inputValue) {
         if (!suggestionsDropdown || !foodDescriptionInput) return;
         suggestionsDropdown.innerHTML = '';
@@ -181,6 +197,7 @@ export function initializeExtraMealFormLogic(formContainerElement) {
     if (foodDescriptionInput && quantityVisualRadios.length > 0) {
         foodDescriptionInput.addEventListener('input', function() {
             const description = this.value.toLowerCase();
+            applyMacroOverrides(description);
             let suggestedRadioValue = null;
             if (description.includes("фили") && (description.includes("2") || description.includes("две"))) {
                 suggestedRadioValue = "малко_количество";
