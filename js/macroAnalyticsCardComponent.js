@@ -318,29 +318,31 @@ export class MacroAnalyticsCard extends HTMLElement {
   renderMetrics() {
     const target = this.targetData;
     const plan = this.planData;
-    const current = this.currentData;
-    if (!target || !current) return;
+    const current = this.currentData || {};
+    const hasCurrent = !!this.currentData;
+    if (!target) return;
     this.grid.innerHTML = '';
     if (this.warningEl) {
       this.warningEl.classList.remove('show');
       this.warningEl.textContent = '';
     }
     const planLine = plan ? `<div class="plan-vs-target">План: ${plan.calories} kcal / Препоръка: ${target.calories} kcal</div>` : '';
+    const consumedCalories = hasCurrent ? current.calories : 0;
     this.centerText.innerHTML = `
-      <div class="consumed-calories">${current.calories}</div>
+      <div class="consumed-calories">${consumedCalories}</div>
       <div class="total-calories-label">${this.labels.totalCaloriesLabel.replace('{calories}', target.calories)}</div>
       ${planLine}`;
     const calDiv = document.createElement('div');
     calDiv.className = 'macro-metric calories';
     calDiv.setAttribute('role', 'listitem');
-    calDiv.setAttribute('aria-label', `${this.labels.caloriesLabel}: ${current.calories} ${this.labels.totalCaloriesLabel.replace('{calories}', target.calories)}`);
+    calDiv.setAttribute('aria-label', `${this.labels.caloriesLabel}: ${consumedCalories} ${this.labels.totalCaloriesLabel.replace('{calories}', target.calories)}`);
     calDiv.innerHTML = `
       <span class="macro-icon"><i class="bi bi-fire"></i></span>
       <div class="macro-label">${this.labels.caloriesLabel}</div>
-      <div class="macro-value">${current.calories} / ${target.calories} kcal</div>`;
+      <div class="macro-value">${hasCurrent ? consumedCalories : '--'} / ${target.calories} kcal</div>`;
     this.grid.appendChild(calDiv);
     const overMacros = [];
-    if (target.calories && current.calories > target.calories * 1.15) {
+    if (hasCurrent && target.calories && consumedCalories > target.calories * 1.15) {
       overMacros.push(this.labels.caloriesLabel);
     }
     const macros = [
@@ -350,7 +352,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     ];
     macros.forEach((item, idx) => {
       const label = this.labels.macros[item.key];
-      const currentVal = current[`${item.key}_grams`];
+      const currentVal = hasCurrent ? current[`${item.key}_grams`] : 0;
       const targetVal = target[`${item.key}_grams`];
       const percent = target[`${item.key}_percent`];
       const div = document.createElement('div');
@@ -362,7 +364,7 @@ export class MacroAnalyticsCard extends HTMLElement {
       div.innerHTML = `
         <span class="macro-icon"><i class="bi ${item.icon}"></i></span>
         <div class="macro-label">${label}</div>
-        <div class="macro-value">${currentVal} / ${targetVal}г</div>
+        <div class="macro-value">${hasCurrent ? currentVal : '--'} / ${targetVal}г</div>
         <div class="macro-subtitle">${percent}% ${this.labels.fromGoal}</div>`;
       div.addEventListener('click', () => this.highlightMacro(div, idx));
       div.addEventListener('keydown', (e) => {
@@ -372,20 +374,26 @@ export class MacroAnalyticsCard extends HTMLElement {
         }
       });
       this.grid.appendChild(div);
-      if (targetVal && currentVal > targetVal * 1.15) {
+      if (hasCurrent && targetVal && currentVal > targetVal * 1.15) {
         overMacros.push(label);
       }
     });
-    if (this.warningEl && overMacros.length > 0) {
-      this.warningEl.textContent = this.labels.exceedWarning.replace('{items}', overMacros.join(', '));
-      this.warningEl.classList.add('show');
+    if (this.warningEl) {
+      if (!hasCurrent) {
+        const msg = this.locale === 'en' ? 'No intake data available.' : 'Липсват текущи данни.';
+        this.warningEl.textContent = msg;
+        this.warningEl.classList.add('show');
+      } else if (overMacros.length > 0) {
+        this.warningEl.textContent = this.labels.exceedWarning.replace('{items}', overMacros.join(', '));
+        this.warningEl.classList.add('show');
+      }
     }
   }
 
   renderChart() {
     const target = this.targetData;
     const current = this.currentData;
-    if (!target || !current || !this.canvas || typeof Chart === 'undefined') return;
+    if (!target || !this.canvas || typeof Chart === 'undefined') return;
     this.hideLoading();
     const skeleton = this.shadowRoot.querySelector('.chart-skeleton');
     if (skeleton) skeleton.remove();
@@ -397,6 +405,27 @@ export class MacroAnalyticsCard extends HTMLElement {
       this.getCssVar('--macro-carbs-color'),
       this.getCssVar('--macro-fat-color')
     ];
+    const datasets = [
+      {
+        label: this.locale === 'en' ? 'Target (g)' : 'Цел (гр)',
+        data: [target.protein_grams, target.carbs_grams, target.fat_grams],
+        backgroundColor: current ? macroColors.map((c) => `${c}40`) : macroColors,
+        borderWidth: 0,
+        cutout: current ? '80%' : '65%'
+      }
+    ];
+    if (current) {
+      datasets.push({
+        label: this.locale === 'en' ? 'Intake (g)' : 'Прием (гр)',
+        data: [current.protein_grams, current.carbs_grams, current.fat_grams],
+        backgroundColor: macroColors,
+        borderColor: this.getCssVar('--card-bg'),
+        borderWidth: 4,
+        borderRadius: 8,
+        cutout: '65%',
+        hoverOffset: 12
+      });
+    }
     this.chart = new Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -405,25 +434,7 @@ export class MacroAnalyticsCard extends HTMLElement {
           `${this.labels.macros.carbs} (${target.carbs_percent}%)`,
           `${this.labels.macros.fat} (${target.fat_percent}%)`
         ],
-        datasets: [
-          {
-            label: this.locale === 'en' ? 'Target (g)' : 'Цел (гр)',
-            data: [target.protein_grams, target.carbs_grams, target.fat_grams],
-            backgroundColor: macroColors.map((c) => `${c}40`),
-            borderWidth: 0,
-            cutout: '80%'
-          },
-          {
-            label: this.locale === 'en' ? 'Intake (g)' : 'Прием (гр)',
-            data: [current.protein_grams, current.carbs_grams, current.fat_grams],
-            backgroundColor: macroColors,
-            borderColor: this.getCssVar('--card-bg'),
-            borderWidth: 4,
-            borderRadius: 8,
-            cutout: '65%',
-            hoverOffset: 12
-          }
-        ]
+        datasets
       },
       options: {
         responsive: true,
