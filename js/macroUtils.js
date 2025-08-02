@@ -118,8 +118,21 @@ function resolveMacros(meal, grams) {
   return typeof grams === 'number' ? scaleMacros(macros, grams) : macros;
 }
 
+function validateMacroCalories(macros = {}, threshold = 0.05) {
+  const { calories = 0, protein = 0, carbs = 0, fat = 0 } = macros;
+  const calc = protein * 4 + carbs * 4 + fat * 9;
+  if (!calc) return;
+  const diff = Math.abs(calc - calories);
+  if (diff / calc > threshold) {
+    console.warn(
+      `[macroUtils] Calorie mismatch: expected ${calc.toFixed(2)}, received ${calories}`
+    );
+  }
+}
+
 export function addMealMacros(meal, acc) {
   const m = resolveMacros(meal, meal?.grams);
+  validateMacroCalories(m);
   acc.calories = (acc.calories || 0) + m.calories;
   acc.protein = (acc.protein || 0) + m.protein;
   acc.carbs = (acc.carbs || 0) + m.carbs;
@@ -130,6 +143,7 @@ export function addMealMacros(meal, acc) {
 
 export function removeMealMacros(meal, acc) {
   const m = resolveMacros(meal, meal?.grams);
+  validateMacroCalories(m);
   acc.calories = (acc.calories || 0) - m.calories;
   acc.protein = (acc.protein || 0) - m.protein;
   acc.carbs = (acc.carbs || 0) - m.carbs;
