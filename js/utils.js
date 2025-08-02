@@ -251,3 +251,20 @@ export function contrastRatio(c1, c2) {
     const darker = Math.min(L1, L2);
     return (lighter + 0.05) / (darker + 0.05);
 }
+
+/**
+ * Нормализира масив от дневни логове, като гарантира наличието на weight и completedMealsStatus в data.
+ * @param {Array<Object>} logs Масив с дневни логове.
+ * @returns {Array<Object>} Нов масив с унифицирани записи.
+ */
+export function normalizeDailyLogs(logs = []) {
+    return logs.map(log => ({
+        date: log.date,
+        data: {
+            ...log.data,
+            weight: log.data?.weight ?? log.weight,
+            completedMealsStatus: log.data?.completedMealsStatus ?? log.completedMealsStatus
+        }
+    }));
+}
+
