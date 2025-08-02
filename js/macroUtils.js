@@ -13,6 +13,40 @@ const macrosByIdOrName = new Map(
     })
 );
 
+// Кеш за хранителни стойности по име
+let nutrientOverrides = {};
+const nutrientCache = new Map();
+const MAX_OVERRIDE_CACHE = 50;
+
+/**
+ * Регистрира overrides за хранителни стойности.
+ * @param {Record<string, {calories:number, protein:number, carbs:number, fat:number}>} overrides
+ */
+export function registerNutrientOverrides(overrides = {}) {
+  nutrientOverrides = overrides || {};
+  nutrientCache.clear();
+}
+
+/**
+ * Връща хранителни стойности за име на храна с кеширане.
+ * @param {string} name
+ * @returns {{calories:number, protein:number, carbs:number, fat:number}|null}
+ */
+export function getNutrientOverride(name = '') {
+  const key = name.toLowerCase().trim();
+  if (!key) return null;
+  if (nutrientCache.has(key)) return nutrientCache.get(key);
+  const data = nutrientOverrides[key] || null;
+  if (data) {
+    nutrientCache.set(key, data);
+    if (nutrientCache.size > MAX_OVERRIDE_CACHE) {
+      const oldestKey = nutrientCache.keys().next().value;
+      nutrientCache.delete(oldestKey);
+    }
+  }
+  return data;
+}
+
 function resolveMacros(meal) {
   if (!meal) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
   if ('calories' in meal) {
@@ -92,4 +126,4 @@ export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, ext
   return { calories, protein, carbs, fat };
 }
 
-export const __testExports = { macrosByIdOrName };
+export const __testExports = { macrosByIdOrName, nutrientCache };

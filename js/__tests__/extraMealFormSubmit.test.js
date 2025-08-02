@@ -22,7 +22,9 @@ beforeEach(async () => {
   }));
   jest.unstable_mockModule('../macroUtils.js', () => ({
     addMealMacros: addMealMacrosMock,
-    removeMealMacros: jest.fn()
+    removeMealMacros: jest.fn(),
+    registerNutrientOverrides: jest.fn(),
+    getNutrientOverride: jest.fn(() => null)
   }));
   jest.unstable_mockModule('../app.js', () => {
     currentIntakeMacrosRef = {};
