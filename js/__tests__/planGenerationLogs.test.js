@@ -61,5 +61,6 @@ describe('processSingleUserPlan log metrics', () => {
     expect(sentPrompt).toContain('-1.0');
     expect(sentPrompt).toContain('4.0');
     expect(sentPrompt).toContain('3.0');
+    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_caloriesMacros', '{}', { expirationTtl: 86400 });
   });
 });
