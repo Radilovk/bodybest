@@ -28,7 +28,6 @@ export async function populateUI() {
         data.planData?.additionalGuidelines ||
         data.additionalGuidelines;
     try { populateRecsTab(data.planData, data.initialAnswers, guidelinesData); } catch(e) { console.error("Error in populateRecsTab:", e); }
-    try { await populateProgressHistory(data.dailyLogs, data.initialData); } catch(e) { console.error("Error in populateProgressHistory:", e); }
 }
 
 function populateUserInfo(userName) {
@@ -824,7 +823,7 @@ export function handleAccordionToggle(event) {
     }
 }
 
-async function populateProgressHistory(dailyLogs, initialData) {
+export async function populateProgressHistory(dailyLogs, initialData) {
     const card = selectors.progressHistoryCard;
     if (!card) return;
 
