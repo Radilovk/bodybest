@@ -130,12 +130,12 @@ function populateDashboardDetailedAnalytics(analyticsData) {
             card.appendChild(header);
 
             const progress = document.createElement('div');
-            progress.className = 'mini-progress-bar';
+            progress.className = 'progress-bar';
             progress.setAttribute('role', 'progressbar');
             progress.setAttribute('aria-valuemin', '0');
             progress.setAttribute('aria-valuemax', '100');
             const fill = document.createElement('div');
-            fill.className = 'mini-progress-fill';
+            fill.className = 'progress-fill';
             if (metric.colorKey) {
                 fill.style.setProperty('--progress-start-color', `var(--color-${metric.colorKey})`);
             }
