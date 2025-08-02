@@ -70,31 +70,52 @@ export async function loadProductMacros() {
   return overrides;
 }
 
-function resolveMacros(meal) {
+/**
+ * Скалира макросите спрямо грамовете.
+ * @param {{calories:number, protein:number, carbs:number, fat:number}} macros
+ * @param {number} grams
+ * @returns {{calories:number, protein:number, carbs:number, fat:number}}
+ */
+export function scaleMacros(macros = {}, grams = 100) {
+  const factor = grams / 100;
+  return {
+    calories: (Number(macros.calories) || 0) * factor,
+    protein: (Number(macros.protein) || 0) * factor,
+    carbs: (Number(macros.carbs) || 0) * factor,
+    fat: (Number(macros.fat) || 0) * factor
+  };
+}
+
+function resolveMacros(meal, grams) {
   if (!meal) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  let macros;
   if ('calories' in meal) {
-    return {
+    macros = {
       calories: Number(meal.calories) || 0,
       protein: Number(meal.protein) || 0,
       carbs: Number(meal.carbs) || 0,
       fat: Number(meal.fat) || 0
     };
+  } else {
+    const override = getNutrientOverride(meal.meal_name || meal.name);
+    if (override) macros = override;
+    else {
+      const baseMacros =
+        macrosByIdOrName.get(meal.id) ||
+        macrosByIdOrName.get((meal.meal_name || meal.name || '').toLowerCase());
+      macros = {
+        calories: Number(baseMacros?.['калории']) || 0,
+        protein: Number(baseMacros?.['белтъчини']) || 0,
+        carbs: Number(baseMacros?.['въглехидрати']) || 0,
+        fat: Number(baseMacros?.['мазнини']) || 0
+      };
+    }
   }
-  const override = getNutrientOverride(meal.meal_name || meal.name);
-  if (override) return override;
-  const macros =
-    macrosByIdOrName.get(meal.id) ||
-    macrosByIdOrName.get((meal.meal_name || meal.name || '').toLowerCase());
-  return {
-    calories: Number(macros?.['калории']) || 0,
-    protein: Number(macros?.['белтъчини']) || 0,
-    carbs: Number(macros?.['въглехидрати']) || 0,
-    fat: Number(macros?.['мазнини']) || 0
-  };
+  return typeof grams === 'number' ? scaleMacros(macros, grams) : macros;
 }
 
 export function addMealMacros(meal, acc) {
-  const m = resolveMacros(meal);
+  const m = resolveMacros(meal, meal?.grams);
   acc.calories = (acc.calories || 0) + m.calories;
   acc.protein = (acc.protein || 0) + m.protein;
   acc.carbs = (acc.carbs || 0) + m.carbs;
@@ -103,7 +124,7 @@ export function addMealMacros(meal, acc) {
 }
 
 export function removeMealMacros(meal, acc) {
-  const m = resolveMacros(meal);
+  const m = resolveMacros(meal, meal?.grams);
   acc.calories = (acc.calories || 0) - m.calories;
   acc.protein = (acc.protein || 0) - m.protein;
   acc.carbs = (acc.carbs || 0) - m.carbs;
@@ -163,4 +184,4 @@ export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, ext
   return { calories, protein, carbs, fat };
 }
 
-export const __testExports = { macrosByIdOrName, nutrientCache };
+export const __testExports = { macrosByIdOrName, nutrientCache, resolveMacros };

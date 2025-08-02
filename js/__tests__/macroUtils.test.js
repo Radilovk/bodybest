@@ -1,5 +1,5 @@
 /** @jest-environment jsdom */
-import { calculateCurrentMacros, addMealMacros, removeMealMacros, registerNutrientOverrides, getNutrientOverride, calculatePlanMacros, loadProductMacros, __testExports } from '../macroUtils.js';
+import { calculateCurrentMacros, addMealMacros, removeMealMacros, registerNutrientOverrides, getNutrientOverride, calculatePlanMacros, loadProductMacros, scaleMacros, __testExports } from '../macroUtils.js';
 
 test('calculateCurrentMacros sums macros from completed meals and extras', () => {
   const planMenu = {
@@ -42,6 +42,20 @@ test('addMealMacros и removeMealMacros актуализират акумула�
   expect(acc).toEqual({ calories: 200, protein: 20, carbs: 30, fat: 10 });
   removeMealMacros(meal, acc);
   expect(acc).toEqual({ calories: 0, protein: 0, carbs: 0, fat: 0 });
+});
+
+test('scaleMacros скалира макросите спрямо грамовете', () => {
+  const base = { calories: 200, protein: 20, carbs: 30, fat: 10 };
+  expect(scaleMacros(base, 150)).toEqual({ calories: 300, protein: 30, carbs: 45, fat: 15 });
+  expect(scaleMacros(base, 75)).toEqual({ calories: 150, protein: 15, carbs: 22.5, fat: 7.5 });
+});
+
+test('resolveMacros при grams използва scaleMacros', () => {
+  const meal = { calories: 200, protein: 20, carbs: 30, fat: 10 };
+  const result150 = __testExports.resolveMacros(meal, 150);
+  const result75 = __testExports.resolveMacros(meal, 75);
+  expect(result150).toEqual({ calories: 300, protein: 30, carbs: 45, fat: 15 });
+  expect(result75).toEqual({ calories: 150, protein: 15, carbs: 22.5, fat: 7.5 });
 });
 
 test('getNutrientOverride кешира резултатите', () => {
