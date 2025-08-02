@@ -840,8 +840,10 @@ async function populateProgressHistory(dailyLogs, initialData) {
 
     const reversedLogs = [...(dailyLogs || [])].reverse();
     reversedLogs.forEach(log => {
-        if (log.date && log.data) {
-            const loggedWeight = safeParseFloat(log.data.weight);
+        if (log.date) {
+            const loggedWeight = safeParseFloat(
+                log.data?.weight ?? log.weight
+            );
             if (loggedWeight !== null) {
                 labels.push(new Date(log.date).toLocaleDateString('bg-BG', { day: 'numeric', month: 'short' }));
                 weightData.push(loggedWeight);
