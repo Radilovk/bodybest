@@ -2,10 +2,10 @@
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, getProgressColor, animateProgressFill, getCssVar, formatDateBgShort } from './utils.js';
 import { generateId } from './config.js';
-import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent } from './app.js';
+import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
-import { calculatePlanMacros } from './macroUtils.js';
+import { calculatePlanMacros, getNutrientOverride, addMealMacros } from './macroUtils.js';
 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
@@ -231,6 +231,19 @@ export function renderPendingMacroChart() {
     if (!macroCard || typeof macroCard.renderChart !== 'function') return;
     macroCard.renderChart();
     macroChartInstance = macroCard.chart || null;
+}
+
+export function addExtraMealWithOverride(name = '', macros = {}) {
+    const override = getNutrientOverride(name) || {};
+    const entry = {
+        calories: macros.calories ?? override.calories ?? 0,
+        protein: macros.protein ?? override.protein ?? 0,
+        carbs: macros.carbs ?? override.carbs ?? 0,
+        fat: macros.fat ?? override.fat ?? 0
+    };
+    todaysExtraMeals.push(entry);
+    addMealMacros(entry, currentIntakeMacros);
+    renderPendingMacroChart();
 }
 
 function renderMacroPreviewGrid(macros) {

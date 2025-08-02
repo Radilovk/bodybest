@@ -2,9 +2,10 @@
 import { selectors } from './uiElements.js';
 import { showLoading, showToast, openModal as genericOpenModal, closeModal as genericCloseModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
-import { currentUserId, todaysExtraMeals, todaysMealCompletionStatus, currentIntakeMacros, fullDashboardData } from './app.js';
+import { currentUserId, todaysExtraMeals, currentIntakeMacros } from './app.js';
 import nutrientOverrides from '../kv/DIET_RESOURCES/nutrient_overrides.json' with { type: 'json' };
-import { addMealMacros, removeMealMacros, registerNutrientOverrides, getNutrientOverride } from './macroUtils.js';
+import { removeMealMacros, registerNutrientOverrides, getNutrientOverride } from './macroUtils.js';
+import { addExtraMealWithOverride, renderPendingMacroChart } from './populateUI.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 
 const dynamicNutrientOverrides = { ...nutrientOverrides };
@@ -406,14 +407,12 @@ export async function handleExtraMealFormSubmit(event) {
         if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
         showToast(result.message || "Храненето е записано!", false);
         const entry = {
-            calories: dataToSend.calories || 0,
-            protein: dataToSend.protein || 0,
-            carbs: dataToSend.carbs || 0,
-            fat: dataToSend.fat || 0
+            calories: dataToSend.calories,
+            protein: dataToSend.protein,
+            carbs: dataToSend.carbs,
+            fat: dataToSend.fat
         };
-        todaysExtraMeals.push(entry);
-        addMealMacros(entry, currentIntakeMacros);
-        renderPendingMacroChart();
+        addExtraMealWithOverride(dataToSend.foodDescription, entry);
         genericCloseModal('extraMealEntryModal');
     } catch (error) {
         showToast(`Грешка: ${error.message}`, true);

@@ -320,6 +320,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     const plan = this.planData;
     const current = this.currentData || {};
     const hasCurrent = !!this.currentData;
+    const hasMacroData = hasCurrent && ['calories','protein_grams','carbs_grams','fat_grams'].some(k => typeof current[k] === 'number');
     if (!target) return;
     this.grid.innerHTML = '';
     if (this.warningEl) {
@@ -327,7 +328,8 @@ export class MacroAnalyticsCard extends HTMLElement {
       this.warningEl.textContent = '';
     }
     const planLine = plan ? `<div class="plan-vs-target">План: ${plan.calories} kcal / Препоръка: ${target.calories} kcal</div>` : '';
-    const consumedCalories = hasCurrent ? current.calories : 0;
+    const consumedCaloriesRaw = hasMacroData ? current.calories : undefined;
+    const consumedCalories = typeof consumedCaloriesRaw === 'number' ? consumedCaloriesRaw : '--';
     this.centerText.innerHTML = `
       <div class="consumed-calories">${consumedCalories}</div>
       <div class="total-calories-label">${this.labels.totalCaloriesLabel.replace('{calories}', target.calories)}</div>
@@ -339,10 +341,10 @@ export class MacroAnalyticsCard extends HTMLElement {
     calDiv.innerHTML = `
       <span class="macro-icon"><i class="bi bi-fire"></i></span>
       <div class="macro-label">${this.labels.caloriesLabel}</div>
-      <div class="macro-value">${hasCurrent ? consumedCalories : '--'} / ${target.calories} kcal</div>`;
+      <div class="macro-value">${consumedCalories} / ${target.calories} kcal</div>`;
     this.grid.appendChild(calDiv);
     const overMacros = [];
-    if (hasCurrent && target.calories && consumedCalories > target.calories * 1.15) {
+    if (typeof consumedCaloriesRaw === 'number' && target.calories && consumedCaloriesRaw > target.calories * 1.15) {
       overMacros.push(this.labels.caloriesLabel);
     }
     const macros = [
@@ -352,19 +354,20 @@ export class MacroAnalyticsCard extends HTMLElement {
     ];
     macros.forEach((item, idx) => {
       const label = this.labels.macros[item.key];
-      const currentVal = hasCurrent ? current[`${item.key}_grams`] : 0;
+      const currentRaw = hasMacroData ? current[`${item.key}_grams`] : undefined;
+      const displayCurrent = typeof currentRaw === 'number' ? currentRaw : '--';
       const targetVal = target[`${item.key}_grams`];
       const percent = target[`${item.key}_percent`];
       const div = document.createElement('div');
       div.className = `macro-metric ${item.key}`;
       div.setAttribute('role', 'button');
       div.setAttribute('tabindex', '0');
-      div.setAttribute('aria-label', `${label}: ${currentVal} от ${targetVal} грама (${percent}% ${this.labels.fromGoal})`);
+      div.setAttribute('aria-label', `${label}: ${displayCurrent} от ${targetVal} грама (${percent}% ${this.labels.fromGoal})`);
       div.setAttribute('aria-pressed', 'false');
       div.innerHTML = `
         <span class="macro-icon"><i class="bi ${item.icon}"></i></span>
         <div class="macro-label">${label}</div>
-        <div class="macro-value">${hasCurrent ? currentVal : '--'} / ${targetVal}г</div>
+        <div class="macro-value">${displayCurrent} / ${targetVal}г</div>
         <div class="macro-subtitle">${percent}% ${this.labels.fromGoal}</div>`;
       div.addEventListener('click', () => this.highlightMacro(div, idx));
       div.addEventListener('keydown', (e) => {
@@ -374,13 +377,17 @@ export class MacroAnalyticsCard extends HTMLElement {
         }
       });
       this.grid.appendChild(div);
-      if (hasCurrent && targetVal && currentVal > targetVal * 1.15) {
+      if (typeof currentRaw === 'number' && targetVal && currentRaw > targetVal * 1.15) {
         overMacros.push(label);
       }
     });
     if (this.warningEl) {
       if (!hasCurrent) {
         const msg = this.locale === 'en' ? 'No intake data available.' : 'Липсват текущи данни.';
+        this.warningEl.textContent = msg;
+        this.warningEl.classList.add('show');
+      } else if (!hasMacroData) {
+        const msg = this.locale === 'en' ? 'No macro data for the product.' : 'Няма макроданни за продукта.';
         this.warningEl.textContent = msg;
         this.warningEl.classList.add('show');
       } else if (overMacros.length > 0) {
