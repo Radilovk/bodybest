@@ -862,8 +862,7 @@ async function populateProgressHistory(dailyLogs, initialData) {
         Chart = await ensureChart();
     } catch (e) {
         console.warn('Chart.js is not loaded.', e);
-        card.classList.add('hidden');
-        card.innerHTML = '';
+        card.innerHTML = '<div class="alert alert-warning" role="alert">Графиката не може да се зареди.</div>';
         return;
     }
 
