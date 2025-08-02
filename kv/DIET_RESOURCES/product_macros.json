@@ -1,0 +1,1082 @@
+[
+  {
+    "name": "краставица",
+    "calories": 15,
+    "protein": 0.7,
+    "carbs": 3.6,
+    "fat": 0.1,
+    "fiber": 0.5,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "тиквичка",
+    "calories": 17,
+    "protein": 1.2,
+    "carbs": 3.1,
+    "fat": 0.3,
+    "fiber": 1,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "домат",
+    "calories": 18,
+    "protein": 0.9,
+    "carbs": 3.9,
+    "fat": 0.2,
+    "fiber": 1.2,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "чушка / пипер (червен, зелен)",
+    "calories": 25,
+    "protein": 1,
+    "carbs": 6,
+    "fat": 0.2,
+    "fiber": 2.1,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "маруля / айсберг",
+    "calories": 14,
+    "protein": 0.9,
+    "carbs": 2.9,
+    "fat": 0.1,
+    "fiber": 1.2,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "спанак / рукола / листни (микс)",
+    "calories": 23,
+    "protein": 2.9,
+    "carbs": 3.6,
+    "fat": 0.4,
+    "fiber": 2.2,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "зеле (бяло)",
+    "calories": 25,
+    "protein": 1.3,
+    "carbs": 5.8,
+    "fat": 0.1,
+    "fiber": 2.5,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "лук (кромид)",
+    "calories": 40,
+    "protein": 1.1,
+    "carbs": 9.3,
+    "fat": 0.1,
+    "fiber": 1.7,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "праз лук",
+    "calories": 61,
+    "protein": 1.5,
+    "carbs": 14.2,
+    "fat": 0.3,
+    "fiber": 1.8,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "чесън",
+    "calories": 149,
+    "protein": 6.4,
+    "carbs": 33.1,
+    "fat": 0.5,
+    "fiber": 2.1,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "морков",
+    "calories": 41,
+    "protein": 0.9,
+    "carbs": 9.6,
+    "fat": 0.2,
+    "fiber": 2.8,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "червено цвекло",
+    "calories": 43,
+    "protein": 1.6,
+    "carbs": 9.6,
+    "fat": 0.2,
+    "fiber": 2.8,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "картоф",
+    "calories": 77,
+    "protein": 2,
+    "carbs": 17.5,
+    "fat": 0.1,
+    "fiber": 2.2,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "сладък картоф (батат)",
+    "calories": 86,
+    "protein": 1.6,
+    "carbs": 20.1,
+    "fat": 0.1,
+    "fiber": 3,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "броколи",
+    "calories": 34,
+    "protein": 2.8,
+    "carbs": 6.6,
+    "fat": 0.4,
+    "fiber": 2.6,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "карфиол",
+    "calories": 25,
+    "protein": 1.9,
+    "carbs": 5,
+    "fat": 0.3,
+    "fiber": 2,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "патладжан",
+    "calories": 25,
+    "protein": 1,
+    "carbs": 5.9,
+    "fat": 0.2,
+    "fiber": 3,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "гъби (печурки)",
+    "calories": 22,
+    "protein": 3.1,
+    "carbs": 3.3,
+    "fat": 0.3,
+    "fiber": 1,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "зелен фасул",
+    "calories": 31,
+    "protein": 1.8,
+    "carbs": 7,
+    "fat": 0.2,
+    "fiber": 2.7,
+    "category": "ЗЕЛЕНЧУЦИ (сурови)"
+  },
+  {
+    "name": "ябълка",
+    "calories": 52,
+    "protein": 0.3,
+    "carbs": 13.8,
+    "fat": 0.2,
+    "fiber": 2.4,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "круша",
+    "calories": 57,
+    "protein": 0.4,
+    "carbs": 15.2,
+    "fat": 0.1,
+    "fiber": 3.1,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "праскова / нектарина",
+    "calories": 42,
+    "protein": 0.9,
+    "carbs": 10.5,
+    "fat": 0.2,
+    "fiber": 1.5,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "кайсия",
+    "calories": 48,
+    "protein": 1.4,
+    "carbs": 11.1,
+    "fat": 0.4,
+    "fiber": 2,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "слива",
+    "calories": 46,
+    "protein": 0.7,
+    "carbs": 11.4,
+    "fat": 0.3,
+    "fiber": 1.4,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "череши",
+    "calories": 63,
+    "protein": 1.1,
+    "carbs": 16,
+    "fat": 0.2,
+    "fiber": 2.1,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "ягоди",
+    "calories": 32,
+    "protein": 0.7,
+    "carbs": 7.7,
+    "fat": 0.3,
+    "fiber": 2,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "малини / къпини",
+    "calories": 50,
+    "protein": 1.3,
+    "carbs": 11.5,
+    "fat": 0.6,
+    "fiber": 6.5,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "боровинки",
+    "calories": 57,
+    "protein": 0.7,
+    "carbs": 14.5,
+    "fat": 0.3,
+    "fiber": 2.4,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "банан",
+    "calories": 89,
+    "protein": 1.1,
+    "carbs": 22.8,
+    "fat": 0.3,
+    "fiber": 2.6,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "портокал",
+    "calories": 47,
+    "protein": 0.9,
+    "carbs": 11.8,
+    "fat": 0.1,
+    "fiber": 2.4,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "грейпфрут / лимон",
+    "calories": 35,
+    "protein": 0.8,
+    "carbs": 9,
+    "fat": 0.1,
+    "fiber": 1.5,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "грозде",
+    "calories": 69,
+    "protein": 0.7,
+    "carbs": 18.1,
+    "fat": 0.2,
+    "fiber": 0.9,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "диня",
+    "calories": 30,
+    "protein": 0.6,
+    "carbs": 7.6,
+    "fat": 0.2,
+    "fiber": 0.4,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "пъпеш",
+    "calories": 34,
+    "protein": 0.8,
+    "carbs": 8.2,
+    "fat": 0.2,
+    "fiber": 0.9,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "киви",
+    "calories": 61,
+    "protein": 1.1,
+    "carbs": 14.7,
+    "fat": 0.5,
+    "fiber": 3,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "авокадо",
+    "calories": 160,
+    "protein": 2,
+    "carbs": 8.5,
+    "fat": 14.7,
+    "fiber": 6.7,
+    "category": "ПЛОДОВЕ (сурови)"
+  },
+  {
+    "name": "пилешко филе (гърди)",
+    "calories": 165,
+    "protein": 31,
+    "carbs": 0,
+    "fat": 3.6,
+    "fiber": 0,
+    "category": "МЕСО, ПТИЦИ И РИБА (сурови, освен ако не е посочено друго)"
+  },
+  {
+    "name": "пилешко бутче (с кожа)",
+    "calories": 215,
+    "protein": 24,
+    "carbs": 0,
+    "fat": 13,
+    "fiber": 0,
+    "category": "МЕСО, ПТИЦИ И РИБА (сурови, освен ако не е посочено друго)"
+  },
+  {
+    "name": "пуешко филе",
+    "calories": 135,
+    "protein": 29,
+    "carbs": 0,
+    "fat": 1,
+    "fiber": 0,
+    "category": "МЕСО, ПТИЦИ И РИБА (сурови, освен ако не е посочено друго)"
+  },
+  {
+    "name": "свинско филе (бонфиле)",
+    "calories": 143,
+    "protein": 26,
+    "carbs": 0,
+    "fat": 3.5,
+    "fiber": 0,
+    "category": "МЕСО, ПТИЦИ И РИБА (сурови, освен ако не е посочено друго)"
+  },
+  {
+    "name": "вратна пържола",
+    "calories": 290,
+    "protein": 17,
+    "carbs": 0,
+    "fat": 24,
+    "fiber": 0,
+    "category": "МЕСО, ПТИЦИ И РИБА (сурови, освен ако не е посочено друго)"
+  },
+  {
+    "name": "телешко/говеждо шо̀л",
+    "calories": 155,
+    "protein": 28,
+    "carbs": 0,
+    "fat": 4,
+    "fiber": 0,
+    "category": "МЕСО, ПТИЦИ И РИБА (сурови, освен ако не е посочено друго)"
+  },
+  {
+    "name": "агнешко бут",
+    "calories": 282,
+    "protein": 25,
+    "carbs": 0,
+    "fat": 20,
+    "fiber": 0,
+    "category": "МЕСО, ПТИЦИ И РИБА (сурови, освен ако не е посочено друго)"
+  },
+  {
+    "name": "сьомга",
+    "calories": 208,
+    "protein": 20,
+    "carbs": 0,
+    "fat": 13,
+    "fiber": 0,
+    "category": "МЕСО, ПТИЦИ И РИБА (сурови, освен ако не е посочено друго)"
+  },
+  {
+    "name": "риба тон (в собствен сос)",
+    "calories": 116,
+    "protein": 26,
+    "carbs": 0,
+    "fat": 0.8,
+    "fiber": 0,
+    "category": "МЕСО, ПТИЦИ И РИБА (сурови, освен ако не е посочено друго)"
+  },
+  {
+    "name": "бяла риба (треска, хек)",
+    "calories": 82,
+    "protein": 18,
+    "carbs": 0,
+    "fat": 0.7,
+    "fiber": 0,
+    "category": "МЕСО, ПТИЦИ И РИБА (сурови, освен ако не е посочено друго)"
+  },
+  {
+    "name": "пъстърва",
+    "calories": 148,
+    "protein": 21,
+    "carbs": 0,
+    "fat": 6,
+    "fiber": 0,
+    "category": "МЕСО, ПТИЦИ И РИБА (сурови, освен ако не е посочено друго)"
+  },
+  {
+    "name": "черен дроб",
+    "calories": 135,
+    "protein": 21,
+    "carbs": 2.5,
+    "fat": 4.5,
+    "fiber": 0,
+    "category": "МЕСО, ПТИЦИ И РИБА (сурови, освен ако не е посочено друго)"
+  },
+  {
+    "name": "луканка / суджук",
+    "calories": 480,
+    "protein": 25,
+    "carbs": 2,
+    "fat": 42,
+    "fiber": 0.5,
+    "category": "КОЛБАСИ И ОБРАБОТЕНО МЕСО"
+  },
+  {
+    "name": "шунка (варено-пушена, с ниско съдържание на мазнини)",
+    "calories": 120,
+    "protein": 20,
+    "carbs": 1.5,
+    "fat": 3.5,
+    "fiber": 0,
+    "category": "КОЛБАСИ И ОБРАБОТЕНО МЕСО"
+  },
+  {
+    "name": "кренвирши / наденица",
+    "calories": 290,
+    "protein": 12,
+    "carbs": 3,
+    "fat": 25,
+    "fiber": 0.2,
+    "category": "КОЛБАСИ И ОБРАБОТЕНО МЕСО"
+  },
+  {
+    "name": "бекон (суров)",
+    "calories": 450,
+    "protein": 15,
+    "carbs": 1,
+    "fat": 45,
+    "fiber": 0,
+    "category": "КОЛБАСИ И ОБРАБОТЕНО МЕСО"
+  },
+  {
+    "name": "пастет (месен)",
+    "calories": 320,
+    "protein": 14,
+    "carbs": 1,
+    "fat": 29,
+    "fiber": 0.1,
+    "category": "КОЛБАСИ И ОБРАБОТЕНО МЕСО"
+  },
+  {
+    "name": "бяло сирене (краве)",
+    "calories": 270,
+    "protein": 16,
+    "carbs": 2,
+    "fat": 22,
+    "fiber": 0,
+    "category": "МЛЕЧНИ ПРОДУКТИ И ЯЙЦА"
+  },
+  {
+    "name": "кашкавал \"витоша\"",
+    "calories": 350,
+    "protein": 25,
+    "carbs": 1.5,
+    "fat": 27,
+    "fiber": 0,
+    "category": "МЛЕЧНИ ПРОДУКТИ И ЯЙЦА"
+  },
+  {
+    "name": "моцарела",
+    "calories": 280,
+    "protein": 22,
+    "carbs": 2.2,
+    "fat": 22,
+    "fiber": 0,
+    "category": "МЛЕЧНИ ПРОДУКТИ И ЯЙЦА"
+  },
+  {
+    "name": "топено сирене",
+    "calories": 300,
+    "protein": 18,
+    "carbs": 5,
+    "fat": 23,
+    "fiber": 0,
+    "category": "МЛЕЧНИ ПРОДУКТИ И ЯЙЦА"
+  },
+  {
+    "name": "крема сирене (тип philadelphia)",
+    "calories": 240,
+    "protein": 6,
+    "carbs": 4,
+    "fat": 22,
+    "fiber": 0,
+    "category": "МЛЕЧНИ ПРОДУКТИ И ЯЙЦА"
+  },
+  {
+    "name": "извара (нискомаслена)",
+    "calories": 98,
+    "protein": 18,
+    "carbs": 3,
+    "fat": 1,
+    "fiber": 0,
+    "category": "МЛЕЧНИ ПРОДУКТИ И ЯЙЦА"
+  },
+  {
+    "name": "кисело мляко (3.6%)",
+    "calories": 61,
+    "protein": 3.5,
+    "carbs": 4.7,
+    "fat": 3.6,
+    "fiber": 0,
+    "category": "МЛЕЧНИ ПРОДУКТИ И ЯЙЦА"
+  },
+  {
+    "name": "цедено кисело мляко (10%)",
+    "calories": 130,
+    "protein": 8,
+    "carbs": 4,
+    "fat": 10,
+    "fiber": 0,
+    "category": "МЛЕЧНИ ПРОДУКТИ И ЯЙЦА"
+  },
+  {
+    "name": "прясно мляко (3.2%)",
+    "calories": 60,
+    "protein": 3.2,
+    "carbs": 4.8,
+    "fat": 3.2,
+    "fiber": 0,
+    "category": "МЛЕЧНИ ПРОДУКТИ И ЯЙЦА"
+  },
+  {
+    "name": "заквасена сметана (20%)",
+    "calories": 206,
+    "protein": 2.5,
+    "carbs": 4,
+    "fat": 20,
+    "fiber": 0,
+    "category": "МЛЕЧНИ ПРОДУКТИ И ЯЙЦА"
+  },
+  {
+    "name": "яйце (цяло, сурово)",
+    "calories": 155,
+    "protein": 13,
+    "carbs": 1.1,
+    "fat": 11,
+    "fiber": 0,
+    "category": "МЛЕЧНИ ПРОДУКТИ И ЯЙЦА"
+  },
+  {
+    "name": "леща (суха)",
+    "calories": 352,
+    "protein": 24.6,
+    "carbs": 63,
+    "fat": 1.1,
+    "fiber": 10.7,
+    "category": "БОБОВИ, ЗЪРНЕНИ, ЯДКИ И СЕМЕНА"
+  },
+  {
+    "name": "боб (сух)",
+    "calories": 347,
+    "protein": 21,
+    "carbs": 62,
+    "fat": 1.2,
+    "fiber": 15,
+    "category": "БОБОВИ, ЗЪРНЕНИ, ЯДКИ И СЕМЕНА"
+  },
+  {
+    "name": "нахут (сух)",
+    "calories": 378,
+    "protein": 20.5,
+    "carbs": 63,
+    "fat": 6,
+    "fiber": 12.2,
+    "category": "БОБОВИ, ЗЪРНЕНИ, ЯДКИ И СЕМЕНА"
+  },
+  {
+    "name": "ориз (бял, сух)",
+    "calories": 365,
+    "protein": 7.1,
+    "carbs": 80,
+    "fat": 0.7,
+    "fiber": 1.3,
+    "category": "БОБОВИ, ЗЪРНЕНИ, ЯДКИ И СЕМЕНА"
+  },
+  {
+    "name": "кафяв ориз (сух)",
+    "calories": 370,
+    "protein": 7.9,
+    "carbs": 77,
+    "fat": 2.9,
+    "fiber": 3.5,
+    "category": "БОБОВИ, ЗЪРНЕНИ, ЯДКИ И СЕМЕНА"
+  },
+  {
+    "name": "паста (суха)",
+    "calories": 371,
+    "protein": 13,
+    "carbs": 75,
+    "fat": 1.5,
+    "fiber": 3.2,
+    "category": "БОБОВИ, ЗЪРНЕНИ, ЯДКИ И СЕМЕНА"
+  },
+  {
+    "name": "киноа (суха)",
+    "calories": 368,
+    "protein": 14.1,
+    "carbs": 64,
+    "fat": 6.1,
+    "fiber": 7,
+    "category": "БОБОВИ, ЗЪРНЕНИ, ЯДКИ И СЕМЕНА"
+  },
+  {
+    "name": "овесени ядки (сухи)",
+    "calories": 389,
+    "protein": 16.9,
+    "carbs": 66,
+    "fat": 6.9,
+    "fiber": 10.6,
+    "category": "БОБОВИ, ЗЪРНЕНИ, ЯДКИ И СЕМЕНА"
+  },
+  {
+    "name": "орехи",
+    "calories": 654,
+    "protein": 15.2,
+    "carbs": 13.7,
+    "fat": 65.2,
+    "fiber": 6.7,
+    "category": "БОБОВИ, ЗЪРНЕНИ, ЯДКИ И СЕМЕНА"
+  },
+  {
+    "name": "бадеми",
+    "calories": 579,
+    "protein": 21.2,
+    "carbs": 21.6,
+    "fat": 49.9,
+    "fiber": 12.5,
+    "category": "БОБОВИ, ЗЪРНЕНИ, ЯДКИ И СЕМЕНА"
+  },
+  {
+    "name": "лешници",
+    "calories": 628,
+    "protein": 15,
+    "carbs": 16.7,
+    "fat": 60.8,
+    "fiber": 9.7,
+    "category": "БОБОВИ, ЗЪРНЕНИ, ЯДКИ И СЕМЕНА"
+  },
+  {
+    "name": "фъстъци",
+    "calories": 567,
+    "protein": 25.8,
+    "carbs": 16.1,
+    "fat": 49.2,
+    "fiber": 8.5,
+    "category": "БОБОВИ, ЗЪРНЕНИ, ЯДКИ И СЕМЕНА"
+  },
+  {
+    "name": "слънчогледови семки",
+    "calories": 584,
+    "protein": 20.8,
+    "carbs": 20,
+    "fat": 51.5,
+    "fiber": 8.6,
+    "category": "БОБОВИ, ЗЪРНЕНИ, ЯДКИ И СЕМЕНА"
+  },
+  {
+    "name": "чиа семена",
+    "calories": 486,
+    "protein": 16.5,
+    "carbs": 42.1,
+    "fat": 30.7,
+    "fiber": 34.4,
+    "category": "БОБОВИ, ЗЪРНЕНИ, ЯДКИ И СЕМЕНА"
+  },
+  {
+    "name": "бял хляб",
+    "calories": 265,
+    "protein": 9,
+    "carbs": 49,
+    "fat": 3.2,
+    "fiber": 2.7,
+    "category": "ХЛЯБ, ТЕСТЕНИ ИЗДЕЛИЯ И ЗАКУСКИ"
+  },
+  {
+    "name": "пълнозърнест хляб",
+    "calories": 247,
+    "protein": 13,
+    "carbs": 41,
+    "fat": 3.5,
+    "fiber": 7,
+    "category": "ХЛЯБ, ТЕСТЕНИ ИЗДЕЛИЯ И ЗАКУСКИ"
+  },
+  {
+    "name": "баница със сирене (печена)",
+    "calories": 320,
+    "protein": 10,
+    "carbs": 25,
+    "fat": 20,
+    "fiber": 1.8,
+    "category": "ХЛЯБ, ТЕСТЕНИ ИЗДЕЛИЯ И ЗАКУСКИ"
+  },
+  {
+    "name": "бюрек / милинка (мазна)",
+    "calories": 400,
+    "protein": 9,
+    "carbs": 35,
+    "fat": 24,
+    "fiber": 2.2,
+    "category": "ХЛЯБ, ТЕСТЕНИ ИЗДЕЛИЯ И ЗАКУСКИ"
+  },
+  {
+    "name": "кифла с мармалад / шоколад",
+    "calories": 350,
+    "protein": 7,
+    "carbs": 58,
+    "fat": 9,
+    "fiber": 2.5,
+    "category": "ХЛЯБ, ТЕСТЕНИ ИЗДЕЛИЯ И ЗАКУСКИ"
+  },
+  {
+    "name": "кроасан с масло",
+    "calories": 406,
+    "protein": 8,
+    "carbs": 46,
+    "fat": 21,
+    "fiber": 2.6,
+    "category": "ХЛЯБ, ТЕСТЕНИ ИЗДЕЛИЯ И ЗАКУСКИ"
+  },
+  {
+    "name": "пърленка (със сирене/кашкавал)",
+    "calories": 310,
+    "protein": 12,
+    "carbs": 38,
+    "fat": 12,
+    "fiber": 2,
+    "category": "ХЛЯБ, ТЕСТЕНИ ИЗДЕЛИЯ И ЗАКУСКИ"
+  },
+  {
+    "name": "мекица (пържена)",
+    "calories": 330,
+    "protein": 6,
+    "carbs": 40,
+    "fat": 16,
+    "fiber": 1.5,
+    "category": "ХЛЯБ, ТЕСТЕНИ ИЗДЕЛИЯ И ЗАКУСКИ"
+  },
+  {
+    "name": "торти/пасти торта \"гараш\"",
+    "calories": 500,
+    "protein": 9,
+    "carbs": 40,
+    "fat": 35,
+    "fiber": 4.5,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "чийзкейк (печен)",
+    "calories": 321,
+    "protein": 6,
+    "carbs": 28,
+    "fat": 22,
+    "fiber": 1,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "бисквитена торта",
+    "calories": 350,
+    "protein": 6,
+    "carbs": 40,
+    "fat": 18,
+    "fiber": 1.5,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "еклер (с крем и шоколад)",
+    "calories": 262,
+    "protein": 5.5,
+    "carbs": 24,
+    "fat": 16,
+    "fiber": 1,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "български класики крем карамел",
+    "calories": 145,
+    "protein": 5,
+    "carbs": 25,
+    "fat": 3,
+    "fiber": 0,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "мляко с ориз",
+    "calories": 120,
+    "protein": 3,
+    "carbs": 22,
+    "fat": 2,
+    "fiber": 0.2,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "баклава / реване / кадаиф",
+    "calories": 450,
+    "protein": 5,
+    "carbs": 70,
+    "fat": 18,
+    "fiber": 2,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "козунак",
+    "calories": 360,
+    "protein": 8,
+    "carbs": 55,
+    "fat": 12,
+    "fiber": 2.2,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "шоколади млечен шоколад",
+    "calories": 535,
+    "protein": 8,
+    "carbs": 59,
+    "fat": 30,
+    "fiber": 2,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "натурален шоколад (70-85%)",
+    "calories": 598,
+    "protein": 7.8,
+    "carbs": 46,
+    "fat": 43,
+    "fiber": 10,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "течен шоколад (тип nutella)",
+    "calories": 540,
+    "protein": 6,
+    "carbs": 57,
+    "fat": 31,
+    "fiber": 3.5,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "вафли/бисквити вафла (тунквана)",
+    "calories": 520,
+    "protein": 6,
+    "carbs": 60,
+    "fat": 28,
+    "fiber": 2.5,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "бисквити (маслени)",
+    "calories": 480,
+    "protein": 6,
+    "carbs": 65,
+    "fat": 22,
+    "fiber": 2,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "млечен сладолед",
+    "calories": 207,
+    "protein": 3.5,
+    "carbs": 24,
+    "fat": 11,
+    "fiber": 0.7,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "сорбе (плодово)",
+    "calories": 135,
+    "protein": 0.5,
+    "carbs": 32,
+    "fat": 0.2,
+    "fiber": 1.2,
+    "category": "ДЕСЕРТИ, СЛАДКИШИ И ШОКОЛАДИ"
+  },
+  {
+    "name": "български шопска салата (с олио и сирене)",
+    "calories": 130,
+    "protein": 5,
+    "carbs": 5,
+    "fat": 10,
+    "fiber": 1.5,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+  {
+    "name": "таратор",
+    "calories": 65,
+    "protein": 2,
+    "carbs": 4,
+    "fat": 4.5,
+    "fiber": 0.5,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+  {
+    "name": "мусака (със заливка)",
+    "calories": 180,
+    "protein": 9,
+    "carbs": 12,
+    "fat": 10,
+    "fiber": 1.8,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+  {
+    "name": "пържени кюфтета (2 бр.)",
+    "calories": 350,
+    "protein": 22,
+    "carbs": 4,
+    "fat": 28,
+    "fiber": 1,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+  {
+    "name": "шкембе чорба (с мляко и масло)",
+    "calories": 150,
+    "protein": 10,
+    "carbs": 3,
+    "fat": 11,
+    "fiber": 0.2,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+  {
+    "name": "боб яхния (сготвен)",
+    "calories": 135,
+    "protein": 7,
+    "carbs": 19,
+    "fat": 3,
+    "fiber": 7,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+  {
+    "name": "интернационален fast food дюнер (стандартен, с всичко)",
+    "calories": 220,
+    "protein": 10,
+    "carbs": 20,
+    "fat": 11,
+    "fiber": 2.5,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+  {
+    "name": "пица (парче, тип маргарита)",
+    "calories": 250,
+    "protein": 10,
+    "carbs": 33,
+    "fat": 8,
+    "fiber": 2.5,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+  {
+    "name": "пица (парче, тип пеперони)",
+    "calories": 290,
+    "protein": 12,
+    "carbs": 33,
+    "fat": 13,
+    "fiber": 2.5,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+  {
+    "name": "бургер (стандартен с телешко)",
+    "calories": 280,
+    "protein": 13,
+    "carbs": 28,
+    "fat": 12,
+    "fiber": 2,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+  {
+    "name": "пържени картофи",
+    "calories": 312,
+    "protein": 3.4,
+    "carbs": 41,
+    "fat": 15,
+    "fiber": 3.8,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+  {
+    "name": "суши (рол с риба и ориз, 6 бр.)",
+    "calories": 180,
+    "protein": 8,
+    "carbs": 30,
+    "fat": 3,
+    "fiber": 1.5,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+  {
+    "name": "вода / чай (неподсладен)",
+    "calories": 0,
+    "protein": 0,
+    "carbs": 0,
+    "fat": 0,
+    "fiber": 0,
+    "category": "НАПИТКИ"
+  },
+  {
+    "name": "кафе (еспресо, без захар)",
+    "calories": 2,
+    "protein": 0.1,
+    "carbs": 0,
+    "fat": 0,
+    "fiber": 0,
+    "category": "НАПИТКИ"
+  },
+  {
+    "name": "газирана напитка (тип кола)",
+    "calories": 42,
+    "protein": 0,
+    "carbs": 10.6,
+    "fat": 0,
+    "fiber": 0,
+    "category": "НАПИТКИ"
+  },
+  {
+    "name": "натурален сок (портокал, 100%)",
+    "calories": 45,
+    "protein": 0.7,
+    "carbs": 10,
+    "fat": 0.2,
+    "fiber": 0.2,
+    "category": "НАПИТКИ"
+  },
+  {
+    "name": "бира (светла, 5% алк.)",
+    "calories": 43,
+    "protein": 0.5,
+    "carbs": 3.6,
+    "fat": 0,
+    "fiber": 0,
+    "category": "НАПИТКИ"
+  },
+  {
+    "name": "вино (сухо, червено/бяло)",
+    "calories": 85,
+    "protein": 0.1,
+    "carbs": 2.6,
+    "fat": 0,
+    "fiber": 0,
+    "category": "НАПИТКИ"
+  },
+  {
+    "name": "ракия (40% алк.)",
+    "calories": 231,
+    "protein": 0,
+    "carbs": 0,
+    "fat": 0,
+    "fiber": 0,
+    "category": "НАПИТКИ"
+  }
+]
