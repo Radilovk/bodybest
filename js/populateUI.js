@@ -851,7 +851,12 @@ async function populateProgressHistory(dailyLogs, initialData) {
         }
     });
 
-    if (labels.length < 2 || weightData.length < 2) {
+    if (weightData.length === 1) {
+        labels.push(new Date().toLocaleDateString('bg-BG', { day: 'numeric', month: 'short' }));
+        weightData.push(weightData[0]); // права линия
+    }
+
+    if (weightData.length === 0) {
         card.classList.add('hidden');
         return;
     }
