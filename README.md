@@ -1114,7 +1114,22 @@ The file `docs/mail_smtp.php` relies on **PHPMailer** for SMTP. Install it via C
 composer require phpmailer/phpmailer
 ```
 
+
 The script expects `vendor/autoload.php` to reside one directory above the PHP file (`require __DIR__ . '/../vendor/autoload.php';`). Ensure the `vendor` folder is placed accordingly to avoid "Failed opening required" errors.
+
+## KV migrations
+
+За еднократни актуализации на Cloudflare KV се използват помощни скриптове от директория `scripts/`.
+Миграцията за планове без макроси се стартира така:
+
+```bash
+node scripts/migrate-final-plan-macros.js
+```
+
+Скриптът обхожда всички ключове `<userId>_final_plan` в `USER_METADATA_KV`,
+изчислява липсващите `caloriesMacros` на база началните отговори и записва
+резултата обратно чрез `wrangler kv key put`. Преди и след изпълнение е добре да
+се проверяват стойностите с `wrangler kv key get`.
 
 ## Cron configuration
 
