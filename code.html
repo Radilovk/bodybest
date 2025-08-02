@@ -55,6 +55,7 @@
       import { loadAndApplyColors } from './js/uiHandlers.js';
       loadAndApplyColors();
     </script>
+    <script type="module" src="./js/macroAnalyticsCardComponent.js"></script>
     <!-- Chart.js - зарежда се в края на body за по-добра производителност -->
   </head>
   <body class="code-page">
@@ -524,7 +525,12 @@
                   </div>
                 </div>
                 <div id="analyticsCardsContainer" class="analytics-cards-grid">
-                  <macro-analytics-card id="macroAnalyticsCard"></macro-analytics-card>
+                  <macro-analytics-card
+                    id="macroAnalyticsCard"
+                    target-data='{"calories":2200,"protein_grams":140,"protein_percent":25,"carbs_grams":248,"carbs_percent":45,"fat_grams":73,"fat_percent":30}'
+                    current-data='{"calories":950,"protein_grams":70,"carbs_grams":90,"fat_grams":40}'
+                    locale="bg"
+                  ></macro-analytics-card>
                 </div>
               </div>
             </div>
@@ -1387,7 +1393,6 @@
     <!-- End #appWrapper -->
 
     <!-- Коригирана JavaScript Връзка -->
-    <script type="module" src="js/macroAnalyticsCardComponent.js"></script>
     <script type="module" src="js/app.js" defer></script>
     <script type="module" src="js/planModChat.js" defer></script>
     
