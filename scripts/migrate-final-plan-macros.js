@@ -53,18 +53,21 @@ function migrate() {
     const planStr = runWrangler(['kv', 'key', 'get', key, '--binding', binding]);
     let plan;
     try { plan = JSON.parse(planStr || '{}'); } catch { plan = {}; }
-    if (plan.caloriesMacros && Object.keys(plan.caloriesMacros).length > 0) return;
-    const initStr = runWrangler(['kv', 'key', 'get', `${userId}_initial_answers`, '--binding', binding]);
-    let initial;
-    try { initial = JSON.parse(initStr || '{}'); } catch { initial = {}; }
-    const macros = estimateMacros(initial);
-    if (!macros) {
-      console.warn(`Skipping ${userId}: unable to compute macros`);
-      return;
+    let macros = plan.caloriesMacros;
+    if (!macros || Object.keys(macros).length === 0) {
+      const initStr = runWrangler(['kv', 'key', 'get', `${userId}_initial_answers`, '--binding', binding]);
+      let initial;
+      try { initial = JSON.parse(initStr || '{}'); } catch { initial = {}; }
+      macros = estimateMacros(initial);
+      if (!macros) {
+        console.warn(`Skipping ${userId}: unable to compute macros`);
+        return;
+      }
+      plan.caloriesMacros = macros;
+      runWrangler(['kv', 'key', 'put', key, JSON.stringify(plan), '--binding', binding]);
+      console.log(`Updated ${key}`);
     }
-    plan.caloriesMacros = macros;
-    runWrangler(['kv', 'key', 'put', key, JSON.stringify(plan), '--binding', binding]);
-    console.log(`Updated ${key}`);
+    runWrangler(['kv', 'key', 'put', `${userId}_final_caloriesMacros`, JSON.stringify(plan.caloriesMacros), '--binding', binding]);
   });
 }
 
