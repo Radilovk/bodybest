@@ -6,7 +6,7 @@ export async function ensureChart() {
       ChartLib = () => ({ destroy() {} });
     } else {
       try {
-        const module = await import('https://cdn.jsdelivr.net/npm/chart.js?module');
+        const module = await import('https://cdn.jsdelivr.net/npm/chart.js/auto/auto.js');
         ChartLib = module.default || module.Chart;
         if (!ChartLib) throw new Error('Chart.js failed to load');
         console.debug('Chart.js loaded');
