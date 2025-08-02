@@ -875,6 +875,35 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 
 За новата логика има тестове `macroUtils.test.js`, `macroCalc.test.js`, `extraMealForm.test.js` и `extraMealFormSubmit.test.js`. При локална разработка стартирайте `npm test` след `npm install`, за да се изпълнят всички проверки.
 
+### Изчисления на макросите
+
+Макросите се съхраняват в речник `caloriesMacros` с калории и грамове:
+
+```json
+{
+  "calories": 1800,
+  "protein_grams": 135,
+  "carbs_grams": 180,
+  "fat_grams": 60
+}
+```
+
+Този обект се изпраща към AI модела за оценка на съотношението:
+
+```bash
+curl -X POST /api/aiHelper \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt":"macro check","macros":{"calories":1800,"protein_grams":135,"carbs_grams":180,"fat_grams":60}}'
+```
+
+Отговорът позволява сравнение **План vs Препоръка**:
+
+| План | Препоръка |
+|------|-----------|
+| 1800 kcal / 135 г P / 180 г C / 60 г F | 1900 kcal / 140 г P / 200 г C / 65 г F |
+
+Разликата се визуализира в `macroAnalyticsCard` и се записва в ключ `<userId>_analysis_macros`.
+
 Ендпойнтът `/api/peekAdminQueries` връща списък с неприключени запитвания, без да ги маркира като прочетени. Използва се основно за показване на индикатора, докато `/api/getAdminQueries` обновява флага `read` при зареждане на данните.
 
 ### Нови API ендпойнти
