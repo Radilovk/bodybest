@@ -7,7 +7,9 @@ import nutrientOverrides from '../kv/DIET_RESOURCES/nutrient_overrides.json' wit
 import { addMealMacros, removeMealMacros, registerNutrientOverrides, getNutrientOverride } from './macroUtils.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 
-registerNutrientOverrides(nutrientOverrides);
+const dynamicNutrientOverrides = { ...nutrientOverrides };
+registerNutrientOverrides(dynamicNutrientOverrides);
+const nutrientLookupCache = {};
 
 let extraMealFormLoaded = false;
 let commonFoods = [];
@@ -167,6 +169,26 @@ export function initializeExtraMealFormLogic(formContainerElement) {
         });
     }
 
+    async function fetchNutrientsAndApply(name) {
+        const key = name.toLowerCase().trim();
+        if (!key || nutrientLookupCache[key] || getNutrientOverride(key)) return;
+        try {
+            const resp = await fetch('/nutrient-lookup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ food: key })
+            });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            nutrientLookupCache[key] = data;
+            dynamicNutrientOverrides[key] = data;
+            registerNutrientOverrides(dynamicNutrientOverrides);
+            applyMacroOverrides(key);
+        } catch (e) {
+            console.error('Nutrient lookup failed', e);
+        }
+    }
+
     function showSuggestions(inputValue) {
         if (!suggestionsDropdown || !foodDescriptionInput) return;
         suggestionsDropdown.innerHTML = '';
@@ -198,6 +220,9 @@ export function initializeExtraMealFormLogic(formContainerElement) {
         foodDescriptionInput.addEventListener('input', function() {
             const description = this.value.toLowerCase();
             applyMacroOverrides(description);
+            if (description.length >= 3 && !getNutrientOverride(description)) {
+                fetchNutrientsAndApply(description);
+            }
             let suggestedRadioValue = null;
             if (description.includes("фили") && (description.includes("2") || description.includes("две"))) {
                 suggestedRadioValue = "малко_количество";
