@@ -1,4 +1,6 @@
+const CHART_JS_URL = 'https://cdn.jsdelivr.net/npm/chart.js@4.5.0/auto/+esm';
 let ChartLib;
+
 export async function ensureChart() {
   if (!ChartLib) {
     if (typeof window === 'undefined'
@@ -6,7 +8,7 @@ export async function ensureChart() {
       ChartLib = () => ({ destroy() {} });
     } else {
       try {
-        const module = await import('https://cdn.jsdelivr.net/npm/chart.js/auto/auto.js');
+        const module = await import(CHART_JS_URL);
         ChartLib = module.default || module.Chart;
         if (!ChartLib) throw new Error('Chart.js failed to load');
         console.debug('Chart.js loaded');
