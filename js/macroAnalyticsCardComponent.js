@@ -1,5 +1,6 @@
 import { loadLocale } from './macroCardLocales.js';
 import { ensureChart } from './chartLoader.js';
+import { scaleMacros } from './macroUtils.js';
 
 let Chart;
 
@@ -196,7 +197,26 @@ export class MacroAnalyticsCard extends HTMLElement {
       return;
     }
     try {
-      const parsed = JSON.parse(newVal);
+      let parsed = JSON.parse(newVal);
+      if (name === 'current-data' && parsed && typeof parsed.grams === 'number') {
+        if (parsed.macros) {
+          const scaled = scaleMacros(parsed.macros, parsed.grams);
+          parsed = {
+            calories: scaled.calories,
+            protein_grams: scaled.protein,
+            carbs_grams: scaled.carbs,
+            fat_grams: scaled.fat
+          };
+        } else {
+          const scaled = scaleMacros(parsed, parsed.grams);
+          parsed = {
+            calories: scaled.calories,
+            protein_grams: scaled.protein,
+            carbs_grams: scaled.carbs,
+            fat_grams: scaled.fat
+          };
+        }
+      }
       if (name === 'target-data') this.targetData = parsed;
       if (name === 'plan-data') this.planData = parsed;
       if (name === 'current-data') this.currentData = parsed;
