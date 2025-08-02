@@ -10,7 +10,7 @@ import {
     openModal, closeModal,
     showLoading, showToast, updateTabsOverflowIndicator
 } from './uiHandlers.js';
-import { populateUI } from './populateUI.js';
+import { populateUI, populateProgressHistory } from './populateUI.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
 import { setupStaticEventListeners, setupDynamicEventListeners, initializeCollapsibleCards } from './eventListeners.js';
 import {
@@ -414,6 +414,11 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
             showPlanPendingState(`Възникна грешка при генерирането на вашия план: ${data.message || 'Свържете се с поддръжка.'}`); return;
         }
 
+        fullDashboardData.dailyLogs = (fullDashboardData.dailyLogs || []).map(log => ({
+            date: log.date,
+            data: { ...log.data, weight: log.data?.weight ?? log.weight }
+        }));
+
         if(selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
         if(selectors.appWrapper) selectors.appWrapper.style.display = 'block';
 
@@ -448,6 +453,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
         }
 
         await populateUI();
+        await populateProgressHistory(fullDashboardData.dailyLogs, fullDashboardData.initialData);
 
         const plan = fullDashboardData.planData;
         const hasRecs = planHasRecContent(plan);
