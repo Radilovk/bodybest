@@ -13,6 +13,7 @@ import {
 import { populateUI, populateProgressHistory } from './populateUI.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
 import { setupStaticEventListeners, setupDynamicEventListeners, initializeCollapsibleCards } from './eventListeners.js';
+import { loadProductMacros } from './macroUtils.js';
 import {
     displayMessage as displayChatMessage,
     displayTypingIndicator as displayChatTypingIndicator, scrollToChatBottom,
@@ -284,6 +285,11 @@ export { planHasRecContent };
 async function initializeApp() {
     try {
         debugLog("initializeApp starting from app.js...");
+        try {
+            await loadProductMacros();
+        } catch (err) {
+            console.warn("Неуспешно зареждане на продуктови макроси:", err);
+        }
         initializeSelectors();
         triggerAssistantWiggle();
         await loadInfoTexts();
