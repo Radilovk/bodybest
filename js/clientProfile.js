@@ -1,6 +1,7 @@
 import { apiEndpoints } from './config.js';
 import { labelMap, statusMap } from './labelMap.js';
 import { initPlanEditor, gatherPlanFormData } from './planEditor.js';
+import { ensureChart } from './chartLoader.js';
 
 let macroChartPlan;
 let macroChartAnalytics;
@@ -58,7 +59,7 @@ async function loadData() {
       alert(profileData.message || 'Грешка при зареждане на профила.');
     }
     if (dashRes.ok && dashData.success) {
-      fillDashboard(dashData);
+      await fillDashboard(dashData);
       fillAdminNotes(dashData.currentStatus);
     } else if (!dashRes.ok) {
       alert(dashData.message || 'Грешка при зареждане на таблото.');
@@ -144,7 +145,7 @@ function fillProfile(data, initialAnswers = {}) {
   if ($('heightInput')) $('heightInput').value = getVal('height') ?? '';
 }
 
-function fillDashboard(data) {
+async function fillDashboard(data) {
   const curW = data.currentStatus?.weight;
   setText('currentWeightHeader', curW, ' кг');
   setText('planStatus', statusMap[data.planStatus] || data.planStatus);
@@ -177,11 +178,12 @@ function fillDashboard(data) {
   }
 
   if (data.planData?.caloriesMacros) {
+    const Chart = await ensureChart();
     if (macroChartPlan) macroChartPlan.destroy();
     if (macroChartAnalytics) macroChartAnalytics.destroy();
     const m = data.planData.caloriesMacros;
     const ctxPlan = document.getElementById('macro-chart-plan');
-    if (ctxPlan && typeof Chart !== 'undefined') {
+    if (ctxPlan) {
       macroChartPlan = new Chart(ctxPlan, {
         type: 'doughnut',
         data: {
@@ -203,7 +205,7 @@ function fillDashboard(data) {
       });
     }
     const ctxAnal = document.getElementById('macro-chart-analytics');
-    if (ctxAnal && typeof Chart !== 'undefined') {
+    if (ctxAnal) {
       macroChartAnalytics = new Chart(ctxAnal, {
         type: 'doughnut',
         data: {

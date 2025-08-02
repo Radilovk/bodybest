@@ -6,6 +6,7 @@ import { loadTemplateInto } from './templateLoader.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 import { loadMaintenanceFlag, setMaintenanceFlag } from './maintenanceMode.js';
 import { renderTemplate } from '../utils/templateRenderer.js';
+import { ensureChart } from './chartLoader.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -444,7 +445,7 @@ function displayPlanMenu(menu, isError = false) {
     planMenuPre.appendChild(table);
 }
 
-function displayDailyLogs(logs, isError = false) {
+async function displayDailyLogs(logs, isError = false) {
     if (!dailyLogsPre) return;
     dailyLogsPre.innerHTML = '';
     if (isError) {
@@ -486,7 +487,7 @@ function displayDailyLogs(logs, isError = false) {
     });
     table.appendChild(tbody);
     dailyLogsPre.appendChild(table);
-    updateWeightChart(logs);
+    await updateWeightChart(logs);
 }
 
 function renderAnalyticsCurrent(cur) {
@@ -617,7 +618,7 @@ async function loadClients() {
                 processing: allClients.filter(c => c.status === 'processing').length
             };
             if (statsOutput) statsOutput.textContent = JSON.stringify(stats, null, 2);
-            updateStatusChart(stats);
+            await updateStatusChart(stats);
         }
     } catch (err) {
         console.error('Error loading clients:', err);
@@ -702,8 +703,9 @@ function populateTestQClientOptions() {
     });
 }
 
-function updateStatusChart(stats) {
-    if (!statusChartCanvas || typeof Chart === 'undefined') return;
+async function updateStatusChart(stats) {
+    if (!statusChartCanvas) return;
+    const Chart = await ensureChart();
     if (statusChart) statusChart.destroy();
     const ctx = statusChartCanvas.getContext('2d');
     statusChart = new Chart(ctx, {
@@ -719,8 +721,9 @@ function updateStatusChart(stats) {
     });
 }
 
-function updateWeightChart(logs) {
-    if (!weightChartCanvas || typeof Chart === 'undefined') return;
+async function updateWeightChart(logs) {
+    if (!weightChartCanvas) return;
+    const Chart = await ensureChart();
     const weights = logs
         .filter(l => l.data && l.data.weight)
         .map(l => ({ date: l.date, weight: Number(l.data.weight) }));
@@ -967,7 +970,7 @@ async function showClient(userId) {
             displayInitialAnswers(dashData.initialAnswers || {}, false);
             const menu = dashData.planData?.week1Menu || {};
             displayPlanMenu(menu, false);
-            displayDailyLogs(dashData.dailyLogs || [], false);
+            await displayDailyLogs(dashData.dailyLogs || [], false);
             displayDashboardSummary(dashData);
             if (dashboardPre) {
                 dashboardPre.textContent = JSON.stringify(dashData, null, 2);
@@ -988,7 +991,7 @@ async function showClient(userId) {
         } else {
             displayInitialAnswers(null, true);
             displayPlanMenu(null, true);
-            displayDailyLogs(null, true);
+            await displayDailyLogs(null, true);
             if (dashboardPre) {
                 dashboardPre.textContent = '';
                 dashboardPre.classList.add('hidden');

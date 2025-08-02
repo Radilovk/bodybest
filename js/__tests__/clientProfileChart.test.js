@@ -30,6 +30,7 @@ beforeEach(() => {
   jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
   jest.unstable_mockModule('../labelMap.js', () => ({ labelMap: {}, statusMap: {} }));
   jest.unstable_mockModule('../planEditor.js', () => ({ initPlanEditor: jest.fn(), gatherPlanFormData: jest.fn(() => ({})) }));
+  jest.unstable_mockModule('../chartLoader.js', () => ({ ensureChart: jest.fn(async () => global.Chart) }));
 });
 
 test('fillDashboard initializes doughnut charts and destroys previous', async () => {
@@ -39,12 +40,13 @@ test('fillDashboard initializes doughnut charts and destroys previous', async ()
     { destroy: jest.fn() },
     { destroy: jest.fn() }
   ];
-  global.Chart = jest
+  const ChartMock = jest
     .fn()
     .mockReturnValueOnce(charts[0])
     .mockReturnValueOnce(charts[1])
     .mockReturnValueOnce(charts[2])
     .mockReturnValueOnce(charts[3]);
+  global.Chart = ChartMock;
   const { fillDashboard } = await import('../clientProfile.js');
   const data = {
     planData: {
@@ -66,10 +68,10 @@ test('fillDashboard initializes doughnut charts and destroys previous', async ()
     currentStatus: {}
   };
 
-  fillDashboard(data);
-  fillDashboard(data);
+  await fillDashboard(data);
+  await fillDashboard(data);
   expect(charts[0].destroy).toHaveBeenCalled();
   expect(charts[1].destroy).toHaveBeenCalled();
-  expect(global.Chart.mock.calls[0][1].type).toBe('doughnut');
-  expect(global.Chart).toHaveBeenCalledTimes(4);
+  expect(ChartMock.mock.calls[0][1].type).toBe('doughnut');
+  expect(ChartMock).toHaveBeenCalledTimes(4);
 });
