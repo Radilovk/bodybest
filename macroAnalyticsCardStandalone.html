@@ -294,7 +294,7 @@
             const res = await fetch(endpoint);
             const data = await res.json();
             if (data.target && data.current) {
-              this.setData(data.target, data.current);
+              this.setData(data);
             }
           } catch (e) {
             console.error('Failed to fetch macro data', e);
@@ -304,9 +304,10 @@
         this.refreshTimer = setInterval(fetchData, interval);
       }
 
-      setData(target, current) {
-        this.setAttribute('target-data', JSON.stringify(target));
-        this.setAttribute('current-data', JSON.stringify(current));
+      setData({ target, plan, current }) {
+        if (target) this.setAttribute('target-data', JSON.stringify(target));
+        if (plan) this.setAttribute('plan-data', JSON.stringify(plan));
+        if (current) this.setAttribute('current-data', JSON.stringify(current));
       }
 
       getCssVar(name) {
