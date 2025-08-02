@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <!--
   Самостоятелен модул за визуализация на макронутриенти.
-  Няма вътрешни зависимости; използва единствено CDN за Bootstrap Icons и Chart.js.
+  Няма външни зависимости освен CDN за Bootstrap Icons и Chart.js.
+  Използва локалния loader (./js/chartLoader.js), който трябва да бъде копиран при самостоятелно използване или в <iframe>.
   Интеграция:
   - копирайте файла или го вградете с <iframe>;
   - подайте данни чрез атрибутите "current-data" и "target-data" (JSON) или
@@ -45,6 +46,7 @@
   ></macro-analytics-card>
 
   <script type="module">
+    import { ensureChart } from './js/chartLoader.js';
     const localeCache = {};
 
     async function loadLocale(locale) {
@@ -248,32 +250,18 @@
         if (this.refreshTimer) clearInterval(this.refreshTimer);
       }
 
-      async ensureChartJs() {
-        if (window.Chart) return;
-        // Prevent duplicate script tags by sharing a global loading promise
-        if (!window._chartPromise) {
-          window._chartPromise = new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-            script.onload = resolve;
-            script.onerror = reject;
-            document.head.appendChild(script);
-          });
-        }
-        await window._chartPromise;
-      }
-
-      lazyLoadChart() {
+      async lazyLoadChart() {
         if (this.observer) return;
         if (!('IntersectionObserver' in window)) {
-          this.ensureChartJs().then(() => this.renderChart());
+          await ensureChart();
+          this.renderChart();
           return;
         }
         this.observer = new IntersectionObserver(async (entries) => {
           entries.forEach(async (entry) => {
             if (entry.isIntersecting) {
               this.observer.disconnect();
-              await this.ensureChartJs();
+              await ensureChart();
               this.renderChart();
             }
           });
