@@ -1936,7 +1936,10 @@ async function handleAnalyzeInitialAnswers(userId, env) {
         const populated = populatePrompt(promptTpl, { '%%ANSWERS_JSON%%': JSON.stringify(answers) });
         const raw = await callModel(modelName, populated, env, { temperature: 0.5, maxTokens: 2500 });
         const cleaned = cleanGeminiJson(raw);
+        const parsed = safeParseJson(cleaned, {});
+        const macros = parsed.caloriesMacros || parsed.macros || {};
         await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
+        await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macros));
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'ready');
         console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
         // Имейлът с линк към анализа вече се изпраща при подаване на въпросника,
@@ -2831,7 +2834,8 @@ async function processSingleUserPlan(userId, env) {
         planBuilder.generationMetadata.timestamp = planBuilder.generationMetadata.timestamp || new Date().toISOString();
         const finalPlanString = JSON.stringify(planBuilder, null, 2);
         await env.USER_METADATA_KV.put(`${userId}_final_plan`, finalPlanString);
-        
+        await env.USER_METADATA_KV.put(`${userId}_caloriesMacros`, JSON.stringify(planBuilder.caloriesMacros), { expirationTtl: 86400 });
+
         if (planBuilder.generationMetadata.errors.length > 0) {
             await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
             await env.USER_METADATA_KV.put(`${userId}_processing_error`, planBuilder.generationMetadata.errors.join('\n---\n'));
