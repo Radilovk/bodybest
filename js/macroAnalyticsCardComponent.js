@@ -7,6 +7,7 @@ let Chart;
 const template = document.createElement('template');
 template.innerHTML = `
   <style>
+    @import "../css/macro-card-vars.css";
     :host { display: block; }
     .card {
       background: var(--card-bg);
