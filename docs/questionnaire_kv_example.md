@@ -44,9 +44,39 @@
   "mainChallenge": "Липса на време за готвене",
   "medicalConditions": ["Нямам"],
   "medications": "Не",
-  "submissionDate": "2024-07-17T09:32:05.123Z"
+"submissionDate": "2024-07-17T09:32:05.123Z"
 }
 ```
+
+## Макроси и калории
+
+След обработка се създават два KV записа:
+
+- `<userId>_analysis_macros` – резултат от AI оценка „План vs Препоръка“.
+- `<userId>_caloriesMacros` – базов дневен прием и макроси.
+
+```json
+// <userId>_analysis_macros
+{
+  "plan": { "calories": 1700, "protein_grams": 120, "carbs_grams": 150, "fat_grams": 55 },
+  "recommendation": { "calories": 1800, "protein_grams": 130, "carbs_grams": 160, "fat_grams": 60 }
+}
+```
+
+```json
+// <userId>_caloriesMacros
+{
+  "calories": 1800,
+  "protein_percent": 30,
+  "carbs_percent": 40,
+  "fat_percent": 30,
+  "protein_grams": 135,
+  "carbs_grams": 180,
+  "fat_grams": 60
+}
+```
+
+Всички стойности са в **kcal** и **грамове**.
 
 В полетата, където изборът позволява повече от една стойност (тип `checkbox`), отговорът е масив от низове. Числовите въпроси (`number`) се съхраняват като числа, а текстовите като низове. Полето `submissionDate` се добавя при изпращане и отбелязва момента на попълване.
 
