@@ -1,7 +1,7 @@
 // app.js - Основен Файл на Приложението
 import { isLocalDevelopment, apiEndpoints } from './config.js';
 import { debugLog, enableDebug } from './logger.js';
-import { safeParseFloat, escapeHtml, fileToDataURL } from './utils.js';
+import { safeParseFloat, escapeHtml, fileToDataURL, normalizeDailyLogs } from './utils.js';
 import { selectors, initializeSelectors, loadInfoTexts } from './uiElements.js';
 import {
     initializeTheme,
@@ -354,6 +354,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
             const data = createTestData();
             debugLog("Using test data for development:", data);
             fullDashboardData = data;
+            fullDashboardData.dailyLogs = normalizeDailyLogs(fullDashboardData.dailyLogs);
             chatHistory = []; // Reset chat history for test user on reload
 
             if(selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
@@ -414,10 +415,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
             showPlanPendingState(`Възникна грешка при генерирането на вашия план: ${data.message || 'Свържете се с поддръжка.'}`); return;
         }
 
-        fullDashboardData.dailyLogs = (fullDashboardData.dailyLogs || []).map(log => ({
-            date: log.date,
-            data: { ...log.data, weight: log.data?.weight ?? log.weight }
-        }));
+        fullDashboardData.dailyLogs = normalizeDailyLogs(fullDashboardData.dailyLogs);
 
         if(selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
         if(selectors.appWrapper) selectors.appWrapper.style.display = 'block';
@@ -638,6 +636,7 @@ export async function handleSaveLog() { // Exported for eventListeners.js
             if(!fullDashboardData.dailyLogs) fullDashboardData.dailyLogs = [];
             fullDashboardData.dailyLogs.push({date: result.savedDate, data: result.savedData || logPayload.data});
         }
+        fullDashboardData.dailyLogs = normalizeDailyLogs(fullDashboardData.dailyLogs);
         if (fullDashboardData.dailyLogs) {
             fullDashboardData.dailyLogs.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         }
