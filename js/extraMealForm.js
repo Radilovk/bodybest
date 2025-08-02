@@ -4,13 +4,26 @@ import { showLoading, showToast, openModal as genericOpenModal, closeModal as ge
 import { apiEndpoints } from './config.js';
 import { currentUserId, todaysExtraMeals, currentIntakeMacros } from './app.js';
 import nutrientOverrides from '../kv/DIET_RESOURCES/nutrient_overrides.json' with { type: 'json' };
-import { removeMealMacros, registerNutrientOverrides, getNutrientOverride } from './macroUtils.js';
+import { removeMealMacros, registerNutrientOverrides, getNutrientOverride, loadProductMacros } from './macroUtils.js';
 import { addExtraMealWithOverride, renderPendingMacroChart } from './populateUI.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 
 const dynamicNutrientOverrides = { ...nutrientOverrides };
 registerNutrientOverrides(dynamicNutrientOverrides);
 const nutrientLookupCache = {};
+
+let productMacrosLoaded = false;
+async function ensureProductMacrosLoaded() {
+    if (productMacrosLoaded) return;
+    try {
+        const overrides = await loadProductMacros();
+        Object.assign(dynamicNutrientOverrides, overrides);
+        registerNutrientOverrides(dynamicNutrientOverrides);
+    } catch (e) {
+        console.error('Неуспешно зареждане на продуктови макроси', e);
+    }
+    productMacrosLoaded = true;
+}
 
 let extraMealFormLoaded = false;
 let commonFoods = [];
@@ -28,12 +41,14 @@ if (typeof fetch !== 'undefined') {
         });
 }
 
-export function initializeExtraMealFormLogic(formContainerElement) {
+export async function initializeExtraMealFormLogic(formContainerElement) {
     const form = formContainerElement.querySelector('#extraMealEntryFormActual');
     if (!form) {
         console.error("EMF Logic Error: Form #extraMealEntryFormActual not found within container!");
         return;
     }
+
+    await ensureProductMacrosLoaded();
 
     const steps = Array.from(form.querySelectorAll('.form-step'));
     const navigationContainer = form.querySelector('.form-wizard-navigation');
@@ -157,17 +172,32 @@ export function initializeExtraMealFormLogic(formContainerElement) {
     const replacedPlannedRadioGroup = form.querySelectorAll('input[name="replacedPlanned"]');
     const skippedMealSelect = form.querySelector('#skippedMeal');
 
+    const macroInputsGrid = form.querySelector('.macro-inputs-grid');
+    let autoFillMsg;
+    if (macroInputsGrid) {
+        autoFillMsg = document.createElement('div');
+        autoFillMsg.id = 'autoFillMsg';
+        autoFillMsg.className = 'auto-fill-msg hidden';
+        autoFillMsg.style.cssText = 'display:flex;align-items:center;gap:0.25rem;font-size:0.8rem;color:var(--text-color-muted);margin-top:var(--space-xs);';
+        autoFillMsg.innerHTML = '<i class="bi bi-magic"></i><span>Стойностите са попълнени автоматично</span>';
+        macroInputsGrid.parentElement?.appendChild(autoFillMsg);
+        macroInputsGrid.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => autoFillMsg.classList.add('hidden')));
+    }
+
     let activeSuggestionIndex = -1;
 
     function applyMacroOverrides(name) {
         const macros = getNutrientOverride(name);
         if (!macros) return;
+        let filled = false;
         ['calories','protein','carbs','fat'].forEach(field => {
             const input = form.querySelector(`input[name="${field}"]`);
             if (input && !input.value) {
                 input.value = macros[field] ?? '';
+                filled = true;
             }
         });
+        if (filled && autoFillMsg) autoFillMsg.classList.remove('hidden');
     }
 
     async function fetchNutrientsAndApply(name) {
@@ -220,6 +250,7 @@ export function initializeExtraMealFormLogic(formContainerElement) {
     if (foodDescriptionInput && quantityVisualRadios.length > 0) {
         foodDescriptionInput.addEventListener('input', function() {
             const description = this.value.toLowerCase();
+            if (autoFillMsg) autoFillMsg.classList.add('hidden');
             applyMacroOverrides(description);
             if (description.length >= 3 && !getNutrientOverride(description)) {
                 fetchNutrientsAndApply(description);
@@ -326,7 +357,7 @@ export async function openExtraMealModal() {
             if (!response.ok) throw new Error(`Грешка зареждане форма: ${response.status}`);
             const raw = await response.text();
             formContainer.innerHTML = sanitizeHTML(raw);
-            initializeExtraMealFormLogic(formContainer);
+            await initializeExtraMealFormLogic(formContainer);
             extraMealFormLoaded = true;
             genericOpenModal('extraMealEntryModal');
             const actualForm = formContainer.querySelector('#extraMealEntryFormActual');
@@ -344,7 +375,7 @@ export async function openExtraMealModal() {
             actualForm.reset();
             const firstQuantityRadio = actualForm.querySelector('input[name="quantityEstimateVisual"][value="не_посочено_в_стъпка_2"]');
             if (firstQuantityRadio) firstQuantityRadio.checked = true;
-            initializeExtraMealFormLogic(formContainer);
+            await initializeExtraMealFormLogic(formContainer);
         }
         genericOpenModal('extraMealEntryModal');
     }
