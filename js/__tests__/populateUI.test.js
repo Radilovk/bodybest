@@ -165,6 +165,37 @@ test('hides modules when values are zero', async () => {
   expect(document.getElementById('progressHistoryCard').classList.contains('hidden')).toBe(true);
 });
 
+test('показва картата за историята на теглото при наследен формат', async () => {
+  jest.resetModules();
+  const today = new Date().toISOString().split('T')[0];
+  const fullData = {
+    userName: 'Иван',
+    analytics: { current: {}, streak: {} },
+    planData: {},
+    dailyLogs: [
+      { date: today, weight: 79, data: {} }
+    ],
+    currentStatus: {},
+    initialData: { weight: 80 },
+    initialAnswers: { submissionDate: new Date().toISOString() }
+  };
+  fullData.dailyLogs.forEach(entry => {
+    if (entry.data.weight === undefined && entry.weight !== undefined) {
+      entry.data.weight = entry.weight;
+    }
+  });
+  jest.unstable_mockModule('../app.js', () => ({
+    fullDashboardData: fullData,
+    todaysMealCompletionStatus: {},
+    todaysExtraMeals: [],
+    currentIntakeMacros: {},
+    planHasRecContent: false
+  }));
+  ({ populateUI } = await import('../populateUI.js'));
+  await populateUI();
+  expect(document.getElementById('progressHistoryCard').classList.contains('hidden')).toBe(false);
+});
+
 test('populates daily plan with color bars and meal types', async () => {
   jest.resetModules();
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
