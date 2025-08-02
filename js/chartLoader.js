@@ -1,4 +1,9 @@
 let ChartLib;
+
+/**
+ * Осигурява зареждане на Chart.js от UMD сборка, за да се избегне
+ * липсващата зависимост `@kurkle/color` при ESM модулите.
+ */
 export async function ensureChart() {
   if (!ChartLib) {
     if (typeof window === 'undefined'
@@ -6,8 +11,9 @@ export async function ensureChart() {
       ChartLib = () => ({ destroy() {} });
     } else {
       try {
-        const module = await import('https://cdn.jsdelivr.net/npm/chart.js/auto/auto.js');
-        ChartLib = module.default || module.Chart;
+        const url = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js';
+        const module = await import(url);
+        ChartLib = module.Chart || module.default || globalThis.Chart;
         if (!ChartLib) throw new Error('Chart.js failed to load');
         console.debug('Chart.js loaded');
       } catch (e) {
