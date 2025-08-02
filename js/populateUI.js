@@ -5,6 +5,7 @@ import { generateId } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
+import { calculatePlanMacros } from './macroUtils.js';
 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
@@ -313,7 +314,12 @@ export async function populateDashboardMacros(macros) {
     const current = currentIntakeMacros && Object.keys(currentIntakeMacros).length > 0
         ? currentIntakeMacros
         : null;
-    card.setData(macros, current);
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const today = new Date();
+    const currentDayKey = dayNames[today.getDay()];
+    const dayMenu = fullDashboardData?.planData?.week1Menu?.[currentDayKey] || [];
+    const planMacros = calculatePlanMacros(dayMenu);
+    card.setData({ target: macros, plan: planMacros, current });
     renderPendingMacroChart();
 }
 

@@ -87,6 +87,18 @@ export function removeMealMacros(meal, acc) {
 }
 
 /**
+ * Сумира макросите на всички хранения за деня.
+ * @param {Array} dayMenu - Масив от хранения за текущия ден.
+ * @returns {{ calories:number, protein:number, carbs:number, fat:number }}
+ */
+export function calculatePlanMacros(dayMenu = []) {
+  const acc = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  if (!Array.isArray(dayMenu)) return acc;
+  dayMenu.forEach((meal) => addMealMacros(meal, acc));
+  return acc;
+}
+
+/**
  * Изчислява общите макроси за изпълнените хранения и извънредни хранения.
  * @param {Object} planMenu - Менюто по дни със списъци от хранения.
  * @param {Object} completionStatus - Обект със статуси дали храненето е изпълнено (day_index ключове).

@@ -66,6 +66,10 @@ template.innerHTML = `
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
+    .chart-center-text .plan-vs-target {
+      font-size: 0.75rem;
+      color: var(--text-secondary-color);
+    }
     .macro-metrics-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -146,6 +150,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     this.chart = null;
     this.activeMacroIndex = null;
     this.targetData = null;
+    this.planData = null;
     this.currentData = null;
     this.observer = null;
       this.refreshTimer = null;
@@ -160,7 +165,7 @@ export class MacroAnalyticsCard extends HTMLElement {
   }
 
     static get observedAttributes() {
-      return ['target-data', 'current-data', 'locale', 'data-endpoint', 'refresh-interval'];
+      return ['target-data', 'plan-data', 'current-data', 'locale', 'data-endpoint', 'refresh-interval'];
     }
 
     async connectedCallback() {
@@ -182,6 +187,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     try {
       const parsed = JSON.parse(newVal);
       if (name === 'target-data') this.targetData = parsed;
+      if (name === 'plan-data') this.planData = parsed;
       if (name === 'current-data') this.currentData = parsed;
       this.renderMetrics();
       this.renderChart();
@@ -256,7 +262,7 @@ export class MacroAnalyticsCard extends HTMLElement {
         const res = await fetch(endpoint);
         const data = await res.json();
         if (data.target && data.current) {
-          this.setData(data.target, data.current);
+          this.setData(data);
         }
       } catch (e) {
         console.error('Failed to fetch macro data', e);
@@ -266,9 +272,10 @@ export class MacroAnalyticsCard extends HTMLElement {
     this.refreshTimer = setInterval(fetchData, interval);
   }
 
-  setData(target, current) {
-    this.setAttribute('target-data', JSON.stringify(target));
-    this.setAttribute('current-data', JSON.stringify(current));
+  setData({ target, plan, current }) {
+    if (target) this.setAttribute('target-data', JSON.stringify(target));
+    if (plan) this.setAttribute('plan-data', JSON.stringify(plan));
+    if (current) this.setAttribute('current-data', JSON.stringify(current));
   }
 
   getCssVar(name) {
@@ -299,12 +306,15 @@ export class MacroAnalyticsCard extends HTMLElement {
 
   renderMetrics() {
     const target = this.targetData;
+    const plan = this.planData;
     const current = this.currentData;
     if (!target || !current) return;
     this.grid.innerHTML = '';
+    const planLine = plan ? `<div class="plan-vs-target">План: ${plan.calories} kcal / Препоръка: ${target.calories} kcal</div>` : '';
     this.centerText.innerHTML = `
       <div class="consumed-calories">${current.calories}</div>
-      <div class="total-calories-label">${this.labels.totalCaloriesLabel.replace('{calories}', target.calories)}</div>`;
+      <div class="total-calories-label">${this.labels.totalCaloriesLabel.replace('{calories}', target.calories)}</div>
+      ${planLine}`;
     const calDiv = document.createElement('div');
     calDiv.className = 'macro-metric calories';
     calDiv.setAttribute('role', 'listitem');

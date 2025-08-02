@@ -44,13 +44,14 @@ test('рендерира метриките и реагира на highlightMacr
     fat_grams: 70,
     fat_percent: 35
   };
+  const plan = { calories: 1900 };
   const current = {
     calories: 1200,
     protein_grams: 60,
     carbs_grams: 100,
     fat_grams: 40
   };
-  card.setData(target, current);
+  card.setData({ target, plan, current });
   const utils = within(card.shadowRoot);
   await waitFor(() => utils.getByText('Белтъчини'));
   expect(utils.getByText('60 / 150г')).toBeTruthy();
@@ -90,6 +91,7 @@ test('data-endpoint и refresh-interval извикват fetch периодич�
           fat_grams: 70,
           fat_percent: 35
         },
+        plan: { calories: 1900 },
         current: {
           calories: 1200,
           protein_grams: 60,

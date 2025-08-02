@@ -1,5 +1,5 @@
 /** @jest-environment jsdom */
-import { calculateCurrentMacros, addMealMacros, removeMealMacros, registerNutrientOverrides, getNutrientOverride, __testExports } from '../macroUtils.js';
+import { calculateCurrentMacros, addMealMacros, removeMealMacros, registerNutrientOverrides, getNutrientOverride, calculatePlanMacros, __testExports } from '../macroUtils.js';
 
 test('calculateCurrentMacros sums macros from completed meals and extras', () => {
   const planMenu = {
@@ -24,6 +24,15 @@ test('calculateCurrentMacros sums macros from completed meals and extras', () =>
 
   const result = calculateCurrentMacros(planMenu, completionStatus, extraMeals);
   expect(result).toEqual({ calories: 880, protein: 67, carbs: 48, fat: 42 });
+});
+
+test('calculatePlanMacros sums macros for day menu', () => {
+  const dayMenu = [
+    { id: 'z-01', meal_name: 'Протеинов шейк' },
+    { id: 'o-01', meal_name: 'Печено пилешко с ориз/картофи и салата' }
+  ];
+  const result = calculatePlanMacros(dayMenu);
+  expect(result).toEqual({ calories: 850, protein: 72, carbs: 70, fat: 28 });
 });
 
 test('addMealMacros и removeMealMacros актуализират акумулатора', () => {
