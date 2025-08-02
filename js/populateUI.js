@@ -866,11 +866,6 @@ async function populateProgressHistory(dailyLogs, initialData) {
         return;
     }
 
-    if (typeof Chart !== 'function') {
-        card.innerHTML = '<div class="alert alert-warning" role="alert">Графиката не може да се зареди.</div>';
-        return;
-    }
-
     if (progressChartInstance) {
         progressChartInstance.destroy();
         progressChartInstance = null;
