@@ -19,11 +19,11 @@ test('calculateCurrentMacros sums macros from completed meals and extras', () =>
   };
 
   const extraMeals = [
-    { calories: 100, protein: 5, carbs: 10, fat: 2 }
+    { calories: 100, protein: 5, carbs: 10, fat: 2, fiber: 0 }
   ];
 
   const result = calculateCurrentMacros(planMenu, completionStatus, extraMeals);
-  expect(result).toEqual({ calories: 880, protein: 67, carbs: 48, fat: 42 });
+  expect(result).toEqual({ calories: 880, protein: 67, carbs: 48, fat: 42, fiber: 0 });
 });
 
 test('calculatePlanMacros sums macros for day menu', () => {
@@ -32,37 +32,37 @@ test('calculatePlanMacros sums macros for day menu', () => {
     { id: 'o-01', meal_name: 'Печено пилешко с ориз/картофи и салата' }
   ];
   const result = calculatePlanMacros(dayMenu);
-  expect(result).toEqual({ calories: 850, protein: 72, carbs: 70, fat: 28 });
+  expect(result).toEqual({ calories: 850, protein: 72, carbs: 70, fat: 28, fiber: 0 });
 });
 
 test('addMealMacros и removeMealMacros актуализират акумулатора', () => {
-  const acc = { calories: 0, protein: 0, carbs: 0, fat: 0 };
-  const meal = { calories: 200, protein: 20, carbs: 30, fat: 10 };
+  const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+  const meal = { calories: 200, protein: 20, carbs: 30, fat: 10, fiber: 5 };
   addMealMacros(meal, acc);
-  expect(acc).toEqual({ calories: 200, protein: 20, carbs: 30, fat: 10 });
+  expect(acc).toEqual({ calories: 200, protein: 20, carbs: 30, fat: 10, fiber: 5 });
   removeMealMacros(meal, acc);
-  expect(acc).toEqual({ calories: 0, protein: 0, carbs: 0, fat: 0 });
+  expect(acc).toEqual({ calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
 });
 
 test('scaleMacros скалира макросите спрямо грамовете', () => {
-  const base = { calories: 200, protein: 20, carbs: 30, fat: 10 };
-  expect(scaleMacros(base, 150)).toEqual({ calories: 300, protein: 30, carbs: 45, fat: 15 });
-  expect(scaleMacros(base, 75)).toEqual({ calories: 150, protein: 15, carbs: 22.5, fat: 7.5 });
+  const base = { calories: 200, protein: 20, carbs: 30, fat: 10, fiber: 5 };
+  expect(scaleMacros(base, 150)).toEqual({ calories: 300, protein: 30, carbs: 45, fat: 15, fiber: 7.5 });
+  expect(scaleMacros(base, 75)).toEqual({ calories: 150, protein: 15, carbs: 22.5, fat: 7.5, fiber: 3.75 });
 });
 
 test('resolveMacros при grams използва scaleMacros', () => {
-  const meal = { calories: 200, protein: 20, carbs: 30, fat: 10 };
+  const meal = { calories: 200, protein: 20, carbs: 30, fat: 10, fiber: 5 };
   const result150 = __testExports.resolveMacros(meal, 150);
   const result75 = __testExports.resolveMacros(meal, 75);
-  expect(result150).toEqual({ calories: 300, protein: 30, carbs: 45, fat: 15 });
-  expect(result75).toEqual({ calories: 150, protein: 15, carbs: 22.5, fat: 7.5 });
+  expect(result150).toEqual({ calories: 300, protein: 30, carbs: 45, fat: 15, fiber: 7.5 });
+  expect(result75).toEqual({ calories: 150, protein: 15, carbs: 22.5, fat: 7.5, fiber: 3.75 });
 });
 
 test('getNutrientOverride кешира резултатите', () => {
-  registerNutrientOverrides({ 'ябълка': { calories: 52, protein: 0.3, carbs: 14, fat: 0.2 } });
+  registerNutrientOverrides({ 'ябълка': { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 2.4 } });
   expect(__testExports.nutrientCache.size).toBe(0);
   const first = getNutrientOverride('ЯБЪЛКА');
-  expect(first).toEqual({ calories: 52, protein: 0.3, carbs: 14, fat: 0.2 });
+  expect(first).toEqual({ calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 2.4 });
   expect(__testExports.nutrientCache.size).toBe(1);
   getNutrientOverride('ябълка');
   expect(__testExports.nutrientCache.size).toBe(1);
@@ -70,8 +70,8 @@ test('getNutrientOverride кешира резултатите', () => {
 
 test('loadProductMacros позволява търсене на продукт по име', async () => {
   await loadProductMacros();
-  const acc = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
   addMealMacros({ name: 'ябълка' }, acc);
-  expect(acc).toEqual({ calories: 52, protein: 0.3, carbs: 13.8, fat: 0.2 });
+  expect(acc).toEqual({ calories: 52, protein: 0.3, carbs: 13.8, fat: 0.2, fiber: 2.4 });
   registerNutrientOverrides({});
 });

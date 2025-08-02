@@ -56,6 +56,7 @@ export const colorGroups = [
       { var: 'macro-protein-color', label: 'Белтъчини' },
       { var: 'macro-carbs-color', label: 'Въглехидрати' },
       { var: 'macro-fat-color', label: 'Мазнини' },
+      { var: 'macro-fiber-color', label: 'Фибри' },
       { var: 'macro-ring-highlight', label: 'Акцент на пръстен' },
       { var: 'macro-stroke-color', label: 'Цвят на рамка' }
     ]
@@ -132,6 +133,7 @@ export const sampleThemes = {
       "macro-protein-color": "#5BC0BE",
       "macro-carbs-color": "#FF6B6B",
       "macro-fat-color": "#FFD166",
+      "macro-fiber-color": "#6FCF97",
       "macro-ring-highlight": "#ffffff",
       "macro-stroke-color": "#e0e0e0"
     },
@@ -165,6 +167,7 @@ export const sampleThemes = {
       "macro-protein-color": "#5BC0BE",
       "macro-carbs-color": "#FF6B6B",
       "macro-fat-color": "#FFD166",
+      "macro-fiber-color": "#6FCF97",
       "macro-ring-highlight": "#1C1F2E",
       "macro-stroke-color": "#444444"
     },
@@ -198,6 +201,7 @@ export const sampleThemes = {
       "macro-protein-color": "#5BC0BE",
       "macro-carbs-color": "#FF6B6B",
       "macro-fat-color": "#FFD166",
+      "macro-fiber-color": "#6FCF97",
       "macro-ring-highlight": "#1C1F2E",
       "macro-stroke-color": "#444444"
     }
