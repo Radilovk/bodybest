@@ -829,6 +829,7 @@ export async function populateProgressHistory(dailyLogs, initialData) {
 
     const weightData = [];
     const labels = [];
+    const todayStr = formatDateBgShort(new Date());
 
     const initialWeight = safeParseFloat(initialData?.weight);
     if (initialWeight !== null) {
@@ -851,7 +852,7 @@ export async function populateProgressHistory(dailyLogs, initialData) {
     });
 
     if (weightData.length === 1) {
-        labels.push(formatDateBgShort(new Date()));
+        labels.push(todayStr);
         weightData.push(weightData[0]); // права линия
     }
 
