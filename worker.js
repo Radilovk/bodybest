@@ -4343,9 +4343,9 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
             if (numericScore >= 4.5) return "Отлично"; if (numericScore >= 3.5) return "Добро";
             if (numericScore >= 2.5) return "Задоволително"; if (numericScore >= 1.5) return "Лошо"; return "Много лошо";
         }
-        if (metricType === 'stress') { // Assuming higher score (calmness) is better
-            if (numericScore >= 4.5) return "Много ниско (спокойствие)"; if (numericScore >= 3.5) return "Ниско";
-            if (numericScore >= 2.5) return "Умерено"; if (numericScore >= 1.5) return "Високо"; return "Много високо";
+        if (metricType === 'calmness') { // Higher score means more calm
+            if (numericScore >= 4.5) return "Много спокойно"; if (numericScore >= 3.5) return "Спокойно";
+            if (numericScore >= 2.5) return "Неутрално"; if (numericScore >= 1.5) return "Неспокойно"; return "Много неспокойно";
         }
         // General 1-5 scale (mood, energy, hydration)
         if (numericScore >= 4.5) return "Отлично"; if (numericScore >= 3.5) return "Много добро";
@@ -4366,10 +4366,10 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
     const currentCalmnessNumeric = avgCalmness !== "N/A" ? parseFloat(avgCalmness) : null;
     detailedAnalyticsMetrics.push({
         key: "stress_level", label: "Ниво на Спокойствие",
-        initialValueText: initialAnswers?.stressLevel ? `${initialAnswers.stressLevel} ниво на стрес` : "N/A",
-        expectedValueText: safeGetL(finalPlan, 'detailedTargets.stress_level_target_text', "Ниско ниво на стрес"),
+        initialValueText: initialAnswers?.stressLevel ? `${initialAnswers.stressLevel} ниво на спокойствие` : "N/A",
+        expectedValueText: safeGetL(finalPlan, 'detailedTargets.stress_level_target_text', "Високо ниво на спокойствие"),
         currentValueNumeric: currentCalmnessNumeric,
-        currentValueText: currentCalmnessNumeric !== null ? `${scoreToText(currentCalmnessNumeric, 'stress')} (${currentCalmnessNumeric.toFixed(1)}/5)` : "Няма данни",
+        currentValueText: currentCalmnessNumeric !== null ? `${scoreToText(currentCalmnessNumeric, 'calmness')} (${currentCalmnessNumeric.toFixed(1)}/5)` : "Няма данни",
         infoTextKey: "stress_level_info",
         periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
     });
