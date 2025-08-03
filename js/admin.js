@@ -510,7 +510,7 @@ function renderAnalyticsCurrent(cur) {
             pb.className = 'progress-bar';
             const fill = document.createElement('div');
             fill.className = 'progress-fill';
-            fill.style.setProperty('--progress-end-color', getProgressColor(pct));
+            fill.style.setProperty('--progress-color', getProgressColor(pct));
             animateProgressFill(fill, pct);
             pb.appendChild(fill);
             pbContainer.appendChild(pb);

@@ -46,7 +46,7 @@ export const colorGroups = [
   {
     name: 'Прогрес барове',
     items: [
-      { var: 'progress-end-color', label: 'Краен цвят на прогрес' },
+      { var: 'progress-color', label: 'Цвят на прогрес' },
       { var: 'progress-bar-bg-empty', label: 'Празен прогрес бар' }
     ]
   },
@@ -128,7 +128,7 @@ export const sampleThemes = {
       "border-color-soft": "#e1e8f0",
       "input-bg-disabled": "#e9ecef",
       "input-border-color": "#ced4da",
-      "progress-end-color": "#2ecc71",
+      "progress-color": "#2ecc71",
       "progress-bar-bg-empty": "#e9ecef",
       "macro-protein-color": "#5BC0BE",
       "macro-carbs-color": "#FF6B6B",
@@ -162,7 +162,7 @@ export const sampleThemes = {
       "border-color-soft": "#2D3044",
       "input-bg-disabled": "#2C3147",
       "input-border-color": "#3C425A",
-      "progress-end-color": "#2ecc71",
+      "progress-color": "#2ecc71",
       "progress-bar-bg-empty": "#393E57",
       "macro-protein-color": "#5BC0BE",
       "macro-carbs-color": "#FF6B6B",
@@ -196,7 +196,7 @@ export const sampleThemes = {
       "border-color-soft": "#2D3044",
       "input-bg-disabled": "#2C3147",
       "input-border-color": "#3C425A",
-      "progress-end-color": "#80FF80",
+      "progress-color": "#80FF80",
       "progress-bar-bg-empty": "#393E57",
       "macro-protein-color": "#5BC0BE",
       "macro-carbs-color": "#FF6B6B",
