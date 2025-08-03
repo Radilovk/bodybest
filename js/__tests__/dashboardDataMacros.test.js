@@ -25,5 +25,9 @@ describe('handleDashboardDataRequest caloriesMacros fallback', () => {
     const res = await handleDashboardDataRequest(request, env);
     expect(res.planData.caloriesMacros).toBeDefined();
     expect(res.planData.caloriesMacros.calories).toBeGreaterThan(0);
+    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith(
+      'u1_final_plan',
+      expect.stringContaining('"caloriesMacros"')
+    );
   });
 });

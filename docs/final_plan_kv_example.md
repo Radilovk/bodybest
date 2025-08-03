@@ -18,29 +18,15 @@
 
 ## Макро записи
 
-За проследяване на промените се използват два помощни ключа:
+За проследяване на промените се използва помощният ключ:
 
 - `<userId>_final_analysis_macros` – сравнение „План vs Препоръка“.
-- `<userId>_final_caloriesMacros` – копие на макронутриентите за бърз достъп.
 
 ```json
 // <userId>_final_analysis_macros
 {
   "plan": { "calories": 1800, "protein_grams": 135, "carbs_grams": 180, "fat_grams": 60 },
   "recommendation": { "calories": 1900, "protein_grams": 140, "carbs_grams": 190, "fat_grams": 65 }
-}
-```
-
-```json
-// <userId>_final_caloriesMacros
-{
-  "calories": 1800,
-  "protein_percent": 30,
-  "carbs_percent": 40,
-  "fat_percent": 30,
-  "protein_grams": 135,
-  "carbs_grams": 180,
-  "fat_grams": 60
 }
 ```
 
