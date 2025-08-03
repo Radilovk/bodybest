@@ -138,6 +138,20 @@
         .macro-metric.carbs.active { border-color: var(--macro-carbs-color); }
         .macro-metric.fat.active { border-color: var(--macro-fat-color); }
         .macro-metric.fiber.active { border-color: var(--macro-fiber-color); }
+        .macro-metric.over {
+          color: #ff4d4f;
+          animation: over-pulse 0.6s ease-in-out;
+        }
+        .macro-metric.under {
+          color: #888;
+          animation: under-pulse 0.6s ease-in-out;
+        }
+        @keyframes over-pulse {
+          50% { transform: scale(1.05); }
+        }
+        @keyframes under-pulse {
+          50% { opacity: 0.5; }
+        }
         .macro-icon { font-size: 1.2rem; }
         .macro-label { font-size: 0.85rem; margin-top: 0.25rem; }
         .macro-value { font-size: 1.1rem; font-weight: 600; }
@@ -344,6 +358,12 @@
           <span class="macro-icon"><i class="bi bi-fire"></i></span>
           <div class="macro-label">${this.labels.caloriesLabel}</div>
           <div class="macro-value">${current.calories} / ${target.calories} kcal</div>`;
+        const calDiff = current.calories - target.calories;
+        if (calDiff > 0) {
+          calDiv.classList.add('over');
+        } else if (calDiff < 0) {
+          calDiv.classList.add('under');
+        }
         this.grid.appendChild(calDiv);
         const macros = [
           { key: 'protein', icon: 'bi-egg-fried' },
@@ -367,6 +387,12 @@
             <div class="macro-label">${label}</div>
             <div class="macro-value">${currentVal} / ${targetVal}г</div>
             <div class="macro-subtitle">${percent}% ${this.labels.fromGoal}</div>`;
+          const diff = currentVal - targetVal;
+          if (diff > 0) {
+            div.classList.add('over');
+          } else if (diff < 0) {
+            div.classList.add('under');
+          }
           div.addEventListener('click', () => this.highlightMacro(div, idx));
           div.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
