@@ -1,6 +1,6 @@
 import { loadLocale } from './macroCardLocales.js';
 import { ensureChart } from './chartLoader.js';
-import { scaleMacros } from './macroUtils.js';
+import { scaleMacros, formatPercent } from './macroUtils.js';
 
 let Chart;
 
@@ -376,9 +376,12 @@ export class MacroAnalyticsCard extends HTMLElement {
       this.warningEl.textContent = '';
     }
     const hasPlan = plan && typeof plan.calories === 'number';
-    const planLine = hasPlan
-      ? `<div class="plan-vs-target">${this.labels.planVsTargetLabel.replace('{plan}', plan.calories).replace('{target}', target.calories)}</div>`
-      : '';
+    const planLine =
+      hasPlan && this.labels.planVsTargetLabel
+        ? `<div class="plan-vs-target">${this.labels.planVsTargetLabel
+            .replace('{plan}', plan.calories)
+            .replace('{target}', target.calories)}</div>`
+        : '';
     const consumedCaloriesRaw = hasMacroData ? current.calories : undefined;
     const consumedCalories = typeof consumedCaloriesRaw === 'number' ? consumedCaloriesRaw : '--';
     const caloriesExceeded =
@@ -418,7 +421,7 @@ export class MacroAnalyticsCard extends HTMLElement {
       const currentRaw = hasMacroData ? current[`${item.key}_grams`] : undefined;
       const displayCurrent = typeof currentRaw === 'number' ? currentRaw : '--';
       const targetVal = target[`${item.key}_grams`];
-      const percent = target[`${item.key}_percent`];
+      const percent = formatPercent(currentRaw / targetVal);
       const div = document.createElement('div');
       div.className = `macro-metric ${item.key}`;
       if (typeof currentRaw === 'number' && typeof targetVal === 'number') {
@@ -429,13 +432,13 @@ export class MacroAnalyticsCard extends HTMLElement {
       }
       div.setAttribute('role', 'button');
       div.setAttribute('tabindex', '0');
-      div.setAttribute('aria-label', `${label}: ${displayCurrent} от ${targetVal} грама (${percent}% ${this.labels.fromGoal})`);
+      div.setAttribute('aria-label', `${label}: ${displayCurrent} от ${targetVal} грама (${percent} ${this.labels.fromGoal})`);
       div.setAttribute('aria-pressed', 'false');
       div.innerHTML = `
         <span class="macro-icon"><i class="bi ${item.icon}"></i></span>
         <div class="macro-label">${label}</div>
         <div class="macro-value">${displayCurrent} / ${targetVal}г</div>
-        <div class="macro-subtitle">${percent}% ${this.labels.fromGoal}</div>`;
+        <div class="macro-subtitle">${percent} ${this.labels.fromGoal}</div>`;
       div.addEventListener('click', () => this.highlightMacro(div, idx));
       div.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {

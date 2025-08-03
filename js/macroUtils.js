@@ -88,6 +88,18 @@ export function scaleMacros(macros = {}, grams = 100) {
   };
 }
 
+/**
+ * Форматира съотношение като процент.
+ * @param {number} ratio - Стойност между 0 и 1.
+ * @param {number} fractionDigits - Брой десетични знаци.
+ * @returns {string}
+ */
+export function formatPercent(ratio, fractionDigits = 0) {
+  const val = Number(ratio);
+  if (!Number.isFinite(val)) return '--%';
+  return `${(val * 100).toFixed(fractionDigits)}%`;
+}
+
 function resolveMacros(meal, grams) {
   if (!meal) return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
   let macros;

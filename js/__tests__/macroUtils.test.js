@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 import { jest } from '@jest/globals';
-import { calculateCurrentMacros, addMealMacros, removeMealMacros, registerNutrientOverrides, getNutrientOverride, calculatePlanMacros, loadProductMacros, scaleMacros, __testExports } from '../macroUtils.js';
+import { calculateCurrentMacros, addMealMacros, removeMealMacros, registerNutrientOverrides, getNutrientOverride, calculatePlanMacros, loadProductMacros, scaleMacros, formatPercent, __testExports } from '../macroUtils.js';
 
 test('calculateCurrentMacros sums macros from completed meals and extras', () => {
   const planMenu = {
@@ -83,4 +83,10 @@ test('loadProductMacros позволява търсене на продукт п
   addMealMacros({ name: 'ябълка' }, acc);
   expect(acc).toEqual({ calories: 52, protein: 0.3, carbs: 13.8, fat: 0.2, fiber: 2.4 });
   registerNutrientOverrides({});
+});
+
+test('formatPercent форматира съотношения', () => {
+  expect(formatPercent(0.4)).toBe('40%');
+  expect(formatPercent(0)).toBe('0%');
+  expect(formatPercent('na')).toBe('--%');
 });
