@@ -1,10 +1,13 @@
 // config.js - Конфигурация и Глобални Променливи
 
-// Определяваме базовия URL според средата
-export const isLocalDevelopment = window.location.hostname === 'localhost' ||
-                               window.location.hostname === '127.0.0.1' ||
-                               window.location.hostname.includes('replit') ||
-                               window.location.hostname.includes('preview');
+// Определяме базовия URL според средата.
+// За да се използва локален proxy, задайте `window.USE_LOCAL_PROXY = true`.
+export const isLocalDevelopment = (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.includes('replit') ||
+    window.location.hostname.includes('preview')
+) && Boolean(window.USE_LOCAL_PROXY);
 
 export const workerBaseUrl = isLocalDevelopment
     ? '' // Използваме локалния proxy в развойна среда

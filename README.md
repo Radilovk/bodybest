@@ -27,6 +27,16 @@ API requests to paths starting with `/api` are automatically proxied to
 
 The application will be available at `http://localhost:5173` by default.
 
+### Локален proxy
+
+По подразбиране `config.js` използва production worker URL. Ако работите локално и имате собствен proxy, задайте `window.USE_LOCAL_PROXY = true`, например в конзолата:
+
+```js
+window.USE_LOCAL_PROXY = true;
+```
+
+При липса на тази променлива заявките се насочват към `https://openapichatbot.radilov-k.workers.dev`, така че приложението функционира без допълнителна настройка.
+
 ### Динамична тема
 
 Интерфейсът следва системната светла/тъмна настройка. Ако в LocalStorage е избрана опцията "system", промяната на темата в операционната система се отразява моментално.
