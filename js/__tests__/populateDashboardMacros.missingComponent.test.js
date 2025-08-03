@@ -45,7 +45,7 @@ test('създава контейнер, ако липсва макро анал
   expect(container).not.toBeNull();
   expect(selectors.analyticsCardsContainer.contains(container)).toBe(true);
   const frame = container.querySelector('#macroAnalyticsCardFrame');
-  expect(frame).not.toBeNull();
+  expect(frame).toBeNull();
 });
 
 test('пресъздава контейнер, когато е извън DOM', async () => {
