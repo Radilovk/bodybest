@@ -169,6 +169,10 @@ body.vivid-theme .index-card .index-value {
 }
 .analytics-card { cursor: pointer; transition: transform 0.3s ease; }
 .analytics-card.open { transform: scale(1.03); }
+.analytics-card iframe {
+  width: 100%;
+  border: 0;
+}
 .metric-current-text {
   margin-bottom: var(--space-sm);
   font-weight: 600;
