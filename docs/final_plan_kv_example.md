@@ -18,15 +18,18 @@
 
 ## Макро записи
 
-За проследяване на промените се използва помощният ключ:
+За проследяване на промените се използва същият ключ като при първоначалния анализ:
 
-- `<userId>_final_analysis_macros` – сравнение „План vs Препоръка“.
+- `<userId>_analysis_macros` – сравнение „План vs Препоръка“ с флаг `status: "final"`.
 
 ```json
-// <userId>_final_analysis_macros
+// <userId>_analysis_macros
 {
-  "plan": { "calories": 1800, "protein_grams": 135, "carbs_grams": 180, "fat_grams": 60 },
-  "recommendation": { "calories": 1900, "protein_grams": 140, "carbs_grams": 190, "fat_grams": 65 }
+  "status": "final",
+  "data": {
+    "plan": { "calories": 1800, "protein_grams": 135, "carbs_grams": 180, "fat_grams": 60 },
+    "recommendation": { "calories": 1900, "protein_grams": 140, "carbs_grams": 190, "fat_grams": 65 }
+  }
 }
 ```
 

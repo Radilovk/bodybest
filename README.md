@@ -915,7 +915,7 @@ curl -X POST /api/aiHelper \
 |------|-----------|
 | 1800 kcal / 135 г P / 180 г C / 60 г F | 1900 kcal / 140 г P / 200 г C / 65 г F |
 
-Разликата се визуализира в `macroAnalyticsCard` и се записва в ключ `<userId>_analysis_macros`.
+Разликата се визуализира в `macroAnalyticsCard` и се записва в ключ `<userId>_analysis_macros` със `status` (`initial` или `final`).
 
 Ендпойнтът `/api/peekAdminQueries` връща списък с неприключени запитвания, без да ги маркира като прочетени. Използва се основно за показване на индикатора, докато `/api/getAdminQueries` обновява флага `read` при зареждане на данните.
 
