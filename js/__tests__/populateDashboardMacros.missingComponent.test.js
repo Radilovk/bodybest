@@ -1,8 +1,7 @@
 /** @jest-environment jsdom */
 import { jest } from '@jest/globals';
 
-test('логва предупреждение при липсващ macro-analytics-card компонент', async () => {
-  jest.unstable_mockModule('../macroAnalyticsCardComponent.js', () => ({}));
+test('не хвърля грешка при липсващ iframe', async () => {
   document.body.innerHTML = `
     <div id="macroMetricsPreview"></div>
     <div id="analyticsCardsContainer"></div>
@@ -21,7 +20,7 @@ test('логва предупреждение при липсващ macro-analyt
     getCssVar: () => '',
     formatDateBgShort: () => ''
   }));
-  jest.unstable_mockModule('../config.js', () => ({ generateId: () => 'id' }));
+  jest.unstable_mockModule('../config.js', () => ({ generateId: () => 'id', standaloneMacroUrl: 'macroAnalyticsCardStandalone.html' }));
   jest.unstable_mockModule('../app.js', () => ({
     fullDashboardData: {},
     todaysMealCompletionStatus: {},
@@ -30,9 +29,6 @@ test('логва предупреждение при липсващ macro-analyt
     planHasRecContent: false,
   }));
   jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn() }));
-  const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   const { populateDashboardMacros } = await import('../populateUI.js');
-  await populateDashboardMacros({ calories: 1000, protein_percent: 30, carbs_percent: 40, fat_percent: 30 });
-  expect(warnSpy).toHaveBeenCalled();
-  expect(document.getElementById('macroAnalyticsCard')).toBeNull();
+  await expect(populateDashboardMacros({ calories: 1000, protein_percent: 30, carbs_percent: 40, fat_percent: 30 })).resolves.not.toThrow();
 });
