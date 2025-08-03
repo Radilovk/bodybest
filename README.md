@@ -190,6 +190,18 @@ const currentData = {
 };
 ```
 
+**Атрибути**
+
+- `exceed-threshold` – множител за границата на превишение на целта (по подразбиране `1.15`).
+
+```html
+<macro-analytics-card
+  exceed-threshold="1.2"
+  target-data="..."
+  current-data="...">
+</macro-analytics-card>
+```
+
 **Функции**
 
 - `renderMacroAnalyticsCard(target, current)` изгражда HTML картата и легендата.
