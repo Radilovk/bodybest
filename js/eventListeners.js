@@ -9,8 +9,8 @@ import {
 } from './uiHandlers.js';
 import { handleLogout } from './auth.js';
 import { openExtraMealModal } from './extraMealForm.js';
-import { apiEndpoints } from './config.js';
-import { macroChartInstance, progressChartInstance, renderPendingMacroChart, populateDashboardMacros } from './populateUI.js';
+import { apiEndpoints, standaloneMacroUrl } from './config.js';
+import { macroChartInstance, progressChartInstance, populateDashboardMacros, lastMacroPayload } from './populateUI.js';
 import {
     handleSaveLog, handleFeedbackFormSubmit, // from app.js
     handleChatSend, handleChatInputKeypress, // from app.js / chat.js
@@ -132,7 +132,22 @@ export function setupStaticEventListeners() {
                 if (preview) preview.style.display = isOpen ? 'grid' : 'none';
                 selectors.detailedAnalyticsAccordion.classList.toggle('index-card', isOpen);
                 if (!isOpen) {
-                    renderPendingMacroChart();
+                    let frame = document.getElementById('macroAnalyticsCardFrame');
+                    if (!frame) {
+                        frame = document.createElement('iframe');
+                        frame.id = 'macroAnalyticsCardFrame';
+                        frame.title = 'Макро анализ';
+                        frame.loading = 'lazy';
+                        frame.style.width = '100%';
+                        frame.style.border = '0';
+                        frame.style.display = 'block';
+                        frame.src = standaloneMacroUrl;
+                        selectors.macroAnalyticsCardContainer.innerHTML = '';
+                        selectors.macroAnalyticsCardContainer.appendChild(frame);
+                    }
+                    const sendData = () => frame.contentWindow?.postMessage({ type: 'macro-data', data: lastMacroPayload }, '*');
+                    if (frame.contentWindow?.document?.readyState === 'complete') sendData();
+                    else frame.addEventListener('load', sendData, { once: true });
                     macroChartInstance?.resize();
                     progressChartInstance?.resize();
                 }
@@ -146,7 +161,22 @@ export function setupStaticEventListeners() {
                     if (preview) preview.style.display = isOpen ? 'grid' : 'none';
                     selectors.detailedAnalyticsAccordion.classList.toggle('index-card', isOpen);
                     if (!isOpen) {
-                        renderPendingMacroChart();
+                        let frame = document.getElementById('macroAnalyticsCardFrame');
+                        if (!frame) {
+                            frame = document.createElement('iframe');
+                            frame.id = 'macroAnalyticsCardFrame';
+                            frame.title = 'Макро анализ';
+                            frame.loading = 'lazy';
+                            frame.style.width = '100%';
+                            frame.style.border = '0';
+                            frame.style.display = 'block';
+                            frame.src = standaloneMacroUrl;
+                            selectors.macroAnalyticsCardContainer.innerHTML = '';
+                            selectors.macroAnalyticsCardContainer.appendChild(frame);
+                        }
+                        const sendData = () => frame.contentWindow?.postMessage({ type: 'macro-data', data: lastMacroPayload }, '*');
+                        if (frame.contentWindow?.document?.readyState === 'complete') sendData();
+                        else frame.addEventListener('load', sendData, { once: true });
                         macroChartInstance?.resize();
                         progressChartInstance?.resize();
                     }

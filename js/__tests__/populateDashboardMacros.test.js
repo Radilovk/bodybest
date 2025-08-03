@@ -2,16 +2,17 @@
 import { jest } from '@jest/globals';
 
 let populateDashboardMacros;
+let renderPendingMacroChart;
 let selectors;
 let appState;
 beforeAll(async () => {
   appState = await import('../app.js');
-  ({ populateDashboardMacros } = await import('../populateUI.js'));
+  ({ populateDashboardMacros, renderPendingMacroChart } = await import('../populateUI.js'));
   ({ selectors } = await import('../uiElements.js'));
 });
 
 function setupDom() {
-  document.body.innerHTML = '<div id="macroMetricsPreview"></div><div id="analyticsCardsContainer"><iframe id="macroAnalyticsCardFrame"></iframe></div>';
+  document.body.innerHTML = '<div id="macroMetricsPreview"></div><div id="analyticsCardsContainer"></div>';
   selectors.macroMetricsPreview = document.getElementById('macroMetricsPreview');
   selectors.analyticsCardsContainer = document.getElementById('analyticsCardsContainer');
 }
@@ -37,11 +38,16 @@ test('placeholder shown when macros missing and populates after migration', asyn
     { id: 'o-01', meal_name: 'Печено пилешко с ориз/картофи и салата' }
   ];
   appState.fullDashboardData.planData = { week1Menu: { [currentDayKey]: dayMenu } };
-  const frame = document.getElementById('macroAnalyticsCardFrame');
-  Object.defineProperty(frame, 'contentWindow', { value: { postMessage: jest.fn(), document: { readyState: 'complete' } } });
   await populateDashboardMacros(macros);
   expect(selectors.macroMetricsPreview.classList.contains('hidden')).toBe(false);
   expect(selectors.macroMetricsPreview.textContent).toContain('1800');
+  expect(document.getElementById('macroAnalyticsCardFrame')).toBeNull();
+
+  const frame = document.createElement('iframe');
+  frame.id = 'macroAnalyticsCardFrame';
+  Object.defineProperty(frame, 'contentWindow', { value: { postMessage: jest.fn(), document: { readyState: 'complete' } } });
+  selectors.macroAnalyticsCardContainer.appendChild(frame);
+  renderPendingMacroChart();
   expect(frame.contentWindow.postMessage).toHaveBeenCalled();
   const expectedCurrent = {
     calories: appState.currentIntakeMacros.calories,

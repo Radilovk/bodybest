@@ -5,14 +5,15 @@ describe('renderPendingMacroChart', () => {
   let renderPendingMacroChart;
   let populateDashboardMacros;
   let appState;
+  let selectors;
 
   beforeEach(async () => {
     jest.resetModules();
     document.body.innerHTML = `
       <div id="macroMetricsPreview"></div>
-      <div id="analyticsCardsContainer"><iframe id="macroAnalyticsCardFrame"></iframe></div>
+      <div id="analyticsCardsContainer"></div>
     `;
-    const selectors = {
+    selectors = {
       macroMetricsPreview: document.getElementById('macroMetricsPreview'),
       analyticsCardsContainer: document.getElementById('analyticsCardsContainer'),
     };
@@ -29,11 +30,12 @@ describe('renderPendingMacroChart', () => {
   });
 
   test('posts updated macro data to iframe on each render', async () => {
-    const frame = document.getElementById('macroAnalyticsCardFrame');
-    Object.defineProperty(frame, 'contentWindow', { value: { postMessage: jest.fn(), document: { readyState: 'complete' } } });
     const macros = { calories: 1800, protein_percent: 30, carbs_percent: 40, fat_percent: 30, protein_grams: 135, carbs_grams: 180, fat_grams: 60 };
     await populateDashboardMacros(macros);
-    frame.contentWindow.postMessage.mockClear();
+    const frame = document.createElement('iframe');
+    frame.id = 'macroAnalyticsCardFrame';
+    Object.defineProperty(frame, 'contentWindow', { value: { postMessage: jest.fn(), document: { readyState: 'complete' } } });
+    selectors.macroAnalyticsCardContainer.appendChild(frame);
     renderPendingMacroChart();
     expect(frame.contentWindow.postMessage).toHaveBeenCalledWith(
       { type: 'macro-data', data: expect.objectContaining({ target: macros }) },

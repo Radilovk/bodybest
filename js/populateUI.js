@@ -1,7 +1,7 @@
 // populateUI.js - Попълване на UI с данни
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort } from './utils.js';
-import { generateId, standaloneMacroUrl } from './config.js';
+import { generateId } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
@@ -9,7 +9,7 @@ import { calculatePlanMacros, getNutrientOverride, addMealMacros, scaleMacros } 
 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
-let lastMacroPayload = null;
+export let lastMacroPayload = null;
 
 // Helper for tests to inject chart instance
 export function __setProgressChartInstance(instance) {
@@ -416,27 +416,8 @@ export async function populateDashboardMacros(macros) {
         fat_grams: currentIntakeMacros.fat,
         fiber_grams: currentIntakeMacros.fiber
     };
-    let frame = document.getElementById('macroAnalyticsCardFrame');
-    if (!frame || !macroContainer.contains(frame)) {
-        if (!frame) {
-            frame = document.createElement('iframe');
-            frame.id = 'macroAnalyticsCardFrame';
-            frame.title = 'Макро анализ';
-            frame.loading = 'lazy';
-            frame.style.width = '100%';
-            frame.style.border = '0';
-            frame.style.display = 'block';
-            frame.src = standaloneMacroUrl;
-        }
-        macroContainer.innerHTML = '';
-        macroContainer.appendChild(frame);
-    }
-    if (frame) {
-        lastMacroPayload = { target: macros, plan: planMacros, current };
-        const sendData = () => frame.contentWindow?.postMessage({ type: 'macro-data', data: lastMacroPayload }, '*');
-        if (frame.contentWindow?.document?.readyState === 'complete') sendData();
-        else frame.addEventListener('load', sendData, { once: true });
-    }
+    lastMacroPayload = { target: macros, plan: planMacros, current };
+    renderPendingMacroChart();
 }
 
 function populateDashboardStreak(streakData) {
