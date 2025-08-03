@@ -47,7 +47,6 @@ export function initializeSelectors() {
         streakGrid: 'streakGrid',
         achievementShareBtn: 'achievementShareBtn',
         analyticsCardsContainer: 'analyticsCardsContainer',
-        macroAnalyticsCardContainer: 'macroAnalyticsCardContainer',
         macroAnalyticsCardFrame: 'macroAnalyticsCardFrame',
         macroMetricsGrid: 'macroMetricsGrid',
         macroMetricsPreview: 'macroMetricsPreview',
@@ -76,7 +75,7 @@ export function initializeSelectors() {
                 'planModChatSend', 'planModChatClose', 'planModChatClear',
                 'streakGrid', 'analyticsCardsContainer', 'achievementShareBtn',
                 'goalCard', 'engagementCard', 'healthCard', 'streakCard',
-                'macroAnalyticsCardContainer', 'macroAnalyticsCardFrame', 'macroMetricsGrid',
+                'macroAnalyticsCardFrame', 'macroMetricsGrid',
                 'macroMetricsPreview',
                 'recFoodAllowedCard', 'recFoodLimitCard', 'recHydrationCard',
                 'recCookingMethodsCard', 'recSupplementsCard'
