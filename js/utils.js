@@ -145,12 +145,18 @@ export function animateProgressFill(el, percent) {
 
 /**
  * Задава цвета на прогрес бара и анимира запълването.
+ * Освен това синхронизира цвета с най-близката карта
+ * за анализи, за да може свързаният текст да наследи
+ * същия оттенък.
  * @param {HTMLElement} el Елементът, представляващ запълването.
  * @param {number} percent Процент за крайна широчина.
  */
 export function applyProgressFill(el, percent) {
     if (!el) return;
-    el.style.setProperty('--progress-color', getProgressColor(percent));
+    const color = getProgressColor(percent);
+    el.style.setProperty('--progress-color', color);
+    const card = el.closest('.analytics-card');
+    if (card) card.style.setProperty('--progress-color', color);
     animateProgressFill(el, percent);
 }
 

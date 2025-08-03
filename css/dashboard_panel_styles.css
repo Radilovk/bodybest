@@ -172,7 +172,7 @@ body.vivid-theme .index-card .index-value {
 .metric-current-text {
   margin-bottom: var(--space-sm);
   font-weight: 600;
-  color: var(--secondary-color);
+  color: var(--progress-color);
 }
 .analytics-card-details {
   overflow: hidden;
