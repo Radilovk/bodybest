@@ -1,8 +1,8 @@
 // populateUI.js - Попълване на UI с данни
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort } from './utils.js';
-import { generateId } from './config.js';
-import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake } from './app.js';
+import { generateId, apiEndpoints } from './config.js';
+import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake, currentUserId } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
 import { calculatePlanMacros, getNutrientOverride, addMealMacros, scaleMacros } from './macroUtils.js';
@@ -402,8 +402,22 @@ export async function populateDashboardMacros(macros) {
     }
     if (!macros) {
         console.warn('Macros data is missing.');
+        macroContainer.innerHTML = '<p class="placeholder">Липсват данни за макроси.</p>' +
+            '<button id="recalcMacrosBtn" class="btn btn-primary btn-sm">Пресметни отново</button>';
+        const btn = macroContainer.querySelector('#recalcMacrosBtn');
+        btn?.addEventListener('click', async () => {
+            try {
+                const res = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}&recalcMacros=1`);
+                const data = await res.json();
+                await populateDashboardMacros(data?.planData?.caloriesMacros);
+            } catch (e) {
+                console.error('Failed to recalc macros', e);
+                showToast('Неуспешно изчисляване на макроси.', true);
+            }
+        }, { once: true });
         return;
     }
+    if (macroContainer.querySelector('#recalcMacrosBtn')) macroContainer.innerHTML = '';
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const today = new Date();
     const currentDayKey = dayNames[today.getDay()];

@@ -19,8 +19,20 @@ describe('renderPendingMacroChart', () => {
     };
     jest.unstable_mockModule('../uiElements.js', () => ({ selectors, trackerInfoTexts: {}, detailedMetricInfoTexts: {} }));
     jest.unstable_mockModule('../utils.js', () => ({ safeGet: jest.fn(), safeParseFloat: jest.fn(), capitalizeFirstLetter: jest.fn(), escapeHtml: jest.fn(), applyProgressFill: jest.fn(), getCssVar: jest.fn(), formatDateBgShort: jest.fn() }));
-    jest.unstable_mockModule('../config.js', () => ({ generateId: () => 'id', standaloneMacroUrl: 'macroAnalyticsCardStandalone.html' }));
-    jest.unstable_mockModule('../app.js', () => ({ fullDashboardData: {}, todaysMealCompletionStatus: {}, currentIntakeMacros: { calories: 1000, protein: 0, carbs: 0, fat: 0, fiber: 0 }, planHasRecContent: false, todaysExtraMeals: [], loadCurrentIntake: jest.fn() }));
+    jest.unstable_mockModule('../config.js', () => ({
+      generateId: () => 'id',
+      standaloneMacroUrl: 'macroAnalyticsCardStandalone.html',
+      apiEndpoints: { dashboard: '/api/dashboardData' }
+    }));
+    jest.unstable_mockModule('../app.js', () => ({
+      fullDashboardData: {},
+      todaysMealCompletionStatus: {},
+      currentIntakeMacros: { calories: 1000, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+      planHasRecContent: false,
+      todaysExtraMeals: [],
+      loadCurrentIntake: jest.fn(),
+      currentUserId: 'u1'
+    }));
     jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn() }));
     jest.unstable_mockModule('../chartLoader.js', () => ({ ensureChart: jest.fn() }));
     jest.unstable_mockModule('../macroUtils.js', () => ({ calculatePlanMacros: jest.fn().mockReturnValue({ calories: 850, protein: 72, carbs: 70, fat: 28 }), getNutrientOverride: jest.fn(), addMealMacros: jest.fn(), scaleMacros: jest.fn() }));

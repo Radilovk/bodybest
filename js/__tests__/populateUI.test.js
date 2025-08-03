@@ -78,7 +78,8 @@ beforeEach(async () => {
     todaysExtraMeals: [],
     currentIntakeMacros: {},
     planHasRecContent: false,
-    loadCurrentIntake: jest.fn()
+    loadCurrentIntake: jest.fn(),
+    currentUserId: 'u1'
   }));
   ({ populateUI } = await import('../populateUI.js'));
 });
@@ -124,6 +125,7 @@ test('обновява макро картата чрез postMessage', async ()
     currentIntakeMacros: {},
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),
+    currentUserId: 'u1'
   }));
   ({ populateUI } = await import('../populateUI.js'));
   const frame = document.getElementById('macroAnalyticsCardFrame');
@@ -161,7 +163,8 @@ test('hides modules when values are zero', async () => {
     ...zeroData,
     todaysExtraMeals: [],
     currentIntakeMacros: {},
-    loadCurrentIntake: jest.fn()
+    loadCurrentIntake: jest.fn(),
+    currentUserId: 'u1'
   }));
   ({ populateUI } = await import('../populateUI.js'));
   await populateUI();
@@ -196,7 +199,8 @@ test('показва картата за историята на теглото 
     todaysExtraMeals: [],
     currentIntakeMacros: {},
     planHasRecContent: false,
-    loadCurrentIntake: jest.fn()
+    loadCurrentIntake: jest.fn(),
+    currentUserId: 'u1'
   }));
   ({ populateUI } = await import('../populateUI.js'));
   await populateUI();
@@ -230,7 +234,8 @@ test('populates daily plan with color bars and meal types', async () => {
     todaysExtraMeals: [],
     currentIntakeMacros: {},
     planHasRecContent: false,
-    loadCurrentIntake: jest.fn()
+    loadCurrentIntake: jest.fn(),
+    currentUserId: 'u1'
   }));
   ({ populateUI } = await import('../populateUI.js'));
   await populateUI();
@@ -274,7 +279,8 @@ test('handles meal type variations', async () => {
     todaysExtraMeals: [],
     currentIntakeMacros: {},
     planHasRecContent: false,
-    loadCurrentIntake: jest.fn()
+    loadCurrentIntake: jest.fn(),
+    currentUserId: 'u1'
   }));
   ({ populateUI } = await import('../populateUI.js'));
   await populateUI();
@@ -310,7 +316,8 @@ test('applies success color to completed meal bar', async () => {
     todaysExtraMeals: [],
     currentIntakeMacros: {},
     planHasRecContent: false,
-    loadCurrentIntake: jest.fn()
+    loadCurrentIntake: jest.fn(),
+    currentUserId: 'u1'
   }));
   ({ populateUI } = await import('../populateUI.js'));
 
@@ -354,7 +361,8 @@ test('clicking a meal card toggles completion status', async () => {
       todaysExtraMeals: [],
       currentIntakeMacros: {},
       planHasRecContent: false,
-      loadCurrentIntake: jest.fn()
+      loadCurrentIntake: jest.fn(),
+      currentUserId: 'u1'
     };
   });
 
@@ -395,7 +403,8 @@ describe('progress bar width handling', () => {
       todaysExtraMeals: [],
       currentIntakeMacros: {},
       planHasRecContent: false,
-      loadCurrentIntake: jest.fn()
+      loadCurrentIntake: jest.fn(),
+      currentUserId: 'u1'
     }));
     ({ populateUI } = await import('../populateUI.js'));
     await populateUI();

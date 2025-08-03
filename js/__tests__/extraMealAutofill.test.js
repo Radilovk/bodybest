@@ -13,7 +13,7 @@ beforeEach(async () => {
     closeModal: jest.fn()
   }));
   jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
-  jest.unstable_mockModule('../populateUI.js', () => ({ addExtraMealWithOverride: jest.fn(), populateDashboardMacros: jest.fn() }));
+  jest.unstable_mockModule('../populateUI.js', () => ({ addExtraMealWithOverride: jest.fn(), populateDashboardMacros: jest.fn(), renderPendingMacroChart: jest.fn() }));
   jest.unstable_mockModule('../app.js', () => ({
     currentUserId: 'u1',
     todaysExtraMeals: [],
