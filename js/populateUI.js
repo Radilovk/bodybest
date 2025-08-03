@@ -402,13 +402,20 @@ export async function populateDashboardMacros(macros) {
     const currentDayKey = dayNames[today.getDay()];
     const dayMenu = fullDashboardData?.planData?.week1Menu?.[currentDayKey] || [];
     const planMacros = calculatePlanMacros(dayMenu);
+    const current = {
+        calories: currentIntakeMacros.calories,
+        protein_grams: currentIntakeMacros.protein,
+        carbs_grams: currentIntakeMacros.carbs,
+        fat_grams: currentIntakeMacros.fat,
+        fiber_grams: currentIntakeMacros.fiber
+    };
+    const card = document.getElementById('macroAnalyticsCard');
+    if (card && typeof card.setData === 'function') {
+        card.setData({ target: macros, plan: planMacros, current });
+    }
     const frame = document.getElementById('macroAnalyticsCardFrame');
     if (frame) {
-        const payload = {
-            target: macros,
-            plan: planMacros,
-            current: currentIntakeMacros
-        };
+        const payload = { target: macros, plan: planMacros, current };
         const sendData = () => frame.contentWindow?.postMessage({ type: 'macro-data', data: payload }, '*');
         if (frame.contentWindow?.document?.readyState === 'complete') {
             sendData();

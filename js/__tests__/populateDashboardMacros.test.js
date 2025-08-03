@@ -11,7 +11,7 @@ beforeAll(async () => {
 });
 
 function setupDom() {
-  document.body.innerHTML = '<div id="macroMetricsPreview"></div><div id="analyticsCardsContainer"><iframe id="macroAnalyticsCardFrame"></iframe></div>';
+  document.body.innerHTML = '<div id="macroMetricsPreview"></div><div id="analyticsCardsContainer"><iframe id="macroAnalyticsCardFrame"></iframe><div id="macroAnalyticsCard"></div></div>';
   selectors.macroMetricsPreview = document.getElementById('macroMetricsPreview');
   selectors.analyticsCardsContainer = document.getElementById('analyticsCardsContainer');
 }
@@ -37,13 +37,23 @@ test('placeholder shown when macros missing and populates after migration', asyn
     { id: 'o-01', meal_name: 'Печено пилешко с ориз/картофи и салата' }
   ];
   appState.fullDashboardData.planData = { week1Menu: { [currentDayKey]: dayMenu } };
+  const card = document.getElementById('macroAnalyticsCard');
+  card.setData = jest.fn();
   await populateDashboardMacros(macros);
   expect(selectors.macroMetricsPreview.classList.contains('hidden')).toBe(false);
   expect(selectors.macroMetricsPreview.textContent).toContain('1800');
   const frame = document.getElementById('macroAnalyticsCardFrame');
-  Object.defineProperty(frame, 'contentWindow', { value: { postMessage: jest.fn() } });
+  Object.defineProperty(frame, 'contentWindow', { value: { postMessage: jest.fn(), document: { readyState: 'complete' } } });
   await populateDashboardMacros(macros);
   expect(frame.contentWindow.postMessage).toHaveBeenCalled();
+  const expectedCurrent = {
+    calories: appState.currentIntakeMacros.calories,
+    protein_grams: appState.currentIntakeMacros.protein,
+    carbs_grams: appState.currentIntakeMacros.carbs,
+    fat_grams: appState.currentIntakeMacros.fat,
+    fiber_grams: appState.currentIntakeMacros.fiber
+  };
+  expect(card.setData).toHaveBeenCalledWith({ target: macros, plan: expect.anything(), current: expectedCurrent });
   const [msg, origin] = frame.contentWindow.postMessage.mock.calls[0];
   expect(origin).toBe('*');
   expect(msg).toMatchObject({
@@ -51,7 +61,7 @@ test('placeholder shown when macros missing and populates after migration', asyn
     data: {
       target: macros,
       plan: expect.objectContaining({ calories: 850, protein: 72, carbs: 70, fat: 28 }),
-      current: appState.currentIntakeMacros
+      current: expectedCurrent
     }
   });
 });
