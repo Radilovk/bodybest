@@ -1,38 +1,426 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Шаблон MacroAnalyticsCard</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-  <script type="module" src="./js/macroAnalyticsCardComponent.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
+    /* --- ОСНОВНИ СТИЛОВЕ И ЦВЕТОВА ПАЛИТРА --- */
     :root {
       --main-bg: #1A1D2D;
       --card-bg: #2C314A;
       --text-color: #E0E0E0;
       --text-secondary-color: #A0A5C0;
-      --macro-protein-color: #5BC0BE;
-      --macro-carbs-color: #FFD166;
-      --macro-fat-color: #FF6B6B;
+      
+      --accent-main: #5BC0BE;
+      --accent-yellow: #FFD166;
+      --accent-red: #FF6B6B;
+
+      --macro-protein-color: var(--accent-main);
+      --macro-carbs-color: var(--accent-yellow);
+      --macro-fat-color: var(--accent-red);
     }
+
     body {
       background-color: var(--main-bg);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       color: var(--text-color);
       padding: 1rem;
     }
-    @media (max-width: 480px) {
-      body { padding: 0.5rem; }
+
+    /* --- СТИЛОВЕ ЗА КАРТАТА --- */
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 20px;
+      padding: 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     }
+
+    .analytics-card h5 {
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: var(--text-color);
+    }
+
+    /* --- КОНТЕЙНЕР НА ДИАГРАМАТА --- */
+    .chart-container {
+      position: relative;
+      margin: 0 auto; /* Премахната долна марж, за да е до легендата */
+      max-width: 250px;
+      height: 250px;
+    }
+
+    .chart-center-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .chart-center-text .consumed-calories {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--text-color);
+    }
+
+    .chart-center-text .total-calories-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary-color);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* --- НОВО: СТИЛОВЕ ЗА ЛЕГЕНДАТА НА ДИАГРАМАТА --- */
+    .chart-legend {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.5rem;
+      margin-top: 0.75rem;
+      margin-bottom: 1.5rem; /* Марж преди решетката с метрики */
+      font-size: 0.8rem;
+      color: var(--text-secondary-color);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .legend-dot.dot-goal {
+      background-color: transparent;
+      border: 2px solid var(--text-secondary-color); /* Представлява външния пръстен */
+    }
+
+    .legend-dot.dot-intake {
+      background-color: var(--accent-main); /* Представлява вътрешния, плътен пръстен */
+    }
+
+    /* --- РЕШЕТКА С МАКРОНУТРИЕНТИ (НОВ ДИЗАЙН) --- */
+    .macro-metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      /* margin-top е преместен в легендата */
+    }
+
+    .macro-metric {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+      border: 1px solid transparent;
+    }
+
+    .macro-metric:hover {
+      transform: translateY(-4px);
+    }
+    
+    .macro-metric.protein.active {
+      box-shadow: 0 0 20px rgba(91, 192, 190, 0.6);
+      border-color: var(--macro-protein-color);
+    }
+    .macro-metric.carbs.active {
+      box-shadow: 0 0 20px rgba(255, 209, 102, 0.6);
+      border-color: var(--macro-carbs-color);
+    }
+    .macro-metric.fat.active {
+      box-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
+      border-color: var(--macro-fat-color);
+    }
+
+    .macro-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    .macro-metric.protein .macro-icon { color: var(--macro-protein-color); }
+    .macro-metric.carbs .macro-icon { color: var(--macro-carbs-color); }
+    .macro-metric.fat .macro-icon { color: var(--macro-fat-color); }
+    
+    .macro-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .macro-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-color);
+    }
+
+    .macro-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary-color);
+    }
+    
+    .macro-metric.calories {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      text-align: left;
+      padding: 0.75rem 1rem;
+    }
+    .macro-metric.calories .macro-icon { margin-bottom: 0; color: var(--accent-yellow); }
+    .macro-metric.calories .macro-details {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    details {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        margin-top: 2rem;
+        padding: 1rem;
+    }
+    summary {
+        cursor: pointer;
+        font-weight: bold;
+    }
+
   </style>
 </head>
 <body>
-  <macro-analytics-card
-    target-data='{"calories":2200,"protein_grams":140,"protein_percent":25,"carbs_grams":248,"carbs_percent":45,"fat_grams":73,"fat_percent":30}'
-    current-data='{"calories":950,"protein_grams":70,"carbs_grams":90,"fat_grams":40}'
-    locale="bg"
-  ></macro-analytics-card>
+  <div class="card" style="max-width:400px;margin:2rem auto;">
+    <div id="macroAnalyticsCard" class="analytics-card">
+      <h5>Дневен Прием & Цели</h5>
+      <div class="chart-container">
+        <canvas id="macroChart"></canvas>
+        <div id="chartCenterText" class="chart-center-text"></div>
+      </div>
+      <!-- НОВО: Контейнер за легендата -->
+      <div id="chartLegendContainer"></div>
+      
+      <div id="macroMetricsGrid" class="macro-metrics-grid"></div>
+    </div>
+  </div>
+
+  <details>
+    <summary>Описание и логика (обновена)</summary>
+    <p>Модулът визуализира препоръчан дневен прием (цел) и текущ прием на макронутриенти. Добавена е легенда за по-добра яснота.</p>
+    <ul>
+      <li><code>renderMacroAnalyticsCard(target, current)</code> – създава HTML структурата, попълва стойностите и генерира легендата за диаграмата.</li>
+      <li><code>renderMacroChart()</code> – инициализира двойна кръгова диаграма. Външният пръстен е целта, вътрешният е текущия прием.</li>
+      <li><code>highlightMacro(el, index)</code> – маркира избрания елемент в решетката и съответния сегмент в диаграмата.</li>
+    </ul>
+  </details>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module">
+    // --- ДЕМО ДАННИ ---
+    const targetData = {
+      calories: 2200,
+      protein_grams: 140,
+      carbs_grams: 248,
+      fat_grams: 73,
+      protein_percent: 25,
+      carbs_percent: 45,
+      fat_percent: 30
+    };
+    const currentData = {
+      calories: 950,
+      protein_grams: 70,
+      carbs_grams: 90,
+      fat_grams: 30,
+    };
+
+    // --- ГЛОБАЛНИ ПРОМЕНЛИВИ ---
+    let macroChartInstance = null;
+    let pendingTargetData = null;
+    let pendingCurrentData = null;
+    let activeMacroIndex = null;
+
+    // --- ПОМОЩНИ ФУНКЦИИ ---
+    const getCssVar = (name, fallback = '') =>
+      getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+
+    // --- ОСНОВНА ЛОГИКА ---
+    function highlightMacro(el, index) {
+      const grid = document.getElementById('macroMetricsGrid');
+      if (!grid) return;
+      
+      grid.querySelectorAll('.macro-metric').forEach(div => div.classList.remove('active'));
+      if (macroChartInstance) {
+        macroChartInstance.setActiveElements([]);
+      }
+
+      if (activeMacroIndex === index) {
+        activeMacroIndex = null;
+        if(macroChartInstance) macroChartInstance.update();
+        return;
+      }
+      
+      activeMacroIndex = index;
+
+      if (el) {
+        el.classList.add('active');
+      }
+
+      if (macroChartInstance && index !== null && index > -1) {
+        macroChartInstance.setActiveElements([{ datasetIndex: 1, index: index }]);
+      }
+
+      if (macroChartInstance) macroChartInstance.update();
+    }
+
+    function renderMacroAnalyticsCard(target, current) {
+      const grid = document.getElementById('macroMetricsGrid');
+      const centerText = document.getElementById('chartCenterText');
+      const legendContainer = document.getElementById('chartLegendContainer'); // НОВО
+      grid.innerHTML = '';
+      
+      centerText.innerHTML = `
+        <div class="consumed-calories">${current.calories}</div>
+        <div class="total-calories-label">от ${target.calories} kcal</div>
+      `;
+      
+      // НОВО: Генериране на легендата
+      legendContainer.innerHTML = `
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-dot dot-goal"></span> Цел</span>
+          <span class="legend-item"><span class="legend-dot dot-intake"></span> Прием</span>
+        </div>
+      `;
+
+      const list = [
+        { l: 'Белтъчини', v: `${current.protein_grams} / ${target.protein_grams}г`, s: `${target.protein_percent}% от целта`, c: 'protein' },
+        { l: 'Въглехидрати', v: `${current.carbs_grams} / ${target.carbs_grams}г`, s: `${target.carbs_percent}% от целта`, c: 'carbs' },
+        { l: 'Мазнини', v: `${current.fat_grams} / ${target.fat_grams}г`, s: `${target.fat_percent}% от целта`, c: 'fat' }
+      ];
+      const iconMap = { 'Белтъчини': 'bi-egg-fried', 'Въглехидрати': 'bi-basket', 'Мазнини': 'bi-droplet-half' };
+      
+      const calDiv = document.createElement('div');
+      calDiv.className = 'macro-metric calories';
+      calDiv.innerHTML = `
+        <span class="macro-icon"><i class="bi bi-fire"></i></span>
+        <div class="macro-details">
+          <div class="macro-label">Приети Калории</div>
+          <div class="macro-value">${current.calories} / ${target.calories} kcal</div>
+        </div>
+      `;
+      grid.appendChild(calDiv);
+
+
+      list.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = `macro-metric ${item.c}`;
+
+        div.innerHTML = `
+          <span class="macro-icon"><i class="bi ${iconMap[item.l]}"></i></span>
+          <div class="macro-label">${item.l}</div>
+          <div class="macro-value">${item.v}</div>
+          <div class="macro-subtitle">${item.s}</div>`;
+        div.addEventListener('click', () => highlightMacro(div, index));
+        grid.appendChild(div);
+      });
+
+      pendingTargetData = target;
+      pendingCurrentData = current;
+    }
+
+    function renderMacroChart() {
+      if (!pendingTargetData || !pendingCurrentData) return;
+      const canvas = document.getElementById('macroChart');
+      if (!canvas || typeof Chart === 'undefined') return;
+      if (macroChartInstance) {
+        macroChartInstance.destroy();
+      }
+      
+      const target = pendingTargetData;
+      const current = pendingCurrentData;
+      const ctx = canvas.getContext('2d');
+
+      const macroColors = [
+        getCssVar('--macro-protein-color'),
+        getCssVar('--macro-carbs-color'),
+        getCssVar('--macro-fat-color')
+      ];
+
+      macroChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: [
+            `Белтъчини (${target.protein_percent}%)`,
+            `Въглехидрати (${target.carbs_percent}%)`,
+            `Мазнини (${target.fat_percent}%)`
+          ],
+          datasets: [
+            {
+              label: 'Цел (гр)',
+              data: [target.protein_grams, target.carbs_grams, target.fat_grams],
+              backgroundColor: macroColors.map(color => `${color}40`),
+              borderWidth: 0,
+              cutout: '80%',
+            },
+            {
+              label: 'Прием (гр)',
+              data: [current.protein_grams, current.carbs_grams, current.fat_grams],
+              backgroundColor: macroColors,
+              borderColor: getCssVar('--card-bg'),
+              borderWidth: 4,
+              borderRadius: 8,
+              cutout: '65%',
+              hoverOffset: 12
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            title: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.parsed !== null) {
+                            label += context.parsed + 'g';
+                        }
+                        return label;
+                    }
+                }
+            }
+          },
+          onClick: (evt, elements) => {
+            if (elements.length > 0) {
+              const clickedIndex = elements[0].index;
+              const macroCard = document.getElementById('macroMetricsGrid').querySelectorAll('.macro-metric')[clickedIndex + 1];
+              highlightMacro(macroCard, clickedIndex);
+            } else {
+              highlightMacro(null, activeMacroIndex);
+            }
+          }
+        }
+      });
+    }
+
+    // --- ИНИЦИАЛИЗАЦИЯ НА ПРИМЕРА ---
+    renderMacroAnalyticsCard(targetData, currentData);
+    renderMacroChart();
+  </script>
 </body>
 </html>
-
