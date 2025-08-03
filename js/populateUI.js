@@ -34,14 +34,17 @@ function addAlpha(color, alpha) {
     return c;
 }
 
+// Изчислява цветовете на графиката, така че линията да изпъква на всички теми.
+// Линията използва вторичния цвят, а мрежата - цвета на рамките за по-добър контраст.
 function getProgressChartColors() {
     const styles = getComputedStyle(document.documentElement);
-    const primary = styles.getPropertyValue('--primary-color').trim();
+    const secondary = styles.getPropertyValue('--secondary-color').trim();
     const text = styles.getPropertyValue('--text-color-primary').trim();
+    const borderColor = styles.getPropertyValue('--border-color').trim();
     return {
-        border: primary,
-        fill: addAlpha(primary, 0.1),
-        grid: addAlpha(text, 0.1),
+        border: secondary,
+        fill: addAlpha(secondary, 0.15),
+        grid: addAlpha(borderColor, 0.3),
         tick: text
     };
 }
