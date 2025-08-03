@@ -55,7 +55,6 @@
       import { loadAndApplyColors } from './js/uiHandlers.js';
       loadAndApplyColors();
     </script>
-    <script type="module" src="js/macroAnalyticsCardComponent.js"></script>
     <!-- Chart.js - зарежда се в края на body за по-добра производителност -->
   </head>
   <body class="code-page">
@@ -525,11 +524,11 @@
                   </div>
                 </div>
                 <div id="analyticsCardsContainer" class="analytics-cards-grid">
-                  <macro-analytics-card
-                      id="macroAnalyticsCard"
-                      locale="bg"
-                      exceed-threshold="1.2">
-                  </macro-analytics-card>
+                  <iframe id="macroAnalyticsCardFrame"
+                          class="analytics-card"
+                          src="macroAnalyticsCardStandalone.html"
+                          title="Макро анализ">
+                  </iframe>
                 </div>
               </div>
             </div>
