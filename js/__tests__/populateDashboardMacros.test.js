@@ -17,7 +17,7 @@ function setupDom() {
   selectors.analyticsCardsContainer = document.getElementById('analyticsCardsContainer');
 }
 
-test('placeholder shown when macros missing and populates after migration', async () => {
+test('recalculates macros automatically and shows spinner while loading', async () => {
   setupDom();
   appState.setCurrentUserId('u1');
   const macros = {
@@ -38,17 +38,23 @@ test('placeholder shown when macros missing and populates after migration', asyn
   appState.fullDashboardData.planData = { week1Menu: { [currentDayKey]: dayMenu } };
 
   const originalFetch = global.fetch;
-  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ planData: { caloriesMacros: macros } }) });
-  await populateDashboardMacros(null);
+  let resolveFetch;
+  global.fetch = jest.fn().mockImplementation(() => new Promise(res => {
+    resolveFetch = () => res({ ok: true, json: async () => ({ planData: { caloriesMacros: macros } }) });
+  }));
+
+  const promise = populateDashboardMacros(null);
+  const container = selectors.macroAnalyticsCardContainer;
+  expect(container.innerHTML).toContain('spinner-border');
   expect(selectors.macroMetricsPreview.classList.contains('hidden')).toBe(true);
-  const btn = document.getElementById('recalcMacrosBtn');
-  expect(btn).not.toBeNull();
-  btn.click();
-  await Promise.resolve();
-  await Promise.resolve();
-  expect(global.fetch).toHaveBeenCalled();
+  expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('recalcMacros=1'));
+
+  resolveFetch();
+  await promise;
+
   expect(selectors.macroMetricsPreview.classList.contains('hidden')).toBe(false);
   expect(selectors.macroMetricsPreview.textContent).toContain('1800');
+  expect(container.innerHTML).not.toContain('spinner-border');
   global.fetch = originalFetch;
   expect(document.getElementById('macroAnalyticsCardFrame')).toBeNull();
 
