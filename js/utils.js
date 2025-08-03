@@ -144,6 +144,17 @@ export function animateProgressFill(el, percent) {
 }
 
 /**
+ * Задава цвета на прогрес бара и анимира запълването.
+ * @param {HTMLElement} el Елементът, представляващ запълването.
+ * @param {number} percent Процент за крайна широчина.
+ */
+export function applyProgressFill(el, percent) {
+    if (!el) return;
+    el.style.setProperty('--progress-color', getProgressColor(percent));
+    animateProgressFill(el, percent);
+}
+
+/**
  * Взема стойност на CSS променлива от :root.
  * @param {string} name Името на променливата (например '--primary-color').
  * @param {string} [fallback=''] Резервна стойност при липса.

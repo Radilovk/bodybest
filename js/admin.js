@@ -1,7 +1,7 @@
 import { apiEndpoints } from './config.js';
 import { loadConfig, saveConfig } from './adminConfig.js';
 import { labelMap, statusMap } from './labelMap.js';
-import { fileToDataURL, fileToText, getProgressColor, animateProgressFill } from './utils.js';
+import { fileToDataURL, fileToText, applyProgressFill } from './utils.js';
 import { loadTemplateInto } from './templateLoader.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 import { loadMaintenanceFlag, setMaintenanceFlag } from './maintenanceMode.js';
@@ -510,8 +510,7 @@ function renderAnalyticsCurrent(cur) {
             pb.className = 'progress-bar';
             const fill = document.createElement('div');
             fill.className = 'progress-fill';
-            fill.style.setProperty('--progress-color', getProgressColor(pct));
-            animateProgressFill(fill, pct);
+            applyProgressFill(fill, pct);
             pb.appendChild(fill);
             pbContainer.appendChild(pb);
             dd.appendChild(pbContainer);
