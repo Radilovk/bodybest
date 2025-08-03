@@ -77,7 +77,8 @@ beforeEach(async () => {
     todaysMealCompletionStatus: {},
     todaysExtraMeals: [],
     currentIntakeMacros: {},
-    planHasRecContent: false
+    planHasRecContent: false,
+    loadCurrentIntake: jest.fn()
   }));
   ({ populateUI } = await import('../populateUI.js'));
 });
@@ -122,6 +123,7 @@ test('обновява макро картата чрез postMessage', async ()
     todaysExtraMeals: [],
     currentIntakeMacros: {},
     planHasRecContent: false,
+    loadCurrentIntake: jest.fn(),
   }));
   ({ populateUI } = await import('../populateUI.js'));
   const frame = document.getElementById('macroAnalyticsCardFrame');
@@ -158,7 +160,8 @@ test('hides modules when values are zero', async () => {
   jest.unstable_mockModule('../app.js', () => ({
     ...zeroData,
     todaysExtraMeals: [],
-    currentIntakeMacros: {}
+    currentIntakeMacros: {},
+    loadCurrentIntake: jest.fn()
   }));
   ({ populateUI } = await import('../populateUI.js'));
   await populateUI();
@@ -192,7 +195,8 @@ test('показва картата за историята на теглото 
     todaysMealCompletionStatus: {},
     todaysExtraMeals: [],
     currentIntakeMacros: {},
-    planHasRecContent: false
+    planHasRecContent: false,
+    loadCurrentIntake: jest.fn()
   }));
   ({ populateUI } = await import('../populateUI.js'));
   await populateUI();
@@ -225,7 +229,8 @@ test('populates daily plan with color bars and meal types', async () => {
     todaysMealCompletionStatus: {},
     todaysExtraMeals: [],
     currentIntakeMacros: {},
-    planHasRecContent: false
+    planHasRecContent: false,
+    loadCurrentIntake: jest.fn()
   }));
   ({ populateUI } = await import('../populateUI.js'));
   await populateUI();
@@ -268,7 +273,8 @@ test('handles meal type variations', async () => {
     todaysMealCompletionStatus: {},
     todaysExtraMeals: [],
     currentIntakeMacros: {},
-    planHasRecContent: false
+    planHasRecContent: false,
+    loadCurrentIntake: jest.fn()
   }));
   ({ populateUI } = await import('../populateUI.js'));
   await populateUI();
@@ -303,7 +309,8 @@ test('applies success color to completed meal bar', async () => {
     todaysMealCompletionStatus: {},
     todaysExtraMeals: [],
     currentIntakeMacros: {},
-    planHasRecContent: false
+    planHasRecContent: false,
+    loadCurrentIntake: jest.fn()
   }));
   ({ populateUI } = await import('../populateUI.js'));
 
@@ -346,7 +353,8 @@ test('clicking a meal card toggles completion status', async () => {
       todaysMealCompletionStatus: {},
       todaysExtraMeals: [],
       currentIntakeMacros: {},
-      planHasRecContent: false
+      planHasRecContent: false,
+      loadCurrentIntake: jest.fn()
     };
   });
 
@@ -386,7 +394,8 @@ describe('progress bar width handling', () => {
       todaysMealCompletionStatus: {},
       todaysExtraMeals: [],
       currentIntakeMacros: {},
-      planHasRecContent: false
+      planHasRecContent: false,
+      loadCurrentIntake: jest.fn()
     }));
     ({ populateUI } = await import('../populateUI.js'));
     await populateUI();

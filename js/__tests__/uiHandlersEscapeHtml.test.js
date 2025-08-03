@@ -27,7 +27,8 @@ describe('uiHandlers escapeHtml usage', () => {
       todaysMealCompletionStatus: {},
       todaysExtraMeals: [],
       currentIntakeMacros: {},
-      planHasRecContent: false
+      planHasRecContent: false,
+      loadCurrentIntake: jest.fn()
     }));
 
     const { openInfoModalWithDetails } = await import('../uiHandlers.js');
@@ -62,7 +63,8 @@ describe('uiHandlers escapeHtml usage', () => {
       todaysMealCompletionStatus: {},
       todaysExtraMeals: [],
       currentIntakeMacros: {},
-      planHasRecContent: false
+      planHasRecContent: false,
+      loadCurrentIntake: jest.fn()
     }));
 
     const { openMainIndexInfo } = await import('../uiHandlers.js');

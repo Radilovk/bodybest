@@ -27,6 +27,7 @@ test('не хвърля грешка при липсващ iframe', async () => 
     todaysExtraMeals: [],
     currentIntakeMacros: {},
     planHasRecContent: false,
+    loadCurrentIntake: jest.fn(),
   }));
   jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn() }));
   const { populateDashboardMacros } = await import('../populateUI.js');
