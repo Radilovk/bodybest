@@ -9,5 +9,6 @@
   },
   "fromGoal": "от целта",
   "totalCaloriesLabel": "от {calories} kcal",
-  "exceedWarning": "Превишение над 15%: {items}"
+  "exceedWarning": "Превишение над 15%: {items}",
+  "planVsTargetLabel": "План vs Цел: {plan} / {target} kcal"
 }
