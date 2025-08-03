@@ -86,14 +86,6 @@ export function updateProgressChartColors() {
 
 document.addEventListener('progressChartThemeChange', updateProgressChartColors);
 
-// Управление на postMessage съобщенията от iframe за макро анализ
-window.addEventListener('message', (event) => {
-    const frame = document.getElementById('macroAnalyticsCardFrame');
-    if (event.source === frame?.contentWindow && event.data?.type === 'macro-card-height') {
-        frame.style.height = `${event.data.height}px`;
-    }
-});
-
 export async function populateUI() {
     const data = fullDashboardData; // Access global state
     if (!data || Object.keys(data).length === 0) {
@@ -308,15 +300,6 @@ export function renderPendingMacroChart() {
     if (!macroCard || typeof macroCard.renderChart !== 'function') return;
     macroCard.renderChart();
     macroChartInstance = macroCard.chart || null;
-    const frame = document.getElementById('macroAnalyticsCardFrame');
-    if (frame?.contentWindow) {
-        const payload = {
-            target: macroCard.targetData,
-            plan: macroCard.planData,
-            current: macroCard.currentData
-        };
-        frame.contentWindow.postMessage({ type: 'macro-data', data: payload }, '*');
-    }
 }
 
 export function addExtraMealWithOverride(name = '', macros = {}, grams) {
@@ -421,16 +404,6 @@ export async function populateDashboardMacros(macros) {
     const card = document.getElementById('macroAnalyticsCard');
     if (card && typeof card.setData === 'function') {
         card.setData({ target: macros, plan: planMacros, current });
-    }
-    const frame = document.getElementById('macroAnalyticsCardFrame');
-    if (frame) {
-        const payload = { target: macros, plan: planMacros, current };
-        const sendData = () => frame.contentWindow?.postMessage({ type: 'macro-data', data: payload }, '*');
-        if (frame.contentWindow?.document?.readyState === 'complete') {
-            sendData();
-        } else {
-            frame.addEventListener('load', sendData, { once: true });
-        }
     }
     renderPendingMacroChart();
 }
