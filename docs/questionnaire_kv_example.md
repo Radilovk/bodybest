@@ -52,13 +52,16 @@
 
 След обработка се създава KV запис:
 
-- `<userId>_analysis_macros` – резултат от AI оценка „План vs Препоръка“.
+- `<userId>_analysis_macros` – резултат от AI оценка „План vs Препоръка“ с флаг `status` (`initial` или `final`).
 
 ```json
 // <userId>_analysis_macros
 {
-  "plan": { "calories": 1700, "protein_grams": 120, "carbs_grams": 150, "fat_grams": 55 },
-  "recommendation": { "calories": 1800, "protein_grams": 130, "carbs_grams": 160, "fat_grams": 60 }
+  "status": "initial",
+  "data": {
+    "plan": { "calories": 1700, "protein_grams": 120, "carbs_grams": 150, "fat_grams": 55 },
+    "recommendation": { "calories": 1800, "protein_grams": 130, "carbs_grams": 160, "fat_grams": 60 }
+  }
 }
 ```
 

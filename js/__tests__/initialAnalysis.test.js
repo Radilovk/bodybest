@@ -32,7 +32,7 @@ describe('initial analysis handlers', () => {
     }
     await worker.handleAnalyzeInitialAnswers('u1', env)
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_analysis', '{"ok":true}')
-    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_analysis_macros', 'null')
+    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_analysis_macros', JSON.stringify({ status: 'initial', data: null }))
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_analysis_status', 'ready')
     expect(global.fetch).toHaveBeenCalled()
   })
