@@ -252,6 +252,7 @@ locales/
   "caloriesLabel": "Приети Калории",
   "macros": { "protein": "", "carbs": "", "fat": "" },
   "fromGoal": "от целта",
+  "subtitle": "{percent} от целта",
   "totalCaloriesLabel": "от {calories} kcal"
 }
 ```

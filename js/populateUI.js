@@ -308,6 +308,15 @@ export function renderPendingMacroChart() {
     if (!macroCard || typeof macroCard.renderChart !== 'function') return;
     macroCard.renderChart();
     macroChartInstance = macroCard.chart || null;
+    const frame = document.getElementById('macroAnalyticsCardFrame');
+    if (frame?.contentWindow) {
+        const payload = {
+            target: macroCard.targetData,
+            plan: macroCard.planData,
+            current: macroCard.currentData
+        };
+        frame.contentWindow.postMessage({ type: 'macro-data', data: payload }, '*');
+    }
 }
 
 export function addExtraMealWithOverride(name = '', macros = {}, grams) {

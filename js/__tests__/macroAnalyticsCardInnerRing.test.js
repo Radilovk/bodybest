@@ -26,6 +26,7 @@ beforeEach(async () => {
       caloriesLabel: 'Приети Калории',
       macros: { protein: 'Белтъчини', carbs: 'Въглехидрати', fat: 'Мазнини', fiber: 'Фибри' },
       fromGoal: 'от целта',
+      subtitle: '{percent} от целта',
       totalCaloriesLabel: 'от {calories} kcal',
       exceedWarning: 'Превишение над 15%: {items}'
     })

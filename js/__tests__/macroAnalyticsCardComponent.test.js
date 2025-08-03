@@ -18,6 +18,7 @@ beforeEach(async () => {
       caloriesLabel: 'Приети Калории',
       macros: { protein: 'Белтъчини', carbs: 'Въглехидрати', fat: 'Мазнини' },
       fromGoal: 'от целта',
+      subtitle: '{percent} от целта',
       totalCaloriesLabel: 'от {calories} kcal',
       exceedWarning: 'Превишение над 15%: {items}'
     })
@@ -129,6 +130,7 @@ test('data-endpoint и refresh-interval извикват fetch периодич�
             caloriesLabel: 'Приети Калории',
             macros: { protein: 'Белтъчини', carbs: 'Въглехидрати', fat: 'Мазнини' },
             fromGoal: 'от целта',
+            subtitle: '{percent} от целта',
             totalCaloriesLabel: 'от {calories} kcal',
             exceedWarning: 'Превишение над 15%: {items}'
           })

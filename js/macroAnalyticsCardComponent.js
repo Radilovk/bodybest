@@ -191,6 +191,7 @@ export class MacroAnalyticsCard extends HTMLElement {
       caloriesLabel: '',
       macros: { protein: '', carbs: '', fat: '', fiber: '' },
       fromGoal: '',
+      subtitle: '',
       totalCaloriesLabel: '',
       exceedWarning: '',
       planVsTargetLabel: ''
@@ -422,6 +423,9 @@ export class MacroAnalyticsCard extends HTMLElement {
       const displayCurrent = typeof currentRaw === 'number' ? currentRaw : '--';
       const targetVal = target[`${item.key}_grams`];
       const percent = formatPercent(currentRaw / targetVal);
+      const subtitle = this.labels.subtitle
+        ? this.labels.subtitle.replace('{percent}', percent)
+        : `${percent} ${this.labels.fromGoal}`.trim();
       const div = document.createElement('div');
       div.className = `macro-metric ${item.key}`;
       if (typeof currentRaw === 'number' && typeof targetVal === 'number') {
@@ -432,13 +436,13 @@ export class MacroAnalyticsCard extends HTMLElement {
       }
       div.setAttribute('role', 'button');
       div.setAttribute('tabindex', '0');
-      div.setAttribute('aria-label', `${label}: ${displayCurrent} от ${targetVal} грама (${percent} ${this.labels.fromGoal})`);
+      div.setAttribute('aria-label', `${label}: ${displayCurrent} от ${targetVal} грама (${subtitle})`);
       div.setAttribute('aria-pressed', 'false');
       div.innerHTML = `
         <span class="macro-icon"><i class="bi ${item.icon}"></i></span>
         <div class="macro-label">${label}</div>
         <div class="macro-value">${displayCurrent} / ${targetVal}г</div>
-        <div class="macro-subtitle">${percent} ${this.labels.fromGoal}</div>`;
+        <div class="macro-subtitle">${subtitle}</div>`;
       div.addEventListener('click', () => this.highlightMacro(div, idx));
       div.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
