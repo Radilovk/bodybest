@@ -4344,8 +4344,11 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
             if (numericScore >= 2.5) return "Задоволително"; if (numericScore >= 1.5) return "Лошо"; return "Много лошо";
         }
         if (metricType === 'calmness') { // Higher score means more calm
-            if (numericScore >= 4.5) return "Много спокойно"; if (numericScore >= 3.5) return "Спокойно";
-            if (numericScore >= 2.5) return "Неутрално"; if (numericScore >= 1.5) return "Неспокойно"; return "Много неспокойно";
+            if (numericScore >= 4.5) return "Отлично";
+            if (numericScore >= 3.5) return "Добро";
+            if (numericScore >= 2.5) return "Средно";
+            if (numericScore >= 1.5) return "Ниско";
+            return "Критично";
         }
         // General 1-5 scale (mood, energy, hydration)
         if (numericScore >= 4.5) return "Отлично"; if (numericScore >= 3.5) return "Много добро";
