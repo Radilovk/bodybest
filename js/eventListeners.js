@@ -68,6 +68,31 @@ export function handleAdaptiveQuizBtnClick(triggerFn = _handleTriggerAdaptiveQui
     triggerFn();
 }
 
+function ensureMacroAnalyticsFrame() {
+    let frame = document.getElementById('macroAnalyticsCardFrame');
+    if (!frame) {
+        frame = document.createElement('iframe');
+        frame.id = 'macroAnalyticsCardFrame';
+        frame.title = 'Макро анализ';
+        frame.loading = 'lazy';
+        frame.style.width = '100%';
+        frame.style.border = '0';
+        frame.style.display = 'none';
+        frame.src = standaloneMacroUrl;
+        selectors.macroAnalyticsCardContainer.appendChild(frame);
+        frame.addEventListener('load', () => {
+            selectors.macroAnalyticsCardContainer.classList.remove('loading');
+            selectors.macroAnalyticsCardContainer.querySelectorAll('.skeleton').forEach(el => el.remove());
+            frame.style.display = 'block';
+            frame.contentWindow?.postMessage({ type: 'macro-data', data: lastMacroPayload }, '*');
+        }, { once: true });
+    } else {
+        frame.contentWindow?.postMessage({ type: 'macro-data', data: lastMacroPayload }, '*');
+    }
+    macroChartInstance?.resize();
+    progressChartInstance?.resize();
+}
+
 
 export function setupStaticEventListeners() {
     if (staticListenersSet) {
@@ -137,26 +162,7 @@ export function setupStaticEventListeners() {
                 if (accContent) { accContent.style.display = isOpen ? 'none' : 'block'; accContent.classList.toggle('open-active', !isOpen); }
                 if (preview) preview.style.display = isOpen ? 'grid' : 'none';
                 selectors.detailedAnalyticsAccordion.classList.toggle('index-card', isOpen);
-                if (!isOpen) {
-                    let frame = document.getElementById('macroAnalyticsCardFrame');
-                    if (!frame) {
-                        frame = document.createElement('iframe');
-                        frame.id = 'macroAnalyticsCardFrame';
-                        frame.title = 'Макро анализ';
-                        frame.loading = 'lazy';
-                        frame.style.width = '100%';
-                        frame.style.border = '0';
-                        frame.style.display = 'block';
-                        frame.src = standaloneMacroUrl;
-                        selectors.macroAnalyticsCardContainer.innerHTML = '';
-                        selectors.macroAnalyticsCardContainer.appendChild(frame);
-                    }
-                    const sendData = () => frame.contentWindow?.postMessage({ type: 'macro-data', data: lastMacroPayload }, '*');
-                    if (frame.contentWindow?.document?.readyState === 'complete') sendData();
-                    else frame.addEventListener('load', sendData, { once: true });
-                    macroChartInstance?.resize();
-                    progressChartInstance?.resize();
-                }
+                if (!isOpen) ensureMacroAnalyticsFrame();
              });
              header.addEventListener('keydown', function(e) {
                 if(e.key === 'Enter' || e.key === ' ') {
@@ -166,26 +172,7 @@ export function setupStaticEventListeners() {
                     if (accContent) { accContent.style.display = isOpen ? 'none' : 'block'; accContent.classList.toggle('open-active', !isOpen); }
                     if (preview) preview.style.display = isOpen ? 'grid' : 'none';
                     selectors.detailedAnalyticsAccordion.classList.toggle('index-card', isOpen);
-                    if (!isOpen) {
-                        let frame = document.getElementById('macroAnalyticsCardFrame');
-                        if (!frame) {
-                            frame = document.createElement('iframe');
-                            frame.id = 'macroAnalyticsCardFrame';
-                            frame.title = 'Макро анализ';
-                            frame.loading = 'lazy';
-                            frame.style.width = '100%';
-                            frame.style.border = '0';
-                            frame.style.display = 'block';
-                            frame.src = standaloneMacroUrl;
-                            selectors.macroAnalyticsCardContainer.innerHTML = '';
-                            selectors.macroAnalyticsCardContainer.appendChild(frame);
-                        }
-                        const sendData = () => frame.contentWindow?.postMessage({ type: 'macro-data', data: lastMacroPayload }, '*');
-                        if (frame.contentWindow?.document?.readyState === 'complete') sendData();
-                        else frame.addEventListener('load', sendData, { once: true });
-                        macroChartInstance?.resize();
-                        progressChartInstance?.resize();
-                    }
+                    if (!isOpen) ensureMacroAnalyticsFrame();
                 }
             });
         }
