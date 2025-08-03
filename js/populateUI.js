@@ -1,7 +1,7 @@
 // populateUI.js - Попълване на UI с данни
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort } from './utils.js';
-import { generateId, standaloneMacroUrl } from './config.js';
+import { generateId } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
@@ -85,6 +85,14 @@ export function updateProgressChartColors() {
 }
 
 document.addEventListener('progressChartThemeChange', updateProgressChartColors);
+
+// Управление на postMessage съобщенията от iframe за макро анализ
+window.addEventListener('message', (event) => {
+    const frame = document.getElementById('macroAnalyticsCardFrame');
+    if (event.source === frame?.contentWindow && event.data?.type === 'macro-card-height') {
+        frame.style.height = `${event.data.height}px`;
+    }
+});
 
 export async function populateUI() {
     const data = fullDashboardData; // Access global state
@@ -395,11 +403,19 @@ export async function populateDashboardMacros(macros) {
     const dayMenu = fullDashboardData?.planData?.week1Menu?.[currentDayKey] || [];
     const planMacros = calculatePlanMacros(dayMenu);
     const frame = document.getElementById('macroAnalyticsCardFrame');
-    frame?.contentWindow?.postMessage(
-        { type: 'macro-data',
-          data: { target: macros, plan: planMacros, current: currentIntakeMacros } },
-        '*'
-    );
+    if (frame) {
+        const payload = {
+            target: macros,
+            plan: planMacros,
+            current: currentIntakeMacros
+        };
+        const sendData = () => frame.contentWindow?.postMessage({ type: 'macro-data', data: payload }, '*');
+        if (frame.contentWindow?.document?.readyState === 'complete') {
+            sendData();
+        } else {
+            frame.addEventListener('load', sendData, { once: true });
+        }
+    }
     renderPendingMacroChart();
 }
 
@@ -906,32 +922,6 @@ export function handleAccordionToggle(event) {
     if (!isOpen && this.closest('#detailedAnalyticsAccordion')) {
         macroChartInstance?.resize();
         progressChartInstance?.resize();
-        const card = document.getElementById('macroAnalyticsCard');
-        if (card && !document.getElementById('macroCardIframe')) {
-            const data = {
-                target: card.getAttribute('target-data') ? JSON.parse(card.getAttribute('target-data')) : null,
-                plan: card.getAttribute('plan-data') ? JSON.parse(card.getAttribute('plan-data')) : null,
-                current: card.getAttribute('current-data') ? JSON.parse(card.getAttribute('current-data')) : null,
-            };
-            const iframe = document.createElement('iframe');
-            iframe.id = 'macroCardIframe';
-            iframe.src = standaloneMacroUrl;
-            iframe.style.width = '100%';
-            iframe.style.border = 'none';
-            iframe.style.height = '0px';
-
-            window.addEventListener('message', function resizeIframe(event) {
-                if (event.source === iframe.contentWindow && event.data?.type === 'macro-card-height') {
-                    iframe.style.height = `${event.data.height}px`;
-                }
-            });
-
-            iframe.addEventListener('load', () => {
-                iframe.contentWindow?.postMessage({ type: 'macro-data', data }, '*');
-            });
-
-            card.replaceWith(iframe);
-        }
     }
 }
 
