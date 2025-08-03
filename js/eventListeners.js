@@ -10,7 +10,13 @@ import {
 import { handleLogout } from './auth.js';
 import { openExtraMealModal } from './extraMealForm.js';
 import { apiEndpoints, standaloneMacroUrl } from './config.js';
-import { macroChartInstance, progressChartInstance, populateDashboardMacros, lastMacroPayload } from './populateUI.js';
+import {
+    macroChartInstance,
+    progressChartInstance,
+    populateDashboardMacros,
+    lastMacroPayload,
+    renderPendingMacroChart
+} from './populateUI.js';
 import {
     handleSaveLog, handleFeedbackFormSubmit, // from app.js
     handleChatSend, handleChatInputKeypress, // from app.js / chat.js
@@ -376,6 +382,8 @@ function handleDelegatedClicks(event) {
             }
             loadCurrentIntake();
             populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
+            // Автоматично опресняване на макро-картата
+            renderPendingMacroChart();
             showToast(`Храненето е ${isCompleted ? 'отбелязано' : 'размаркирано'}.`, false, 2000);
         }
         return;

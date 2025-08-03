@@ -5,7 +5,11 @@ import { apiEndpoints } from './config.js';
 import { currentUserId, todaysExtraMeals, currentIntakeMacros, fullDashboardData, loadCurrentIntake } from './app.js';
 import nutrientOverrides from '../kv/DIET_RESOURCES/nutrient_overrides.json' with { type: 'json' };
 import { removeMealMacros, registerNutrientOverrides, getNutrientOverride, loadProductMacros } from './macroUtils.js';
-import { addExtraMealWithOverride, populateDashboardMacros } from './populateUI.js';
+import {
+    addExtraMealWithOverride,
+    populateDashboardMacros,
+    renderPendingMacroChart
+} from './populateUI.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 
 const dynamicNutrientOverrides = { ...nutrientOverrides };
@@ -464,6 +468,8 @@ export async function handleExtraMealFormSubmit(event) {
             fat: dataToSend.fat
         };
         addExtraMealWithOverride(dataToSend.foodDescription, entry);
+        // Автоматично опресняване на макро-картата
+        renderPendingMacroChart();
         genericCloseModal('extraMealEntryModal');
     } catch (error) {
         showToast(`Грешка: ${error.message}`, true);
@@ -478,6 +484,8 @@ export function deleteExtraMeal(index) {
         removeMealMacros(removed, currentIntakeMacros);
         loadCurrentIntake();
         populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
+        // Автоматично опресняване на макро-картата
+        renderPendingMacroChart();
         showToast('Храненето е изтрито.', false, 2000);
     }
 }
