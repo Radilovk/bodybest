@@ -26,6 +26,10 @@ beforeEach(async () => {
     registerNutrientOverrides: jest.fn(),
     getNutrientOverride: jest.fn(() => null)
   }));
+  jest.unstable_mockModule('../populateUI.js', () => ({
+    addExtraMealWithOverride: jest.fn(),
+    populateDashboardMacros: jest.fn()
+  }));
   jest.unstable_mockModule('../app.js', () => {
     currentIntakeMacrosRef = {};
     return {
@@ -33,8 +37,9 @@ beforeEach(async () => {
       todaysMealCompletionStatus: {},
       todaysExtraMeals: [],
       currentIntakeMacros: currentIntakeMacrosRef,
-      fullDashboardData: { planData: { week1Menu: {} } },
-      planHasRecContent: false
+      fullDashboardData: { planData: { week1Menu: {}, caloriesMacros: {} } },
+      planHasRecContent: false,
+      loadCurrentIntake: jest.fn()
     };
   });
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });

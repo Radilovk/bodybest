@@ -10,7 +10,7 @@ import {
 import { handleLogout } from './auth.js';
 import { openExtraMealModal } from './extraMealForm.js';
 import { apiEndpoints } from './config.js';
-import { macroChartInstance, progressChartInstance, renderPendingMacroChart } from './populateUI.js';
+import { macroChartInstance, progressChartInstance, renderPendingMacroChart, populateDashboardMacros } from './populateUI.js';
 import {
     handleSaveLog, handleFeedbackFormSubmit, // from app.js
     handleChatSend, handleChatInputKeypress, // from app.js / chat.js
@@ -18,7 +18,8 @@ import {
     _handleTriggerAdaptiveQuizClientSide, // from app.js
     todaysMealCompletionStatus, todaysExtraMeals, currentIntakeMacros,
     fullDashboardData, activeTooltip, currentUserId,
-    setChatModelOverride, setChatPromptOverride
+    setChatModelOverride, setChatPromptOverride,
+    loadCurrentIntake
 } from './app.js';
 import { addMealMacros, removeMealMacros } from './macroUtils.js';
 import {
@@ -343,7 +344,8 @@ function handleDelegatedClicks(event) {
             if (meal) {
                 (isCompleted ? addMealMacros : removeMealMacros)(meal, currentIntakeMacros);
             }
-            renderPendingMacroChart();
+            loadCurrentIntake();
+            populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
             showToast(`Храненето е ${isCompleted ? 'отбелязано' : 'размаркирано'}.`, false, 2000);
         }
         return;

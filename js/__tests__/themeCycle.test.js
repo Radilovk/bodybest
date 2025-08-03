@@ -25,7 +25,8 @@ describe('theme cycling', () => {
       todaysMealCompletionStatus: {},
       todaysExtraMeals: [],
       currentIntakeMacros: {},
-      planHasRecContent: false
+      planHasRecContent: false,
+      loadCurrentIntake: jest.fn()
     }));
     ({ toggleTheme, applyTheme, updateThemeButtonText, initializeTheme } = await import('../uiHandlers.js'));
   });

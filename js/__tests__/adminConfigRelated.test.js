@@ -178,7 +178,8 @@ describe('uiHandlers.loadAndApplyColors', () => {
       todaysMealCompletionStatus: {},
       todaysExtraMeals: [],
       currentIntakeMacros: {},
-      planHasRecContent: false
+      planHasRecContent: false,
+      loadCurrentIntake: jest.fn()
     }));
     ({ loadAndApplyColors } = await import('../uiHandlers.js'));
   });

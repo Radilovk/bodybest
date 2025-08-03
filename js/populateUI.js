@@ -2,7 +2,7 @@
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort } from './utils.js';
 import { generateId, standaloneMacroUrl } from './config.js';
-import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals } from './app.js';
+import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
 import { calculatePlanMacros, getNutrientOverride, addMealMacros, scaleMacros } from './macroUtils.js';
@@ -316,7 +316,8 @@ export function addExtraMealWithOverride(name = '', macros = {}, grams) {
     const entry = gramValue ? { ...scaled, grams: gramValue } : scaled;
     todaysExtraMeals.push(entry);
     addMealMacros(entry, currentIntakeMacros);
-    renderPendingMacroChart();
+    loadCurrentIntake();
+    populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
 }
 
 function renderMacroPreviewGrid(macros) {

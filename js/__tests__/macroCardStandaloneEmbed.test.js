@@ -17,7 +17,7 @@ beforeEach(async () => {
   jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn() }));
   jest.unstable_mockModule('../extraMealForm.js', () => ({ openExtraMealModal: jest.fn() }));
   jest.unstable_mockModule('../config.js', () => ({ generateId: () => 'id-1', standaloneMacroUrl: 'macroAnalyticsCardStandalone.html' }));
-  jest.unstable_mockModule('../app.js', () => ({ fullDashboardData: {}, todaysMealCompletionStatus: {}, todaysExtraMeals: [], currentIntakeMacros: {}, planHasRecContent: false }));
+  jest.unstable_mockModule('../app.js', () => ({ fullDashboardData: {}, todaysMealCompletionStatus: {}, todaysExtraMeals: [], currentIntakeMacros: {}, planHasRecContent: false, loadCurrentIntake: jest.fn() }));
   jest.unstable_mockModule('../chartLoader.js', () => ({ ensureChart: jest.fn() }));
   jest.unstable_mockModule('../macroUtils.js', () => ({ calculatePlanMacros: jest.fn(), getNutrientOverride: jest.fn(), addMealMacros: jest.fn(), scaleMacros: jest.fn() }));
   const mod = await import('../populateUI.js');
