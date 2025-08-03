@@ -90,6 +90,7 @@ export function applyTheme(theme) {
     const cls = theme === 'dark' ? 'dark-theme' : theme === 'vivid' ? 'vivid-theme' : 'light-theme';
     document.body.classList.add(cls);
     document.dispatchEvent(new Event('themechange'));
+    document.dispatchEvent(new Event('progressChartThemeChange'));
 }
 
 export function toggleTheme() {

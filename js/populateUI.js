@@ -10,6 +10,11 @@ import { calculatePlanMacros, getNutrientOverride, addMealMacros, scaleMacros } 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
 
+// Helper for tests to inject chart instance
+export function __setProgressChartInstance(instance) {
+    progressChartInstance = instance;
+}
+
 function addAlpha(color, alpha) {
     const c = color.trim();
     if (c.startsWith('#')) {
@@ -41,7 +46,7 @@ function getProgressChartColors() {
     };
 }
 
-function applyProgressChartTheme() {
+export function updateProgressChartColors() {
     if (!progressChartInstance) return;
     const { border, fill, grid, tick } = getProgressChartColors();
     const ds = progressChartInstance.data.datasets[0];
@@ -57,7 +62,7 @@ function applyProgressChartTheme() {
     progressChartInstance.update();
 }
 
-document.addEventListener('themechange', applyProgressChartTheme);
+document.addEventListener('progressChartThemeChange', updateProgressChartColors);
 
 export async function populateUI() {
     const data = fullDashboardData; // Access global state
@@ -1003,5 +1008,5 @@ export async function populateProgressHistory(dailyLogs, initialData) {
             }
         }
     });
-    applyProgressChartTheme();
+    updateProgressChartColors();
 }
