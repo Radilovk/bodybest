@@ -52,7 +52,9 @@ function getBrightness(color) {
 }
 
 function getProgressChartColors() {
-    const styles = getComputedStyle(document.documentElement);
+    // Вземаме цветовете от body, за да се съобразят с активната тема
+    const root = document.body || document.documentElement;
+    const styles = getComputedStyle(root);
     const header = styles.getPropertyValue('--primary-color').trim();
     const cardBg = (styles.getPropertyValue('--card-bg') || '#fff').trim();
     const darkBg = getBrightness(cardBg) < 0.5;
