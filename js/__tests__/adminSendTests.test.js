@@ -154,8 +154,7 @@ describe('sendTestImage', () => {
     jest.unstable_mockModule('../utils.js', () => ({
       fileToDataURL: jest.fn(async () => 'data:image/png;base64,imgdata'),
       fileToText: jest.fn(),
-      getProgressColor: jest.fn(() => 'rgb(0,0,0)'),
-      animateProgressFill: jest.fn()
+      applyProgressFill: jest.fn()
     }));
     const mod = await import('../admin.js');
     send = mod.sendTestImage;
@@ -200,8 +199,7 @@ describe('sendTestQuestionnaire', () => {
     jest.unstable_mockModule('../utils.js', () => ({
       fileToText: jest.fn(async () => '{"a":1}'),
       fileToDataURL: jest.fn(),
-      getProgressColor: jest.fn(() => 'rgb(0,0,0)'),
-      animateProgressFill: jest.fn()
+      applyProgressFill: jest.fn()
     }));
     const mod = await import('../admin.js');
     send = mod.sendTestQuestionnaire;

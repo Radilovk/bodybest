@@ -17,9 +17,9 @@ test('логва предупреждение при липсващ macro-analyt
     safeParseFloat: () => {},
     capitalizeFirstLetter: () => {},
     escapeHtml: () => {},
-    getProgressColor: () => {},
-    animateProgressFill: () => {},
-    getCssVar: () => ''
+    applyProgressFill: () => {},
+    getCssVar: () => '',
+    formatDateBgShort: () => ''
   }));
   jest.unstable_mockModule('../config.js', () => ({ generateId: () => 'id' }));
   jest.unstable_mockModule('../app.js', () => ({
