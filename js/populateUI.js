@@ -184,12 +184,14 @@ function populateDashboardDetailedAnalytics(analyticsData) {
     const cardsContainer = selectors.analyticsCardsContainer;
     const accordionContent = selectors.detailedAnalyticsContent;
     const textualAnalysisContainer = selectors.dashboardTextualAnalysis;
+    const macroContainer = selectors.macroAnalyticsCardContainer;
 
     if (!cardsContainer || !accordionContent || !textualAnalysisContainer) {
         console.warn("Detailed analytics elements for dashboard not found.");
         return;
     }
     cardsContainer.innerHTML = '';
+    if (macroContainer) cardsContainer.appendChild(macroContainer);
     textualAnalysisContainer.innerHTML = '';
 
 
@@ -390,8 +392,9 @@ function renderMacroPreviewGrid(macros) {
 
 export async function populateDashboardMacros(macros) {
     renderMacroPreviewGrid(macros);
-    if (!selectors.analyticsCardsContainer) {
-        console.warn('Analytics cards container not found.');
+    const macroContainer = selectors.macroAnalyticsCardContainer;
+    if (!macroContainer || !macroContainer.isConnected) {
+        console.warn('Macro analytics container not found in DOM.');
         return;
     }
     if (!macros) {
@@ -411,7 +414,7 @@ export async function populateDashboardMacros(macros) {
         fiber_grams: currentIntakeMacros.fiber
     };
     let frame = document.getElementById('macroAnalyticsCardFrame');
-    if (!frame && selectors.macroAnalyticsCardContainer) {
+    if (!frame) {
         frame = document.createElement('iframe');
         frame.id = 'macroAnalyticsCardFrame';
         frame.title = 'Макро анализ';
@@ -420,8 +423,8 @@ export async function populateDashboardMacros(macros) {
         frame.style.border = '0';
         frame.style.display = 'block';
         frame.src = standaloneMacroUrl;
-        selectors.macroAnalyticsCardContainer.innerHTML = '';
-        selectors.macroAnalyticsCardContainer.appendChild(frame);
+        macroContainer.innerHTML = '';
+        macroContainer.appendChild(frame);
     }
     if (frame) {
         lastMacroPayload = { target: macros, plan: planMacros, current };
