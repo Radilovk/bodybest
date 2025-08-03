@@ -89,6 +89,7 @@ export function applyTheme(theme) {
     document.body.classList.remove('light-theme', 'dark-theme', 'vivid-theme');
     const cls = theme === 'dark' ? 'dark-theme' : theme === 'vivid' ? 'vivid-theme' : 'light-theme';
     document.body.classList.add(cls);
+    document.dispatchEvent(new Event('themechange'));
 }
 
 export function toggleTheme() {

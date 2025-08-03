@@ -10,6 +10,55 @@ import { calculatePlanMacros, getNutrientOverride, addMealMacros, scaleMacros } 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
 
+function addAlpha(color, alpha) {
+    const c = color.trim();
+    if (c.startsWith('#')) {
+        let hex = c.slice(1);
+        if (hex.length === 3) hex = hex.split('').map(ch => ch + ch).join('');
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    if (c.startsWith('rgba')) {
+        return c.replace(/rgba\((\d+),\s*(\d+),\s*(\d+),[^)]+\)/, `rgba($1,$2,$3,${alpha})`);
+    }
+    if (c.startsWith('rgb')) {
+        return c.replace('rgb', 'rgba').replace(')', `, ${alpha})`);
+    }
+    return c;
+}
+
+function getProgressChartColors() {
+    const styles = getComputedStyle(document.documentElement);
+    const primary = styles.getPropertyValue('--primary-color').trim();
+    const text = styles.getPropertyValue('--text-color-primary').trim();
+    return {
+        border: primary,
+        fill: addAlpha(primary, 0.1),
+        grid: addAlpha(text, 0.1),
+        tick: text
+    };
+}
+
+function applyProgressChartTheme() {
+    if (!progressChartInstance) return;
+    const { border, fill, grid, tick } = getProgressChartColors();
+    const ds = progressChartInstance.data.datasets[0];
+    ds.borderColor = border;
+    ds.backgroundColor = fill;
+    const scales = progressChartInstance.options.scales;
+    if (scales.x?.ticks) scales.x.ticks.color = tick;
+    if (scales.y?.ticks) scales.y.ticks.color = tick;
+    if (scales.y?.title) scales.y.title.color = tick;
+    if (scales.y?.grid) scales.y.grid.color = grid;
+    const legend = progressChartInstance.options.plugins?.legend;
+    if (legend?.labels) legend.labels.color = tick;
+    progressChartInstance.update();
+}
+
+document.addEventListener('themechange', applyProgressChartTheme);
+
 export async function populateUI() {
     const data = fullDashboardData; // Access global state
     if (!data || Object.keys(data).length === 0) {
@@ -921,6 +970,7 @@ export async function populateProgressHistory(dailyLogs, initialData) {
     card.appendChild(chartContainer);
 
     const ctx = canvas.getContext('2d');
+    const colors = getProgressChartColors();
     progressChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
@@ -928,8 +978,8 @@ export async function populateProgressHistory(dailyLogs, initialData) {
             datasets: [{
                 label: 'Тегло (кг)',
                 data: weightData,
-                borderColor: 'rgba(58, 80, 107, 1)',
-                backgroundColor: 'rgba(58, 80, 107, 0.1)',
+                borderColor: colors.border,
+                backgroundColor: colors.fill,
                 tension: 0.1,
                 fill: false,
                 spanGaps: true
@@ -939,17 +989,19 @@ export async function populateProgressHistory(dailyLogs, initialData) {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: { grid: { display: false } },
+                x: { grid: { display: false }, ticks: { color: colors.tick } },
                 y: {
                     beginAtZero: false,
-                    title: { display: true, text: 'Тегло (кг)' },
-                    grid: { color: 'rgba(0,0,0,0.05)'}
+                    title: { display: true, text: 'Тегло (кг)', color: colors.tick },
+                    grid: { color: colors.grid },
+                    ticks: { color: colors.tick }
                 }
             },
             plugins: {
-                legend: { display: true, position: 'top' },
+                legend: { display: true, position: 'top', labels: { color: colors.tick } },
                 tooltip: { mode: 'index', intersect: false }
             }
         }
     });
+    applyProgressChartTheme();
 }
