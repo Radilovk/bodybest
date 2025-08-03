@@ -435,14 +435,14 @@
             ],
             datasets: [
               {
-                label: this.locale === 'en' ? 'Target (g)' : 'Цел (гр)',
+                label: 'Цел',
                 data: [target.protein_grams, target.carbs_grams, target.fat_grams, target.fiber_grams],
                 backgroundColor: macroColors.map((c) => `${c}40`),
                 borderWidth: 0,
                 cutout: '80%'
               },
               {
-                label: this.locale === 'en' ? 'Intake (g)' : 'Прием (гр)',
+                label: 'Прием',
                 data: [current.protein_grams, current.carbs_grams, current.fat_grams, current.fiber_grams],
                 backgroundColor: macroColors,
                 borderColor: this.getCssVar('--card-bg'),
@@ -458,13 +458,10 @@
             maintainAspectRatio: false,
             animation: { duration: 800, easing: 'easeOutQuart' },
             plugins: {
-              legend: { display: false },
+              legend: { display: true, position: 'bottom' },
               tooltip: {
                 callbacks: {
-                  label: (context) => {
-                    const label = context.dataset.label || '';
-                    return `${label}: ${context.parsed}g`;
-                  }
+                  label: (context) => `${context.dataset.label}: ${context.parsed}g`
                 }
               }
             },
