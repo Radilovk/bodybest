@@ -31,6 +31,8 @@ test('заменя макро картата с iframe при разгръщан
   const iframe = document.querySelector('#macroCardIframe');
   expect(iframe).not.toBeNull();
   expect(iframe.src).toContain(standaloneMacroUrl);
+  expect(document.querySelector('macro-analytics-card')).toBeNull();
+  expect(document.querySelector('.card.analytics-card')).toBeNull();
 });
 
 test('актуализира височината на iframe чрез postMessage', () => {
