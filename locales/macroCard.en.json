@@ -8,6 +8,7 @@
     "fiber": "Fiber"
   },
   "fromGoal": "of goal",
+  "subtitle": "{percent} of goal",
   "totalCaloriesLabel": "of {calories} kcal",
   "exceedWarning": "Exceeds target by >15%: {items}",
   "planVsTargetLabel": "Plan vs Goal: {plan} / {target} kcal"

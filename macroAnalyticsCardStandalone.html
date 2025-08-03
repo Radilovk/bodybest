@@ -221,6 +221,7 @@
           caloriesLabel: '',
           macros: { protein: '', carbs: '', fat: '' },
           fromGoal: '',
+          subtitle: '',
           totalCaloriesLabel: ''
         };
       }
@@ -374,18 +375,23 @@
           const label = this.labels.macros[item.key];
           const currentVal = current[`${item.key}_grams`];
           const targetVal = target[`${item.key}_grams`];
-          const percent = target[`${item.key}_percent`];
+          const ratio = targetVal ? currentVal / targetVal : 0;
+          const percent = Math.round(ratio * 100);
+          const percentText = `${percent}%`;
+          const subtitle = this.labels.subtitle
+            ? this.labels.subtitle.replace('{percent}', percentText)
+            : `${percentText} ${this.labels.fromGoal}`.trim();
           const div = document.createElement('div');
           div.className = `macro-metric ${item.key}`;
           div.setAttribute('role', 'button');
           div.setAttribute('tabindex', '0');
-          div.setAttribute('aria-label', `${label}: ${currentVal} от ${targetVal} грама (${percent}% ${this.labels.fromGoal})`);
+          div.setAttribute('aria-label', `${label}: ${currentVal} от ${targetVal} грама (${subtitle})`);
           div.setAttribute('aria-pressed', 'false');
           div.innerHTML = `
             <span class="macro-icon"><i class="bi ${item.icon}"></i></span>
             <div class="macro-label">${label}</div>
             <div class="macro-value">${currentVal} / ${targetVal}г</div>
-            <div class="macro-subtitle">${percent}% ${this.labels.fromGoal}</div>`;
+            <div class="macro-subtitle">${subtitle}</div>`;
           const diff = currentVal - targetVal;
           if (diff > 0) {
             div.classList.add('over');
