@@ -1,16 +1,6 @@
 /** @jest-environment jsdom */
 import { jest } from '@jest/globals';
 
-class DummyMacroCard extends HTMLElement {
-  constructor() {
-    super();
-    this.setData = jest.fn();
-  }
-}
-customElements.define('macro-analytics-card', DummyMacroCard);
-
-global.fetch = jest.fn(() => Promise.resolve({ json: () => Promise.resolve([]) }));
-
 let populateDashboardMacros;
 let selectors;
 let appState;
@@ -21,7 +11,7 @@ beforeAll(async () => {
 });
 
 function setupDom() {
-  document.body.innerHTML = '<div id="macroMetricsPreview"></div><div id="analyticsCardsContainer"></div>';
+  document.body.innerHTML = '<div id="macroMetricsPreview"></div><div id="analyticsCardsContainer"><iframe id="macroAnalyticsCardFrame"></iframe></div>';
   selectors.macroMetricsPreview = document.getElementById('macroMetricsPreview');
   selectors.analyticsCardsContainer = document.getElementById('analyticsCardsContainer');
 }
@@ -50,10 +40,18 @@ test('placeholder shown when macros missing and populates after migration', asyn
   await populateDashboardMacros(macros);
   expect(selectors.macroMetricsPreview.classList.contains('hidden')).toBe(false);
   expect(selectors.macroMetricsPreview.textContent).toContain('1800');
-  const card = document.getElementById('macroAnalyticsCard');
-  expect(card.setData).toHaveBeenCalledWith({
-    target: macros,
-    plan: { calories: 850, protein: 72, carbs: 70, fat: 28 },
-    current: appState.currentIntakeMacros
+  const frame = document.getElementById('macroAnalyticsCardFrame');
+  Object.defineProperty(frame, 'contentWindow', { value: { postMessage: jest.fn() } });
+  await populateDashboardMacros(macros);
+  expect(frame.contentWindow.postMessage).toHaveBeenCalled();
+  const [msg, origin] = frame.contentWindow.postMessage.mock.calls[0];
+  expect(origin).toBe('*');
+  expect(msg).toMatchObject({
+    type: 'macro-data',
+    data: {
+      target: macros,
+      plan: expect.objectContaining({ calories: 850, protein: 72, carbs: 70, fat: 28 }),
+      current: appState.currentIntakeMacros
+    }
   });
 });

@@ -14,14 +14,10 @@ beforeEach(async () => {
     <div id="healthProgressFill"></div><div id="healthProgressBar"></div><span id="healthProgressText"></span>
     <div id="streakGrid"></div>
     <div id="macroMetricsPreview"></div>
-    <macro-analytics-card id="macroAnalyticsCard"></macro-analytics-card>
+    <iframe id="macroAnalyticsCardFrame"></iframe>
     <h3 id="dailyPlanTitle"></h3>
     <ul id="dailyMealList"></ul>
   `;
-  if (!customElements.get('macro-analytics-card')) {
-    customElements.define('macro-analytics-card', class extends HTMLElement {});
-  }
-
   const selectors = {
     headerTitle: document.getElementById('headerTitle'),
     goalCard: document.getElementById('goalCard'),
@@ -38,7 +34,7 @@ beforeEach(async () => {
     healthProgressBar: document.getElementById('healthProgressBar'),
     healthProgressText: document.getElementById('healthProgressText'),
     streakGrid: document.getElementById('streakGrid'),
-    macroAnalyticsCard: document.getElementById('macroAnalyticsCard'),
+    macroAnalyticsCardFrame: document.getElementById('macroAnalyticsCardFrame'),
     macroMetricsPreview: document.getElementById('macroMetricsPreview'),
     dailyPlanTitle: document.getElementById('dailyPlanTitle'),
     dailyMealList: document.getElementById('dailyMealList')
@@ -99,7 +95,7 @@ test('populates dashboard sections', async () => {
   expect(document.querySelectorAll('#streakGrid .streak-day.logged').length).toBe(1);
 });
 
-test('обновява макро картата чрез setData', async () => {
+test('обновява макро картата чрез postMessage', async () => {
   jest.resetModules();
   const fullData = {
     userName: 'Иван',
@@ -128,14 +124,20 @@ test('обновява макро картата чрез setData', async () => 
     planHasRecContent: false,
   }));
   ({ populateUI } = await import('../populateUI.js'));
-  const card = document.getElementById('macroAnalyticsCard');
-  card.setData = jest.fn();
+  const frame = document.getElementById('macroAnalyticsCardFrame');
+  frame.contentWindow = { postMessage: jest.fn() };
   await populateUI();
-  expect(card.setData).toHaveBeenCalledWith({
-    target: expect.objectContaining({ calories: 1800 }),
-    plan: expect.any(Object),
-    current: {}
-  });
+  expect(frame.contentWindow.postMessage).toHaveBeenCalledWith(
+    {
+      type: 'macro-data',
+      data: {
+        target: expect.objectContaining({ calories: 1800 }),
+        plan: expect.any(Object),
+        current: {}
+      }
+    },
+    '*'
+  );
 });
 
 test('hides modules when values are zero', async () => {

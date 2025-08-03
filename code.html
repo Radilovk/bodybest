@@ -524,7 +524,11 @@
                   </div>
                 </div>
                 <div id="analyticsCardsContainer" class="analytics-cards-grid">
-                  <macro-analytics-card id="macroAnalyticsCard"></macro-analytics-card>
+                  <iframe id="macroAnalyticsCardFrame"
+                          class="analytics-card"
+                          src="macroAnalyticsCardStandalone.html"
+                          title="Макро анализ">
+                  </iframe>
                 </div>
               </div>
             </div>
@@ -1387,9 +1391,15 @@
     <!-- End #appWrapper -->
 
     <!-- Коригирана JavaScript Връзка -->
-    <script type="module" src="js/macroAnalyticsCardComponent.js"></script>
     <script type="module" src="js/app.js" defer></script>
     <script type="module" src="js/planModChat.js" defer></script>
+    <script>
+      window.addEventListener('message', e => {
+        if (e.data?.type === 'macro-card-height') {
+          document.getElementById('macroAnalyticsCardFrame').style.height = `${e.data.height}px`;
+        }
+      });
+    </script>
     
   </body>
 </html>

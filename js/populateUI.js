@@ -378,30 +378,11 @@ function renderMacroPreviewGrid(macros) {
     });
 }
 
-async function ensureMacroCard() {
-    if (!customElements.get('macro-analytics-card')) {
-        await import('./macroAnalyticsCardComponent.js');
-    }
-}
-
 export async function populateDashboardMacros(macros) {
     renderMacroPreviewGrid(macros);
-    await ensureMacroCard();
-    if (!customElements.get('macro-analytics-card')) {
-        console.warn('macro-analytics-card component is missing.');
-        return;
-    }
-    const container = selectors.analyticsCardsContainer;
-    if (!container) {
+    if (!selectors.analyticsCardsContainer) {
         console.warn('Analytics cards container not found.');
         return;
-    }
-
-    let card = document.getElementById('macroAnalyticsCard');
-    if (!card) {
-        card = document.createElement('macro-analytics-card');
-        card.id = 'macroAnalyticsCard';
-        container.appendChild(card);
     }
     if (!macros) {
         console.warn('Macros data is missing.');
@@ -412,7 +393,12 @@ export async function populateDashboardMacros(macros) {
     const currentDayKey = dayNames[today.getDay()];
     const dayMenu = fullDashboardData?.planData?.week1Menu?.[currentDayKey] || [];
     const planMacros = calculatePlanMacros(dayMenu);
-    card.setData({ target: macros, plan: planMacros, current: currentIntakeMacros });
+    const frame = document.getElementById('macroAnalyticsCardFrame');
+    frame?.contentWindow?.postMessage(
+        { type: 'macro-data',
+          data: { target: macros, plan: planMacros, current: currentIntakeMacros } },
+        '*'
+    );
     renderPendingMacroChart();
 }
 
