@@ -1138,10 +1138,11 @@ async function handleDashboardDataRequest(request, env) {
         }
 
         if (!finalPlan.caloriesMacros || Object.keys(finalPlan.caloriesMacros).length === 0) {
-            const macrosStr = await env.USER_METADATA_KV.get(`${userId}_final_caloriesMacros`);
-            let macros = macrosStr ? safeParseJson(macrosStr, null) : null;
-            if (!macros) macros = estimateMacros(initialAnswers);
-            if (macros) finalPlan.caloriesMacros = macros;
+            const macros = estimateMacros(initialAnswers);
+            if (macros) {
+                finalPlan.caloriesMacros = macros;
+                await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(finalPlan));
+            }
         }
 
         const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries, currentStatus, env); // Добавен userId
@@ -2874,7 +2875,6 @@ async function processSingleUserPlan(userId, env) {
         planBuilder.generationMetadata.timestamp = planBuilder.generationMetadata.timestamp || new Date().toISOString();
         const finalPlanString = JSON.stringify(planBuilder, null, 2);
         await env.USER_METADATA_KV.put(`${userId}_final_plan`, finalPlanString);
-        await env.USER_METADATA_KV.put(`${userId}_caloriesMacros`, JSON.stringify(planBuilder.caloriesMacros), { expirationTtl: 86400 });
         
         if (planBuilder.generationMetadata.errors.length > 0) {
             await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
