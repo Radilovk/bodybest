@@ -182,9 +182,10 @@ export class MacroAnalyticsCard extends HTMLElement {
     this.planData = null;
     this.currentData = null;
     this.observer = null;
-      this.refreshTimer = null;
-      this.locale = this.getAttribute('locale') || document.documentElement.lang || 'bg';
-      this.labels = {
+    this.refreshTimer = null;
+    this.locale = this.getAttribute('locale') || document.documentElement.lang || 'bg';
+    this.exceedThreshold = parseFloat(this.getAttribute('exceed-threshold')) || 1.15;
+    this.labels = {
       title: '',
       caloriesLabel: '',
       macros: { protein: '', carbs: '', fat: '', fiber: '' },
@@ -194,9 +195,9 @@ export class MacroAnalyticsCard extends HTMLElement {
     };
   }
 
-    static get observedAttributes() {
-      return ['target-data', 'plan-data', 'current-data', 'locale', 'data-endpoint', 'refresh-interval'];
-    }
+  static get observedAttributes() {
+    return ['target-data', 'plan-data', 'current-data', 'locale', 'data-endpoint', 'refresh-interval', 'exceed-threshold'];
+  }
 
     async connectedCallback() {
       this.classList.add('loaded');
@@ -212,6 +213,12 @@ export class MacroAnalyticsCard extends HTMLElement {
       }
     if (name === 'data-endpoint' || name === 'refresh-interval') {
       this.setupAutoRefresh();
+      return;
+    }
+    if (name === 'exceed-threshold') {
+      const val = parseFloat(newVal);
+      if (!Number.isNaN(val)) this.exceedThreshold = val;
+      this.renderMetrics();
       return;
     }
     try {
@@ -382,7 +389,11 @@ export class MacroAnalyticsCard extends HTMLElement {
       <div class="macro-value">${consumedCalories} / ${target.calories} kcal</div>`;
     this.grid.appendChild(calDiv);
     const overMacros = [];
-    if (typeof consumedCaloriesRaw === 'number' && target.calories && consumedCaloriesRaw > target.calories * 1.15) {
+    if (
+      typeof consumedCaloriesRaw === 'number' &&
+      target.calories &&
+      consumedCaloriesRaw > target.calories * this.exceedThreshold
+    ) {
       overMacros.push(this.labels.caloriesLabel);
     }
     const macros = [
@@ -421,7 +432,7 @@ export class MacroAnalyticsCard extends HTMLElement {
         }
       });
       this.grid.appendChild(div);
-      if (typeof currentRaw === 'number' && targetVal && currentRaw > targetVal * 1.15) {
+      if (typeof currentRaw === 'number' && targetVal && currentRaw > targetVal * this.exceedThreshold) {
         overMacros.push(label);
       }
     });
