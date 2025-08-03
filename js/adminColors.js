@@ -130,7 +130,7 @@ const vividTheme = {
   'secondary-color': '#FFD166',
   'accent-color': '#FF6B6B',
   'tertiary-color': '#FF9C9C',
-  'progress-end-color': '#80FF80'
+  'progress-color': '#80FF80'
 };
 
 function setCssVar(key, val) {

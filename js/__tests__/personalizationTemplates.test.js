@@ -17,14 +17,14 @@ beforeEach(async () => {
     colorGroups: [
       { name: 'Dashboard', items: [
         { var: 'primary-color', label: '' },
-        { var: 'progress-end-color', label: '' }
+        { var: 'progress-color', label: '' }
       ] },
       { name: 'Code', items: [{ var: 'code-bg', label: '' }] }
     ],
     sampleThemes: {
       dashboard: { Light: {
         'primary-color': '#010101',
-        'progress-end-color': '#030303'
+        'progress-color': '#030303'
       } },
       code: { Light: { 'code-bg': '#020202' } }
     }

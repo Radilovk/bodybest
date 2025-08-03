@@ -106,7 +106,7 @@ function populateDashboardMainIndexes(currentAnalytics) {
     } else {
         show(selectors.goalCard);
         if (selectors.goalProgressFill) {
-            selectors.goalProgressFill.style.setProperty('--progress-end-color', getProgressColor(goalProgressPercent));
+            selectors.goalProgressFill.style.setProperty('--progress-color', getProgressColor(goalProgressPercent));
             animateProgressFill(selectors.goalProgressFill, goalProgressPercent);
         }
         if (selectors.goalProgressBar) selectors.goalProgressBar.setAttribute('aria-valuenow', `${Math.round(goalProgressPercent)}`);
@@ -131,7 +131,7 @@ function populateDashboardMainIndexes(currentAnalytics) {
     } else {
         show(selectors.engagementCard);
         if (selectors.engagementProgressFill) {
-            selectors.engagementProgressFill.style.setProperty('--progress-end-color', getProgressColor(engagementScore));
+            selectors.engagementProgressFill.style.setProperty('--progress-color', getProgressColor(engagementScore));
             animateProgressFill(selectors.engagementProgressFill, engagementScore);
         }
         if (selectors.engagementProgressBar) selectors.engagementProgressBar.setAttribute('aria-valuenow', `${Math.round(engagementScore)}`);
@@ -144,7 +144,7 @@ function populateDashboardMainIndexes(currentAnalytics) {
     } else {
         show(selectors.healthCard);
         if (selectors.healthProgressFill) {
-            selectors.healthProgressFill.style.setProperty('--progress-end-color', getProgressColor(healthScore));
+            selectors.healthProgressFill.style.setProperty('--progress-color', getProgressColor(healthScore));
             animateProgressFill(selectors.healthProgressFill, healthScore);
         }
         if (selectors.healthProgressBar) selectors.healthProgressBar.setAttribute('aria-valuenow', `${Math.round(healthScore)}`);
@@ -251,7 +251,7 @@ function populateDashboardDetailedAnalytics(analyticsData) {
                 const value = Number(metric.currentValueNumeric);
                 const percent = value <= 5 ? ((value - 1) / 4) * 100 : Math.max(0, Math.min(100, value));
                 progress.setAttribute('aria-valuenow', `${Math.round(percent)}`);
-                fill.style.setProperty('--progress-end-color', getProgressColor(percent));
+                fill.style.setProperty('--progress-color', getProgressColor(percent));
                 animateProgressFill(fill, percent);
             }
 
