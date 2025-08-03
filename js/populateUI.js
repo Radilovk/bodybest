@@ -1,7 +1,7 @@
 // populateUI.js - Попълване на UI с данни
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort } from './utils.js';
-import { generateId } from './config.js';
+import { generateId, standaloneMacroUrl } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
@@ -9,6 +9,7 @@ import { calculatePlanMacros, getNutrientOverride, addMealMacros, scaleMacros } 
 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
+let lastMacroPayload = null;
 
 // Helper for tests to inject chart instance
 export function __setProgressChartInstance(instance) {
@@ -304,18 +305,9 @@ function populateDashboardDetailedAnalytics(analyticsData) {
 }
 
 export function renderPendingMacroChart() {
-    const macroCard = document.getElementById('macroAnalyticsCard');
-    if (!macroCard || typeof macroCard.renderChart !== 'function') return;
-    macroCard.renderChart();
-    macroChartInstance = macroCard.chart || null;
     const frame = document.getElementById('macroAnalyticsCardFrame');
-    if (frame?.contentWindow) {
-        const payload = {
-            target: macroCard.targetData,
-            plan: macroCard.planData,
-            current: macroCard.currentData
-        };
-        frame.contentWindow.postMessage({ type: 'macro-data', data: payload }, '*');
+    if (frame?.contentWindow && lastMacroPayload) {
+        frame.contentWindow.postMessage({ type: 'macro-data', data: lastMacroPayload }, '*');
     }
 }
 
@@ -418,21 +410,25 @@ export async function populateDashboardMacros(macros) {
         fat_grams: currentIntakeMacros.fat,
         fiber_grams: currentIntakeMacros.fiber
     };
-    const card = document.getElementById('macroAnalyticsCard');
-    if (card && typeof card.setData === 'function') {
-        card.setData({ target: macros, plan: planMacros, current });
+    let frame = document.getElementById('macroAnalyticsCardFrame');
+    if (!frame && selectors.macroAnalyticsCardContainer) {
+        frame = document.createElement('iframe');
+        frame.id = 'macroAnalyticsCardFrame';
+        frame.title = 'Макро анализ';
+        frame.loading = 'lazy';
+        frame.style.width = '100%';
+        frame.style.border = '0';
+        frame.style.display = 'block';
+        frame.src = standaloneMacroUrl;
+        selectors.macroAnalyticsCardContainer.innerHTML = '';
+        selectors.macroAnalyticsCardContainer.appendChild(frame);
     }
-    const frame = document.getElementById('macroAnalyticsCardFrame');
     if (frame) {
-        const payload = { target: macros, plan: planMacros, current };
-        const sendData = () => frame.contentWindow?.postMessage({ type: 'macro-data', data: payload }, '*');
-        if (frame.contentWindow?.document?.readyState === 'complete') {
-            sendData();
-        } else {
-            frame.addEventListener('load', sendData, { once: true });
-        }
+        lastMacroPayload = { target: macros, plan: planMacros, current };
+        const sendData = () => frame.contentWindow?.postMessage({ type: 'macro-data', data: lastMacroPayload }, '*');
+        if (frame.contentWindow?.document?.readyState === 'complete') sendData();
+        else frame.addEventListener('load', sendData, { once: true });
     }
-    renderPendingMacroChart();
 }
 
 function populateDashboardStreak(streakData) {
