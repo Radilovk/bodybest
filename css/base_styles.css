@@ -94,6 +94,7 @@
   --progress-gradient: linear-gradient(to right, var(--color-danger), var(--color-warning), var(--color-success));
   --progress-end-color: var(--color-success);
   --progress-bar-glow-color: color-mix(in srgb, var(--progress-end-color) 60%, transparent);
+  --progress-color: var(--progress-end-color);
   --progress-bar-height: 1rem;
   --progress-bar-radius: var(--radius-sm);
 
@@ -187,6 +188,7 @@ body.dark-theme {
   --shadow-soft: 0px 6px 18px rgba(var(--surface-background-rgb), 0.5), 0px 2px 7px rgba(var(--surface-background-rgb), 0.3);
 
   --progress-bar-bg-empty: #393E57;
+  --progress-color: var(--progress-end-color);
 
   /* Макро диаграма - тъмна тема */
   --macro-protein-color: #5BC0BE;
@@ -273,6 +275,7 @@ body.vivid-theme {
 
   --progress-bar-bg-empty: #393E57;
   --progress-end-color: #80FF80;
+  --progress-color: var(--progress-end-color);
 
   /* Макро диаграма - ярка тема */
   --macro-protein-color: #5BC0BE;

@@ -36,11 +36,7 @@
 }
 .progress-fill {
   position: relative;
-  background: linear-gradient(
-    to right,
-    color-mix(in srgb, var(--progress-start-color) 90%, transparent),
-    var(--progress-end-color)
-  );
+  background: var(--progress-color);
   height: 100%;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   width: 0;
@@ -149,11 +145,7 @@ body.vivid-theme .index-card .index-value {
 }
 .analytics-card .mini-progress-fill {
   position: relative;
-  background: linear-gradient(
-    to right,
-    color-mix(in srgb, var(--progress-start-color) 90%, transparent),
-    var(--progress-end-color)
-  );
+  background: var(--progress-color);
   height: 100%;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   width: 0;
