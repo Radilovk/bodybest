@@ -34,14 +34,35 @@ function addAlpha(color, alpha) {
     return c;
 }
 
+function getBrightness(color) {
+    const c = color.trim();
+    let r, g, b;
+    if (c.startsWith('#')) {
+        let hex = c.slice(1);
+        if (hex.length === 3) hex = hex.split('').map(ch => ch + ch).join('');
+        r = parseInt(hex.slice(0, 2), 16);
+        g = parseInt(hex.slice(2, 4), 16);
+        b = parseInt(hex.slice(4, 6), 16);
+    } else if (c.startsWith('rgb')) {
+        [r, g, b] = c.replace(/rgba?\(|\)|\s/g, '').split(',').map(Number);
+    } else {
+        return 1; // assume light background
+    }
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
 function getProgressChartColors() {
     const styles = getComputedStyle(document.documentElement);
     const primary = styles.getPropertyValue('--primary-color').trim();
     const text = styles.getPropertyValue('--text-color-primary').trim();
+    const cardBg = (styles.getPropertyValue('--card-bg') || '#fff').trim();
+    const darkBg = getBrightness(cardBg) < 0.5;
+    const fillAlpha = darkBg ? 0.3 : 0.1;
+    const gridAlpha = darkBg ? 0.2 : 0.1;
     return {
         border: primary,
-        fill: addAlpha(primary, 0.1),
-        grid: addAlpha(text, 0.1),
+        fill: addAlpha(primary, fillAlpha),
+        grid: addAlpha(text, gridAlpha),
         tick: text
     };
 }
