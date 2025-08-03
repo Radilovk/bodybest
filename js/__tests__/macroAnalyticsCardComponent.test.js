@@ -57,6 +57,8 @@ test('рендерира метриките и реагира на highlightMacr
   await waitFor(() => utils.getByText('Белтъчини'));
   expect(utils.getByText('60 / 150г')).toBeTruthy();
   const proteinDiv = utils.getByText('Белтъчини').closest('.macro-metric');
+  expect(proteinDiv.getAttribute('aria-label')).toContain('40%');
+  expect(within(proteinDiv).getByText('40% от целта')).toBeTruthy();
   expect(proteinDiv.classList.contains('active')).toBe(false);
   fireEvent.click(proteinDiv);
   expect(proteinDiv.classList.contains('active')).toBe(true);
