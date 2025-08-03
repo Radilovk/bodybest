@@ -131,10 +131,11 @@ test('обновява макро картата чрез setData', async () => 
   const card = document.getElementById('macroAnalyticsCard');
   card.setData = jest.fn();
   await populateUI();
-  expect(card.setData).toHaveBeenCalledWith(
-    expect.objectContaining({ calories: 1800 }),
-    null,
-  );
+  expect(card.setData).toHaveBeenCalledWith({
+    target: expect.objectContaining({ calories: 1800 }),
+    plan: expect.any(Object),
+    current: {}
+  });
 });
 
 test('hides modules when values are zero', async () => {
