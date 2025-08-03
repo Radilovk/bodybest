@@ -53,17 +53,16 @@ function getBrightness(color) {
 
 function getProgressChartColors() {
     const styles = getComputedStyle(document.documentElement);
-    const primary = styles.getPropertyValue('--primary-color').trim();
-    const text = styles.getPropertyValue('--text-color-primary').trim();
+    const header = styles.getPropertyValue('--primary-color').trim();
     const cardBg = (styles.getPropertyValue('--card-bg') || '#fff').trim();
     const darkBg = getBrightness(cardBg) < 0.5;
     const fillAlpha = darkBg ? 0.3 : 0.1;
     const gridAlpha = darkBg ? 0.2 : 0.1;
     return {
-        border: primary,
-        fill: addAlpha(primary, fillAlpha),
-        grid: addAlpha(text, gridAlpha),
-        tick: text
+        border: header,
+        fill: addAlpha(header, fillAlpha),
+        grid: addAlpha(header, gridAlpha),
+        tick: header
     };
 }
 
