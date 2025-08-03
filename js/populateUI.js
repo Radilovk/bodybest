@@ -1,7 +1,7 @@
 // populateUI.js - Попълване на UI с данни
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort } from './utils.js';
-import { generateId } from './config.js';
+import { generateId, standaloneMacroUrl } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
@@ -403,7 +403,6 @@ export async function populateDashboardMacros(macros) {
         card.id = 'macroAnalyticsCard';
         container.appendChild(card);
     }
-
     if (!macros) {
         console.warn('Macros data is missing.');
         return;
@@ -923,6 +922,27 @@ export function handleAccordionToggle(event) {
     if (!isOpen && this.closest('#detailedAnalyticsAccordion')) {
         macroChartInstance?.resize();
         progressChartInstance?.resize();
+        const card = document.getElementById('macroAnalyticsCard');
+        if (card && !document.getElementById('macroCardIframe')) {
+            const data = {
+                target: card.getAttribute('target-data') ? JSON.parse(card.getAttribute('target-data')) : null,
+                plan: card.getAttribute('plan-data') ? JSON.parse(card.getAttribute('plan-data')) : null,
+                current: card.getAttribute('current-data') ? JSON.parse(card.getAttribute('current-data')) : null,
+            };
+            const wrapper = document.createElement('div');
+            wrapper.className = 'card analytics-card';
+            const iframe = document.createElement('iframe');
+            iframe.id = 'macroCardIframe';
+            iframe.src = standaloneMacroUrl;
+            iframe.style.width = '100%';
+            iframe.style.border = 'none';
+            iframe.style.height = '500px';
+            iframe.addEventListener('load', () => {
+                iframe.contentWindow?.postMessage({ type: 'macro-data', data }, '*');
+            });
+            wrapper.appendChild(iframe);
+            card.replaceWith(wrapper);
+        }
     }
 }
 
