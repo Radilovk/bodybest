@@ -191,7 +191,8 @@ export class MacroAnalyticsCard extends HTMLElement {
       macros: { protein: '', carbs: '', fat: '', fiber: '' },
       fromGoal: '',
       totalCaloriesLabel: '',
-      exceedWarning: ''
+      exceedWarning: '',
+      planVsTargetLabel: ''
     };
   }
 
@@ -372,7 +373,10 @@ export class MacroAnalyticsCard extends HTMLElement {
       this.warningEl.classList.remove('show');
       this.warningEl.textContent = '';
     }
-    const planLine = plan ? `<div class="plan-vs-target">План: ${plan.calories} kcal / Препоръка: ${target.calories} kcal</div>` : '';
+    const hasPlan = plan && typeof plan.calories === 'number';
+    const planLine = hasPlan
+      ? `<div class="plan-vs-target">${this.labels.planVsTargetLabel.replace('{plan}', plan.calories).replace('{target}', target.calories)}</div>`
+      : '';
     const consumedCaloriesRaw = hasMacroData ? current.calories : undefined;
     const consumedCalories = typeof consumedCaloriesRaw === 'number' ? consumedCaloriesRaw : '--';
     this.centerText.innerHTML = `
