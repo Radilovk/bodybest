@@ -88,7 +88,6 @@
   --progress-color-50: 243, 156, 18;
   --progress-color-75: 255, 203, 0;
   --progress-color-100: 46, 204, 113;
-  --progress-start-color: var(--color-danger);
 
   --progress-bar-bg-empty: #e9ecef;
   --progress-gradient: linear-gradient(to right, var(--color-danger), var(--color-warning), var(--color-success));

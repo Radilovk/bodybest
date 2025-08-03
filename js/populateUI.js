@@ -136,9 +136,6 @@ function populateDashboardDetailedAnalytics(analyticsData) {
             progress.setAttribute('aria-valuemax', '100');
             const fill = document.createElement('div');
             fill.className = 'mini-progress-fill';
-            if (metric.colorKey) {
-                fill.style.setProperty('--progress-start-color', `var(--color-${metric.colorKey})`);
-            }
             progress.appendChild(fill);
             card.appendChild(progress);
 
