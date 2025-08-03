@@ -179,7 +179,7 @@ function populateDashboardMainIndexes(currentAnalytics) {
     }
 }
 
-function populateDashboardDetailedAnalytics(analyticsData) {
+export function populateDashboardDetailedAnalytics(analyticsData) {
     const cardsContainer = selectors.analyticsCardsContainer;
     const accordionContent = selectors.detailedAnalyticsContent;
     const textualAnalysisContainer = selectors.dashboardTextualAnalysis;
@@ -188,7 +188,12 @@ function populateDashboardDetailedAnalytics(analyticsData) {
         console.warn("Detailed analytics elements for dashboard not found.");
         return;
     }
+
+    const macroCard = cardsContainer
+        .querySelector('#macroAnalyticsCardFrame')?.closest('.analytics-card');
+
     cardsContainer.innerHTML = '';
+    if (macroCard) cardsContainer.appendChild(macroCard);
     textualAnalysisContainer.innerHTML = '';
 
 
@@ -283,7 +288,7 @@ function populateDashboardDetailedAnalytics(analyticsData) {
 
             cardsContainer.appendChild(card);
         });
-    } else {
+    } else if (!macroCard) {
         cardsContainer.innerHTML = '<p class="placeholder">Няма налични детайлни показатели за показване.</p>';
     }
 
