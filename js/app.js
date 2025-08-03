@@ -13,7 +13,7 @@ import {
 import { populateUI, populateProgressHistory } from './populateUI.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
 import { setupStaticEventListeners, setupDynamicEventListeners, initializeCollapsibleCards } from './eventListeners.js';
-import { loadProductMacros } from './macroUtils.js';
+import { loadProductMacros, calculateCurrentMacros } from './macroUtils.js';
 import {
     displayMessage as displayChatMessage,
     displayTypingIndicator as displayChatTypingIndicator, scrollToChatBottom,
@@ -340,6 +340,27 @@ async function initializeApp() {
 // ==========================================================================
 // ЗАРЕЖДАНЕ И ОБРАБОТКА НА ДАННИ
 // ==========================================================================
+export function loadCurrentIntake() {
+    try {
+        currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+        todaysExtraMeals = [];
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayLog = fullDashboardData?.dailyLogs?.find(l => l.date === todayStr)?.data;
+        if (!todayLog) return;
+        const completed = todayLog.completedMealsStatus || {};
+        Object.keys(todaysMealCompletionStatus).forEach(k => delete todaysMealCompletionStatus[k]);
+        Object.assign(todaysMealCompletionStatus, completed);
+        todaysExtraMeals = Array.isArray(todayLog.extraMeals) ? todayLog.extraMeals : [];
+        currentIntakeMacros = calculateCurrentMacros(
+            fullDashboardData.planData?.week1Menu || {},
+            todaysMealCompletionStatus,
+            todaysExtraMeals
+        );
+    } catch (err) {
+        console.error('Error loading current intake:', err);
+    }
+}
+
 /**
  * Зарежда данни за таблото от бекенда и обновява интерфейса.
  * Използва се и от модула adaptiveQuiz.js след изпращане на тест.
@@ -361,6 +382,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
             debugLog("Using test data for development:", data);
             fullDashboardData = data;
             fullDashboardData.dailyLogs = normalizeDailyLogs(fullDashboardData.dailyLogs);
+            loadCurrentIntake();
             chatHistory = []; // Reset chat history for test user on reload
 
             if(selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
@@ -422,6 +444,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
         }
 
         fullDashboardData.dailyLogs = normalizeDailyLogs(fullDashboardData.dailyLogs);
+        loadCurrentIntake();
 
         if(selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
         if(selectors.appWrapper) selectors.appWrapper.style.display = 'block';

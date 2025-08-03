@@ -54,6 +54,6 @@ test('placeholder shown when macros missing and populates after migration', asyn
   expect(card.setData).toHaveBeenCalledWith({
     target: macros,
     plan: { calories: 850, protein: 72, carbs: 70, fat: 28 },
-    current: null
+    current: appState.currentIntakeMacros
   });
 });

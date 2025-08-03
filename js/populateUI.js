@@ -407,15 +407,12 @@ export async function populateDashboardMacros(macros) {
         console.warn('Macros data is missing.');
         return;
     }
-    const current = currentIntakeMacros && Object.keys(currentIntakeMacros).length > 0
-        ? currentIntakeMacros
-        : null;
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const today = new Date();
     const currentDayKey = dayNames[today.getDay()];
     const dayMenu = fullDashboardData?.planData?.week1Menu?.[currentDayKey] || [];
     const planMacros = calculatePlanMacros(dayMenu);
-    card.setData({ target: macros, plan: planMacros, current });
+    card.setData({ target: macros, plan: planMacros, current: currentIntakeMacros });
     renderPendingMacroChart();
 }
 
