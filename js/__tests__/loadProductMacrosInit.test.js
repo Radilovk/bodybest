@@ -29,7 +29,7 @@ test('initializeApp продължава при грешка в loadProductMacro
     showToast: jest.fn(),
     updateTabsOverflowIndicator: jest.fn()
   }));
-  jest.unstable_mockModule('../populateUI.js', () => ({ populateUI: jest.fn(), populateProgressHistory: jest.fn() }));
+  jest.unstable_mockModule('../populateUI.js', () => ({ populateUI: jest.fn(), populateProgressHistory: jest.fn(), populateDashboardMacros: jest.fn() }));
   jest.unstable_mockModule('../eventListeners.js', () => ({
     setupStaticEventListeners: jest.fn(),
     setupDynamicEventListeners: jest.fn(),
