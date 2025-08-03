@@ -53,6 +53,18 @@
   animation: progress-grow 0.4s forwards;
 }
 
+/* Progress bar color levels */
+.progress-fill.level-1,
+.mini-progress-fill.level-1 { --progress-color: var(--progress-level-1); }
+.progress-fill.level-2,
+.mini-progress-fill.level-2 { --progress-color: var(--progress-level-2); }
+.progress-fill.level-3,
+.mini-progress-fill.level-3 { --progress-color: var(--progress-level-3); }
+.progress-fill.level-4,
+.mini-progress-fill.level-4 { --progress-color: var(--progress-level-4); }
+.progress-fill.level-5,
+.mini-progress-fill.level-5 { --progress-color: var(--progress-level-5); }
+
 .accordion-container {
   border: 1px solid var(--border-color-soft); border-radius: var(--radius-lg);
   overflow: hidden; margin-bottom: var(--space-md);

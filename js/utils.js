@@ -109,11 +109,11 @@ export function fileToText(file) {
  * color - CSS променлива за съответния цвят.
  */
 export const progressLevels = [
-    { limit: 20, color: 'var(--rating-1)' },
-    { limit: 40, color: 'var(--rating-2)' },
-    { limit: 60, color: 'var(--rating-3)' },
-    { limit: 80, color: 'var(--rating-4)' },
-    { limit: 100, color: 'var(--rating-5)' }
+    { limit: 20, color: 'var(--progress-level-1)' },
+    { limit: 40, color: 'var(--progress-level-2)' },
+    { limit: 60, color: 'var(--progress-level-3)' },
+    { limit: 80, color: 'var(--progress-level-4)' },
+    { limit: 100, color: 'var(--progress-level-5)' }
 ];
 
 /**

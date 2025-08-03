@@ -114,6 +114,12 @@
   --rating-1: #e74c3c; --rating-2: #f39c12; --rating-3: #f1c40f;
   --rating-4: #a6d96a; --rating-5: #2ecc71;
 
+  --progress-level-1: var(--rating-1);
+  --progress-level-2: var(--rating-2);
+  --progress-level-3: var(--rating-3);
+  --progress-level-4: var(--rating-4);
+  --progress-level-5: var(--rating-5);
+
   --chat-widget-bg: color-mix(in srgb, var(--surface-background) 95%, var(--accent-color) 5%);
   --chat-header-bg: var(--primary-color);
   --chat-header-text: #fff;
