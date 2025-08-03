@@ -1162,16 +1162,18 @@ The script expects `vendor/autoload.php` to reside one directory above the PHP f
 ## KV migrations
 
 За еднократни актуализации на Cloudflare KV се използват помощни скриптове от директория `scripts/`.
-Миграцията за планове без макроси се стартира така:
+
+## Поддръжка на макро данни
+
+Скриптът `scripts/migrate-final-plan-macros.js` попълва липсващите полета `caloriesMacros` в `USER_METADATA_KV`.
+За автоматизация е добавен `npm` скрипт:
 
 ```bash
-node scripts/migrate-final-plan-macros.js
+npm run migrate-macros
 ```
 
-Скриптът обхожда всички ключове `<userId>_final_plan` в `USER_METADATA_KV`,
-изчислява липсващите `caloriesMacros` на база началните отговори и записва
-резултата обратно чрез `wrangler kv key put`. Преди и след изпълнение е добре да
-се проверяват стойностите с `wrangler kv key get`.
+Препоръчително е да се изпълнява след всеки деплой (например чрез `npm run deploy`), за да останат макро данните актуални.
+Преди и след миграцията проверявайте стойностите с `wrangler kv key get`.
 
 ## Cron configuration
 

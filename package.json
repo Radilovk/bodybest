@@ -13,7 +13,9 @@
     "test:file": "node scripts/test.sh --runTestsByPath",
     "test:related": "node scripts/test-related.js",
     "coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
-    "docs": "typedoc"
+    "docs": "typedoc",
+    "migrate-macros": "node scripts/migrate-final-plan-macros.js",
+    "deploy": "wrangler deploy && npm run migrate-macros"
   },
   "keywords": [],
   "author": "",
