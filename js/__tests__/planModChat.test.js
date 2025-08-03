@@ -60,7 +60,8 @@ describe('handleChatSend plan modification', () => {
       isLocalDevelopment: false,
       workerBaseUrl: '',
       apiEndpoints: { chat: '/chat' },
-      generateId: jest.fn()
+      generateId: jest.fn(),
+      standaloneMacroUrl: 'macroAnalyticsCardStandalone.html'
     }));
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
@@ -182,7 +183,8 @@ describe('plan modification chat modal close/reset', () => {
       workerBaseUrl: '',
       apiEndpoints: {},
       cloudflareAccountId: 'c',
-      generateId: jest.fn()
+      generateId: jest.fn(),
+      standaloneMacroUrl: 'macroAnalyticsCardStandalone.html'
     }));
     jest.unstable_mockModule('../swipeUtils.js', () => ({ computeSwipeTargetIndex: jest.fn() }));
     jest.unstable_mockModule('../achievements.js', () => ({
@@ -353,7 +355,8 @@ describe('planModPrompt fail modal close', () => {
       isLocalDevelopment: false,
       workerBaseUrl: '',
       apiEndpoints: { getPlanModificationPrompt: '/prompt' },
-      generateId: jest.fn()
+      generateId: jest.fn(),
+      standaloneMacroUrl: 'macroAnalyticsCardStandalone.html'
     }));
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,
@@ -428,7 +431,8 @@ describe('openPlanModificationChat errors', () => {
       isLocalDevelopment: false,
       workerBaseUrl: '',
       apiEndpoints: { getPlanModificationPrompt: '/prompt' },
-      generateId: jest.fn()
+      generateId: jest.fn(),
+      standaloneMacroUrl: 'macroAnalyticsCardStandalone.html'
     }));
     global.fetch = jest.fn(() => Promise.reject(new Error('fail')));
     app = await import('../app.js');

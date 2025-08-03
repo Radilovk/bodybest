@@ -70,3 +70,6 @@ export const initialBotMessage =
     (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('initialBotMessage')) ||
     (typeof localStorage !== 'undefined' && localStorage.getItem('initialBotMessage')) ||
     'Здравейте! Аз съм вашият виртуален асистент MyBody.Best. Как мога да ви помогна днес?';
+
+// URL към самостоятелната макро карта
+export const standaloneMacroUrl = 'macroAnalyticsCardStandalone.html';
