@@ -392,10 +392,13 @@ function renderMacroPreviewGrid(macros) {
 
 export async function populateDashboardMacros(macros) {
     renderMacroPreviewGrid(macros);
-    const macroContainer = selectors.macroAnalyticsCardContainer;
-    if (!macroContainer || !macroContainer.isConnected) {
-        console.warn('Macro analytics container not found in DOM.');
-        return;
+    let macroContainer = selectors.macroAnalyticsCardContainer;
+    if (!macroContainer || !document.contains(macroContainer)) {
+        macroContainer = document.createElement('div');
+        macroContainer.id = 'macroAnalyticsCardContainer';
+        macroContainer.className = 'card analytics-card';
+        selectors.analyticsCardsContainer?.appendChild(macroContainer);
+        selectors.macroAnalyticsCardContainer = macroContainer;
     }
     if (!macros) {
         console.warn('Macros data is missing.');
@@ -414,15 +417,17 @@ export async function populateDashboardMacros(macros) {
         fiber_grams: currentIntakeMacros.fiber
     };
     let frame = document.getElementById('macroAnalyticsCardFrame');
-    if (!frame) {
-        frame = document.createElement('iframe');
-        frame.id = 'macroAnalyticsCardFrame';
-        frame.title = 'Макро анализ';
-        frame.loading = 'lazy';
-        frame.style.width = '100%';
-        frame.style.border = '0';
-        frame.style.display = 'block';
-        frame.src = standaloneMacroUrl;
+    if (!frame || !macroContainer.contains(frame)) {
+        if (!frame) {
+            frame = document.createElement('iframe');
+            frame.id = 'macroAnalyticsCardFrame';
+            frame.title = 'Макро анализ';
+            frame.loading = 'lazy';
+            frame.style.width = '100%';
+            frame.style.border = '0';
+            frame.style.display = 'block';
+            frame.src = standaloneMacroUrl;
+        }
         macroContainer.innerHTML = '';
         macroContainer.appendChild(frame);
     }

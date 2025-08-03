@@ -1,15 +1,11 @@
 /** @jest-environment jsdom */
 import { jest } from '@jest/globals';
 
-test('не хвърля грешка при липсващ iframe', async () => {
-  document.body.innerHTML = `
-    <div id="macroMetricsPreview"></div>
-    <div id="analyticsCardsContainer"></div>
-  `;
-  const selectors = {
-    macroMetricsPreview: document.getElementById('macroMetricsPreview'),
-    analyticsCardsContainer: document.getElementById('analyticsCardsContainer'),
-  };
+afterEach(() => {
+  jest.resetModules();
+});
+
+function setupMocks(selectors) {
   jest.unstable_mockModule('../uiElements.js', () => ({ selectors, trackerInfoTexts: {}, detailedMetricInfoTexts: {} }));
   jest.unstable_mockModule('../utils.js', () => ({
     safeGet: () => {},
@@ -30,6 +26,44 @@ test('не хвърля грешка при липсващ iframe', async () => 
     loadCurrentIntake: jest.fn(),
   }));
   jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn() }));
+}
+
+test('създава контейнер, ако липсва макро анализ карта', async () => {
+  document.body.innerHTML = `
+    <div id="macroMetricsPreview"></div>
+    <div id="analyticsCardsContainer"></div>
+  `;
+  const selectors = {
+    macroMetricsPreview: document.getElementById('macroMetricsPreview'),
+    analyticsCardsContainer: document.getElementById('analyticsCardsContainer'),
+    macroAnalyticsCardContainer: null,
+  };
+  setupMocks(selectors);
   const { populateDashboardMacros } = await import('../populateUI.js');
   await expect(populateDashboardMacros({ calories: 1000, protein_percent: 30, carbs_percent: 40, fat_percent: 30 })).resolves.not.toThrow();
+  const container = document.getElementById('macroAnalyticsCardContainer');
+  expect(container).not.toBeNull();
+  expect(selectors.analyticsCardsContainer.contains(container)).toBe(true);
+  const frame = container.querySelector('#macroAnalyticsCardFrame');
+  expect(frame).not.toBeNull();
+});
+
+test('пресъздава контейнер, когато е извън DOM', async () => {
+  document.body.innerHTML = `
+    <div id="macroMetricsPreview"></div>
+    <div id="analyticsCardsContainer"></div>
+  `;
+  const detached = document.createElement('div');
+  detached.id = 'macroAnalyticsCardContainer';
+  const selectors = {
+    macroMetricsPreview: document.getElementById('macroMetricsPreview'),
+    analyticsCardsContainer: document.getElementById('analyticsCardsContainer'),
+    macroAnalyticsCardContainer: detached,
+  };
+  setupMocks(selectors);
+  const { populateDashboardMacros } = await import('../populateUI.js');
+  await populateDashboardMacros({ calories: 1000, protein_percent: 30, carbs_percent: 40, fat_percent: 30 });
+  const container = document.getElementById('macroAnalyticsCardContainer');
+  expect(container).not.toBe(detached);
+  expect(selectors.analyticsCardsContainer.contains(container)).toBe(true);
 });
