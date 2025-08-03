@@ -929,9 +929,6 @@ export function handleAccordionToggle(event) {
                 plan: card.getAttribute('plan-data') ? JSON.parse(card.getAttribute('plan-data')) : null,
                 current: card.getAttribute('current-data') ? JSON.parse(card.getAttribute('current-data')) : null,
             };
-            const wrapper = document.createElement('div');
-            wrapper.className = 'card analytics-card';
-
             const iframe = document.createElement('iframe');
             iframe.id = 'macroCardIframe';
             iframe.src = standaloneMacroUrl;
@@ -949,8 +946,7 @@ export function handleAccordionToggle(event) {
                 iframe.contentWindow?.postMessage({ type: 'macro-data', data }, '*');
             });
 
-            wrapper.appendChild(iframe);
-            card.replaceWith(wrapper);
+            card.replaceWith(iframe);
         }
     }
 }
