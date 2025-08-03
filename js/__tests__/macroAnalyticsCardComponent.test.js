@@ -88,6 +88,33 @@ test('показва предупреждение при превишаване 
   expect(utils.getByText(/Превишение над 15%/)).toBeTruthy();
 });
 
+test('класифицира over и under макросите', async () => {
+  const card = document.createElement('macro-analytics-card');
+  document.body.appendChild(card);
+  const target = {
+    calories: 2000,
+    protein_grams: 100,
+    protein_percent: 40,
+    carbs_grams: 200,
+    carbs_percent: 40,
+    fat_grams: 50,
+    fat_percent: 20
+  };
+  const current = {
+    calories: 1800,
+    protein_grams: 120,
+    carbs_grams: 200,
+    fat_grams: 40
+  };
+  card.setData({ target, current });
+  const utils = within(card.shadowRoot);
+  await waitFor(() => utils.getByText('Белтъчини'));
+  const proteinDiv = utils.getByText('Белтъчини').closest('.macro-metric');
+  const fatDiv = utils.getByText('Мазнини').closest('.macro-metric');
+  expect(proteinDiv.classList.contains('over')).toBe(true);
+  expect(fatDiv.classList.contains('under')).toBe(true);
+});
+
 test('data-endpoint и refresh-interval извикват fetch периодично', async () => {
   jest.useFakeTimers();
   const endpoint = '/macros';

@@ -91,6 +91,22 @@ template.innerHTML = `
     .macro-metric.carbs.active { border-color: var(--macro-carbs-color); }
     .macro-metric.fat.active { border-color: var(--macro-fat-color); }
     .macro-metric.fiber.active { border-color: var(--macro-fiber-color); }
+    .macro-metric.over {
+      border-color: var(--color-danger);
+      animation: macro-over-pulse 1s ease-in-out infinite alternate;
+    }
+    .macro-metric.under {
+      border-color: var(--color-warning);
+      animation: macro-under-pulse 1s ease-in-out infinite alternate;
+    }
+    @keyframes macro-over-pulse {
+      from { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+      to { box-shadow: 0 0 10px 4px rgba(231, 76, 60, 0); }
+    }
+    @keyframes macro-under-pulse {
+      from { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.7); }
+      to { box-shadow: 0 0 10px 4px rgba(243, 156, 18, 0); }
+    }
     .macro-icon { font-size: 1.2rem; }
     .macro-label { font-size: 0.85rem; margin-top: 0.25rem; }
     .macro-value { font-size: 1.1rem; font-weight: 600; }
@@ -383,6 +399,11 @@ export class MacroAnalyticsCard extends HTMLElement {
       const percent = target[`${item.key}_percent`];
       const div = document.createElement('div');
       div.className = `macro-metric ${item.key}`;
+      if (typeof currentRaw === 'number' && typeof targetVal === 'number') {
+        const delta = currentRaw - targetVal;
+        if (delta > 0) div.classList.add('over');
+        else if (delta < 0) div.classList.add('under');
+      }
       div.setAttribute('role', 'button');
       div.setAttribute('tabindex', '0');
       div.setAttribute('aria-label', `${label}: ${displayCurrent} от ${targetVal} грама (${percent}% ${this.labels.fromGoal})`);
