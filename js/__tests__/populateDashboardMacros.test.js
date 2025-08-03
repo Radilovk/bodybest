@@ -19,9 +19,7 @@ function setupDom() {
 
 test('placeholder shown when macros missing and populates after migration', async () => {
   setupDom();
-  await populateDashboardMacros(null);
-  expect(selectors.macroMetricsPreview.classList.contains('hidden')).toBe(true);
-
+  appState.setCurrentUserId('u1');
   const macros = {
     calories: 1800,
     protein_percent: 30,
@@ -38,9 +36,20 @@ test('placeholder shown when macros missing and populates after migration', asyn
     { id: 'o-01', meal_name: 'Печено пилешко с ориз/картофи и салата' }
   ];
   appState.fullDashboardData.planData = { week1Menu: { [currentDayKey]: dayMenu } };
-  await populateDashboardMacros(macros);
+
+  const originalFetch = global.fetch;
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ planData: { caloriesMacros: macros } }) });
+  await populateDashboardMacros(null);
+  expect(selectors.macroMetricsPreview.classList.contains('hidden')).toBe(true);
+  const btn = document.getElementById('recalcMacrosBtn');
+  expect(btn).not.toBeNull();
+  btn.click();
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(global.fetch).toHaveBeenCalled();
   expect(selectors.macroMetricsPreview.classList.contains('hidden')).toBe(false);
   expect(selectors.macroMetricsPreview.textContent).toContain('1800');
+  global.fetch = originalFetch;
   expect(document.getElementById('macroAnalyticsCardFrame')).toBeNull();
 
   const frame = document.createElement('iframe');

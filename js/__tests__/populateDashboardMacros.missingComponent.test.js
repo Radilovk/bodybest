@@ -16,7 +16,11 @@ function setupMocks(selectors) {
     getCssVar: () => '',
     formatDateBgShort: () => ''
   }));
-  jest.unstable_mockModule('../config.js', () => ({ generateId: () => 'id', standaloneMacroUrl: 'macroAnalyticsCardStandalone.html' }));
+  jest.unstable_mockModule('../config.js', () => ({
+    generateId: () => 'id',
+    standaloneMacroUrl: 'macroAnalyticsCardStandalone.html',
+    apiEndpoints: { dashboard: '/api/dashboardData' }
+  }));
   jest.unstable_mockModule('../app.js', () => ({
     fullDashboardData: {},
     todaysMealCompletionStatus: {},
@@ -24,6 +28,7 @@ function setupMocks(selectors) {
     currentIntakeMacros: {},
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),
+    currentUserId: 'u1'
   }));
   jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn() }));
 }

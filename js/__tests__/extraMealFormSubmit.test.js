@@ -24,11 +24,13 @@ beforeEach(async () => {
     addMealMacros: addMealMacrosMock,
     removeMealMacros: jest.fn(),
     registerNutrientOverrides: jest.fn(),
-    getNutrientOverride: jest.fn(() => null)
+    getNutrientOverride: jest.fn(() => null),
+    loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] })
   }));
   jest.unstable_mockModule('../populateUI.js', () => ({
     addExtraMealWithOverride: jest.fn(),
-    populateDashboardMacros: jest.fn()
+    populateDashboardMacros: jest.fn(),
+    renderPendingMacroChart: jest.fn()
   }));
   jest.unstable_mockModule('../app.js', () => {
     currentIntakeMacrosRef = {};
