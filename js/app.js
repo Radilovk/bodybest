@@ -10,7 +10,7 @@ import {
     openModal, closeModal,
     showLoading, showToast, updateTabsOverflowIndicator
 } from './uiHandlers.js';
-import { populateUI, populateProgressHistory } from './populateUI.js';
+import { populateUI, populateProgressHistory, populateDashboardMacros } from './populateUI.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
 import { setupStaticEventListeners, setupDynamicEventListeners, initializeCollapsibleCards } from './eventListeners.js';
 import { loadProductMacros, calculateCurrentMacros } from './macroUtils.js';
@@ -445,6 +445,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
 
         fullDashboardData.dailyLogs = normalizeDailyLogs(fullDashboardData.dailyLogs);
         loadCurrentIntake();
+        await populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
 
         if(selectors.planPendingState) selectors.planPendingState.classList.add('hidden');
         if(selectors.appWrapper) selectors.appWrapper.style.display = 'block';
