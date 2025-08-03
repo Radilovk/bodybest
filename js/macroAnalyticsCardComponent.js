@@ -184,6 +184,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     this.observer = null;
     this.refreshTimer = null;
     this.locale = this.getAttribute('locale') || document.documentElement.lang || 'bg';
+    // Множителят, над който приемът се счита за превишен (например 1.2 = 120%).
     this.exceedThreshold = parseFloat(this.getAttribute('exceed-threshold')) || 1.15;
     this.labels = {
       title: '',
@@ -216,6 +217,7 @@ export class MacroAnalyticsCard extends HTMLElement {
       return;
     }
     if (name === 'exceed-threshold') {
+      // Позволява динамично променяне на прага за превишение.
       const val = parseFloat(newVal);
       if (!Number.isNaN(val)) this.exceedThreshold = val;
       this.renderMetrics();
@@ -375,12 +377,23 @@ export class MacroAnalyticsCard extends HTMLElement {
     const planLine = plan ? `<div class="plan-vs-target">План: ${plan.calories} kcal / Препоръка: ${target.calories} kcal</div>` : '';
     const consumedCaloriesRaw = hasMacroData ? current.calories : undefined;
     const consumedCalories = typeof consumedCaloriesRaw === 'number' ? consumedCaloriesRaw : '--';
+    const caloriesExceeded =
+      typeof consumedCaloriesRaw === 'number' &&
+      target.calories &&
+      // Превишение се отчита само над зададения множител.
+      consumedCaloriesRaw > target.calories * this.exceedThreshold;
     this.centerText.innerHTML = `
       <div class="consumed-calories">${consumedCalories}</div>
       <div class="total-calories-label">${this.labels.totalCaloriesLabel.replace('{calories}', target.calories)}</div>
       ${planLine}`;
     const calDiv = document.createElement('div');
     calDiv.className = 'macro-metric calories';
+    if (caloriesExceeded) calDiv.classList.add('over');
+    else if (
+      typeof consumedCaloriesRaw === 'number' &&
+      target.calories &&
+      consumedCaloriesRaw < target.calories
+    ) calDiv.classList.add('under');
     calDiv.setAttribute('role', 'listitem');
     calDiv.setAttribute('aria-label', `${this.labels.caloriesLabel}: ${consumedCalories} ${this.labels.totalCaloriesLabel.replace('{calories}', target.calories)}`);
     calDiv.innerHTML = `
@@ -389,13 +402,7 @@ export class MacroAnalyticsCard extends HTMLElement {
       <div class="macro-value">${consumedCalories} / ${target.calories} kcal</div>`;
     this.grid.appendChild(calDiv);
     const overMacros = [];
-    if (
-      typeof consumedCaloriesRaw === 'number' &&
-      target.calories &&
-      consumedCaloriesRaw > target.calories * this.exceedThreshold
-    ) {
-      overMacros.push(this.labels.caloriesLabel);
-    }
+    if (caloriesExceeded) overMacros.push(this.labels.caloriesLabel);
     const macros = [
       { key: 'protein', icon: 'bi-egg-fried' },
       { key: 'carbs', icon: 'bi-basket' },
@@ -411,9 +418,10 @@ export class MacroAnalyticsCard extends HTMLElement {
       const div = document.createElement('div');
       div.className = `macro-metric ${item.key}`;
       if (typeof currentRaw === 'number' && typeof targetVal === 'number') {
-        const delta = currentRaw - targetVal;
-        if (delta > 0) div.classList.add('over');
-        else if (delta < 0) div.classList.add('under');
+        const ratio = currentRaw / targetVal;
+        // Клас "over" се добавя само при надвишение над прага.
+        if (ratio > this.exceedThreshold) div.classList.add('over');
+        else if (ratio < 1) div.classList.add('under');
       }
       div.setAttribute('role', 'button');
       div.setAttribute('tabindex', '0');
@@ -433,6 +441,7 @@ export class MacroAnalyticsCard extends HTMLElement {
       });
       this.grid.appendChild(div);
       if (typeof currentRaw === 'number' && targetVal && currentRaw > targetVal * this.exceedThreshold) {
+        // Запомняме макросите, превишили прага, за текстово предупреждение.
         overMacros.push(label);
       }
     });
