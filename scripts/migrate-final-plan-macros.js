@@ -30,10 +30,22 @@ function estimateMacros(initial = {}) {
   const protein_percent = 30;
   const carbs_percent = 40;
   const fat_percent = 30;
+  const fiber_percent = 10;
   const protein_grams = calcMacroGrams(calories, protein_percent, 4);
   const carbs_grams = calcMacroGrams(calories, carbs_percent, 4);
   const fat_grams = calcMacroGrams(calories, fat_percent, 9);
-  return { calories, protein_percent, carbs_percent, fat_percent, protein_grams, carbs_grams, fat_grams };
+  const fiber_grams = calcMacroGrams(calories, fiber_percent, 2);
+  return {
+    calories,
+    protein_percent,
+    carbs_percent,
+    fat_percent,
+    fiber_percent,
+    protein_grams,
+    carbs_grams,
+    fat_grams,
+    fiber_grams
+  };
 }
 
 function runWrangler(args) {
@@ -53,6 +65,7 @@ function migrate() {
     const planStr = runWrangler(['kv', 'key', 'get', key, '--binding', binding]);
     let plan;
     try { plan = JSON.parse(planStr || '{}'); } catch { plan = {}; }
+    let macros;
     if (!plan.caloriesMacros || Object.keys(plan.caloriesMacros).length === 0) {
       let macrosStr;
       try {
@@ -60,8 +73,11 @@ function migrate() {
       } catch {
         macrosStr = null;
       }
-      let macros;
-      try { macros = JSON.parse(macrosStr || 'null'); } catch { macros = null; }
+      try {
+        macros = JSON.parse(macrosStr || 'null');
+      } catch {
+        macros = null;
+      }
       if (!macros) {
         const initStr = runWrangler(['kv', 'key', 'get', `${userId}_initial_answers`, '--binding', binding]);
         let initial;
@@ -72,10 +88,23 @@ function migrate() {
           return;
         }
       }
-      plan.caloriesMacros = macros;
-      runWrangler(['kv', 'key', 'put', key, JSON.stringify(plan), '--binding', binding]);
-      console.log(`Updated ${key}`);
+    } else {
+      macros = plan.caloriesMacros;
     }
+
+    if (macros.fiber_percent == null && macros.fiber_grams != null && macros.calories) {
+      macros.fiber_percent = Math.round((macros.fiber_grams * 2 * 100) / macros.calories);
+    }
+    if (macros.fiber_percent == null) {
+      macros.fiber_percent = 10;
+    }
+    if (macros.fiber_grams == null && macros.calories && macros.fiber_percent != null) {
+      macros.fiber_grams = calcMacroGrams(macros.calories, macros.fiber_percent, 2);
+    }
+
+    plan.caloriesMacros = macros;
+    runWrangler(['kv', 'key', 'put', key, JSON.stringify(plan), '--binding', binding]);
+    console.log(`Updated ${key}`);
     try {
       runWrangler(['kv', 'key', 'delete', `${userId}_final_caloriesMacros`, '--binding', binding]);
     } catch {
