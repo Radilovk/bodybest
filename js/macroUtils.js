@@ -172,7 +172,26 @@ export function removeMealMacros(meal, acc) {
 export function calculatePlanMacros(dayMenu = []) {
   const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
   if (!Array.isArray(dayMenu)) return acc;
-  dayMenu.forEach((meal) => addMealMacros(meal, acc));
+  dayMenu.forEach((meal) => {
+    const macros = meal && typeof meal.macros === 'object' ? meal.macros : null;
+    if (macros) {
+      const normalized = {
+        calories: Number(macros.calories) || 0,
+        protein: Number(macros.protein) || 0,
+        carbs: Number(macros.carbs) || 0,
+        fat: Number(macros.fat) || 0,
+        fiber: Number(macros.fiber) || 0
+      };
+      validateMacroCalories(normalized);
+      acc.calories += normalized.calories;
+      acc.protein += normalized.protein;
+      acc.carbs += normalized.carbs;
+      acc.fat += normalized.fat;
+      acc.fiber += normalized.fiber;
+    } else {
+      addMealMacros(meal, acc);
+    }
+  });
   return acc;
 }
 

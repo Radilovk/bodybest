@@ -36,6 +36,15 @@ test('calculatePlanMacros sums macros for day menu', () => {
   expect(result).toEqual({ calories: 850, protein: 72, carbs: 70, fat: 28, fiber: 0 });
 });
 
+test('calculatePlanMacros използва наличното поле macros', () => {
+  const dayMenu = [
+    { macros: { calories: 100, protein: 10, carbs: 20, fat: 5, fiber: 3 } },
+    { macros: { calories: 200, protein: 20, carbs: 30, fat: 10, fiber: 5 } }
+  ];
+  const result = calculatePlanMacros(dayMenu);
+  expect(result).toEqual({ calories: 300, protein: 30, carbs: 50, fat: 15, fiber: 8 });
+});
+
 test('addMealMacros и removeMealMacros актуализират акумулатора', () => {
   const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
   const meal = { calories: 290, protein: 20, carbs: 30, fat: 10, fiber: 5 };
