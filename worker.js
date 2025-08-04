@@ -4086,6 +4086,7 @@ async function callOpenAiAPI(prompt, apiKey, model, options = {}) {
 
 function getModelProvider(model) {
     if (!model) return 'gemini';
+    if (model === 'command-r-plus') return 'cf';
     if (model.startsWith('@cf/')) return 'cf';
     if (model.startsWith('gpt-')) return 'openai';
     return 'gemini';

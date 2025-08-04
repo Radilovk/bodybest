@@ -49,3 +49,27 @@ describe('callModel with CF provider', () => {
     await expect(callModel(model, 'hi', env)).rejects.toThrow('CF AI error: bad');
   });
 });
+
+describe('callModel with command-r-plus model', () => {
+  const env = { CF_ACCOUNT_ID: 'acc', CF_AI_TOKEN: 'token' };
+  const model = 'command-r-plus';
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  test('uses Cloudflare endpoint', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ result: { response: 'ok' } })
+    });
+
+    await callModel(model, 'hi', env);
+
+    const expectedUrl = 'https://api.cloudflare.com/client/v4/accounts/acc/ai/run/command-r-plus';
+    expect(global.fetch).toHaveBeenCalledWith(
+      expectedUrl,
+      expect.objectContaining({ method: 'POST' })
+    );
+  });
+});
