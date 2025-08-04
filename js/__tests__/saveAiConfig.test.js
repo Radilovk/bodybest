@@ -8,23 +8,24 @@ beforeEach(async () => {
 
   document.body.innerHTML = `
     <form id="aiConfigForm">
-      <input id="planModel" />
+      <datalist id="modelOptions"></datalist>
+      <input id="planModel" list="modelOptions" />
       <textarea id="planPrompt"></textarea>
       <input id="planTokens" />
       <input id="planTemperature" />
-      <input id="chatModel" />
+      <input id="chatModel" list="modelOptions" />
       <textarea id="chatPrompt"></textarea>
       <input id="chatTokens" />
       <input id="chatTemperature" />
-      <input id="modModel" />
+      <input id="modModel" list="modelOptions" />
       <textarea id="modPrompt"></textarea>
       <input id="modTokens" />
       <input id="modTemperature" />
-      <input id="imageModel" />
+      <input id="imageModel" list="modelOptions" />
       <textarea id="imagePrompt"></textarea>
       <input id="imageTokens" />
       <input id="imageTemperature" />
-      <input id="analysisModel" />
+      <input id="analysisModel" list="modelOptions" />
       <textarea id="analysisPrompt"></textarea>
       <input id="adminToken" />
     </form>
@@ -32,6 +33,7 @@ beforeEach(async () => {
     <button id="sendQuery"></button>
   `;
   sessionStorage.clear();
+  localStorage.clear();
   sessionStorage.setItem('adminToken', 'secret');
 
   const form = document.getElementById('aiConfigForm');
@@ -53,6 +55,7 @@ beforeEach(async () => {
 afterEach(() => {
   global.fetch && global.fetch.mockRestore();
   sessionStorage.clear();
+  localStorage.clear();
 });
 
 test('saveAiConfig sends updates payload with Authorization header', async () => {
