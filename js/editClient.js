@@ -563,12 +563,12 @@ export async function initEditClient(userId) {
   const regenBtn = document.getElementById('regeneratePlan');
   if (regenBtn) {
     regenBtn.addEventListener('click', async () => {
-      await fetch(apiEndpoints.updateStatus, {
+      await fetch(apiEndpoints.regeneratePlan, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, plan_status: 'pending' })
+        body: JSON.stringify({ userId })
       });
-      alert('Заявката за нов план е изпратена.');
+      alert('Генерирането на нов план започна.');
     });
   }
 

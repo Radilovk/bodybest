@@ -44,6 +44,7 @@ export const apiEndpoints = {
     peekClientReplies: `${workerBaseUrl}/api/peekClientReplies`,
     getFeedbackMessages: `${workerBaseUrl}/api/getFeedbackMessages`,
     getPlanModificationPrompt: `${workerBaseUrl}/api/getPlanModificationPrompt`,
+    regeneratePlan: `${workerBaseUrl}/api/regeneratePlan`,
     updateStatus: `${workerBaseUrl}/api/updateStatus`,
     getAiConfig: `${workerBaseUrl}/api/getAiConfig`,
     setAiConfig: `${workerBaseUrl}/api/setAiConfig`,

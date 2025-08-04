@@ -476,6 +476,8 @@ export default {
                 responseBody = await handleDashboardDataRequest(request, env);
             } else if (method === 'POST' && path === '/api/log') {
                 responseBody = await handleLogRequest(request, env);
+            } else if (method === 'POST' && path === '/api/regeneratePlan') {
+                responseBody = await handleRegeneratePlanRequest(request, env, ctx);
             } else if (method === 'POST' && path === '/api/updateStatus') {
                 responseBody = await handleUpdateStatusRequest(request, env);
             } else if (method === 'POST' && path === '/api/chat') {
@@ -1538,6 +1540,28 @@ async function handleUpdateProfileRequest(request, env) {
 }
 }
 // ------------- END FUNCTION: handleUpdateProfileRequest -------------
+
+// ------------- START FUNCTION: handleRegeneratePlanRequest -------------
+async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = processSingleUserPlan) {
+    try {
+        const { userId } = await request.json();
+        if (!userId) {
+            return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
+        }
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'processing', { metadata: { status: 'processing' } });
+        if (ctx) {
+            ctx.waitUntil(planProcessor(userId, env));
+        } else {
+            await planProcessor(userId, env);
+        }
+        return { success: true, message: 'Генерирането на нов план стартира.' };
+    } catch (error) {
+        console.error('Error in handleRegeneratePlanRequest:', error.message, error.stack);
+        const body = await request.json().catch(() => ({}));
+        return { success: false, message: 'Грешка при генериране на плана.', statusHint: 500, userId: body.userId || 'unknown_user' };
+    }
+}
+// ------------- END FUNCTION: handleRegeneratePlanRequest -------------
 
 // ------------- START FUNCTION: handleUpdatePlanRequest -------------
 async function handleUpdatePlanRequest(request, env) {
@@ -2803,38 +2827,28 @@ async function processSingleUserPlan(userId, env) {
         if (questionsJsonString) { try { const defs = JSON.parse(questionsJsonString); if (Array.isArray(defs)) defs.forEach(q => { if (q.id && q.text) questionTextMap.set(q.id, q.text); }); } catch (e) { console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Failed to parse question_definitions: ${e.message}`); } } else { console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Resource 'question_definitions' not found.`); }
         const recipeData = safeParseJson(recipeDataStr, {});
 
-        // --- Нов блок: извличане на данни от последните дневници ---
+        // --- Нов блок: извличане на данни от всички дневници ---
         const currentStatusStr = await env.USER_METADATA_KV.get(`${userId}_current_status`);
         const currentStatus = safeParseJson(currentStatusStr, {});
-        const logStringsForMetrics = await Promise.all(
-            Array.from({ length: 7 }, (_, i) => {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                return env.USER_METADATA_KV.get(`${userId}_log_${d.toISOString().split('T')[0]}`);
-            })
-        );
-        const logEntries = [];
-        for (let i = 0; i < logStringsForMetrics.length; i++) {
-            if (logStringsForMetrics[i]) {
-                const ld = safeParseJson(logStringsForMetrics[i], {});
-                logEntries.push(ld);
-            } else {
-                logEntries.push({});
-            }
-        }
+        const logsList = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
+        const logKeys = logsList.keys.map(k => k.name).sort();
+        const logStrings = await Promise.all(logKeys.map(k => env.USER_METADATA_KV.get(k)));
+        const logEntries = logStrings.map(s => safeParseJson(s, {}));
+
         const safeNum = (v) => { const n = parseFloat(v); return isNaN(n) ? null : n; };
         let recentWeight = safeNum(currentStatus.weight);
-        if (recentWeight === null && logEntries[0]) recentWeight = safeNum(logEntries[0].weight);
-        let weightSevenDaysAgo = null;
-        if (logEntries[6]) weightSevenDaysAgo = safeNum(logEntries[6].weight);
+        if (recentWeight === null && logEntries.length > 0) {
+            recentWeight = safeNum(logEntries[logEntries.length - 1].weight);
+        }
+        const firstWeight = logEntries.length > 0 ? safeNum(logEntries[0].weight) : null;
         let weightChangeStr = 'N/A';
-        if (recentWeight !== null && weightSevenDaysAgo !== null) {
-            const diff = recentWeight - weightSevenDaysAgo;
+        if (recentWeight !== null && firstWeight !== null) {
+            const diff = recentWeight - firstWeight;
             weightChangeStr = `${diff >= 0 ? '+' : ''}${diff.toFixed(1)} кг`;
         }
         const avgOf = (key) => {
             const vals = logEntries.map(l => safeNum(l[key])).filter(v => v !== null);
-            return vals.length > 0 ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : 'N/A';
+            return vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : 'N/A';
         };
         const avgMood = avgOf('mood');
         const avgEnergy = avgOf('energy');
@@ -4669,4 +4683,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig };
