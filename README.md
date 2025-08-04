@@ -557,10 +557,11 @@ Before deploying, configure the following secrets in Cloudflare (via the dashboa
 - `PHP_FILE_API_TOKEN`
 - `CF_AI_TOKEN` – API token used for Cloudflare AI requests
 - `OPENAI_API_KEY` – set via `wrangler secret put OPENAI_API_KEY`, used by `worker.js`
+- `COHERE_API_KEY` – API ключ за Cohere модели
 - `FROM_EMAIL` – optional sender address for outgoing emails
 - `FROM_NAME` – optional display name shown in the "From" header
 
-Без тази стойност част от AI функционалностите няма да работят.
+Без тези стойности част от AI функционалностите няма да работят.
 
 Optionally set `CF_ACCOUNT_ID` via `wrangler secret put` if it differs from the value in `wrangler.toml`. Ако липсва, работникът използва стойността от `wrangler.toml`.
 
@@ -710,6 +711,30 @@ await fetch(CF_URL, {
 {
   "image": "data:image/jpeg;base64,<BASE64>",
   "prompt": "INPUT PROMPT"
+}
+```
+
+#### Cohere чат модели
+
+За работа с моделите на Cohere задайте секрет `COHERE_API_KEY`.
+
+Кратък пример за заявка:
+
+```bash
+curl -X POST https://api.cohere.ai/v1/chat \
+  -H "Authorization: Bearer $COHERE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"command","message":"Здравей","temperature":0.7,"max_tokens":50}'
+```
+
+JSON форматът на заявката:
+
+```json
+{
+  "model": "command",
+  "message": "Здравей",
+  "temperature": 0.7,
+  "max_tokens": 50
 }
 ```
 
