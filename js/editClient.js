@@ -75,6 +75,7 @@ export async function initEditClient(userId) {
     document.getElementById('caloriesMacros-protein-view').textContent = `${data.caloriesMacros?.protein_percent || 0}% / ${data.caloriesMacros?.protein_grams || 0}г`;
     document.getElementById('caloriesMacros-carbs-view').textContent = `${data.caloriesMacros?.carbs_percent || 0}% / ${data.caloriesMacros?.carbs_grams || 0}г`;
     document.getElementById('caloriesMacros-fat-view').textContent = `${data.caloriesMacros?.fat_percent || 0}% / ${data.caloriesMacros?.fat_grams || 0}г`;
+    document.getElementById('caloriesMacros-fiber-view').textContent = `${data.caloriesMacros?.fiber_percent || 0}% / ${data.caloriesMacros?.fiber_grams || 0}г`;
 
     document.getElementById('caloriesMacros-edit-calories').value = data.caloriesMacros?.calories || 0;
     document.getElementById('caloriesMacros-edit-protein-percent').value = data.caloriesMacros?.protein_percent || 0;
@@ -83,6 +84,8 @@ export async function initEditClient(userId) {
     document.getElementById('caloriesMacros-edit-carbs-grams').value = data.caloriesMacros?.carbs_grams || 0;
     document.getElementById('caloriesMacros-edit-fat-percent').value = data.caloriesMacros?.fat_percent || 0;
     document.getElementById('caloriesMacros-edit-fat-grams').value = data.caloriesMacros?.fat_grams || 0;
+    document.getElementById('caloriesMacros-edit-fiber-percent').value = data.caloriesMacros?.fiber_percent || 0;
+    document.getElementById('caloriesMacros-edit-fiber-grams').value = data.caloriesMacros?.fiber_grams || 0;
 
     populateList('main_allowed_foods', data.allowedForbiddenFoods?.main_allowed_foods || []);
     populateList('main_forbidden_foods', data.allowedForbiddenFoods?.main_forbidden_foods || []);
@@ -400,13 +403,16 @@ export async function initEditClient(userId) {
     const cGram = document.getElementById("caloriesMacros-edit-carbs-grams");
     const fPct = document.getElementById("caloriesMacros-edit-fat-percent");
     const fGram = document.getElementById("caloriesMacros-edit-fat-grams");
-  if (!calInput || !pPct || !pGram || !cPct || !cGram || !fPct || !fGram) return;
+    const fibPct = document.getElementById("caloriesMacros-edit-fiber-percent");
+    const fibGram = document.getElementById("caloriesMacros-edit-fiber-grams");
+  if (!calInput || !pPct || !pGram || !cPct || !cGram || !fPct || !fGram || !fibPct || !fibGram) return;
 
     function updateGrams() {
       const cal = parseInt(calInput.value);
       pGram.value = calcMacroGrams(cal, pPct.value, 4);
       cGram.value = calcMacroGrams(cal, cPct.value, 4);
       fGram.value = calcMacroGrams(cal, fPct.value, 9);
+      fibGram.value = calcMacroGrams(cal, fibPct.value, 2);
     }
 
     function updatePercents() {
@@ -415,12 +421,13 @@ export async function initEditClient(userId) {
       pPct.value = calcMacroPercent(cal, pGram.value, 4);
       cPct.value = calcMacroPercent(cal, cGram.value, 4);
       fPct.value = calcMacroPercent(cal, fGram.value, 9);
+      fibPct.value = calcMacroPercent(cal, fibGram.value, 2);
     }
 
-    [calInput, pPct, cPct, fPct].forEach(el => {
+    [calInput, pPct, cPct, fPct, fibPct].forEach(el => {
       el.addEventListener('input', updateGrams);
     });
-    [pGram, cGram, fGram].forEach(el => {
+    [pGram, cGram, fGram, fibGram].forEach(el => {
       el.addEventListener('input', updatePercents);
     });
   }
@@ -447,7 +454,9 @@ export async function initEditClient(userId) {
       carbs_percent: parseInt(document.getElementById('caloriesMacros-edit-carbs-percent').value),
       carbs_grams: parseInt(document.getElementById('caloriesMacros-edit-carbs-grams').value),
       fat_percent: parseInt(document.getElementById('caloriesMacros-edit-fat-percent').value),
-      fat_grams: parseInt(document.getElementById('caloriesMacros-edit-fat-grams').value)
+      fat_grams: parseInt(document.getElementById('caloriesMacros-edit-fat-grams').value),
+      fiber_percent: parseInt(document.getElementById('caloriesMacros-edit-fiber-percent').value),
+      fiber_grams: parseInt(document.getElementById('caloriesMacros-edit-fiber-grams').value)
     };
     planData.allowedForbiddenFoods = {
       main_allowed_foods: Array.from(document.querySelectorAll('#main_allowed_foods-edit input')).map(i => i.value).filter(Boolean),
@@ -676,11 +685,21 @@ export async function initCharts(data) {
     macroChart = new Chart(macroCtx, {
       type: 'doughnut',
       data: {
-        labels: [`Протеини (${data.caloriesMacros.protein_percent}%)`, `Въглехидрати (${data.caloriesMacros.carbs_percent}%)`, `Мазнини (${data.caloriesMacros.fat_percent}%)`],
+        labels: [
+          `Протеини (${data.caloriesMacros.protein_percent}%)`,
+          `Въглехидрати (${data.caloriesMacros.carbs_percent}%)`,
+          `Мазнини (${data.caloriesMacros.fat_percent}%)`,
+          `Фибри (${data.caloriesMacros.fiber_percent}%)`
+        ],
         datasets: [{
           label: 'Разпределение на макроси',
-          data: [data.caloriesMacros.protein_grams, data.caloriesMacros.carbs_grams, data.caloriesMacros.fat_grams],
-          backgroundColor: ['rgb(54,162,235)', 'rgb(255,205,86)', 'rgb(255,99,132)'],
+          data: [
+            data.caloriesMacros.protein_grams,
+            data.caloriesMacros.carbs_grams,
+            data.caloriesMacros.fat_grams,
+            data.caloriesMacros.fiber_grams
+          ],
+          backgroundColor: ['rgb(54,162,235)', 'rgb(255,205,86)', 'rgb(255,99,132)', 'rgb(111,207,151)'],
           hoverOffset: 4
         }]
       },

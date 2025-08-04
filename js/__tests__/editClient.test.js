@@ -24,9 +24,20 @@ test('initCharts uses Chart with parsed data', async () => {
   const { __testExports } = await import('../editClient.js');
   const { initCharts } = __testExports;
   await initCharts({
-    caloriesMacros: { protein_percent: 40, carbs_percent: 40, fat_percent: 20, protein_grams: 120, carbs_grams: 200, fat_grams: 50, calories: 2000 },
+    caloriesMacros: {
+      protein_percent: 40,
+      carbs_percent: 40,
+      fat_percent: 15,
+      fiber_percent: 5,
+      protein_grams: 120,
+      carbs_grams: 200,
+      fat_grams: 50,
+      fiber_grams: 25,
+      calories: 2000
+    },
     profileSummary: 'Текущо тегло 80 кг (промяна за 7 дни: -1 кг)'
   });
   expect(ChartMock.mock.calls[0][1].type).toBe('doughnut');
+  expect(ChartMock.mock.calls[0][1].data.datasets[0].data).toEqual([120, 200, 50, 25]);
   expect(ChartMock.mock.calls[1][1].type).toBe('line');
 });

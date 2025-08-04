@@ -10,3 +10,8 @@ test('calcMacroGrams calculates grams from calories and percent', () => {
 test('calcMacroPercent calculates percent from grams', () => {
   expect(calcMacroPercent(2000, 200, 4)).toBe(40);
 });
+
+test('calculations support fiber at 2 kcal/g', () => {
+  expect(calcMacroGrams(2000, 10, 2)).toBe(100);
+  expect(calcMacroPercent(2000, 100, 2)).toBe(10);
+});
