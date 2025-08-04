@@ -2,10 +2,10 @@
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort } from './utils.js';
 import { generateId, apiEndpoints } from './config.js';
-import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake, currentUserId } from './app.js';
+import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake, currentUserId, todaysPlanMacros } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
-import { calculatePlanMacros, getNutrientOverride, addMealMacros, scaleMacros } from './macroUtils.js';
+import { getNutrientOverride, addMealMacros, scaleMacros } from './macroUtils.js';
 import { logMacroPayload } from '../utils/debug.js';
 
 export let macroChartInstance = null;
@@ -479,11 +479,7 @@ export async function populateDashboardMacros(macros) {
         return;
     }
     macroContainer.innerHTML = '';
-    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const today = new Date();
-    const currentDayKey = dayNames[today.getDay()];
-    const dayMenu = fullDashboardData?.planData?.week1Menu?.[currentDayKey] || [];
-    const plan = calculatePlanMacros(dayMenu);
+    const plan = todaysPlanMacros;
     const current = {
         calories: currentIntakeMacros.calories,
         protein_grams: currentIntakeMacros.protein,

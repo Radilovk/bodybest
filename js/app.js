@@ -13,7 +13,7 @@ import {
 import { populateUI, populateProgressHistory, populateDashboardMacros } from './populateUI.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
 import { setupStaticEventListeners, setupDynamicEventListeners, initializeCollapsibleCards } from './eventListeners.js';
-import { loadProductMacros, calculateCurrentMacros } from './macroUtils.js';
+import { loadProductMacros, calculateCurrentMacros, calculatePlanMacros } from './macroUtils.js';
 import {
     displayMessage as displayChatMessage,
     displayTypingIndicator as displayChatTypingIndicator, scrollToChatBottom,
@@ -122,6 +122,7 @@ export let fullDashboardData = {};
 export let chatHistory = [];
 export let todaysMealCompletionStatus = {}; // Updated by populateUI and eventListeners
 export let todaysExtraMeals = []; // Extra meals logged for today
+export let todaysPlanMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }; // Cached plan macros for today
 export let currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }; // Calculated current macro intake
 export let activeTooltip = null; // Managed by uiHandlers via setActiveTooltip
 export let chatModelOverride = null; // Optional model override for next chat message
@@ -162,6 +163,7 @@ export function resetAppState() {
     fullDashboardData = {};
     chatHistory = [];
     todaysMealCompletionStatus = {};
+    todaysPlanMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
     activeTooltip = null;
     chatPromptOverride = null;
     currentQuizData = null;
@@ -382,6 +384,10 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
             debugLog("Using test data for development:", data);
             fullDashboardData = data;
             fullDashboardData.dailyLogs = normalizeDailyLogs(fullDashboardData.dailyLogs);
+            const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+            const currentDayKey = dayNames[new Date().getDay()];
+            const dayMenu = fullDashboardData.planData?.week1Menu?.[currentDayKey] || [];
+            todaysPlanMacros = calculatePlanMacros(dayMenu);
             loadCurrentIntake();
             chatHistory = []; // Reset chat history for test user on reload
 
@@ -444,6 +450,10 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
         }
 
         fullDashboardData.dailyLogs = normalizeDailyLogs(fullDashboardData.dailyLogs);
+        const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+        const currentDayKey = dayNames[new Date().getDay()];
+        const dayMenu = fullDashboardData.planData?.week1Menu?.[currentDayKey] || [];
+        todaysPlanMacros = calculatePlanMacros(dayMenu);
         loadCurrentIntake();
         await populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
 

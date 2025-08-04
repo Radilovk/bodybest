@@ -32,6 +32,7 @@ describe('renderPendingMacroChart', () => {
       currentIntakeMacros: { calories: 1000, protein: 0, carbs: 0, fat: 0, fiber: 0 },
       planHasRecContent: false,
       todaysExtraMeals: [],
+      todaysPlanMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
       loadCurrentIntake: jest.fn(),
       currentUserId: 'u1'
     }));
