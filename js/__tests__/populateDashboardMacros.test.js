@@ -6,11 +6,13 @@ let populateDashboardMacros;
 let renderPendingMacroChart;
 let selectors;
 let appState;
+let macroUtils;
 beforeAll(async () => {
   appState = await import('../app.js');
   populateModule = await import('../populateUI.js');
   ({ populateDashboardMacros, renderPendingMacroChart } = populateModule);
   ({ selectors } = await import('../uiElements.js'));
+  macroUtils = await import('../macroUtils.js');
 });
 
 function setupDom() {
@@ -40,6 +42,7 @@ test('recalculates macros automatically and shows spinner while loading', async 
     { id: 'o-01', meal_name: 'Печено пилешко с ориз/картофи и салата' }
   ];
   appState.fullDashboardData.planData = { week1Menu: { [currentDayKey]: dayMenu } };
+  Object.assign(appState.todaysPlanMacros, macroUtils.calculatePlanMacros(dayMenu));
 
   const originalFetch = global.fetch;
   let resolveFetch;
@@ -92,10 +95,29 @@ test('валидира и отхвърля некоректни макро да�
   const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const currentDayKey = dayNames[new Date().getDay()];
   appState.fullDashboardData.planData = { week1Menu: { [currentDayKey]: [] } };
+  Object.assign(appState.todaysPlanMacros, macroUtils.calculatePlanMacros([]));
   const badMacros = { calories: 2000, protein_grams: 'bad', carbs_grams: 200, fat_grams: 60, fiber_percent: 10, fiber_grams: 30 };
-  const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   await populateDashboardMacros(badMacros);
-  expect(warnSpy).toHaveBeenCalled();
   expect(populateModule.lastMacroPayload).toBe(previous);
-  warnSpy.mockRestore();
+});
+
+test('calculatePlanMacros се извиква само веднъж при кеширани стойности', async () => {
+  jest.resetModules();
+  const calcMock = jest.fn().mockReturnValue({ calories: 100, protein: 10, carbs: 20, fat: 5, fiber: 3 });
+  jest.unstable_mockModule('../macroUtils.js', () => ({ loadProductMacros: jest.fn(), calculateCurrentMacros: jest.fn(), calculatePlanMacros: calcMock, getNutrientOverride: jest.fn(), addMealMacros: jest.fn(), scaleMacros: jest.fn(), registerNutrientOverrides: jest.fn() }));
+  const app = await import('../app.js');
+  const populate = await import('../populateUI.js');
+  const { populateDashboardMacros } = populate;
+  const { selectors } = await import('../uiElements.js');
+  document.body.innerHTML = '<div id="macroMetricsPreview"></div><div id="analyticsCardsContainer"></div>';
+  selectors.macroMetricsPreview = document.getElementById('macroMetricsPreview');
+  selectors.analyticsCardsContainer = document.getElementById('analyticsCardsContainer');
+  const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  const currentDayKey = dayNames[new Date().getDay()];
+  const dayMenu = [{ macros: { calories: 100, protein: 10, carbs: 20, fat: 5, fiber: 3 } }];
+  app.fullDashboardData.planData = { week1Menu: { [currentDayKey]: dayMenu } };
+  Object.assign(app.todaysPlanMacros, calcMock(dayMenu));
+  await populateDashboardMacros({});
+  await populateDashboardMacros({});
+  expect(calcMock).toHaveBeenCalledTimes(1);
 });

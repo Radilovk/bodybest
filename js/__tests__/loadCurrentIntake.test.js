@@ -5,7 +5,7 @@ test('loadCurrentIntake агрегира макросите от логовет�
   jest.resetModules();
   const app = await import('../app.js');
   const todayStr = new Date().toISOString().split('T')[0];
-  app.fullDashboardData = {
+  Object.assign(app.fullDashboardData, {
     planData: { week1Menu: {} },
     dailyLogs: [
       {
@@ -16,7 +16,7 @@ test('loadCurrentIntake агрегира макросите от логовет�
         },
       },
     ],
-  };
+  });
   app.loadCurrentIntake();
   expect(app.todaysMealCompletionStatus).toEqual({ sample: true });
   expect(app.todaysExtraMeals).toHaveLength(1);
