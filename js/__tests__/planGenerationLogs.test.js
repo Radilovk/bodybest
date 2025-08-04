@@ -25,6 +25,12 @@ describe('processSingleUserPlan log metrics', () => {
         }),
         put: jest.fn(),
         delete: jest.fn(),
+        list: jest.fn(async () => ({
+          keys: [
+            { name: `${userId}_log_${iso(0)}` },
+            { name: `${userId}_log_${iso(6)}` }
+          ]
+        }))
       },
       RESOURCES_KV: {
         get: jest.fn(async (key) => {
@@ -64,6 +70,7 @@ describe('processSingleUserPlan log metrics', () => {
     const putCalls = env.USER_METADATA_KV.put.mock.calls;
     const finalPlanCall = putCalls.find(c => c[0] === 'u1_final_plan');
     expect(finalPlanCall).toBeDefined();
-    expect(finalPlanCall[1]).toContain('"caloriesMacros":{"fiber_percent":10,"fiber_grams":30}');
+    const savedPlan = JSON.parse(finalPlanCall[1]);
+    expect(savedPlan.caloriesMacros).toEqual({ fiber_percent: 10, fiber_grams: 30 });
   });
 });

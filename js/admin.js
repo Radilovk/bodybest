@@ -1064,12 +1064,12 @@ if (sendQueryBtn) {
 if (regenBtn) {
     regenBtn.addEventListener('click', async () => {
         if (!currentUserId) return;
-        await fetch(apiEndpoints.updateStatus, {
+        await fetch(apiEndpoints.regeneratePlan, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUserId, plan_status: 'pending' })
+            body: JSON.stringify({ userId: currentUserId })
         });
-        alert('Заявката за нов план е изпратена.');
+        alert('Генерирането на нов план започна.');
     });
 }
 
