@@ -45,13 +45,22 @@ test('calculatePlanMacros използва наличното поле macros', 
   expect(result).toEqual({ calories: 300, protein: 30, carbs: 50, fat: 15, fiber: 8 });
 });
 
-test('addMealMacros и removeMealMacros актуализират акумулатора', () => {
+test('addMealMacros и removeMealMacros актуализират и clamp-ват акумулатора', () => {
   const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
   const meal = { calories: 290, protein: 20, carbs: 30, fat: 10, fiber: 5 };
   addMealMacros(meal, acc);
   expect(acc).toEqual({ calories: 290, protein: 20, carbs: 30, fat: 10, fiber: 5 });
   removeMealMacros(meal, acc);
   expect(acc).toEqual({ calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+  // repeat removal to ensure clamp to 0
+  removeMealMacros(meal, acc);
+  expect(acc).toEqual({ calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+});
+
+test('removeMealMacros нормализира липсващи полета', () => {
+  const acc = { calories: 100, protein: 10, carbs: 10, fat: 5, fiber: 2 };
+  removeMealMacros({ calories: 150, protein: 20 }, acc);
+  expect(acc).toEqual({ calories: 0, protein: 0, carbs: 10, fat: 5, fiber: 2 });
 });
 
 test('scaleMacros скалира макросите спрямо грамовете', () => {

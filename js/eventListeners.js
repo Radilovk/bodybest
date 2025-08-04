@@ -22,12 +22,11 @@ import {
     handleChatSend, handleChatInputKeypress, // from app.js / chat.js
     _handlePrevQuizQuestion, _handleNextQuizQuestion, _handleSubmitQuizAnswersClientSide, // from app.js
     _handleTriggerAdaptiveQuizClientSide, // from app.js
-    todaysMealCompletionStatus, todaysExtraMeals, currentIntakeMacros,
+    todaysMealCompletionStatus,
     fullDashboardData, activeTooltip, currentUserId,
     setChatModelOverride, setChatPromptOverride,
     recalculateCurrentIntakeMacros
 } from './app.js';
-import { addMealMacros, removeMealMacros } from './macroUtils.js';
 import {
     openPlanModificationChat,
     clearPlanModChat,
@@ -364,10 +363,6 @@ function handleDelegatedClicks(event) {
         if (day && index !== undefined) {
             const isCompleted = mealCard.classList.toggle('completed');
             todaysMealCompletionStatus[`${day}_${index}`] = isCompleted;
-            const meal = fullDashboardData.planData?.week1Menu?.[day]?.[index];
-            if (meal) {
-                (isCompleted ? addMealMacros : removeMealMacros)(meal, currentIntakeMacros);
-            }
             recalculateCurrentIntakeMacros();
             populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
             // Автоматично опресняване на макро-картата
