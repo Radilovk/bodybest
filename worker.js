@@ -285,6 +285,7 @@ async function sendPasswordResetEmail(to, token, env) {
 // ------------- START BLOCK: GlobalConstantsAndBindings -------------
 const GEMINI_API_KEY_SECRET_NAME = 'GEMINI_API_KEY';
 const OPENAI_API_KEY_SECRET_NAME = 'OPENAI_API_KEY';
+const COHERE_API_KEY_SECRET_NAME = 'COHERE_API_KEY';
 const CF_AI_TOKEN_SECRET_NAME = 'CF_AI_TOKEN';
 const CF_ACCOUNT_ID_VAR_NAME = 'CF_ACCOUNT_ID';
 const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
@@ -4084,6 +4085,38 @@ async function callOpenAiAPI(prompt, apiKey, model, options = {}) {
 }
 // ------------- END FUNCTION: callOpenAiAPI -------------
 
+// ------------- START FUNCTION: callCohereAI -------------
+async function callCohereAI(model, prompt, apiKey, options = {}) {
+    if (!model) {
+        throw new Error('Cohere model name is missing.');
+    }
+    const url = 'https://api.cohere.ai/v1/generate';
+    const body = {
+        model,
+        prompt,
+        ...(options.temperature !== undefined && { temperature: options.temperature }),
+        ...(options.maxTokens !== undefined && { max_tokens: options.maxTokens })
+    };
+    const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+        const msg = data?.message || data?.error || `HTTP ${resp.status}`;
+        throw new Error(`Cohere API Error (${model}): ${msg}`);
+    }
+    const text = data?.generations?.[0]?.text;
+    if (text === undefined || text === null) {
+        throw new Error(`Cohere API Error (${model}): No text in response.`);
+    }
+    return text;
+}
+// ------------- END FUNCTION: callCohereAI -------------
 
 function getModelProvider(model) {
     if (!model) return 'gemini';
@@ -4095,7 +4128,7 @@ function getModelProvider(model) {
 
 async function callModel(model, prompt, env, { temperature = 0.7, maxTokens = 800 } = {}) {
     const provider = getModelProvider(model);
-    if (provider === 'cf' || provider === 'cohere') {
+    if (provider === 'cf') {
         return callCfAi(
             model,
             {
@@ -4106,6 +4139,11 @@ async function callModel(model, prompt, env, { temperature = 0.7, maxTokens = 80
             },
             env
         );
+    }
+    if (provider === 'cohere') {
+        const key = env[COHERE_API_KEY_SECRET_NAME];
+        if (!key) throw new Error('Missing Cohere API key.');
+        return callCohereAI(model, prompt, key, { temperature, maxTokens });
     }
     if (provider === 'openai') {
         const key = env[OPENAI_API_KEY_SECRET_NAME];
