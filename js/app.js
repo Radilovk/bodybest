@@ -10,7 +10,7 @@ import {
     openModal, closeModal,
     showLoading, showToast, updateTabsOverflowIndicator
 } from './uiHandlers.js';
-import { populateUI, populateProgressHistory, populateDashboardMacros } from './populateUI.js';
+import { populateUI, populateProgressHistory, populateDashboardMacros, setMacroExceedThreshold } from './populateUI.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
 import { setupStaticEventListeners, setupDynamicEventListeners, initializeCollapsibleCards } from './eventListeners.js';
 import { loadProductMacros, calculateCurrentMacros, calculatePlanMacros } from './macroUtils.js';
@@ -401,6 +401,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
             const data = createTestData();
             debugLog("Using test data for development:", data);
             fullDashboardData = data;
+            setMacroExceedThreshold(data.macroExceedThreshold);
             fullDashboardData.dailyLogs = normalizeDailyLogs(fullDashboardData.dailyLogs);
             const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
             const currentDayKey = dayNames[new Date().getDay()];
@@ -458,6 +459,7 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
 
         debugLog("Data received from worker:", data);
         fullDashboardData = data;
+        setMacroExceedThreshold(data.macroExceedThreshold);
         // chatHistory = []; // Do not reset chat history on normal data load, only for test user or logout
 
         if (data.planStatus === "pending" || data.planStatus === "processing") {

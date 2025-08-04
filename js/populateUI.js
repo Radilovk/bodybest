@@ -1,7 +1,7 @@
 // populateUI.js - Попълване на UI с данни
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort } from './utils.js';
-import { generateId, apiEndpoints } from './config.js';
+import { generateId, apiEndpoints, standaloneMacroUrl } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake, currentUserId, todaysPlanMacros } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
@@ -11,6 +11,20 @@ import { logMacroPayload } from '../utils/debug.js';
 export let macroChartInstance = null;
 export let progressChartInstance = null;
 export let lastMacroPayload = null;
+export let macroExceedThreshold = 1.15;
+
+export function setMacroExceedThreshold(val) {
+    const num = parseFloat(val);
+    if (!isNaN(num) && num >= 1) {
+        macroExceedThreshold = num;
+    } else {
+        macroExceedThreshold = 1.15;
+    }
+}
+
+export function buildMacroCardUrl() {
+    return `${standaloneMacroUrl}?threshold=${macroExceedThreshold}`;
+}
 
 // Helper for tests to inject chart instance
 export function __setProgressChartInstance(instance) {

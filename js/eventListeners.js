@@ -15,7 +15,9 @@ import {
     progressChartInstance,
     populateDashboardMacros,
     lastMacroPayload,
-    renderPendingMacroChart
+    renderPendingMacroChart,
+    macroExceedThreshold,
+    buildMacroCardUrl
 } from './populateUI.js';
 import {
     handleSaveLog, handleFeedbackFormSubmit, // from app.js
@@ -67,7 +69,7 @@ export function handleAdaptiveQuizBtnClick(triggerFn = _handleTriggerAdaptiveQui
     triggerFn();
 }
 
-function ensureMacroAnalyticsFrame() {
+export function ensureMacroAnalyticsFrame() {
     let frame = document.getElementById('macroAnalyticsCardFrame');
     if (!frame) {
         frame = document.createElement('iframe');
@@ -77,7 +79,7 @@ function ensureMacroAnalyticsFrame() {
         frame.style.width = '100%';
         frame.style.border = '0';
         frame.style.display = 'none';
-        frame.src = standaloneMacroUrl;
+        frame.src = buildMacroCardUrl();
         selectors.macroAnalyticsCardContainer.appendChild(frame);
         frame.addEventListener('load', () => {
             selectors.macroAnalyticsCardContainer.classList.remove('loading');
