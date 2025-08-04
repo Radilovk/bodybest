@@ -5,7 +5,7 @@
   Използва локалния loader (./js/chartLoader.js), който трябва да бъде копиран при самостоятелно използване или в <iframe>.
   Интеграция:
   - копирайте файла или го вградете с <iframe>;
-  - подайте данни чрез атрибутите "current-data" и "target-data" (JSON) или
+  - подайте данни чрез атрибутите "current-data" и "plan-data" (JSON) или
     използвайте "data-endpoint" и "refresh-interval" за автоматично опресняване;
   - цветовете се настройват чрез CSS променливите в :root;
   - преводите се зареждат от locales/macroCard.{lang}.json според атрибута "locale".
@@ -211,7 +211,7 @@
         this.titleEl = this.shadowRoot.querySelector('h5');
         this.chart = null;
         this.activeMacroIndex = null;
-        this.targetData = null;
+        this.planData = null;
         this.currentData = null;
         this.observer = null;
         this.refreshTimer = null;
@@ -227,7 +227,7 @@
       }
 
       static get observedAttributes() {
-        return ['target-data', 'current-data', 'locale', 'data-endpoint', 'refresh-interval'];
+        return ['plan-data', 'current-data', 'locale', 'data-endpoint', 'refresh-interval'];
       }
 
       async connectedCallback() {
@@ -249,7 +249,7 @@
         }
         try {
           const parsed = JSON.parse(newVal);
-          if (name === 'target-data') this.targetData = parsed;
+          if (name === 'plan-data') this.planData = parsed;
           if (name === 'current-data') this.currentData = parsed;
           this.renderMetrics();
           this.renderChart();
@@ -300,7 +300,7 @@
           try {
             const res = await fetch(endpoint);
             const data = await res.json();
-            if (data.target && data.current) {
+            if (data.plan && data.current) {
               this.setData(data);
             }
           } catch (e) {
@@ -311,8 +311,8 @@
         this.refreshTimer = setInterval(fetchData, interval);
       }
 
-      setData({ target, current }) {
-        if (target) this.setAttribute('target-data', JSON.stringify(target));
+      setData({ plan, current }) {
+        if (plan) this.setAttribute('plan-data', JSON.stringify(plan));
         if (current) this.setAttribute('current-data', JSON.stringify(current));
       }
 
@@ -343,22 +343,24 @@
       }
 
       renderMetrics() {
-        const target = this.targetData;
+        const plan = this.planData;
         const current = this.currentData;
-        if (!target || !current) return;
+        if (!plan) return;
         this.grid.innerHTML = '';
+        const consumed = current?.calories ?? '--';
         this.centerText.innerHTML = `
-          <div class="consumed-calories">${current.calories}</div>
-          <div class="total-calories-label">${this.labels.totalCaloriesLabel.replace('{calories}', target.calories)}</div>`;
+          <div class="consumed-calories">${consumed} / ${plan.calories}</div>
+          <div class="total-calories-label">${this.labels.intakeVsPlanLabel || 'Прием vs План'}</div>`;
+        if (!current) return;
         const calDiv = document.createElement('div');
         calDiv.className = 'macro-metric calories';
         calDiv.setAttribute('role', 'listitem');
-        calDiv.setAttribute('aria-label', `${this.labels.caloriesLabel}: ${current.calories} ${this.labels.totalCaloriesLabel.replace('{calories}', target.calories)}`);
+        calDiv.setAttribute('aria-label', `${this.labels.caloriesLabel}: ${current.calories} ${this.labels.totalCaloriesLabel.replace('{calories}', plan.calories)}`);
         calDiv.innerHTML = `
           <span class="macro-icon"><i class="bi bi-fire"></i></span>
           <div class="macro-label">${this.labels.caloriesLabel}</div>
-          <div class="macro-value">${current.calories} / ${target.calories} kcal</div>`;
-        const calDiff = current.calories - target.calories;
+          <div class="macro-value">${current.calories} / ${plan.calories} kcal</div>`;
+        const calDiff = current.calories - plan.calories;
         if (calDiff > 0) {
           calDiv.classList.add('over');
         } else if (calDiff < 0) {
@@ -374,8 +376,8 @@
         macros.forEach((item, idx) => {
           const label = this.labels.macros[item.key];
           const currentVal = current[`${item.key}_grams`];
-          const targetVal = target[`${item.key}_grams`];
-          const ratio = targetVal ? currentVal / targetVal : 0;
+          const planVal = plan[`${item.key}_grams`];
+          const ratio = planVal ? currentVal / planVal : 0;
           const percent = Math.round(ratio * 100);
           const percentText = `${percent}%`;
           const subtitle = this.labels.subtitle
@@ -385,14 +387,14 @@
           div.className = `macro-metric ${item.key}`;
           div.setAttribute('role', 'button');
           div.setAttribute('tabindex', '0');
-          div.setAttribute('aria-label', `${label}: ${currentVal} от ${targetVal} грама (${subtitle})`);
+          div.setAttribute('aria-label', `${label}: ${currentVal} от ${planVal} грама (${subtitle})`);
           div.setAttribute('aria-pressed', 'false');
           div.innerHTML = `
             <span class="macro-icon"><i class="bi ${item.icon}"></i></span>
             <div class="macro-label">${label}</div>
-            <div class="macro-value">${currentVal} / ${targetVal}г</div>
+            <div class="macro-value">${currentVal} / ${planVal}г</div>
             <div class="macro-subtitle">${subtitle}</div>`;
-          const diff = currentVal - targetVal;
+          const diff = currentVal - planVal;
           if (diff > 0) {
             div.classList.add('over');
           } else if (diff < 0) {
@@ -410,9 +412,9 @@
       }
 
       renderChart() {
-        const target = this.targetData;
+        const plan = this.planData;
         const current = this.currentData;
-        if (!target || !current || !this.canvas || typeof Chart === 'undefined') return;
+        if (!plan || !this.canvas || typeof Chart === 'undefined') return;
         const skeleton = this.shadowRoot.querySelector('.chart-skeleton');
         if (skeleton) skeleton.remove();
         if (this.canvas.hasAttribute('hidden')) this.canvas.removeAttribute('hidden');
@@ -424,34 +426,37 @@
           this.getCssVar('--macro-fat-color'),
           this.getCssVar('--macro-fiber-color')
         ];
+        const datasets = [
+          {
+            label: 'План',
+            data: [plan.protein_grams, plan.carbs_grams, plan.fat_grams, plan.fiber_grams],
+            backgroundColor: current ? macroColors.map((c) => `${c}40`) : macroColors,
+            borderWidth: 0,
+            cutout: current ? '80%' : '65%'
+          }
+        ];
+        if (current) {
+          datasets.push({
+            label: 'Прием',
+            data: [current.protein_grams, current.carbs_grams, current.fat_grams, current.fiber_grams],
+            backgroundColor: macroColors,
+            borderColor: this.getCssVar('--card-bg'),
+            borderWidth: 4,
+            borderRadius: 8,
+            cutout: '65%',
+            hoverOffset: 12
+          });
+        }
         this.chart = new Chart(ctx, {
           type: 'doughnut',
           data: {
             labels: [
-              `${this.labels.macros.protein} (${target.protein_percent}%)`,
-              `${this.labels.macros.carbs} (${target.carbs_percent}%)`,
-              `${this.labels.macros.fat} (${target.fat_percent}%)`,
-              `${this.labels.macros.fiber} (${target.fiber_percent}%)`
+              `${this.labels.macros.protein} (${plan.protein_percent}%)`,
+              `${this.labels.macros.carbs} (${plan.carbs_percent}%)`,
+              `${this.labels.macros.fat} (${plan.fat_percent}%)`,
+              `${this.labels.macros.fiber} (${plan.fiber_percent}%)`
             ],
-            datasets: [
-              {
-                label: 'Цел',
-                data: [target.protein_grams, target.carbs_grams, target.fat_grams, target.fiber_grams],
-                backgroundColor: macroColors.map((c) => `${c}40`),
-                borderWidth: 0,
-                cutout: '80%'
-              },
-              {
-                label: 'Прием',
-                data: [current.protein_grams, current.carbs_grams, current.fat_grams, current.fiber_grams],
-                backgroundColor: macroColors,
-                borderColor: this.getCssVar('--card-bg'),
-                borderWidth: 4,
-                borderRadius: 8,
-                cutout: '65%',
-                hoverOffset: 12
-              }
-            ]
+            datasets
           },
           options: {
             responsive: true,

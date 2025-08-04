@@ -50,7 +50,7 @@ describe('renderPendingMacroChart', () => {
     selectors.macroAnalyticsCardContainer.appendChild(frame);
     renderPendingMacroChart();
     expect(frame.contentWindow.postMessage).toHaveBeenCalledWith(
-      { type: 'macro-data', data: expect.objectContaining({ target: macros }) },
+      { type: 'macro-data', data: expect.objectContaining({ plan: expect.any(Object) }) },
       '*'
     );
 

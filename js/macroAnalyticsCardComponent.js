@@ -67,10 +67,6 @@ template.innerHTML = `
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    .chart-center-text .plan-vs-target {
-      font-size: 0.75rem;
-      color: var(--text-secondary-color);
-    }
     .macro-metrics-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -178,7 +174,6 @@ export class MacroAnalyticsCard extends HTMLElement {
     this.warningEl = this.shadowRoot.querySelector('.macro-warning');
     this.chart = null;
     this.activeMacroIndex = null;
-    this.targetData = null;
     this.planData = null;
     this.currentData = null;
     this.observer = null;
@@ -194,12 +189,12 @@ export class MacroAnalyticsCard extends HTMLElement {
       subtitle: '',
       totalCaloriesLabel: '',
       exceedWarning: '',
-      planVsTargetLabel: ''
+      intakeVsPlanLabel: ''
     };
   }
 
   static get observedAttributes() {
-    return ['target-data', 'plan-data', 'current-data', 'locale', 'data-endpoint', 'refresh-interval', 'exceed-threshold'];
+    return ['plan-data', 'current-data', 'locale', 'data-endpoint', 'refresh-interval', 'exceed-threshold'];
   }
 
     async connectedCallback() {
@@ -246,7 +241,6 @@ export class MacroAnalyticsCard extends HTMLElement {
           };
         }
       }
-      if (name === 'target-data') this.targetData = parsed;
       if (name === 'plan-data') this.planData = parsed;
       if (name === 'current-data') this.currentData = parsed;
       this.renderMetrics();
@@ -321,7 +315,7 @@ export class MacroAnalyticsCard extends HTMLElement {
       try {
         const res = await fetch(endpoint);
         const data = await res.json();
-        if (data.target && data.current) {
+        if (data.plan && data.current) {
           this.setData(data);
         }
       } catch (e) {
@@ -332,8 +326,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     this.refreshTimer = setInterval(fetchData, interval);
   }
 
-  setData({ target, plan, current }) {
-    if (target) this.setAttribute('target-data', JSON.stringify(target));
+  setData({ plan, current }) {
     if (plan) this.setAttribute('plan-data', JSON.stringify(plan));
     if (current) this.setAttribute('current-data', JSON.stringify(current));
   }
@@ -365,49 +358,41 @@ export class MacroAnalyticsCard extends HTMLElement {
   }
 
   renderMetrics() {
-    const target = this.targetData;
     const plan = this.planData;
     const current = this.currentData || {};
     const hasCurrent = !!this.currentData;
-    const hasMacroData = hasCurrent && ['calories','protein_grams','carbs_grams','fat_grams','fiber_grams'].some(k => typeof current[k] === 'number');
-    if (!target) return;
+    const hasMacroData =
+      hasCurrent && ['calories','protein_grams','carbs_grams','fat_grams','fiber_grams'].some(k => typeof current[k] === 'number');
+    if (!plan) return;
     this.grid.innerHTML = '';
     if (this.warningEl) {
       this.warningEl.classList.remove('show');
       this.warningEl.textContent = '';
     }
-    const hasPlan = plan && typeof plan.calories === 'number';
-    const planLine =
-      hasPlan && this.labels.planVsTargetLabel
-        ? `<div class="plan-vs-target">${this.labels.planVsTargetLabel
-            .replace('{plan}', plan.calories)
-            .replace('{target}', target.calories)}</div>`
-        : '';
     const consumedCaloriesRaw = hasMacroData ? current.calories : undefined;
     const consumedCalories = typeof consumedCaloriesRaw === 'number' ? consumedCaloriesRaw : '--';
     const caloriesExceeded =
       typeof consumedCaloriesRaw === 'number' &&
-      target.calories &&
+      plan.calories &&
       // Превишение се отчита само над зададения множител.
-      consumedCaloriesRaw > target.calories * this.exceedThreshold;
+      consumedCaloriesRaw > plan.calories * this.exceedThreshold;
     this.centerText.innerHTML = `
-      <div class="consumed-calories">${consumedCalories}</div>
-      <div class="total-calories-label">${this.labels.totalCaloriesLabel.replace('{calories}', target.calories)}</div>
-      ${planLine}`;
+      <div class="consumed-calories">${consumedCalories} / ${plan.calories}</div>
+      <div class="total-calories-label">${this.labels.intakeVsPlanLabel || 'Прием vs План'}</div>`;
     const calDiv = document.createElement('div');
     calDiv.className = 'macro-metric calories';
     if (caloriesExceeded) calDiv.classList.add('over');
     else if (
       typeof consumedCaloriesRaw === 'number' &&
-      target.calories &&
-      consumedCaloriesRaw < target.calories
+      plan.calories &&
+      consumedCaloriesRaw < plan.calories
     ) calDiv.classList.add('under');
     calDiv.setAttribute('role', 'listitem');
-    calDiv.setAttribute('aria-label', `${this.labels.caloriesLabel}: ${consumedCalories} ${this.labels.totalCaloriesLabel.replace('{calories}', target.calories)}`);
+    calDiv.setAttribute('aria-label', `${this.labels.caloriesLabel}: ${consumedCalories} ${this.labels.totalCaloriesLabel.replace('{calories}', plan.calories)}`);
     calDiv.innerHTML = `
       <span class="macro-icon"><i class="bi bi-fire"></i></span>
       <div class="macro-label">${this.labels.caloriesLabel}</div>
-      <div class="macro-value">${consumedCalories} / ${target.calories} kcal</div>`;
+      <div class="macro-value">${consumedCalories} / ${plan.calories} kcal</div>`;
     this.grid.appendChild(calDiv);
     const overMacros = [];
     if (caloriesExceeded) overMacros.push(this.labels.caloriesLabel);
@@ -421,7 +406,7 @@ export class MacroAnalyticsCard extends HTMLElement {
       const label = this.labels.macros[item.key];
       const currentRaw = hasMacroData ? current[`${item.key}_grams`] : undefined;
       const displayCurrent = typeof currentRaw === 'number' ? currentRaw : '--';
-      const targetVal = target[`${item.key}_grams`];
+      const targetVal = plan[`${item.key}_grams`];
       const percent = formatPercent(currentRaw / targetVal);
       const subtitle = this.labels.subtitle
         ? this.labels.subtitle.replace('{percent}', percent)
@@ -473,9 +458,9 @@ export class MacroAnalyticsCard extends HTMLElement {
   }
 
   renderChart() {
-    const target = this.targetData;
+    const plan = this.planData;
     const current = this.currentData;
-    if (!target || !this.canvas || typeof Chart === 'undefined') return;
+    if (!plan || !this.canvas || typeof Chart === 'undefined') return;
     this.hideLoading();
     const skeleton = this.shadowRoot.querySelector('.chart-skeleton');
     if (skeleton) skeleton.remove();
@@ -490,8 +475,8 @@ export class MacroAnalyticsCard extends HTMLElement {
     ];
     const datasets = [
       {
-        label: this.locale === 'en' ? 'Target (g)' : 'Цел (гр)',
-        data: [target.protein_grams, target.carbs_grams, target.fat_grams, target.fiber_grams],
+        label: this.locale === 'en' ? 'Plan (g)' : 'План (гр)',
+        data: [plan.protein_grams, plan.carbs_grams, plan.fat_grams, plan.fiber_grams],
         backgroundColor: current ? macroColors.map((c) => `${c}40`) : macroColors,
         borderWidth: 0,
         cutout: current ? '80%' : '65%'
@@ -513,10 +498,10 @@ export class MacroAnalyticsCard extends HTMLElement {
       type: 'doughnut',
       data: {
         labels: [
-          `${this.labels.macros.protein} (${target.protein_percent}%)`,
-          `${this.labels.macros.carbs} (${target.carbs_percent}%)`,
-          `${this.labels.macros.fat} (${target.fat_percent}%)`,
-          `${this.labels.macros.fiber} (${target.fiber_percent}%)`
+          `${this.labels.macros.protein} (${plan.protein_percent}%)`,
+          `${this.labels.macros.carbs} (${plan.carbs_percent}%)`,
+          `${this.labels.macros.fat} (${plan.fat_percent}%)`,
+          `${this.labels.macros.fiber} (${plan.fiber_percent}%)`
         ],
         datasets
       },

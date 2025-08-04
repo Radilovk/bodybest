@@ -20,7 +20,8 @@ beforeEach(async () => {
       fromGoal: 'от целта',
       subtitle: '{percent} от целта',
       totalCaloriesLabel: 'от {calories} kcal',
-      exceedWarning: 'Превишение над 15%: {items}'
+      exceedWarning: 'Превишение над 15%: {items}',
+      intakeVsPlanLabel: 'Прием vs План'
     })
   });
   global.IntersectionObserver = class { observe() {} disconnect() {} };
@@ -37,7 +38,7 @@ afterEach(() => {
 test('рендерира метриките и реагира на highlightMacro', async () => {
   const card = document.createElement('macro-analytics-card');
   document.body.appendChild(card);
-  const target = {
+  const plan = {
     calories: 2000,
     protein_grams: 150,
     protein_percent: 75,
@@ -46,14 +47,13 @@ test('рендерира метриките и реагира на highlightMacr
     fat_grams: 70,
     fat_percent: 35
   };
-  const plan = { calories: 1900 };
   const current = {
     calories: 1200,
     protein_grams: 60,
     carbs_grams: 100,
     fat_grams: 40
   };
-  card.setData({ target, plan, current });
+  card.setData({ plan, current });
   const utils = within(card.shadowRoot);
   await waitFor(() => utils.getByText('Белтъчини'));
   expect(utils.getByText('60 / 150г')).toBeTruthy();
@@ -70,7 +70,7 @@ test('рендерира метриките и реагира на highlightMacr
 test('показва предупреждение при превишаване на макросите', async () => {
   const card = document.createElement('macro-analytics-card');
   document.body.appendChild(card);
-  const target = {
+  const plan = {
     calories: 2000,
     protein_grams: 100,
     protein_percent: 40,
@@ -85,7 +85,7 @@ test('показва предупреждение при превишаване 
     carbs_grams: 150,
     fat_grams: 40
   };
-  card.setData({ target, current });
+  card.setData({ plan, current });
   const utils = within(card.shadowRoot);
   await waitFor(() => utils.getByText(/Превишение над 15%/));
   expect(utils.getByText(/Превишение над 15%/)).toBeTruthy();
@@ -94,7 +94,7 @@ test('показва предупреждение при превишаване 
 test('класифицира over и under макросите', async () => {
   const card = document.createElement('macro-analytics-card');
   document.body.appendChild(card);
-  const target = {
+  const plan = {
     calories: 2000,
     protein_grams: 100,
     protein_percent: 40,
@@ -109,7 +109,7 @@ test('класифицира over и under макросите', async () => {
     carbs_grams: 200,
     fat_grams: 40
   };
-  card.setData({ target, current });
+  card.setData({ plan, current });
   const utils = within(card.shadowRoot);
   await waitFor(() => utils.getByText('Белтъчини'));
   const proteinDiv = utils.getByText('Белтъчини').closest('.macro-metric');
@@ -132,14 +132,15 @@ test('data-endpoint и refresh-interval извикват fetch периодич�
             fromGoal: 'от целта',
             subtitle: '{percent} от целта',
             totalCaloriesLabel: 'от {calories} kcal',
-            exceedWarning: 'Превишение над 15%: {items}'
+            exceedWarning: 'Превишение над 15%: {items}',
+            intakeVsPlanLabel: 'Прием vs План'
           })
         });
       }
     return Promise.resolve({
       ok: true,
       json: async () => ({
-        target: {
+        plan: {
           calories: 2000,
           protein_grams: 150,
           protein_percent: 75,
@@ -148,7 +149,6 @@ test('data-endpoint и refresh-interval извикват fetch периодич�
           fat_grams: 70,
           fat_percent: 35
         },
-        plan: { calories: 1900 },
         current: {
           calories: 1200,
           protein_grams: 60,

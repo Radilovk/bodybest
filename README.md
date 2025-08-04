@@ -177,12 +177,12 @@ Include the common registration logic by importing `setupRegistration`:
 
 ### MacroAnalyticsCard
 
-Компонентът визуализира целеви и текущ прием на макронутриенти чрез карта и двойна кръгова диаграма.
+Компонентът визуализира планов и текущ прием на макронутриенти чрез карта и двойна кръгова диаграма.
 
 **Данни**
 
 ```js
-const targetData = {
+const planData = {
   calories: 2200,
   protein_grams: 140,
   carbs_grams: 248,
@@ -207,14 +207,14 @@ const currentData = {
 ```html
 <macro-analytics-card
   exceed-threshold="1.2"
-  target-data="..."
+  plan-data="..."
   current-data="...">
 </macro-analytics-card>
 ```
 
 **Функции**
 
-- `renderMacroAnalyticsCard(target, current)` изгражда HTML картата и легендата.
+- `renderMacroAnalyticsCard(plan, current)` изгражда HTML картата и легендата.
 - `renderMacroChart()` рисува двойната диаграма с `Chart.js`.
 - `highlightMacro(el, index)` подсветява избрания сегмент в картата и диаграмата.
 
@@ -270,9 +270,9 @@ locales/
 **Динамични данни**
 
 ```js
-const targetData = await fetch('/api/target').then(r => r.json());
+const planData = await fetch('/api/plan').then(r => r.json());
 const currentData = await fetch('/api/current').then(r => r.json());
-renderMacroAnalyticsCard(targetData, currentData);
+renderMacroAnalyticsCard(planData, currentData);
 renderMacroChart();
 ```
 

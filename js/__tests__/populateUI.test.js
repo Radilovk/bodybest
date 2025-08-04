@@ -137,7 +137,6 @@ test('обновява макро картата чрез postMessage', async ()
     {
       type: 'macro-data',
       data: {
-        target: expect.objectContaining({ calories: 1800 }),
         plan: expect.any(Object),
         current: {}
       }

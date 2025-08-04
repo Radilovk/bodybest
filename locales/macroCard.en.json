@@ -11,5 +11,5 @@
   "subtitle": "{percent} of goal",
   "totalCaloriesLabel": "of {calories} kcal",
   "exceedWarning": "Exceeds target by >15%: {items}",
-  "planVsTargetLabel": "Plan vs Goal: {plan} / {target} kcal"
+  "intakeVsPlanLabel": "Intake vs Plan"
 }
