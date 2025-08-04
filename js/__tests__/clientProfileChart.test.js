@@ -57,7 +57,9 @@ test('fillDashboard initializes doughnut charts and destroys previous', async ()
         fat_percent: 20,
         protein_grams: 120,
         carbs_grams: 200,
-        fat_grams: 44
+        fat_grams: 44,
+        fiber_percent: 10,
+        fiber_grams: 30
       },
       week1Menu: {},
       allowedForbiddenFoods: {},

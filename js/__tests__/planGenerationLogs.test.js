@@ -33,7 +33,7 @@ describe('processSingleUserPlan log metrics', () => {
           if (key === 'recipe_data') return '{}';
           if (key === 'model_plan_generation') return 'model';
           if (key === 'prompt_unified_plan_generation_v2') {
-            return '{"profileSummary":"Weight %%RECENT_WEIGHT_KG%% diff %%WEIGHT_CHANGE_LAST_7_DAYS%% mood %%AVG_MOOD_LAST_7_DAYS%% energy %%AVG_ENERGY_LAST_7_DAYS%%","caloriesMacros":{},"week1Menu":{},"principlesWeek2_4":[],"detailedTargets":{}}';
+            return '{"profileSummary":"Weight %%RECENT_WEIGHT_KG%% diff %%WEIGHT_CHANGE_LAST_7_DAYS%% mood %%AVG_MOOD_LAST_7_DAYS%% energy %%AVG_ENERGY_LAST_7_DAYS%%","caloriesMacros":{"fiber_percent":10,"fiber_grams":30},"week1Menu":{},"principlesWeek2_4":[],"detailedTargets":{}}';
           }
           return null;
         })
@@ -45,7 +45,7 @@ describe('processSingleUserPlan log metrics', () => {
     let sentPrompt = '';
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ candidates: [{ content: { parts: [{ text: '{"profileSummary":"ok","caloriesMacros":{},"week1Menu":{},"principlesWeek2_4":[],"detailedTargets":{}}' }] } }] })
+      json: async () => ({ candidates: [{ content: { parts: [{ text: '{"profileSummary":"ok","caloriesMacros":{"fiber_percent":10,"fiber_grams":30},"week1Menu":{},"principlesWeek2_4":[],"detailedTargets":{}}' }] } }] })
     });
 
     await mod.processSingleUserPlan(userId, env);
@@ -64,6 +64,6 @@ describe('processSingleUserPlan log metrics', () => {
     const putCalls = env.USER_METADATA_KV.put.mock.calls;
     const finalPlanCall = putCalls.find(c => c[0] === 'u1_final_plan');
     expect(finalPlanCall).toBeDefined();
-    expect(finalPlanCall[1]).toContain('"caloriesMacros": {}');
+    expect(finalPlanCall[1]).toContain('"caloriesMacros":{"fiber_percent":10,"fiber_grams":30}');
   });
 });

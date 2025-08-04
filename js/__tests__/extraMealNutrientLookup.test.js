@@ -27,7 +27,7 @@ beforeEach(async () => {
     todaysExtraMeals: [],
     todaysMealCompletionStatus: {},
     currentIntakeMacros: {},
-    fullDashboardData: { planData: { week1Menu: {}, caloriesMacros: {} } },
+    fullDashboardData: { planData: { week1Menu: {}, caloriesMacros: { fiber_percent: 10, fiber_grams: 30 } } },
     loadCurrentIntake: jest.fn()
   }));
   ({ initializeExtraMealFormLogic } = await import('../extraMealForm.js'));

@@ -28,7 +28,7 @@ describe('processSingleUserPlan with pending modification', () => {
           if (['base_diet_model','allowed_meal_combinations','eating_psychology'].includes(key)) return '';
           if (key === 'recipe_data') return '{}';
           if (key === 'model_plan_generation') return 'model';
-          if (key === 'prompt_unified_plan_generation_v2') return '{"profileSummary":"X","caloriesMacros":{},"week1Menu":{},"principlesWeek2_4":[],"detailedTargets":{}}';
+          if (key === 'prompt_unified_plan_generation_v2') return '{"profileSummary":"X","caloriesMacros":{"fiber_percent":10,"fiber_grams":30},"week1Menu":{},"principlesWeek2_4":[],"detailedTargets":{}}';
           return null;
         })
       },
@@ -39,7 +39,7 @@ describe('processSingleUserPlan with pending modification', () => {
     let sentPrompt = '';
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ candidates: [{ content: { parts: [{ text: '{"profileSummary":"ok","caloriesMacros":{},"week1Menu":{},"principlesWeek2_4":[],"detailedTargets":{}}' }] } }] })
+      json: async () => ({ candidates: [{ content: { parts: [{ text: '{"profileSummary":"ok","caloriesMacros":{"fiber_percent":10,"fiber_grams":30},"week1Menu":{},"principlesWeek2_4":[],"detailedTargets":{}}' }] } }] })
     });
 
     await mod.processSingleUserPlan(userId, env);

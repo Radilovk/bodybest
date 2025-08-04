@@ -39,7 +39,7 @@ describe('handleDashboardDataRequest caloriesMacros', () => {
             name: 'U', weight: '70', height: '170', age: '30', gender: 'мъж', q1745878295708: 'умерено'
           }));
           if (key === 'u1_final_plan') return Promise.resolve(JSON.stringify({
-            caloriesMacros: { calories: 1, protein_percent: 1, carbs_percent: 1, fat_percent: 1, protein_grams: 1, carbs_grams: 1, fat_grams: 1 },
+            caloriesMacros: { calories: 1, protein_percent: 1, carbs_percent: 1, fat_percent: 1, protein_grams: 1, carbs_grams: 1, fat_grams: 1, fiber_percent: 10, fiber_grams: 30 },
             profileSummary: 's', allowedForbiddenFoods: {}, hydrationCookingSupplements: {}, week1Menu: {}, principlesWeek2_4: []
           }));
           if (key === 'plan_status_u1') return Promise.resolve('ready');
