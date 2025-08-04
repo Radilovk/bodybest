@@ -4,6 +4,15 @@ import { scaleMacros, formatPercent } from './macroUtils.js';
 
 let Chart;
 
+function ensureGramsFields(obj) {
+  if (!obj) return obj;
+  if (obj.protein_grams === undefined && typeof obj.protein === 'number') obj.protein_grams = obj.protein;
+  if (obj.carbs_grams === undefined && typeof obj.carbs === 'number') obj.carbs_grams = obj.carbs;
+  if (obj.fat_grams === undefined && typeof obj.fat === 'number') obj.fat_grams = obj.fat;
+  if (obj.fiber_grams === undefined && typeof obj.fiber === 'number') obj.fiber_grams = obj.fiber;
+  return obj;
+}
+
 const template = document.createElement('template');
 template.innerHTML = `
   <style>
@@ -241,8 +250,8 @@ export class MacroAnalyticsCard extends HTMLElement {
           };
         }
       }
-      if (name === 'plan-data') this.planData = parsed;
-      if (name === 'current-data') this.currentData = parsed;
+      if (name === 'plan-data') this.planData = ensureGramsFields(parsed);
+      if (name === 'current-data') this.currentData = ensureGramsFields(parsed);
       this.renderMetrics();
       this.renderChart();
     } catch (e) {
