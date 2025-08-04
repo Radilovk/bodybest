@@ -26,12 +26,60 @@ function setupMocks(selectors) {
     todaysMealCompletionStatus: {},
     todaysExtraMeals: [],
     todaysPlanMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
-    currentIntakeMacros: {},
+    currentIntakeMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),
-    currentUserId: 'u1'
+    currentUserId: 'u1',
+    handleSaveLog: jest.fn(),
+    handleFeedbackFormSubmit: jest.fn(),
+    handleChatSend: jest.fn(),
+    handleChatInputKeypress: jest.fn(),
+    _handlePrevQuizQuestion: jest.fn(),
+    _handleNextQuizQuestion: jest.fn(),
+    _handleSubmitQuizAnswersClientSide: jest.fn(),
+    _handleTriggerAdaptiveQuizClientSide: jest.fn(),
+    activeTooltip: null,
+    setChatModelOverride: jest.fn(),
+    setChatPromptOverride: jest.fn(),
+    recalculateCurrentIntakeMacros: jest.fn(),
+    resetAppState: jest.fn(),
+    stopPlanStatusPolling: jest.fn(),
+    stopAdminQueriesPolling: jest.fn()
   }));
-  jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn() }));
+  jest.unstable_mockModule('../uiHandlers.js', () => ({
+    toggleMenu: jest.fn(),
+    closeMenu: jest.fn(),
+    handleOutsideMenuClick: jest.fn(),
+    handleMenuKeydown: jest.fn(),
+    toggleTheme: jest.fn(),
+    activateTab: jest.fn(),
+    handleTabKeydown: jest.fn(),
+    closeModal: jest.fn(),
+    openModal: jest.fn(),
+    openInfoModalWithDetails: jest.fn(),
+    toggleDailyNote: jest.fn(),
+    openMainIndexInfo: jest.fn(),
+    openInstructionsModal: jest.fn(),
+    handleTrackerTooltipShow: jest.fn(),
+    handleTrackerTooltipHide: jest.fn(),
+    showToast: jest.fn(),
+    showLoading: jest.fn()
+  }));
+  jest.unstable_mockModule('../auth.js', () => ({ handleLogout: jest.fn() }));
+  jest.unstable_mockModule('../eventListeners.js', () => ({
+    ensureMacroAnalyticsFrame: jest.fn(() => {
+      let frame = document.getElementById('macroAnalyticsCardFrame');
+      if (!frame) {
+        frame = document.createElement('iframe');
+        frame.id = 'macroAnalyticsCardFrame';
+        const container = document.getElementById('macroAnalyticsCardContainer');
+        if (container) container.appendChild(frame);
+      }
+    }),
+    setupStaticEventListeners: jest.fn(),
+    setupDynamicEventListeners: jest.fn(),
+    initializeCollapsibleCards: jest.fn()
+  }));
 }
 
 test('създава контейнер, ако липсва макро анализ карта', async () => {
@@ -51,7 +99,7 @@ test('създава контейнер, ако липсва макро анал
   expect(container).not.toBeNull();
   expect(selectors.analyticsCardsContainer.contains(container)).toBe(true);
   const frame = container.querySelector('#macroAnalyticsCardFrame');
-  expect(frame).toBeNull();
+  expect(frame).not.toBeNull();
 });
 
 test('пресъздава контейнер, когато е извън DOM', async () => {

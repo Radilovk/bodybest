@@ -7,6 +7,7 @@ import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAna
 import { ensureChart } from './chartLoader.js';
 import { getNutrientOverride, addMealMacros, scaleMacros } from './macroUtils.js';
 import { logMacroPayload } from '../utils/debug.js';
+import { ensureMacroAnalyticsFrame } from './eventListeners.js';
 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
@@ -514,6 +515,7 @@ export async function populateDashboardMacros(macros) {
         return;
     }
     lastMacroPayload = payload;
+    ensureMacroAnalyticsFrame();
     renderPendingMacroChart();
 }
 

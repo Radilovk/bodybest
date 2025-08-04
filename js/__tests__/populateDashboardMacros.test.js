@@ -7,6 +7,21 @@ let renderPendingMacroChart;
 let selectors;
 let appState;
 let macroUtils;
+
+jest.unstable_mockModule('../eventListeners.js', () => ({
+  ensureMacroAnalyticsFrame: jest.fn(() => {
+    let frame = document.getElementById('macroAnalyticsCardFrame');
+    if (!frame) {
+      frame = document.createElement('iframe');
+      frame.id = 'macroAnalyticsCardFrame';
+      const container = document.getElementById('macroAnalyticsCardContainer');
+      if (container) container.appendChild(frame);
+    }
+  }),
+  setupStaticEventListeners: jest.fn(),
+  setupDynamicEventListeners: jest.fn(),
+  initializeCollapsibleCards: jest.fn()
+}));
 beforeAll(async () => {
   appState = await import('../app.js');
   populateModule = await import('../populateUI.js');
@@ -63,12 +78,9 @@ test('recalculates macros automatically and shows spinner while loading', async 
   expect(selectors.macroMetricsPreview.textContent).toContain('1800');
   expect(container.innerHTML).not.toContain('spinner-border');
   global.fetch = originalFetch;
-  expect(document.getElementById('macroAnalyticsCardFrame')).toBeNull();
-
-  const frame = document.createElement('iframe');
-  frame.id = 'macroAnalyticsCardFrame';
+  const frame = document.getElementById('macroAnalyticsCardFrame');
+  expect(frame).not.toBeNull();
   Object.defineProperty(frame, 'contentWindow', { value: { postMessage: jest.fn(), document: { readyState: 'complete' } } });
-  selectors.macroAnalyticsCardContainer.appendChild(frame);
   renderPendingMacroChart();
   expect(frame.contentWindow.postMessage).toHaveBeenCalled();
   const expectedCurrent = {
