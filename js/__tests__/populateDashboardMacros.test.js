@@ -83,7 +83,7 @@ test('recalculates macros automatically and shows spinner while loading', async 
   expect(msg).toMatchObject({
     type: 'macro-data',
     data: {
-      plan: expect.objectContaining({ calories: 850, protein: 72, carbs: 70, fat: 28 }),
+      plan: expect.objectContaining({ calories: 850, protein_grams: 72, carbs_grams: 70, fat_grams: 28 }),
       current: expectedCurrent
     }
   });
@@ -95,16 +95,15 @@ test('валидира и отхвърля некоректни макро да�
   const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const currentDayKey = dayNames[new Date().getDay()];
   appState.fullDashboardData.planData = { week1Menu: { [currentDayKey]: [] } };
-  Object.assign(appState.todaysPlanMacros, macroUtils.calculatePlanMacros([]));
-  const badMacros = { calories: 2000, protein_grams: 'bad', carbs_grams: 200, fat_grams: 60, fiber_percent: 10, fiber_grams: 30 };
-  await populateDashboardMacros(badMacros);
+  Object.assign(appState.todaysPlanMacros, { calories: 2000, protein: 'bad', carbs: 200, fat: 60, fiber: 30 });
+  await populateDashboardMacros({});
   expect(populateModule.lastMacroPayload).toBe(previous);
 });
 
 test('calculatePlanMacros се извиква само веднъж при кеширани стойности', async () => {
   jest.resetModules();
   const calcMock = jest.fn().mockReturnValue({ calories: 100, protein: 10, carbs: 20, fat: 5, fiber: 3 });
-  jest.unstable_mockModule('../macroUtils.js', () => ({ loadProductMacros: jest.fn(), calculateCurrentMacros: jest.fn(), calculatePlanMacros: calcMock, getNutrientOverride: jest.fn(), addMealMacros: jest.fn(), scaleMacros: jest.fn(), registerNutrientOverrides: jest.fn() }));
+  jest.unstable_mockModule('../macroUtils.js', () => ({ loadProductMacros: jest.fn(), calculateCurrentMacros: jest.fn(), calculatePlanMacros: calcMock, getNutrientOverride: jest.fn(), addMealMacros: jest.fn(), removeMealMacros: jest.fn(), scaleMacros: jest.fn(), registerNutrientOverrides: jest.fn() }));
   const app = await import('../app.js');
   const populate = await import('../populateUI.js');
   const { populateDashboardMacros } = populate;
