@@ -677,6 +677,7 @@ function renderClients() {
     list.forEach(c => {
         const li = document.createElement('li');
         const btn = document.createElement('button');
+        btn.className = 'client-open';
         const dateText = c.registrationDate ? ` - ${new Date(c.registrationDate).toLocaleDateString('bg-BG')}` : '';
         const lastText = c.lastUpdated ? ` (обновено ${new Date(c.lastUpdated).toLocaleDateString('bg-BG')})` : '';
         btn.textContent = `${c.name}${dateText}${lastText}`;
@@ -697,6 +698,30 @@ function renderClients() {
         }
         btn.addEventListener('click', () => showClient(c.userId));
         li.appendChild(btn);
+
+        const needsPlan = c.status === 'pending' || c.status === 'error' || c.status === 'unknown';
+        if (needsPlan) {
+            const regen = document.createElement('button');
+            regen.className = 'regen-plan-btn button-small';
+            regen.textContent = 'Нов план';
+            regen.title = 'Генерирай нов план';
+            regen.addEventListener('click', async e => {
+                e.stopPropagation();
+                try {
+                    await fetch(apiEndpoints.regeneratePlan, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: c.userId })
+                    });
+                    alert('Стартирана е нова генерация.');
+                } catch (err) {
+                    console.error('regeneratePlan error:', err);
+                    alert('Грешка при стартиране на генерирането.');
+                }
+            });
+            li.appendChild(regen);
+        }
+
         clientsList?.appendChild(li);
     });
 }

@@ -13,10 +13,17 @@ body {
   border-radius: 50%;
   background: var(--color-danger);
 }
-#clientsList li { margin-bottom: 5px; }
-#clientsList button {
-  width: 100%;
+#clientsList li {
+  margin-bottom: 5px;
+  display: flex;
+  gap: 5px;
+}
+#clientsList .client-open {
+  flex: 1;
   text-align: left;
+}
+#clientsList .regen-plan-btn {
+  flex: 0 0 auto;
 }
 #clientsControls {
   display: flex;
