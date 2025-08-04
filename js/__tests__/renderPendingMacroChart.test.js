@@ -46,6 +46,7 @@ describe('renderPendingMacroChart', () => {
 
   test('posts updated macro data to iframe on each render', async () => {
     const macros = { calories: 1800, protein_percent: 30, carbs_percent: 40, fat_percent: 30, protein_grams: 135, carbs_grams: 180, fat_grams: 60 };
+    Object.assign(appState.todaysPlanMacros, { calories: 850, protein: 72, carbs: 70, fat: 28 });
     await populateDashboardMacros(macros);
     const frame = document.createElement('iframe');
     frame.id = 'macroAnalyticsCardFrame';
@@ -53,7 +54,7 @@ describe('renderPendingMacroChart', () => {
     selectors.macroAnalyticsCardContainer.appendChild(frame);
     renderPendingMacroChart();
     expect(frame.contentWindow.postMessage).toHaveBeenCalledWith(
-      { type: 'macro-data', data: expect.objectContaining({ plan: expect.any(Object) }) },
+      { type: 'macro-data', data: expect.objectContaining({ plan: expect.objectContaining({ protein_grams: 72 }) }) },
       '*'
     );
 

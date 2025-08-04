@@ -443,8 +443,8 @@ function renderMacroPreviewGrid(macros) {
 export function validateMacroPayload({ plan, current }) {
     const isObj = v => v && typeof v === 'object';
     const check = (obj, keys) => isObj(obj) && keys.every(k => typeof obj[k] === 'number' && !isNaN(obj[k]));
-    const planValid = check(plan, ['calories', 'protein', 'carbs', 'fat']) &&
-        (plan?.fiber === undefined || typeof plan.fiber === 'number');
+    const planValid = check(plan, ['calories', 'protein_grams', 'carbs_grams', 'fat_grams']) &&
+        (plan?.fiber_grams === undefined || typeof plan.fiber_grams === 'number');
     const currentValid = check(current, ['calories', 'protein_grams', 'carbs_grams', 'fat_grams']) &&
         (current?.fiber_grams === undefined || typeof current.fiber_grams === 'number');
     return planValid && currentValid;
@@ -479,7 +479,13 @@ export async function populateDashboardMacros(macros) {
         return;
     }
     macroContainer.innerHTML = '';
-    const plan = todaysPlanMacros;
+    const plan = {
+        calories: todaysPlanMacros.calories,
+        protein_grams: todaysPlanMacros.protein,
+        carbs_grams: todaysPlanMacros.carbs,
+        fat_grams: todaysPlanMacros.fat,
+        fiber_grams: todaysPlanMacros.fiber
+    };
     const current = {
         calories: currentIntakeMacros.calories,
         protein_grams: currentIntakeMacros.protein,
