@@ -228,6 +228,7 @@ const modelHints = {
     '@cf/llava-hf/llava-v1.6b': { tokens: 'до 4096', temperature: 'препоръчително 0.2' },
     '@cf/stabilityai/clip': { tokens: 'до 77', temperature: 'препоръчително 0.2' },
     'gpt-3.5-turbo': { tokens: 'до 4096', temperature: 'по подразбиране 0.7' },
+    'command-r-plus': { tokens: 'до 128000', temperature: 'по подразбиране 0.75' },
     'gemini-pro': { tokens: 'до 2048', temperature: 'по подразбиране 0.2' }
 };
 
