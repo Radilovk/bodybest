@@ -72,6 +72,21 @@ export async function loadProductMacros() {
 }
 
 /**
+ * Нормализира макросите като попълва липсващи полета със стойност 0.
+ * @param {Object} macros
+ * @returns {{calories:number, protein:number, carbs:number, fat:number, fiber:number}}
+ */
+export function normalizeMacros(macros = {}) {
+  return {
+    calories: Number(macros.calories) || 0,
+    protein: Number(macros.protein) || 0,
+    carbs: Number(macros.carbs) || 0,
+    fat: Number(macros.fat) || 0,
+    fiber: Number(macros.fiber) || 0
+  };
+}
+
+/**
  * Скалира макросите спрямо грамовете.
  * @param {{calories:number, protein:number, carbs:number, fat:number, fiber:number}} macros
  * @param {number} grams
@@ -143,7 +158,7 @@ function validateMacroCalories(macros = {}, threshold = 0.05) {
 }
 
 export function addMealMacros(meal, acc) {
-  const m = resolveMacros(meal, meal?.grams);
+  const m = normalizeMacros(resolveMacros(meal, meal?.grams));
   validateMacroCalories(m);
   acc.calories = (acc.calories || 0) + m.calories;
   acc.protein = (acc.protein || 0) + m.protein;
@@ -213,13 +228,22 @@ export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, ext
     (meals || []).forEach((meal, idx) => {
       const key = `${day}_${idx}`;
       if (completionStatus[key]) {
-        const macros = macrosByIdOrName.get(meal.id) || macrosByIdOrName.get((meal.meal_name || '').toLowerCase());
+        const macros =
+          macrosByIdOrName.get(meal.id) ||
+          macrosByIdOrName.get((meal.meal_name || '').toLowerCase());
         if (macros) {
-          calories += Number(macros['калории']) || 0;
-          protein += Number(macros['белтъчини']) || 0;
-          carbs += Number(macros['въглехидрати']) || 0;
-          fat += Number(macros['мазнини']) || 0;
-          fiber += Number(macros['фибри']) || 0;
+          const m = normalizeMacros({
+            calories: macros['калории'],
+            protein: macros['белтъчини'],
+            carbs: macros['въглехидрати'],
+            fat: macros['мазнини'],
+            fiber: macros['фибри']
+          });
+          calories += m.calories;
+          protein += m.protein;
+          carbs += m.carbs;
+          fat += m.fat;
+          fiber += m.fiber;
         }
       }
     });
@@ -227,15 +251,15 @@ export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, ext
 
   if (Array.isArray(extraMeals)) {
     extraMeals.forEach((m) => {
-      calories += Number(m.calories) || 0;
-      protein += Number(m.protein) || 0;
-      carbs += Number(m.carbs) || 0;
-      fat += Number(m.fat) || 0;
-      fiber += Number(m.fiber) || 0;
+      const n = normalizeMacros(m);
+      calories += n.calories;
+      protein += n.protein;
+      carbs += n.carbs;
+      fat += n.fat;
+      fiber += n.fiber;
     });
   }
 
   return { calories, protein, carbs, fat, fiber };
 }
-
 export const __testExports = { macrosByIdOrName, nutrientCache, resolveMacros };
