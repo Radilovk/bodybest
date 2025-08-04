@@ -6,6 +6,7 @@ import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, pla
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
 import { calculatePlanMacros, getNutrientOverride, addMealMacros, scaleMacros } from './macroUtils.js';
+import { logMacroPayload } from '../utils/debug.js';
 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
@@ -324,6 +325,7 @@ function populateDashboardDetailedAnalytics(analyticsData) {
 export function renderPendingMacroChart() {
     const frame = document.getElementById('macroAnalyticsCardFrame');
     if (frame?.contentWindow && lastMacroPayload) {
+        logMacroPayload(lastMacroPayload);
         frame.contentWindow.postMessage({ type: 'macro-data', data: lastMacroPayload }, '*');
     }
 }
