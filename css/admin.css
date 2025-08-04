@@ -13,18 +13,10 @@ body {
   border-radius: 50%;
   background: var(--color-danger);
 }
-#clientsList li {
-  margin-bottom: 5px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-#clientsList button.client-item {
-  flex: 1 1 auto;
+#clientsList li { margin-bottom: 5px; }
+#clientsList button {
+  width: 100%;
   text-align: left;
-}
-#clientsList button.regen-btn {
-  flex: none;
 }
 #clientsControls {
   display: flex;
