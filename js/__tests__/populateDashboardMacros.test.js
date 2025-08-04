@@ -80,7 +80,6 @@ test('recalculates macros automatically and shows spinner while loading', async 
   expect(msg).toMatchObject({
     type: 'macro-data',
     data: {
-      target: macros,
       plan: expect.objectContaining({ calories: 850, protein: 72, carbs: 70, fat: 28 }),
       current: expectedCurrent
     }

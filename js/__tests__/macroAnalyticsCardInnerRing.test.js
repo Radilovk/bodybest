@@ -28,7 +28,8 @@ beforeEach(async () => {
       fromGoal: 'от целта',
       subtitle: '{percent} от целта',
       totalCaloriesLabel: 'от {calories} kcal',
-      exceedWarning: 'Превишение над 15%: {items}'
+      exceedWarning: 'Превишение над 15%: {items}',
+      intakeVsPlanLabel: 'Прием vs План'
     })
   });
   jest.unstable_mockModule('../chartLoader.js', () => ({ ensureChart: async () => ChartMock }));
@@ -42,7 +43,7 @@ afterEach(() => {
 test('рендерира вътрешен пръстен при текущи макроси', async () => {
   const card = document.createElement('macro-analytics-card');
   document.body.appendChild(card);
-  const target = {
+  const plan = {
     calories: 2000,
     protein_grams: 150,
     protein_percent: 75,
@@ -60,7 +61,7 @@ test('рендерира вътрешен пръстен при текущи м�
     fat_grams: 40,
     fiber_grams: 20
   };
-  card.setData({ target, current });
+  card.setData({ plan, current });
   await waitFor(() => {
     expect(global.__lastChartInstance).toBeTruthy();
     expect(global.__lastChartInstance.data.datasets.length).toBe(2);
