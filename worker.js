@@ -1046,7 +1046,8 @@ async function handleDashboardDataRequest(request, env) {
             adaptiveQuizPendingStr,
             aiUpdateSummaryAckStr,
             lastUpdateTsStr,
-            lastFeedbackChatTsStr
+            lastFeedbackChatTsStr,
+            profileStr
         ] = await Promise.all([
             env.USER_METADATA_KV.get(`${userId}_initial_answers`),
             env.USER_METADATA_KV.get(`${userId}_final_plan`),
@@ -1057,7 +1058,8 @@ async function handleDashboardDataRequest(request, env) {
             env.USER_METADATA_KV.get(`${userId}_adaptive_quiz_pending`),
             env.USER_METADATA_KV.get(`${userId}_ai_update_pending_ack`),
             env.USER_METADATA_KV.get(`${userId}_last_significant_update_ts`),
-            env.USER_METADATA_KV.get(`${userId}_last_feedback_chat_ts`)
+            env.USER_METADATA_KV.get(`${userId}_last_feedback_chat_ts`),
+            env.USER_METADATA_KV.get(`${userId}_profile`)
         ]);
 
         if (finalPlanStr) console.log(`final_plan snippet: ${finalPlanStr.slice(0,200)}`);
@@ -1071,6 +1073,7 @@ async function handleDashboardDataRequest(request, env) {
         const initialData = { weight: initialAnswers.weight, height: initialAnswers.height, goal: initialAnswers.goal };
         const recipeData = safeParseJson(recipeDataStr, {});
         const currentStatus = safeParseJson(currentStatusStr, {});
+        const profile = safeParseJson(profileStr, {});
         
         const logKeys = [];
         const today = new Date();
@@ -1116,7 +1119,8 @@ async function handleDashboardDataRequest(request, env) {
             recipeData, dailyLogs: logEntries, currentStatus, isFirstLoginWithReadyPlan,
             showAdaptiveQuiz: adaptiveQuizPendingStr === "true",
             aiUpdateSummary: aiUpdateSummary, // Добавено тук
-            triggerAutomatedFeedbackChat
+            triggerAutomatedFeedbackChat,
+            macroExceedThreshold: typeof profile.macroExceedThreshold === 'number' ? profile.macroExceedThreshold : undefined
         };
 
         if (actualPlanStatus === 'pending' || actualPlanStatus === 'processing') {
@@ -1509,14 +1513,22 @@ async function handleUpdateProfileRequest(request, env) {
         const data = await request.json();
         const userId = data.userId;
         if (!userId) return { success: false, message: "Липсва ID на потребител.", statusHint: 400 };
-        const profile = {
-            name: data.name ? String(data.name).trim() : "",
-            fullname: data.fullname ? String(data.fullname).trim() : "",
-            age: (typeof data.age === "number" && !isNaN(data.age)) ? data.age : null,
-            phone: data.phone ? String(data.phone).trim() : "",
-            email: data.email ? String(data.email).trim().toLowerCase() : "",
-            height: (typeof data.height === "number" && !isNaN(data.height)) ? data.height : null
-        };
+        const existingStr = await env.USER_METADATA_KV.get(`${userId}_profile`);
+        const profile = existingStr ? safeParseJson(existingStr, {}) : {};
+        profile.name = data.name ? String(data.name).trim() : "";
+        profile.fullname = data.fullname ? String(data.fullname).trim() : "";
+        profile.age = (typeof data.age === "number" && !isNaN(data.age)) ? data.age : null;
+        profile.phone = data.phone ? String(data.phone).trim() : "";
+        profile.email = data.email ? String(data.email).trim().toLowerCase() : "";
+        profile.height = (typeof data.height === "number" && !isNaN(data.height)) ? data.height : null;
+        const thr = parseFloat(data.macroExceedThreshold);
+        if (!isNaN(thr)) {
+            if (thr >= 1 && thr <= 2) {
+                profile.macroExceedThreshold = thr;
+            } else {
+                console.warn(`macroExceedThreshold out of range for ${userId}:`, thr);
+            }
+        }
         await env.USER_METADATA_KV.put(`${userId}_profile`, JSON.stringify(profile));
         return { success: true, message: "Профилът е обновен успешно" };
     } catch (error) {

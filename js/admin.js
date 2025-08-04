@@ -64,6 +64,7 @@ const profileForm = document.getElementById('profileForm');
 const profileName = document.getElementById('profileName');
 const profileEmail = document.getElementById('profileEmail');
 const profilePhone = document.getElementById('profilePhone');
+const profileMacroThreshold = document.getElementById('profileMacroThreshold');
 const aiConfigForm = document.getElementById('aiConfigForm');
 const planModelInput = document.getElementById('planModel');
 const chatModelInput = document.getElementById('chatModel');
@@ -952,6 +953,7 @@ async function showClient(userId) {
             if (profileName) profileName.value = data.name || '';
             if (profileEmail) profileEmail.value = data.email || '';
             if (profilePhone) profilePhone.value = data.phone || '';
+            if (profileMacroThreshold) profileMacroThreshold.value = data.macroExceedThreshold ?? '';
             if (openFullProfileLink) openFullProfileLink.href = `clientProfile.html?userId=${encodeURIComponent(userId)}`;
             if (openUserDataLink) openUserDataLink.href = `Userdata.html?userId=${encodeURIComponent(userId)}`;
             await Promise.all([
@@ -1178,7 +1180,8 @@ if (profileForm) {
                     userId: currentUserId,
                     name: profileName.value.trim(),
                     email: profileEmail.value.trim(),
-                    phone: profilePhone.value.trim()
+                    phone: profilePhone.value.trim(),
+                    macroExceedThreshold: profileMacroThreshold.value ? parseFloat(profileMacroThreshold.value) : undefined
                 })
             });
             alert('Профилът е обновен.');

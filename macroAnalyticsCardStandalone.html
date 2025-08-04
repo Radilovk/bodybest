@@ -42,13 +42,16 @@
 <body>
   <macro-analytics-card
     locale="bg"
-    exceed-threshold="1.2"
     data-endpoint="/api/macro-summary"
     refresh-interval="60000"
   ></macro-analytics-card>
 
   <script type="module">
     import { ensureChart } from './js/chartLoader.js';
+    const params = new URLSearchParams(window.location.search);
+    const thr = parseFloat(params.get('threshold'));
+    const cardEl = document.querySelector('macro-analytics-card');
+    if (!isNaN(thr)) cardEl.setAttribute('exceed-threshold', thr);
     const localeCache = {};
 
     async function loadLocale(locale) {
