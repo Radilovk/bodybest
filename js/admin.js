@@ -97,6 +97,29 @@ const testImageBtn = document.getElementById('testImageModel');
 const analysisModelInput = document.getElementById('analysisModel');
 const analysisPromptInput = document.getElementById('analysisPrompt');
 const testAnalysisBtn = document.getElementById('testAnalysisModel');
+
+const modelOptionsList = document.getElementById('modelOptions');
+let availableModels = new Set(JSON.parse(localStorage.getItem('aiModelHistory') || '[]'));
+
+function populateModelOptions() {
+    if (!modelOptionsList) return;
+    modelOptionsList.innerHTML = '';
+    for (const m of availableModels) {
+        if (!m) continue;
+        const opt = document.createElement('option');
+        opt.value = m;
+        modelOptionsList.appendChild(opt);
+    }
+}
+
+function recordSuccessfulModel(modelName) {
+    if (!modelName) return;
+    availableModels.add(modelName);
+    localStorage.setItem('aiModelHistory', JSON.stringify(Array.from(availableModels)));
+    populateModelOptions();
+}
+
+populateModelOptions();
 const emailSettingsForm = document.getElementById('emailSettingsForm');
 const fromEmailNameInput = document.getElementById('fromEmailName');
 const emailTypesContainer = document.getElementById('emailTypesContainer');
@@ -1295,6 +1318,9 @@ async function loadAiConfig() {
         updateHints(chatModelInput, chatHints);
         updateHints(modModelInput, modHints);
         updateHints(imageModelInput, imageHints);
+        ['model_plan_generation', 'model_chat', 'model_principle_adjustment', 'model_image_analysis', 'model_questionnaire_analysis']
+            .forEach(k => { if (cfg[k]) availableModels.add(cfg[k]); });
+        populateModelOptions();
     } catch (err) {
         console.error('Error loading AI config:', err);
         alert('Грешка при зареждане на AI конфигурацията.');
@@ -1741,6 +1767,7 @@ async function testAiModel(modelName) {
             alert(data.message || 'Неуспешен тест.');
         } else {
             alert('Връзката е успешна.');
+            recordSuccessfulModel(modelName);
         }
     } catch (err) {
         console.error('Error testing AI model:', err);
