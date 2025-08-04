@@ -651,6 +651,39 @@ async function loadClients() {
     }
 }
 
+async function regeneratePlanFor(userId) {
+    try {
+        await fetch(apiEndpoints.regeneratePlan, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId })
+        });
+    } catch (err) {
+        console.error('regeneratePlan error:', err);
+        alert('Грешка при стартиране на генерирането.');
+        return;
+    }
+
+    const intervalId = setInterval(async () => {
+        try {
+            const resp = await fetch(`${apiEndpoints.planStatus}?userId=${userId}`);
+            const data = await resp.json();
+            if (resp.ok && data.success) {
+                if (data.planStatus === 'ready') {
+                    clearInterval(intervalId);
+                    alert('Планът е обновен.');
+                    await loadClients();
+                } else if (data.planStatus === 'error') {
+                    clearInterval(intervalId);
+                    alert(`Грешка при генерирането: ${data.error || ''}`);
+                }
+            }
+        } catch (err) {
+            console.error('planStatus polling error:', err);
+        }
+    }, 3000);
+}
+
 function renderClients() {
     const search = (clientSearch.value || '').toLowerCase();
     const filter = statusFilter.value;
@@ -677,6 +710,7 @@ function renderClients() {
     list.forEach(c => {
         const li = document.createElement('li');
         const btn = document.createElement('button');
+        btn.className = 'client-item';
         const dateText = c.registrationDate ? ` - ${new Date(c.registrationDate).toLocaleDateString('bg-BG')}` : '';
         const lastText = c.lastUpdated ? ` (обновено ${new Date(c.lastUpdated).toLocaleDateString('bg-BG')})` : '';
         btn.textContent = `${c.name}${dateText}${lastText}`;
@@ -697,6 +731,18 @@ function renderClients() {
         }
         btn.addEventListener('click', () => showClient(c.userId));
         li.appendChild(btn);
+
+        if (c.status === 'error') {
+            const regen = document.createElement('button');
+            regen.className = 'regen-btn';
+            regen.textContent = 'Нов план';
+            regen.addEventListener('click', (e) => {
+                e.stopPropagation();
+                regeneratePlanFor(c.userId);
+            });
+            li.appendChild(regen);
+        }
+
         clientsList?.appendChild(li);
     });
 }
