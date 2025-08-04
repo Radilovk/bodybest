@@ -111,6 +111,8 @@ test('обновява макро картата чрез postMessage', async ()
         carbs_percent: 40,
         fat_grams: 50,
         fat_percent: 20,
+        fiber_percent: 10,
+        fiber_grams: 30,
       },
     },
     dailyLogs: [],

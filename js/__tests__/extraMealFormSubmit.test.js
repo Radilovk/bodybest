@@ -41,7 +41,7 @@ beforeEach(async () => {
       todaysMealCompletionStatus: {},
       todaysExtraMeals: [],
       currentIntakeMacros: currentIntakeMacrosRef,
-      fullDashboardData: { planData: { week1Menu: {}, caloriesMacros: {} } },
+      fullDashboardData: { planData: { week1Menu: {}, caloriesMacros: { fiber_percent: 10, fiber_grams: 30 } } },
       planHasRecContent: false,
       loadCurrentIntake: jest.fn()
     };

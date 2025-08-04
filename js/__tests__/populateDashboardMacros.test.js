@@ -29,7 +29,9 @@ test('recalculates macros automatically and shows spinner while loading', async 
     fat_percent: 30,
     protein_grams: 135,
     carbs_grams: 180,
-    fat_grams: 60
+    fat_grams: 60,
+    fiber_percent: 10,
+    fiber_grams: 30
   };
   const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const currentDayKey = dayNames[new Date().getDay()];
@@ -91,7 +93,7 @@ test('валидира и отхвърля некоректни макро да�
   const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const currentDayKey = dayNames[new Date().getDay()];
   appState.fullDashboardData.planData = { week1Menu: { [currentDayKey]: [] } };
-  const badMacros = { calories: 2000, protein_grams: 'bad', carbs_grams: 200, fat_grams: 60 };
+  const badMacros = { calories: 2000, protein_grams: 'bad', carbs_grams: 200, fat_grams: 60, fiber_percent: 10, fiber_grams: 30 };
   const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   await populateDashboardMacros(badMacros);
   expect(warnSpy).toHaveBeenCalled();

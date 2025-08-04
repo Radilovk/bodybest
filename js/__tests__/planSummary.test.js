@@ -3,7 +3,7 @@ import { createPlanUpdateSummary } from '../../worker.js';
 describe('createPlanUpdateSummary', () => {
   test('creates summary from new plan without truncating short text', () => {
     const newPlan = {
-      caloriesMacros: { calories: 1800 },
+      caloriesMacros: { calories: 1800, fiber_percent: 10, fiber_grams: 30 },
       principlesWeek2_4: 'Принцип 1\nПринцип 2\nПринцип 3'
     };
     const summary = createPlanUpdateSummary(newPlan, {});
@@ -15,7 +15,7 @@ describe('createPlanUpdateSummary', () => {
   test('limits number of changes when text is long', () => {
     const longLine = 'Много дълъг принцип който увеличава дължината на текста';
     const newPlan = {
-      caloriesMacros: { calories: 1800 },
+      caloriesMacros: { calories: 1800, fiber_percent: 10, fiber_grams: 30 },
       principlesWeek2_4: Array(6).fill(longLine).join('\n')
     };
     const summary = createPlanUpdateSummary(newPlan, {});

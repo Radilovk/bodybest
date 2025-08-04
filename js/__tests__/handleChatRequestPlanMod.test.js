@@ -9,7 +9,7 @@ describe('handleChatRequest plan modification marker', () => {
         if (key.endsWith('_initial_answers')) return Promise.resolve('{"name":"U","goal":"gain","weight":"70"}');
         if (key.endsWith('_final_plan')) return Promise.resolve(JSON.stringify({
           profileSummary: 's',
-          caloriesMacros: { calories: 1800, protein_grams: 1, carbs_grams: 1, fat_grams: 1 },
+          caloriesMacros: { calories: 1800, protein_grams: 1, carbs_grams: 1, fat_grams: 1, fiber_percent: 10, fiber_grams: 30 },
           allowedForbiddenFoods: { main_allowed_foods: [], main_forbidden_foods: [] },
           hydrationCookingSupplements: { hydration_recommendations: { daily_liters: '2' }, cooking_methods: { recommended: [] }, supplement_suggestions: [] },
           week1Menu: { sunday: [] },

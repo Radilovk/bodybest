@@ -4,7 +4,7 @@ import { handleUpdatePlanRequest } from '../../worker.js';
 describe('handleUpdatePlanRequest', () => {
   test('stores plan data using final plan key', async () => {
     const env = { USER_METADATA_KV: { put: jest.fn() } };
-    const planData = { week: 1, caloriesMacros: { calories: 2000 } };
+    const planData = { week: 1, caloriesMacros: { calories: 2000, fiber_percent: 10, fiber_grams: 30 } };
     const request = { json: async () => ({ userId: 'u1', planData }) };
     const res = await handleUpdatePlanRequest(request, env);
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('u1_final_plan', JSON.stringify(planData));
