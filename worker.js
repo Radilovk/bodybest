@@ -285,7 +285,7 @@ async function sendPasswordResetEmail(to, token, env) {
 // ------------- START BLOCK: GlobalConstantsAndBindings -------------
 const GEMINI_API_KEY_SECRET_NAME = 'GEMINI_API_KEY';
 const OPENAI_API_KEY_SECRET_NAME = 'OPENAI_API_KEY';
-const COHERE_API_KEY_SECRET_NAME = 'COHERE_API_KEY';
+const COMMAND_R_PLUS_SECRET_NAME = 'command-r-plus';
 const CF_AI_TOKEN_SECRET_NAME = 'CF_AI_TOKEN';
 const CF_ACCOUNT_ID_VAR_NAME = 'CF_ACCOUNT_ID';
 const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
@@ -4141,8 +4141,8 @@ async function callModel(model, prompt, env, { temperature = 0.7, maxTokens = 80
         );
     }
     if (provider === 'cohere') {
-        const key = env[COHERE_API_KEY_SECRET_NAME];
-        if (!key) throw new Error('Missing Cohere API key.');
+        const key = env[COMMAND_R_PLUS_SECRET_NAME];
+        if (!key) throw new Error('Missing command-r-plus API key.');
         return callCohereAI(model, prompt, key, { temperature, maxTokens });
     }
     if (provider === 'openai') {
