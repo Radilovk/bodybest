@@ -56,6 +56,7 @@ describe('renderPendingMacroChart', () => {
 
     appState.currentIntakeMacros.calories = 1500;
     await populateDashboardMacros(macros);
+    selectors.macroAnalyticsCardContainer.appendChild(frame);
     frame.contentWindow.postMessage.mockClear();
     renderPendingMacroChart();
     expect(frame.contentWindow.postMessage).toHaveBeenCalledWith(

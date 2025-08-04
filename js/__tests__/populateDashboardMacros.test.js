@@ -1,13 +1,15 @@
 /** @jest-environment jsdom */
 import { jest } from '@jest/globals';
 
+let populateModule;
 let populateDashboardMacros;
 let renderPendingMacroChart;
 let selectors;
 let appState;
 beforeAll(async () => {
   appState = await import('../app.js');
-  ({ populateDashboardMacros, renderPendingMacroChart } = await import('../populateUI.js'));
+  populateModule = await import('../populateUI.js');
+  ({ populateDashboardMacros, renderPendingMacroChart } = populateModule);
   ({ selectors } = await import('../uiElements.js'));
 });
 
@@ -81,4 +83,18 @@ test('recalculates macros automatically and shows spinner while loading', async 
       current: expectedCurrent
     }
   });
+});
+
+test('валидира и отхвърля некоректни макро данни', async () => {
+  setupDom();
+  const previous = populateModule.lastMacroPayload;
+  const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  const currentDayKey = dayNames[new Date().getDay()];
+  appState.fullDashboardData.planData = { week1Menu: { [currentDayKey]: [] } };
+  const badMacros = { calories: 2000, protein_grams: 'bad', carbs_grams: 200, fat_grams: 60 };
+  const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  await populateDashboardMacros(badMacros);
+  expect(warnSpy).toHaveBeenCalled();
+  expect(populateModule.lastMacroPayload).toBe(previous);
+  warnSpy.mockRestore();
 });

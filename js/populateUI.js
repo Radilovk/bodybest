@@ -407,6 +407,24 @@ function renderMacroPreviewGrid(macros) {
     });
 }
 
+/**
+ * Валидира структурата на макро payload-а.
+ * Проверява наличието на ключове и че стойностите им са числа.
+ * @param {{ target: object, plan: object, current: object }} payload
+ * @returns {boolean}
+ */
+export function validateMacroPayload({ target, plan, current }) {
+    const isObj = v => v && typeof v === 'object';
+    const check = (obj, keys) => isObj(obj) && keys.every(k => typeof obj[k] === 'number' && !isNaN(obj[k]));
+    const targetValid = check(target, ['calories', 'protein_grams', 'carbs_grams', 'fat_grams']) &&
+        (target?.fiber_grams === undefined || typeof target.fiber_grams === 'number');
+    const planValid = check(plan, ['calories', 'protein', 'carbs', 'fat']) &&
+        (plan?.fiber === undefined || typeof plan.fiber === 'number');
+    const currentValid = check(current, ['calories', 'protein_grams', 'carbs_grams', 'fat_grams']) &&
+        (current?.fiber_grams === undefined || typeof current.fiber_grams === 'number');
+    return targetValid && planValid && currentValid;
+}
+
 export async function populateDashboardMacros(macros) {
     renderMacroPreviewGrid(macros);
     let macroContainer = selectors.macroAnalyticsCardContainer;
@@ -448,7 +466,13 @@ export async function populateDashboardMacros(macros) {
         fat_grams: currentIntakeMacros.fat,
         fiber_grams: currentIntakeMacros.fiber
     };
-    lastMacroPayload = { target: macros, plan: planMacros, current };
+    const payload = { target: macros, plan: planMacros, current };
+    if (!validateMacroPayload(payload)) {
+        console.warn('Невалидна структура на макро-данните', payload);
+        logMacroPayload({ error: 'Invalid macro payload structure', payload });
+        return;
+    }
+    lastMacroPayload = payload;
     renderPendingMacroChart();
 }
 
