@@ -1,4 +1,4 @@
-# INSTRUCTIONS FOR UNIFIED PLAN GENERATION (JSON OUTPUT ONLY) - v2.1 (Optimized)
+# INSTRUCTIONS FOR UNIFIED PLAN GENERATION (JSON OUTPUT ONLY) - v2.2 (Optimized)
 
 Your primary goal is to analyze the provided user questionnaire answers and generate a **single, comprehensive, valid JSON object** representing a complete personalized plan. Adhere strictly to the specified JSON structure and all instructions. The entire output MUST be a single JSON object.
 
@@ -23,14 +23,24 @@ Your primary goal is to analyze the provided user questionnaire answers and gene
   // Ако има налични данни за скорошен прогрес, спомени накратко теглото: "Текущо тегло %%RECENT_WEIGHT_KG%% (промяна за 7 дни: %%WEIGHT_CHANGE_LAST_7_DAYS%%)".
 
   "caloriesMacros": {
+    // Calculations use a universal formula (напр. Mifflin-St Jeor) модифицирана според индивидуалните параметри
+    // (%%AGE%%, %%GENDER%%, %%WEIGHT%%, %%HEIGHT%%, %%ACTIVITY_LEVEL%%, %%CONDITIONS%%).
     "calories": "number (integer)",
     "protein_percent": "number (integer)",
     "carbs_percent": "number (integer)",
     "fat_percent": "number (integer)",
+    "fiber_percent": "number (integer)",
     "protein_grams": "number (integer)",
     "carbs_grams": "number (integer)",
-    "fat_grams": "number (integer)"
+    "fat_grams": "number (integer)",
+    "fiber_grams": "number (integer)"
   },
+  // Пример:
+  // "caloriesMacros": {
+  //   "calories": 1800,
+  //   "protein_percent": 30, "carbs_percent": 40, "fat_percent": 20, "fiber_percent": 10,
+  //   "protein_grams": 135, "carbs_grams": 180, "fat_grams": 40, "fiber_grams": 45
+  // }
 
   "allowedForbiddenFoods": {
     // All lists in Bulgarian. Base on %%BASE_DIET_MODEL_SUMMARY%%, user's %%FOOD_PREFERENCE%%, %%INTOLERANCES%%, %%DISLIKED_FOODS%%, %%CONDITIONS%%.
@@ -49,19 +59,33 @@ Your primary goal is to analyze the provided user questionnaire answers and gene
     // Each day is an array of meal objects.
     // Each meal object: {
     //   "meal_name": "string",
+    //   "macros": { "calories": "number", "protein_grams": "number", "carbs_grams": "number", "fat_grams": "number", "fiber_grams": "number" },
     //   "items": [{
     //     "name": "string",
     //     "grams": "string" // CRITICAL: Quantity WITH THE UNIT (e.g., "150g", "100ml", "1 бр.", "1/2 чаша (120ml)", "2 с.л.").
                            // Quantities should reflect standard portion sizes that align with the calculated "caloriesMacros".
                            // For whole items like fruits/vegetables, "1 бр. (среден размер)" or "1 малък банан" is acceptable.
-                           // For liquids, use "ml" or "чаша (200-250ml)". For spoons, specify "с.л." (супена) or "ч.л." (чаена).
+                           // For liquids, use "ml" или "чаша (200-250ml)". For spoons, specify "с.л." (супена) or "ч.л." (чаена).
                            // Avoid vague terms like "малко", "много" without a concrete reference.
     //   }],
     //   "recipeKey": "string"
     // }
+    // Пример:
+    // {
+    //   "meal_name": "Закуска",
+    //   "macros": { "calories": 400, "protein_grams": 25, "carbs_grams": 50, "fat_grams": 10, "fiber_grams": 8 },
+    //   "items": [ ... ],
+    //   "recipeKey": "oats_01"
+    // }
     // Menu should align with "caloriesMacros", prioritize "main_allowed_foods", avoid "main_forbidden_foods", and respect user preferences/intolerances.
     // Ensure variety and simplicity. Use %%ALLOWED_MEAL_COMBINATIONS%% for inspiration.
-    // If appropriate for the user's psychological profile (based on %%MAIN_CHALLENGES%% and overall context, e.g., if they struggle with strictness), consider including one or two "more flexible" or "comfort food" options within the week, ensuring they still broadly fit the calorie/macro targets or are clearly marked as an occasional treat with portion control advice.
+    // If appropriate for the user's psychological profile (based on %%MAIN_CHALLENGES%% and overall context, e.g., if they struggle with strictness), consider including one or two "more flexible" или "comfort food" options within the week, ensuring they still broadly fit the calorie/macro targets or are clearly marked as an occasional treat with portion control advice.
+  },
+
+  "mealMacrosIndex": {
+    // Бърза справка по ден и индекс на хранене.
+    // Ключовете са във формат "day_index" (напр. "monday_0", "monday_1").
+    // Пример: "monday_0": { "calories": 400, "protein_grams": 25, "carbs_grams": 50, "fat_grams": 10, "fiber_grams": 8 }
   },
 
   "principlesWeek2_4": [
@@ -125,7 +149,7 @@ Your primary goal is to analyze the provided user questionnaire answers and gene
   "generationMetadata": {
       "timestamp": "%%GENERATION_TIMESTAMP%%",
       "modelUsed": "%%MODEL_NAME_USED%%",
-      "promptVersion": "v2.1-optimized",
+      "promptVersion": "v2.2",
       "errors": []
    }
 }
