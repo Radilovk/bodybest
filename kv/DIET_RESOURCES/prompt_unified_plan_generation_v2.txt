@@ -23,8 +23,7 @@ Your primary goal is to analyze the provided user questionnaire answers and gene
   // Ако има налични данни за скорошен прогрес, спомени накратко теглото: "Текущо тегло %%RECENT_WEIGHT_KG%% (промяна за 7 дни: %%WEIGHT_CHANGE_LAST_7_DAYS%%)".
 
   "caloriesMacros": {
-    // Calculations use a universal formula (напр. Mifflin-St Jeor) модифицирана според индивидуалните параметри
-    // (%%AGE%%, %%GENDER%%, %%WEIGHT%%, %%HEIGHT%%, %%ACTIVITY_LEVEL%%, %%CONDITIONS%%).
+    // Calculations use a universal formula (напр. Mifflin-St Jeor) модифицирана според индивидуалните параметри, както и цел, медицинско състояние, и други релевантни данни
     "calories": "number (integer)",
     "protein_percent": "number (integer)",
     "carbs_percent": "number (integer)",
