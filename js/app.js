@@ -340,26 +340,44 @@ async function initializeApp() {
 }
 
 // ==========================================================================
-// ЗАРЕЖДАНЕ И ОБРАБОТКА НА ДАННИ
+// ЗАРЕЖДАНЕ И ОБНОВЯВАНЕ НА ДАННИ
 // ==========================================================================
-export function loadCurrentIntake() {
+export function loadCurrentIntake(status = null, extraMeals = null) {
     try {
         currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
-        todaysExtraMeals = [];
-        const todayStr = new Date().toISOString().split('T')[0];
-        const todayLog = fullDashboardData?.dailyLogs?.find(l => l.date === todayStr)?.data;
-        if (!todayLog) return;
-        const completed = todayLog.completedMealsStatus || {};
-        Object.keys(todaysMealCompletionStatus).forEach(k => delete todaysMealCompletionStatus[k]);
-        Object.assign(todaysMealCompletionStatus, completed);
-        todaysExtraMeals = Array.isArray(todayLog.extraMeals) ? todayLog.extraMeals : [];
+
+        // Ако не са подадени състояние и допълнителни хранения, зареждаме от дневника
+        if (!status || !extraMeals) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todayLog = fullDashboardData?.dailyLogs?.find(l => l.date === todayStr)?.data;
+            if (!todayLog) return;
+            const completed = todayLog.completedMealsStatus || {};
+            Object.keys(todaysMealCompletionStatus).forEach(k => delete todaysMealCompletionStatus[k]);
+            Object.assign(todaysMealCompletionStatus, completed);
+            todaysExtraMeals = Array.isArray(todayLog.extraMeals) ? todayLog.extraMeals : [];
+            status = todaysMealCompletionStatus;
+            extraMeals = todaysExtraMeals;
+        }
+
+        currentIntakeMacros = calculateCurrentMacros(
+            fullDashboardData.planData?.week1Menu || {},
+            status,
+            extraMeals
+        );
+    } catch (err) {
+        console.error('Error loading current intake:', err);
+    }
+}
+
+export function recalculateCurrentIntakeMacros() {
+    try {
         currentIntakeMacros = calculateCurrentMacros(
             fullDashboardData.planData?.week1Menu || {},
             todaysMealCompletionStatus,
             todaysExtraMeals
         );
     } catch (err) {
-        console.error('Error loading current intake:', err);
+        console.error('Error recalculating current intake:', err);
     }
 }
 
