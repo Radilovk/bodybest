@@ -27,6 +27,14 @@ test('initCharts uses Chart with parsed data', async () => {
     caloriesMacros: { protein_percent: 40, carbs_percent: 40, fat_percent: 20, protein_grams: 120, carbs_grams: 200, fat_grams: 50, calories: 2000, fiber_percent: 10, fiber_grams: 30 },
     profileSummary: 'Текущо тегло 80 кг (промяна за 7 дни: -1 кг)'
   });
-  expect(ChartMock.mock.calls[0][1].type).toBe('doughnut');
+  const macroConfig = ChartMock.mock.calls[0][1];
+  expect(macroConfig.type).toBe('doughnut');
+  expect(macroConfig.data.labels).toEqual([
+    'Протеини (40%)',
+    'Въглехидрати (40%)',
+    'Мазнини (20%)',
+    'Фибри (10%)'
+  ]);
+  expect(macroConfig.data.datasets[0].data).toEqual([120, 200, 50, 30]);
   expect(ChartMock.mock.calls[1][1].type).toBe('line');
 });
