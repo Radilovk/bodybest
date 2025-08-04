@@ -6,6 +6,8 @@ describe('renderPendingMacroChart', () => {
   let populateDashboardMacros;
   let appState;
   let selectors;
+  let populateModule;
+  let __setLastMacroPayload;
 
   beforeEach(async () => {
     jest.resetModules();
@@ -37,8 +39,8 @@ describe('renderPendingMacroChart', () => {
     jest.unstable_mockModule('../chartLoader.js', () => ({ ensureChart: jest.fn() }));
     jest.unstable_mockModule('../macroUtils.js', () => ({ calculatePlanMacros: jest.fn().mockReturnValue({ calories: 850, protein: 72, carbs: 70, fat: 28 }), getNutrientOverride: jest.fn(), addMealMacros: jest.fn(), scaleMacros: jest.fn() }));
     appState = await import('../app.js');
-    const mod = await import('../populateUI.js');
-    ({ renderPendingMacroChart, populateDashboardMacros } = mod);
+    populateModule = await import('../populateUI.js');
+    ({ renderPendingMacroChart, populateDashboardMacros, __setLastMacroPayload } = populateModule);
   });
 
   test('posts updated macro data to iframe on each render', async () => {
@@ -63,5 +65,28 @@ describe('renderPendingMacroChart', () => {
       { type: 'macro-data', data: expect.objectContaining({ current: expect.objectContaining({ calories: 1500 }) }) },
       '*'
     );
+  });
+
+  test('updates existing chart data without destroying it', () => {
+    const chartMock = {
+      data: { datasets: [{ data: [] }, { data: [] }] },
+      update: jest.fn(),
+      destroy: jest.fn()
+    };
+    __setLastMacroPayload({
+      plan: { protein_grams: 10, carbs_grams: 20, fat_grams: 30, fiber_grams: 40 },
+      current: { protein_grams: 5, carbs_grams: 10, fat_grams: 15, fiber_grams: 20 }
+    });
+    const ctx = { chart: chartMock };
+    renderPendingMacroChart.call(ctx);
+    __setLastMacroPayload({
+      plan: { protein_grams: 1, carbs_grams: 2, fat_grams: 3, fiber_grams: 4 },
+      current: { protein_grams: 0, carbs_grams: 1, fat_grams: 2, fiber_grams: 3 }
+    });
+    renderPendingMacroChart.call(ctx);
+    expect(chartMock.destroy).not.toHaveBeenCalled();
+    expect(chartMock.update).toHaveBeenCalledTimes(2);
+    expect(chartMock.data.datasets[0].data).toEqual([1, 2, 3, 4]);
+    expect(chartMock.data.datasets[1].data).toEqual([0, 1, 2, 3]);
   });
 });

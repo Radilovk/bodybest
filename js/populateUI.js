@@ -17,6 +17,11 @@ export function __setProgressChartInstance(instance) {
     progressChartInstance = instance;
 }
 
+// Helper for tests to set macro payload
+export function __setLastMacroPayload(payload) {
+    lastMacroPayload = payload;
+}
+
 function addAlpha(color, alpha) {
     const c = color.trim();
     if (c.startsWith('#')) {
@@ -323,6 +328,28 @@ function populateDashboardDetailedAnalytics(analyticsData) {
 }
 
 export function renderPendingMacroChart() {
+    if (this?.chart && lastMacroPayload) {
+        const { plan, current } = lastMacroPayload;
+        const datasets = this.chart.data.datasets || [];
+        if (datasets[0]) {
+            datasets[0].data = [
+                plan.protein_grams,
+                plan.carbs_grams,
+                plan.fat_grams,
+                plan.fiber_grams
+            ];
+        }
+        if (current && datasets[1]) {
+            datasets[1].data = [
+                current.protein_grams,
+                current.carbs_grams,
+                current.fat_grams,
+                current.fiber_grams
+            ];
+        }
+        this.chart.update();
+        return;
+    }
     const frame = document.getElementById('macroAnalyticsCardFrame');
     if (frame?.contentWindow && lastMacroPayload) {
         logMacroPayload(lastMacroPayload);
