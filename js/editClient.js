@@ -561,14 +561,42 @@ export async function initEditClient(userId) {
   }
 
   const regenBtn = document.getElementById('regeneratePlan');
+  const regenProgress = document.getElementById('regenProgress');
   if (regenBtn) {
     regenBtn.addEventListener('click', async () => {
-      await fetch(apiEndpoints.regeneratePlan, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
-      });
-      alert('Генерирането на нов план започна.');
+      if (regenProgress) regenProgress.classList.remove('hidden');
+      try {
+        await fetch(apiEndpoints.regeneratePlan, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        });
+      } catch (err) {
+        console.error('regeneratePlan error:', err);
+        if (regenProgress) regenProgress.classList.add('hidden');
+        alert('Грешка при стартиране на генерирането.');
+        return;
+      }
+
+      const intervalId = setInterval(async () => {
+        try {
+          const resp = await fetch(`${apiEndpoints.planStatus}?userId=${userId}`);
+          const data = await resp.json();
+          if (resp.ok && data.success) {
+            if (data.planStatus === 'ready') {
+              clearInterval(intervalId);
+              if (regenProgress) regenProgress.classList.add('hidden');
+              alert('Планът е обновен.');
+            } else if (data.planStatus === 'error') {
+              clearInterval(intervalId);
+              if (regenProgress) regenProgress.classList.add('hidden');
+              alert(`Грешка при генерирането: ${data.error || ''}`);
+            }
+          }
+        } catch (err) {
+          console.error('planStatus polling error:', err);
+        }
+      }, 3000);
     });
   }
 

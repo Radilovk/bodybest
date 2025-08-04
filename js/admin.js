@@ -30,6 +30,7 @@ const statusFilter = document.getElementById('statusFilter');
 const tagFilterSelect = document.getElementById('tagFilter');
 const detailsSection = document.getElementById('clientDetails');
 const regenBtn = document.getElementById('regeneratePlan');
+const regenProgress = document.getElementById('regenProgress');
 const aiSummaryBtn = document.getElementById('aiSummary');
 const notesField = document.getElementById('adminNotes');
 const tagsField = document.getElementById('adminTags');
@@ -1066,12 +1067,39 @@ if (sendQueryBtn) {
 if (regenBtn) {
     regenBtn.addEventListener('click', async () => {
         if (!currentUserId) return;
-        await fetch(apiEndpoints.regeneratePlan, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUserId })
-        });
-        alert('Генерирането на нов план започна.');
+        if (regenProgress) regenProgress.classList.remove('hidden');
+        try {
+            await fetch(apiEndpoints.regeneratePlan, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUserId })
+            });
+        } catch (err) {
+            console.error('regeneratePlan error:', err);
+            if (regenProgress) regenProgress.classList.add('hidden');
+            alert('Грешка при стартиране на генерирането.');
+            return;
+        }
+
+        const intervalId = setInterval(async () => {
+            try {
+                const resp = await fetch(`${apiEndpoints.planStatus}?userId=${currentUserId}`);
+                const data = await resp.json();
+                if (resp.ok && data.success) {
+                    if (data.planStatus === 'ready') {
+                        clearInterval(intervalId);
+                        if (regenProgress) regenProgress.classList.add('hidden');
+                        alert('Планът е обновен.');
+                    } else if (data.planStatus === 'error') {
+                        clearInterval(intervalId);
+                        if (regenProgress) regenProgress.classList.add('hidden');
+                        alert(`Грешка при генерирането: ${data.error || ''}`);
+                    }
+                }
+            } catch (err) {
+                console.error('planStatus polling error:', err);
+            }
+        }, 3000);
     });
 }
 
