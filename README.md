@@ -557,7 +557,7 @@ Before deploying, configure the following secrets in Cloudflare (via the dashboa
 - `PHP_FILE_API_TOKEN`
 - `CF_AI_TOKEN` – API token used for Cloudflare AI requests
 - `OPENAI_API_KEY` – set via `wrangler secret put OPENAI_API_KEY`, used by `worker.js`
-- `COHERE_API_KEY` – API ключ за Cohere модели
+- `command-r-plus` – API ключ за Cohere модела `command-r-plus`
 - `FROM_EMAIL` – optional sender address for outgoing emails
 - `FROM_NAME` – optional display name shown in the "From" header
 
@@ -714,27 +714,36 @@ await fetch(CF_URL, {
 }
 ```
 
-#### Cohere чат модели
+#### Cohere чат модел `command-r-plus`
 
-За работа с моделите на Cohere задайте секрет `COHERE_API_KEY`.
-
-Кратък пример за заявка:
+За работа с този модел задайте секрет `command-r-plus`:
 
 ```bash
-curl -X POST https://api.cohere.ai/v1/chat \
-  -H "Authorization: Bearer $COHERE_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"model":"command","message":"Здравей","temperature":0.7,"max_tokens":50}'
+wrangler secret put command-r-plus
 ```
 
-JSON форматът на заявката:
+Примерен `curl` към Cohere:
+
+```bash
+curl https://api.cohere.ai/v1/chat \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "model": "command-r-plus",
+        "message": "Analyze the following Bulgarian text...",
+        "temperature": 0.3,
+        "max_tokens": 512
+      }'
+```
+
+Пълен JSON пример:
 
 ```json
 {
-  "model": "command",
-  "message": "Здравей",
-  "temperature": 0.7,
-  "max_tokens": 50
+  "model": "command-r-plus",
+  "message": "Analyze the following Bulgarian text.\n\nPerform the following tasks:\n\n1. Identify the main topic(s) and summarize them concisely.\n2. Extract the central claim and any supporting arguments.\n3. Detect any logical inconsistencies or contradictions.\n4. Infer one implicit assumption that is not explicitly stated.\n\nText:\n\n„Човекът е по природа социално същество, но съвременното общество създава изолация чрез дигитализацията. Макар да сме по-свързани от всякога, расте чувството на самота. Следователно технологичният прогрес подкопава човешката природа.“",
+  "temperature": 0.3,
+  "max_tokens": 512
 }
 ```
 

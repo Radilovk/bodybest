@@ -52,7 +52,7 @@ describe('callModel with CF provider', () => {
 
 describe('callModel with command-r-plus model', () => {
   const model = 'command-r-plus';
-  const env = { COHERE_API_KEY: 'key' };
+  const env = { 'command-r-plus': 'key' };
 
   afterEach(() => {
     global.fetch = originalFetch;
@@ -75,6 +75,6 @@ describe('callModel with command-r-plus model', () => {
   });
 
   test('throws if API key missing', async () => {
-    await expect(callModel(model, 'hi', {})).rejects.toThrow('Missing Cohere API key.');
+    await expect(callModel(model, 'hi', {})).rejects.toThrow('Missing command-r-plus API key.');
   });
 });
