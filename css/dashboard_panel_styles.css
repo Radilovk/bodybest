@@ -594,11 +594,11 @@ body.vivid-theme .tracker .metric-rating .rating-value {
   flex-basis: calc(20% - 5px); /* За 5 правоъгълника с gap 6px (4 gaps * 6px = 24px) */
 }
 .rating-square:hover { transform: scale(1.1); }
-.rating-square.filled.level-1 { background-color: var(--rating-1); border-color: var(--rating-1); }
-.rating-square.filled.level-2 { background-color: var(--rating-2); border-color: var(--rating-2); }
-.rating-square.filled.level-3 { background-color: var(--rating-3); border-color: var(--rating-3); }
-.rating-square.filled.level-4 { background-color: var(--rating-4); border-color: var(--rating-4); }
-.rating-square.filled.level-5 { background-color: var(--rating-5); border-color: var(--rating-5); }
+.rating-square.filled.level-1 { background-color: var(--progress-level-1); border-color: var(--progress-level-1); }
+.rating-square.filled.level-2 { background-color: var(--progress-level-2); border-color: var(--progress-level-2); }
+.rating-square.filled.level-3 { background-color: var(--progress-level-3); border-color: var(--progress-level-3); }
+.rating-square.filled.level-4 { background-color: var(--progress-level-4); border-color: var(--progress-level-4); }
+.rating-square.filled.level-5 { background-color: var(--progress-level-5); border-color: var(--progress-level-5); }
 
 
 .tooltip-tracker {

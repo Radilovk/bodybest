@@ -651,7 +651,7 @@ function populateDashboardLog(dailyLogs, currentStatus, initialData) {
                 ${[1,2,3,4,5].map(val => {
                     const levelDescription = trackerInfoTexts[metric.key]?.levels?.[val] || `Оценка ${val} от 5`;
                     return `<div
-                                class="rating-square ${val <= currentValue ? `filled level-${val}` : ''}"
+                                class="rating-square ${val <= currentValue ? `filled level-${currentValue}` : ''}"
                                 data-value="${val}"
                                 title="${levelDescription}"
                                 aria-label="${levelDescription}"></div>`;
