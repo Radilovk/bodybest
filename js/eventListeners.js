@@ -25,7 +25,7 @@ import {
     todaysMealCompletionStatus, todaysExtraMeals, currentIntakeMacros,
     fullDashboardData, activeTooltip, currentUserId,
     setChatModelOverride, setChatPromptOverride,
-    loadCurrentIntake
+    recalculateCurrentIntakeMacros
 } from './app.js';
 import { addMealMacros, removeMealMacros } from './macroUtils.js';
 import {
@@ -368,7 +368,7 @@ function handleDelegatedClicks(event) {
             if (meal) {
                 (isCompleted ? addMealMacros : removeMealMacros)(meal, currentIntakeMacros);
             }
-            loadCurrentIntake();
+            recalculateCurrentIntakeMacros();
             populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
             // Автоматично опресняване на макро-картата
             renderPendingMacroChart();
