@@ -169,13 +169,13 @@ export function addMealMacros(meal, acc) {
 }
 
 export function removeMealMacros(meal, acc) {
-  const m = resolveMacros(meal, meal?.grams);
+  const m = normalizeMacros(resolveMacros(meal, meal?.grams));
   validateMacroCalories(m);
-  acc.calories = (acc.calories || 0) - m.calories;
-  acc.protein = (acc.protein || 0) - m.protein;
-  acc.carbs = (acc.carbs || 0) - m.carbs;
-  acc.fat = (acc.fat || 0) - m.fat;
-  acc.fiber = (acc.fiber || 0) - m.fiber;
+  acc.calories = Math.max(0, (acc.calories || 0) - m.calories);
+  acc.protein = Math.max(0, (acc.protein || 0) - m.protein);
+  acc.carbs = Math.max(0, (acc.carbs || 0) - m.carbs);
+  acc.fat = Math.max(0, (acc.fat || 0) - m.fat);
+  acc.fiber = Math.max(0, (acc.fiber || 0) - m.fiber);
   return acc;
 }
 
