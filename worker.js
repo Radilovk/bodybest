@@ -4084,9 +4084,10 @@ async function callOpenAiAPI(prompt, apiKey, model, options = {}) {
 }
 // ------------- END FUNCTION: callOpenAiAPI -------------
 
+
 function getModelProvider(model) {
     if (!model) return 'gemini';
-    if (model === 'command-r-plus') return 'cf';
+    if (model === 'command-r-plus') return 'cohere';
     if (model.startsWith('@cf/')) return 'cf';
     if (model.startsWith('gpt-')) return 'openai';
     return 'gemini';
@@ -4094,7 +4095,7 @@ function getModelProvider(model) {
 
 async function callModel(model, prompt, env, { temperature = 0.7, maxTokens = 800 } = {}) {
     const provider = getModelProvider(model);
-    if (provider === 'cf') {
+    if (provider === 'cf' || provider === 'cohere') {
         return callCfAi(
             model,
             {
