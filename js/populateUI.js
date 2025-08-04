@@ -366,7 +366,10 @@ export function renderPendingMacroChart() {
         return;
     }
     const frame = document.getElementById('macroAnalyticsCardFrame');
-    if (frame?.contentWindow && lastMacroPayload) {
+    if (!frame && lastMacroPayload) {
+        logMacroPayload(lastMacroPayload);
+        ensureMacroAnalyticsFrame();
+    } else if (frame?.contentWindow && lastMacroPayload) {
         logMacroPayload(lastMacroPayload);
         frame.contentWindow.postMessage({ type: 'macro-data', data: lastMacroPayload }, '*');
     }
