@@ -4090,10 +4090,10 @@ async function callCohereAI(model, prompt, apiKey, options = {}) {
     if (!model) {
         throw new Error('Cohere model name is missing.');
     }
-    const url = 'https://api.cohere.ai/v1/generate';
+    const url = 'https://api.cohere.ai/v1/chat';
     const body = {
         model,
-        prompt,
+        message: prompt,
         ...(options.temperature !== undefined && { temperature: options.temperature }),
         ...(options.maxTokens !== undefined && { max_tokens: options.maxTokens })
     };
@@ -4110,7 +4110,7 @@ async function callCohereAI(model, prompt, apiKey, options = {}) {
         const msg = data?.message || data?.error || `HTTP ${resp.status}`;
         throw new Error(`Cohere API Error (${model}): ${msg}`);
     }
-    const text = data?.generations?.[0]?.text;
+    const text = data?.text;
     if (text === undefined || text === null) {
         throw new Error(`Cohere API Error (${model}): No text in response.`);
     }

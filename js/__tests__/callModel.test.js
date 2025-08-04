@@ -51,25 +51,30 @@ describe('callModel with CF provider', () => {
 });
 
 describe('callModel with command-r-plus model', () => {
-  const env = { CF_ACCOUNT_ID: 'acc', CF_AI_TOKEN: 'token' };
   const model = 'command-r-plus';
+  const env = { COHERE_API_KEY: 'key' };
 
   afterEach(() => {
     global.fetch = originalFetch;
   });
 
-  test('uses Cloudflare endpoint', async () => {
+  test('uses Cohere chat endpoint', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ result: { response: 'ok' } })
+      json: async () => ({ text: 'ok' })
     });
 
-    await callModel(model, 'hi', env);
+    const res = await callModel(model, 'hi', env);
 
-    const expectedUrl = 'https://api.cloudflare.com/client/v4/accounts/acc/ai/run/command-r-plus';
+    expect(res).toBe('ok');
+    const expectedUrl = 'https://api.cohere.ai/v1/chat';
     expect(global.fetch).toHaveBeenCalledWith(
       expectedUrl,
       expect.objectContaining({ method: 'POST' })
     );
+  });
+
+  test('throws if API key missing', async () => {
+    await expect(callModel(model, 'hi', {})).rejects.toThrow('Missing Cohere API key.');
   });
 });
