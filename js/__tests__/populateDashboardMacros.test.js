@@ -100,13 +100,12 @@ test('recalculates macros automatically and shows spinner while loading', async 
 
 test('валидира и отхвърля некоректни макро данни', async () => {
   setupDom();
-  const previous = populateModule.lastMacroPayload;
   const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const currentDayKey = dayNames[new Date().getDay()];
   appState.fullDashboardData.planData = { week1Menu: { [currentDayKey]: [] } };
   Object.assign(appState.todaysPlanMacros, { calories: 2000, protein: 'bad', carbs: 200, fat: 60, fiber: 30 });
   await populateDashboardMacros({});
-  expect(populateModule.lastMacroPayload).toBe(previous);
+  expect(document.querySelector('macro-analytics-card')).toBeNull();
 });
 
 test('calculatePlanMacros се извиква само веднъж при кеширани стойности', async () => {

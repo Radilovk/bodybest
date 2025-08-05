@@ -7,7 +7,6 @@ describe('renderPendingMacroChart', () => {
   let appState;
   let selectors;
   let populateModule;
-  let __setLastMacroPayload;
   let ensureMacroAnalyticsElement;
 
   beforeEach(async () => {
@@ -55,7 +54,7 @@ describe('renderPendingMacroChart', () => {
     jest.unstable_mockModule('../eventListeners.js', () => eventListenersMock);
     appState = await import('../app.js');
     populateModule = await import('../populateUI.js');
-    ({ renderPendingMacroChart, populateDashboardMacros, __setLastMacroPayload } = populateModule);
+    ({ renderPendingMacroChart, populateDashboardMacros } = populateModule);
     ({ ensureMacroAnalyticsElement } = await import('../eventListeners.js'));
   });
 
@@ -67,7 +66,7 @@ describe('renderPendingMacroChart', () => {
     ensureMacroAnalyticsElement.mockClear();
     card.setData.mockClear();
     renderPendingMacroChart();
-    expect(ensureMacroAnalyticsElement).not.toHaveBeenCalled();
+    expect(ensureMacroAnalyticsElement).toHaveBeenCalledTimes(1);
     expect(card.setData).toHaveBeenCalledWith(
       expect.objectContaining({ plan: expect.objectContaining({ protein_grams: 72 }) })
     );
@@ -78,37 +77,14 @@ describe('renderPendingMacroChart', () => {
     const sameCard = selectors.macroAnalyticsCardContainer.querySelector('macro-analytics-card');
     sameCard.setData.mockClear();
     renderPendingMacroChart();
-    expect(ensureMacroAnalyticsElement).not.toHaveBeenCalled();
+    expect(ensureMacroAnalyticsElement).toHaveBeenCalledTimes(1);
     expect(sameCard.setData).toHaveBeenCalledWith(
       expect.objectContaining({ current: expect.objectContaining({ calories: 1500 }) })
     );
   });
 
-  test('updates existing chart data without destroying it', () => {
-    const chartMock = {
-      data: { datasets: [{ data: [] }, { data: [] }] },
-      update: jest.fn(),
-      destroy: jest.fn()
-    };
-    __setLastMacroPayload({
-      plan: { protein_grams: 10, carbs_grams: 20, fat_grams: 30, fiber_grams: 40 },
-      current: { protein_grams: 5, carbs_grams: 10, fat_grams: 15, fiber_grams: 20 }
-    });
-    const ctx = { chart: chartMock };
-    renderPendingMacroChart.call(ctx);
-    __setLastMacroPayload({
-      plan: { protein_grams: 1, carbs_grams: 2, fat_grams: 3, fiber_grams: 4 },
-      current: { protein_grams: 0, carbs_grams: 1, fat_grams: 2, fiber_grams: 3 }
-    });
-    renderPendingMacroChart.call(ctx);
-    expect(chartMock.destroy).not.toHaveBeenCalled();
-    expect(chartMock.update).toHaveBeenCalledTimes(2);
-    expect(chartMock.data.datasets[0].data).toEqual([1, 2, 3, 4]);
-    expect(chartMock.data.datasets[1].data).toEqual([0, 1, 2, 3]);
-  });
-
   test('създава елемент за макро анализ при липса', () => {
-    __setLastMacroPayload({ plan: { protein_grams: 1, carbs_grams: 2, fat_grams: 3, fiber_grams: 4 } });
+    document.querySelector('macro-analytics-card')?.remove();
     renderPendingMacroChart();
     expect(ensureMacroAnalyticsElement).toHaveBeenCalledTimes(1);
   });
