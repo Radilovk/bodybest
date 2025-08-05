@@ -25,7 +25,7 @@ beforeEach(async () => {
   ({ initializeExtraMealFormLogic } = await import('../extraMealForm.js'));
 });
 
-test('автопопълва макросите при разпозната храна', () => {
+test('автопопълва макросите при разпозната храна', async () => {
   document.body.innerHTML = `<div id="c">
     <form id="extraMealEntryFormActual">
       <div class="form-step"></div>
@@ -47,7 +47,7 @@ test('автопопълва макросите при разпозната хр
     </form>
   </div>`;
   const container = document.getElementById('c');
-  initializeExtraMealFormLogic(container);
+  await initializeExtraMealFormLogic(container);
   const input = container.querySelector('#foodDescription');
   input.value = 'ябълка';
   input.dispatchEvent(new Event('input', { bubbles: true }));

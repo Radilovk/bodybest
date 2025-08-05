@@ -3,14 +3,12 @@ import { jest } from '@jest/globals';
 
 let handleExtraMealFormSubmit;
 let showToastMock;
-let addMealMacrosMock;
 let addExtraMealWithOverrideMock;
 let currentIntakeMacrosRef;
 
 beforeEach(async () => {
   jest.resetModules();
   showToastMock = jest.fn();
-  addMealMacrosMock = jest.fn();
   jest.unstable_mockModule('../uiHandlers.js', () => ({
     showLoading: jest.fn(),
     showToast: showToastMock,
@@ -22,7 +20,6 @@ beforeEach(async () => {
     apiEndpoints: { logExtraMeal: '/api' }
   }));
   jest.unstable_mockModule('../macroUtils.js', () => ({
-    addMealMacros: addMealMacrosMock,
     removeMealMacros: jest.fn(),
     registerNutrientOverrides: jest.fn(),
     getNutrientOverride: jest.fn(() => null),
@@ -58,7 +55,6 @@ test('показва съобщение при липса на количест�
   await handleExtraMealFormSubmit(e);
   expect(showToastMock).toHaveBeenCalled();
   expect(fetch).not.toHaveBeenCalled();
-  expect(addMealMacrosMock).not.toHaveBeenCalled();
 });
 
 test('изпраща макро стойности при попълнени полета', async () => {
