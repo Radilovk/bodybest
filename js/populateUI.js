@@ -1,4 +1,5 @@
 // populateUI.js - Попълване на UI с данни
+import './macroAnalyticsCardComponent.js';
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort } from './utils.js';
 import { generateId, apiEndpoints, standaloneMacroUrl } from './config.js';
