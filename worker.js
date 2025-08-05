@@ -1537,12 +1537,69 @@ async function handleUpdateProfileRequest(request, env) {
 }
 // ------------- END FUNCTION: handleUpdateProfileRequest -------------
 
+// ------------- START FUNCTION: validatePlanPrerequisites -------------
+async function validatePlanPrerequisites(env, userId) {
+    const [modelName, prompt, initialAnswersStr] = await Promise.all([
+        env.RESOURCES_KV?.get('model_plan_generation'),
+        env.RESOURCES_KV?.get('prompt_unified_plan_generation_v2'),
+        env.USER_METADATA_KV?.get(`${userId}_initial_answers`)
+    ]);
+
+    const fail = async (msg) => {
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        return msg;
+    };
+
+    if (!modelName || typeof modelName !== 'string') {
+        return await fail('Липсва модел за генериране на план.');
+    }
+    if (!prompt || typeof prompt !== 'string') {
+        return await fail('Липсва шаблон за генериране на план.');
+    }
+    if (!initialAnswersStr) {
+        return await fail('Липсват начални отговори.');
+    }
+    let initialAnswers;
+    try {
+        initialAnswers = JSON.parse(initialAnswersStr);
+    } catch {
+        return await fail('Невалидни начални отговори.');
+    }
+    if (!initialAnswers || Object.keys(initialAnswers).length === 0) {
+        return await fail('Невалидни начални отговори.');
+    }
+
+    const provider = getModelProvider(modelName);
+    if (provider === 'gemini' && !env[GEMINI_API_KEY_SECRET_NAME]) {
+        return await fail('Липсва Gemini API ключ.');
+    }
+    if (provider === 'openai' && !env[OPENAI_API_KEY_SECRET_NAME]) {
+        return await fail('Липсва OpenAI API ключ.');
+    }
+    if (provider === 'cohere' && !env[COMMAND_R_PLUS_SECRET_NAME]) {
+        return await fail('Липсва Cohere API ключ.');
+    }
+    if (provider === 'cf') {
+        const hasRuntime = env.AI && typeof env.AI.run === 'function';
+        const accountId = env[CF_ACCOUNT_ID_VAR_NAME] || env.accountId || env.ACCOUNT_ID;
+        if (!hasRuntime && (!env[CF_AI_TOKEN_SECRET_NAME] || !accountId)) {
+            return await fail('Липсват Cloudflare AI ключ или идентификатор на акаунт.');
+        }
+    }
+    return null;
+}
+// ------------- END FUNCTION: validatePlanPrerequisites -------------
+
 // ------------- START FUNCTION: handleRegeneratePlanRequest -------------
 async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = processSingleUserPlan) {
     try {
         const { userId, priorityGuidance } = await request.json();
         if (!userId) {
             return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
+        }
+        const prereqError = await validatePlanPrerequisites(env, userId);
+        if (prereqError) {
+            return { success: false, message: prereqError, statusHint: 400 };
         }
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'processing', { metadata: { status: 'processing' } });
         if (ctx) {
@@ -2777,6 +2834,11 @@ async function handleSetMaintenanceMode(request, env) {
 // ------------- START FUNCTION: processSingleUserPlan -------------
 async function processSingleUserPlan(userId, env, priorityGuidance = '') {
     console.log(`PROCESS_USER_PLAN (${userId}): Starting plan generation.`);
+    const prereqError = await validatePlanPrerequisites(env, userId);
+    if (prereqError) {
+        console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${prereqError}`);
+        return { success: false, message: prereqError };
+    }
     try {
         console.log(`PROCESS_USER_PLAN (${userId}): Step 0 - Loading prerequisites.`);
         const initialAnswersString = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);

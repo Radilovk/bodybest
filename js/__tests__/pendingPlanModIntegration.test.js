@@ -21,6 +21,7 @@ describe('processSingleUserPlan with pending modification', () => {
         }),
         put: jest.fn(),
         delete: jest.fn(),
+        list: jest.fn(async () => ({ keys: [] }))
       },
       RESOURCES_KV: {
         get: jest.fn(key => {
