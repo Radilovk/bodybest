@@ -7,6 +7,7 @@ import { sanitizeHTML } from './htmlSanitizer.js';
 import { loadMaintenanceFlag, setMaintenanceFlag } from './maintenanceMode.js';
 import { renderTemplate } from '../utils/templateRenderer.js';
 import { ensureChart } from './chartLoader.js';
+import { setupPlanRegeneration } from './planRegenerator.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -240,6 +241,7 @@ let currentUserId = null;
 function setCurrentUserId(val) {
     currentUserId = val;
 }
+setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => currentUserId });
 let profileNavObserver = null;
 let currentPlanData = null;
 let currentDashboardData = null;
@@ -1089,44 +1091,6 @@ if (sendQueryBtn) {
     sendQueryBtn.addEventListener('click', sendAdminQuery);
 }
 
-if (regenBtn) {
-    regenBtn.addEventListener('click', async () => {
-        if (!currentUserId) return;
-        if (regenProgress) regenProgress.classList.remove('hidden');
-        try {
-            await fetch(apiEndpoints.regeneratePlan, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: currentUserId })
-            });
-        } catch (err) {
-            console.error('regeneratePlan error:', err);
-            if (regenProgress) regenProgress.classList.add('hidden');
-            alert('Грешка при стартиране на генерирането.');
-            return;
-        }
-
-        const intervalId = setInterval(async () => {
-            try {
-                const resp = await fetch(`${apiEndpoints.planStatus}?userId=${currentUserId}`);
-                const data = await resp.json();
-                if (resp.ok && data.success) {
-                    if (data.planStatus === 'ready') {
-                        clearInterval(intervalId);
-                        if (regenProgress) regenProgress.classList.add('hidden');
-                        alert('Планът е обновен.');
-                    } else if (data.planStatus === 'error') {
-                        clearInterval(intervalId);
-                        if (regenProgress) regenProgress.classList.add('hidden');
-                        alert(`Грешка при генерирането: ${data.error || ''}`);
-                    }
-                }
-            } catch (err) {
-                console.error('planStatus polling error:', err);
-            }
-        }, 3000);
-    });
-}
 
 if (aiSummaryBtn) {
     aiSummaryBtn.addEventListener('click', async () => {
