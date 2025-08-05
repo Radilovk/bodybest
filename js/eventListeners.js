@@ -14,7 +14,6 @@ import {
     macroChartInstance,
     progressChartInstance,
     populateDashboardMacros,
-    lastMacroPayload,
     renderPendingMacroChart,
     macroExceedThreshold
 } from './populateUI.js';
@@ -75,9 +74,9 @@ export function ensureMacroAnalyticsElement() {
         el.setAttribute('exceed-threshold', String(macroExceedThreshold));
         selectors.macroAnalyticsCardContainer.appendChild(el);
     }
-    el.setData(lastMacroPayload);
     macroChartInstance?.resize();
     progressChartInstance?.resize();
+    return el;
 }
 
 

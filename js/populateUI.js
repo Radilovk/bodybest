@@ -11,7 +11,6 @@ import { ensureMacroAnalyticsElement } from './eventListeners.js';
 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
-export let lastMacroPayload = null;
 export let macroExceedThreshold = 1.15;
 
 export function setMacroExceedThreshold(val) {
@@ -32,10 +31,6 @@ export function __setProgressChartInstance(instance) {
     progressChartInstance = instance;
 }
 
-// Helper for tests to set macro payload
-export function __setLastMacroPayload(payload) {
-    lastMacroPayload = payload;
-}
 
 function addAlpha(color, alpha) {
     const c = color.trim();
@@ -335,36 +330,25 @@ function populateDashboardDetailedAnalytics(analyticsData) {
 }
 
 export function renderPendingMacroChart() {
-    if (this?.chart && lastMacroPayload) {
-        const { plan, current } = lastMacroPayload;
-        const datasets = this.chart.data.datasets || [];
-        if (datasets[0]) {
-            datasets[0].data = [
-                plan.protein_grams,
-                plan.carbs_grams,
-                plan.fat_grams,
-                plan.fiber_grams
-            ];
-        }
-        if (current && datasets[1]) {
-            datasets[1].data = [
-                current.protein_grams,
-                current.carbs_grams,
-                current.fat_grams,
-                current.fiber_grams
-            ];
-        }
-        this.chart.update();
-        return;
-    }
-    const el = selectors.macroAnalyticsCardContainer?.querySelector('macro-analytics-card');
-    if (!el && lastMacroPayload) {
-        logMacroPayload(lastMacroPayload);
-        ensureMacroAnalyticsElement();
-    } else if (el && typeof el.setData === 'function' && lastMacroPayload) {
-        logMacroPayload(lastMacroPayload);
-        el.setData(lastMacroPayload);
-    }
+    const card = ensureMacroAnalyticsElement();
+    if (!card) return;
+    const plan = {
+        calories: todaysPlanMacros.calories,
+        protein_grams: todaysPlanMacros.protein,
+        carbs_grams: todaysPlanMacros.carbs,
+        fat_grams: todaysPlanMacros.fat,
+        fiber_grams: todaysPlanMacros.fiber
+    };
+    const current = {
+        calories: currentIntakeMacros.calories,
+        protein_grams: currentIntakeMacros.protein,
+        carbs_grams: currentIntakeMacros.carbs,
+        fat_grams: currentIntakeMacros.fat,
+        fiber_grams: currentIntakeMacros.fiber
+    };
+    const payload = { plan, current };
+    logMacroPayload(payload);
+    card.setData(payload);
 }
 
 export function addExtraMealWithOverride(name = '', macros = {}, grams) {
@@ -509,9 +493,9 @@ export async function populateDashboardMacros(macros) {
         logMacroPayload({ error: 'Invalid macro payload structure', payload });
         return;
     }
-    lastMacroPayload = payload;
-    ensureMacroAnalyticsElement();
-    renderPendingMacroChart();
+    // Създаваме или взимаме макро-картата и я обновяваме с текущите данни
+    const card = ensureMacroAnalyticsElement();
+    card.setData(payload); // компонентът се актуализира със стойностите
 }
 
 function populateDashboardStreak(streakData) {
