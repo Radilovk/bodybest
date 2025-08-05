@@ -10,14 +10,20 @@ beforeEach(async () => {
       <div class="accordion-header" aria-expanded="false"></div>
       <div class="accordion-content"></div>
     </div>
-    <iframe id="macroAnalyticsCardFrame"></iframe>
   `;
   jest.unstable_mockModule('../uiElements.js', () => ({ selectors: {}, trackerInfoTexts: {}, detailedMetricInfoTexts: {} }));
   jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn() }));
   jest.unstable_mockModule('../extraMealForm.js', () => ({ openExtraMealModal: jest.fn() }));
   jest.unstable_mockModule('../config.js', () => ({
     generateId: () => 'id-1',
-    apiEndpoints: { dashboard: '/api/dashboardData' }
+    apiEndpoints: { dashboard: '/api/dashboardData' },
+    standaloneMacroUrl: 'macroAnalyticsCardStandalone.html'
+  }));
+  jest.unstable_mockModule('../eventListeners.js', () => ({
+    ensureMacroAnalyticsElement: jest.fn(),
+    setupStaticEventListeners: jest.fn(),
+    setupDynamicEventListeners: jest.fn(),
+    initializeCollapsibleCards: jest.fn(),
   }));
   jest.unstable_mockModule('../app.js', () => ({
     fullDashboardData: {},
@@ -35,21 +41,10 @@ beforeEach(async () => {
   handleAccordionToggle = mod.handleAccordionToggle;
 });
 
-test('не създава iframe при разгръщане', () => {
+test('не създава macro-analytics-card при разгръщане', () => {
   const header = document.querySelector('.accordion-header');
   handleAccordionToggle.call(header);
-  const iframe = document.querySelector('#macroCardIframe');
-  expect(iframe).toBeNull();
+  const card = document.querySelector('macro-analytics-card');
+  expect(card).toBeNull();
 });
 
-test('слушателят за съобщения променя височината', async () => {
-  await import('../populateUI.js');
-  const frame = document.getElementById('macroAnalyticsCardFrame');
-  const newHeight = 420;
-  const evt = new MessageEvent('message', {
-    data: { type: 'macro-card-height', height: newHeight },
-    source: frame.contentWindow,
-  });
-  window.dispatchEvent(evt);
-  expect(frame.style.height).toBe(`${newHeight}px`);
-});

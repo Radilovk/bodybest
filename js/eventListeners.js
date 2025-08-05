@@ -9,15 +9,14 @@ import {
 } from './uiHandlers.js';
 import { handleLogout } from './auth.js';
 import { openExtraMealModal } from './extraMealForm.js';
-import { apiEndpoints, standaloneMacroUrl } from './config.js';
+import { apiEndpoints } from './config.js';
 import {
     macroChartInstance,
     progressChartInstance,
     populateDashboardMacros,
     lastMacroPayload,
     renderPendingMacroChart,
-    macroExceedThreshold,
-    buildMacroCardUrl
+    macroExceedThreshold
 } from './populateUI.js';
 import {
     handleSaveLog, handleFeedbackFormSubmit, // from app.js
@@ -69,27 +68,14 @@ export function handleAdaptiveQuizBtnClick(triggerFn = _handleTriggerAdaptiveQui
     triggerFn();
 }
 
-export function ensureMacroAnalyticsFrame() {
-    let frame = document.getElementById('macroAnalyticsCardFrame');
-    if (!frame) {
-        frame = document.createElement('iframe');
-        frame.id = 'macroAnalyticsCardFrame';
-        frame.title = 'Макро анализ';
-        frame.loading = 'lazy';
-        frame.style.width = '100%';
-        frame.style.border = '0';
-        frame.style.display = 'none';
-        frame.src = buildMacroCardUrl();
-        selectors.macroAnalyticsCardContainer.appendChild(frame);
-        frame.addEventListener('load', () => {
-            selectors.macroAnalyticsCardContainer.classList.remove('loading');
-            selectors.macroAnalyticsCardContainer.querySelectorAll('.skeleton').forEach(el => el.remove());
-            frame.style.display = 'block';
-            frame.contentWindow?.postMessage({ type: 'macro-data', data: lastMacroPayload }, '*');
-        }, { once: true });
-    } else {
-        frame.contentWindow?.postMessage({ type: 'macro-data', data: lastMacroPayload }, '*');
+export function ensureMacroAnalyticsElement() {
+    let el = selectors.macroAnalyticsCardContainer?.querySelector('macro-analytics-card');
+    if (!el) {
+        el = document.createElement('macro-analytics-card');
+        el.setAttribute('exceed-threshold', String(macroExceedThreshold));
+        selectors.macroAnalyticsCardContainer.appendChild(el);
     }
+    el.setData(lastMacroPayload);
     macroChartInstance?.resize();
     progressChartInstance?.resize();
 }
@@ -163,7 +149,7 @@ export function setupStaticEventListeners() {
                 if (accContent) { accContent.style.display = isOpen ? 'none' : 'block'; accContent.classList.toggle('open-active', !isOpen); }
                 if (preview) preview.style.display = isOpen ? 'grid' : 'none';
                 selectors.detailedAnalyticsAccordion.classList.toggle('index-card', isOpen);
-                if (!isOpen) ensureMacroAnalyticsFrame();
+                if (!isOpen) ensureMacroAnalyticsElement();
              });
              header.addEventListener('keydown', function(e) {
                 if(e.key === 'Enter' || e.key === ' ') {
@@ -173,7 +159,7 @@ export function setupStaticEventListeners() {
                     if (accContent) { accContent.style.display = isOpen ? 'none' : 'block'; accContent.classList.toggle('open-active', !isOpen); }
                     if (preview) preview.style.display = isOpen ? 'grid' : 'none';
                     selectors.detailedAnalyticsAccordion.classList.toggle('index-card', isOpen);
-                    if (!isOpen) ensureMacroAnalyticsFrame();
+                    if (!isOpen) ensureMacroAnalyticsElement();
                 }
             });
         }

@@ -9,14 +9,15 @@ let appState;
 let macroUtils;
 
 jest.unstable_mockModule('../eventListeners.js', () => ({
-  ensureMacroAnalyticsFrame: jest.fn(() => {
-    let frame = document.getElementById('macroAnalyticsCardFrame');
-    if (!frame) {
-      frame = document.createElement('iframe');
-      frame.id = 'macroAnalyticsCardFrame';
+  ensureMacroAnalyticsElement: jest.fn(() => {
+    let el = document.querySelector('macro-analytics-card');
+    if (!el) {
+      el = document.createElement('macro-analytics-card');
+      el.setData = jest.fn();
       const container = document.getElementById('macroAnalyticsCardContainer');
-      if (container) container.appendChild(frame);
+      if (container) container.appendChild(el);
     }
+    return el;
   }),
   setupStaticEventListeners: jest.fn(),
   setupDynamicEventListeners: jest.fn(),
@@ -78,11 +79,11 @@ test('recalculates macros automatically and shows spinner while loading', async 
   expect(selectors.macroMetricsPreview.textContent).toContain('1800');
   expect(container.innerHTML).not.toContain('spinner-border');
   global.fetch = originalFetch;
-  const frame = document.getElementById('macroAnalyticsCardFrame');
-  expect(frame).not.toBeNull();
-  Object.defineProperty(frame, 'contentWindow', { value: { postMessage: jest.fn(), document: { readyState: 'complete' } } });
+  const card = container.querySelector('macro-analytics-card');
+  expect(card).not.toBeNull();
+  card.setData.mockClear();
   renderPendingMacroChart();
-  expect(frame.contentWindow.postMessage).toHaveBeenCalled();
+  expect(card.setData).toHaveBeenCalled();
   const expectedCurrent = {
     calories: appState.currentIntakeMacros.calories,
     protein_grams: appState.currentIntakeMacros.protein,
@@ -90,14 +91,10 @@ test('recalculates macros automatically and shows spinner while loading', async 
     fat_grams: appState.currentIntakeMacros.fat,
     fiber_grams: appState.currentIntakeMacros.fiber
   };
-  const [msg, origin] = frame.contentWindow.postMessage.mock.calls[0];
-  expect(origin).toBe('*');
-  expect(msg).toMatchObject({
-    type: 'macro-data',
-    data: {
-      plan: expect.objectContaining({ calories: 850, protein_grams: 72, carbs_grams: 70, fat_grams: 28 }),
-      current: expectedCurrent
-    }
+  const [payload] = card.setData.mock.calls[0];
+  expect(payload).toMatchObject({
+    plan: expect.objectContaining({ calories: 850, protein_grams: 72, carbs_grams: 70, fat_grams: 28 }),
+    current: expectedCurrent
   });
 });
 

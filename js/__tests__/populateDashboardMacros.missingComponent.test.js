@@ -67,14 +67,15 @@ function setupMocks(selectors) {
   }));
   jest.unstable_mockModule('../auth.js', () => ({ handleLogout: jest.fn() }));
   jest.unstable_mockModule('../eventListeners.js', () => ({
-    ensureMacroAnalyticsFrame: jest.fn(() => {
-      let frame = document.getElementById('macroAnalyticsCardFrame');
-      if (!frame) {
-        frame = document.createElement('iframe');
-        frame.id = 'macroAnalyticsCardFrame';
+    ensureMacroAnalyticsElement: jest.fn(() => {
+      let el = document.querySelector('macro-analytics-card');
+      if (!el) {
+        el = document.createElement('macro-analytics-card');
+        el.setData = jest.fn();
         const container = document.getElementById('macroAnalyticsCardContainer');
-        if (container) container.appendChild(frame);
+        if (container) container.appendChild(el);
       }
+      return el;
     }),
     setupStaticEventListeners: jest.fn(),
     setupDynamicEventListeners: jest.fn(),
@@ -98,8 +99,8 @@ test('създава контейнер, ако липсва макро анал
   const container = document.getElementById('macroAnalyticsCardContainer');
   expect(container).not.toBeNull();
   expect(selectors.analyticsCardsContainer.contains(container)).toBe(true);
-  const frame = container.querySelector('#macroAnalyticsCardFrame');
-  expect(frame).not.toBeNull();
+  const card = container.querySelector('macro-analytics-card');
+  expect(card).not.toBeNull();
 });
 
 test('пресъздава контейнер, когато е извън DOM', async () => {
