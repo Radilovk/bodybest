@@ -27,6 +27,22 @@ test('calculateCurrentMacros sums macros from completed meals and extras', () =>
   expect(result).toEqual({ calories: 880, protein: 67, carbs: 48, fat: 42, fiber: 0 });
 });
 
+test('calculateCurrentMacros използва meal.macros и overrides', () => {
+  registerNutrientOverrides({
+    'override meal': { calories: 50, protein: 5, carbs: 5, fat: 2, fiber: 1 }
+  });
+  const planMenu = {
+    monday: [
+      { meal_name: 'Override Meal' },
+      { macros: { calories: 100, protein: 10, carbs: 20, fat: 5, fiber: 3 } }
+    ]
+  };
+  const completionStatus = { monday_0: true, monday_1: true };
+  const result = calculateCurrentMacros(planMenu, completionStatus, []);
+  expect(result).toEqual({ calories: 150, protein: 15, carbs: 25, fat: 7, fiber: 4 });
+  registerNutrientOverrides({});
+});
+
 test('calculatePlanMacros sums macros for day menu', () => {
   const dayMenu = [
     { id: 'z-01', meal_name: 'Протеинов шейк' },
