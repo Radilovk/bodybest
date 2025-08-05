@@ -27,6 +27,7 @@ async function ensureLoggedIn() {
 const clientsList = document.getElementById('clientsList');
 const clientsCount = document.getElementById('clientsCount');
 const clientSearch = document.getElementById('clientSearch');
+const clientSuggestions = document.getElementById('clientSuggestions');
 const statusFilter = document.getElementById('statusFilter');
 const tagFilterSelect = document.getElementById('tagFilter');
 const detailsSection = document.getElementById('clientDetails');
@@ -638,6 +639,7 @@ async function loadClients() {
             updateTagFilterOptions();
             populateTestQClientOptions();
             renderClients();
+            updateClientSuggestions();
             const stats = {
                 clients: allClients.length,
                 ready: allClients.filter(c => c.status === 'ready').length,
@@ -676,6 +678,12 @@ function renderClients() {
         return (a.name || '').localeCompare(b.name || '');
     });
     if (clientsCount) clientsCount.textContent = `Общ брой клиенти: ${list.length}`;
+    if (list.length === 0) {
+        const li = document.createElement('li');
+        li.textContent = 'Няма намерени клиенти.';
+        clientsList?.appendChild(li);
+        return;
+    }
     list.forEach(c => {
         const li = document.createElement('li');
         const btn = document.createElement('button');
@@ -725,6 +733,28 @@ function renderClients() {
         }
 
         clientsList?.appendChild(li);
+    });
+}
+
+function updateClientSuggestions() {
+    if (!clientSuggestions) return;
+    const search = (clientSearch.value || '').toLowerCase();
+    clientSuggestions.innerHTML = '';
+    if (!search) return;
+    const suggestions = [];
+    for (const c of allClients) {
+        if (c.name && c.name.toLowerCase().includes(search)) {
+            suggestions.push(c.name);
+        }
+        if (c.email && c.email.toLowerCase().includes(search)) {
+            suggestions.push(c.email);
+        }
+        if (suggestions.length >= 5) break;
+    }
+    suggestions.slice(0, 5).forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        clientSuggestions.appendChild(opt);
     });
 }
 
@@ -967,7 +997,22 @@ if (closeProfileBtn) {
     });
 }
 
-if (clientSearch) clientSearch.addEventListener('input', renderClients);
+function debounce(fn, delay) {
+    let t;
+    return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), delay);
+    };
+}
+
+const debouncedRenderClients = debounce(renderClients, 300);
+
+if (clientSearch) {
+    clientSearch.addEventListener('input', () => {
+        updateClientSuggestions();
+        debouncedRenderClients();
+    });
+}
 if (statusFilter) statusFilter.addEventListener('change', renderClients);
 if (sortOrderSelect) sortOrderSelect.addEventListener('change', renderClients);
 if (tagFilterSelect) tagFilterSelect.addEventListener('change', renderClients);
