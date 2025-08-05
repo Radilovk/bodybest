@@ -218,48 +218,19 @@ export function calculatePlanMacros(dayMenu = []) {
  * @returns {{ calories:number, protein:number, carbs:number, fat:number, fiber:number }}
  */
 export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, extraMeals = []) {
-  let calories = 0;
-  let protein = 0;
-  let carbs = 0;
-  let fat = 0;
-  let fiber = 0;
+  const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
   Object.entries(planMenu).forEach(([day, meals]) => {
     (meals || []).forEach((meal, idx) => {
       const key = `${day}_${idx}`;
-      if (completionStatus[key]) {
-        const macros =
-          macrosByIdOrName.get(meal.id) ||
-          macrosByIdOrName.get((meal.meal_name || '').toLowerCase());
-        if (macros) {
-          const m = normalizeMacros({
-            calories: macros['калории'],
-            protein: macros['белтъчини'],
-            carbs: macros['въглехидрати'],
-            fat: macros['мазнини'],
-            fiber: macros['фибри']
-          });
-          calories += m.calories;
-          protein += m.protein;
-          carbs += m.carbs;
-          fat += m.fat;
-          fiber += m.fiber;
-        }
-      }
+      if (completionStatus[key]) addMealMacros(meal?.macros || meal, acc);
     });
   });
 
   if (Array.isArray(extraMeals)) {
-    extraMeals.forEach((m) => {
-      const n = normalizeMacros(m);
-      calories += n.calories;
-      protein += n.protein;
-      carbs += n.carbs;
-      fat += n.fat;
-      fiber += n.fiber;
-    });
+    extraMeals.forEach((m) => addMealMacros(m, acc));
   }
 
-  return { calories, protein, carbs, fat, fiber };
+  return acc;
 }
 export const __testExports = { macrosByIdOrName, nutrientCache, resolveMacros };
