@@ -14,7 +14,7 @@ beforeEach(async () => {
     <div id="healthProgressFill"></div><div id="healthProgressBar"></div><span id="healthProgressText"></span>
     <div id="streakGrid"></div>
     <div id="macroMetricsPreview"></div>
-    <iframe id="macroAnalyticsCardFrame"></iframe>
+    <div id="analyticsCardsContainer"><div id="macroAnalyticsCardContainer"></div></div>
     <h3 id="dailyPlanTitle"></h3>
     <ul id="dailyMealList"></ul>
   `;
@@ -34,12 +34,19 @@ beforeEach(async () => {
     healthProgressBar: document.getElementById('healthProgressBar'),
     healthProgressText: document.getElementById('healthProgressText'),
     streakGrid: document.getElementById('streakGrid'),
-    macroAnalyticsCardFrame: document.getElementById('macroAnalyticsCardFrame'),
+    analyticsCardsContainer: document.getElementById('analyticsCardsContainer'),
+    macroAnalyticsCardContainer: document.getElementById('macroAnalyticsCardContainer'),
     macroMetricsPreview: document.getElementById('macroMetricsPreview'),
     dailyPlanTitle: document.getElementById('dailyPlanTitle'),
     dailyMealList: document.getElementById('dailyMealList')
   };
   jest.unstable_mockModule('../uiElements.js', () => ({ selectors, trackerInfoTexts: {}, detailedMetricInfoTexts: {} }));
+  jest.unstable_mockModule('../eventListeners.js', () => ({
+    ensureMacroAnalyticsElement: jest.fn(),
+    setupStaticEventListeners: jest.fn(),
+    setupDynamicEventListeners: jest.fn(),
+    initializeCollapsibleCards: jest.fn(),
+  }));
   jest.unstable_mockModule('../uiHandlers.js', () => ({
     toggleMenu: jest.fn(),
     closeMenu: jest.fn(),
@@ -98,7 +105,7 @@ test('populates dashboard sections', async () => {
   expect(document.querySelectorAll('#streakGrid .streak-day.logged').length).toBe(1);
 });
 
-test('обновява макро картата чрез postMessage', async () => {
+test('обновява макро картата чрез setData', async () => {
   jest.resetModules();
   const fullData = {
     userName: 'Иван',
@@ -121,6 +128,9 @@ test('обновява макро картата чрез postMessage', async ()
     initialData: {},
     initialAnswers: {},
   };
+  const card = document.createElement('macro-analytics-card');
+  card.setData = jest.fn();
+  document.getElementById('macroAnalyticsCardContainer').appendChild(card);
   jest.unstable_mockModule('../app.js', () => ({
     fullDashboardData: fullData,
     todaysMealCompletionStatus: {},
@@ -130,20 +140,18 @@ test('обновява макро картата чрез postMessage', async ()
     loadCurrentIntake: jest.fn(),
     currentUserId: 'u1'
   }));
+  jest.unstable_mockModule('../eventListeners.js', () => ({
+    ensureMacroAnalyticsElement: jest.fn(() => card),
+    setupStaticEventListeners: jest.fn(),
+    setupDynamicEventListeners: jest.fn(),
+    initializeCollapsibleCards: jest.fn(),
+  }));
   ({ populateUI } = await import('../populateUI.js'));
-  const frame = document.getElementById('macroAnalyticsCardFrame');
-  frame.contentWindow = { postMessage: jest.fn() };
   await populateUI();
-  expect(frame.contentWindow.postMessage).toHaveBeenCalledWith(
-    {
-      type: 'macro-data',
-      data: {
-        plan: expect.any(Object),
-        current: {}
-      }
-    },
-    '*'
-  );
+  expect(card.setData).toHaveBeenCalledWith({
+    plan: expect.any(Object),
+    current: {}
+  });
 });
 
 test('hides modules when values are zero', async () => {

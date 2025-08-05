@@ -7,7 +7,7 @@ import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAna
 import { ensureChart } from './chartLoader.js';
 import { getNutrientOverride, addMealMacros, scaleMacros } from './macroUtils.js';
 import { logMacroPayload } from '../utils/debug.js';
-import { ensureMacroAnalyticsFrame } from './eventListeners.js';
+import { ensureMacroAnalyticsElement } from './eventListeners.js';
 
 export let macroChartInstance = null;
 export let progressChartInstance = null;
@@ -107,14 +107,6 @@ export function updateProgressChartColors() {
 }
 
 document.addEventListener('progressChartThemeChange', updateProgressChartColors);
-
-// Управление на postMessage съобщенията от iframe за макро анализ
-window.addEventListener('message', (event) => {
-    const frame = document.getElementById('macroAnalyticsCardFrame');
-    if (event.source === frame?.contentWindow && event.data?.type === 'macro-card-height') {
-        frame.style.height = `${event.data.height}px`;
-    }
-});
 
 export async function populateUI() {
     const data = fullDashboardData; // Access global state
@@ -365,13 +357,13 @@ export function renderPendingMacroChart() {
         this.chart.update();
         return;
     }
-    const frame = document.getElementById('macroAnalyticsCardFrame');
-    if (!frame && lastMacroPayload) {
+    const el = selectors.macroAnalyticsCardContainer?.querySelector('macro-analytics-card');
+    if (!el && lastMacroPayload) {
         logMacroPayload(lastMacroPayload);
-        ensureMacroAnalyticsFrame();
-    } else if (frame?.contentWindow && lastMacroPayload) {
+        ensureMacroAnalyticsElement();
+    } else if (el && typeof el.setData === 'function' && lastMacroPayload) {
         logMacroPayload(lastMacroPayload);
-        frame.contentWindow.postMessage({ type: 'macro-data', data: lastMacroPayload }, '*');
+        el.setData(lastMacroPayload);
     }
 }
 
@@ -518,7 +510,7 @@ export async function populateDashboardMacros(macros) {
         return;
     }
     lastMacroPayload = payload;
-    ensureMacroAnalyticsFrame();
+    ensureMacroAnalyticsElement();
     renderPendingMacroChart();
 }
 
