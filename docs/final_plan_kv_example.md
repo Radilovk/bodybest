@@ -5,7 +5,7 @@
 ## Основни полета
 
 - `profileSummary` – кратък преглед на целта, медицинските особености и предпочитанията на потребителя.
-- `caloriesMacros` – препоръчителен дневен калориен прием и съотношение на макронутриенти.
+- `caloriesMacros` – обект с две части: `plan` и `recommendation`, всяка с калории и макронутриенти.
 - `allowedForbiddenFoods` – списък с основни позволени и ограничени храни, включително допълнителни предложения.
 - `week1Menu` – меню по дни за първата седмица.
 - `principlesWeek2_4` – принципи и насоки за седмици 2‑4.
@@ -15,6 +15,15 @@
 - `generationMetadata` – технически данни за генерирането (timestamp, използван модел и др.).
 
 Пълният примерен запис може да се види във файла [`final_plan_template.json`](final_plan_template.json). Структурата следва camelCase именуване и съдържа текст на български език.
+
+Примерна секция `caloriesMacros`:
+
+```json
+"caloriesMacros": {
+  "plan": { "calories": 1800, "protein_grams": 135, "carbs_grams": 180, "fat_grams": 60 },
+  "recommendation": { "calories": 1900, "protein_grams": 140, "carbs_grams": 190, "fat_grams": 65 }
+}
+```
 
 ## Макро записи
 
