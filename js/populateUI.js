@@ -495,6 +495,10 @@ export async function populateDashboardMacros(macros) {
     }
     // Създаваме или взимаме макро-картата и я обновяваме с текущите данни
     const card = ensureMacroAnalyticsElement();
+    if (typeof card.setData !== 'function') {
+        console.warn('macro-analytics-card не е зареден');
+        return;
+    }
     card.setData(payload); // компонентът се актуализира със стойностите
 }
 
