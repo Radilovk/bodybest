@@ -1,21 +1,25 @@
 import { apiEndpoints } from './config.js';
 
+let cachedConfig = null;
+
 /**
  * Зарежда конфигурационни стойности от сървъра.
  * @param {string[]} [keys] - Списък от ключове за филтриране.
  * @returns {Promise<object>} Получената конфигурация.
  */
 export async function loadConfig(keys) {
-    const resp = await fetch(apiEndpoints.getAiConfig);
-    const data = await resp.json();
-    if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
-    const cfg = data.config || {};
+    if (!cachedConfig) {
+        const resp = await fetch(apiEndpoints.getAiConfig);
+        const data = await resp.json();
+        if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
+        cachedConfig = data.config || {};
+    }
     if (Array.isArray(keys) && keys.length) {
         const subset = {};
-        for (const k of keys) subset[k] = cfg[k];
+        for (const k of keys) subset[k] = cachedConfig[k];
         return subset;
     }
-    return cfg;
+    return cachedConfig;
 }
 
 /**
@@ -34,5 +38,6 @@ export async function saveConfig(updates) {
     });
     const data = await resp.json();
     if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
+    cachedConfig = { ...(cachedConfig || {}), ...(updates || {}) };
     return data;
 }
