@@ -934,23 +934,21 @@ localStorage.setItem('initialBotMessage', 'Добре дошли!');
 
 ### Изчисления на макросите
 
-Макросите се съхраняват в речник `caloriesMacros` с калории и грамове:
+Макросите се съхраняват в речник `caloriesMacros` с две части – `plan` (стойности в плана) и `recommendation` (целеви стойности):
 
 ```json
 {
-  "calories": 1800,
-  "protein_grams": 135,
-  "carbs_grams": 180,
-  "fat_grams": 60
+  "plan": { "calories": 1800, "protein_grams": 135, "carbs_grams": 180, "fat_grams": 60 },
+  "recommendation": { "calories": 1900, "protein_grams": 140, "carbs_grams": 190, "fat_grams": 65 }
 }
 ```
 
-Този обект се изпраща към AI модела за оценка на съотношението:
+Блокът `plan` се изпраща към AI модела за оценка на съотношението:
 
 ```bash
 curl -X POST /api/aiHelper \
   -H 'Content-Type: application/json' \
-  -d '{"prompt":"macro check","macros":{"calories":1800,"protein_grams":135,"carbs_grams":180,"fat_grams":60}}'
+ -d '{"prompt":"macro check","macros":{"calories":1800,"protein_grams":135,"carbs_grams":180,"fat_grams":60}}'
 ```
 
 Отговорът позволява сравнение **План vs Препоръка**:
@@ -1209,7 +1207,7 @@ The script expects `vendor/autoload.php` to reside one directory above the PHP f
 
 ## Поддръжка на макро данни
 
-Скриптът `scripts/migrate-final-plan-macros.js` попълва липсващите полета `caloriesMacros` в `USER_METADATA_KV`.
+Скриптът `scripts/migrate-final-plan-macros.js` попълва липсващите полета `caloriesMacros` (структура с `plan` и `recommendation`) в `USER_METADATA_KV`.
 За автоматизация е добавен `npm` скрипт:
 
 ```bash

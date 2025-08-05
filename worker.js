@@ -1570,7 +1570,15 @@ async function handleUpdatePlanRequest(request, env) {
             return { success: false, message: 'Невалидни данни за плана.', statusHint: 400 };
         }
         await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(planData));
-        const macrosRecord = { status: 'final', data: planData.caloriesMacros || null };
+        const macrosRecord = {
+            status: 'final',
+            data: planData.caloriesMacros
+                ? {
+                    plan: planData.caloriesMacros.plan,
+                    recommendation: planData.caloriesMacros.recommendation
+                }
+                : null
+        };
         await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'ready', { metadata: { status: 'ready' } });
         return { success: true, message: 'Планът е обновен успешно' };
