@@ -164,7 +164,8 @@ async function fillDashboard(data) {
       { l: 'Калории', v: macros.calories, s: 'kcal дневно' },
       { l: 'Протеини', v: macros.protein_grams, s: macros.protein_percent ? `${macros.protein_percent}% от калориите` : '' },
       { l: 'Въглехидрати', v: macros.carbs_grams, s: macros.carbs_percent ? `${macros.carbs_percent}% от калориите` : '' },
-      { l: 'Мазнини', v: macros.fat_grams, s: macros.fat_percent ? `${macros.fat_percent}% от калориите` : '' }
+      { l: 'Мазнини', v: macros.fat_grams, s: macros.fat_percent ? `${macros.fat_percent}% от калориите` : '' },
+      { l: 'Фибри', v: macros.fiber_grams, s: macros.fiber_percent ? `${macros.fiber_percent}% от калориите` : '' }
     ];
     list.forEach(item => {
       const col = document.createElement('div');
@@ -187,11 +188,21 @@ async function fillDashboard(data) {
       macroChartPlan = new Chart(ctxPlan, {
         type: 'doughnut',
         data: {
-          labels: [`Протеини (${m.protein_percent}%)`, `Въглехидрати (${m.carbs_percent}%)`, `Мазнини (${m.fat_percent}%)`],
+          labels: [
+            `Протеини (${m.protein_percent}%)`,
+            `Въглехидрати (${m.carbs_percent}%)`,
+            `Мазнини (${m.fat_percent}%)`,
+            `Фибри (${m.fiber_percent}%)`
+          ],
           datasets: [{
             label: 'Разпределение на макроси',
-            data: [m.protein_grams, m.carbs_grams, m.fat_grams],
-            backgroundColor: ['rgb(54,162,235)', 'rgb(255,205,86)', 'rgb(255,99,132)'],
+            data: [m.protein_grams, m.carbs_grams, m.fat_grams, m.fiber_grams],
+            backgroundColor: [
+              'rgb(54,162,235)',
+              'rgb(255,205,86)',
+              'rgb(255,99,132)',
+              '#6FCF97'
+            ],
             hoverOffset: 4
           }]
         },
@@ -209,11 +220,21 @@ async function fillDashboard(data) {
       macroChartAnalytics = new Chart(ctxAnal, {
         type: 'doughnut',
         data: {
-          labels: [`Протеини (${m.protein_percent}%)`, `Въглехидрати (${m.carbs_percent}%)`, `Мазнини (${m.fat_percent}%)`],
+          labels: [
+            `Протеини (${m.protein_percent}%)`,
+            `Въглехидрати (${m.carbs_percent}%)`,
+            `Мазнини (${m.fat_percent}%)`,
+            `Фибри (${m.fiber_percent}%)`
+          ],
           datasets: [{
             label: 'Разпределение на макроси',
-            data: [m.protein_grams, m.carbs_grams, m.fat_grams],
-            backgroundColor: ['rgb(54,162,235)', 'rgb(255,205,86)', 'rgb(255,99,132)'],
+            data: [m.protein_grams, m.carbs_grams, m.fat_grams, m.fiber_grams],
+            backgroundColor: [
+              'rgb(54,162,235)',
+              'rgb(255,205,86)',
+              'rgb(255,99,132)',
+              '#6FCF97'
+            ],
             hoverOffset: 4
           }]
         },

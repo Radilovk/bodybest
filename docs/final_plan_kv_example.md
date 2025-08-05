@@ -5,7 +5,7 @@
 ## Основни полета
 
 - `profileSummary` – кратък преглед на целта, медицинските особености и предпочитанията на потребителя.
-- `caloriesMacros` – обект с две части: `plan` и `recommendation`, всяка с калории и макронутриенти.
+- `caloriesMacros` – обект с две части: `plan` и `recommendation`, всяка с калории и макронутриенти (включително фибри).
 - `allowedForbiddenFoods` – списък с основни позволени и ограничени храни, включително допълнителни предложения.
 - `week1Menu` – меню по дни за първата седмица.
 - `principlesWeek2_4` – принципи и насоки за седмици 2‑4.
@@ -20,8 +20,22 @@
 
 ```json
 "caloriesMacros": {
-  "plan": { "calories": 1800, "protein_grams": 135, "carbs_grams": 180, "fat_grams": 60 },
-  "recommendation": { "calories": 1900, "protein_grams": 140, "carbs_grams": 190, "fat_grams": 65 }
+  "plan": {
+    "calories": 1800,
+    "protein_grams": 135,
+    "carbs_grams": 180,
+    "fat_grams": 60,
+    "fiber_percent": 10,
+    "fiber_grams": 30
+  },
+  "recommendation": {
+    "calories": 1900,
+    "protein_grams": 140,
+    "carbs_grams": 190,
+    "fat_grams": 65,
+    "fiber_percent": 12,
+    "fiber_grams": 35
+  }
 }
 ```
 
@@ -36,8 +50,22 @@
 {
   "status": "final",
   "data": {
-    "plan": { "calories": 1800, "protein_grams": 135, "carbs_grams": 180, "fat_grams": 60 },
-    "recommendation": { "calories": 1900, "protein_grams": 140, "carbs_grams": 190, "fat_grams": 65 }
+    "plan": {
+      "calories": 1800,
+      "protein_grams": 135,
+      "carbs_grams": 180,
+      "fat_grams": 60,
+      "fiber_percent": 10,
+      "fiber_grams": 30
+    },
+    "recommendation": {
+      "calories": 1900,
+      "protein_grams": 140,
+      "carbs_grams": 190,
+      "fat_grams": 65,
+      "fiber_percent": 12,
+      "fiber_grams": 35
+    }
   }
 }
 ```
