@@ -9,6 +9,7 @@ import { getNutrientOverride, addMealMacros, scaleMacros } from './macroUtils.js
 import { logMacroPayload } from '../utils/debug.js';
 import { ensureMacroAnalyticsElement } from './eventListeners.js';
 
+let macroAnalyticsComponentPromise;
 export let macroChartInstance = null;
 export let progressChartInstance = null;
 export let macroExceedThreshold = 1.15;
@@ -493,6 +494,9 @@ export async function populateDashboardMacros(macros) {
         logMacroPayload({ error: 'Invalid macro payload structure', payload });
         return;
     }
+    // Зареждаме компонента за макро анализ при първа нужда
+    macroAnalyticsComponentPromise ||= import('./macroAnalyticsCardComponent.js');
+    await macroAnalyticsComponentPromise;
     // Създаваме или взимаме макро-картата и я обновяваме с текущите данни
     const card = ensureMacroAnalyticsElement();
     if (typeof card.setData !== 'function') {

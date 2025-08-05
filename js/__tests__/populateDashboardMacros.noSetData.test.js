@@ -6,6 +6,7 @@ afterEach(() => {
 });
 
 function setupMocks(selectors) {
+  jest.unstable_mockModule('../macroAnalyticsCardComponent.js', () => ({}));
   jest.unstable_mockModule('../uiElements.js', () => ({ selectors, trackerInfoTexts: {}, detailedMetricInfoTexts: {} }));
   jest.unstable_mockModule('../utils.js', () => ({
     safeGet: () => {},

@@ -11,6 +11,7 @@ describe('renderPendingMacroChart', () => {
 
   beforeEach(async () => {
     jest.resetModules();
+    jest.unstable_mockModule('../macroAnalyticsCardComponent.js', () => ({}));
     document.body.innerHTML = `
       <div id="macroMetricsPreview"></div>
       <div id="analyticsCardsContainer"></div>
