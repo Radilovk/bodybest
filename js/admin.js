@@ -1847,18 +1847,20 @@ document.addEventListener('DOMContentLoaded', () => {
     generateEmailFieldsets();
     initEmailPreviews();
 
-    // Стартира асинхронните операции в отделен IIFE,
+    // Стартира асинхронните операции паралелно,
     // за да не блокират работата на интерфейса
     (async () => {
         await ensureLoggedIn();
-        await loadClients();
-        await checkForNotifications();
-        await loadNotifications();
         loadAdminToken();
-        await loadAiConfig();
-        await loadAiPresets();
-        if (emailSettingsForm) await loadEmailSettings();
-        if (testEmailSection?.open) await loadTestEmailTemplate();
+        await Promise.all([
+            loadClients(),
+            checkForNotifications(),
+            loadNotifications(),
+            loadAiConfig(),
+            loadAiPresets(),
+            emailSettingsForm ? loadEmailSettings() : Promise.resolve(),
+            testEmailSection?.open ? loadTestEmailTemplate() : Promise.resolve()
+        ]);
         setInterval(checkForNotifications, 60000);
         setInterval(loadNotifications, 60000);
     })();
