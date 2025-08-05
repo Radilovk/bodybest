@@ -709,7 +709,12 @@ function renderClients() {
         btn.addEventListener('click', () => showClient(c.userId));
         li.appendChild(btn);
 
-        const needsPlan = c.status === 'pending' || c.status === 'error' || c.status === 'unknown';
+        // Позволява повторно генериране дори при зациклил статус "В процес"
+        const needsPlan =
+            c.status === 'pending' ||
+            c.status === 'error' ||
+            c.status === 'unknown' ||
+            c.status === 'processing';
         if (needsPlan) {
             const regen = document.createElement('button');
             regen.className = 'regen-plan-btn button-small';
