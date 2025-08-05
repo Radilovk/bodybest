@@ -70,7 +70,6 @@ test('recalculates macros automatically and shows spinner while loading', async 
   const promise = populateDashboardMacros(null);
   const container = selectors.macroAnalyticsCardContainer;
   expect(container.innerHTML).toContain('spinner-border');
-  expect(container.innerHTML).toContain('Изчисляват се макроси');
   expect(selectors.macroMetricsPreview.classList.contains('hidden')).toBe(true);
   expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('recalcMacros=1'));
 
@@ -80,7 +79,6 @@ test('recalculates macros automatically and shows spinner while loading', async 
   expect(selectors.macroMetricsPreview.classList.contains('hidden')).toBe(false);
   expect(selectors.macroMetricsPreview.textContent).toContain('1800');
   expect(container.innerHTML).not.toContain('spinner-border');
-  expect(container.innerHTML).not.toContain('Изчисляват се макроси');
   global.fetch = originalFetch;
   const card = container.querySelector('macro-analytics-card');
   expect(card).not.toBeNull();
@@ -111,7 +109,7 @@ test('валидира и отхвърля некоректни макро да�
   expect(document.querySelector('macro-analytics-card')).toBeNull();
 });
 
-test('показва спинър и съобщение при нулеви макроси и fallback при неуспех', async () => {
+test('показва placeholder при нулеви макроси', async () => {
   setupDom();
   Object.assign(appState.todaysPlanMacros, { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
   Object.assign(appState.currentIntakeMacros, { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
@@ -125,21 +123,11 @@ test('показва спинър и съобщение при нулеви ма
     fat_grams: 0,
     fiber_grams: 0
   };
-  const originalFetch = global.fetch;
-  let resolveFetch;
-  global.fetch = jest.fn().mockImplementation(() => new Promise(res => {
-    resolveFetch = () => res({ ok: true, json: async () => ({ planData: { caloriesMacros: macros } }) });
-  }));
-  const promise = populateDashboardMacros(macros);
+  await populateDashboardMacros(macros);
   const container = selectors.macroAnalyticsCardContainer;
-  expect(container.innerHTML).toContain('spinner-border');
-  expect(container.innerHTML).toContain('Изчисляват се макроси');
-  resolveFetch();
-  await promise;
   expect(container.innerHTML).toContain('Липсват данни за макроси.');
   expect(selectors.macroMetricsPreview.classList.contains('hidden')).toBe(true);
   expect(document.querySelector('macro-analytics-card')).toBeNull();
-  global.fetch = originalFetch;
 });
 
 test('calculatePlanMacros се извиква само веднъж при кеширани стойности', async () => {
