@@ -1540,15 +1540,15 @@ async function handleUpdateProfileRequest(request, env) {
 // ------------- START FUNCTION: handleRegeneratePlanRequest -------------
 async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = processSingleUserPlan) {
     try {
-        const { userId } = await request.json();
+        const { userId, priorityGuidance } = await request.json();
         if (!userId) {
             return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
         }
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'processing', { metadata: { status: 'processing' } });
         if (ctx) {
-            ctx.waitUntil(planProcessor(userId, env));
+            ctx.waitUntil(planProcessor(userId, env, priorityGuidance));
         } else {
-            await planProcessor(userId, env);
+            await planProcessor(userId, env, priorityGuidance);
         }
         return { success: true, message: 'Генерирането на нов план стартира.' };
     } catch (error) {
@@ -2775,7 +2775,7 @@ async function handleSetMaintenanceMode(request, env) {
 // ------------- END BLOCK: PlanGenerationHeaderComment -------------
 
 // ------------- START FUNCTION: processSingleUserPlan -------------
-async function processSingleUserPlan(userId, env) {
+async function processSingleUserPlan(userId, env, priorityGuidance = '') {
     console.log(`PROCESS_USER_PLAN (${userId}): Starting plan generation.`);
     try {
         console.log(`PROCESS_USER_PLAN (${userId}): Step 0 - Loading prerequisites.`);
@@ -2882,6 +2882,9 @@ async function processSingleUserPlan(userId, env) {
         if (pendingPlanModText) {
             finalPrompt += `\n\n[PLAN_MODIFICATION]\n${pendingPlanModText}`;
         }
+        if (priorityGuidance) {
+            finalPrompt += `\n\n[PRIORITY_GUIDANCE]\n${priorityGuidance}`;
+        }
         let generatedPlanObject = null; let rawAiResponse = "";
         try {
             console.log(`PROCESS_USER_PLAN (${userId}): Calling model ${planModelName} for unified plan. Prompt length: ${finalPrompt.length}`);
@@ -2895,6 +2898,20 @@ async function processSingleUserPlan(userId, env) {
             console.log(`PROCESS_USER_PLAN (${userId}): Unified plan JSON parsed successfully.`);
             const { generationMetadata, ...restOfGeneratedPlan } = generatedPlanObject;
             Object.assign(planBuilder, restOfGeneratedPlan);
+            const ensureFiber = (macros) => {
+                if (!macros) return;
+                const { calories, fiber_percent, fiber_grams } = macros;
+                if (fiber_percent == null && fiber_grams != null && calories) {
+                    macros.fiber_percent = Math.round((fiber_grams * 2 * 100) / calories);
+                }
+                if (fiber_grams == null && fiber_percent != null && calories) {
+                    macros.fiber_grams = Math.round((calories * fiber_percent) / 100 / 2);
+                }
+            };
+            if (planBuilder.caloriesMacros) {
+                ensureFiber(planBuilder.caloriesMacros.plan);
+                ensureFiber(planBuilder.caloriesMacros.recommendation);
+            }
             if (generationMetadata && Array.isArray(generationMetadata.errors)) planBuilder.generationMetadata.errors.push(...generationMetadata.errors);
         } catch (e) {
             const errorMsg = `Unified Plan Generation Error for ${userId}: ${e.message}. Raw response (start): ${rawAiResponse.substring(0, 500)}...`;

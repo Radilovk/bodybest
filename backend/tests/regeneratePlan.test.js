@@ -1,8 +1,8 @@
 import { jest } from '@jest/globals';
 import { handleRegeneratePlanRequest } from '../../worker.js';
 
-describe('handleRegeneratePlanRequest', () => {
-  test('стартира генерирането и предава priorityGuidance', async () => {
+describe('POST /api/regeneratePlan', () => {
+  test('предава priorityGuidance към процесора', async () => {
     const env = { USER_METADATA_KV: { put: jest.fn() } };
     const ctx = { waitUntil: jest.fn() };
     const mockProcessor = jest.fn().mockResolvedValue();
