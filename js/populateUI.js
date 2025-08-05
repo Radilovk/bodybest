@@ -5,7 +5,7 @@ import { generateId, apiEndpoints, standaloneMacroUrl } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake, currentUserId, todaysPlanMacros } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
-import { getNutrientOverride, addMealMacros, scaleMacros } from './macroUtils.js';
+import { getNutrientOverride, scaleMacros } from './macroUtils.js';
 import { logMacroPayload } from '../utils/debug.js';
 import { ensureMacroAnalyticsElement } from './eventListeners.js';
 
@@ -365,7 +365,6 @@ export function addExtraMealWithOverride(name = '', macros = {}, grams) {
     const scaled = gramValue ? scaleMacros(base, gramValue) : base;
     const entry = gramValue ? { ...scaled, grams: gramValue } : scaled;
     todaysExtraMeals.push(entry);
-    addMealMacros(entry, currentIntakeMacros);
     loadCurrentIntake();
     populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
 }
