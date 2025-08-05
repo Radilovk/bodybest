@@ -2006,7 +2006,6 @@ async function handleAnalyzeInitialAnswers(userId, env) {
             return;
         }
         const answers = safeParseJson(answersStr, {});
-        const macros = estimateMacros(answers);
         const promptTpl = await env.RESOURCES_KV.get('prompt_questionnaire_analysis');
         const modelName = await env.RESOURCES_KV.get('model_questionnaire_analysis');
         const provider = getModelProvider(modelName);
@@ -2020,8 +2019,6 @@ async function handleAnalyzeInitialAnswers(userId, env) {
         const raw = await callModel(modelName, populated, env, { temperature: 0.5, maxTokens: 2500 });
         const cleaned = cleanGeminiJson(raw);
         await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
-        const macrosRecord = { status: 'initial', data: macros };
-        await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'ready');
         console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
         // Имейлът с линк към анализа вече се изпраща при подаване на въпросника,
