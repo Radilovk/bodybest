@@ -8,7 +8,9 @@
       "fat_percent": 30,
       "protein_grams": 135,
       "carbs_grams": 180,
-      "fat_grams": 60
+      "fat_grams": 60,
+      "fiber_percent": 10,
+      "fiber_grams": 30
     },
     "recommendation": {
       "calories": 1900,
@@ -17,7 +19,9 @@
       "fat_percent": 30,
       "protein_grams": 140,
       "carbs_grams": 190,
-      "fat_grams": 65
+      "fat_grams": 65,
+      "fiber_percent": 12,
+      "fiber_grams": 35
     }
   },
   "allowedForbiddenFoods": {
