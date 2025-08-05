@@ -8,6 +8,7 @@ let selectors;
 let appState;
 let macroUtils;
 
+jest.unstable_mockModule('../macroAnalyticsCardComponent.js', () => ({}));
 jest.unstable_mockModule('../eventListeners.js', () => ({
   ensureMacroAnalyticsElement: jest.fn(() => {
     let el = document.querySelector('macro-analytics-card');
