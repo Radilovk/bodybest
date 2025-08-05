@@ -33,7 +33,7 @@ test('динамичният импорт на macroAnalyticsCardComponent се 
     fullDashboardData: {},
     todaysMealCompletionStatus: {},
     todaysExtraMeals: [],
-    todaysPlanMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+    todaysPlanMacros: { calories: 2000, protein: 150, carbs: 200, fat: 70, fiber: 30 },
     currentIntakeMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),

@@ -26,7 +26,7 @@ function setupMocks(selectors) {
     fullDashboardData: {},
     todaysMealCompletionStatus: {},
     todaysExtraMeals: [],
-    todaysPlanMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+    todaysPlanMacros: { calories: 1800, protein: 120, carbs: 200, fat: 60, fiber: 30 },
     currentIntakeMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),
