@@ -1537,12 +1537,62 @@ async function handleUpdateProfileRequest(request, env) {
 }
 // ------------- END FUNCTION: handleUpdateProfileRequest -------------
 
+// ------------- START FUNCTION: validatePlanPrerequisites -------------
+async function validatePlanPrerequisites(env, userId) {
+    const [
+        modelName,
+        promptTemplate,
+        initialAnswersStr
+    ] = await Promise.all([
+        env.RESOURCES_KV.get('model_plan_generation'),
+        env.RESOURCES_KV.get('prompt_unified_plan_generation_v2'),
+        env.USER_METADATA_KV.get(`${userId}_initial_answers`)
+    ]);
+    if (!initialAnswersStr) {
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        return { ok: false, message: 'Липсват първоначални отговори.' };
+    }
+    let parsedInitial;
+    try {
+        parsedInitial = JSON.parse(initialAnswersStr);
+    } catch {
+        parsedInitial = null;
+    }
+    if (!parsedInitial || typeof parsedInitial !== 'object' || Object.keys(parsedInitial).length === 0) {
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        return { ok: false, message: 'Некоректни първоначални отговори.' };
+    }
+    if (!modelName) {
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        return { ok: false, message: 'Липсва model_plan_generation.' };
+    }
+    if (!promptTemplate) {
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        return { ok: false, message: 'Липсва prompt_unified_plan_generation_v2.' };
+    }
+    const provider = getModelProvider(modelName);
+    if (provider === 'gemini' && !env[GEMINI_API_KEY_SECRET_NAME]) {
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        return { ok: false, message: 'Липсва GEMINI_API_KEY.' };
+    }
+    if (provider === 'openai' && !env[OPENAI_API_KEY_SECRET_NAME]) {
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        return { ok: false, message: 'Липсва OPENAI_API_KEY.' };
+    }
+    return { ok: true };
+}
+// ------------- END FUNCTION: validatePlanPrerequisites -------------
+
 // ------------- START FUNCTION: handleRegeneratePlanRequest -------------
 async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = processSingleUserPlan) {
     try {
         const { userId, priorityGuidance } = await request.json();
         if (!userId) {
             return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
+        }
+        const precheck = await validatePlanPrerequisites(env, userId);
+        if (!precheck.ok) {
+            return { success: false, message: precheck.message, statusHint: 400 };
         }
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'processing', { metadata: { status: 'processing' } });
         if (ctx) {
@@ -2778,6 +2828,11 @@ async function handleSetMaintenanceMode(request, env) {
 async function processSingleUserPlan(userId, env, priorityGuidance = '') {
     console.log(`PROCESS_USER_PLAN (${userId}): Starting plan generation.`);
     try {
+        const precheck = await validatePlanPrerequisites(env, userId);
+        if (!precheck.ok) {
+            console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${precheck.message}`);
+            return;
+        }
         console.log(`PROCESS_USER_PLAN (${userId}): Step 0 - Loading prerequisites.`);
         const initialAnswersString = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
         const previousPlanStr = await env.USER_METADATA_KV.get(`${userId}_final_plan`);
