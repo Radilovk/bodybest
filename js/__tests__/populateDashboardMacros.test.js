@@ -109,6 +109,27 @@ test('валидира и отхвърля некоректни макро да�
   expect(document.querySelector('macro-analytics-card')).toBeNull();
 });
 
+test('показва placeholder при нулеви макроси', async () => {
+  setupDom();
+  Object.assign(appState.todaysPlanMacros, { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+  Object.assign(appState.currentIntakeMacros, { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+  const macros = {
+    calories: 0,
+    protein_percent: 0,
+    carbs_percent: 0,
+    fat_percent: 0,
+    protein_grams: 0,
+    carbs_grams: 0,
+    fat_grams: 0,
+    fiber_grams: 0
+  };
+  await populateDashboardMacros(macros);
+  const container = selectors.macroAnalyticsCardContainer;
+  expect(container.innerHTML).toContain('Липсват данни за макроси.');
+  expect(selectors.macroMetricsPreview.classList.contains('hidden')).toBe(true);
+  expect(document.querySelector('macro-analytics-card')).toBeNull();
+});
+
 test('calculatePlanMacros се извиква само веднъж при кеширани стойности', async () => {
   jest.resetModules();
   const calcMock = jest.fn().mockReturnValue({ calories: 100, protein: 10, carbs: 20, fat: 5, fiber: 3 });
