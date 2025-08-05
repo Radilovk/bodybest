@@ -51,8 +51,8 @@
     --header-bg-solid: rgb(40, 40, 60);
     /* Цвят на мобилното меню - следва хедъра */
     --mobile-menu-bg: var(--header-bg-solid);
-    --text-color-primary: #e0e6f0;
-    --text-color-secondary: #a0b0c5;
+    --text-color-primary: #E0E0E0;
+    --text-color-secondary: #A0A5C0;
     --border-color: rgba(91, 192, 190, 0.2);
     --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.2);
     --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.25);

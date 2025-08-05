@@ -35,7 +35,7 @@ template.innerHTML = `
       font-size: 1.25rem;
       font-weight: 600;
       margin-bottom: 1.5rem;
-      color: var(--text-color);
+      color: var(--text-color-primary, #E0E0E0);
     }
     .chart-container {
       position: relative;
@@ -68,11 +68,11 @@ template.innerHTML = `
       font-size: 2.5rem;
       font-weight: 700;
       line-height: 1.1;
-      color: var(--text-color);
+      color: var(--text-color-primary, #E0E0E0);
     }
     .chart-center-text .total-calories-label {
       font-size: 0.8rem;
-      color: var(--text-secondary-color);
+      color: var(--text-color-secondary, #A0A5C0);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -115,7 +115,7 @@ template.innerHTML = `
     .macro-icon { font-size: 1.2rem; }
     .macro-label { font-size: 0.85rem; margin-top: 0.25rem; }
     .macro-value { font-size: 1.1rem; font-weight: 600; }
-    .macro-subtitle { font-size: 0.75rem; color: var(--text-secondary-color); }
+    .macro-subtitle { font-size: 0.75rem; color: var(--text-color-secondary, #A0A5C0); }
 
     .macro-warning {
       margin-top: 0.75rem;
