@@ -1039,7 +1039,6 @@ async function handleAnalysisStatusRequest(request, env) {
 async function handleDashboardDataRequest(request, env) {
     const url = new URL(request.url);
     const userId = url.searchParams.get('userId');
-    const recalcMacros = url.searchParams.get('recalcMacros');
     if (!userId) return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
     try {
         const [
@@ -1145,17 +1144,14 @@ async function handleDashboardDataRequest(request, env) {
             return { ...baseResponse, success: false, message: 'Грешка при зареждане на данните на Вашия план.', statusHint: 500, planData: null, analytics: null };
         }
 
-        if (!finalPlan.caloriesMacros || Object.keys(finalPlan.caloriesMacros).length === 0 || recalcMacros === '1') {
-            const macros = estimateMacros(initialAnswers);
-            if (macros) {
-                finalPlan.caloriesMacros = macros;
-                await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(finalPlan));
-            }
+        if (!finalPlan.caloriesMacros || Object.keys(finalPlan.caloriesMacros).length === 0) {
+            console.error(`DASHBOARD_DATA (${userId}): Missing caloriesMacros in final plan.`);
+            return { ...baseResponse, success: false, message: 'Планът няма макроси; изисква се повторно генериране', statusHint: 500, planData: null, analytics: null };
         }
 
         const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries, currentStatus, env); // Добавен userId
         const planDataForClient = { ...finalPlan };
-        
+
         console.log(`DASHBOARD_DATA (${userId}): Successfully fetched data. Plan status: ${actualPlanStatus}.`);
         return { ...baseResponse, planData: planDataForClient, analytics: analyticsData };
 
