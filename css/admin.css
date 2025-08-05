@@ -18,6 +18,10 @@ body {
   display: flex;
   gap: 5px;
 }
+#clientsList {
+  max-height: 400px;
+  overflow-y: auto;
+}
 #clientsList .client-open {
   flex: 1;
   text-align: left;

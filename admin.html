@@ -225,7 +225,8 @@
   <details class="sidebar card" id="clientsSection">
     <summary class="clients-summary">Клиенти</summary>
     <div id="clientsControls" class="clients-controls">
-      <input id="clientSearch" placeholder="Търсене по име">
+      <input id="clientSearch" list="clientSuggestions" placeholder="Търсене по име или имейл">
+      <datalist id="clientSuggestions"></datalist>
       <select id="statusFilter">
         <option value="all">Всички</option>
         <option value="pending">pending</option>
