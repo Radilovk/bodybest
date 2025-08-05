@@ -455,7 +455,7 @@ export async function populateDashboardMacros(macros) {
     }
     if (!macros) {
         renderMacroPreviewGrid(null);
-        macroContainer.innerHTML = '<div class="spinner-border" role="status"></div>';
+        macroContainer.innerHTML = '<div class="spinner-border" role="status"></div><p class="placeholder">Изчисляват се макроси...</p>';
         try {
             const res = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}&recalcMacros=1`);
             const data = await res.json();
@@ -495,17 +495,20 @@ export async function populateDashboardMacros(macros) {
     }
     if (isAllZero(plan) && isAllZero(current)) {
         renderMacroPreviewGrid(null);
-        macroContainer.innerHTML = '<p class="placeholder">Липсват данни за макроси.</p>';
+        macroContainer.innerHTML = '<div class="spinner-border" role="status"></div><p class="placeholder">Изчисляват се макроси...</p>';
         try {
             const res = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}&recalcMacros=1`);
             const data = await res.json();
             const newMacros = data?.planData?.caloriesMacros;
             if (newMacros && !(isAllZero(newMacros.plan) && isAllZero(newMacros.current))) {
                 await populateDashboardMacros(newMacros);
+            } else {
+                macroContainer.innerHTML = '<p class="placeholder">Липсват данни за макроси.</p>';
             }
         } catch (e) {
             console.error('Failed to recalc macros', e);
             showToast('Неуспешно изчисляване на макроси.', true);
+            macroContainer.innerHTML = '<p class="placeholder">Липсват данни за макроси.</p>';
         }
         return;
     }
