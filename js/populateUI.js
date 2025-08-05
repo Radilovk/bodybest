@@ -445,7 +445,6 @@ export function validateMacroPayload({ plan, current }) {
 }
 
 export async function populateDashboardMacros(macros) {
-    renderMacroPreviewGrid(macros);
     let macroContainer = selectors.macroAnalyticsCardContainer;
     if (!macroContainer || !document.contains(macroContainer)) {
         macroContainer = document.createElement('div');
@@ -455,6 +454,7 @@ export async function populateDashboardMacros(macros) {
         selectors.macroAnalyticsCardContainer = macroContainer;
     }
     if (!macros) {
+        renderMacroPreviewGrid(null);
         macroContainer.innerHTML = '<div class="spinner-border" role="status"></div>';
         try {
             const res = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}&recalcMacros=1`);
@@ -472,7 +472,6 @@ export async function populateDashboardMacros(macros) {
         }
         return;
     }
-    macroContainer.innerHTML = '';
     const plan = {
         calories: todaysPlanMacros.calories,
         protein_grams: todaysPlanMacros.protein,
@@ -488,11 +487,30 @@ export async function populateDashboardMacros(macros) {
         fiber_grams: currentIntakeMacros.fiber
     };
     const payload = { plan, current };
+    const isAllZero = obj => Object.values(obj || {}).every(v => Number(v) === 0);
     if (!validateMacroPayload(payload)) {
         console.warn('Невалидна структура на макро-данните', payload);
         logMacroPayload({ error: 'Invalid macro payload structure', payload });
         return;
     }
+    if (isAllZero(plan) && isAllZero(current)) {
+        renderMacroPreviewGrid(null);
+        macroContainer.innerHTML = '<p class="placeholder">Липсват данни за макроси.</p>';
+        try {
+            const res = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}&recalcMacros=1`);
+            const data = await res.json();
+            const newMacros = data?.planData?.caloriesMacros;
+            if (newMacros && !(isAllZero(newMacros.plan) && isAllZero(newMacros.current))) {
+                await populateDashboardMacros(newMacros);
+            }
+        } catch (e) {
+            console.error('Failed to recalc macros', e);
+            showToast('Неуспешно изчисляване на макроси.', true);
+        }
+        return;
+    }
+    renderMacroPreviewGrid(macros);
+    macroContainer.innerHTML = '';
     // Зареждаме компонента за макро анализ при първа нужда
     macroAnalyticsComponentPromise ||= import('./macroAnalyticsCardComponent.js');
     await macroAnalyticsComponentPromise;
