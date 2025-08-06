@@ -1057,24 +1057,6 @@ async function showClient(userId) {
             detailsSection.classList.remove('hidden');
             resetTabs();
             openDetailsSections();
-            if (regenBtn) {
-                try {
-                    const resp = await fetch(`${apiEndpoints.checkPlanPrerequisites}?userId=${encodeURIComponent(userId)}`);
-                    const prereq = await resp.json().catch(() => ({}));
-                    if (resp.ok && prereq.success && prereq.ok) {
-                        regenBtn.disabled = false;
-                        regenProgress?.classList.add('hidden');
-                    } else {
-                        regenBtn.disabled = true;
-                        if (regenProgress) {
-                            regenProgress.textContent = (prereq.message || '').toLowerCase();
-                            regenProgress.classList.remove('hidden');
-                        }
-                    }
-                } catch {
-                    regenBtn.disabled = true;
-                }
-            }
             const clientInfo = allClients.find(c => c.userId === userId);
             const regDate = clientInfo?.registrationDate ? new Date(clientInfo.registrationDate).toLocaleDateString('bg-BG') : '';
             const name = clientInfo?.name || data.name || userId;
