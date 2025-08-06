@@ -52,6 +52,7 @@ test('деактивира и реактивира бутона', async () => {
   regenBtn.click();
   document.getElementById('priorityGuidanceConfirm').click();
   await Promise.resolve();
+  await Promise.resolve();
   expect(regenBtn.disabled).toBe(true);
   jest.advanceTimersByTime(3000);
   await Promise.resolve();
