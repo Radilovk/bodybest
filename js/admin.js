@@ -106,13 +106,10 @@ async function hasPlanPrerequisites(userId) {
     try {
         const resp = await fetch(`${apiEndpoints.checkPlanPrerequisites}?userId=${encodeURIComponent(userId)}`);
         const data = await resp.json();
-        if (!resp.ok || !data.success) {
-            return { ok: false, missing: [], message: data.message };
-        }
-        return { ok: data.ok, missing: data.missing || [], message: data.message };
+        return resp.ok && data.success && data.ok;
     } catch (err) {
         console.error('prereq check error', err);
-        return { ok: false, missing: [], message: 'Грешка при проверка на prerequisites.' };
+        return false;
     }
 }
 
@@ -729,8 +726,8 @@ async function renderClients() {
             c.status === 'unknown' ||
             c.status === 'processing';
         if (needsPlan) {
-            const precheck = await hasPlanPrerequisites(c.userId);
-            if (precheck.ok) {
+            const ok = await hasPlanPrerequisites(c.userId);
+            if (ok) {
                 const regen = document.createElement('button');
                 regen.className = 'regen-plan-btn button-small';
                 regen.textContent = 'Нов план';
@@ -745,7 +742,7 @@ async function renderClients() {
             } else {
                 const msg = document.createElement('span');
                 msg.className = 'regen-missing-msg';
-                msg.textContent = `липсват: ${precheck.missing.join(', ')}`;
+                msg.textContent = 'липсват данни за регенериране';
                 li.appendChild(msg);
             }
         }
