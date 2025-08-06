@@ -43,6 +43,8 @@ export const apiEndpoints = {
     getClientReplies: `${workerBaseUrl}/api/getClientReplies`,
     peekClientReplies: `${workerBaseUrl}/api/peekClientReplies`,
     getFeedbackMessages: `${workerBaseUrl}/api/getFeedbackMessages`,
+    listUserKv: `${workerBaseUrl}/api/listUserKv`,
+    updateKv: `${workerBaseUrl}/api/updateKv`,
     getPlanModificationPrompt: `${workerBaseUrl}/api/getPlanModificationPrompt`,
     regeneratePlan: `${workerBaseUrl}/api/regeneratePlan`,
     checkPlanPrerequisites: `${workerBaseUrl}/api/checkPlanPrerequisites`,
