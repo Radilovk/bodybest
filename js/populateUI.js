@@ -202,7 +202,19 @@ function populateDashboardDetailedAnalytics(analyticsData) {
     }
     cardsContainer.innerHTML = '';
     if (macroContainer) {
-        macroContainer.innerHTML = '';
+        macroContainer.classList.add('loading');
+        macroContainer.innerHTML = `
+            <h5></h5>
+            <div class="chart-container">
+                <div class="chart-skeleton skeleton"></div>
+            </div>
+            <div class="macro-metrics-grid">
+                <div class="macro-metric metric-skeleton skeleton"></div>
+                <div class="macro-metric metric-skeleton skeleton"></div>
+                <div class="macro-metric metric-skeleton skeleton"></div>
+                <div class="macro-metric metric-skeleton skeleton"></div>
+                <div class="macro-metric metric-skeleton skeleton"></div>
+            </div>`;
         cardsContainer.appendChild(macroContainer);
     }
     textualAnalysisContainer.innerHTML = '';
@@ -440,6 +452,7 @@ export async function populateDashboardMacros(macros) {
     if (!macroContainer || !document.contains(macroContainer)) {
         macroContainer = document.createElement('div');
         macroContainer.id = 'macroAnalyticsCardContainer';
+        macroContainer.className = 'card analytics-card';
         selectors.analyticsCardsContainer?.appendChild(macroContainer);
         selectors.macroAnalyticsCardContainer = macroContainer;
     }
@@ -483,12 +496,10 @@ export async function populateDashboardMacros(macros) {
         return;
     }
     // Зареждаме компонента за макро анализ при първа нужда
+    macroAnalyticsComponentPromise ||= import('./macroAnalyticsCardComponent.js');
+    await macroAnalyticsComponentPromise;
     // Създаваме или взимаме макро-картата и я обновяваме с текущите данни
     const card = ensureMacroAnalyticsElement();
-    if (typeof card.setData !== 'function') {
-        macroAnalyticsComponentPromise ||= import('./macroAnalyticsCardComponent.js');
-        await macroAnalyticsComponentPromise;
-    }
     if (typeof card.setData !== 'function') {
         console.warn('macro-analytics-card не е зареден');
         return;
