@@ -1,10 +1,7 @@
-import { hexToRgb } from './utils.js';
-
 let ChartLib;
 let subtleGlowRegistered = false;
-const GLOW_OFFSET = 10;
 
-export const subtleGlowPlugin = {
+const subtleGlowPlugin = {
   id: 'subtleGlow',
   afterDatasetsDraw(chart) {
     const { ctx } = chart;
@@ -16,8 +13,7 @@ export const subtleGlowPlugin = {
           ? dataset.backgroundColor[i]
           : dataset.backgroundColor;
         ctx.shadowColor = bg;
-        ctx.shadowBlur = 12;
-        ctx.globalCompositeOperation = 'lighter';
+        ctx.shadowBlur = 8;
         ctx.fillStyle = bg;
         ctx.beginPath();
         ctx.arc(element.x, element.y, element.outerRadius, element.startAngle, element.endAngle);
@@ -31,26 +27,6 @@ export const subtleGlowPlugin = {
         );
         ctx.closePath();
         ctx.fill();
-
-        const gradient = ctx.createRadialGradient(
-          element.x,
-          element.y,
-          0,
-          element.x,
-          element.y,
-          element.outerRadius + GLOW_OFFSET
-        );
-        const innerStop = element.outerRadius / (element.outerRadius + GLOW_OFFSET);
-        gradient.addColorStop(0, bg);
-        gradient.addColorStop(innerStop, bg);
-        const rgb = hexToRgb(bg);
-        const outer = rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)` : bg;
-        gradient.addColorStop(1, outer);
-        ctx.strokeStyle = gradient;
-        ctx.lineWidth = GLOW_OFFSET;
-        ctx.beginPath();
-        ctx.arc(element.x, element.y, element.outerRadius, element.startAngle, element.endAngle);
-        ctx.stroke();
       });
       ctx.restore();
     });
