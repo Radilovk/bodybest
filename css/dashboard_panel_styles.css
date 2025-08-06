@@ -173,6 +173,19 @@ body.vivid-theme .index-card .index-value {
   width: 100%;
   border: 0;
 }
+
+#macroAnalyticsCardContainer {
+  --card-bg: #2C314A;
+  --card-bg-rgb: 44,49,74;
+  --card-bg-opacity: 1;
+  --text-color-primary: #E0E0E0;
+  --text-color-secondary: #A0A5C0;
+  --macro-protein-color: #5BC0BE;
+  --macro-carbs-color: #FFD166;
+  --macro-fat-color: #FF6B6B;
+  --macro-fiber-color: #6FCF97;
+  color: var(--text-color-primary);
+}
 .metric-current-text {
   margin-bottom: var(--space-sm);
   font-weight: 600;
