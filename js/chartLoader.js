@@ -1,9 +1,7 @@
 let ChartLib;
 let subtleGlowRegistered = false;
 
-export const GLOW_OFFSET = 6;
-
-export const subtleGlowPlugin = {
+const subtleGlowPlugin = {
   id: 'subtleGlow',
   afterDatasetsDraw(chart) {
     const { ctx } = chart;
@@ -15,21 +13,14 @@ export const subtleGlowPlugin = {
           ? dataset.backgroundColor[i]
           : dataset.backgroundColor;
         ctx.shadowColor = bg;
-        ctx.shadowBlur = 4;
-        ctx.lineWidth = GLOW_OFFSET;
+        ctx.shadowBlur = 8;
         ctx.fillStyle = bg;
         ctx.beginPath();
+        ctx.arc(element.x, element.y, element.outerRadius, element.startAngle, element.endAngle);
         ctx.arc(
           element.x,
           element.y,
-          element.outerRadius + GLOW_OFFSET,
-          element.startAngle,
-          element.endAngle
-        );
-        ctx.arc(
-          element.x,
-          element.y,
-          element.innerRadius + 1,
+          element.innerRadius,
           element.endAngle,
           element.startAngle,
           true
