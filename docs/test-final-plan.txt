@@ -1,0 +1,792 @@
+{
+  "profileSummary": "Потребител с цел Отслабване, има Инсулинова резистентност и Лактозна непоносимост, предпочита Вегетариански режим и има Средно ниво на активност. Текущо тегло N/A (промяна за 7 дни: N/A).",
+  "caloriesMacros": {
+    "plan": {
+      "calories": 1600,
+      "protein_percent": 30,
+      "carbs_percent": 45,
+      "fat_percent": 25,
+      "fiber_percent": 10,
+      "protein_grams": 120,
+      "carbs_grams": 180,
+      "fat_grams": 44,
+      "fiber_grams": 40
+    },
+    "recommendation": {
+      "calories": 1700,
+      "protein_percent": 30,
+      "carbs_percent": 45,
+      "fat_percent": 25,
+      "fiber_percent": 10,
+      "protein_grams": 128,
+      "carbs_grams": 191,
+      "fat_grams": 47,
+      "fiber_grams": 43
+    }
+  },
+  "week1Menu": {
+    "monday": [
+      {
+        "meal_name": "Закуска",
+        "macros": {
+          "calories": 300,
+          "protein_grams": 25,
+          "carbs_grams": 30,
+          "fat_grams": 8,
+          "fiber_grams": 5
+        },
+        "items": [
+          {
+            "name": "Протеинов шейк с бадемово мляко",
+            "grams": "250ml"
+          },
+          {
+            "name": "Протеин на прах (веган)",
+            "grams": "25g"
+          },
+          {
+            "name": "Горски плодове",
+            "grams": "100g"
+          }
+        ],
+        "recipeKey": "z-01"
+      },
+      {
+        "meal_name": "Обяд",
+        "macros": {
+          "calories": 450,
+          "protein_grams": 35,
+          "carbs_grams": 50,
+          "fat_grams": 15,
+          "fiber_grams": 10
+        },
+        "items": [
+          {
+            "name": "Леща",
+            "grams": "300g"
+          },
+          {
+            "name": "Зелена салата",
+            "grams": "100g"
+          },
+          {
+            "name": "Пълнозърнест хляб",
+            "grams": "1 филия"
+          }
+        ],
+        "recipeKey": "o-04"
+      },
+      {
+        "meal_name": "Вечеря",
+        "macros": {
+          "calories": 400,
+          "protein_grams": 30,
+          "carbs_grams": 40,
+          "fat_grams": 15,
+          "fiber_grams": 8
+        },
+        "items": [
+          {
+            "name": "Тофу на скара",
+            "grams": "150g"
+          },
+          {
+            "name": "Задушени зеленчуци (броколи, чушки, моркови)",
+            "grams": "200g"
+          }
+        ],
+        "recipeKey": "v-02"
+      }
+    ],
+    "tuesday": [
+      {
+        "meal_name": "Закуска",
+        "macros": {
+          "calories": 350,
+          "protein_grams": 15,
+          "carbs_grams": 40,
+          "fat_grams": 15,
+          "fiber_grams": 7
+        },
+        "items": [
+          {
+            "name": "Смути с чиа и бадемово мляко",
+            "grams": "250ml"
+          },
+          {
+            "name": "Чиа семена",
+            "grams": "15g"
+          },
+          {
+            "name": "Ягоди",
+            "grams": "150g"
+          }
+        ],
+        "recipeKey": "z-04"
+      },
+      {
+        "meal_name": "Обяд",
+        "macros": {
+          "calories": 450,
+          "protein_grams": 30,
+          "carbs_grams": 55,
+          "fat_grams": 15,
+          "fiber_grams": 12
+        },
+        "items": [
+          {
+            "name": "Салата с киноа, нахут и зеленчуци",
+            "grams": "350g"
+          },
+          {
+            "name": "Зехтин и лимонов сок",
+            "grams": "2 с.л."
+          }
+        ],
+        "recipeKey": "o-05"
+      },
+      {
+        "meal_name": "Вечеря",
+        "macros": {
+          "calories": 400,
+          "protein_grams": 35,
+          "carbs_grams": 35,
+          "fat_grams": 15,
+          "fiber_grams": 10
+        },
+        "items": [
+          {
+            "name": "Вегетариански бургер (без глутен)",
+            "grams": "1 бр."
+          },
+          {
+            "name": "Салата от рукола и домати",
+            "grams": "150g"
+          }
+        ],
+        "recipeKey": "v-03"
+      }
+    ],
+    "wednesday": [
+      {
+        "meal_name": "Закуска",
+        "macros": {
+          "calories": 320,
+          "protein_grams": 15,
+          "carbs_grams": 40,
+          "fat_grams": 10,
+          "fiber_grams": 6
+        },
+        "items": [
+          {
+            "name": "Сандвич с пълнозърнест хляб",
+            "grams": "2 филии"
+          },
+          {
+            "name": "Авокадо",
+            "grams": "50g"
+          },
+          {
+            "name": "Домати и краставици",
+            "grams": "50g"
+          }
+        ],
+        "recipeKey": "z-03"
+      },
+      {
+        "meal_name": "Обяд",
+        "macros": {
+          "calories": 450,
+          "protein_grams": 30,
+          "carbs_grams": 50,
+          "fat_grams": 20,
+          "fiber_grams": 10
+        },
+        "items": [
+          {
+            "name": "Крем-супа от тиквички",
+            "grams": "250ml"
+          },
+          {
+            "name": "Тофу",
+            "grams": "50g"
+          },
+          {
+            "name": "Пълнозърнест хляб",
+            "grams": "1 филия"
+          }
+        ],
+        "recipeKey": "o-07"
+      },
+      {
+        "meal_name": "Вечеря",
+        "macros": {
+          "calories": 430,
+          "protein_grams": 35,
+          "carbs_grams": 45,
+          "fat_grams": 15,
+          "fiber_grams": 12
+        },
+        "items": [
+          {
+            "name": "Пълнени чушки с киноа и зеленчуци",
+            "grams": "2 бр. (среден размер)"
+          }
+        ],
+        "recipeKey": "v-04"
+      }
+    ],
+    "thursday": [
+      {
+        "meal_name": "Закуска",
+        "macros": {
+          "calories": 280,
+          "protein_grams": 8,
+          "carbs_grams": 35,
+          "fat_grams": 12,
+          "fiber_grams": 10
+        },
+        "items": [
+          {
+            "name": "Смути с чиа и плодове",
+            "grams": "1 чаша (250ml)"
+          },
+          {
+            "name": "Бадемово мляко",
+            "grams": "200ml"
+          },
+          {
+            "name": "Чиа семена",
+            "grams": "1 с.л."
+          },
+          {
+            "name": "Микс от горски плодове",
+            "grams": "100g"
+          }
+        ],
+        "recipeKey": "z-04"
+      },
+      {
+        "meal_name": "Обяд",
+        "macros": {
+          "calories": 470,
+          "protein_grams": 32,
+          "carbs_grams": 58,
+          "fat_grams": 18,
+          "fiber_grams": 14
+        },
+        "items": [
+          {
+            "name": "Салата с леща, печени зеленчуци и дресинг от лимон и зехтин",
+            "grams": "350g"
+          }
+        ],
+        "recipeKey": "o-05"
+      },
+      {
+        "meal_name": "Вечеря",
+        "macros": {
+          "calories": 420,
+          "protein_grams": 38,
+          "carbs_grams": 42,
+          "fat_grams": 16,
+          "fiber_grams": 11
+        },
+        "items": [
+          {
+            "name": "Вегетарианска мусака с патладжани и тофу",
+            "grams": "300g"
+          }
+        ],
+        "recipeKey": "v-05"
+      }
+    ],
+    "friday": [
+      {
+        "meal_name": "Закуска",
+        "macros": {
+          "calories": 310,
+          "protein_grams": 14,
+          "carbs_grams": 38,
+          "fat_grams": 12,
+          "fiber_grams": 9
+        },
+        "items": [
+          {
+            "name": "Пълнозърнеста палачинка с плодове и ядки",
+            "grams": "1 бр."
+          },
+          {
+            "name": "Бадемово мляко",
+            "grams": "100ml"
+          },
+          {
+            "name": "Микс от горски плодове",
+            "grams": "80g"
+          },
+          {
+            "name": "Натрошени бадеми",
+            "grams": "10g"
+          }
+        ],
+        "recipeKey": "z-05"
+      },
+      {
+        "meal_name": "Обяд",
+        "macros": {
+          "calories": 460,
+          "protein_grams": 31,
+          "carbs_grams": 55,
+          "fat_grams": 19,
+          "fiber_grams": 13
+        },
+        "items": [
+          {
+            "name": "Салата с киноа, авокадо и чери домати",
+            "grams": "320g"
+          },
+          {
+            "name": "Дресинг от зехтин и балсамов оцет",
+            "grams": "2 с.л."
+          }
+        ],
+        "recipeKey": "o-05"
+      },
+      {
+        "meal_name": "Вечеря",
+        "macros": {
+          "calories": 410,
+          "protein_grams": 37,
+          "carbs_grams": 40,
+          "fat_grams": 15,
+          "fiber_grams": 10
+        },
+        "items": [
+          {
+            "name": "Вегетариански гювеч с боб и зеленчуци",
+            "grams": "300g"
+          }
+        ],
+        "recipeKey": "v-06"
+      }
+    ],
+    "saturday": [
+      {
+        "meal_name": "Закуска",
+        "macros": {
+          "calories": 330,
+          "protein_grams": 16,
+          "carbs_grams": 42,
+          "fat_grams": 13,
+          "fiber_grams": 8
+        },
+        "items": [
+          {
+            "name": "Тортила сандвич с авокадо и зеленчуци",
+            "grams": "1 бр."
+          },
+          {
+            "name": "Пълнозърнеста тортила",
+            "grams": "1 бр."
+          },
+          {
+            "name": "Авокадо",
+            "grams": "50g"
+          },
+          {
+            "name": "Микс от зеленчуци (спанак, чушки, домати)",
+            "grams": "70g"
+          }
+        ],
+        "recipeKey": "z-06"
+      },
+      {
+        "meal_name": "Обяд",
+        "macros": {
+          "calories": 480,
+          "protein_grams": 33,
+          "carbs_grams": 57,
+          "fat_grams": 20,
+          "fiber_grams": 15
+        },
+        "items": [
+          {
+            "name": "Салата с нахут, печени зеленчуци и дресинг от тахан",
+            "grams": "340g"
+          }
+        ],
+        "recipeKey": "o-05"
+      },
+      {
+        "meal_name": "Вечеря",
+        "macros": {
+          "calories": 400,
+          "protein_grams": 36,
+          "carbs_grams": 39,
+          "fat_grams": 14,
+          "fiber_grams": 9
+        },
+        "items": [
+          {
+            "name": "Вегетариански кебап с тофу и зеленчуци",
+            "grams": "250g"
+          }
+        ],
+        "recipeKey": "v-07"
+      }
+    ],
+    "sunday": [
+      {
+        "meal_name": "Закуска",
+        "macros": {
+          "calories": 340,
+          "protein_grams": 17,
+          "carbs_grams": 44,
+          "fat_grams": 14,
+          "fiber_grams": 10
+        },
+        "items": [
+          {
+            "name": "Пълнозърнеста палачинка с плодове и ядки",
+            "grams": "1 бр."
+          },
+          {
+            "name": "Бадемово мляко",
+            "grams": "100ml"
+          },
+          {
+            "name": "Микс от горски плодове",
+            "grams": "80g"
+          },
+          {
+            "name": "Натрошени бадеми",
+            "grams": "10g"
+          }
+        ],
+        "recipeKey": "z-05"
+      },
+      {
+        "meal_name": "Обяд",
+        "macros": {
+          "calories": 490,
+          "protein_grams": 34,
+          "carbs_grams": 59,
+          "fat_grams": 21,
+          "fiber_grams": 16
+        },
+        "items": [
+          {
+            "name": "Салата с киноа, авокадо, чери домати и дресинг от зехтин и лимон",
+            "grams": "350g"
+          }
+        ],
+        "recipeKey": "o-05"
+      },
+      {
+        "meal_name": "Вечеря",
+        "macros": {
+          "calories": 390,
+          "protein_grams": 35,
+          "carbs_grams": 38,
+          "fat_grams": 13,
+          "fiber_grams": 8
+        },
+        "items": [
+          {
+            "name": "Вегетариански сарми с ориз и зеленчуци",
+            "grams": "3 бр. (среден размер)"
+          }
+        ],
+        "recipeKey": "v-08"
+      }
+    ]
+  },
+  "principlesWeek2_4": [
+    {
+      "title": "Принцип 1: Разнообразие в храненето",
+      "content": "Опитайте нови рецепти и съставки всяка седмица, за да се наслаждавате на процеса и да си осигурите всички необходими хранителни вещества. Тъй като сте вегетарианец, експериментирайте с различни видове бобови и тофу.",
+      "icon": "icon-food-apple"
+    },
+    {
+      "title": "Принцип 2: Планиране на храненията",
+      "content": "Отделете време в края на всяка седмица, за да планирате менюто си за следващата. Това ще ви помогне да се придържате към целите си и да избегнете импулсивни решения, особено ако сте склонни към такива.",
+      "icon": "icon-strategy"
+    },
+    {
+      "title": "Принцип 3: Управление на инсулиновата резистентност",
+      "content": "Фокусирайте се върху храни с нисък гликемичен индекс и редовни хранения, за да поддържате стабилни нивата на кръвната захар. Избягвайте големи количества въглехидрати на едно хранене.",
+      "icon": "icon-pill"
+    },
+    {
+      "title": "Принцип 4: Включване на физическа активност",
+      "content": "Добавете редовни разходки или други форми на упражнения към ежедневието си. Дори кратки, но редовни тренировки могат да имат голям ефект върху вашето здраве и тегло.",
+      "icon": "icon-run"
+    }
+  ],
+  "additionalGuidelines": [],
+  "hydrationCookingSupplements": {
+    "hydration_recommendations": {
+      "daily_liters": "Препоръчително е да пиете поне 2-2.5 литра вода на ден.",
+      "tips": [
+        "Носете бутилка вода със себе си и я пълнете редовно.",
+        "Пийте вода преди, по време и след хранене.",
+        "Включете хидратиращи храни като краставици и диня в диетата си."
+      ],
+      "suitable_drinks": [
+        "Вода",
+        "Билков чай (без захар)",
+        "Газирана вода (без захар)",
+        "Разредени плодови сокове (в умерени количества)"
+      ],
+      "unsuitable_drinks": [
+        "Захарни напитки (газирани напитки, сокове)",
+        "Алкохол",
+        "Подсладени чайове и кафета"
+      ]
+    },
+    "cooking_methods": {
+      "recommended": [
+        "Варене",
+        "Печене",
+        "Готвене на пара",
+        "Готвене на скара"
+      ],
+      "limit_or_avoid": [
+        "Пържене",
+        "Дълбоко пържене"
+      ],
+      "fat_usage_tip": "Използвайте зехтин или кокосово масло в малки количества. Избягвайте прекалено много мазнина при готвене."
+    },
+    "supplement_suggestions": [
+      {
+        "supplement_name": "Витамин D",
+        "reasoning": "Тъй като имате Инсулинова резистентност и може да имате дефицит на витамин D, е препоръчително да го приемате като добавка.",
+        "caution": "Консултирайте се с лекар за подходящата доза."
+      },
+      {
+        "supplement_name": "Витамин B12",
+        "reasoning": "Тъй като сте на вегетариански режим, може да имате недостиг на витамин B12, който се съдържа предимно в животински продукти.",
+        "caution": "Консултирайте се с лекар за подходящата доза."
+      }
+    ]
+  },
+  "allowedForbiddenFoods": {
+    "main_allowed_foods": [
+      "зеленчуци (без картофи)",
+      "плодове (с нисък гликемичен индекс)",
+      "бобови",
+      "тофу",
+      "яйца (в умерени количества)",
+      "пълнозърнести храни (в умерени количества)",
+      "растителни млека (бадемово, кокосово, оризово)",
+      "семена (ленено, чиа, тиквено)",
+      "ядки (в умерени количества)"
+    ],
+    "main_forbidden_foods": [
+      "краве мляко и млечни продукти",
+      "захар и сладки изделия",
+      "преработени храни",
+      "бяло брашно и изделия от него",
+      "картофи",
+      "царевица"
+    ],
+    "detailed_allowed_suggestions": [
+      "Киноа като заместител на ориз",
+      "Леща и нахут като източник на протеин",
+      "Бадемово мляко в смутита и кафе",
+      "Зеленолистни зеленчуци (спанак, маруля, кейл) за салати и гарнитури",
+      "Авокадо като източник на здравословни мазнини"
+    ],
+    "detailed_limit_suggestions": [
+      "Плодове с високо съдържание на захар (банани, грозде) в малки количества",
+      "Пълнозърнести храни (кафяв ориз, овес) в умерени порции",
+      "Яйца - до 3-4 на седмица",
+      "Ядки и семена - до 30 грама на ден"
+    ],
+    "dressing_flavoring_ideas": [
+      "зехтин и лимонов сок",
+      "балсамов оцет",
+      "горчица",
+      "пресни билки (магданоз, копър, босилек)",
+      "подправки (куркума, джинджифил, чесън)"
+    ]
+  },
+  "psychologicalGuidance": {
+    "coping_strategies": [
+      "Водете си дневник на хранене, за да осъзнаете по-добре какво и защо ядете. Това може да помогне да идентифицирате емоционални тригери.",
+      "Намерете алтернативни начини за справяне със стреса, като медитация, йога или разходки сред природата. Тъй като спите само 4 часа, опитайте се да подобрите съня си.",
+      "Практикувайте осъзнато хранене, като се фокусирате върху вкуса и текстурата на храната, вместо да ядете набързо и безразборно."
+    ],
+    "motivational_messages": [
+      "Помнете, че всяка малка стъпка напред е победа. Не се обезсърчавайте от временни неуспехи.",
+      "Фокусирайте се върху ползите за здравето, които ще постигнете с отслабването, като подобрено кръвно налягане и по-добър контрол на кръвната захар.",
+      "Награждавайте се за постиженията си, но не с храна. Например, купете си нова дреха или отидете на кино."
+    ],
+    "habit_building_tip": "Започнете с малки промени, като например да пиете една чаша вода повече на ден или да добавите една порция зеленчуци към всяко хранене. Постепенно увеличавайте трудността.",
+    "self_compassion_reminder": "Бъдете мили към себе си и не се обвинявайте за грешките си. Важно е да се учите от тях и да продължавате напред. Помнете, че сте човек и е нормално да имате трудни моменти."
+  },
+  "detailedTargets": {
+    "sleep_quality_target_text": "Стремете се към поне 7-8 часа сън на нощ, без прекъсвания. Опитайте техники за релаксация преди лягане.",
+    "stress_level_target_text": "Намалете нивата на стрес чрез редовни упражнения, медитация или други релаксиращи дейности. Опитайте да отделите поне 15 минути на ден за себе си.",
+    "energy_level_target_text": "Увеличете енергийните си нива чрез балансирано хранене, редовен сън и физическа активност. Опитайте се да поддържате стабилни нива на кръвната захар.",
+    "hydration_target_text": "Пийте поне 2.5 литра вода на ден. Носете бутилка вода със себе си и я пълнете редовно.",
+    "bmi_target_numeric": 24.5,
+    "bmi_target_category_text": "Нормално тегло",
+    "meal_adherence_target_percent": 80,
+    "log_consistency_target_percent": 90
+  },
+  "generationMetadata": {
+    "timestamp": "2025-08-06T02:43:28.494Z",
+    "modelUsed": "gemini-2.0-flash",
+    "errors": []
+  },
+  "mealMacrosIndex": {
+    "monday_0": {
+      "calories": 300,
+      "protein_grams": 25,
+      "carbs_grams": 30,
+      "fat_grams": 8,
+      "fiber_grams": 5
+    },
+    "monday_1": {
+      "calories": 450,
+      "protein_grams": 35,
+      "carbs_grams": 50,
+      "fat_grams": 15,
+      "fiber_grams": 10
+    },
+    "monday_2": {
+      "calories": 400,
+      "protein_grams": 30,
+      "carbs_grams": 40,
+      "fat_grams": 15,
+      "fiber_grams": 8
+    },
+    "tuesday_0": {
+      "calories": 350,
+      "protein_grams": 15,
+      "carbs_grams": 40,
+      "fat_grams": 15,
+      "fiber_grams": 7
+    },
+    "tuesday_1": {
+      "calories": 450,
+      "protein_grams": 30,
+      "carbs_grams": 55,
+      "fat_grams": 15,
+      "fiber_grams": 12
+    },
+    "tuesday_2": {
+      "calories": 400,
+      "protein_grams": 35,
+      "carbs_grams": 35,
+      "fat_grams": 15,
+      "fiber_grams": 10
+    },
+    "wednesday_0": {
+      "calories": 320,
+      "protein_grams": 15,
+      "carbs_grams": 40,
+      "fat_grams": 10,
+      "fiber_grams": 6
+    },
+    "wednesday_1": {
+      "calories": 450,
+      "protein_grams": 30,
+      "carbs_grams": 50,
+      "fat_grams": 20,
+      "fiber_grams": 10
+    },
+    "wednesday_2": {
+      "calories": 430,
+      "protein_grams": 35,
+      "carbs_grams": 45,
+      "fat_grams": 15,
+      "fiber_grams": 12
+    },
+    "thursday_0": {
+      "calories": 280,
+      "protein_grams": 8,
+      "carbs_grams": 35,
+      "fat_grams": 12,
+      "fiber_grams": 10
+    },
+    "thursday_1": {
+      "calories": 470,
+      "protein_grams": 32,
+      "carbs_grams": 58,
+      "fat_grams": 18,
+      "fiber_grams": 14
+    },
+    "thursday_2": {
+      "calories": 420,
+      "protein_grams": 38,
+      "carbs_grams": 42,
+      "fat_grams": 16,
+      "fiber_grams": 11
+    },
+    "friday_0": {
+      "calories": 310,
+      "protein_grams": 14,
+      "carbs_grams": 38,
+      "fat_grams": 12,
+      "fiber_grams": 9
+    },
+    "friday_1": {
+      "calories": 460,
+      "protein_grams": 31,
+      "carbs_grams": 55,
+      "fat_grams": 19,
+      "fiber_grams": 13
+    },
+    "friday_2": {
+      "calories": 410,
+      "protein_grams": 37,
+      "carbs_grams": 40,
+      "fat_grams": 15,
+      "fiber_grams": 10
+    },
+    "saturday_0": {
+      "calories": 330,
+      "protein_grams": 16,
+      "carbs_grams": 42,
+      "fat_grams": 13,
+      "fiber_grams": 8
+    },
+    "saturday_1": {
+      "calories": 480,
+      "protein_grams": 33,
+      "carbs_grams": 57,
+      "fat_grams": 20,
+      "fiber_grams": 15
+    },
+    "saturday_2": {
+      "calories": 400,
+      "protein_grams": 36,
+      "carbs_grams": 39,
+      "fat_grams": 14,
+      "fiber_grams": 9
+    },
+    "sunday_0": {
+      "calories": 340,
+      "protein_grams": 17,
+      "carbs_grams": 44,
+      "fat_grams": 14,
+      "fiber_grams": 10
+    },
+    "sunday_1": {
+      "calories": 490,
+      "protein_grams": 34,
+      "carbs_grams": 59,
+      "fat_grams": 21,
+      "fiber_grams": 16
+    },
+    "sunday_2": {
+      "calories": 390,
+      "protein_grams": 35,
+      "carbs_grams": 38,
+      "fat_grams": 13,
+      "fiber_grams": 8
+    }
+  }
+}
