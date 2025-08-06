@@ -3888,6 +3888,11 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
     let engagementScore = 0;
     let averageMealAdherence = 0;
     let logCompletionRate = 0;
+    let indexCompletionRate = 0;
+
+    let indexFieldsLogged = 0;
+    let indexFieldsExpected = 0;
+    const indexKeys = ['mood','energy','calmness','sleep','hydration'];
 
     let totalPlannedMealsInPeriod = 0;
     let totalCompletedMealsInPeriod = 0;
@@ -3926,6 +3931,16 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
                     }
                 });
             }
+
+            if (hasDataLoggedThisDay) {
+                indexFieldsExpected += indexKeys.length;
+                indexKeys.forEach((key) => {
+                    const val = logEntryForDay.data[key];
+                    if (val !== null && val !== undefined && String(val).trim() !== '') {
+                        indexFieldsLogged++;
+                    }
+                });
+            }
         }
         
         if (plannedMealsThisDay > 0) {
@@ -3939,8 +3954,9 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
     }
 
     averageMealAdherence = totalPlannedMealsInPeriod > 0 ? (totalCompletedMealsInPeriod / totalPlannedMealsInPeriod) * 100 : (daysWithAnyLogEntry > 0 ? 0 : 50); // if logs exist but no plan, 0%, else 50% default
+    indexCompletionRate = indexFieldsExpected > 0 ? (indexFieldsLogged / indexFieldsExpected) * 100 : 0;
     logCompletionRate = (daysWithAnyLogEntry / USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS) * 100;
-    engagementScore = capScore((averageMealAdherence * 0.7) + (logCompletionRate * 0.3));
+    engagementScore = capScore((averageMealAdherence * 0.4) + (indexCompletionRate * 0.4) + (logCompletionRate * 0.2));
 
     const avgMood = getAvgLog('mood', 3, logsToConsider, USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS);
     const avgEnergy = getAvgLog('energy', 3, logsToConsider, USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS);
@@ -4081,6 +4097,16 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         currentValueNumeric: parseFloat(averageMealAdherence.toFixed(1)),
         currentValueText: `${Math.round(averageMealAdherence)}%`,
         infoTextKey: "meal_adherence_info",
+        periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
+    });
+
+    detailedAnalyticsMetrics.push({
+        key: "index_completion", label: "Попълване на Индекси",
+        initialValueText: "N/A",
+        expectedValueText: safeGetL(finalPlan, 'detailedTargets.index_completion_target_text', "> 80%"),
+        currentValueNumeric: parseFloat(indexCompletionRate.toFixed(1)),
+        currentValueText: `${Math.round(indexCompletionRate)}%`,
+        infoTextKey: "index_completion_info",
         periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
     });
 
@@ -4275,4 +4301,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, calculateAnalyticsIndexes };
