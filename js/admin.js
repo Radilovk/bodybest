@@ -1040,7 +1040,12 @@ async function showClient(userId) {
         history.replaceState(null, '', `?userId=${encodeURIComponent(userId)}`);
         await loadTemplateInto('editclient.html', 'adminProfileContainer');
         const mod = await import('./editClient.js');
-        await mod.initEditClient(userId);
+        try {
+            await mod.initEditClient(userId);
+        } catch (err) {
+            console.error('initEditClient error', err);
+            alert('Липсва визуализация на плана.');
+        }
         setupProfileCardNav();
     }
     try {
