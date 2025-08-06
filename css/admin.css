@@ -62,10 +62,38 @@ pre { background: var(--surface-background, #f5f5f5); padding: 10px; overflow: a
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
+  width: 100%;
 }
 .sidebar {
   flex: 1 1 250px;
   max-width: 300px;
+}
+#clientsSection {
+  flex: 1 1 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.clients-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+#clientsList {
+  flex: 1 1 100%;
+}
+#clientsControls {
+  flex: 1 1 100%;
+}
+#clientsList li,
+.client-card {
+  margin-bottom: 5px;
+  display: flex;
+  gap: 5px;
+  flex: 1 1 200px;
 }
 .main-content {
   flex: 3 1 400px;
