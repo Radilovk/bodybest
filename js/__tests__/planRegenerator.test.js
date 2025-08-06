@@ -146,3 +146,15 @@ test('изпраща reason и priorityGuidance при отделни полет
   await Promise.resolve();
   expect(startPlanGenerationMock).toHaveBeenCalledWith({ userId: 'u1', reason: 'причина', priorityGuidance: 'приоритет' });
 });
+
+test('предава priorityGuidance чрез getPriorityGuidance', async () => {
+  const regenBtn = document.getElementById('regen');
+  const regenProgress = document.getElementById('regenProgress');
+  const getPriorityGuidance = () => document.getElementById('priorityGuidanceInput').value.trim();
+  setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => 'u1', getPriorityGuidance });
+  regenBtn.click();
+  document.getElementById('priorityGuidanceInput').value = 'prio';
+  document.getElementById('priorityGuidanceConfirm').click();
+  await Promise.resolve();
+  expect(startPlanGenerationMock).toHaveBeenCalledWith({ userId: 'u1', reason: 'prio', priorityGuidance: 'prio' });
+});
