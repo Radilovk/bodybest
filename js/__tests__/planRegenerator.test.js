@@ -1,8 +1,13 @@
 /** @jest-environment jsdom */
 import { jest } from '@jest/globals';
 
+const startPlanGenerationMock = jest.fn();
+
 jest.unstable_mockModule('../config.js', () => ({
   apiEndpoints: { regeneratePlan: '/regen', planStatus: '/status' }
+}));
+jest.unstable_mockModule('../planGeneration.js', () => ({
+  startPlanGeneration: startPlanGenerationMock
 }));
 
 let setupPlanRegeneration;
@@ -10,6 +15,8 @@ let setupPlanRegeneration;
 beforeEach(async () => {
   jest.resetModules();
   jest.useFakeTimers();
+  startPlanGenerationMock.mockReset();
+  startPlanGenerationMock.mockResolvedValue({ success: true });
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true, planStatus: 'ready' }) });
   document.body.innerHTML = `
     <button id="regen"></button>
@@ -38,15 +45,11 @@ test('изпраща reason при потвърждение', async () => {
   input.value = 'причина';
   document.getElementById('priorityGuidanceConfirm').click();
   await Promise.resolve();
-  expect(fetch).toHaveBeenCalledWith('/regen', expect.objectContaining({
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId: 'u1', reason: 'причина', priorityGuidance: '' })
-  }));
+  expect(startPlanGenerationMock).toHaveBeenCalledWith({ userId: 'u1', reason: 'причина', priorityGuidance: '' });
 });
 
 test('показва съобщение при липсващи prerequisites', async () => {
-  global.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ success: false, precheck: { message: 'Липсват данни' } }) });
+  startPlanGenerationMock.mockRejectedValueOnce(Object.assign(new Error('Липсват данни'), { precheck: true }));
   const regenBtn = document.getElementById('regen');
   const regenProgress = document.getElementById('regenProgress');
   setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => 'u1' });
@@ -91,10 +94,8 @@ test('изпраща заявка само за последно избран us
   document.getElementById('priorityGuidanceConfirm').click();
   await Promise.resolve();
 
-  expect(fetch).toHaveBeenCalledTimes(1);
-  expect(fetch).toHaveBeenCalledWith('/regen', expect.objectContaining({
-    body: JSON.stringify({ userId: 'u2', reason: 'Админ регенерация', priorityGuidance: '' })
-  }));
+  expect(startPlanGenerationMock).toHaveBeenCalledTimes(1);
+  expect(startPlanGenerationMock).toHaveBeenCalledWith({ userId: 'u2', reason: 'Админ регенерация', priorityGuidance: '' });
 });
 
 test('изпраща reason и priorityGuidance при отделни полета', async () => {
@@ -118,7 +119,5 @@ test('изпраща reason и priorityGuidance при отделни полет
   document.getElementById('priorityGuidanceInput').value = 'приоритет';
   document.getElementById('priorityGuidanceConfirm').click();
   await Promise.resolve();
-  expect(fetch).toHaveBeenCalledWith('/regen', expect.objectContaining({
-    body: JSON.stringify({ userId: 'u1', reason: 'причина', priorityGuidance: 'приоритет' })
-  }));
+  expect(startPlanGenerationMock).toHaveBeenCalledWith({ userId: 'u1', reason: 'причина', priorityGuidance: 'приоритет' });
 });
