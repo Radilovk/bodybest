@@ -1,7 +1,7 @@
+// Опростена структура: премахната секция "recommendation"; фронтендът очаква само "caloriesMacros" с реалните дневни макроси.
 {
   "profileSummary": "Потребител с цел Отслабване, има Инсулинова резистентност и Лактозна непоносимост, предпочита Вегетариански режим и има Средно ниво на активност. Текущо тегло N/A (промяна за 7 дни: N/A).",
   "caloriesMacros": {
-    "plan": {
       "calories": 1600,
       "protein_percent": 30,
       "carbs_percent": 45,
@@ -11,18 +11,6 @@
       "carbs_grams": 180,
       "fat_grams": 44,
       "fiber_grams": 40
-    },
-    "recommendation": {
-      "calories": 1700,
-      "protein_percent": 30,
-      "carbs_percent": 45,
-      "fat_percent": 25,
-      "fiber_percent": 10,
-      "protein_grams": 128,
-      "carbs_grams": 191,
-      "fat_grams": 47,
-      "fiber_grams": 43
-    }
   },
   "week1Menu": {
     "monday": [
