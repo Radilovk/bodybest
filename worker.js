@@ -1553,12 +1553,7 @@ async function handleUpdatePlanRequest(request, env) {
         await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(planData));
         const macrosRecord = {
             status: 'final',
-            data: planData.caloriesMacros
-                ? {
-                    plan: planData.caloriesMacros.plan,
-                    recommendation: planData.caloriesMacros.recommendation
-                }
-                : null
+            data: planData.caloriesMacros || null
         };
         await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'ready', { metadata: { status: 'ready' } });
@@ -2844,8 +2839,7 @@ async function processSingleUserPlan(userId, env, priorityGuidance = '', regenRe
                 }
             };
             if (planBuilder.caloriesMacros) {
-                ensureFiber(planBuilder.caloriesMacros.plan);
-                ensureFiber(planBuilder.caloriesMacros.recommendation);
+                ensureFiber(planBuilder.caloriesMacros);
             }
             if (generationMetadata && Array.isArray(generationMetadata.errors)) planBuilder.generationMetadata.errors.push(...generationMetadata.errors);
         } catch (e) {

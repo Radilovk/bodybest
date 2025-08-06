@@ -72,6 +72,7 @@ export async function initEditClient(userId) {
       document.getElementById('weight-change-display').textContent = weightMatch[2];
     }
 
+    // caloriesMacros е плосък обект; стойностите се четат директно
     document.getElementById('caloriesMacros-calories-view').textContent = `${data.caloriesMacros?.calories || 0} kcal`;
     document.getElementById('caloriesMacros-protein-view').textContent = `${data.caloriesMacros?.protein_percent || 0}% / ${data.caloriesMacros?.protein_grams || 0}г`;
     document.getElementById('caloriesMacros-carbs-view').textContent = `${data.caloriesMacros?.carbs_percent || 0}% / ${data.caloriesMacros?.carbs_grams || 0}г`;
