@@ -37,7 +37,7 @@ afterEach(() => {
 });
 
 test('показва бутон за нов план при статус "в процес"', async () => {
-  global.fetch.mockResolvedValue({ ok: true, json: async () => ({ success: true, ok: true }) });
+  global.fetch.mockResolvedValue({ ok: true, json: async () => ({ success: true, ok: true, missing: [] }) });
   admin.allClients.length = 0;
   admin.allClients.push({ userId: 'u1', name: 'Test', status: 'processing', tags: [] });
   await admin.renderClients();
@@ -47,19 +47,22 @@ test('показва бутон за нов план при статус "в п�
 });
 
 test('не показва бутон при липсващи prerequisites', async () => {
-  global.fetch.mockResolvedValue({ ok: true, json: async () => ({ success: true, ok: false }) });
+  global.fetch.mockResolvedValue({
+    ok: true,
+    json: async () => ({ success: true, ok: false, missing: ['model_plan_generation'], message: 'Липсват: model_plan_generation' })
+  });
   admin.allClients.length = 0;
   admin.allClients.push({ userId: 'u1', name: 'Test', status: 'processing', tags: [] });
   await admin.renderClients();
   const btn = document.querySelector('.regen-plan-btn');
   const msg = document.querySelector('.regen-missing-msg');
   expect(btn).toBeNull();
-  expect(msg.textContent).toContain('липсват данни');
+  expect(msg.textContent).toBe('липсват: model_plan_generation');
 });
 
 test('праща reason при клик върху бутона', async () => {
   global.fetch
-    .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, ok: true }) })
+    .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, ok: true, missing: [] }) })
     .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) })
     .mockResolvedValue({ ok: true, json: async () => ({ success: true, planStatus: 'ready' }) });
   admin.allClients.length = 0;
