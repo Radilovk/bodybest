@@ -564,7 +564,13 @@ export async function initEditClient(userId) {
 
   const regenBtn = document.getElementById('regeneratePlan');
   const regenProgress = document.getElementById('regenProgress');
-  setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => userId });
+  const priorityGuidanceInput = document.getElementById('priorityGuidanceInput');
+  setupPlanRegeneration({
+    regenBtn,
+    regenProgress,
+    getUserId: () => userId,
+    getPriorityGuidance: () => priorityGuidanceInput?.value.trim() || ''
+  });
 
   const aiSummaryBtn = document.getElementById('aiSummary');
   if (aiSummaryBtn) {

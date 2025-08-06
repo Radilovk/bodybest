@@ -5,6 +5,7 @@ let activeUserId;
 let activeRegenBtn;
 let activeRegenProgress;
 let confirmListenerAdded = false;
+let modalListenersAdded = false;
 let displayedLogs = 0;
 
 function openModal(modal) {
@@ -48,8 +49,12 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId, getP
     if (reasonInput) reasonInput.value = '';
     openModal(modal);
   });
-  cancel?.addEventListener('click', hide);
-  closeBtn?.addEventListener('click', hide);
+
+  if (!modalListenersAdded) {
+    modalListenersAdded = true;
+    cancel?.addEventListener('click', hide);
+    closeBtn?.addEventListener('click', hide);
+  }
 
   if (!confirmListenerAdded) {
     confirmListenerAdded = true;
