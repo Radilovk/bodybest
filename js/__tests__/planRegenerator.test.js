@@ -8,6 +8,7 @@ jest.unstable_mockModule('../config.js', () => ({
 let setupPlanRegeneration;
 
 beforeEach(async () => {
+  jest.resetModules();
   jest.useFakeTimers();
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true, planStatus: 'ready' }) });
   document.body.innerHTML = `
@@ -56,4 +57,29 @@ test('деактивира и реактивира бутона', async () => {
   await Promise.resolve();
   await Promise.resolve();
   expect(regenBtn.disabled).toBe(false);
+});
+
+test('изпраща заявка само за последно избран userId', async () => {
+  const regenBtn1 = document.getElementById('regen');
+  const regenProgress1 = document.getElementById('regenProgress');
+  const regenBtn2 = document.createElement('button');
+  regenBtn2.id = 'regen2';
+  document.body.appendChild(regenBtn2);
+  const regenProgress2 = document.createElement('div');
+  regenProgress2.id = 'regenProgress2';
+  regenProgress2.classList.add('hidden');
+  document.body.appendChild(regenProgress2);
+
+  setupPlanRegeneration({ regenBtn: regenBtn1, regenProgress: regenProgress1, getUserId: () => 'u1' });
+  setupPlanRegeneration({ regenBtn: regenBtn2, regenProgress: regenProgress2, getUserId: () => 'u2' });
+
+  regenBtn1.click();
+  regenBtn2.click();
+  document.getElementById('priorityGuidanceConfirm').click();
+  await Promise.resolve();
+
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(fetch).toHaveBeenCalledWith('/regen', expect.objectContaining({
+    body: JSON.stringify({ userId: 'u2', reason: 'Админ регенерация' })
+  }));
 });
