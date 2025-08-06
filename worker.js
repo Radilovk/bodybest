@@ -2925,6 +2925,12 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
              return null;
         }
 
+        const originalGoal = initialAnswers.goal || 'N/A';
+        const calMac = finalPlan.caloriesMacros;
+        const initCalMac = calMac
+            ? `Кал: ${calMac.calories || '?'} P:${calMac.protein_grams || '?'}g C:${calMac.carbs_grams || '?'}g F:${calMac.fat_grams || '?'}g`
+            : 'N/A';
+
         const currentWeightVal = safeParseFloat(currentStatus?.weight);
         const currentWeightStr = currentWeightVal ? `${currentWeightVal.toFixed(1)} кг` : "N/A";
         
