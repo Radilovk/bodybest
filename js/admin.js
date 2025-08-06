@@ -726,7 +726,8 @@ function renderClients() {
                     await fetch(apiEndpoints.regeneratePlan, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userId: c.userId })
+                        // Причината е задължителна за API; подаваме стандартна стойност.
+                        body: JSON.stringify({ userId: c.userId, reason: 'Админ регенерация' })
                     });
                     alert('Стартирана е нова генерация.');
                 } catch (err) {

@@ -39,7 +39,8 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
       await fetch(apiEndpoints.regeneratePlan, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, priorityGuidance })
+        // "reason" се изисква от бекенда; използваме указанията или стандартен текст.
+        body: JSON.stringify({ userId, priorityGuidance, reason: priorityGuidance || 'Админ регенерация' })
       });
     } catch (err) {
       console.error('regeneratePlan error:', err);
