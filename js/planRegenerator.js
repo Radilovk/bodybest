@@ -57,7 +57,17 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: activeUserId, reason: reason || 'Админ регенерация', priorityGuidance })
         });
+        const data = await resp.json();
         if (!resp.ok) throw new Error('Request failed');
+        if (!data.success) {
+          if (activeRegenProgress) {
+            activeRegenProgress.textContent = 'Грешка';
+            setTimeout(() => activeRegenProgress.classList.add('hidden'), 2000);
+          }
+          activeRegenBtn.disabled = false;
+          alert(data.message || 'Грешка при стартиране на генерирането.');
+          return;
+        }
       } catch (err) {
         console.error('regeneratePlan error:', err);
         if (activeRegenProgress) {
