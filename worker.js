@@ -914,7 +914,15 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         questionnaireData.submissionDate = new Date().toISOString();
         await env.USER_METADATA_KV.put(`${userId}_initial_answers`, JSON.stringify(questionnaireData));
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
+        await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
+
+        const planTask = processSingleUserPlan(userId, env);
+        if (ctx) {
+            ctx.waitUntil(planTask);
+        } else {
+            await planTask;
+        }
 
         const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] ||
             'https://radilovk.github.io/bodybest/reganalize/analyze.html';
