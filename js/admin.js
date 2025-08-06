@@ -42,6 +42,7 @@ const newQueryText = document.getElementById('newQueryText');
 const sendQueryBtn = document.getElementById('sendQuery');
 const clientRepliesList = document.getElementById('clientRepliesList');
 const feedbackList = document.getElementById('feedbackList');
+const kvDataDiv = document.getElementById('kvData');
 const statsOutput = document.getElementById('statsOutput');
 const showStatsBtn = document.getElementById('showStats');
 const maintenanceBtn = document.getElementById('toggleMaintenance');
@@ -1072,6 +1073,33 @@ async function showClient(userId) {
                 loadFeedback(),
                 loadClientReplies(true)
             ]);
+            try {
+                const kvResp = await fetch(`${apiEndpoints.listUserKv}?userId=${userId}`);
+                const kvData = await kvResp.json().catch(() => ({}));
+                if (kvDataDiv) kvDataDiv.innerHTML = '';
+                if (kvResp.ok && kvData.success) {
+                    Object.entries(kvData.kv || {}).forEach(([fullKey, val]) => {
+                        const detailsEl = document.createElement('details');
+                        const summaryEl = document.createElement('summary');
+                        summaryEl.textContent = fullKey.replace(`${userId}_`, '');
+                        const textarea = document.createElement('textarea');
+                        textarea.value = val || '';
+                        const btn = document.createElement('button');
+                        btn.textContent = 'Запази';
+                        btn.addEventListener('click', async () => {
+                            const ok = await saveKvEntry(fullKey, textarea.value);
+                            if (ok) {
+                                btn.textContent = 'Запазено';
+                                setTimeout(() => (btn.textContent = 'Запази'), 1000);
+                            }
+                        });
+                        detailsEl.append(summaryEl, textarea, btn);
+                        kvDataDiv?.appendChild(detailsEl);
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading KV data:', err);
+            }
             unreadClients.delete(userId);
             unreadByClient.delete(userId);
             updateSectionDots(userId);
@@ -1357,6 +1385,21 @@ async function loadClientReplies(markRead = false) {
         }
     } catch (err) {
         console.error('Error loading client replies:', err);
+    }
+}
+
+async function saveKvEntry(key, value) {
+    try {
+        const resp = await fetch(apiEndpoints.updateKv, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key, value })
+        });
+        const data = await resp.json().catch(() => ({}));
+        return resp.ok && data.success;
+    } catch (err) {
+        console.error('Error saving KV entry:', err);
+        return false;
     }
 }
 

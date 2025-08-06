@@ -557,6 +557,10 @@ export default {
                 responseBody = await handleSetMaintenanceMode(request, env);
             } else if (method === 'GET' && path === '/api/getFeedbackMessages') {
                 responseBody = await handleGetFeedbackMessagesRequest(request, env);
+            } else if (method === 'GET' && path === '/api/listUserKv') {
+                responseBody = await handleListUserKvRequest(request, env);
+            } else if (method === 'POST' && path === '/api/updateKv') {
+                responseBody = await handleUpdateKvRequest(request, env);
             } else {
                 responseBody = { success: false, error: 'Not Found', message: 'Ресурсът не е намерен.' };
                 responseStatus = 404;
@@ -4325,5 +4329,42 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
     return processed;
 }
 // ------------- END BLOCK: UserEventHandlers -------------
+
+// ------------- START FUNCTION: handleListUserKvRequest -------------
+async function handleListUserKvRequest(request, env) {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get('userId');
+    if (!userId) {
+        return { success: false, message: 'Missing userId' };
+    }
+    try {
+        const list = await env.USER_METADATA_KV.list({ prefix: `${userId}_` });
+        const kv = {};
+        for (const { name } of list.keys) {
+            kv[name] = await env.USER_METADATA_KV.get(name);
+        }
+        return { success: true, kv };
+    } catch (error) {
+        console.error('Error in handleListUserKvRequest:', error.message, error.stack);
+        return { success: false, message: 'Failed to list KV data' };
+    }
+}
+// ------------- END FUNCTION: handleListUserKvRequest -------------
+
+// ------------- START FUNCTION: handleUpdateKvRequest -------------
+async function handleUpdateKvRequest(request, env) {
+    try {
+        const { key, value } = await request.json();
+        if (!key) {
+            return { success: false, message: 'Missing key' };
+        }
+        await env.USER_METADATA_KV.put(key, String(value));
+        return { success: true };
+    } catch (error) {
+        console.error('Error in handleUpdateKvRequest:', error.message, error.stack);
+        return { success: false, message: 'Failed to update KV data' };
+    }
+}
+// ------------- END FUNCTION: handleUpdateKvRequest -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, calculateAnalyticsIndexes };
+ export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, calculateAnalyticsIndexes, handleListUserKvRequest, handleUpdateKvRequest };
