@@ -20,8 +20,6 @@ import {
 import {
     handleSaveLog, handleFeedbackFormSubmit, // from app.js
     handleChatSend, handleChatInputKeypress, // from app.js / chat.js
-    _handlePrevQuizQuestion, _handleNextQuizQuestion, _handleSubmitQuizAnswersClientSide, // from app.js
-    _handleTriggerAdaptiveQuizClientSide, // from app.js
     todaysMealCompletionStatus,
     fullDashboardData, activeTooltip, currentUserId,
     setChatModelOverride, setChatPromptOverride,
@@ -59,12 +57,6 @@ async function acknowledgeAiUpdate() {
     } catch (err) {
         console.warn('Неуспешно потвърждение на AI обновление:', err);
     }
-}
-
-export function handleAdaptiveQuizBtnClick(triggerFn = _handleTriggerAdaptiveQuizClientSide) {
-    const modal = document.getElementById('adaptiveQuizWrapper');
-    if (modal && modal.classList.contains('visible')) return;
-    triggerFn();
 }
 
 export function ensureMacroAnalyticsElement() {
@@ -220,41 +212,6 @@ export function setupStaticEventListeners() {
         closeModal('extraMealEntryModal');
     });
 
-    if (selectors.prevQuestionBtn) selectors.prevQuestionBtn.addEventListener('click', _handlePrevQuizQuestion);
-    if (selectors.nextQuestionBtn) selectors.nextQuestionBtn.addEventListener('click', _handleNextQuizQuestion);
-    if (selectors.submitQuizBtn) selectors.submitQuizBtn.addEventListener('click', _handleSubmitQuizAnswersClientSide);
-
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('rating-square')) {
-            const container = e.target.closest('.rating-squares');
-            if (container && container.closest('#adaptiveQuizWrapper')) { // Ensure it's within the quiz
-                container.querySelectorAll('.rating-square').forEach(square => {
-                    square.classList.remove('selected'); // This class might be specific to extra meal form
-                });
-                // 'filled' class is used in quiz, handled by render logic
-            }
-        }
-    });
-
-    document.addEventListener('click', function(e) {
-        const modal = document.getElementById('adaptiveQuizWrapper');
-        if (e.target === modal && modal && modal.classList.contains('visible')) {
-            closeModal('adaptiveQuizWrapper');
-        }
-    });
-
-    document.addEventListener('keydown', function(e) {
-        const modal = document.getElementById('adaptiveQuizWrapper');
-        if (e.key === 'Escape' && modal && modal.classList.contains('visible')) {
-            closeModal('adaptiveQuizWrapper');
-        }
-    });
-
-    document.addEventListener('click', function(e) {
-        if (e.target.matches('[data-modal-close="adaptiveQuizWrapper"]')) {
-            closeModal('adaptiveQuizWrapper');
-        }
-    });
 
     staticListenersSet = true;
 }
@@ -321,7 +278,7 @@ function handleDelegatedClicks(event) {
     }
     const ratingSquare = target.closest('.rating-square');
     if (ratingSquare) {
-        // Ensure this rating square is part of the daily log, not the adaptive quiz
+        // Ensure this rating square is part of the daily log
         const dailyTrackerContext = ratingSquare.closest('#dailyTracker .metric-rating');
         if (dailyTrackerContext) {
             event.stopPropagation();

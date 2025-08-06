@@ -10,7 +10,6 @@ const env = {
       if (key === `${userId}_final_plan`) return JSON.stringify({ principlesWeek2_4: 'Old principles' });
       if (key === `${userId}_current_status`) return JSON.stringify({ weight: 70 });
       if (key === `${userId}_chat_history`) return '[]';
-      if (key === `${userId}_last_adaptive_quiz_ts`) return null;
       return null;
     }),
     list: jest.fn().mockResolvedValue({ keys: [] }),

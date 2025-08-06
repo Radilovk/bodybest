@@ -30,8 +30,6 @@ export function initializeSelectors() {
         instructionsModal: 'instructionsModal',
         showIntroVideoBtn: 'showIntroVideoBtn',
         extraMealEntryModal: 'extraMealEntryModal', extraMealFormContainer: 'extraMealFormContainer',
-        adaptiveQuizModal: 'adaptiveQuizWrapper',
-        adaptiveQuizContainer: 'adaptiveQuizWrapper',
         planModificationBtn: 'planModificationBtn',
         planModInProgressIcon: 'planModInProgressIcon',
         planModChatModal: 'planModChatModal',
@@ -80,7 +78,7 @@ export function initializeSelectors() {
                 'recFoodAllowedCard', 'recFoodLimitCard', 'recHydrationCard',
                 'recCookingMethodsCard', 'recSupplementsCard'
             ];
-            if (!optionalOrDynamic.includes(key) && key !== 'adaptiveQuizModal' && key !== 'adaptiveQuizContainer') {
+            if (!optionalOrDynamic.includes(key)) {
                 console.warn(`HTML element not found: ${key} (selector: '${selectorValue}')`);
                 if (criticalSelectors.includes(key)) {
                     missingCriticalCount++;
@@ -90,26 +88,7 @@ export function initializeSelectors() {
         }
     }
 
-    if (selectors.adaptiveQuizContainer) {
-        selectors.quizLoadingIndicator = selectors.adaptiveQuizContainer.querySelector('#quizLoadingIndicator');
-        selectors.quizErrorState = selectors.adaptiveQuizContainer.querySelector('#quizErrorState');
-        selectors.quizQuestionContainer = selectors.adaptiveQuizContainer.querySelector('#quizQuestionContainer');
-        selectors.quizNavigation = selectors.adaptiveQuizContainer.querySelector('.aq-navigation-hybrid');
-        if (selectors.quizNavigation) {
-            selectors.prevQuestionBtn = selectors.quizNavigation.querySelector('#prevQuestionBtn');
-            selectors.nextQuestionBtn = selectors.quizNavigation.querySelector('#nextQuestionBtn');
-            selectors.submitQuizBtn = selectors.quizNavigation.querySelector('#submitQuizBtn');
-        }
-        const headerElement = selectors.adaptiveQuizContainer.querySelector('.aq-header-hybrid');
-        if (headerElement) {
-            selectors.adaptiveQuizGeneralTitle = headerElement.querySelector('#adaptiveQuizGeneralTitle');
-            selectors.adaptiveQuizGeneralDescription = headerElement.querySelector('#adaptiveQuizGeneralDescription');
-            selectors.quizProgressBar = headerElement.querySelector('#quizProgressBar');
-        }
-        selectors.questionTemplate = selectors.adaptiveQuizContainer.querySelector('#questionTemplate');
-    } else {
-        console.warn("Основният контейнер за адаптивния въпросник ('adaptiveQuizWrapper') не е намерен. Специфичните селектори за въпросника няма да бъдат инициализирани.");
-    }
+    // Адаптивният въпросник е премахнат, така че няма специални селектори
 
     if (missingCriticalCount > 0) {
          const errorMsg = `CRITICAL ERROR: ${missingCriticalCount} essential HTML element(s) are missing. Functionality will be severely impaired. Please check your HTML structure.`;
