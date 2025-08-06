@@ -10,6 +10,7 @@ jest.unstable_mockModule('../config.js', () => ({
 }));
 
 let admin;
+let showClient;
 
 beforeEach(async () => {
   global.fetch = jest.fn();
@@ -27,8 +28,14 @@ beforeEach(async () => {
       <button id="priorityGuidanceCancel"></button>
       <button id="priorityGuidanceClose"></button>
     </div>
+    <div id="clientDetails" class="hidden"></div>
+    <h2 id="clientName"></h2>
+    <button id="regeneratePlan"></button>
+    <div id="regenProgress"></div>
+    <div id="msg"></div>
   `;
   admin = await import('../admin.js');
+  showClient = admin.showClient;
 });
 
 afterEach(() => {
@@ -76,4 +83,21 @@ test('праща reason при клик върху бутона', async () => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId: 'u1', reason: 'Админ регенерация', priorityGuidance: '' })
   }));
+});
+
+test('деактивира бутона при липсващ email', async () => {
+  global.fetch = jest.fn(url => {
+    if (url.includes('/check')) {
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ success: true, ok: false, missing: ['email'], message: 'Липсват: email' })
+      });
+    }
+    return Promise.resolve({ ok: true, json: async () => ({ success: true }) });
+  });
+  admin.allClients.length = 0;
+  admin.allClients.push({ userId: 'u1', name: 'Test', status: 'ready', tags: [] });
+  await showClient('u1');
+  expect(document.body.textContent.toLowerCase()).toContain('липсват: email');
+  expect(document.getElementById('regeneratePlan').disabled).toBe(true);
 });
