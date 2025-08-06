@@ -446,7 +446,8 @@ export function validateMacroPayload({ plan, current }) {
 }
 
 export async function populateDashboardMacros(macros) {
-    renderMacroPreviewGrid(macros);
+    const flat = macros?.plan ?? macros;
+    renderMacroPreviewGrid(flat);
     let macroContainer = selectors.macroAnalyticsCardContainer;
     if (!macroContainer || !document.contains(macroContainer)) {
         macroContainer = document.createElement('div');
@@ -455,7 +456,7 @@ export async function populateDashboardMacros(macros) {
         selectors.analyticsCardsContainer?.appendChild(macroContainer);
         selectors.macroAnalyticsCardContainer = macroContainer;
     }
-    if (!macros) {
+    if (!flat) {
         macroContainer.innerHTML = '<div class="spinner-border" role="status"></div>';
         try {
             const res = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}&recalcMacros=1`);
@@ -475,11 +476,11 @@ export async function populateDashboardMacros(macros) {
     }
     macroContainer.innerHTML = '';
     const plan = {
-        calories: todaysPlanMacros.calories,
-        protein_grams: todaysPlanMacros.protein,
-        carbs_grams: todaysPlanMacros.carbs,
-        fat_grams: todaysPlanMacros.fat,
-        fiber_grams: todaysPlanMacros.fiber
+        calories: flat?.calories ?? todaysPlanMacros.calories,
+        protein_grams: flat?.protein_grams ?? todaysPlanMacros.protein,
+        carbs_grams: flat?.carbs_grams ?? todaysPlanMacros.carbs,
+        fat_grams: flat?.fat_grams ?? todaysPlanMacros.fat,
+        fiber_grams: flat?.fiber_grams ?? todaysPlanMacros.fiber
     };
     const current = {
         calories: currentIntakeMacros.calories,

@@ -129,3 +129,31 @@ test('calculatePlanMacros се извиква само веднъж при ке�
   await populateDashboardMacros({});
   expect(calcMock).toHaveBeenCalledTimes(1);
 });
+
+test('използва грамовете от подадения план, когато са налични', async () => {
+  setupDom();
+  const macros = {
+    plan: {
+      calories: 1900,
+      protein_percent: 30,
+      carbs_percent: 40,
+      fat_percent: 30,
+      protein_grams: 140,
+      carbs_grams: 190,
+      fat_grams: 63,
+      fiber_grams: 28
+    }
+  };
+  Object.assign(appState.todaysPlanMacros, { calories: 500, protein: 10, carbs: 20, fat: 5, fiber: 3 });
+  await populateDashboardMacros(macros);
+  const card = document.querySelector('macro-analytics-card');
+  const [payload] = card.setData.mock.calls[0];
+  expect(payload.plan).toMatchObject({
+    calories: 1900,
+    protein_grams: 140,
+    carbs_grams: 190,
+    fat_grams: 63,
+    fiber_grams: 28
+  });
+  expect(selectors.macroMetricsPreview.textContent).toContain('1900');
+});
