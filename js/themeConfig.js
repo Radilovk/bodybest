@@ -101,6 +101,8 @@ export const colorGroups = [
   }
 ];
 
+export const macroColorVars = ['macro-protein-color', 'macro-carbs-color', 'macro-fat-color', 'macro-fiber-color'];
+
 export const sampleThemes = {
   "dashboard": {
     "Light": {
@@ -204,6 +206,40 @@ export const sampleThemes = {
       "macro-fiber-color": "#6FCF97",
       "macro-ring-highlight": "#1C1F2E",
       "macro-stroke-color": "#444444"
+    },
+    "HighContrast": {
+      "primary-color": "#FFFFFF",
+      "secondary-color": "#FFD700",
+      "accent-color": "#00FFFF",
+      "tertiary-color": "#FF00FF",
+      "accent-opacity": "1",
+      "text-color-primary": "#FFFFFF",
+      "text-color-secondary": "#FFD700",
+      "text-color-muted": "#AAAAAA",
+      "text-color-on-primary": "#000000",
+      "font-color-primary": "#FFFFFF",
+      "font-color-secondary": "#FFD700",
+      "font-color-muted": "#AAAAAA",
+      "font-color-on-primary": "#000000",
+      "bg-color": "#000000",
+      "surface-background": "#000000",
+      "card-bg": "#000000",
+      "card-bg-opacity": "1",
+      "input-bg": "#000000",
+      "text-color-on-secondary": "#000000",
+      "text-color-disabled": "#666666",
+      "border-color": "#FFFFFF",
+      "border-color-soft": "#666666",
+      "input-bg-disabled": "#333333",
+      "input-border-color": "#FFFFFF",
+      "progress-color": "#FFFFFF",
+      "progress-bar-bg-empty": "#333333",
+      "macro-protein-color": "#FFFF00",
+      "macro-carbs-color": "#00FFFF",
+      "macro-fat-color": "#FF00FF",
+      "macro-fiber-color": "#FFFFFF",
+      "macro-ring-highlight": "#FFFFFF",
+      "macro-stroke-color": "#FFFFFF"
     }
   },
   "index": {

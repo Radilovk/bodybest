@@ -1,6 +1,7 @@
 import { loadLocale } from './macroCardLocales.js';
 import { ensureChart } from './chartLoader.js';
 import { scaleMacros, formatPercent } from './macroUtils.js';
+import { macroColorVars } from './themeConfig.js';
 
 let Chart;
 
@@ -218,6 +219,8 @@ export class MacroAnalyticsCard extends HTMLElement {
     this.locale = this.getAttribute('locale') || document.documentElement.lang || 'bg';
     // Множителят, над който приемът се счита за превишен (например 1.2 = 120%).
     this.exceedThreshold = parseFloat(this.getAttribute('exceed-threshold')) || 1.15;
+    this.motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    this.handleThemeOrPrefs = this.handleThemeOrPrefs.bind(this);
     this.labels = {
       title: '',
       caloriesLabel: '',
@@ -239,6 +242,8 @@ export class MacroAnalyticsCard extends HTMLElement {
       await this.updateLocale(document.documentElement.lang);
       this.lazyLoadChart();
       this.setupAutoRefresh();
+      document.addEventListener('themechange', this.handleThemeOrPrefs);
+      this.motionQuery.addEventListener('change', this.handleThemeOrPrefs);
     }
 
   attributeChangedCallback(name, _oldVal, newVal) {
@@ -298,6 +303,12 @@ export class MacroAnalyticsCard extends HTMLElement {
 
   disconnectedCallback() {
     if (this.refreshTimer) clearInterval(this.refreshTimer);
+    document.removeEventListener('themechange', this.handleThemeOrPrefs);
+    this.motionQuery.removeEventListener('change', this.handleThemeOrPrefs);
+  }
+
+  handleThemeOrPrefs() {
+    this.renderChart();
   }
 
   showLoading() {
@@ -504,19 +515,15 @@ export class MacroAnalyticsCard extends HTMLElement {
     if (this.canvas.hasAttribute('hidden')) this.canvas.removeAttribute('hidden');
     if (this.chart) this.chart.destroy();
     const ctx = this.canvas.getContext('2d');
-    const macroColors = [
-      this.getCssVar('--macro-protein-color'),
-      this.getCssVar('--macro-carbs-color'),
-      this.getCssVar('--macro-fat-color'),
-      this.getCssVar('--macro-fiber-color')
-    ];
+    const macroColors = macroColorVars.map(v => this.getCssVar(`--${v}`));
     const datasets = [
       {
         label: this.locale === 'en' ? 'Plan (g)' : 'План (гр)',
         data: [plan.protein_grams, plan.carbs_grams, plan.fat_grams, plan.fiber_grams],
         backgroundColor: current ? macroColors.map((c) => `${c}40`) : macroColors,
         borderWidth: 0,
-        cutout: current ? '80%' : '65%'
+        cutout: current ? '80%' : '65%',
+        hoverOffset: 8
       }
     ];
     if (current) {
@@ -527,12 +534,13 @@ export class MacroAnalyticsCard extends HTMLElement {
         borderWidth: 0,
         borderRadius: 8,
         cutout: '65%',
-        hoverOffset: 12
+        hoverOffset: 8
       });
     }
     if (!Chart.registry.getPlugin('subtleGlow')) {
       Chart.register(subtleGlowPlugin);
     }
+    const prefersReduced = this.motionQuery.matches;
     this.chart = new Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -547,7 +555,10 @@ export class MacroAnalyticsCard extends HTMLElement {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: { duration: 800, easing: 'easeOutQuart' },
+        animation: prefersReduced ? false : { duration: 800, easing: 'easeOutQuart' },
+        onHover: (evt, elements) => {
+          evt.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+        },
         plugins: {
           legend: { display: false },
           tooltip: {
