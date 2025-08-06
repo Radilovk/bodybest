@@ -224,7 +224,7 @@
   <div class="layout">
   <details class="sidebar card" id="clientsSection">
     <summary class="clients-summary">Клиенти</summary>
-    <div id="clientsControls" class="clients-controls">
+    <div id="clientsControls" class="clients-controls clients-row">
       <input id="clientSearch" list="clientSuggestions" placeholder="Търсене по име или имейл">
       <datalist id="clientSuggestions"></datalist>
       <select id="statusFilter">
@@ -243,7 +243,7 @@
       <button id="showStats">Покажи статистика</button>
     </div>
     <p id="clientsCount"></p>
-    <ul id="clientsList"></ul>
+    <ul id="clientsList" class="clients-row"></ul>
   </details>
 
   <main id="clientDetails" class="main-content card hidden">
