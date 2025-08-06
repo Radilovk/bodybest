@@ -33,7 +33,6 @@ const tagFilterSelect = document.getElementById('tagFilter');
 const detailsSection = document.getElementById('clientDetails');
 const regenBtn = document.getElementById('regeneratePlan');
 const regenProgress = document.getElementById('regenProgress');
-const priorityGuidanceInput = document.getElementById('priorityGuidanceInput');
 const aiSummaryBtn = document.getElementById('aiSummary');
 const notesField = document.getElementById('adminNotes');
 const tagsField = document.getElementById('adminTags');
@@ -104,16 +103,6 @@ const analysisModelInput = document.getElementById('analysisModel');
 const analysisPromptInput = document.getElementById('analysisPrompt');
 const testAnalysisBtn = document.getElementById('testAnalysisModel');
 
-async function hasPlanPrerequisites(userId) {
-    try {
-        const resp = await fetch(`${apiEndpoints.checkPlanPrerequisites}?userId=${encodeURIComponent(userId)}`);
-        const data = await resp.json();
-        return resp.ok && data.success && data.ok;
-    } catch (err) {
-        console.error('prereq check error', err);
-        return false;
-    }
-}
 
 const modelOptionsList = document.getElementById('modelOptions');
 let availableModels = new Set(JSON.parse(localStorage.getItem('aiModelHistory') || '[]'));
@@ -258,8 +247,7 @@ function setCurrentUserId(val) {
 setupPlanRegeneration({
     regenBtn,
     regenProgress,
-    getUserId: () => currentUserId,
-    getPriorityGuidance: () => priorityGuidanceInput?.value.trim() || ''
+    getUserId: () => currentUserId
 });
 let profileNavObserver = null;
 let currentPlanData = null;
@@ -733,30 +721,21 @@ async function renderClients() {
             c.status === 'unknown' ||
             c.status === 'processing';
         if (needsPlan) {
-            const ok = await hasPlanPrerequisites(c.userId);
-            if (ok) {
-                const regen = document.createElement('button');
-                regen.className = 'regen-plan-btn button-small';
-                regen.textContent = 'Нов план';
-                regen.title = 'Генерирай нов план';
-                const progress = document.createElement('span');
-                progress.className = 'regen-progress hidden';
-                progress.setAttribute('aria-live', 'polite');
-                li.appendChild(regen);
-                li.appendChild(progress);
-                regen.addEventListener('click', e => e.stopPropagation());
-                setupPlanRegeneration({
-                    regenBtn: regen,
-                    regenProgress: progress,
-                    getUserId: () => c.userId,
-                    getPriorityGuidance: () => priorityGuidanceInput?.value.trim() || ''
-                });
-            } else {
-                const msg = document.createElement('span');
-                msg.className = 'regen-missing-msg';
-                msg.textContent = 'липсват данни за регенериране';
-                li.appendChild(msg);
-            }
+            const regen = document.createElement('button');
+            regen.className = 'regen-plan-btn button-small';
+            regen.textContent = 'Нов план';
+            regen.title = 'Генерирай нов план';
+            const progress = document.createElement('span');
+            progress.className = 'regen-progress hidden';
+            progress.setAttribute('aria-live', 'polite');
+            li.appendChild(regen);
+            li.appendChild(progress);
+            regen.addEventListener('click', e => e.stopPropagation());
+            setupPlanRegeneration({
+                regenBtn: regen,
+                regenProgress: progress,
+                getUserId: () => c.userId
+            });
         }
 
         clientsList?.appendChild(li);

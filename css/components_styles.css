@@ -148,11 +148,6 @@
 }
 .modal-content .close-button:hover { color: var(--text-color-primary); }
 
-#regenLogBody {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
 .achievement-emoji {
   font-size: 4rem;
   text-align: center;

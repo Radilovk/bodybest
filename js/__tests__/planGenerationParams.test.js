@@ -3,7 +3,7 @@ import { jest } from '@jest/globals';
 const startPlanGenerationMock = jest.fn();
 
 jest.unstable_mockModule('../config.js', () => ({
-  apiEndpoints: { regeneratePlan: '/regen', planLog: '/log', updateKv: '/kv' }
+  apiEndpoints: { regeneratePlan: '/regen' }
 }));
 jest.unstable_mockModule('../planGeneration.js', () => ({
   startPlanGeneration: startPlanGenerationMock
@@ -13,54 +13,22 @@ let regeneratePlan, setupPlanRegeneration;
 
 beforeEach(async () => {
   jest.resetModules();
-  jest.useFakeTimers();
   startPlanGenerationMock.mockReset();
   startPlanGenerationMock.mockResolvedValue({ success: true });
-  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true, logs: [], status: 'ready' }) });
-  document.body.innerHTML = `
-    <button id="regen"></button>
-    <div id="regenProgress" class="hidden"></div>
-    <div id="regenLogModal" aria-hidden="true">
-      <div class="modal-body" id="regenLogBody"></div>
-      <button id="regenLogClose"></button>
-    </div>
-    <div id="priorityGuidanceModal" aria-hidden="true">
-      <textarea id="priorityGuidanceInput"></textarea>
-      <textarea id="regenReasonInput"></textarea>
-      <button id="priorityGuidanceConfirm"></button>
-      <button id="priorityGuidanceCancel"></button>
-      <button id="priorityGuidanceClose"></button>
-    </div>
-  `;
+  global.alert = jest.fn();
+  document.body.innerHTML = `<button id="regen"></button>`;
   ({ regeneratePlan } = await import('../questionnaireCore.js'));
   ({ setupPlanRegeneration } = await import('../planRegenerator.js'));
 });
 
-afterEach(() => {
-  jest.useRealTimers();
-});
-
 test('questionnaireCore и planRegenerator подават еднакви параметри', async () => {
-  const params = { userId: 'u1', reason: 'причина', priorityGuidance: 'приоритет' };
-  await regeneratePlan(params);
+  await regeneratePlan({ userId: 'u1' });
   const firstCall = startPlanGenerationMock.mock.calls[0][0];
 
   const regenBtn = document.getElementById('regen');
-  const regenProgress = document.getElementById('regenProgress');
-  setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => 'u1' });
+  setupPlanRegeneration({ regenBtn, getUserId: () => 'u1' });
   regenBtn.click();
-  document.getElementById('regenReasonInput').value = 'причина';
-  document.getElementById('priorityGuidanceInput').value = 'приоритет';
-  document.getElementById('priorityGuidanceConfirm').click();
   await Promise.resolve();
-  const modal = document.getElementById('regenLogModal');
-  expect(modal.classList.contains('visible')).toBe(true);
-  jest.advanceTimersByTime(3000);
-  await Promise.resolve();
-  await Promise.resolve();
-  await Promise.resolve();
-  expect(modal.classList.contains('visible')).toBe(false);
-  expect(document.getElementById('regenLogBody').textContent).toBe('');
   const secondCall = startPlanGenerationMock.mock.calls[1][0];
 
   expect(firstCall).toEqual(secondCall);

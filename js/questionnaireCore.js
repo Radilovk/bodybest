@@ -493,8 +493,8 @@ export function getResponses() {
   return state.responses;
 }
 
-export function regeneratePlan({ userId, reason = '', priorityGuidance = '' }) {
-  return startPlanGeneration({ userId, reason, priorityGuidance });
+export function regeneratePlan({ userId }) {
+  return startPlanGeneration({ userId });
 }
 
 export async function initQuestionnaire({ questionsUrl, submitUrl }) {
