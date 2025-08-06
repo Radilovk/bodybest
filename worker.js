@@ -3310,13 +3310,20 @@ async function checkWeightStagnationTrigger(userId, initialAnswers, env) {
 
 // ------------- START FUNCTION: checkLowEngagementTrigger -------------
 async function checkLowEngagementTrigger(userId, env) {
-    let daysSinceLastLog = ADAPTIVE_QUIZ_LOW_ENGAGEMENT_DAYS + 1; // Assume no logs initially
+    const planTs = await env.USER_METADATA_KV.get(`${userId}_last_significant_update_ts`);
+    if (planTs) {
+        const planAgeDays = (Date.now() - Number(planTs)) / (1000 * 60 * 60 * 24);
+        if (planAgeDays < ADAPTIVE_QUIZ_LOW_ENGAGEMENT_DAYS) return false;
+    }
+    const logList = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_`, limit: 1 });
+    if (!logList.keys || logList.keys.length === 0) return false;
+    let daysSinceLastLog = ADAPTIVE_QUIZ_LOW_ENGAGEMENT_DAYS + 1;
     for (let i = 0; i < ADAPTIVE_QUIZ_LOW_ENGAGEMENT_DAYS; i++) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         const logKey = `${userId}_log_${date.toISOString().split('T')[0]}`;
         // Просто проверяваме дали ключът съществува, get с type:'arrayBuffer' е ефективен за това
-        const logExists = await env.USER_METADATA_KV.get(logKey, { type: "arrayBuffer" }); 
+        const logExists = await env.USER_METADATA_KV.get(logKey, { type: "arrayBuffer" });
         if (logExists !== null) {
             daysSinceLastLog = i;
             // console.log(`[ADAPT_QUIZ_TRIGGER_ENGAGEMENT] User ${userId}: Found log from ${i} days ago. Days since last log: ${daysSinceLastLog}.`);
@@ -4784,4 +4791,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, checkLowEngagementTrigger };
