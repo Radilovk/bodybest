@@ -198,7 +198,8 @@ body.dark-theme {
   --macro-protein-color: #5BC0BE;
   --macro-fat-color: #FFD166;
   --macro-carbs-color: #FF6B6B;
-  --macro-ring-highlight: #1C1F2E;
+  --macro-fiber-color: #6FCF97;
+  --macro-ring-highlight: #ffffff;
   --macro-stroke-color: #444444;
 
   --toast-bg: rgba(37, 42, 65, 0.95); --toast-text: #F0F2F5;
@@ -284,7 +285,8 @@ body.vivid-theme {
   --macro-protein-color: #5BC0BE;
   --macro-fat-color: #FFD166;
   --macro-carbs-color: #FF6B6B;
-  --macro-ring-highlight: #1C1F2E;
+  --macro-fiber-color: #6FCF97;
+  --macro-ring-highlight: #ffffff;
   --macro-stroke-color: #444444;
 
   --toast-bg: rgba(37, 42, 65, 0.95); --toast-text: #F0F2F5;

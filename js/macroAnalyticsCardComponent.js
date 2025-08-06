@@ -496,8 +496,7 @@ export class MacroAnalyticsCard extends HTMLElement {
         label: this.locale === 'en' ? 'Intake (g)' : 'Прием (гр)',
         data: [current.protein_grams, current.carbs_grams, current.fat_grams, current.fiber_grams],
         backgroundColor: macroColors,
-        borderColor: this.getCssVar('--card-bg'),
-        borderWidth: 4,
+        borderWidth: 0,
         borderRadius: 8,
         cutout: '65%',
         hoverOffset: 12
