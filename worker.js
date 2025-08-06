@@ -2984,12 +2984,37 @@ async function processSingleUserPlan(userId, env, priorityGuidance = '', regenRe
             console.log(`PROCESS_USER_PLAN (${userId}): Calling model ${planModelName} for unified plan. Prompt length: ${finalPrompt.length}`);
             rawAiResponse = await callModel(planModelName, finalPrompt, env, { temperature: 0.1, maxTokens: 20000 });
             const cleanedJson = cleanGeminiJson(rawAiResponse);
-            generatedPlanObject = safeParseJson(cleanedJson);
-            if (!generatedPlanObject || !generatedPlanObject.profileSummary || !generatedPlanObject.week1Menu || !generatedPlanObject.principlesWeek2_4 || !generatedPlanObject.detailedTargets) {
-                console.error(`PROCESS_USER_PLAN_ERROR (${userId}): Unified plan generation returned an invalid or incomplete JSON structure. Original response (start): ${rawAiResponse.substring(0,300)}`);
-                throw new Error("Unified plan generation returned an invalid or incomplete JSON structure.");
+            generatedPlanObject = safeParseJson(cleanedJson, {});
+            const requiredSections = ["profileSummary", "week1Menu", "principlesWeek2_4", "detailedTargets"];
+            let missingSections = requiredSections.filter(key => !generatedPlanObject[key]);
+            const originallyMissing = [...missingSections];
+            if (missingSections.length > 0) {
+                const missMsg = `Missing sections: ${missingSections.join(', ')}`;
+                console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${missMsg}. Original response (start): ${rawAiResponse.substring(0,300)}`);
+                planBuilder.generationMetadata.errors.push(missMsg);
+                try {
+                    const repairPrompt = `Return JSON with keys ${missingSections.join(', ')} based on this plan: ${cleanedJson}`;
+                    const repairResponse = await callModel(planModelName, repairPrompt, env, { temperature: 0.1, maxTokens: 1000 });
+                    const repairedObject = safeParseJson(cleanGeminiJson(repairResponse), {});
+                    missingSections.forEach(key => {
+                        if (repairedObject[key]) generatedPlanObject[key] = repairedObject[key];
+                    });
+                    missingSections = requiredSections.filter(key => !generatedPlanObject[key]);
+                    if (missingSections.length > 0) {
+                        const stillMsg = `Still missing sections after repair: ${missingSections.join(', ')}`;
+                        console.warn(`PROCESS_USER_PLAN_WARNING (${userId}): ${stillMsg}`);
+                        planBuilder.generationMetadata.errors.push(stillMsg);
+                    } else {
+                        console.log(`PROCESS_USER_PLAN (${userId}): Missing sections filled: ${originallyMissing.join(', ')}`);
+                    }
+                } catch (repairErr) {
+                    const repairErrorMsg = `Repair attempt failed: ${repairErr.message}`;
+                    console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${repairErrorMsg}`);
+                    planBuilder.generationMetadata.errors.push(repairErrorMsg);
+                }
+            } else {
+                console.log(`PROCESS_USER_PLAN (${userId}): Unified plan JSON parsed successfully.`);
             }
-            console.log(`PROCESS_USER_PLAN (${userId}): Unified plan JSON parsed successfully.`);
             const { generationMetadata, ...restOfGeneratedPlan } = generatedPlanObject;
             Object.assign(planBuilder, restOfGeneratedPlan);
             const ensureFiber = (macros) => {
