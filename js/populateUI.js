@@ -202,7 +202,7 @@ function populateDashboardDetailedAnalytics(analyticsData) {
     }
     cardsContainer.innerHTML = '';
     if (macroContainer) {
-        macroContainer.className = 'card analytics-card loading';
+        macroContainer.classList.add('loading');
         macroContainer.innerHTML = `
             <h5></h5>
             <div class="chart-container">
@@ -474,7 +474,6 @@ export async function populateDashboardMacros(macros) {
         }
         return;
     }
-    macroContainer.classList.remove('loading', 'card', 'analytics-card');
     macroContainer.innerHTML = '';
     const plan = {
         calories: flat?.calories ?? todaysPlanMacros.calories,
