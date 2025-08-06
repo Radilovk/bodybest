@@ -1539,10 +1539,11 @@ async function handleUpdateProfileRequest(request, env) {
 
 // ------------- START FUNCTION: validatePlanPrerequisites -------------
 async function validatePlanPrerequisites(env, userId) {
+    // Извличаме всички задължителни елементи, нужни за генериране на план.
     const [
-        modelName,
-        promptTemplate,
-        initialAnswersStr
+        modelName,            // задължително: идентификатор на модела
+        promptTemplate,       // задължително: шаблон за подканата
+        initialAnswersStr     // задължително: отговори от въпросника
     ] = await Promise.all([
         env.RESOURCES_KV.get('model_plan_generation'),
         env.RESOURCES_KV.get('prompt_unified_plan_generation_v2'),
@@ -1579,6 +1580,7 @@ async function validatePlanPrerequisites(env, userId) {
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
         return { ok: false, message: 'Липсва OPENAI_API_KEY.' };
     }
+    // Опционални данни (напр. дневници) не се валидират тук, липсата им е допустима.
     return { ok: true };
 }
 // ------------- END FUNCTION: validatePlanPrerequisites -------------
@@ -2848,18 +2850,27 @@ async function processSingleUserPlan(userId, env, priorityGuidance = '') {
         }
         console.log(`PROCESS_USER_PLAN (${userId}): Processing for email: ${initialAnswers.email || 'N/A'}`);
         const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, principlesWeek2_4: [], additionalGuidelines: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
-        const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, openaiApiKey, planModelName, unifiedPromptTemplate, pendingPlanModStr ] = await Promise.all([
-            env.RESOURCES_KV.get('question_definitions'), env.RESOURCES_KV.get('base_diet_model'),
-            env.RESOURCES_KV.get('allowed_meal_combinations'), env.RESOURCES_KV.get('eating_psychology'),
-            env.RESOURCES_KV.get('recipe_data'), env[GEMINI_API_KEY_SECRET_NAME], env[OPENAI_API_KEY_SECRET_NAME],
-            env.RESOURCES_KV.get('model_plan_generation'), env.RESOURCES_KV.get('prompt_unified_plan_generation_v2'),
-            env.USER_METADATA_KV.get(`pending_plan_mod_${userId}`)
+        const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, openaiApiKey, planModelName, unifiedPromptTemplate ] = await Promise.all([
+            env.RESOURCES_KV.get('question_definitions'),
+            env.RESOURCES_KV.get('base_diet_model'),
+            env.RESOURCES_KV.get('allowed_meal_combinations'),
+            env.RESOURCES_KV.get('eating_psychology'),
+            env.RESOURCES_KV.get('recipe_data'),
+            env[GEMINI_API_KEY_SECRET_NAME],
+            env[OPENAI_API_KEY_SECRET_NAME],
+            env.RESOURCES_KV.get('model_plan_generation'),
+            env.RESOURCES_KV.get('prompt_unified_plan_generation_v2')
         ]);
-        const pendingPlanModData = safeParseJson(pendingPlanModStr, pendingPlanModStr);
+        // Опционално: чакаща модификация на плана
         let pendingPlanModText = '';
-        if (pendingPlanModData) {
-            if (typeof pendingPlanModData === 'string') pendingPlanModText = pendingPlanModData;
-            else pendingPlanModText = JSON.stringify(pendingPlanModData);
+        try {
+            const pendingPlanModStr = await env.USER_METADATA_KV.get(`pending_plan_mod_${userId}`);
+            const pendingPlanModData = safeParseJson(pendingPlanModStr, pendingPlanModStr);
+            if (pendingPlanModData) {
+                pendingPlanModText = typeof pendingPlanModData === 'string' ? pendingPlanModData : JSON.stringify(pendingPlanModData);
+            }
+        } catch (err) {
+            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): неуспешно зареждане на pending_plan_mod - ${err.message}`);
         }
         const providerForPlan = getModelProvider(planModelName);
         if (providerForPlan === 'gemini' && !geminiApiKey) {
@@ -2883,13 +2894,23 @@ async function processSingleUserPlan(userId, env, priorityGuidance = '') {
         if (questionsJsonString) { try { const defs = JSON.parse(questionsJsonString); if (Array.isArray(defs)) defs.forEach(q => { if (q.id && q.text) questionTextMap.set(q.id, q.text); }); } catch (e) { console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Failed to parse question_definitions: ${e.message}`); } } else { console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Resource 'question_definitions' not found.`); }
         const recipeData = safeParseJson(recipeDataStr, {});
 
-        // --- Нов блок: извличане на данни от всички дневници ---
-        const currentStatusStr = await env.USER_METADATA_KV.get(`${userId}_current_status`);
-        const currentStatus = safeParseJson(currentStatusStr, {});
-        const logsList = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
-        const logKeys = logsList.keys.map(k => k.name).sort();
-        const logStrings = await Promise.all(logKeys.map(k => env.USER_METADATA_KV.get(k)));
-        const logEntries = logStrings.map(s => safeParseJson(s, {}));
+        // --- Опционални данни: текущ статус и дневници ---
+        let currentStatus = {};
+        let logEntries = [];
+        try {
+            const currentStatusStr = await env.USER_METADATA_KV.get(`${userId}_current_status`);
+            currentStatus = safeParseJson(currentStatusStr, {});
+        } catch (err) {
+            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): неуспешно зареждане на current_status - ${err.message}`);
+        }
+        try {
+            const logsList = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
+            const logKeys = logsList.keys.map(k => k.name).sort();
+            const logStrings = await Promise.all(logKeys.map(k => env.USER_METADATA_KV.get(k)));
+            logEntries = logStrings.map(s => safeParseJson(s, {}));
+        } catch (err) {
+            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): неуспешно зареждане на дневници - ${err.message}`);
+        }
 
         const safeNum = (v) => { const n = parseFloat(v); return isNaN(n) ? null : n; };
         let recentWeight = safeNum(currentStatus.weight);
