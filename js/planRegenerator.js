@@ -33,18 +33,26 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
     const userId = getUserId?.();
     if (!userId) return;
     hide();
-    const priorityGuidance = input.value.trim();
-    if (regenProgress) regenProgress.classList.remove('hidden');
+    const reason = input.value.trim();
+    if (regenProgress) {
+      regenProgress.textContent = 'Генериране…';
+      regenProgress.classList.remove('hidden');
+    }
+    regenBtn.disabled = true;
     try {
-      await fetch(apiEndpoints.regeneratePlan, {
+      const resp = await fetch(apiEndpoints.regeneratePlan, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // "reason" се изисква от бекенда; използваме указанията или стандартен текст.
-        body: JSON.stringify({ userId, priorityGuidance, reason: priorityGuidance || 'Админ регенерация' })
+        body: JSON.stringify({ userId, reason: reason || 'Админ регенерация' })
       });
+      if (!resp.ok) throw new Error('Request failed');
     } catch (err) {
       console.error('regeneratePlan error:', err);
-      if (regenProgress) regenProgress.classList.add('hidden');
+      if (regenProgress) {
+        regenProgress.textContent = 'Грешка';
+        setTimeout(() => regenProgress.classList.add('hidden'), 2000);
+      }
+      regenBtn.disabled = false;
       alert('Грешка при стартиране на генерирането.');
       return;
     }
@@ -56,11 +64,19 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
         if (resp.ok && data.success) {
           if (data.planStatus === 'ready') {
             clearInterval(intervalId);
-            if (regenProgress) regenProgress.classList.add('hidden');
+            if (regenProgress) {
+              regenProgress.textContent = 'Готово';
+              setTimeout(() => regenProgress.classList.add('hidden'), 2000);
+            }
+            regenBtn.disabled = false;
             alert('Планът е обновен.');
           } else if (data.planStatus === 'error') {
             clearInterval(intervalId);
-            if (regenProgress) regenProgress.classList.add('hidden');
+            if (regenProgress) {
+              regenProgress.textContent = 'Грешка';
+              setTimeout(() => regenProgress.classList.add('hidden'), 2000);
+            }
+            regenBtn.disabled = false;
             alert(`Грешка при генерирането: ${data.error || ''}`);
           }
         }
