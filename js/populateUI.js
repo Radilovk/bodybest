@@ -452,7 +452,8 @@ export async function populateDashboardMacros(macros) {
     if (!macroContainer || !document.contains(macroContainer)) {
         macroContainer = document.createElement('div');
         macroContainer.id = 'macroAnalyticsCardContainer';
-        macroContainer.className = 'card analytics-card';
+        // Container should inherit styling from standalone macro card
+        macroContainer.className = '';
         selectors.analyticsCardsContainer?.appendChild(macroContainer);
         selectors.macroAnalyticsCardContainer = macroContainer;
     }
