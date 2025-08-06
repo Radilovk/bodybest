@@ -498,8 +498,6 @@ node scripts/view-usage-logs.js sendTestEmail 5
 | `allowed_meal_combinations` | JSON със списък на позволените комбинации от хранения |
 | `base_diet_model` | Описание на базовия диетичен модел |
 | `eating_psychology` | Текстове с психологически насоки при хранене |
-| `model_adaptive_quiz` | Име на модела за генериране на адаптивни въпросници |
-| `model_adaptive_quiz_analysis` | Модел за анализ на отговорите от адаптивен въпросник |
 | `model_chat` | Модел за чат асистента |
 | `model_plan_generation` | Модел за първоначално генериране на план |
 | `model_principle_adjustment` | Модел за корекция на принципите |
@@ -507,9 +505,7 @@ node scripts/view-usage-logs.js sendTestEmail 5
 | `model_questionnaire_analysis` | Модел за анализ на първоначалния въпросник |
 | `prompt_image_analysis` | Шаблон за промпт при анализ на изображение |
 | `prompt_questionnaire_analysis` | Шаблон за анализ на подадените отговори |
-| `prompt_adaptive_quiz_generation` | Шаблон за създаване на адаптивен въпросник |
 | `prompt_analytics_textual_summary` | Шаблон за текстов анализ на прогреса |
-| `prompt_analyze_quiz_and_suggest_changes` | Шаблон за анализ на отговорите и предложения за промяна |
 | `prompt_chat` | Шаблон за чат промптове |
 | `prompt_praise_generation` | Шаблон за генериране на похвали |
 | `prompt_principle_adjustment` | Шаблон за промпт при корекция на принципи |

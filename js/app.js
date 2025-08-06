@@ -20,12 +20,6 @@ import {
     setAutomatedChatPending
 } from './chat.js';
 import { initializeAchievements } from './achievements.js';
-import {
-    openAdaptiveQuizModal as _openAdaptiveQuizModal,
-    renderCurrentQuizQuestion,
-    showQuizValidationMessage,
-    hideQuizValidationMessage
-} from './adaptiveQuiz.js';
 import { openPlanModificationChat } from './planModChat.js';
 export { openPlanModificationChat };
 
@@ -136,15 +130,6 @@ let planStatusInterval = null;
 let planStatusTimeout = null;
 let adminQueriesInterval = null; // Интервал за проверка на администраторски съобщения
 
-// Променливи за адаптивния въпросник - управлявани от app.js
-export let currentQuizData = null;
-export let userQuizAnswers = {};
-export let currentQuestionIndex = 0;
-
-// Setters for quiz state, to be called from adaptiveQuiz.js or other modules
-export function setCurrentQuizData(data) { currentQuizData = data; }
-export function setUserQuizAnswers(answers) { userQuizAnswers = answers; }
-export function setCurrentQuestionIndex(index) { currentQuestionIndex = index; }
 export function setActiveTooltip(tooltip) { activeTooltip = tooltip; }
 
 export function triggerAssistantWiggle() {
@@ -166,9 +151,6 @@ export function resetAppState() {
     todaysPlanMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
     activeTooltip = null;
     chatPromptOverride = null;
-    currentQuizData = null;
-    userQuizAnswers = {};
-    currentQuestionIndex = 0;
 }
 
 // Функция за създаване на тестови данни
@@ -178,7 +160,6 @@ function createTestData() {
         success: true,
         planStatus: "ready",
         userName: "Тестов Потребител",
-        showAdaptiveQuiz: false,
         analytics: {
             current: { goalProgress: 65, engagementScore: 78, overallHealthScore: 72 },
             detailed: [{ label: "BMI", initialValueText: "28.5", expectedValueText: "24.0", currentValueText: "26.2", key: "bmi", infoTextKey: "bmi_info" }],
@@ -383,10 +364,9 @@ export function recalculateCurrentIntakeMacros() {
 
 /**
  * Зарежда данни за таблото от бекенда и обновява интерфейса.
- * Използва се и от модула adaptiveQuiz.js след изпращане на тест.
  * @returns {Promise<void>}
  */
-export async function loadDashboardData() { // Exported for adaptiveQuiz.js to call after submit
+export async function loadDashboardData() {
     debugLog("loadDashboardData starting for user:", currentUserId);
     if (!currentUserId) {
          showPlanPendingState("Грешка: Потребителска сесия не е намерена. Моля, <a href='index.html' style='color: var(--primary-color); text-decoration: underline;'>влезте отново</a>.");
@@ -533,10 +513,6 @@ export async function loadDashboardData() { // Exported for adaptiveQuiz.js to c
             activateTab(selectors.tabButtons[0]);
         }
 
-        if (fullDashboardData.showAdaptiveQuiz === true) {
-            _openAdaptiveQuizModal(); // From adaptiveQuiz.js
-        }
-
         showToast("Данните са заредени успешно.", false, 2000);
     } catch (error) {
         console.error("Error loading/processing dashboard data:", error);
@@ -560,7 +536,7 @@ function showPlanPendingState(customMessage) {
             if (pElements.length > 1) pElements[1].innerHTML = customMessage;
             else if (pElements.length > 0) pElements[0].innerHTML = customMessage;
         } else {
-             if (pElements.length > 0) pElements[0].textContent = "Благодарим ви за попълнения въпросник! Вашият персонализиран план MyBody.Best се генерира.";
+             if (pElements.length > 0) pElements[0].textContent = "Вашият персонализиран план MyBody.Best се генерира.";
              if (pElements.length > 1) pElements[1].textContent = "Моля, проверете отново по-късно. Ще бъдете уведомени (ако сте позволили известия) или опитайте да презаредите страницата след известно време.";
         }
     }
@@ -752,170 +728,6 @@ export async function handleFeedbackFormSubmit(event) { // Exported for eventLis
     } finally {
         showLoading(false);
     }
-}
-
-
-// ==========================================================================
-// АДАПТИВЕН ВЪПРОСНИК - ЛОГИКА И API КОМУНИКАЦИЯ (Остават в app.js)
-// ==========================================================================
-
-export async function _generateAdaptiveQuizClientSide(userId, context = {}) { // Prefixed to avoid clash if adaptiveQuiz.js also defines it
-    debugLog("generateAdaptiveQuizClientSide (app.js) called for user:", userId, "with context:", context);
-    if (!userId) throw new Error("Липсва потребителско ID за генериране на въпросник.");
-
-    if (userId.includes('test_user') || isLocalDevelopment) {
-        debugLog("Generating test quiz data (app.js)");
-        return {
-            quizId: 'test_quiz_' + Date.now(),
-            quizTitle: "Тестов Въпросник от App.js",
-            quizDescription: "Това е тестов въпросник за разработка от App.js",
-            questions: [
-                { id: "q1_app", text: "Как се чувствате днес (App)?", answerType: "скала_1_5", required: true, options: { min: 1, max: 5, minLabel: "Зле", maxLabel: "Отлично" }},
-                { id: "q2_app", text: "Колко чаши вода пихте вчера (App)?", answerType: "number", required: true, placeholder: "Въведете брой чаши" },
-                { id: "q3_app", text: "Какви са главните ви предизвикателства (App)?", answerType: "еднозначен_избор_от_списък", required: false, options: ["Време", "Мотивация", "Знания", "Активност"] }
-            ]
-        };
-    }
-
-    try {
-        let queryString = `userId=${userId}`;
-        if (context.trigger) queryString += `&trigger=${encodeURIComponent(context.trigger)}`;
-        if (context.specificFocus) queryString += `&focus=${encodeURIComponent(context.specificFocus)}`;
-        const response = await fetch(`${apiEndpoints.getAdaptiveQuiz}?${queryString}`);
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: `Сървърна грешка: ${response.status}` }));
-            throw new Error(errorData.message || `Грешка от сървъра: ${response.status}`);
-        }
-        const result = await response.json();
-        if (!result.success || !result.showQuiz || !result.quizData) {
-            throw new Error(result.message || "Неуспешно зареждане или генериране на въпросник от сървъра.");
-        }
-        debugLog("Quiz data received from worker (app.js):", result.quizData);
-        return result.quizData;
-    } catch (error) {
-        console.error("Error in generateAdaptiveQuizClientSide (app.js):", error);
-        throw error;
-    }
-}
-
-export async function _submitAdaptiveQuizClientSide(userId, quizId, submittedAnswers) { // Prefixed
-    debugLog("submitAdaptiveQuizClientSide (app.js) called for quiz:", quizId, "answers:", submittedAnswers);
-    if (!userId || !quizId || !submittedAnswers) {
-        throw new Error("Липсват необходими данни за подаване на въпросника.");
-    }
-
-    if (userId.includes('test_user') || isLocalDevelopment) {
-        debugLog("Simulating quiz analysis for test user (app.js)");
-        return {
-            success: true,
-            message: "Тестовият въпросник (App.js) беше подаден успешно!",
-            aiUpdateSummary: { title: "Анализ (App.js) завършен", introduction: "Благодарим за отговорите!", changes: ["Актуализиран план според вашите нужди"], encouragement: "Продължавайте силната работа!" }
-        };
-    }
-
-    const payload = { userId: userId, quizId: quizId, answers: submittedAnswers };
-    try {
-        const response = await fetch(apiEndpoints.submitAdaptiveQuiz, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: `Сървърна грешка при подаване: ${response.status}` }));
-            throw new Error(errorData.message || `Грешка от сървъра при подаване на отговорите: ${response.status}`);
-        }
-        const result = await response.json();
-        if (!result.success) {
-            throw new Error(result.message || "Неуспешна обработка на отговорите от сървъра.");
-        }
-        debugLog("Quiz submit result from worker (app.js):", result);
-        return result;
-    } catch (error) {
-        console.error("Error in submitAdaptiveQuizClientSide (app.js):", error);
-        throw error;
-    }
-}
-
-// Event handlers for quiz navigation, to be attached in eventListeners.js
-export function _handlePrevQuizQuestion() {
-    if (currentQuestionIndex > 0) {
-        setCurrentQuestionIndex(currentQuestionIndex - 1);
-        renderCurrentQuizQuestion(false); // from adaptiveQuiz.js
-    }
-}
-
-export function _handleNextQuizQuestion() {
-    const currentQ = currentQuizData.questions[currentQuestionIndex];
-    if (currentQ.required) {
-        const answer = userQuizAnswers[currentQ.id];
-        let isEmpty = false;
-        if (Array.isArray(answer)) { isEmpty = answer.length === 0; }
-        else { isEmpty = (answer === null || String(answer).trim() === ''); }
-
-        if (isEmpty) {
-            showQuizValidationMessage('Моля, отговорете на този въпрос, преди да продължите.'); // from adaptiveQuiz.js
-            const currentCard = selectors.quizQuestionContainer.querySelector('.aq-question-card-hybrid');
-            const inputAreaInCard = currentCard?.querySelector('.question-input-area');
-            const firstInputInArea = inputAreaInCard?.querySelector('input:not([type="hidden"]), textarea, .rating-square[tabindex="0"], select');
-            if (firstInputInArea) firstInputInArea.focus();
-            return;
-        }
-    }
-    hideQuizValidationMessage(); // from adaptiveQuiz.js
-    if (currentQuestionIndex < currentQuizData.questions.length - 1) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-        renderCurrentQuizQuestion(true); // from adaptiveQuiz.js
-    }
-}
-
-export async function _handleSubmitQuizAnswersClientSide() {
-    for (let i = 0; i < currentQuizData.questions.length; i++) {
-        const q = currentQuizData.questions[i];
-        if (q.required) {
-            const answer = userQuizAnswers[q.id];
-            let isEmpty = false;
-            if (Array.isArray(answer)) { isEmpty = answer.length === 0; }
-            else { isEmpty = (answer === null || String(answer).trim() === ''); }
-            if (isEmpty) {
-                showToast(`Моля, отговорете на всички задължителни въпроси. Въпрос "${q.text.substring(0,30)}..." е пропуснат.`, true, 4000);
-                setCurrentQuestionIndex(i);
-                renderCurrentQuizQuestion(true); // from adaptiveQuiz.js
-                return;
-            }
-        }
-    }
-
-    showLoading(true, "Обработка на вашите отговори...");
-    try {
-        await _submitAdaptiveQuizClientSide(currentUserId, currentQuizData.quizId, userQuizAnswers);
-        showToast("Въпросникът е успешно подаден!", false, 2000);
-
-        setTimeout(() => {
-            if (selectors.adaptiveQuizModal) {
-                closeModal('adaptiveQuizWrapper');
-            }
-        }, 1500);
-
-        showPlanPendingState();
-        pollPlanStatus();
-
-        setCurrentQuizData(null);
-        setUserQuizAnswers({});
-        setCurrentQuestionIndex(0);
-    } catch (error) {
-        console.error("Error submitting quiz answers:", error);
-        showToast(`Грешка при подаване на въпросника: ${error.message}`, true);
-        setCurrentQuizData(null);
-        setUserQuizAnswers({});
-        setCurrentQuestionIndex(0);
-    } finally {
-        showLoading(false);
-    }
-}
-
-export async function _handleTriggerAdaptiveQuizClientSide() { // Exported for eventListeners.js
-    if (!currentUserId) { showToast("Моля, влезте първо.", true); return; }
-    _openAdaptiveQuizModal(); // from adaptiveQuiz.js
 }
 
 

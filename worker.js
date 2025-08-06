@@ -299,14 +299,6 @@ const USER_ACTIVITY_LOG_LOOKBACK_DAYS = 10;
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS = 7;
 const RECENT_CHAT_MESSAGES_FOR_PRINCIPLES = 10;
 
-const ADAPTIVE_QUIZ_PERIODICITY_DAYS = 28;
-const ADAPTIVE_QUIZ_TRIGGER_COOLDOWN_DAYS = 14;
-const ADAPTIVE_QUIZ_WEIGHT_STAGNATION_LOOKBACK_DAYS = 14;
-const ADAPTIVE_QUIZ_WEIGHT_STAGNATION_THRESHOLD_KG_LOSS = 0.3;
-const ADAPTIVE_QUIZ_WEIGHT_STAGNATION_THRESHOLD_KG_GAIN = 0.2;
-const ADAPTIVE_QUIZ_LOW_ENGAGEMENT_DAYS = 7;
-const ADAPTIVE_QUIZ_ANSWERS_LOOKBACK_DAYS = 35; // Колко назад да търсим отговори от въпросник за контекст
-const PREVIOUS_QUIZZES_FOR_CONTEXT_COUNT = 2; // Брой предишни въпросници за контекст при генериране на нов
 const AUTOMATED_FEEDBACK_TRIGGER_DAYS = 3; // След толкова дни предлагаме автоматичен чат
 const PRAISE_INTERVAL_DAYS = 3; // Интервал за нова похвала/значка
 const MEDAL_ICONS = [
@@ -500,12 +492,6 @@ export default {
             } else if (method === 'POST' && path === '/api/performPasswordReset') {
                 responseBody = await handlePerformPasswordReset(request, env);
                 if (responseBody.statusHint) { responseStatus = responseBody.statusHint; }
-            } else if (method === 'GET' && path === '/api/getAdaptiveQuiz') { // Запазено от v2.1
-                responseBody = await handleGetAdaptiveQuizRequest(request, env);
-            } else if (method === 'POST' && path === '/api/submitAdaptiveQuiz') { // Запазено от v2.1, ще бъде прегледано за интеграция на AI summary
-                responseBody = await handleSubmitAdaptiveQuizRequest(request, env);
-            } else if (method === 'POST' && path === '/api/triggerAdaptiveQuizTest') { // Запазено от v2.1
-                responseBody = await handleTriggerAdaptiveQuizTestRequest(request, env, ctx);
             } else if (method === 'POST' && path === '/api/acknowledgeAiUpdate') { // НОВ ендпойнт
                 responseBody = await handleAcknowledgeAiUpdateRequest(request, env);
             } else if (method === 'POST' && path === '/api/recordFeedbackChat') {
@@ -600,17 +586,14 @@ export default {
 
         let processedUsersForPlan = 0;
         let processedUsersForPrinciples = 0;
-        let processedUsersForAdaptiveQuiz = 0;
         let processedUserEvents = 0;
         const MAX_PROCESS_PER_RUN_PLAN_GEN = parseInt(env.MAX_PROCESS_PER_RUN_PLAN_GEN || '1', 10);
         const MAX_PROCESS_PER_RUN_PRINCIPLES = parseInt(env.MAX_PROCESS_PER_RUN_PRINCIPLES || '2', 10);
-        const MAX_PROCESS_PER_RUN_ADAPTIVE_QUIZ = parseInt(env.MAX_PROCESS_PER_RUN_ADAPTIVE_QUIZ || '3', 10);
 
         const planGenStart = Date.now();
         let planGenDuration = 0;
         let userEventsDuration = 0;
         let principlesDuration = 0;
-        let quizDuration = 0;
 
         try {
             // --- 1. Обработка на генериране на първоначален план ---
@@ -680,11 +663,7 @@ export default {
                 const lastUpdateTsForPrinciples = lastUpdateTsStrForPrinciples ? parseInt(lastUpdateTsStrForPrinciples, 10) : 0;
                 const daysSinceLastPrincipleUpdate = (Date.now() - lastUpdateTsForPrinciples) / (1000 * 60 * 60 * 24);
 
-                const lastQuizCompletionTsStr = await env.USER_METADATA_KV.get(`${userId}_last_adaptive_quiz_ts`);
-                const lastQuizCompletionTs = lastQuizCompletionTsStr ? parseInt(lastQuizCompletionTsStr, 10) : 0;
-
-                if (daysSinceLastPrincipleUpdate >= PRINCIPLE_UPDATE_INTERVAL_DAYS &&
-                    (lastQuizCompletionTs === 0 || Date.now() - lastQuizCompletionTs > PRINCIPLE_UPDATE_INTERVAL_DAYS * 24 * 60 * 60 * 1000) ) {
+                if (daysSinceLastPrincipleUpdate >= PRINCIPLE_UPDATE_INTERVAL_DAYS) {
                     console.log(`[CRON-Principles] User ${userId} due for standard principle update.`);
                     // Извикваме handlePrincipleAdjustment без calledFromQuizAnalysis = true (default е false)
                     // handlePrincipleAdjustment е async, но тук не е нужно да го await-ваме директно, тъй като е продължителна операция
@@ -695,66 +674,6 @@ export default {
             if (processedUsersForPrinciples === 0) console.log("[CRON-Principles] No users for standard principle update.");
 
             principlesDuration = Date.now() - principlesStart;
-
-            // --- 3. Проверка и задействане на Адаптивни Въпросници ---
-            console.log("[CRON-AdaptiveQuiz] Starting check for adaptive quiz triggers.");
-            const quizStart = Date.now();
-            for (const userId of usersWithReadyPlan) {
-                if (processedUsersForAdaptiveQuiz >= MAX_PROCESS_PER_RUN_ADAPTIVE_QUIZ) {
-                     console.log(`[CRON-AdaptiveQuiz] Reached processing limit for quiz generation this run.`);
-                     break;
-                }
-
-                const initialAnswersStr = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
-                if (!initialAnswersStr) continue;
-                const initialAnswers = safeParseJson(initialAnswersStr, {});
-
-                const lastQuizTsStr = await env.USER_METADATA_KV.get(`${userId}_last_adaptive_quiz_ts`);
-                const lastQuizTs = lastQuizTsStr ? parseInt(lastQuizTsStr, 10) : 0;
-                const daysSinceLastQuiz = (Date.now() - lastQuizTs) / (1000 * 60 * 60 * 24);
-
-                if (lastQuizTs === 0) continue;
-
-                const isQuizAlreadyPending = await env.USER_METADATA_KV.get(`${userId}_adaptive_quiz_pending`);
-                if (isQuizAlreadyPending === "true") {
-                    // console.log(`[CRON-AdaptiveQuiz] Quiz already pending for user ${userId}. Skipping generation.`);
-                    continue;
-                }
-
-                let shouldTriggerQuiz = false;
-                let triggerReason = "";
-
-                if (daysSinceLastQuiz >= ADAPTIVE_QUIZ_PERIODICITY_DAYS) {
-                    shouldTriggerQuiz = true;
-                    triggerReason = "Periodicity";
-                }
-
-                if (!shouldTriggerQuiz && daysSinceLastQuiz >= ADAPTIVE_QUIZ_TRIGGER_COOLDOWN_DAYS) {
-                    const weightStagnation = await checkWeightStagnationTrigger(userId, initialAnswers, env);
-                    if (weightStagnation) {
-                        shouldTriggerQuiz = true;
-                        triggerReason = "WeightStagnation";
-                    }
-                    if (!shouldTriggerQuiz) {
-                        const lowEngagement = await checkLowEngagementTrigger(userId, env);
-                        if (lowEngagement) {
-                            shouldTriggerQuiz = true;
-                            triggerReason = "LowEngagement";
-                        }
-                    }
-                }
-
-                if (shouldTriggerQuiz) {
-                    console.log(`[CRON-AdaptiveQuiz] Triggering for user ${userId}. Reason: ${triggerReason}. Days since last quiz: ${daysSinceLastQuiz.toFixed(1)}`);
-                    ctx.waitUntil(generateAndStoreAdaptiveQuiz(userId, initialAnswers, env));
-                    processedUsersForAdaptiveQuiz++;
-                }
-            }
-            if (processedUsersForAdaptiveQuiz === 0) {
-                console.log("[CRON-AdaptiveQuiz] No users found for adaptive quiz this run.");
-            }
-
-            quizDuration = Date.now() - quizStart;
 
         } catch(error) {
             console.error("[CRON] Error during scheduled execution:", error.message, error.stack);
@@ -767,16 +686,14 @@ export default {
             eventsProcessed: processedUserEvents,
             eventsMs: userEventsDuration,
             principlesProcessed: processedUsersForPrinciples,
-            principlesMs: principlesDuration,
-            quizProcessed: processedUsersForAdaptiveQuiz,
-            quizMs: quizDuration
+            principlesMs: principlesDuration
         };
         try {
             await env.USER_METADATA_KV.put(`cron_metrics_${metrics.ts}`, JSON.stringify(metrics));
         } catch(storeErr) {
             console.error("[CRON] Failed to store metrics:", storeErr.message);
         }
-        console.log(`[CRON] Trigger finished. PlanGen: ${processedUsersForPlan}, Principles: ${processedUsersForPrinciples}, AdaptiveQuiz: ${processedUsersForAdaptiveQuiz}, UserEvents: ${processedUserEvents}`);
+        console.log(`[CRON] Trigger finished. PlanGen: ${processedUsersForPlan}, Principles: ${processedUsersForPrinciples}, UserEvents: ${processedUserEvents}`);
     }
     // ------------- END FUNCTION: scheduled -------------
 };
@@ -1054,7 +971,6 @@ async function handleDashboardDataRequest(request, env) {
         const [
             initialAnswersStr, finalPlanStr, recipeDataStr, planStatus,
             currentStatusStr,                     firstLoginFlagStr,
-            adaptiveQuizPendingStr,
             aiUpdateSummaryAckStr,
             lastUpdateTsStr,
             lastFeedbackChatTsStr,
@@ -1066,7 +982,6 @@ async function handleDashboardDataRequest(request, env) {
             env.USER_METADATA_KV.get(`plan_status_${userId}`),
             env.USER_METADATA_KV.get(`${userId}_current_status`),
             env.USER_METADATA_KV.get(`${userId}_welcome_seen`),
-            env.USER_METADATA_KV.get(`${userId}_adaptive_quiz_pending`),
             env.USER_METADATA_KV.get(`${userId}_ai_update_pending_ack`),
             env.USER_METADATA_KV.get(`${userId}_last_significant_update_ts`),
             env.USER_METADATA_KV.get(`${userId}_last_feedback_chat_ts`),
@@ -1128,7 +1043,6 @@ async function handleDashboardDataRequest(request, env) {
         const baseResponse = {
             success: true, userId, planStatus: actualPlanStatus, userName, initialAnswers, initialData,
             recipeData, dailyLogs: logEntries, currentStatus, isFirstLoginWithReadyPlan,
-            showAdaptiveQuiz: adaptiveQuizPendingStr === "true",
             aiUpdateSummary: aiUpdateSummary, // Добавено тук
             triggerAutomatedFeedbackChat,
             macroExceedThreshold: typeof profile.macroExceedThreshold === 'number' ? profile.macroExceedThreshold : undefined
@@ -1707,104 +1621,6 @@ async function handlePerformPasswordReset(request, env) {
 }
 // ------------- END FUNCTION: handlePerformPasswordReset -------------
 
-// ------------- START FUNCTION: handleGetAdaptiveQuizRequest -------------
-async function handleGetAdaptiveQuizRequest(request, env) {
-    const url = new URL(request.url);
-    const userId = url.searchParams.get('userId');
-    if (!userId) return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
-    try {
-        const quizPending = await env.USER_METADATA_KV.get(`${userId}_adaptive_quiz_pending`);
-        if (quizPending !== "true") {
-            console.log(`GET_ADAPTIVE_QUIZ (${userId}): No pending quiz.`);
-            return { success: true, showQuiz: false, message: "В момента няма чакащ адаптивен въпросник за Вас." };
-        }
-        const quizJson = await env.USER_METADATA_KV.get(`${userId}_adaptive_quiz_content`);
-        if (!quizJson) {
-            // Ако е pending, но няма съдържание, това е грешка - изчистваме pending флага.
-            await env.USER_METADATA_KV.delete(`${userId}_adaptive_quiz_pending`);
-            console.error(`GET_ADAPTIVE_QUIZ_ERROR (${userId}): Quiz pending but content not found. Cleared pending flag.`);
-            return { success: false, showQuiz: false, message: "Въпросникът е бил маркиран като чакащ, но съдържанието му не е намерено. Моля, опитайте по-късно или се свържете с поддръжка.", statusHint: 500 };
-        }
-        const quizData = safeParseJson(quizJson);
-        if (!quizData || !Array.isArray(quizData.questions) || quizData.questions.length === 0) {
-            await env.USER_METADATA_KV.delete(`${userId}_adaptive_quiz_pending`);
-            console.error(`GET_ADAPTIVE_QUIZ_ERROR (${userId}): Invalid quiz JSON structure. Cleared pending flag. Content (start): ${quizJson.substring(0,100)}`);
-            return { success: false, showQuiz: false, message: "Грешка в структурата на заредения въпросник. Моля, информирайте поддръжка.", statusHint: 500 };
-        }
-        console.log(`GET_ADAPTIVE_QUIZ (${userId}): Serving quiz ID ${quizData.quizId}.`);
-        return { success: true, showQuiz: true, quizData: quizData };
-    } catch (error) {
-        console.error(`Error in handleGetAdaptiveQuizRequest for ${userId}:`, error.message, error.stack);
-        return { success: false, message: 'Възникна грешка при извличане на адаптивен въпросник.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleGetAdaptiveQuizRequest -------------
-
-// ------------- START FUNCTION: handleSubmitAdaptiveQuizRequest -------------
-async function handleSubmitAdaptiveQuizRequest(request, env) {
-    try {
-        const { userId, answers, quizId } = await request.json();
-        if (!userId || !answers || typeof answers !== 'object' || !quizId) {
-            console.warn(`SUBMIT_ADAPTIVE_QUIZ_ERROR (${userId || 'unknown'}): Missing or invalid data. quizId: ${quizId}, answers type: ${typeof answers}`);
-            return { success: false, message: 'Липсват необходими данни (userId, answers, quizId) или са в невалиден формат.', statusHint: 400 };
-        }
-        const timestamp = new Date().toISOString();
-        const answersKey = `${userId}_adaptive_quiz_answers_${quizId}_${timestamp.replace(/[:.]/g, '-')}`;
-        
-        await env.USER_METADATA_KV.put(answersKey, JSON.stringify({ userId, quizId, timestamp, answers }));
-        await env.USER_METADATA_KV.delete(`${userId}_adaptive_quiz_pending`); // Изчистваме флага, че има чакащ въпросник
-        await env.USER_METADATA_KV.put(`${userId}_last_adaptive_quiz_ts`, Date.now().toString()); // Записваме кога е попълнен последният
-
-        // Запазваме _adaptive_quiz_content_${quizId} за история, ако е генериран с ID, а не само общия.
-        // Функцията generateAndStoreAdaptiveQuiz вече прави това.
-        console.log(`SUBMIT_ADAPTIVE_QUIZ (${userId}): Answers for quiz ${quizId} saved to ${answersKey}.`);
-
-        // Създаваме събитие за последваща адаптация на плана
-        const evaluation = await evaluatePlanChange(userId, { reason: 'adaptiveQuiz', quizId }, env);
-        const evRes = await createUserEvent('planMod', userId, { reason: 'adaptiveQuiz', quizId, evaluation }, env);
-        let finalMsg = "Вашите отговори бяха успешно записани! Актуализацията на плана ще бъде извършена скоро.";
-        if(evRes && evRes.message) finalMsg = `${evRes.message} Отговорите ви са записани.`;
-
-        return { success: true, message: finalMsg };
-    } catch (error) {
-        console.error("Error in handleSubmitAdaptiveQuizRequest:", error.message, error.stack);
-        const userIdFromBody = (await request.json().catch(() => ({}))).userId || 'unknown';
-        return { success: false, message: `Възникна грешка при запис на отговорите Ви: ${error.message}`, statusHint: 500, userId: userIdFromBody };
-    }
-}
-// ------------- END FUNCTION: handleSubmitAdaptiveQuizRequest -------------
-
-// ------------- START FUNCTION: handleTriggerAdaptiveQuizTestRequest -------------
-async function handleTriggerAdaptiveQuizTestRequest(request, env, ctx) {
-    try {
-        const { userId } = await request.json();
-        if (!userId) {
-            console.warn("TRIGGER_ADAPTIVE_QUIZ_TEST_ERROR: userId is required.");
-            return { success: false, message: "userId is required in body for test trigger." };
-        }
-        const initialAnswersStr = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
-        if (!initialAnswersStr) {
-            console.warn(`TRIGGER_ADAPTIVE_QUIZ_TEST_ERROR (${userId}): No initial answers found.`);
-            return { success: false, message: `No initial answers found for ${userId}. Cannot trigger quiz generation.` };
-        }
-        const initialAnswers = safeParseJson(initialAnswersStr);
-        if (Object.keys(initialAnswers).length === 0) {
-             console.warn(`TRIGGER_ADAPTIVE_QUIZ_TEST_ERROR (${userId}): Parsed initial answers are empty.`);
-            return { success: false, message: `Parsed initial answers are empty for ${userId}. Cannot trigger quiz generation.` };
-        }
-
-        console.log(`TRIGGER_ADAPTIVE_QUIZ_TEST (${userId}): Manually triggering adaptive quiz generation.`);
-        ctx.waitUntil(
-            generateAndStoreAdaptiveQuiz(userId, initialAnswers, env)
-                .catch(err => console.error(`TRIGGER_ADAPTIVE_QUIZ_TEST_ERROR (${userId}): Background task generateAndStoreAdaptiveQuiz failed:`, err.message, err.stack))
-        );
-        return { success: true, message: `Adaptive quiz generation triggered for user ${userId}. Check KV for ${userId}_adaptive_quiz_pending and ${userId}_adaptive_quiz_content. The quiz will appear in the dashboard if generated successfully.` };
-    } catch (error) {
-        console.error("Error in handleTriggerAdaptiveQuizTestRequest:", error.message, error.stack);
-        return { success: false, message: error.message, statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleTriggerAdaptiveQuizTestRequest -------------
 
 // ------------- START FUNCTION: handleAcknowledgeAiUpdateRequest -------------
 async function handleAcknowledgeAiUpdateRequest(request, env) {
@@ -3056,10 +2872,6 @@ async function processSingleUserPlan(userId, env, priorityGuidance = '', regenRe
             const summary = createPlanUpdateSummary(planBuilder, previousPlan);
             await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summary));
 
-            if (!(await env.USER_METADATA_KV.get(`${userId}_last_adaptive_quiz_ts`))) {
-                await env.USER_METADATA_KV.put(`${userId}_last_adaptive_quiz_ts`, Date.now().toString());
-            }
-
             console.log(`PROCESS_USER_PLAN (${userId}): Successfully generated and saved UNIFIED plan. Status set to 'ready'.`);
         }
     } catch (error) {
@@ -3080,7 +2892,7 @@ async function processSingleUserPlan(userId, env, priorityGuidance = '', regenRe
 
 // ------------- START FUNCTION: handlePrincipleAdjustment -------------
 async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = false) {
-    console.log(`PRINCIPLE_ADJUST (${userId}): Starting. Called from quiz analysis: ${calledFromQuizAnalysis}`);
+    console.log(`PRINCIPLE_ADJUST (${userId}): Starting.`);
     try {
         const [
             initialAnswersStr, finalPlanStr, currentStatusStr,
@@ -3119,37 +2931,6 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
              return null;
         }
 
-        let lastAdaptiveQuizDate = "Няма данни за скорошен въпросник";
-        let detailedAdaptiveQuizSummary = "Няма данни от скорошен адаптивен въпросник, които да бъдат използвани за контекст.";
-        const lastQuizTsStr = await env.USER_METADATA_KV.get(`${userId}_last_adaptive_quiz_ts`);
-        if (lastQuizTsStr) {
-            const lastQuizTs = parseInt(lastQuizTsStr, 10);
-            if ((Date.now() - lastQuizTs) / (1000 * 60 * 60 * 24) < ADAPTIVE_QUIZ_ANSWERS_LOOKBACK_DAYS) {
-                lastAdaptiveQuizDate = new Date(lastQuizTs).toLocaleDateString('bg-BG');
-                const listOptions = { prefix: `${userId}_adaptive_quiz_answers_`, limit: 1, reverse: true };
-                const listedAnswers = await env.USER_METADATA_KV.list(listOptions);
-                if (listedAnswers.keys.length > 0) {
-                    const lastAnswerKey = listedAnswers.keys[0].name;
-                    const lastAnswerDataStr = await env.USER_METADATA_KV.get(lastAnswerKey);
-                    const lastAnswerData = safeParseJson(lastAnswerDataStr);
-                    if (lastAnswerData && lastAnswerData.quizId && lastAnswerData.answers) {
-                        // Опитваме да заредим специфичната дефиниция на въпросника, на който е отговорено
-                        const quizContentStr = await env.USER_METADATA_KV.get(`${userId}_adaptive_quiz_content_${lastAnswerData.quizId}`) 
-                                            || await env.USER_METADATA_KV.get(`${userId}_adaptive_quiz_content`); // Fallback to general if specific not found
-                        const quizContent = safeParseJson(quizContentStr);
-                        if (quizContent && (quizContent.quizId === lastAnswerData.quizId || !quizContent.quizId) ) { // If quizContent.quizId is missing, assume it's the one
-                             detailedAdaptiveQuizSummary = formatQuizAnswersForContext(quizContent, lastAnswerData.answers, `Резюме от Адаптивен Въпросник (ID: ${lastAnswerData.quizId}, попълнен на ${lastAdaptiveQuizDate})`);
-                        } else {
-                            detailedAdaptiveQuizSummary = `Отговорите от въпросник ID ${lastAnswerData.quizId} (попълнен на ${lastAdaptiveQuizDate}) са налични, но точната дефиниция на въпросите не е намерена или не съвпада. Сурови отговори: ${JSON.stringify(lastAnswerData.answers).substring(0, 300)}...`;
-                        }
-                    }
-                }
-            }
-        }
-
-        const originalGoal = initialAnswers.goal || "N/A";
-        const calMac = finalPlan.caloriesMacros;
-        const initCalMac = calMac ? `Кал: ${calMac.calories||'?'} P:${calMac.protein_grams||'?'}g (${calMac.protein_percent||'?'}%) C:${calMac.carbs_grams||'?'}g (${calMac.carbs_percent||'?'}%) F:${calMac.fat_grams||'?'}g (${calMac.fat_percent||'?'}%)` : "N/A";
         const currentWeightVal = safeParseFloat(currentStatus?.weight);
         const currentWeightStr = currentWeightVal ? `${currentWeightVal.toFixed(1)} кг` : "N/A";
         
@@ -3232,9 +3013,7 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
             '%%AVERAGE_SLEEP_QUALITY_LAST_WEEK%%': `${avgSleep}/5`,
             '%%MEAL_ADHERENCE_PERCENT_LAST_WEEK%%': mealAdherencePercent,
             '%%RECENT_CHAT_SUMMARY%%': recentChatSummary,
-            '%%USER_SPECIFIC_CONCERNS_FROM_LOGS_OR_CHAT%%': userConcernsSummary,
-            '%%LAST_ADAPTIVE_QUIZ_DATE%%': lastAdaptiveQuizDate,
-            '%%ADAPTIVE_QUIZ_SUMMARY%%': detailedAdaptiveQuizSummary
+            '%%USER_SPECIFIC_CONCERNS_FROM_LOGS_OR_CHAT%%': userConcernsSummary
         };
 
         const populatedPrompt = populatePrompt(principleAdjustmentPromptTpl, replacements);
@@ -3294,342 +3073,6 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
 }
 // ------------- END FUNCTION: handlePrincipleAdjustment -------------
 
-// ------------- START BLOCK: HelperFunctionsForAdaptiveQuiz -------------
-// ------------- START FUNCTION: checkWeightStagnationTrigger -------------
-async function checkWeightStagnationTrigger(userId, initialAnswers, env) {
-    const userGoal = initialAnswers.goal;
-    if (userGoal !== 'отслабване' && userGoal !== 'покачване на мускулна маса') {
-        // console.log(`[ADAPT_QUIZ_TRIGGER_SKIP_WEIGHT] User ${userId}: Goal '${userGoal}' not weight-related.`);
-        return false;
-    }
-    const currentStatusStr = await env.USER_METADATA_KV.get(`${userId}_current_status`);
-    const currentStatus = safeParseJson(currentStatusStr, {});
-    const currentWeight = safeParseFloat(currentStatus.weight);
-
-    if (currentWeight === null) {
-        // console.log(`[ADAPT_QUIZ_TRIGGER_SKIP_WEIGHT] User ${userId}: No current weight available.`);
-        return false;
-    }
-
-    let weightXDaysAgo = null;
-    // Търсим тегло в диапазона [lookback - 2, lookback + 2] дни, за да имаме по-голям шанс да намерим запис
-    for (let i = ADAPTIVE_QUIZ_WEIGHT_STAGNATION_LOOKBACK_DAYS - 2; i <= ADAPTIVE_QUIZ_WEIGHT_STAGNATION_LOOKBACK_DAYS + 2; i++) {
-        if (i <= 0) continue;
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const logStr = await env.USER_METADATA_KV.get(`${userId}_log_${date.toISOString().split('T')[0]}`);
-        if (logStr) {
-            const logData = safeParseJson(logStr, {});
-            const loggedWeight = safeParseFloat(logData.weight);
-            if (loggedWeight !== null) {
-                weightXDaysAgo = loggedWeight;
-                // console.log(`[ADAPT_QUIZ_TRIGGER_WEIGHT] User ${userId}: Found weight ${weightXDaysAgo}kg from ${i} days ago.`);
-                break;
-            }
-        }
-    }
-
-    if (weightXDaysAgo === null) {
-        // console.log(`[ADAPT_QUIZ_TRIGGER_SKIP_WEIGHT] User ${userId}: No weight log found around ${ADAPTIVE_QUIZ_WEIGHT_STAGNATION_LOOKBACK_DAYS} days ago.`);
-        return false;
-    }
-
-    if (userGoal === 'отслабване') {
-        const weightChange = weightXDaysAgo - currentWeight; // Положително е загуба
-        const stagnant = weightChange < ADAPTIVE_QUIZ_WEIGHT_STAGNATION_THRESHOLD_KG_LOSS;
-        // if (stagnant) console.log(`[ADAPT_QUIZ_TRIGGER_WEIGHT_STAGNATION] User ${userId} (Loss Goal): Stagnation detected. Change: ${weightChange.toFixed(2)}kg (Threshold: <${ADAPTIVE_QUIZ_WEIGHT_STAGNATION_THRESHOLD_KG_LOSS}kg)`);
-        return stagnant;
-    } else if (userGoal === 'покачване на мускулна маса') {
-        const weightChange = currentWeight - weightXDaysAgo; // Положително е покачване
-        const stagnant = weightChange < ADAPTIVE_QUIZ_WEIGHT_STAGNATION_THRESHOLD_KG_GAIN;
-        // if (stagnant) console.log(`[ADAPT_QUIZ_TRIGGER_WEIGHT_STAGNATION] User ${userId} (Gain Goal): Stagnation detected. Change: ${weightChange.toFixed(2)}kg (Threshold: <${ADAPTIVE_QUIZ_WEIGHT_STAGNATION_THRESHOLD_KG_GAIN}kg)`);
-        return stagnant;
-    }
-    return false;
-}
-// ------------- END FUNCTION: checkWeightStagnationTrigger -------------
-
-// ------------- START FUNCTION: checkLowEngagementTrigger -------------
-async function checkLowEngagementTrigger(userId, env) {
-    const planTs = await env.USER_METADATA_KV.get(`${userId}_last_significant_update_ts`);
-    if (planTs) {
-        const planAgeDays = (Date.now() - Number(planTs)) / (1000 * 60 * 60 * 24);
-        if (planAgeDays < ADAPTIVE_QUIZ_LOW_ENGAGEMENT_DAYS) return false;
-    }
-    const logList = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_`, limit: 1 });
-    if (!logList.keys || logList.keys.length === 0) return false;
-    let daysSinceLastLog = ADAPTIVE_QUIZ_LOW_ENGAGEMENT_DAYS + 1;
-    for (let i = 0; i < ADAPTIVE_QUIZ_LOW_ENGAGEMENT_DAYS; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const logKey = `${userId}_log_${date.toISOString().split('T')[0]}`;
-        // Просто проверяваме дали ключът съществува, get с type:'arrayBuffer' е ефективен за това
-        const logExists = await env.USER_METADATA_KV.get(logKey, { type: "arrayBuffer" });
-        if (logExists !== null) {
-            daysSinceLastLog = i;
-            // console.log(`[ADAPT_QUIZ_TRIGGER_ENGAGEMENT] User ${userId}: Found log from ${i} days ago. Days since last log: ${daysSinceLastLog}.`);
-            break;
-        }
-    }
-    const lowEngagement = daysSinceLastLog >= ADAPTIVE_QUIZ_LOW_ENGAGEMENT_DAYS;
-    // if (lowEngagement) console.log(`[ADAPT_QUIZ_TRIGGER_LOW_ENGAGEMENT] User ${userId}: Low engagement detected. Days since last log: ${daysSinceLastLog} (Threshold: >=${ADAPTIVE_QUIZ_LOW_ENGAGEMENT_DAYS} days)`);
-    return lowEngagement;
-}
-// ------------- END FUNCTION: checkLowEngagementTrigger -------------
-
-// ------------- START FUNCTION: getPreviousQuizzesContext -------------
-async function getPreviousQuizzesContext(userId, env, count = PREVIOUS_QUIZZES_FOR_CONTEXT_COUNT) {
-    let summary = "Няма данни от предишни адаптивни въпросници, които да бъдат използвани за контекст.";
-    if (count <= 0) return summary;
-
-    try {
-        const listOptions = { prefix: `${userId}_adaptive_quiz_answers_`, limit: count, reverse: true };
-        const listedAnswers = await env.USER_METADATA_KV.list(listOptions);
-
-        if (listedAnswers.keys.length === 0) {
-            // console.log(`[ADAPT_QUIZ_CONTEXT] User ${userId}: No previous quiz answers found.`);
-            return summary;
-        }
-
-        const summaries = [];
-        // listedAnswers.keys са вече сортирани от най-нови към най-стари (reverse: true)
-        // За да ги покажем в хронологичен ред в промпта (от най-стар към най-нов от извлечените), обръщаме масива
-        for (const key of listedAnswers.keys.reverse()) {
-            const answerDataStr = await env.USER_METADATA_KV.get(key.name);
-            const answerData = safeParseJson(answerDataStr);
-
-            if (answerData && answerData.quizId && answerData.answers) {
-                let quizDefinitionToUse = null;
-                // Първо търсим специфичната дефиниция за този quizId
-                const specificQuizContentStr = await env.USER_METADATA_KV.get(`${userId}_adaptive_quiz_content_${answerData.quizId}`);
-                if (specificQuizContentStr) {
-                    quizDefinitionToUse = safeParseJson(specificQuizContentStr);
-                } else {
-                    // Fallback: Ако специфичната дефиниция не е намерена, опитваме с общата _adaptive_quiz_content,
-                    // но само ако нейният quizId съвпада (т.е. това е бил последният генериран И попълнен въпросник)
-                    const generalQuizContentStr = await env.USER_METADATA_KV.get(`${userId}_adaptive_quiz_content`);
-                     if(generalQuizContentStr) {
-                        const generalQuizContent = safeParseJson(generalQuizContentStr);
-                        if (generalQuizContent && generalQuizContent.quizId === answerData.quizId) {
-                            quizDefinitionToUse = generalQuizContent;
-                        }
-                     }
-                }
-
-                const quizDate = new Date(answerData.timestamp).toLocaleDateString('bg-BG');
-                if (quizDefinitionToUse) {
-                    summaries.push(formatQuizAnswersForContext(quizDefinitionToUse, answerData.answers, `Резюме от въпросник (ID: ${answerData.quizId}, попълнен на ${quizDate})`));
-                } else {
-                    summaries.push(`Отговори от въпросник ID ${answerData.quizId} (попълнен на ${quizDate}):\n${JSON.stringify(answerData.answers).substring(0, 250)}... (Дефиницията на въпросите за този ID не е намерена)`);
-                }
-            }
-        }
-        if (summaries.length > 0) {
-            summary = "КОНТЕКСТ ОТ ПРЕДИШНИ АДАПТИВНИ ВЪПРОСНИЦИ (от най-стар към най-нов от извадката):\n\n" + summaries.join("\n\n---\n\n");
-        }
-    } catch (error) {
-        console.error(`Error getting previous quizzes context for ${userId}:`, error.message, error.stack);
-        summary = "Грешка при извличане на контекст от предишни въпросници.";
-    }
-    // console.log(`[ADAPT_QUIZ_CONTEXT] User ${userId}: Context summary length: ${summary.length}`);
-    return summary;
-}
-// ------------- END FUNCTION: getPreviousQuizzesContext -------------
-
-// ------------- START FUNCTION: generateAndStoreAdaptiveQuiz -------------
-async function generateAndStoreAdaptiveQuiz(userId, initialAnswers, env) {
-    console.log(`[ADAPT_QUIZ_GEN] Attempting to generate adaptive quiz for user ${userId}`);
-    let rawQuizResponse = "";
-    try {
-        const geminiApiKey = env[GEMINI_API_KEY_SECRET_NAME];
-        const openaiApiKey = env[OPENAI_API_KEY_SECRET_NAME];
-        const quizPromptTemplate = await env.RESOURCES_KV.get('prompt_adaptive_quiz_generation');
-        const quizModelName = await env.RESOURCES_KV.get('model_adaptive_quiz') || await env.RESOURCES_KV.get('model_chat'); // Fallback model
-
-        const providerForQuiz = getModelProvider(quizModelName);
-        if (!quizPromptTemplate || !quizModelName ||
-            (providerForQuiz === 'gemini' && !geminiApiKey) ||
-            (providerForQuiz === 'openai' && !openaiApiKey)) {
-            console.error(`[ADAPT_QUIZ_GEN_ERROR] Missing prerequisites for ${userId} (API key, prompt, or model).`);
-            await env.USER_METADATA_KV.put(`${userId}_adaptive_quiz_error`, "Грешка в конфигурацията за генериране на въпросник.");
-            return;
-        }
-
-        const finalPlanStr = await env.USER_METADATA_KV.get(`${userId}_final_plan`);
-        const finalPlan = safeParseJson(finalPlanStr, {});
-        const currentStatusStr = await env.USER_METADATA_KV.get(`${userId}_current_status`);
-        const currentStatus = safeParseJson(currentStatusStr, {});
-        const currentPrinciples = safeGet(finalPlan, 'principlesWeek2_4', 'Общи принципи.');
-        
-        const logKeys = [];
-        const today = new Date();
-        // Взимаме логове за последните N дни, колкото е ADAPTIVE_QUIZ_WEIGHT_STAGNATION_LOOKBACK_DAYS (обикновено 14)
-        for (let i = 0; i < ADAPTIVE_QUIZ_WEIGHT_STAGNATION_LOOKBACK_DAYS; i++) {
-            const date = new Date(today); date.setDate(today.getDate() - i);
-            logKeys.push(`${userId}_log_${date.toISOString().split('T')[0]}`);
-        }
-        const logStrings = await Promise.all(logKeys.map(key => env.USER_METADATA_KV.get(key)));
-        // Обработваме само последните 7 от намерените логове за по-кратко резюме
-        const recentLogsForQuiz = logStrings
-            .map((logStr, index) => {
-                const logData = safeParseJson(logStr, null);
-                if (logData) {
-                    const date = new Date(today); date.setDate(today.getDate() - index);
-                    return { date: date.toISOString().split('T')[0], ...logData};
-                }
-                return null;
-            })
-            .filter(log => log !== null)
-            .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Сортираме по дата, най-новите първи
-            .slice(0, 7); // Взимаме само последните 7 за промпта
-
-        const previousQuizContext = await getPreviousQuizzesContext(userId, env, PREVIOUS_QUIZZES_FOR_CONTEXT_COUNT);
-
-        const userContextForPrompt = `
-            ОСНОВНА ИНФОРМАЦИЯ ЗА ПОТРЕБИТЕЛЯ (ID: ${userId}):
-            - Цел: ${initialAnswers.goal || 'N/A'}
-            - Възраст: ${initialAnswers.age || 'N/A'}, Пол: ${initialAnswers.gender || 'N/A'}
-            - Текущо тегло: ${currentStatus.weight || initialAnswers.weight || 'N/A'} кг (Начално тегло: ${initialAnswers.weight || 'N/A'} кг)
-            - Хранителни предпочитания: ${initialAnswers.foodPreference || 'N/A'}
-            - Нехаресвани храни: ${initialAnswers.q1745806494081 || initialAnswers.q1745806409218 || 'Няма'}
-            - Медицински състояния: ${(Array.isArray(initialAnswers.medicalConditions) ? initialAnswers.medicalConditions.filter(c => c && c.toLowerCase() !== 'нямам').join(', ') : 'Няма') || 'Няма'}
-
-            ИНФОРМАЦИЯ ОТ ТЕКУЩИЯ ПЛАН:
-            - План калории: ${safeGet(finalPlan, 'caloriesMacros.calories', 'N/A')} kcal
-            - Макронутриенти (Протеин/Въглехидрати/Мазнини %): ${safeGet(finalPlan, 'caloriesMacros.protein_percent', '?')}% / ${safeGet(finalPlan, 'caloriesMacros.carbs_percent', '?')}% / ${safeGet(finalPlan, 'caloriesMacros.fat_percent', '?')}%
-            - Основни текущи хранителни принципи (може да са били адаптирани): ${typeof currentPrinciples === 'string' ? currentPrinciples.substring(0, 500) : JSON.stringify(currentPrinciples).substring(0, 500)}...
-
-            СКОРОШНА АКТИВНОСТ И ОБРАТНА ВРЪЗКА (последни ~7 дни с логове, ако има):
-            - Обобщение на логове: ${recentLogsForQuiz.length > 0 ? JSON.stringify(recentLogsForQuiz.map(l => ({ дата: new Date(l.date).toLocaleDateString('bg-BG'), тегло: l.weight, настроение: l.mood, енергия: l.energy, сън: l.sleep, бележка: l.note ? l.note.substring(0,30)+"..." : null, изпълнени_хранения: Object.values(l.completedMealsStatus || {}).filter(v=>v===true).length, извънредни_хранения: l.extraMeals ? l.extraMeals.length : 0 }))).substring(0,1500) : "Няма скорошни логове."}
-            
-            ${previousQuizContext} 
-            ---
-            Инструкция за AI: Твоята задача е да генерираш персонализиран адаптивен въпросник.
-            Целта на въпросника е да събере актуална информация от потребителя, която ще помогне за по-нататъшното адаптиране на неговата програма.
-            Фокусирай се върху области, където може да има проблеми, или върху проверка на придържането и общото състояние.
-            Генерирай между 3 и 5 въпроса. Въпросите трябва да са кратки, ясни и на български език.
-            За всеки въпрос, предложи подходящ тип на отговор от следните: "свободен_текст", "еднозначен_избор_от_списък", "многозначен_избор_от_списък", "скала_1_5".
-            Ако типът е избор от списък ("еднозначен_избор_от_списък", "многозначен_избор_от_списък"), предостави масив от възможни отговори (стрингове) в полето "options".
-            Ако типът е "скала_1_5", можеш да предоставиш етикети за минимума и максимума на скалата в полето "scaleLabels" (напр. {"minLabel": "Никак", "maxLabel": "Много"}).
-            Всеки въпрос трябва да има уникално "id" (генерирай кратък, смислен стринг, напр. "mood_last_days"), "text" (текст на въпроса), "answerType", и "required" (boolean, по подразбиране true).
-            
-            Форматирай резултата като JSON масив от обекти. Всеки обект представлява един въпрос.
-            Пример за структура на въпрос:
-            { "id": "sleep_quality_weekly", "text": "Как оценявате качеството на съня си през последната седмица?", "answerType": "скала_1_5", "scaleLabels": {"minLabel": "Много лошо", "maxLabel": "Отлично"}, "required": true }
-            { "id": "main_challenge_adherence", "text": "Кое беше най-голямото Ви предизвикателство при спазването на плана тази седмица?", "answerType": "еднозначен_избор_от_списък", "options": ["Липса на време за готвене", "Хранене навън / социални събития", "Силно чувство на глад / апетит", "Емоционално хранене", "Друго (опишете)"], "required": true }
-        `.trim().replace(/\s+/g, ' '); // Компактиране на празните пространства за по-къс промпт
-
-        const replacements = {
-            '%%USER_CONTEXT%%': userContextForPrompt, // Този плейсхолдър трябва да е в KV шаблона
-            '%%USER_ID%%': userId
-        };
-        const populatedQuizPrompt = populatePrompt(quizPromptTemplate, replacements);
-
-        console.log(`[ADAPT_QUIZ_GEN] Calling model ${quizModelName} for user ${userId}. Prompt length: ${populatedQuizPrompt.length}`);
-        rawQuizResponse = await callModel(quizModelName, populatedQuizPrompt, env, { temperature: 0.7, maxTokens: 2500 });
-        
-        const cleanedQuizJson = cleanGeminiJson(rawQuizResponse);
-        let parsedQuizArray = safeParseJson(cleanedQuizJson, []);
-        if (!Array.isArray(parsedQuizArray) || parsedQuizArray.length === 0) {
-            console.error(`[ADAPT_QUIZ_GEN_ERROR] Failed to parse or AI response invalid for ${userId}. Raw: ${cleanedQuizJson.substring(0,300)}...`);
-            await env.USER_METADATA_KV.put(`${userId}_adaptive_quiz_error`, "AI генерира празен или невалиден въпросник."); return;
-        }
-
-        const validatedQuestions = [];
-        let validationError = false;
-        for (let i = 0; i < parsedQuizArray.length; i++) {
-            const q = parsedQuizArray[i];
-            if (!q || typeof q.id !== 'string' || q.id.trim() === '' || typeof q.text !== 'string' || q.text.trim() === '' || typeof q.answerType !== 'string') {
-                console.warn(`[ADAPT_QUIZ_GEN_VALIDATION_WARN] (${userId}) Invalid question structure for question ${i+1}: Missing id, text, or answerType. Question data: ${JSON.stringify(q)}`);
-                validationError = true; break; // По-строго - ако един е невалиден, целият въпросник може да е компрометиран
-            }
-            const questionId = q.id.trim();
-            let options = [];
-            if ((q.answerType === "еднозначен_избор_от_списък" || q.answerType === "многозначен_избор_от_списък")) {
-                if (!Array.isArray(q.options) || q.options.length === 0) {
-                    console.warn(`[ADAPT_QUIZ_GEN_VALIDATION_WARN] (${userId}) Question type ${q.answerType} (ID: ${questionId}) requires options, but none provided or empty. Skipping question.`);
-                    continue; 
-                }
-                options = q.options.map(opt => {
-                    if (typeof opt === 'string' && opt.trim() !== '') return opt.trim();
-                    if (typeof opt === 'object' && opt !== null && typeof opt.value === 'string' && opt.value.trim() !== '' && typeof opt.label === 'string' && opt.label.trim() !== '') return { value: opt.value.trim(), label: opt.label.trim() };
-                    return null;
-                }).filter(opt => opt !== null);
-
-                if (options.length === 0 && q.options.length > 0) {
-                     console.warn(`[ADAPT_QUIZ_GEN_VALIDATION_WARN] (${userId}) All options for question ID ${questionId} were invalid. Skipping question.`);
-                     continue;
-                }
-                 if (options.length === 0) { // Ако след филтрация няма опции, а са били нужни
-                    console.warn(`[ADAPT_QUIZ_GEN_VALIDATION_WARN] (${userId}) No valid options remained for question ID ${questionId} of type ${q.answerType}. Skipping question.`);
-                    continue;
-                }
-            }
-            validatedQuestions.push({
-                id: questionId,
-                text: q.text.trim(),
-                answerType: q.answerType,
-                options: options.length > 0 ? options : undefined, // Запазваме options само ако има валидни такива
-                scaleLabels: (q.answerType === "скала_1_5" && q.scaleLabels && typeof q.scaleLabels === 'object' && q.scaleLabels.minLabel && q.scaleLabels.maxLabel) ? q.scaleLabels : undefined,
-                required: typeof q.required === 'boolean' ? q.required : true // По подразбиране въпросите са задължителни
-            });
-        }
-
-        if (validationError || validatedQuestions.length === 0) {
-            console.error(`[ADAPT_QUIZ_GEN_ERROR] (${userId}) Validation failed or no valid questions remained after validation. Initial parsed array had ${parsedQuizArray.length} questions. Final valid: ${validatedQuestions.length}.`);
-            await env.USER_METADATA_KV.put(`${userId}_adaptive_quiz_error`, "Грешка при валидиране на генерирания от AI въпросник."); return;
-        }
-
-        const quizId = crypto.randomUUID();
-        const quizToStore = {
-            quizId: quizId,
-            title: "Вашият Персонализиран Адаптивен Въпросник", 
-            description: "Моля, отговорете на следните въпроси. Вашите отговори ще ни помогнат да адаптираме програмата Ви още по-добре към текущите Ви нужди и напредък.",
-            generatedAt: new Date().toISOString(),
-            questions: validatedQuestions
-        };
-
-        await env.USER_METADATA_KV.put(`${userId}_adaptive_quiz_content_${quizId}`, JSON.stringify(quizToStore)); // Специфична дефиниция
-        await env.USER_METADATA_KV.put(`${userId}_adaptive_quiz_content`, JSON.stringify(quizToStore));      // Последна генерирана (за getAdaptiveQuiz)
-        await env.USER_METADATA_KV.put(`${userId}_adaptive_quiz_pending`, "true");
-        await env.USER_METADATA_KV.delete(`${userId}_adaptive_quiz_error`); // Изчистваме евентуална стара грешка
-        console.log(`[ADAPT_QUIZ_GEN_SUCCESS] Successfully generated and stored adaptive quiz (ID: ${quizId}) for user ${userId}. Number of questions: ${validatedQuestions.length}`);
-
-    } catch (error) {
-        console.error(`[ADAPT_QUIZ_GEN_FATAL_ERROR] Error during adaptive quiz generation for user ${userId}:`, error.message, error.stack);
-        await env.USER_METADATA_KV.put(`${userId}_adaptive_quiz_error`, `Вътрешна грешка при генериране на въпросник: ${error.message.substring(0,100)}`);
-        await env.USER_METADATA_KV.put(`${userId}_last_quiz_raw_error`, rawQuizResponse.substring(0, 300));
-    }
-}
-// ------------- END FUNCTION: generateAndStoreAdaptiveQuiz -------------
-
-// ------------- START FUNCTION: formatQuizAnswersForContext -------------
-function formatQuizAnswersForContext(quizDefinition, answers, title = "Резюме на отговори от въпросник") {
-    if (!quizDefinition || !Array.isArray(quizDefinition.questions) || !answers || typeof answers !== 'object') {
-        return `${title}: Непълни данни за форматиране (липсва дефиниция на въпроси или отговори).`;
-    }
-    let formattedString = `${title} (ID на въпросника: ${quizDefinition.quizId || 'N/A'}, Генериран на: ${quizDefinition.generatedAt ? new Date(quizDefinition.generatedAt).toLocaleDateString('bg-BG') : 'N/A'}):\n`;
-    quizDefinition.questions.forEach(question => {
-        const answer = answers[question.id]; // answers е обект с question.id като ключ
-        formattedString += `\nВъпрос (ID: ${question.id}): ${question.text}\n`;
-        if (answer !== undefined && answer !== null && String(answer).trim() !== "") {
-            if (Array.isArray(answer)) {
-                formattedString += `Отговор: ${answer.length > 0 ? answer.join(', ') : '(няма избран отговор)'}\n`;
-            } else if (typeof answer === 'object') { // За случаи, където отговорът може да е по-сложен обект
-                formattedString += `Отговор: ${JSON.stringify(answer)}\n`;
-            }
-            else {
-                formattedString += `Отговор: ${answer}\n`;
-            }
-        } else {
-            formattedString += `Отговор: (няма отговор или е празен)\n`;
-        }
-    });
-    return formattedString.trim();
-}
-// ------------- END FUNCTION: formatQuizAnswersForContext -------------
-
-// ------------- END BLOCK: HelperFunctionsForAdaptiveQuiz -------------
 
 
 // ------------- START BLOCK: HelperFunctionsHeaderComment -------------
@@ -4832,4 +4275,4 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, checkLowEngagementTrigger };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig };

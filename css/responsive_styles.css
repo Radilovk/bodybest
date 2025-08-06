@@ -251,17 +251,6 @@
    #planModChatSend { width: 38px; height: 38px; }
    #planModChatSend svg { width: 16px; height: 16px; }
 
-  /* Responsive for Quiz elements - these should be in adaptive_quiz_styles.css */
-  /*
-  .question-input-area .rating-squares { 
-      gap: var(--space-xs);
-  }
-  .question-input-area .rating-square {
-    width: 35px; 
-    height: 35px; 
-    font-size: 0.9em;
-  }
-  */
 }
 
 @media (min-width: 768px) {

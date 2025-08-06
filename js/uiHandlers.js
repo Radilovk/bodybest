@@ -188,20 +188,10 @@ let modalQueue = [];
 
 function openModalInternal(modalId) {
     const modal = document.getElementById(modalId); if (!modal) return;
-    if (modalId === 'adaptiveQuizWrapper') {
-        modal.style.display = 'flex';
-        requestAnimationFrame(() => {
-            modal.classList.add('visible');
-            modal.setAttribute('aria-hidden', 'false');
-            const first = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-            (first || modal).focus();
-        });
-    } else {
-        modal.classList.add('visible');
-        modal.setAttribute('aria-hidden', 'false');
-        const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-        (firstFocusable || modal).focus();
-    }
+    modal.classList.add('visible');
+    modal.setAttribute('aria-hidden', 'false');
+    const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    (firstFocusable || modal).focus();
 }
 
 export function openModal(modalId) {
@@ -216,9 +206,6 @@ export function closeModal(modalId) {
 
     const handleTransitionEnd = () => {
         modal.removeEventListener('transitionend', handleTransitionEnd);
-        if (modalId === "adaptiveQuizWrapper") {
-            modal.style.display = "none";
-        }
         if (modalQueue.length > 0) {
             const next = modalQueue.shift();
             openModalInternal(next);

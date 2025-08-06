@@ -42,12 +42,6 @@ test('initializeApp продължава при грешка в loadProductMacro
     setAutomatedChatPending: jest.fn()
   }));
   jest.unstable_mockModule('../achievements.js', () => ({ initializeAchievements: jest.fn() }));
-  jest.unstable_mockModule('../adaptiveQuiz.js', () => ({
-    openAdaptiveQuizModal: jest.fn(),
-    renderCurrentQuizQuestion: jest.fn(),
-    showQuizValidationMessage: jest.fn(),
-    hideQuizValidationMessage: jest.fn()
-  }));
   jest.unstable_mockModule('../planModChat.js', () => ({ openPlanModificationChat: jest.fn() }));
 
   const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
