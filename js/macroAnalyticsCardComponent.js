@@ -4,6 +4,31 @@ import { scaleMacros, formatPercent } from './macroUtils.js';
 
 let Chart;
 
+const subtleGlowPlugin = {
+  id: 'subtleGlow',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    chart.getSortedVisibleDatasetMetas().forEach((meta) => {
+      const dataset = chart.data.datasets[meta.index];
+      ctx.save();
+      meta.data.forEach((element, i) => {
+        const bg = Array.isArray(dataset.backgroundColor)
+          ? dataset.backgroundColor[i]
+          : dataset.backgroundColor;
+        ctx.shadowColor = bg;
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = bg;
+        ctx.beginPath();
+        ctx.arc(element.x, element.y, element.outerRadius, element.startAngle, element.endAngle);
+        ctx.arc(element.x, element.y, element.innerRadius, element.endAngle, element.startAngle, true);
+        ctx.closePath();
+        ctx.fill();
+      });
+      ctx.restore();
+    });
+  }
+};
+
 function ensureGramsFields(obj) {
   if (!obj) return obj;
   if (obj.protein_grams === undefined && typeof obj.protein === 'number') obj.protein_grams = obj.protein;
@@ -42,6 +67,9 @@ template.innerHTML = `
       margin: 0 auto;
       max-width: 250px;
       height: 250px;
+    }
+    canvas {
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
     }
     .loading-indicator {
       position: absolute;
@@ -501,6 +529,9 @@ export class MacroAnalyticsCard extends HTMLElement {
         cutout: '65%',
         hoverOffset: 12
       });
+    }
+    if (!Chart.registry.getPlugin('subtleGlow')) {
+      Chart.register(subtleGlowPlugin);
     }
     this.chart = new Chart(ctx, {
       type: 'doughnut',
