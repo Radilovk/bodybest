@@ -33,6 +33,11 @@ const tagFilterSelect = document.getElementById('tagFilter');
 const detailsSection = document.getElementById('clientDetails');
 const regenBtn = document.getElementById('regeneratePlan');
 const regenProgress = document.getElementById('regenProgress');
+const priorityModal = document.getElementById('priorityGuidanceModal');
+const priorityInput = document.getElementById('priorityGuidanceInput');
+const priorityConfirm = document.getElementById('priorityGuidanceConfirm');
+const priorityCancel = document.getElementById('priorityGuidanceCancel');
+const priorityClose = document.getElementById('priorityGuidanceClose');
 const aiSummaryBtn = document.getElementById('aiSummary');
 const notesField = document.getElementById('adminNotes');
 const tagsField = document.getElementById('adminTags');
@@ -242,7 +247,16 @@ let currentUserId = null;
 function setCurrentUserId(val) {
     currentUserId = val;
 }
-setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => currentUserId });
+setupPlanRegeneration({
+    regenBtn,
+    regenProgress,
+    getUserId: () => currentUserId,
+    modal: priorityModal,
+    input: priorityInput,
+    confirm: priorityConfirm,
+    cancel: priorityCancel,
+    closeBtn: priorityClose
+});
 let profileNavObserver = null;
 let currentPlanData = null;
 let currentDashboardData = null;
@@ -726,7 +740,16 @@ function renderClients() {
             li.appendChild(regen);
             li.appendChild(progress);
             regen.addEventListener('click', e => e.stopPropagation());
-            setupPlanRegeneration({ regenBtn: regen, regenProgress: progress, getUserId: () => c.userId });
+            setupPlanRegeneration({
+                regenBtn: regen,
+                regenProgress: progress,
+                getUserId: () => c.userId,
+                modal: priorityModal,
+                input: priorityInput,
+                confirm: priorityConfirm,
+                cancel: priorityCancel,
+                closeBtn: priorityClose
+            });
         }
 
         clientsList?.appendChild(li);
