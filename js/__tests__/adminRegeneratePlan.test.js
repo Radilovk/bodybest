@@ -6,7 +6,7 @@ jest.unstable_mockModule('../templateLoader.js', () => ({
   loadTemplateInto: async () => {}
 }));
 jest.unstable_mockModule('../config.js', () => ({
-  apiEndpoints: { regeneratePlan: '/regen', checkPlanPrerequisites: '/check', planStatus: '/status' }
+  apiEndpoints: { regeneratePlan: '/regen', checkPlanPrerequisites: '/check', planLog: '/log', updateKv: '/kv' }
 }));
 
 let admin;
@@ -27,6 +27,8 @@ beforeEach(async () => {
       <button id="priorityGuidanceCancel"></button>
       <button id="priorityGuidanceClose"></button>
     </div>
+    <div id="regenLog"></div>
+    <div id="regenProgress" class="hidden"></div>
   `;
   admin = await import('../admin.js');
 });
@@ -61,7 +63,8 @@ test('праща reason при клик върху бутона', async () => {
   global.fetch
     .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, ok: true }) })
     .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) })
-    .mockResolvedValue({ ok: true, json: async () => ({ success: true, planStatus: 'ready' }) });
+    .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, logs: [], status: 'ready' }) })
+    .mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
   admin.allClients.length = 0;
   admin.allClients.push({ userId: 'u1', name: 'Test', status: 'processing', tags: [] });
   await admin.renderClients();

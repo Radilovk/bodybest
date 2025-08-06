@@ -4,7 +4,7 @@ import { jest } from '@jest/globals';
 const startPlanGenerationMock = jest.fn();
 
 jest.unstable_mockModule('../config.js', () => ({
-  apiEndpoints: { regeneratePlan: '/regen', planStatus: '/status' }
+  apiEndpoints: { regeneratePlan: '/regen', planLog: '/log', updateKv: '/kv' }
 }));
 jest.unstable_mockModule('../planGeneration.js', () => ({
   startPlanGeneration: startPlanGenerationMock
@@ -17,10 +17,11 @@ beforeEach(async () => {
   jest.useFakeTimers();
   startPlanGenerationMock.mockReset();
   startPlanGenerationMock.mockResolvedValue({ success: true });
-  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true, planStatus: 'ready' }) });
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true, logs: [], status: 'ready' }) });
   document.body.innerHTML = `
     <button id="regen"></button>
     <div id="regenProgress" class="hidden"></div>
+    <div id="regenLog"></div>
     <div id="priorityGuidanceModal" aria-hidden="true">
       <textarea id="priorityGuidanceInput"></textarea>
       <button id="priorityGuidanceConfirm"></button>
@@ -102,6 +103,7 @@ test('изпраща reason и priorityGuidance при отделни полет
   document.body.innerHTML = `
     <button id="regen"></button>
     <div id="regenProgress" class="hidden"></div>
+    <div id="regenLog"></div>
     <div id="priorityGuidanceModal" aria-hidden="true">
       <textarea id="priorityGuidanceInput"></textarea>
       <textarea id="regenReasonInput"></textarea>
