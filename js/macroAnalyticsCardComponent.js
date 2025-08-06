@@ -511,7 +511,7 @@ export class MacroAnalyticsCard extends HTMLElement {
       {
         label: this.locale === 'en' ? 'Plan (g)' : 'План (гр)',
         data: [plan.protein_grams, plan.carbs_grams, plan.fat_grams, plan.fiber_grams],
-        backgroundColor: current ? macroColors.map((c) => `${c}BF`) : macroColors,
+        backgroundColor: current ? macroColors.map((c) => `${c}80`) : macroColors,
         borderWidth: 0,
         cutout: current ? '80%' : '65%',
         hoverOffset: 8
