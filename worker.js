@@ -1475,43 +1475,39 @@ async function validatePlanPrerequisites(env, userId) {
         env.RESOURCES_KV.get('prompt_unified_plan_generation_v2'),
         env.USER_METADATA_KV.get(`${userId}_initial_answers`)
     ]);
-    const missing = [];
-
     if (!initialAnswersStr) {
-        missing.push('първоначални отговори');
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        return { ok: false, message: 'Липсват първоначални отговори.' };
     }
     let parsedInitial;
-    if (initialAnswersStr) {
-        try {
-            parsedInitial = JSON.parse(initialAnswersStr);
-        } catch {
-            parsedInitial = null;
-        }
-        if (!parsedInitial || typeof parsedInitial !== 'object' || Object.keys(parsedInitial).length === 0) {
-            missing.push('първоначални отговори');
-        }
+    try {
+        parsedInitial = JSON.parse(initialAnswersStr);
+    } catch {
+        parsedInitial = null;
+    }
+    if (!parsedInitial || typeof parsedInitial !== 'object' || Object.keys(parsedInitial).length === 0) {
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        return { ok: false, message: 'Некоректни първоначални отговори.' };
     }
     if (!modelName) {
-        missing.push('model_plan_generation');
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        return { ok: false, message: 'Липсва model_plan_generation.' };
     }
     if (!promptTemplate) {
-        missing.push('prompt_unified_plan_generation_v2');
-    }
-    if (modelName) {
-        const provider = getModelProvider(modelName);
-        if (provider === 'gemini' && !env[GEMINI_API_KEY_SECRET_NAME]) {
-            missing.push('GEMINI_API_KEY');
-        }
-        if (provider === 'openai' && !env[OPENAI_API_KEY_SECRET_NAME]) {
-            missing.push('OPENAI_API_KEY');
-        }
-    }
-    if (missing.length > 0) {
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
-        return { ok: false, missing, message: `Липсват: ${missing.join(', ')}` };
+        return { ok: false, message: 'Липсва prompt_unified_plan_generation_v2.' };
+    }
+    const provider = getModelProvider(modelName);
+    if (provider === 'gemini' && !env[GEMINI_API_KEY_SECRET_NAME]) {
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        return { ok: false, message: 'Липсва GEMINI_API_KEY.' };
+    }
+    if (provider === 'openai' && !env[OPENAI_API_KEY_SECRET_NAME]) {
+        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        return { ok: false, message: 'Липсва OPENAI_API_KEY.' };
     }
     // Опционални данни (напр. дневници) не се валидират тук, липсата им е допустима.
-    return { ok: true, missing: [] };
+    return { ok: true };
 }
 // ------------- END FUNCTION: validatePlanPrerequisites -------------
 
@@ -1524,12 +1520,7 @@ async function handleCheckPlanPrerequisitesRequest(request, env) {
     }
     try {
         const precheck = await validatePlanPrerequisites(env, userId);
-        return {
-            success: true,
-            ok: precheck.ok,
-            missing: precheck.missing || [],
-            message: precheck.message
-        };
+        return { success: true, ...precheck };
     } catch (error) {
         console.error('Error in handleCheckPlanPrerequisitesRequest:', error.message, error.stack);
         return { success: false, message: 'Грешка при проверка на prerequisites.', statusHint: 500 };
