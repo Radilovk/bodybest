@@ -31,4 +31,20 @@ describe('POST /api/regeneratePlan', () => {
     expect(res.statusHint).toBe(400);
     expect(env.USER_METADATA_KV.put).not.toHaveBeenCalled();
   });
+
+  test('връща precheck при липсващи prerequisites', async () => {
+    const env = {
+      USER_METADATA_KV: {
+        put: jest.fn(),
+        get: jest.fn(async key => null)
+      },
+      RESOURCES_KV: { get: jest.fn(async () => 'model') },
+      GEMINI_API_KEY: 'key'
+    };
+    const request = { json: async () => ({ userId: 'u1', reason: 'r' }) };
+    const res = await handleRegeneratePlanRequest(request, env, null, jest.fn());
+    expect(res.success).toBe(false);
+    expect(res.precheck).toEqual({ ok: false, message: 'Липсват първоначални отговори.' });
+    expect(res.statusHint).toBe(400);
+  });
 });

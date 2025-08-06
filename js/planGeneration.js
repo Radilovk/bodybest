@@ -18,6 +18,9 @@ export async function startPlanGeneration({ userId, reason = '', priorityGuidanc
   const data = await resp.json();
   if (!resp.ok) throw new Error(data.message || 'Request failed');
   if (!data.success) {
+    if (data.precheck?.message && typeof alert === 'function') {
+      alert(data.precheck.message);
+    }
     const err = new Error(data.precheck?.message || data.message || 'Грешка при стартиране на генерирането.');
     err.precheck = Boolean(data.precheck);
     throw err;
