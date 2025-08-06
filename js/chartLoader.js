@@ -76,6 +76,11 @@ export async function ensureChart() {
   return ChartLib;
 }
 
+/**
+ * Регистрира subtleGlow plug-in само веднъж.
+ * @param {any} Chart - инстанция на Chart.js (UMD).
+ * @returns {boolean} дали регистрацията е успешна.
+ */
 export function registerSubtleGlow(Chart) {
   if (subtleGlowRegistered) return true;
   if (!Chart || typeof Chart.register !== 'function') {
