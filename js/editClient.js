@@ -564,21 +564,7 @@ export async function initEditClient(userId) {
 
   const regenBtn = document.getElementById('regeneratePlan');
   const regenProgress = document.getElementById('regenProgress');
-  const priorityModal = document.getElementById('priorityGuidanceModal');
-  const priorityInput = document.getElementById('priorityGuidanceInput');
-  const priorityConfirm = document.getElementById('priorityGuidanceConfirm');
-  const priorityCancel = document.getElementById('priorityGuidanceCancel');
-  const priorityClose = document.getElementById('priorityGuidanceClose');
-  setupPlanRegeneration({
-    regenBtn,
-    regenProgress,
-    getUserId: () => userId,
-    modal: priorityModal,
-    input: priorityInput,
-    confirm: priorityConfirm,
-    cancel: priorityCancel,
-    closeBtn: priorityClose
-  });
+  setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => userId });
 
   const aiSummaryBtn = document.getElementById('aiSummary');
   if (aiSummaryBtn) {
