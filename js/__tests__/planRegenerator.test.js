@@ -33,11 +33,27 @@ test('изпраща reason при потвърждение', async () => {
   const regenProgress = document.getElementById('regenProgress');
   setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => 'u1' });
   regenBtn.click();
+  const input = document.getElementById('priorityGuidanceInput');
+  input.value = 'причина';
   document.getElementById('priorityGuidanceConfirm').click();
   await Promise.resolve();
   expect(fetch).toHaveBeenCalledWith('/regen', expect.objectContaining({
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId: 'u1', priorityGuidance: '', reason: 'Админ регенерация' })
+    body: JSON.stringify({ userId: 'u1', reason: 'причина' })
   }));
+});
+
+test('деактивира и реактивира бутона', async () => {
+  const regenBtn = document.getElementById('regen');
+  const regenProgress = document.getElementById('regenProgress');
+  setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => 'u1' });
+  regenBtn.click();
+  document.getElementById('priorityGuidanceConfirm').click();
+  await Promise.resolve();
+  expect(regenBtn.disabled).toBe(true);
+  jest.advanceTimersByTime(3000);
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(regenBtn.disabled).toBe(false);
 });

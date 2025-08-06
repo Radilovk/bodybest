@@ -720,22 +720,13 @@ function renderClients() {
             regen.className = 'regen-plan-btn button-small';
             regen.textContent = 'Нов план';
             regen.title = 'Генерирай нов план';
-            regen.addEventListener('click', async e => {
-                e.stopPropagation();
-                try {
-                    await fetch(apiEndpoints.regeneratePlan, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        // Причината е задължителна за API; подаваме стандартна стойност.
-                        body: JSON.stringify({ userId: c.userId, reason: 'Админ регенерация' })
-                    });
-                    alert('Стартирана е нова генерация.');
-                } catch (err) {
-                    console.error('regeneratePlan error:', err);
-                    alert('Грешка при стартиране на генерирането.');
-                }
-            });
+            const progress = document.createElement('span');
+            progress.className = 'regen-progress hidden';
+            progress.setAttribute('aria-live', 'polite');
             li.appendChild(regen);
+            li.appendChild(progress);
+            regen.addEventListener('click', e => e.stopPropagation());
+            setupPlanRegeneration({ regenBtn: regen, regenProgress: progress, getUserId: () => c.userId });
         }
 
         clientsList?.appendChild(li);
