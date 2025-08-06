@@ -5,6 +5,7 @@ let activeUserId;
 let activeRegenBtn;
 let activeRegenProgress;
 let confirmListenerAdded = false;
+let displayedLogs = 0;
 
 function openModal(modal) {
   modal.classList.add('visible');
@@ -29,6 +30,8 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
 
   const hide = () => closeModal(modal);
 
+  const regenLog = document.getElementById('regenLog');
+
   regenBtn.addEventListener('click', () => {
     activeUserId = getUserId?.();
     activeRegenBtn = regenBtn;
@@ -52,6 +55,8 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
         activeRegenProgress.classList.remove('hidden');
       }
       activeRegenBtn.disabled = true;
+      displayedLogs = 0;
+      if (regenLog) regenLog.textContent = '';
       try {
         await startPlanGeneration({
           userId: activeUserId,
@@ -74,29 +79,41 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
       const progress = activeRegenProgress;
       const intervalId = setInterval(async () => {
         try {
-          const resp = await fetch(`${apiEndpoints.planStatus}?userId=${userId}`);
+          const resp = await fetch(`${apiEndpoints.planLog}?userId=${userId}`);
           const data = await resp.json();
           if (resp.ok && data.success) {
-            if (data.planStatus === 'ready') {
+            const logs = data.logs || [];
+            if (regenLog) {
+              for (let i = displayedLogs; i < logs.length; i++) {
+                const div = document.createElement('div');
+                div.textContent = logs[i];
+                regenLog.appendChild(div);
+              }
+              displayedLogs = logs.length;
+            }
+            if (data.status === 'ready' || data.status === 'error') {
               clearInterval(intervalId);
               if (progress) {
-                progress.textContent = 'Готово';
+                progress.textContent = data.status === 'ready' ? 'Готово' : 'Грешка';
                 setTimeout(() => progress.classList.add('hidden'), 2000);
               }
               btn.disabled = false;
-              alert('Планът е обновен.');
-            } else if (data.planStatus === 'error') {
-              clearInterval(intervalId);
-              if (progress) {
-                progress.textContent = 'Грешка';
-                setTimeout(() => progress.classList.add('hidden'), 2000);
+              if (data.status === 'ready') alert('Планът е обновен.');
+              else alert(`Грешка при генерирането: ${data.error || ''}`);
+              try {
+                await fetch(apiEndpoints.updateKv, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ key: `${userId}_plan_log`, value: '[]' })
+                });
+              } catch (e) {
+                console.error('clear plan log error:', e);
               }
-              btn.disabled = false;
-              alert(`Грешка при генерирането: ${data.error || ''}`);
+              if (regenLog) regenLog.textContent = '';
             }
           }
         } catch (err) {
-          console.error('planStatus polling error:', err);
+          console.error('planLog polling error:', err);
         }
       }, 3000);
     });
