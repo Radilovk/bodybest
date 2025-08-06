@@ -21,7 +21,10 @@ beforeEach(async () => {
   document.body.innerHTML = `
     <button id="regen"></button>
     <div id="regenProgress" class="hidden"></div>
-    <div id="regenLog"></div>
+    <div id="regenLogModal" aria-hidden="true">
+      <div class="modal-body" id="regenLogBody"></div>
+      <button id="regenLogClose"></button>
+    </div>
     <div id="priorityGuidanceModal" aria-hidden="true">
       <textarea id="priorityGuidanceInput"></textarea>
       <button id="priorityGuidanceConfirm"></button>
@@ -76,6 +79,23 @@ test('деактивира и реактивира бутона', async () => {
   expect(regenBtn.disabled).toBe(false);
 });
 
+test('отваря и затваря лог модала', async () => {
+  const regenBtn = document.getElementById('regen');
+  const regenProgress = document.getElementById('regenProgress');
+  setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => 'u1' });
+  regenBtn.click();
+  document.getElementById('priorityGuidanceConfirm').click();
+  await Promise.resolve();
+  const modal = document.getElementById('regenLogModal');
+  expect(modal.classList.contains('visible')).toBe(true);
+  jest.advanceTimersByTime(3000);
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(modal.classList.contains('visible')).toBe(false);
+  expect(document.getElementById('regenLogBody').textContent).toBe('');
+});
+
 test('изпраща заявка само за последно избран userId', async () => {
   const regenBtn1 = document.getElementById('regen');
   const regenProgress1 = document.getElementById('regenProgress');
@@ -103,7 +123,10 @@ test('изпраща reason и priorityGuidance при отделни полет
   document.body.innerHTML = `
     <button id="regen"></button>
     <div id="regenProgress" class="hidden"></div>
-    <div id="regenLog"></div>
+    <div id="regenLogModal" aria-hidden="true">
+      <div class="modal-body" id="regenLogBody"></div>
+      <button id="regenLogClose"></button>
+    </div>
     <div id="priorityGuidanceModal" aria-hidden="true">
       <textarea id="priorityGuidanceInput"></textarea>
       <textarea id="regenReasonInput"></textarea>

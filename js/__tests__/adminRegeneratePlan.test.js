@@ -27,7 +27,10 @@ beforeEach(async () => {
       <button id="priorityGuidanceCancel"></button>
       <button id="priorityGuidanceClose"></button>
     </div>
-    <div id="regenLog"></div>
+    <div id="regenLogModal" aria-hidden="true">
+      <div class="modal-body" id="regenLogBody"></div>
+      <button id="regenLogClose"></button>
+    </div>
     <div id="regenProgress" class="hidden"></div>
   `;
   admin = await import('../admin.js');
@@ -43,6 +46,7 @@ test('показва бутон за нов план при статус "в п�
   admin.allClients.length = 0;
   admin.allClients.push({ userId: 'u1', name: 'Test', status: 'processing', tags: [] });
   await admin.renderClients();
+  await Promise.resolve();
   const btn = document.querySelector('.regen-plan-btn');
   expect(btn).not.toBeNull();
   expect(btn.textContent).toContain('Нов план');
@@ -53,27 +57,39 @@ test('не показва бутон при липсващи prerequisites', asy
   admin.allClients.length = 0;
   admin.allClients.push({ userId: 'u1', name: 'Test', status: 'processing', tags: [] });
   await admin.renderClients();
+  await Promise.resolve();
   const btn = document.querySelector('.regen-plan-btn');
   const msg = document.querySelector('.regen-missing-msg');
   expect(btn).toBeNull();
   expect(msg.textContent).toContain('липсват данни');
 });
 
-test('праща reason при клик върху бутона', async () => {
-  global.fetch
-    .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, ok: true }) })
-    .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) })
-    .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, logs: [], status: 'ready' }) })
-    .mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
+test('праща reason при клик върху бутона и управлява лог модала', async () => {
+  global.fetch.mockImplementation((url) => {
+    if (url.startsWith('/check')) {
+      return Promise.resolve({ ok: true, json: async () => ({ success: true, ok: true }) });
+    }
+    if (url === '/regen') {
+      return Promise.resolve({ ok: true, json: async () => ({ success: true }) });
+    }
+    if (url.startsWith('/log')) {
+      return Promise.resolve({ ok: true, json: async () => ({ success: true, logs: [], status: 'ready' }) });
+    }
+    return Promise.resolve({ ok: true, json: async () => ({ success: true }) });
+  });
   admin.allClients.length = 0;
   admin.allClients.push({ userId: 'u1', name: 'Test', status: 'processing', tags: [] });
   await admin.renderClients();
+  await Promise.resolve();
   const btn = document.querySelector('.regen-plan-btn');
   btn.click();
   document.getElementById('priorityGuidanceConfirm').click();
   await Promise.resolve();
-  jest.advanceTimersByTime(3000);
-  await Promise.resolve();
+  const modal = document.getElementById('regenLogModal');
+  expect(modal.classList.contains('visible')).toBe(true);
+  await jest.advanceTimersByTimeAsync(3000);
+  expect(modal.classList.contains('visible')).toBe(false);
+  expect(document.getElementById('regenLogBody').textContent).toBe('');
   expect(fetch).toHaveBeenNthCalledWith(2, '/regen', expect.objectContaining({
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

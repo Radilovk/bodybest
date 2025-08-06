@@ -13,13 +13,17 @@ let regeneratePlan, setupPlanRegeneration;
 
 beforeEach(async () => {
   jest.resetModules();
+  jest.useFakeTimers();
   startPlanGenerationMock.mockReset();
   startPlanGenerationMock.mockResolvedValue({ success: true });
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true, logs: [], status: 'ready' }) });
   document.body.innerHTML = `
     <button id="regen"></button>
     <div id="regenProgress" class="hidden"></div>
-    <div id="regenLog"></div>
+    <div id="regenLogModal" aria-hidden="true">
+      <div class="modal-body" id="regenLogBody"></div>
+      <button id="regenLogClose"></button>
+    </div>
     <div id="priorityGuidanceModal" aria-hidden="true">
       <textarea id="priorityGuidanceInput"></textarea>
       <textarea id="regenReasonInput"></textarea>
@@ -30,6 +34,10 @@ beforeEach(async () => {
   `;
   ({ regeneratePlan } = await import('../questionnaireCore.js'));
   ({ setupPlanRegeneration } = await import('../planRegenerator.js'));
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 test('questionnaireCore и planRegenerator подават еднакви параметри', async () => {
@@ -45,6 +53,14 @@ test('questionnaireCore и planRegenerator подават еднакви пар�
   document.getElementById('priorityGuidanceInput').value = 'приоритет';
   document.getElementById('priorityGuidanceConfirm').click();
   await Promise.resolve();
+  const modal = document.getElementById('regenLogModal');
+  expect(modal.classList.contains('visible')).toBe(true);
+  jest.advanceTimersByTime(3000);
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(modal.classList.contains('visible')).toBe(false);
+  expect(document.getElementById('regenLogBody').textContent).toBe('');
   const secondCall = startPlanGenerationMock.mock.calls[1][0];
 
   expect(firstCall).toEqual(secondCall);

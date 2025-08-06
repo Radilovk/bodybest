@@ -19,6 +19,16 @@ function closeModal(modal) {
   modal.setAttribute('aria-hidden', 'true');
 }
 
+const logModal = document.getElementById('regenLogModal');
+const logBody = document.getElementById('regenLogBody');
+const logClose = document.getElementById('regenLogClose');
+if (logClose && logModal && logBody) {
+  logClose.addEventListener('click', () => {
+    closeModal(logModal);
+    logBody.textContent = '';
+  });
+}
+
 export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
   const modal = document.getElementById('priorityGuidanceModal');
   const priorityInput = document.getElementById('priorityGuidanceInput');
@@ -29,8 +39,6 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
   if (!regenBtn || !modal || !confirm || (!priorityInput && !reasonInput)) return;
 
   const hide = () => closeModal(modal);
-
-  const regenLog = document.getElementById('regenLog');
 
   regenBtn.addEventListener('click', () => {
     activeUserId = getUserId?.();
@@ -56,7 +64,8 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
       }
       activeRegenBtn.disabled = true;
       displayedLogs = 0;
-      if (regenLog) regenLog.textContent = '';
+      if (logBody) logBody.textContent = '';
+      if (logModal) openModal(logModal);
       try {
         await startPlanGeneration({
           userId: activeUserId,
@@ -71,6 +80,8 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
         }
         activeRegenBtn.disabled = false;
         if (!err.precheck) alert('Грешка при стартиране на генерирането.');
+        if (logModal) closeModal(logModal);
+        if (logBody) logBody.textContent = '';
         return;
       }
 
@@ -83,13 +94,14 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
           const data = await resp.json();
           if (resp.ok && data.success) {
             const logs = data.logs || [];
-            if (regenLog) {
+            if (logBody) {
               for (let i = displayedLogs; i < logs.length; i++) {
                 const div = document.createElement('div');
                 div.textContent = logs[i];
-                regenLog.appendChild(div);
+                logBody.appendChild(div);
               }
               displayedLogs = logs.length;
+              logBody.scrollTop = logBody.scrollHeight;
             }
             if (data.status === 'ready' || data.status === 'error') {
               clearInterval(intervalId);
@@ -100,6 +112,8 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
               btn.disabled = false;
               if (data.status === 'ready') alert('Планът е обновен.');
               else alert(`Грешка при генерирането: ${data.error || ''}`);
+              if (logModal) closeModal(logModal);
+              if (logBody) logBody.textContent = '';
               try {
                 await fetch(apiEndpoints.updateKv, {
                   method: 'POST',
@@ -109,7 +123,6 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
               } catch (e) {
                 console.error('clear plan log error:', e);
               }
-              if (regenLog) regenLog.textContent = '';
             }
           }
         } catch (err) {

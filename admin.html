@@ -274,7 +274,12 @@
         <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
       </div>
     </div>
-    <div id="regenLog" class="regen-log"></div>
+    <div id="regenLogModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal-content">
+        <div class="modal-body" id="regenLogBody"></div>
+        <button id="regenLogClose" class="button button-secondary">Затвори</button>
+      </div>
+    </div>
     <button id="aiSummary">AI резюме</button>
     <div class="profile-nav-container">
       <button id="profileCardNavToggle" class="profile-nav-toggle" aria-label="Показване на навигацията">
