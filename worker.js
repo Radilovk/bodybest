@@ -1590,19 +1590,24 @@ async function validatePlanPrerequisites(env, userId) {
 // ------------- START FUNCTION: handleRegeneratePlanRequest -------------
 async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = processSingleUserPlan) {
     try {
-        const { userId, priorityGuidance } = await request.json();
+        const { userId, priorityGuidance, reason } = await request.json();
         if (!userId) {
             return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
         }
+        if (typeof reason !== 'string' || reason.trim().length === 0) {
+            return { success: false, message: 'Липсва причина за регенериране.', statusHint: 400 };
+        }
+        const trimmedReason = reason.trim();
         const precheck = await validatePlanPrerequisites(env, userId);
         if (!precheck.ok) {
             return { success: false, message: precheck.message, statusHint: 400 };
         }
+        await env.USER_METADATA_KV.put(`pending_plan_mod_${userId}`, trimmedReason);
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'processing', { metadata: { status: 'processing' } });
         if (ctx) {
-            ctx.waitUntil(planProcessor(userId, env, priorityGuidance));
+            ctx.waitUntil(planProcessor(userId, env, priorityGuidance, trimmedReason));
         } else {
-            await planProcessor(userId, env, priorityGuidance);
+            await planProcessor(userId, env, priorityGuidance, trimmedReason);
         }
         return { success: true, message: 'Генерирането на нов план стартира.' };
     } catch (error) {
@@ -2829,7 +2834,7 @@ async function handleSetMaintenanceMode(request, env) {
 // ------------- END BLOCK: PlanGenerationHeaderComment -------------
 
 // ------------- START FUNCTION: processSingleUserPlan -------------
-async function processSingleUserPlan(userId, env, priorityGuidance = '') {
+async function processSingleUserPlan(userId, env, priorityGuidance = '', regenReason = '') {
     console.log(`PROCESS_USER_PLAN (${userId}): Starting plan generation.`);
     try {
         const precheck = await validatePlanPrerequisites(env, userId);
@@ -2962,6 +2967,9 @@ async function processSingleUserPlan(userId, env, priorityGuidance = '') {
         }
         if (priorityGuidance) {
             finalPrompt += `\n\n[PRIORITY_GUIDANCE]\n${priorityGuidance}`;
+        }
+        if (regenReason) {
+            finalPrompt += `\n\n[REGENERATION_REASON]\n${regenReason}`;
         }
         let generatedPlanObject = null; let rawAiResponse = "";
         try {
