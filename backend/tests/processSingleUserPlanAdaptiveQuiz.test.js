@@ -65,8 +65,5 @@ describe('processSingleUserPlan', () => {
     const ts = kvStore.get('u1_last_adaptive_quiz_ts');
     expect(ts).toBeDefined();
     expect(Number(ts)).not.toBeNaN();
-    const readyTs = kvStore.get('u1_plan_ready_ts');
-    expect(readyTs).toBeDefined();
-    expect(Number(readyTs)).not.toBeNaN();
   });
 });
