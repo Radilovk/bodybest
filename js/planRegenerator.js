@@ -19,11 +19,12 @@ function closeModal(modal) {
 
 export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
   const modal = document.getElementById('priorityGuidanceModal');
-  const input = document.getElementById('priorityGuidanceInput');
+  const priorityInput = document.getElementById('priorityGuidanceInput');
+  const reasonInput = document.getElementById('regenReasonInput');
   const confirm = document.getElementById('priorityGuidanceConfirm');
   const cancel = document.getElementById('priorityGuidanceCancel');
   const closeBtn = document.getElementById('priorityGuidanceClose');
-  if (!regenBtn || !modal || !confirm || !input) return;
+  if (!regenBtn || !modal || !confirm || (!priorityInput && !reasonInput)) return;
 
   const hide = () => closeModal(modal);
 
@@ -31,7 +32,8 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
     activeUserId = getUserId?.();
     activeRegenBtn = regenBtn;
     activeRegenProgress = regenProgress;
-    input.value = '';
+    if (priorityInput) priorityInput.value = '';
+    if (reasonInput) reasonInput.value = '';
     openModal(modal);
   });
   cancel?.addEventListener('click', hide);
@@ -42,7 +44,8 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
     confirm.addEventListener('click', async () => {
       if (!activeUserId || !activeRegenBtn) return;
       hide();
-      const reason = input.value.trim();
+      const reason = (reasonInput ? reasonInput.value : priorityInput?.value || '').trim();
+      const priorityGuidance = reasonInput ? (priorityInput?.value.trim() || '') : '';
       if (activeRegenProgress) {
         activeRegenProgress.textContent = 'Генериране…';
         activeRegenProgress.classList.remove('hidden');
@@ -52,7 +55,7 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
         const resp = await fetch(apiEndpoints.regeneratePlan, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: activeUserId, reason: reason || 'Админ регенерация' })
+          body: JSON.stringify({ userId: activeUserId, reason: reason || 'Админ регенерация', priorityGuidance })
         });
         if (!resp.ok) throw new Error('Request failed');
       } catch (err) {

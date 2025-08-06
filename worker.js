@@ -1520,16 +1520,22 @@ async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = pr
             return { success: false, message: 'Липсва причина за регенериране.', statusHint: 400 };
         }
         const trimmedReason = reason.trim();
+        const trimmedPriority = typeof priorityGuidance === 'string' ? priorityGuidance.trim() : '';
         const precheck = await validatePlanPrerequisites(env, userId);
         if (!precheck.ok) {
             return { success: false, message: precheck.message, statusHint: 400 };
         }
-        await env.USER_METADATA_KV.put(`pending_plan_mod_${userId}`, trimmedReason);
+        if (trimmedPriority) {
+            // Запис на приоритетни указания за потенциална модификация на плана
+            await env.USER_METADATA_KV.put(`pending_plan_mod_${userId}`, trimmedPriority);
+        }
+        // Съхраняване на причината за регенериране отделно
+        await env.USER_METADATA_KV.put(`regen_reason_${userId}`, trimmedReason);
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'processing', { metadata: { status: 'processing' } });
         if (ctx) {
-            ctx.waitUntil(planProcessor(userId, env, priorityGuidance, trimmedReason));
+            ctx.waitUntil(planProcessor(userId, env, trimmedPriority, trimmedReason));
         } else {
-            await planProcessor(userId, env, priorityGuidance, trimmedReason);
+            await planProcessor(userId, env, trimmedPriority, trimmedReason);
         }
         return { success: true, message: 'Генерирането на нов план стартира.' };
     } catch (error) {
