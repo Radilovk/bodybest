@@ -713,6 +713,8 @@ export default {
                 const lastQuizTs = lastQuizTsStr ? parseInt(lastQuizTsStr, 10) : 0;
                 const daysSinceLastQuiz = (Date.now() - lastQuizTs) / (1000 * 60 * 60 * 24);
 
+                if (lastQuizTs === 0) continue;
+
                 const isQuizAlreadyPending = await env.USER_METADATA_KV.get(`${userId}_adaptive_quiz_pending`);
                 if (isQuizAlreadyPending === "true") {
                     // console.log(`[CRON-AdaptiveQuiz] Quiz already pending for user ${userId}. Skipping generation.`);
@@ -3012,6 +3014,11 @@ async function processSingleUserPlan(userId, env, priorityGuidance = '') {
             await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
             const summary = createPlanUpdateSummary(planBuilder, previousPlan);
             await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summary));
+
+            if (!(await env.USER_METADATA_KV.get(`${userId}_last_adaptive_quiz_ts`))) {
+                await env.USER_METADATA_KV.put(`${userId}_last_adaptive_quiz_ts`, Date.now().toString());
+            }
+
             console.log(`PROCESS_USER_PLAN (${userId}): Successfully generated and saved UNIFIED plan. Status set to 'ready'.`);
         }
     } catch (error) {
