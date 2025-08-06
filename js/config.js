@@ -45,6 +45,7 @@ export const apiEndpoints = {
     getFeedbackMessages: `${workerBaseUrl}/api/getFeedbackMessages`,
     getPlanModificationPrompt: `${workerBaseUrl}/api/getPlanModificationPrompt`,
     regeneratePlan: `${workerBaseUrl}/api/regeneratePlan`,
+    checkPlanPrerequisites: `${workerBaseUrl}/api/checkPlanPrerequisites`,
     updateStatus: `${workerBaseUrl}/api/updateStatus`,
     getAiConfig: `${workerBaseUrl}/api/getAiConfig`,
     setAiConfig: `${workerBaseUrl}/api/setAiConfig`,

@@ -102,6 +102,17 @@ const analysisModelInput = document.getElementById('analysisModel');
 const analysisPromptInput = document.getElementById('analysisPrompt');
 const testAnalysisBtn = document.getElementById('testAnalysisModel');
 
+async function hasPlanPrerequisites(userId) {
+    try {
+        const resp = await fetch(`${apiEndpoints.checkPlanPrerequisites}?userId=${encodeURIComponent(userId)}`);
+        const data = await resp.json();
+        return resp.ok && data.success && data.ok;
+    } catch (err) {
+        console.error('prereq check error', err);
+        return false;
+    }
+}
+
 const modelOptionsList = document.getElementById('modelOptions');
 let availableModels = new Set(JSON.parse(localStorage.getItem('aiModelHistory') || '[]'));
 
@@ -655,7 +666,7 @@ async function loadClients() {
     }
 }
 
-function renderClients() {
+async function renderClients() {
     const search = (clientSearch.value || '').toLowerCase();
     const filter = statusFilter.value;
     const tagFilterValues = tagFilterSelect ? Array.from(tagFilterSelect.selectedOptions).map(o => o.value) : [];
@@ -684,7 +695,7 @@ function renderClients() {
         clientsList?.appendChild(li);
         return;
     }
-    list.forEach(c => {
+    await Promise.all(list.map(async c => {
         const li = document.createElement('li');
         const btn = document.createElement('button');
         btn.className = 'client-open';
@@ -709,28 +720,35 @@ function renderClients() {
         btn.addEventListener('click', () => showClient(c.userId));
         li.appendChild(btn);
 
-        // Позволява повторно генериране дори при зациклил статус "В процес"
         const needsPlan =
             c.status === 'pending' ||
             c.status === 'error' ||
             c.status === 'unknown' ||
             c.status === 'processing';
         if (needsPlan) {
-            const regen = document.createElement('button');
-            regen.className = 'regen-plan-btn button-small';
-            regen.textContent = 'Нов план';
-            regen.title = 'Генерирай нов план';
-            const progress = document.createElement('span');
-            progress.className = 'regen-progress hidden';
-            progress.setAttribute('aria-live', 'polite');
-            li.appendChild(regen);
-            li.appendChild(progress);
-            regen.addEventListener('click', e => e.stopPropagation());
-            setupPlanRegeneration({ regenBtn: regen, regenProgress: progress, getUserId: () => c.userId });
+            const ok = await hasPlanPrerequisites(c.userId);
+            if (ok) {
+                const regen = document.createElement('button');
+                regen.className = 'regen-plan-btn button-small';
+                regen.textContent = 'Нов план';
+                regen.title = 'Генерирай нов план';
+                const progress = document.createElement('span');
+                progress.className = 'regen-progress hidden';
+                progress.setAttribute('aria-live', 'polite');
+                li.appendChild(regen);
+                li.appendChild(progress);
+                regen.addEventListener('click', e => e.stopPropagation());
+                setupPlanRegeneration({ regenBtn: regen, regenProgress: progress, getUserId: () => c.userId });
+            } else {
+                const msg = document.createElement('span');
+                msg.className = 'regen-missing-msg';
+                msg.textContent = 'липсват данни за регенериране';
+                li.appendChild(msg);
+            }
         }
 
         clientsList?.appendChild(li);
-    });
+    }));
 }
 
 function updateClientSuggestions() {
