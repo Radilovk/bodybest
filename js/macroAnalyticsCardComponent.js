@@ -67,12 +67,22 @@ template.innerHTML = `
       transform: translate(-50%, -50%);
       text-align: center;
       pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
-    .chart-center-text .consumed-calories {
-      font-size: 2.5rem;
+    .chart-center-text .calories-value {
+      font-size: 1.4rem;
       font-weight: 700;
       line-height: 1.1;
       color: var(--text-color-primary, #E0E0E0);
+    }
+    .chart-center-text .calories-separator {
+      width: 100%;
+      height: 1px;
+      background-color: var(--text-color-secondary, #A0A5C0);
+      margin: 0.25rem 0;
     }
     .chart-center-text .total-calories-label {
       font-size: 0.8rem;
@@ -404,7 +414,9 @@ export class MacroAnalyticsCard extends HTMLElement {
       // Превишение се отчита само над зададения множител.
       consumedCaloriesRaw > plan.calories * this.exceedThreshold;
     this.centerText.innerHTML = `
-      <div class="consumed-calories">${consumedCalories} / ${plan.calories}</div>
+      <div class="calories-value">${consumedCalories}</div>
+      <div class="calories-separator"></div>
+      <div class="calories-value">${plan.calories}</div>
       <div class="total-calories-label">${this.labels.intakeVsPlanLabel || 'Прием vs План'}</div>`;
     const calDiv = document.createElement('div');
     calDiv.className = 'macro-metric calories';
