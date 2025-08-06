@@ -1,7 +1,8 @@
 let ChartLib;
 let subtleGlowRegistered = false;
+const GLOW_OFFSET = 10;
 
-const subtleGlowPlugin = {
+export const subtleGlowPlugin = {
   id: 'subtleGlow',
   afterDatasetsDraw(chart) {
     const { ctx } = chart;
@@ -28,6 +29,24 @@ const subtleGlowPlugin = {
         );
         ctx.closePath();
         ctx.fill();
+
+        const gradient = ctx.createRadialGradient(
+          element.x,
+          element.y,
+          0,
+          element.x,
+          element.y,
+          element.outerRadius + GLOW_OFFSET
+        );
+        const innerStop = element.outerRadius / (element.outerRadius + GLOW_OFFSET);
+        gradient.addColorStop(0, bg);
+        gradient.addColorStop(innerStop, bg);
+        gradient.addColorStop(1, 'transparent');
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = GLOW_OFFSET;
+        ctx.beginPath();
+        ctx.arc(element.x, element.y, element.outerRadius, element.startAngle, element.endAngle);
+        ctx.stroke();
       });
       ctx.restore();
     });
