@@ -1,4 +1,5 @@
 import { apiEndpoints } from './config.js';
+import { startPlanGeneration } from './planGeneration.js';
 
 let activeUserId;
 let activeRegenBtn;
@@ -52,30 +53,19 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
       }
       activeRegenBtn.disabled = true;
       try {
-        const resp = await fetch(apiEndpoints.regeneratePlan, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: activeUserId, reason: reason || 'Админ регенерация', priorityGuidance })
+        await startPlanGeneration({
+          userId: activeUserId,
+          reason: reason || 'Админ регенерация',
+          priorityGuidance
         });
-        const data = await resp.json();
-        if (!resp.ok) throw new Error('Request failed');
-        if (!data.success) {
-          const msg = data.precheck?.message || data.message || 'Грешка при стартиране на генерирането.';
-          if (activeRegenProgress) {
-            activeRegenProgress.textContent = msg;
-            setTimeout(() => activeRegenProgress.classList.add('hidden'), 4000);
-          }
-          activeRegenBtn.disabled = false;
-          return;
-        }
       } catch (err) {
         console.error('regeneratePlan error:', err);
         if (activeRegenProgress) {
-          activeRegenProgress.textContent = 'Грешка';
-          setTimeout(() => activeRegenProgress.classList.add('hidden'), 2000);
+          activeRegenProgress.textContent = err.message || 'Грешка';
+          setTimeout(() => activeRegenProgress.classList.add('hidden'), 4000);
         }
         activeRegenBtn.disabled = false;
-        alert('Грешка при стартиране на генерирането.');
+        if (!err.precheck) alert('Грешка при стартиране на генерирането.');
         return;
       }
 

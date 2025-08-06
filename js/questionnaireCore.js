@@ -1,6 +1,7 @@
 import { setupRegistration } from './register.js';
 import { showMessage, hideMessage } from './messageUtils.js';
 import { updateStepProgress } from './stepProgress.js';
+import { startPlanGeneration } from './planGeneration.js';
 
 const state = {
   rawQuestions: [],
@@ -490,6 +491,10 @@ export async function submitResponses() {
 
 export function getResponses() {
   return state.responses;
+}
+
+export function regeneratePlan({ userId, reason = '', priorityGuidance = '' }) {
+  return startPlanGeneration({ userId, reason, priorityGuidance });
 }
 
 export async function initQuestionnaire({ questionsUrl, submitUrl }) {
