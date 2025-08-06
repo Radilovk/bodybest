@@ -154,7 +154,7 @@ test('обновява макро картата чрез setData', async () => 
   });
 });
 
-test('hides modules when values are zero', async () => {
+test('hides modules when values are zero, except engagement card', async () => {
   jest.resetModules();
   const zeroData = {
     fullDashboardData: {
@@ -179,7 +179,7 @@ test('hides modules when values are zero', async () => {
   ({ populateUI } = await import('../populateUI.js'));
   await populateUI();
   expect(document.getElementById('goalCard').classList.contains('hidden')).toBe(true);
-  expect(document.getElementById('engagementCard').classList.contains('hidden')).toBe(true);
+  expect(document.getElementById('engagementCard').classList.contains('hidden')).toBe(false);
   expect(document.getElementById('healthCard').classList.contains('hidden')).toBe(true);
   expect(document.getElementById('progressHistoryCard').classList.contains('hidden')).toBe(true);
 });

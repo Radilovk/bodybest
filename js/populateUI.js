@@ -166,7 +166,7 @@ function populateDashboardMainIndexes(currentAnalytics) {
     }
 
     const engagementScore = safeParseFloat(safeGet(currentAnalytics, 'engagementScore'), null);
-    if (engagementScore === null || engagementScore <= 0) {
+    if (engagementScore === null || Number.isNaN(engagementScore) || engagementScore < 0) {
         hide(selectors.engagementCard);
     } else {
         show(selectors.engagementCard);
