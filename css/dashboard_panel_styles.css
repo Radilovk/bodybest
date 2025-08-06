@@ -118,15 +118,6 @@ body.vivid-theme .index-card .index-value {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--space-lg);
 }
-#macroAnalyticsCardContainer {
-  --card-bg: #2C314A;
-  --text-color-primary: #E0E0E0;
-  --text-color-secondary: #A0A5C0;
-  --macro-protein-color: #5BC0BE;
-  --macro-carbs-color: #FFD166;
-  --macro-fat-color: #FF6B6B;
-  --macro-fiber-color: #6FCF97;
-}
 .analytics-card {
   background: rgba(var(--card-bg-rgb), var(--card-bg-opacity));
   backdrop-filter: blur(var(--glass-blur));
