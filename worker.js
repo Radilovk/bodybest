@@ -1571,7 +1571,7 @@ async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = pr
         const trimmedPriority = typeof priorityGuidance === 'string' ? priorityGuidance.trim() : '';
         const precheck = await validatePlanPrerequisites(env, userId);
         if (!precheck.ok) {
-            return { success: false, message: precheck.message, statusHint: 400 };
+            return { success: false, message: precheck.message, statusHint: 400, precheck };
         }
         if (trimmedPriority) {
             // Запис на приоритетни указания за потенциална модификация на плана
