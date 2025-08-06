@@ -2,6 +2,18 @@
 import { jest } from '@jest/globals';
 import { fireEvent, within, waitFor } from '@testing-library/dom';
 
+beforeAll(() => {
+  global.matchMedia = jest.fn().mockImplementation(() => {
+    const listeners = [];
+    return {
+      matches: false,
+      addEventListener: (_e, cb) => listeners.push(cb),
+      removeEventListener: jest.fn(),
+      dispatchEvent: (e) => { listeners.forEach((cb) => cb(e)); }
+    };
+  });
+});
+
 let originalFetch;
 let originalIO;
 
@@ -167,4 +179,22 @@ test('data-endpoint и refresh-interval извикват fetch периодич�
   await Promise.resolve();
   const endpointCalls = global.fetch.mock.calls.filter(c => c[0] === endpoint).length;
   expect(endpointCalls).toBe(2);
+});
+
+test('re-renders chart on theme change', async () => {
+  const card = document.createElement('macro-analytics-card');
+  document.body.appendChild(card);
+  await waitFor(() => card.labels.title !== '');
+  const spy = jest.spyOn(card, 'renderChart');
+  card.handleThemeOrPrefs();
+  expect(spy).toHaveBeenCalled();
+});
+
+test('re-renders chart on motion preference change', async () => {
+  const card = document.createElement('macro-analytics-card');
+  document.body.appendChild(card);
+  await waitFor(() => card.labels.title !== '');
+  const spy = jest.spyOn(card, 'renderChart');
+  card.handleThemeOrPrefs();
+  expect(spy).toHaveBeenCalled();
 });
