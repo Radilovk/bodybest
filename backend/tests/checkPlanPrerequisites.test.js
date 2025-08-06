@@ -10,6 +10,7 @@ test('връща ok при налични prerequisites', async () => {
   const res = await handleCheckPlanPrerequisitesRequest(request, env);
   expect(res.success).toBe(true);
   expect(res.ok).toBe(true);
+  expect(res.missing).toEqual([]);
 });
 
 test('връща грешка при липсващи отговори', async () => {
@@ -21,5 +22,6 @@ test('връща грешка при липсващи отговори', async (
   const res = await handleCheckPlanPrerequisitesRequest(request, env);
   expect(res.success).toBe(true);
   expect(res.ok).toBe(false);
-  expect(res.message).toBe('Липсват първоначални отговори.');
+  expect(res.missing).toEqual(['първоначални отговори']);
+  expect(res.message).toBe('Липсват: първоначални отговори');
 });
