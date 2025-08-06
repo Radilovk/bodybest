@@ -41,7 +41,7 @@ test('изпраща reason при потвърждение', async () => {
   expect(fetch).toHaveBeenCalledWith('/regen', expect.objectContaining({
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId: 'u1', reason: 'причина' })
+    body: JSON.stringify({ userId: 'u1', reason: 'причина', priorityGuidance: '' })
   }));
 });
 
@@ -80,6 +80,32 @@ test('изпраща заявка само за последно избран us
 
   expect(fetch).toHaveBeenCalledTimes(1);
   expect(fetch).toHaveBeenCalledWith('/regen', expect.objectContaining({
-    body: JSON.stringify({ userId: 'u2', reason: 'Админ регенерация' })
+    body: JSON.stringify({ userId: 'u2', reason: 'Админ регенерация', priorityGuidance: '' })
+  }));
+});
+
+test('изпраща reason и priorityGuidance при отделни полета', async () => {
+  document.body.innerHTML = `
+    <button id="regen"></button>
+    <div id="regenProgress" class="hidden"></div>
+    <div id="priorityGuidanceModal" aria-hidden="true">
+      <textarea id="priorityGuidanceInput"></textarea>
+      <textarea id="regenReasonInput"></textarea>
+      <button id="priorityGuidanceConfirm"></button>
+      <button id="priorityGuidanceCancel"></button>
+      <button id="priorityGuidanceClose"></button>
+    </div>
+  `;
+  ({ setupPlanRegeneration } = await import('../planRegenerator.js'));
+  const regenBtn = document.getElementById('regen');
+  const regenProgress = document.getElementById('regenProgress');
+  setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => 'u1' });
+  regenBtn.click();
+  document.getElementById('regenReasonInput').value = 'причина';
+  document.getElementById('priorityGuidanceInput').value = 'приоритет';
+  document.getElementById('priorityGuidanceConfirm').click();
+  await Promise.resolve();
+  expect(fetch).toHaveBeenCalledWith('/regen', expect.objectContaining({
+    body: JSON.stringify({ userId: 'u1', reason: 'причина', priorityGuidance: 'приоритет' })
   }));
 });

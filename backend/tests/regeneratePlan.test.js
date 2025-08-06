@@ -2,7 +2,7 @@ import { jest } from '@jest/globals';
 import { handleRegeneratePlanRequest } from '../../worker.js';
 
 describe('POST /api/regeneratePlan', () => {
-  test('записва reason и го предава към процесора', async () => {
+  test('записва priorityGuidance и reason и ги предава към процесора', async () => {
     const env = {
       USER_METADATA_KV: {
         put: jest.fn(),
@@ -15,7 +15,8 @@ describe('POST /api/regeneratePlan', () => {
     const mockProcessor = jest.fn().mockResolvedValue();
     const request = { json: async () => ({ userId: 'u1', priorityGuidance: 'повече протеин', reason: 'нова цел' }) };
     const res = await handleRegeneratePlanRequest(request, env, ctx, mockProcessor);
-    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('pending_plan_mod_u1', 'нова цел');
+    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('pending_plan_mod_u1', 'повече протеин');
+    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('regen_reason_u1', 'нова цел');
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('plan_status_u1', 'processing', { metadata: { status: 'processing' } });
     expect(ctx.waitUntil).toHaveBeenCalled();
     expect(mockProcessor).toHaveBeenCalledWith('u1', env, 'повече протеин', 'нова цел');
