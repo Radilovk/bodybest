@@ -1052,6 +1052,38 @@ async function showClient(userId) {
             profileResp.json().catch(() => ({})),
             dashResp.json().catch(() => ({}))
         ]);
+
+        if (kvDataDiv) kvDataDiv.innerHTML = '';
+        try {
+            const kvResp = await fetch(`${apiEndpoints.listUserKv}?userId=${userId}`);
+            const kvData = await kvResp.json().catch(() => ({}));
+            if (kvResp.ok && kvData.success) {
+                Object.entries(kvData.kv || {}).forEach(([fullKey, val]) => {
+                    const detailsEl = document.createElement('details');
+                    const summaryEl = document.createElement('summary');
+                    summaryEl.textContent = fullKey.replace(`${userId}_`, '');
+                    const textarea = document.createElement('textarea');
+                    textarea.value = val || '';
+                    const btn = document.createElement('button');
+                    btn.textContent = 'Запази';
+                    btn.addEventListener('click', async () => {
+                        const ok = await saveKvEntry(fullKey, textarea.value);
+                        if (ok) {
+                            btn.textContent = 'Запазено';
+                            setTimeout(() => (btn.textContent = 'Запази'), 1000);
+                        }
+                    });
+                    detailsEl.append(summaryEl, textarea, btn);
+                    kvDataDiv?.appendChild(detailsEl);
+                });
+            } else if (kvDataDiv) {
+                kvDataDiv.textContent = 'Грешка при зареждане на KV данни';
+            }
+        } catch (err) {
+            console.error('Error loading KV data:', err);
+            if (kvDataDiv) kvDataDiv.textContent = 'Грешка при зареждане на KV данни';
+        }
+
         let hasError = false;
         if (profileResp.ok && data.success) {
             currentUserId = userId;
@@ -1073,33 +1105,6 @@ async function showClient(userId) {
                 loadFeedback(),
                 loadClientReplies(true)
             ]);
-            try {
-                const kvResp = await fetch(`${apiEndpoints.listUserKv}?userId=${userId}`);
-                const kvData = await kvResp.json().catch(() => ({}));
-                if (kvDataDiv) kvDataDiv.innerHTML = '';
-                if (kvResp.ok && kvData.success) {
-                    Object.entries(kvData.kv || {}).forEach(([fullKey, val]) => {
-                        const detailsEl = document.createElement('details');
-                        const summaryEl = document.createElement('summary');
-                        summaryEl.textContent = fullKey.replace(`${userId}_`, '');
-                        const textarea = document.createElement('textarea');
-                        textarea.value = val || '';
-                        const btn = document.createElement('button');
-                        btn.textContent = 'Запази';
-                        btn.addEventListener('click', async () => {
-                            const ok = await saveKvEntry(fullKey, textarea.value);
-                            if (ok) {
-                                btn.textContent = 'Запазено';
-                                setTimeout(() => (btn.textContent = 'Запази'), 1000);
-                            }
-                        });
-                        detailsEl.append(summaryEl, textarea, btn);
-                        kvDataDiv?.appendChild(detailsEl);
-                    });
-                }
-            } catch (err) {
-                console.error('Error loading KV data:', err);
-            }
             unreadClients.delete(userId);
             unreadByClient.delete(userId);
             updateSectionDots(userId);
