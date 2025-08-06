@@ -9,10 +9,11 @@ import { apiEndpoints } from './config.js';
  * @returns {Promise<any>} резултатът от сървъра
  */
 export async function startPlanGeneration({ userId, reason = '', priorityGuidance = '' }) {
+  const payload = { userId, reason, priorityGuidance };
   const resp = await fetch(apiEndpoints.regeneratePlan, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, reason, priorityGuidance })
+    body: JSON.stringify(payload)
   });
   const data = await resp.json();
   if (!resp.ok) throw new Error(data.message || 'Request failed');

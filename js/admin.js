@@ -33,6 +33,7 @@ const tagFilterSelect = document.getElementById('tagFilter');
 const detailsSection = document.getElementById('clientDetails');
 const regenBtn = document.getElementById('regeneratePlan');
 const regenProgress = document.getElementById('regenProgress');
+const priorityGuidanceInput = document.getElementById('priorityGuidanceInput');
 const aiSummaryBtn = document.getElementById('aiSummary');
 const notesField = document.getElementById('adminNotes');
 const tagsField = document.getElementById('adminTags');
@@ -254,7 +255,12 @@ let currentUserId = null;
 function setCurrentUserId(val) {
     currentUserId = val;
 }
-setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => currentUserId });
+setupPlanRegeneration({
+    regenBtn,
+    regenProgress,
+    getUserId: () => currentUserId,
+    getPriorityGuidance: () => priorityGuidanceInput?.value.trim() || ''
+});
 let profileNavObserver = null;
 let currentPlanData = null;
 let currentDashboardData = null;
@@ -739,7 +745,12 @@ async function renderClients() {
                 li.appendChild(regen);
                 li.appendChild(progress);
                 regen.addEventListener('click', e => e.stopPropagation());
-                setupPlanRegeneration({ regenBtn: regen, regenProgress: progress, getUserId: () => c.userId });
+                setupPlanRegeneration({
+                    regenBtn: regen,
+                    regenProgress: progress,
+                    getUserId: () => c.userId,
+                    getPriorityGuidance: () => priorityGuidanceInput?.value.trim() || ''
+                });
             } else {
                 const msg = document.createElement('span');
                 msg.className = 'regen-missing-msg';

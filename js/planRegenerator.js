@@ -29,7 +29,7 @@ if (logClose && logModal && logBody) {
   });
 }
 
-export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
+export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId, getPriorityGuidance }) {
   const modal = document.getElementById('priorityGuidanceModal');
   const priorityInput = document.getElementById('priorityGuidanceInput');
   const reasonInput = document.getElementById('regenReasonInput');
@@ -57,7 +57,12 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
       if (!activeUserId || !activeRegenBtn) return;
       hide();
       const reason = (reasonInput ? reasonInput.value : priorityInput?.value || '').trim();
-      const priorityGuidance = reasonInput ? (priorityInput?.value.trim() || '') : '';
+      const priorityGuidance =
+        typeof getPriorityGuidance === 'function'
+          ? getPriorityGuidance() || ''
+          : reasonInput
+            ? priorityInput?.value.trim() || ''
+            : '';
       if (activeRegenProgress) {
         activeRegenProgress.textContent = 'Генериране…';
         activeRegenProgress.classList.remove('hidden');
