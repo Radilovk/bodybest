@@ -13,8 +13,7 @@ const subtleGlowPlugin = {
           ? dataset.backgroundColor[i]
           : dataset.backgroundColor;
         ctx.shadowColor = bg;
-        ctx.shadowBlur = 12;
-        ctx.globalCompositeOperation = 'lighter';
+        ctx.shadowBlur = 8;
         ctx.fillStyle = bg;
         ctx.beginPath();
         ctx.arc(element.x, element.y, element.outerRadius, element.startAngle, element.endAngle);
@@ -89,13 +88,7 @@ export function registerSubtleGlow(Chart) {
     return false;
   }
   try {
-    let existing;
-    try {
-      existing = Chart.registry?.plugins?.get?.('subtleGlow');
-    } catch {
-      existing = null;
-    }
-    if (!existing) {
+    if (!Chart.registry?.getPlugin('subtleGlow')) {
       Chart.register(subtleGlowPlugin);
     }
     subtleGlowRegistered = true;
