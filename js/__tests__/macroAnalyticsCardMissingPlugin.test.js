@@ -55,6 +55,6 @@ test('създава диаграма без plug-in когато Chart.register
   };
   card.setData({ plan });
   await waitFor(() => expect(card.chart).toBeTruthy());
-  expect(warnSpy).toHaveBeenCalled();
+  expect(warnSpy.mock.calls.some(([msg]) => msg.includes('subtleGlow'))).toBe(true);
   warnSpy.mockRestore();
 });

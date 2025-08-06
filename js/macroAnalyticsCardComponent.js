@@ -300,7 +300,10 @@ export class MacroAnalyticsCard extends HTMLElement {
       this.showLoading();
       try {
         Chart = await ensureChart();
-        this.pluginRegistered = registerSubtleGlow(Chart);
+        const glowReady = registerSubtleGlow(Chart);
+        if (!glowReady) {
+          console.warn('subtleGlow plug-in не е наличен; диаграмата ще се рендерира без него.');
+        }
         this.renderChart();
       } catch (e) {
         console.error('Failed to load Chart.js', e);
