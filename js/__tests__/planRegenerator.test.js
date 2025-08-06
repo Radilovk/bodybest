@@ -45,6 +45,18 @@ test('изпраща reason при потвърждение', async () => {
   }));
 });
 
+test('показва съобщение при липсващи prerequisites', async () => {
+  global.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ success: false, precheck: { message: 'Липсват данни' } }) });
+  const regenBtn = document.getElementById('regen');
+  const regenProgress = document.getElementById('regenProgress');
+  setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => 'u1' });
+  regenBtn.click();
+  document.getElementById('priorityGuidanceConfirm').click();
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(regenProgress.textContent).toBe('Липсват данни');
+});
+
 test('деактивира и реактивира бутона', async () => {
   const regenBtn = document.getElementById('regen');
   const regenProgress = document.getElementById('regenProgress');

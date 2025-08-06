@@ -60,12 +60,12 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
         const data = await resp.json();
         if (!resp.ok) throw new Error('Request failed');
         if (!data.success) {
+          const msg = data.precheck?.message || data.message || 'Грешка при стартиране на генерирането.';
           if (activeRegenProgress) {
-            activeRegenProgress.textContent = 'Грешка';
-            setTimeout(() => activeRegenProgress.classList.add('hidden'), 2000);
+            activeRegenProgress.textContent = msg;
+            setTimeout(() => activeRegenProgress.classList.add('hidden'), 4000);
           }
           activeRegenBtn.disabled = false;
-          alert(data.message || 'Грешка при стартиране на генерирането.');
           return;
         }
       } catch (err) {
