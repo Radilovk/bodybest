@@ -975,8 +975,7 @@ curl -X POST /api/aiHelper \
 - `POST /api/testAiModel` – проверява връзката с конкретен AI модел.
 - `POST /api/submitQuestionnaire` – изпраща отговорите от началния въпросник.
 - `POST /api/regeneratePlan` – генерира изцяло нов план. Тяло на заявката:
-  `{ "userId": "u1", "reason": "по-балансиран режим", "priorityGuidance": "повече протеин" }`.
-  Полето `reason` е задължително и се използва като контекст при генерирането.
+  `{ "userId": "u1" }`.
 - `GET /api/analysisStatus` – връща текущия статус на персоналния анализ.
 - `GET /api/getInitialAnalysis` – връща първоначалния анализ.
 - `POST /api/analyzeImage` – анализира качено изображение и връща резултат. Изпращайте поле `image` с пълен `data:` URL. Ендпойнтът не изисква `WORKER_ADMIN_TOKEN`, освен ако изрично не сте го добавили като защита.

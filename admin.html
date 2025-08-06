@@ -269,17 +269,7 @@
       </form>
     </details>
     <button id="regeneratePlan">Генерирай нов план</button>
-    <div id="regenProgress" class="hidden">
-      <div class="progress">
-        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
-      </div>
-    </div>
-    <div id="regenLogModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
-      <div class="modal-content">
-        <div class="modal-body" id="regenLogBody"></div>
-        <button id="regenLogClose" class="button button-secondary">Затвори</button>
-      </div>
-    </div>
+    <div id="regenProgress" class="hidden"></div>
     <button id="aiSummary">AI резюме</button>
     <div class="profile-nav-container">
       <button id="profileCardNavToggle" class="profile-nav-toggle" aria-label="Показване на навигацията">
@@ -525,17 +515,6 @@
     <a id="openTestQAnalysis" class="button button-small hidden" target="_blank">Отвори анализа</a>
   </details>
 
-  <div id="priorityGuidanceModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="modal-content">
-      <button id="priorityGuidanceClose" class="close-button" aria-label="Затвори прозореца">&times;</button>
-      <label for="priorityGuidanceInput">Приоритетни указания</label>
-      <textarea id="priorityGuidanceInput" rows="4" placeholder="Опишете приоритетните указания"></textarea>
-      <div class="modal-actions">
-        <button id="priorityGuidanceConfirm" class="button">Потвърди</button>
-        <button id="priorityGuidanceCancel" class="button button-secondary">Отказ</button>
-      </div>
-    </div>
-  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
