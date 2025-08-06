@@ -1,34 +1,9 @@
 import { loadLocale } from './macroCardLocales.js';
-import { ensureChart } from './chartLoader.js';
+import { ensureChart, registerSubtleGlow } from './chartLoader.js';
 import { scaleMacros, formatPercent } from './macroUtils.js';
 import { macroColorVars } from './themeConfig.js';
 
 let Chart;
-
-const subtleGlowPlugin = {
-  id: 'subtleGlow',
-  afterDatasetsDraw(chart) {
-    const { ctx } = chart;
-    chart.getSortedVisibleDatasetMetas().forEach((meta) => {
-      const dataset = chart.data.datasets[meta.index];
-      ctx.save();
-      meta.data.forEach((element, i) => {
-        const bg = Array.isArray(dataset.backgroundColor)
-          ? dataset.backgroundColor[i]
-          : dataset.backgroundColor;
-        ctx.shadowColor = bg;
-        ctx.shadowBlur = 8;
-        ctx.fillStyle = bg;
-        ctx.beginPath();
-        ctx.arc(element.x, element.y, element.outerRadius, element.startAngle, element.endAngle);
-        ctx.arc(element.x, element.y, element.innerRadius, element.endAngle, element.startAngle, true);
-        ctx.closePath();
-        ctx.fill();
-      });
-      ctx.restore();
-    });
-  }
-};
 
 function ensureGramsFields(obj) {
   if (!obj) return obj;
@@ -325,6 +300,7 @@ export class MacroAnalyticsCard extends HTMLElement {
       this.showLoading();
       try {
         Chart = await ensureChart();
+        this.pluginRegistered = registerSubtleGlow(Chart);
         this.renderChart();
       } catch (e) {
         console.error('Failed to load Chart.js', e);
@@ -537,8 +513,8 @@ export class MacroAnalyticsCard extends HTMLElement {
         hoverOffset: 8
       });
     }
-    if (!Chart.registry.getPlugin('subtleGlow')) {
-      Chart.register(subtleGlowPlugin);
+    if (typeof Chart.register !== 'function') {
+      console.warn('Chart.register липсва; диаграмата ще бъде без subtleGlow plug-in.');
     }
     const prefersReduced = this.motionQuery.matches;
     this.chart = new Chart(ctx, {

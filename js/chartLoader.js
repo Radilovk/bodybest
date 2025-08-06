@@ -1,4 +1,37 @@
 let ChartLib;
+let subtleGlowRegistered = false;
+
+const subtleGlowPlugin = {
+  id: 'subtleGlow',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    chart.getSortedVisibleDatasetMetas().forEach((meta) => {
+      const dataset = chart.data.datasets[meta.index];
+      ctx.save();
+      meta.data.forEach((element, i) => {
+        const bg = Array.isArray(dataset.backgroundColor)
+          ? dataset.backgroundColor[i]
+          : dataset.backgroundColor;
+        ctx.shadowColor = bg;
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = bg;
+        ctx.beginPath();
+        ctx.arc(element.x, element.y, element.outerRadius, element.startAngle, element.endAngle);
+        ctx.arc(
+          element.x,
+          element.y,
+          element.innerRadius,
+          element.endAngle,
+          element.startAngle,
+          true
+        );
+        ctx.closePath();
+        ctx.fill();
+      });
+      ctx.restore();
+    });
+  }
+};
 
 /**
  * Осигурява зареждане на Chart.js от UMD сборка, за да се избегне
@@ -41,4 +74,22 @@ export async function ensureChart() {
     }
   }
   return ChartLib;
+}
+
+export function registerSubtleGlow(Chart) {
+  if (subtleGlowRegistered) return true;
+  if (!Chart || typeof Chart.register !== 'function') {
+    console.warn('Chart.register липсва; пропускане на plug-in subtleGlow.');
+    return false;
+  }
+  try {
+    if (!Chart.registry?.getPlugin('subtleGlow')) {
+      Chart.register(subtleGlowPlugin);
+    }
+    subtleGlowRegistered = true;
+    return true;
+  } catch (e) {
+    console.warn('Регистрацията на plug-in subtleGlow се провали.', e);
+    return false;
+  }
 }
