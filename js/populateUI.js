@@ -112,6 +112,7 @@ export async function populateUI() {
     try { populateUserInfo(data.userName); } catch(e) { console.error("Error in populateUserInfo:", e); }
     try { populateDashboardMainIndexes(data.analytics?.current); } catch(e) { console.error("Error in populateDashboardMainIndexes:", e); }
     try { populateDashboardDetailedAnalytics(data.analytics); } catch(e) { console.error("Error in populateDashboardDetailedAnalytics:", e); }
+    // планът съдържа плосък обект caloriesMacros
     try { await populateDashboardMacros(data.planData?.caloriesMacros); } catch(e) { console.error("Error in populateDashboardMacros:", e); }
     try { populateDashboardStreak(data.analytics?.streak); } catch(e) { console.error("Error in populateDashboardStreak:", e); }
     try { populateDashboardDailyPlan(data.planData?.week1Menu, data.dailyLogs, data.recipeData); } catch(e) { console.error("Error in populateDashboardDailyPlan:", e); }
