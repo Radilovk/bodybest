@@ -32,24 +32,11 @@ afterEach(() => {
 test('изпраща reason при потвърждение', async () => {
   const regenBtn = document.getElementById('regen');
   const regenProgress = document.getElementById('regenProgress');
-  const modal = document.getElementById('priorityGuidanceModal');
-  const input = document.getElementById('priorityGuidanceInput');
-  const confirm = document.getElementById('priorityGuidanceConfirm');
-  const cancel = document.getElementById('priorityGuidanceCancel');
-  const closeBtn = document.getElementById('priorityGuidanceClose');
-  setupPlanRegeneration({
-    regenBtn,
-    regenProgress,
-    getUserId: () => 'u1',
-    modal,
-    input,
-    confirm,
-    cancel,
-    closeBtn
-  });
+  setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => 'u1' });
   regenBtn.click();
+  const input = document.getElementById('priorityGuidanceInput');
   input.value = 'причина';
-  confirm.click();
+  document.getElementById('priorityGuidanceConfirm').click();
   await Promise.resolve();
   expect(fetch).toHaveBeenCalledWith('/regen', expect.objectContaining({
     method: 'POST',
@@ -61,23 +48,9 @@ test('изпраща reason при потвърждение', async () => {
 test('деактивира и реактивира бутона', async () => {
   const regenBtn = document.getElementById('regen');
   const regenProgress = document.getElementById('regenProgress');
-  const modal = document.getElementById('priorityGuidanceModal');
-  const input = document.getElementById('priorityGuidanceInput');
-  const confirm = document.getElementById('priorityGuidanceConfirm');
-  const cancel = document.getElementById('priorityGuidanceCancel');
-  const closeBtn = document.getElementById('priorityGuidanceClose');
-  setupPlanRegeneration({
-    regenBtn,
-    regenProgress,
-    getUserId: () => 'u1',
-    modal,
-    input,
-    confirm,
-    cancel,
-    closeBtn
-  });
+  setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => 'u1' });
   regenBtn.click();
-  confirm.click();
+  document.getElementById('priorityGuidanceConfirm').click();
   await Promise.resolve();
   expect(regenBtn.disabled).toBe(true);
   jest.advanceTimersByTime(3000);
@@ -96,36 +69,13 @@ test('изпраща заявка само за последно избран us
   regenProgress2.id = 'regenProgress2';
   regenProgress2.classList.add('hidden');
   document.body.appendChild(regenProgress2);
-  const modal = document.getElementById('priorityGuidanceModal');
-  const input = document.getElementById('priorityGuidanceInput');
-  const confirm = document.getElementById('priorityGuidanceConfirm');
-  const cancel = document.getElementById('priorityGuidanceCancel');
-  const closeBtn = document.getElementById('priorityGuidanceClose');
 
-  setupPlanRegeneration({
-    regenBtn: regenBtn1,
-    regenProgress: regenProgress1,
-    getUserId: () => 'u1',
-    modal,
-    input,
-    confirm,
-    cancel,
-    closeBtn
-  });
-  setupPlanRegeneration({
-    regenBtn: regenBtn2,
-    regenProgress: regenProgress2,
-    getUserId: () => 'u2',
-    modal,
-    input,
-    confirm,
-    cancel,
-    closeBtn
-  });
+  setupPlanRegeneration({ regenBtn: regenBtn1, regenProgress: regenProgress1, getUserId: () => 'u1' });
+  setupPlanRegeneration({ regenBtn: regenBtn2, regenProgress: regenProgress2, getUserId: () => 'u2' });
 
   regenBtn1.click();
   regenBtn2.click();
-  confirm.click();
+  document.getElementById('priorityGuidanceConfirm').click();
   await Promise.resolve();
 
   expect(fetch).toHaveBeenCalledTimes(1);

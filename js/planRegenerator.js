@@ -3,7 +3,7 @@ import { apiEndpoints } from './config.js';
 let activeUserId;
 let activeRegenBtn;
 let activeRegenProgress;
-let detachLast;
+let confirmListenerAdded = false;
 
 function openModal(modal) {
   modal.classList.add('visible');
@@ -17,39 +17,29 @@ function closeModal(modal) {
   modal.setAttribute('aria-hidden', 'true');
 }
 
-export function setupPlanRegeneration({
-  regenBtn,
-  regenProgress,
-  getUserId,
-  modal,
-  input,
-  confirm,
-  cancel,
-  closeBtn
-}) {
+export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
+  const modal = document.getElementById('priorityGuidanceModal');
+  const input = document.getElementById('priorityGuidanceInput');
+  const confirm = document.getElementById('priorityGuidanceConfirm');
+  const cancel = document.getElementById('priorityGuidanceCancel');
+  const closeBtn = document.getElementById('priorityGuidanceClose');
   if (!regenBtn || !modal || !confirm || !input) return;
 
   const hide = () => closeModal(modal);
 
   regenBtn.addEventListener('click', () => {
-    detachLast?.();
     activeUserId = getUserId?.();
     activeRegenBtn = regenBtn;
     activeRegenProgress = regenProgress;
     input.value = '';
     openModal(modal);
+  });
+  cancel?.addEventListener('click', hide);
+  closeBtn?.addEventListener('click', hide);
 
-    let onConfirm;
-    let onCancel;
-
-    const cleanup = () => {
-      confirm.removeEventListener('click', onConfirm);
-      cancel?.removeEventListener('click', onCancel);
-      closeBtn?.removeEventListener('click', onCancel);
-      if (detachLast === cleanup) detachLast = null;
-    };
-
-    onConfirm = async () => {
+  if (!confirmListenerAdded) {
+    confirmListenerAdded = true;
+    confirm.addEventListener('click', async () => {
       if (!activeUserId || !activeRegenBtn) return;
       hide();
       const reason = input.value.trim();
@@ -73,7 +63,6 @@ export function setupPlanRegeneration({
         }
         activeRegenBtn.disabled = false;
         alert('Грешка при стартиране на генерирането.');
-        cleanup();
         return;
       }
 
@@ -107,18 +96,6 @@ export function setupPlanRegeneration({
           console.error('planStatus polling error:', err);
         }
       }, 3000);
-
-      cleanup();
-    };
-
-    onCancel = () => {
-      hide();
-      cleanup();
-    };
-
-    detachLast = cleanup;
-    confirm.addEventListener('click', onConfirm);
-    cancel?.addEventListener('click', onCancel);
-    closeBtn?.addEventListener('click', onCancel);
-  });
+    });
+  }
 }
