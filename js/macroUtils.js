@@ -76,13 +76,23 @@ export async function loadProductMacros() {
  * @param {Object} macros
  * @returns {{calories:number, protein:number, carbs:number, fat:number, fiber:number}}
  */
+function mapGramFields(obj = {}) {
+  const mapped = { ...obj };
+  if (mapped.protein_grams != null) mapped.protein = mapped.protein_grams;
+  if (mapped.carbs_grams != null) mapped.carbs = mapped.carbs_grams;
+  if (mapped.fat_grams != null) mapped.fat = mapped.fat_grams;
+  if (mapped.fiber_grams != null) mapped.fiber = mapped.fiber_grams;
+  return mapped;
+}
+
 export function normalizeMacros(macros = {}) {
+  const m = mapGramFields(macros);
   return {
-    calories: Number(macros.calories) || 0,
-    protein: Number(macros.protein) || 0,
-    carbs: Number(macros.carbs) || 0,
-    fat: Number(macros.fat) || 0,
-    fiber: Number(macros.fiber) || 0
+    calories: Number(m.calories) || 0,
+    protein: Number(m.protein) || 0,
+    carbs: Number(m.carbs) || 0,
+    fat: Number(m.fat) || 0,
+    fiber: Number(m.fiber) || 0
   };
 }
 
@@ -158,7 +168,8 @@ function validateMacroCalories(macros = {}, threshold = 0.05) {
 }
 
 export function addMealMacros(meal, acc) {
-  const m = normalizeMacros(resolveMacros(meal, meal?.grams));
+  const mapped = mapGramFields(meal);
+  const m = normalizeMacros(resolveMacros(mapped, mapped?.grams));
   validateMacroCalories(m);
   acc.calories = (acc.calories || 0) + m.calories;
   acc.protein = (acc.protein || 0) + m.protein;
@@ -169,7 +180,8 @@ export function addMealMacros(meal, acc) {
 }
 
 export function removeMealMacros(meal, acc) {
-  const m = normalizeMacros(resolveMacros(meal, meal?.grams));
+  const mapped = mapGramFields(meal);
+  const m = normalizeMacros(resolveMacros(mapped, mapped?.grams));
   validateMacroCalories(m);
   acc.calories = Math.max(0, (acc.calories || 0) - m.calories);
   acc.protein = Math.max(0, (acc.protein || 0) - m.protein);
@@ -190,12 +202,13 @@ export function calculatePlanMacros(dayMenu = []) {
   dayMenu.forEach((meal) => {
     const macros = meal && typeof meal.macros === 'object' ? meal.macros : null;
     if (macros) {
+      const mapped = mapGramFields(macros);
       const normalized = {
-        calories: Number(macros.calories) || 0,
-        protein: Number(macros.protein) || 0,
-        carbs: Number(macros.carbs) || 0,
-        fat: Number(macros.fat) || 0,
-        fiber: Number(macros.fiber) || 0
+        calories: Number(mapped.calories) || 0,
+        protein: Number(mapped.protein) || 0,
+        carbs: Number(mapped.carbs) || 0,
+        fat: Number(mapped.fat) || 0,
+        fiber: Number(mapped.fiber) || 0
       };
       validateMacroCalories(normalized);
       acc.calories += normalized.calories;
@@ -223,12 +236,12 @@ export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, ext
   Object.entries(planMenu).forEach(([day, meals]) => {
     (meals || []).forEach((meal, idx) => {
       const key = `${day}_${idx}`;
-      if (completionStatus[key]) addMealMacros(meal?.macros || meal, acc);
+      if (completionStatus[key]) addMealMacros(mapGramFields(meal?.macros || meal), acc);
     });
   });
 
   if (Array.isArray(extraMeals)) {
-    extraMeals.forEach((m) => addMealMacros(m, acc));
+    extraMeals.forEach((m) => addMealMacros(mapGramFields(m), acc));
   }
 
   return acc;
