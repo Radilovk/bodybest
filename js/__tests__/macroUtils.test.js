@@ -20,7 +20,7 @@ test('calculateCurrentMacros sums macros from completed meals and extras', () =>
   };
 
   const extraMeals = [
-    { calories: 100, protein: 5, carbs: 10, fat: 2, fiber: 0 }
+    { calories: 100, protein_grams: 5, carbs_grams: 10, fat_grams: 2, fiber_grams: 0 }
   ];
 
   const result = calculateCurrentMacros(planMenu, completionStatus, extraMeals);
@@ -34,7 +34,7 @@ test('calculateCurrentMacros използва meal.macros и overrides', () => {
   const planMenu = {
     monday: [
       { meal_name: 'Override Meal' },
-      { macros: { calories: 100, protein: 10, carbs: 20, fat: 5, fiber: 3 } }
+      { macros: { calories: 100, protein_grams: 10, carbs_grams: 20, fat_grams: 5, fiber_grams: 3 } }
     ]
   };
   const completionStatus = { monday_0: true, monday_1: true };
@@ -54,8 +54,8 @@ test('calculatePlanMacros sums macros for day menu', () => {
 
 test('calculatePlanMacros използва наличното поле macros', () => {
   const dayMenu = [
-    { macros: { calories: 100, protein: 10, carbs: 20, fat: 5, fiber: 3 } },
-    { macros: { calories: 200, protein: 20, carbs: 30, fat: 10, fiber: 5 } }
+    { macros: { calories: 100, protein_grams: 10, carbs_grams: 20, fat_grams: 5, fiber_grams: 3 } },
+    { macros: { calories: 200, protein_grams: 20, carbs_grams: 30, fat_grams: 10, fiber_grams: 5 } }
   ];
   const result = calculatePlanMacros(dayMenu);
   expect(result).toEqual({ calories: 300, protein: 30, carbs: 50, fat: 15, fiber: 8 });
@@ -63,7 +63,7 @@ test('calculatePlanMacros използва наличното поле macros', 
 
 test('addMealMacros и removeMealMacros актуализират и clamp-ват акумулатора', () => {
   const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
-  const meal = { calories: 290, protein: 20, carbs: 30, fat: 10, fiber: 5 };
+  const meal = { calories: 290, protein_grams: 20, carbs_grams: 30, fat_grams: 10, fiber_grams: 5 };
   addMealMacros(meal, acc);
   expect(acc).toEqual({ calories: 290, protein: 20, carbs: 30, fat: 10, fiber: 5 });
   removeMealMacros(meal, acc);
@@ -75,7 +75,7 @@ test('addMealMacros и removeMealMacros актуализират и clamp-ват
 
 test('removeMealMacros нормализира липсващи полета', () => {
   const acc = { calories: 100, protein: 10, carbs: 10, fat: 5, fiber: 2 };
-  removeMealMacros({ calories: 150, protein: 20 }, acc);
+  removeMealMacros({ calories: 150, protein_grams: 20 }, acc);
   expect(acc).toEqual({ calories: 0, protein: 0, carbs: 10, fat: 5, fiber: 2 });
 });
 
@@ -125,7 +125,7 @@ test('formatPercent форматира съотношения', () => {
   expect(formatPercent('na')).toBe('--%');
 });
 
-test('normalizeMacros попълва липсващи полета с 0', () => {
-  const result = normalizeMacros({ calories: 50, protein: 10 });
+test('normalizeMacros приема _grams полета', () => {
+  const result = normalizeMacros({ calories: 50, protein_grams: 10 });
   expect(result).toEqual({ calories: 50, protein: 10, carbs: 0, fat: 0, fiber: 0 });
 });
