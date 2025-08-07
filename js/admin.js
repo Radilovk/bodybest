@@ -8,6 +8,8 @@ import { loadMaintenanceFlag, setMaintenanceFlag } from './maintenanceMode.js';
 import { renderTemplate } from '../utils/templateRenderer.js';
 import { ensureChart } from './chartLoader.js';
 import { setupPlanRegeneration } from './planRegenerator.js';
+import { openPlanModificationChat } from './planModChat.js';
+import { initializeSelectors } from './uiElements.js';
 
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
@@ -1029,6 +1031,16 @@ async function showClient(userId) {
         adminProfileContainer.innerHTML = '';
         history.replaceState(null, '', `?userId=${encodeURIComponent(userId)}`);
         await loadTemplateInto('editclient.html', 'adminProfileContainer');
+        await loadTemplateInto('partials/planModChatModal.html', 'planModChatModalContainer');
+        try {
+            initializeSelectors();
+        } catch (e) {
+            console.warn('initializeSelectors warning', e);
+        }
+        const planModBtn = document.getElementById('planModBtn');
+        if (planModBtn) {
+            planModBtn.addEventListener('click', () => openPlanModificationChat(userId));
+        }
         const mod = await import('./editClient.js');
         try {
             await mod.initEditClient(userId);
