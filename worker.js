@@ -617,6 +617,12 @@ export default {
                 }
                 if (['pending', 'processing', 'error'].includes(status)) {
                     const userId = key.name.replace('plan_status_', '');
+                    const initialAnswers = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
+                    if (!initialAnswers) {
+                        await env.USER_METADATA_KV.put(key.name, 'pending_inputs', { metadata: { status: 'pending_inputs' } });
+                        console.log(`[CRON-PlanGen] Missing initial answers for ${userId}`);
+                        continue;
+                    }
                     await env.USER_METADATA_KV.put(key.name, 'processing', { metadata: { status: 'processing' } });
                     ctx.waitUntil(processSingleUserPlan(userId, env));
                     processedUsersForPlan++;
