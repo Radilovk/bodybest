@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 import { jest } from '@jest/globals';
 
-let populateUI;
+let populateUI, populateModule;
 
 beforeEach(async () => {
   jest.resetModules();
@@ -89,11 +89,13 @@ beforeEach(async () => {
     loadCurrentIntake: jest.fn(),
     currentUserId: 'u1'
   }));
-  ({ populateUI } = await import('../populateUI.js'));
+  populateModule = await import('../populateUI.js');
+  ({ populateUI } = populateModule);
 });
 
 afterEach(() => {
   document.body.innerHTML = '';
+  sessionStorage.clear();
 });
 
 test('populates dashboard sections', async () => {
@@ -434,4 +436,12 @@ describe('progress bar width handling', () => {
     expect(document.getElementById('engagementCard').classList.contains('hidden')).toBe(hidden);
     expect(document.getElementById('healthCard').classList.contains('hidden')).toBe(hidden);
   });
+});
+
+test('ресет на макросите при смяна на деня', async () => {
+  sessionStorage.setItem('lastDashboardDate', '2000-01-01');
+  const { loadCurrentIntake } = await import('../app.js');
+  await populateUI();
+  expect(loadCurrentIntake).toHaveBeenCalled();
+  expect(sessionStorage.getItem('lastDashboardDate')).toBe(new Date().toISOString().split('T')[0]);
 });
