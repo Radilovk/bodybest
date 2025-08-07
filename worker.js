@@ -2697,7 +2697,7 @@ async function handleSetMaintenanceMode(request, env) {
 // ------------- END BLOCK: PlanGenerationHeaderComment -------------
 
 // ------------- START FUNCTION: processSingleUserPlan -------------
-async function processSingleUserPlan(userId, env, priorityGuidance = '', regenReason = '') {
+async function processSingleUserPlan(userId, env) {
     console.log(`PROCESS_USER_PLAN (${userId}): Starting plan generation.`);
     const logKey = `${userId}_plan_log`;
     let logMessages = [];
@@ -2847,12 +2847,7 @@ async function processSingleUserPlan(userId, env, priorityGuidance = '', regenRe
         if (pendingPlanModText) {
             finalPrompt += `\n\n[PLAN_MODIFICATION]\n${pendingPlanModText}`;
         }
-        if (priorityGuidance) {
-            finalPrompt += `\n\n[PRIORITY_GUIDANCE]\n${priorityGuidance}`;
-        }
-        if (regenReason) {
-            finalPrompt += `\n\n[REGENERATION_REASON]\n${regenReason}`;
-        }
+        
         let generatedPlanObject = null; let rawAiResponse = "";
         try {
             await addLog('Извикване на AI модела');
