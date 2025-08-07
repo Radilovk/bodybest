@@ -2,7 +2,7 @@ import { jest } from '@jest/globals';
 import { handleRegeneratePlanRequest } from '../../worker.js';
 
 describe('handleRegeneratePlanRequest', () => {
-  test('записва priorityGuidance и reason и стартира генерирането', async () => {
+  test('стартира генерирането само с userId', async () => {
     const env = {
       USER_METADATA_KV: {
         put: jest.fn(),
@@ -13,19 +13,20 @@ describe('handleRegeneratePlanRequest', () => {
     };
     const ctx = { waitUntil: jest.fn() };
     const mockProcessor = jest.fn().mockResolvedValue();
-    const request = { json: async () => ({ userId: 'u1', priorityGuidance: 'повече протеин', reason: 'нова цел' }) };
+    const request = { json: async () => ({ userId: 'u1' }) };
     const res = await handleRegeneratePlanRequest(request, env, ctx, mockProcessor);
-    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('pending_plan_mod_u1', 'повече протеин');
-    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('regen_reason_u1', 'нова цел');
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('plan_status_u1', 'processing', { metadata: { status: 'processing' } });
+    expect(env.USER_METADATA_KV.put).not.toHaveBeenCalledWith('pending_plan_mod_u1', expect.anything());
+    expect(env.USER_METADATA_KV.put).not.toHaveBeenCalledWith('regen_reason_u1', expect.anything());
     expect(ctx.waitUntil).toHaveBeenCalled();
-    expect(mockProcessor).toHaveBeenCalledWith('u1', env, 'повече протеин', 'нова цел');
+    expect(mockProcessor).toHaveBeenCalledWith('u1', env);
+    expect(mockProcessor.mock.calls[0].length).toBe(2);
     expect(res.success).toBe(true);
   });
 
-  test('връща грешка при липсващ reason', async () => {
+  test('връща грешка при липсващ userId', async () => {
     const env = { USER_METADATA_KV: { put: jest.fn() } };
-    const request = { json: async () => ({ userId: 'u1', reason: '' }) };
+    const request = { json: async () => ({}) };
     const res = await handleRegeneratePlanRequest(request, env, null, jest.fn());
     expect(res.success).toBe(false);
     expect(res.statusHint).toBe(400);

@@ -1559,37 +1559,27 @@ async function handleCheckPlanPrerequisitesRequest(request, env) {
 
 // ------------- START FUNCTION: handleRegeneratePlanRequest -------------
 async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = processSingleUserPlan) {
+    let body;
     try {
-        const { userId, priorityGuidance, reason } = await request.json();
+        body = await request.json();
+        const { userId } = body;
         if (!userId) {
             return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
         }
-        if (typeof reason !== 'string' || reason.trim().length === 0) {
-            return { success: false, message: 'Липсва причина за регенериране.', statusHint: 400 };
-        }
-        const trimmedReason = reason.trim();
-        const trimmedPriority = typeof priorityGuidance === 'string' ? priorityGuidance.trim() : '';
         const precheck = await validatePlanPrerequisites(env, userId);
         if (!precheck.ok) {
-            return { success: false, message: precheck.message, statusHint: 400, precheck };
+            return { success: false, message: precheck.message, statusHint: 400 };
         }
-        if (trimmedPriority) {
-            // Запис на приоритетни указания за потенциална модификация на плана
-            await env.USER_METADATA_KV.put(`pending_plan_mod_${userId}`, trimmedPriority);
-        }
-        // Съхраняване на причината за регенериране отделно
-        await env.USER_METADATA_KV.put(`regen_reason_${userId}`, trimmedReason);
         await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'processing', { metadata: { status: 'processing' } });
         if (ctx) {
-            ctx.waitUntil(planProcessor(userId, env, trimmedPriority, trimmedReason));
+            ctx.waitUntil(planProcessor(userId, env));
         } else {
-            await planProcessor(userId, env, trimmedPriority, trimmedReason);
+            await planProcessor(userId, env);
         }
         return { success: true, message: 'Генерирането на нов план стартира.' };
     } catch (error) {
         console.error('Error in handleRegeneratePlanRequest:', error.message, error.stack);
-        const body = await request.json().catch(() => ({}));
-        return { success: false, message: 'Грешка при генериране на плана.', statusHint: 500, userId: body.userId || 'unknown_user' };
+        return { success: false, message: 'Грешка при генериране на плана.', statusHint: 500, userId: body?.userId || 'unknown_user' };
     }
 }
 // ------------- END FUNCTION: handleRegeneratePlanRequest -------------
