@@ -534,3 +534,70 @@ describe('openPlanModificationChat context', () => {
     expect(payload.context).toBe('admin');
   });
 });
+
+describe('openPlanModificationChat title', () => {
+  let app;
+  let selectors;
+  beforeEach(async () => {
+    jest.resetModules();
+    const planModChatTitle = document.createElement('h4');
+    const planModChatClient = document.createElement('span');
+    planModChatTitle.appendChild(planModChatClient);
+    selectors = {
+      chatWidget: { classList: { contains: () => true } },
+      chatInput: null,
+      planModChatMessages: document.createElement('div'),
+      planModChatInput: { value: '', disabled: false, focus: jest.fn() },
+      planModChatSend: { disabled: false },
+      planModChatTitle,
+      planModChatClient
+    };
+    jest.unstable_mockModule('../uiElements.js', () => ({
+      selectors,
+      initializeSelectors: jest.fn(),
+      trackerInfoTexts: {},
+      detailedMetricInfoTexts: {},
+      loadInfoTexts: jest.fn(() => Promise.resolve())
+    }));
+    jest.unstable_mockModule('../uiHandlers.js', () => ({
+      toggleMenu: jest.fn(),
+      closeMenu: jest.fn(),
+      handleOutsideMenuClick: jest.fn(),
+      handleMenuKeydown: jest.fn(),
+      initializeTheme: jest.fn(),
+      applyTheme: jest.fn(),
+      toggleTheme: jest.fn(),
+      updateThemeButtonText: jest.fn(),
+      activateTab: jest.fn(),
+      handleTabKeydown: jest.fn(),
+      openModal: jest.fn(),
+      closeModal: jest.fn(),
+      openInstructionsModal: jest.fn(),
+      openInfoModalWithDetails: jest.fn(),
+      openMainIndexInfo: jest.fn(),
+      toggleDailyNote: jest.fn(),
+      showTrackerTooltip: jest.fn(),
+      hideTrackerTooltip: jest.fn(),
+      handleTrackerTooltipShow: jest.fn(),
+      handleTrackerTooltipHide: jest.fn(),
+      loadAndApplyColors: jest.fn(),
+      showLoading: jest.fn(),
+      showToast: jest.fn(),
+      updateTabsOverflowIndicator: jest.fn()
+    }));
+    jest.unstable_mockModule('../config.js', () => ({
+      isLocalDevelopment: false,
+      workerBaseUrl: '',
+      apiEndpoints: { getPlanModificationPrompt: '/prompt', chat: '/chat' },
+      generateId: jest.fn(),
+      standaloneMacroUrl: 'macroAnalyticsCardStandalone.html'
+    }));
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ prompt: 'p' }) });
+    app = await import('../app.js');
+  });
+
+  test('populates title with client name', async () => {
+    await app.openPlanModificationChat('u1', null, null, 'Иван');
+    expect(selectors.planModChatClient.textContent).toBe('- Иван');
+  });
+});

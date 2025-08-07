@@ -128,7 +128,12 @@ export function handlePlanModChatInputKeypress(e) {
   }
 }
 
-export async function openPlanModificationChat(userIdOverride = null, initialMessage = null, context = null) {
+export async function openPlanModificationChat(
+  userIdOverride = null,
+  initialMessage = null,
+  context = null,
+  clientName = null
+) {
   const uid = userIdOverride || currentUserId;
   if (!uid) {
     showToast('Моля, влезте първо.', true);
@@ -136,6 +141,9 @@ export async function openPlanModificationChat(userIdOverride = null, initialMes
   }
   clearPlanModChat();
   planModChatContext = context;
+  if (selectors.planModChatClient) {
+    selectors.planModChatClient.textContent = clientName ? `- ${clientName}` : '';
+  }
   openModal('planModChatModal');
   if (selectors.planModChatInput) selectors.planModChatInput.disabled = true;
   if (selectors.planModChatSend) selectors.planModChatSend.disabled = true;
