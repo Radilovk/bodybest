@@ -579,6 +579,7 @@ export async function initEditClient(userId) {
   }
 
   const regenBtn = document.getElementById('regeneratePlan');
+  const generateBtn = document.getElementById('generatePlan');
   const regenProgress = document.getElementById('regenProgress');
 
   async function precheckPlan() {
@@ -610,6 +611,25 @@ export async function initEditClient(userId) {
     regenProgress,
     getUserId: () => userId
   });
+
+  if (generateBtn) {
+    try {
+      const resp = await fetch(`${apiEndpoints.planStatus}?userId=${userId}`);
+      const data = await resp.json().catch(() => ({}));
+      if (data.planStatus === 'ready') {
+        generateBtn.disabled = true;
+      } else {
+        setupPlanRegeneration({
+          regenBtn: generateBtn,
+          regenProgress,
+          getUserId: () => userId
+        });
+      }
+    } catch (err) {
+      console.error('planStatus check error:', err);
+      generateBtn.disabled = true;
+    }
+  }
 
   const aiSummaryBtn = document.getElementById('aiSummary');
   if (aiSummaryBtn) {
