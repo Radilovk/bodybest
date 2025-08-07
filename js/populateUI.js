@@ -5,7 +5,7 @@ import { generateId, apiEndpoints, standaloneMacroUrl } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake, currentUserId, todaysPlanMacros } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
-import { getNutrientOverride, scaleMacros } from './macroUtils.js';
+import { getNutrientOverride, scaleMacros, calculatePlanMacros } from './macroUtils.js';
 import { logMacroPayload } from '../utils/debug.js';
 import { ensureMacroAnalyticsElement } from './eventListeners.js';
 
@@ -446,8 +446,6 @@ export function validateMacroPayload({ plan, current }) {
 }
 
 export async function populateDashboardMacros(macros) {
-    const flat = macros?.plan ?? macros;
-    renderMacroPreviewGrid(flat);
     let macroContainer = selectors.macroAnalyticsCardContainer;
     if (!macroContainer || !document.contains(macroContainer)) {
         macroContainer = document.createElement('div');
@@ -456,7 +454,9 @@ export async function populateDashboardMacros(macros) {
         selectors.analyticsCardsContainer?.appendChild(macroContainer);
         selectors.macroAnalyticsCardContainer = macroContainer;
     }
-    if (!flat) {
+
+    if (!macros) {
+        renderMacroPreviewGrid(null);
         macroContainer.innerHTML = '<div class="spinner-border" role="status"></div>';
         try {
             const res = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}&recalcMacros=1`);
@@ -474,13 +474,15 @@ export async function populateDashboardMacros(macros) {
         }
         return;
     }
+
+    renderMacroPreviewGrid(todaysPlanMacros);
     macroContainer.innerHTML = '';
     const plan = {
-        calories: flat?.calories ?? todaysPlanMacros.calories,
-        protein_grams: flat?.protein_grams ?? todaysPlanMacros.protein,
-        carbs_grams: flat?.carbs_grams ?? todaysPlanMacros.carbs,
-        fat_grams: flat?.fat_grams ?? todaysPlanMacros.fat,
-        fiber_grams: flat?.fiber_grams ?? todaysPlanMacros.fiber
+        calories: todaysPlanMacros.calories,
+        protein_grams: todaysPlanMacros.protein,
+        carbs_grams: todaysPlanMacros.carbs,
+        fat_grams: todaysPlanMacros.fat,
+        fiber_grams: todaysPlanMacros.fiber
     };
     const current = {
         calories: currentIntakeMacros.calories,
@@ -534,17 +536,20 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
 
     if(selectors.dailyPlanTitle) selectors.dailyPlanTitle.textContent = `📅 Меню (${capitalizeFirstLetter(todayTitle)})`;
 
+    const dailyPlanData = safeGet(week1Menu, currentDayKey, []);
+    Object.assign(todaysPlanMacros, calculatePlanMacros(dailyPlanData));
+
     // Reset макросите ако денят се е сменил
     const lastDate = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('lastDashboardDate') : null;
     if (lastDate !== todayDateStr) {
         loadCurrentIntake();
-        populateDashboardMacros(todaysPlanMacros);
         if (typeof sessionStorage !== 'undefined') {
             sessionStorage.setItem('lastDashboardDate', todayDateStr);
         }
     }
 
-    const dailyPlanData = safeGet(week1Menu, currentDayKey, []);
+    populateDashboardMacros(todaysPlanMacros);
+
     if (!dailyPlanData || dailyPlanData.length === 0) {
         listElement.innerHTML = '<li class="placeholder">Няма налично меню за днес.</li>'; return;
     }

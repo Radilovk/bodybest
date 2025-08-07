@@ -55,8 +55,8 @@ test('recalculates macros automatically and shows spinner while loading', async 
   const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const currentDayKey = dayNames[new Date().getDay()];
   const dayMenu = [
-    { id: 'z-01', meal_name: 'Протеинов шейк' },
-    { id: 'o-01', meal_name: 'Печено пилешко с ориз/картофи и салата' }
+    { meal_name: 'Омлет', macros: { calories: 300, protein: 20, carbs: 10, fat: 15, fiber: 2 } },
+    { meal_name: 'Салата', macros: { calories: 200, protein: 5, carbs: 20, fat: 10, fiber: 5 } }
   ];
   appState.fullDashboardData.planData = { week1Menu: { [currentDayKey]: dayMenu } };
   Object.assign(appState.todaysPlanMacros, macroUtils.calculatePlanMacros(dayMenu));
@@ -77,7 +77,7 @@ test('recalculates macros automatically and shows spinner while loading', async 
   await promise;
 
   expect(selectors.macroMetricsPreview.classList.contains('hidden')).toBe(false);
-  expect(selectors.macroMetricsPreview.textContent).toContain('1800');
+  expect(selectors.macroMetricsPreview.textContent).toContain('500');
   expect(container.innerHTML).not.toContain('spinner-border');
   global.fetch = originalFetch;
   const card = container.querySelector('macro-analytics-card');
@@ -94,7 +94,7 @@ test('recalculates macros automatically and shows spinner while loading', async 
   };
   const [payload] = card.setData.mock.calls[0];
   expect(payload).toMatchObject({
-    plan: expect.objectContaining({ calories: 850, protein_grams: 72, carbs_grams: 70, fat_grams: 28 }),
+    plan: expect.objectContaining({ calories: 500, protein_grams: 25, carbs_grams: 30, fat_grams: 25, fiber_grams: 7 }),
     current: expectedCurrent
   });
 });
@@ -130,30 +130,32 @@ test('calculatePlanMacros се извиква само веднъж при ке�
   expect(calcMock).toHaveBeenCalledTimes(1);
 });
 
-test('използва грамовете от подадения план, когато са налични', async () => {
+test('игнорира подадения план и използва сумата от дневното меню', async () => {
   setupDom();
   const macros = {
     plan: {
       calories: 1900,
-      protein_percent: 30,
-      carbs_percent: 40,
-      fat_percent: 30,
       protein_grams: 140,
       carbs_grams: 190,
       fat_grams: 63,
       fiber_grams: 28
     }
   };
-  Object.assign(appState.todaysPlanMacros, { calories: 500, protein: 10, carbs: 20, fat: 5, fiber: 3 });
+  const dayMenu = [
+    { meal_name: 'Омлет', macros: { calories: 300, protein: 20, carbs: 10, fat: 15, fiber: 2 } },
+    { meal_name: 'Салата', macros: { calories: 200, protein: 5, carbs: 20, fat: 10, fiber: 5 } }
+  ];
+  const summed = macroUtils.calculatePlanMacros(dayMenu);
+  Object.assign(appState.todaysPlanMacros, summed);
   await populateDashboardMacros(macros);
   const card = document.querySelector('macro-analytics-card');
   const [payload] = card.setData.mock.calls[0];
   expect(payload.plan).toMatchObject({
-    calories: 1900,
-    protein_grams: 140,
-    carbs_grams: 190,
-    fat_grams: 63,
-    fiber_grams: 28
+    calories: summed.calories,
+    protein_grams: summed.protein,
+    carbs_grams: summed.carbs,
+    fat_grams: summed.fat,
+    fiber_grams: summed.fiber
   });
-  expect(selectors.macroMetricsPreview.textContent).toContain('1900');
+  expect(selectors.macroMetricsPreview.textContent).toContain(String(summed.calories));
 });
