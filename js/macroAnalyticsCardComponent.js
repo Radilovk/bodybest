@@ -71,6 +71,10 @@ template.innerHTML = `
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      transition: transform 0.3s ease;
+    }
+    .chart-center-text.active {
+      transform: translate(-50%, -50%) scale(1.1);
     }
     .chart-center-text .calories-value {
       font-size: 1.4rem;
@@ -377,6 +381,7 @@ export class MacroAnalyticsCard extends HTMLElement {
       div.classList.remove('active');
       div.setAttribute('aria-pressed', 'false');
     });
+    this.centerText.classList.remove('active');
     if (this.chart) this.chart.setActiveElements([]);
     if (this.activeMacroIndex === index) {
       this.activeMacroIndex = null;
@@ -392,6 +397,22 @@ export class MacroAnalyticsCard extends HTMLElement {
       this.chart.setActiveElements([{ datasetIndex: 1, index }]);
       this.chart.update();
     }
+  }
+
+  highlightCalories(el) {
+    this.grid.querySelectorAll('.macro-metric').forEach((div) => {
+      if (div !== el) div.classList.remove('active');
+      div.setAttribute('aria-pressed', 'false');
+    });
+    this.activeMacroIndex = null;
+    if (this.chart) {
+      this.chart.setActiveElements([]);
+      this.chart.update();
+    }
+    const isActive = el.classList.toggle('active');
+    el.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    if (isActive) this.centerText.classList.add('active');
+    else this.centerText.classList.remove('active');
   }
 
   renderMetrics() {
@@ -426,12 +447,21 @@ export class MacroAnalyticsCard extends HTMLElement {
       plan.calories &&
       consumedCaloriesRaw < plan.calories
     ) calDiv.classList.add('under');
-    calDiv.setAttribute('role', 'listitem');
+    calDiv.setAttribute('role', 'button');
+    calDiv.setAttribute('tabindex', '0');
+    calDiv.setAttribute('aria-pressed', 'false');
     calDiv.setAttribute('aria-label', `${this.labels.caloriesLabel}: ${consumedCalories} ${this.labels.totalCaloriesLabel.replace('{calories}', plan.calories)}`);
     calDiv.innerHTML = `
       <span class="macro-icon"><i class="bi bi-fire"></i></span>
       <div class="macro-label">${this.labels.caloriesLabel}</div>
       <div class="macro-value">${consumedCalories} / ${plan.calories} kcal</div>`;
+    calDiv.addEventListener('click', () => this.highlightCalories(calDiv));
+    calDiv.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.highlightCalories(calDiv);
+      }
+    });
     this.grid.appendChild(calDiv);
     const overMacros = [];
     if (caloriesExceeded) overMacros.push(this.labels.caloriesLabel);
