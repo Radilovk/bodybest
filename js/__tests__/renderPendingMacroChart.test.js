@@ -36,11 +36,13 @@ describe('renderPendingMacroChart', () => {
       todaysExtraMeals: [],
       todaysPlanMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
       loadCurrentIntake: jest.fn(),
-      currentUserId: 'u1'
+      currentUserId: 'u1',
+      recalculateCurrentIntakeMacros: jest.fn(),
+      resetAppState: jest.fn()
     }));
     jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn() }));
     jest.unstable_mockModule('../chartLoader.js', () => ({ ensureChart: jest.fn() }));
-    jest.unstable_mockModule('../macroUtils.js', () => ({ calculatePlanMacros: jest.fn().mockReturnValue({ calories: 850, protein: 72, carbs: 70, fat: 28 }), getNutrientOverride: jest.fn(), addMealMacros: jest.fn(), scaleMacros: jest.fn() }));
+    jest.unstable_mockModule('../macroUtils.js', () => ({ calculatePlanMacros: jest.fn().mockReturnValue({ calories: 850, protein: 72, carbs: 70, fat: 28 }), getNutrientOverride: jest.fn(), addMealMacros: jest.fn(), scaleMacros: jest.fn(), calculateMacroPercents: jest.fn(() => ({ protein_percent: 0, carbs_percent: 0, fat_percent: 0 })) }));
     const eventListenersMock = {
       ensureMacroAnalyticsElement: jest.fn(() => {
         let el = document.querySelector('macro-analytics-card');

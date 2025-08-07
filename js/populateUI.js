@@ -5,7 +5,7 @@ import { generateId, apiEndpoints, standaloneMacroUrl } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake, recalculateCurrentIntakeMacros, currentUserId, todaysPlanMacros } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
-import { getNutrientOverride, scaleMacros, calculatePlanMacros } from './macroUtils.js';
+import { getNutrientOverride, scaleMacros, calculatePlanMacros, calculateMacroPercents } from './macroUtils.js';
 import { logMacroPayload } from '../utils/debug.js';
 import { ensureMacroAnalyticsElement } from './eventListeners.js';
 
@@ -415,11 +415,12 @@ function renderMacroPreviewGrid(macros) {
         return;
     }
     preview.classList.remove('hidden');
+    const percents = calculateMacroPercents(macros);
     const list = [
         { l: 'Калории', v: macros.calories, s: 'kcal', cls: 'calories' },
-        { l: 'Белтъчини', v: macros.protein_percent, s: '%' },
-        { l: 'Въглехидрати', v: macros.carbs_percent, s: '%' },
-        { l: 'Мазнини', v: macros.fat_percent, s: '%' }
+        { l: 'Белтъчини', v: macros.protein_percent ?? percents.protein_percent, s: '%' },
+        { l: 'Въглехидрати', v: macros.carbs_percent ?? percents.carbs_percent, s: '%' },
+        { l: 'Мазнини', v: macros.fat_percent ?? percents.fat_percent, s: '%' }
     ];
     const iconMap = {
         'Калории': 'bi-fire',
@@ -511,7 +512,7 @@ export async function populateDashboardMacros(macros) {
         return;
     }
 
-    renderMacroPreviewGrid(todaysPlanMacros);
+    renderMacroPreviewGrid(currentIntakeMacros);
     macroContainer.innerHTML = '';
     const plan = {
         calories: todaysPlanMacros.calories,

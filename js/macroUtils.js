@@ -125,6 +125,24 @@ export function formatPercent(ratio, fractionDigits = 0) {
   return `${(val * 100).toFixed(fractionDigits)}%`;
 }
 
+/**
+ * Изчислява процентното съотношение на макросите спрямо общите калории.
+ * @param {{calories:number, protein:number, carbs:number, fat:number}} macros
+ * @returns {{protein_percent:number, carbs_percent:number, fat_percent:number}}
+ */
+export function calculateMacroPercents(macros = {}) {
+  const { calories = 0, protein = 0, carbs = 0, fat = 0 } = macros;
+  if (calories <= 0) {
+    return { protein_percent: 0, carbs_percent: 0, fat_percent: 0 };
+  }
+  const toPercent = (grams, kcalPerGram) => Math.round((grams * kcalPerGram / calories) * 100);
+  return {
+    protein_percent: toPercent(protein, 4),
+    carbs_percent: toPercent(carbs, 4),
+    fat_percent: toPercent(fat, 9)
+  };
+}
+
 function resolveMacros(meal, grams) {
   if (!meal) return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
   let macros;
