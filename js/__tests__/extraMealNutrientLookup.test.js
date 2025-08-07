@@ -21,7 +21,7 @@ beforeEach(async () => {
     closeModal: jest.fn()
   }));
   jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
-  jest.unstable_mockModule('../populateUI.js', () => ({ addExtraMealWithOverride: jest.fn(), populateDashboardMacros: jest.fn(), renderPendingMacroChart: jest.fn() }));
+  jest.unstable_mockModule('../populateUI.js', () => ({ addExtraMealWithOverride: jest.fn(), populateDashboardMacros: jest.fn(), renderPendingMacroChart: jest.fn(), appendExtraMealCard: jest.fn() }));
   jest.unstable_mockModule('../app.js', () => ({
     currentUserId: 'u1',
     todaysExtraMeals: [],
@@ -55,7 +55,7 @@ test('извиква nutrient lookup при непозната храна', asyn
     </form>
   </div>`;
   const container = document.getElementById('c');
-  initializeExtraMealFormLogic(container);
+  await initializeExtraMealFormLogic(container);
   const input = container.querySelector('#foodDescription');
   input.value = 'непозната храна';
   input.dispatchEvent(new Event('input', { bubbles: true }));
