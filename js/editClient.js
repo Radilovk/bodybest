@@ -580,6 +580,31 @@ export async function initEditClient(userId) {
 
   const regenBtn = document.getElementById('regeneratePlan');
   const regenProgress = document.getElementById('regenProgress');
+
+  async function precheckPlan() {
+    if (!regenBtn) return;
+    try {
+      const resp = await fetch(`${apiEndpoints.checkPlanPrerequisites}?userId=${userId}`);
+      const data = await resp.json().catch(() => ({}));
+      if (!data.ok) {
+        regenBtn.disabled = true;
+        if (regenProgress) {
+          regenProgress.textContent = data.message || 'Липсват данни';
+          regenProgress.classList.remove('hidden');
+        }
+      } else {
+        regenBtn.disabled = false;
+        if (regenProgress) {
+          regenProgress.textContent = '';
+          regenProgress.classList.add('hidden');
+        }
+      }
+    } catch (err) {
+      console.error('precheckPlan error:', err);
+    }
+  }
+
+  await precheckPlan();
   setupPlanRegeneration({
     regenBtn,
     regenProgress,
