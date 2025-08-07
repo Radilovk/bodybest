@@ -527,19 +527,28 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
     }
 
     const today = new Date();
+    const todayDateStr = today.toISOString().split('T')[0];
     const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     const currentDayKey = dayNames[today.getDay()];
     const todayTitle = today.toLocaleDateString('bg-BG', { weekday: 'long', day: 'numeric', month: 'long' });
 
     if(selectors.dailyPlanTitle) selectors.dailyPlanTitle.textContent = `📅 Меню (${capitalizeFirstLetter(todayTitle)})`;
 
+    // Reset макросите ако денят се е сменил
+    const lastDate = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('lastDashboardDate') : null;
+    if (lastDate !== todayDateStr) {
+        loadCurrentIntake();
+        populateDashboardMacros(todaysPlanMacros);
+        if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('lastDashboardDate', todayDateStr);
+        }
+    }
+
     const dailyPlanData = safeGet(week1Menu, currentDayKey, []);
     if (!dailyPlanData || dailyPlanData.length === 0) {
         listElement.innerHTML = '<li class="placeholder">Няма налично меню за днес.</li>'; return;
     }
     listElement.innerHTML = '';
-
-    const todayDateStr = today.toISOString().split('T')[0];
     const todaysLogFromServer = dailyLogs?.find(log => log.date === todayDateStr)?.data || {};
     const completedMealsFromServer = todaysLogFromServer.completedMealsStatus || {};
     // Accessing todaysMealCompletionStatus which is exported from app.js
