@@ -1062,10 +1062,24 @@ async function showClient(userId) {
             dashResp.json().catch(() => ({}))
         ]);
 
+        const profileStatus = data.status ?? profileResp.status;
+        const profileMessage = data.message ?? profileResp.statusText;
+        if (!profileResp.ok || !data.success) {
+            alert(`Профилът върна ${profileStatus}: ${profileMessage}`);
+        }
+
+        const dashStatus = dashData.status ?? dashResp.status;
+        const dashMessage = dashData.message ?? dashResp.statusText;
+        if (!dashResp.ok || !dashData.success) {
+            alert(`Таблото върна ${dashStatus}: ${dashMessage}`);
+        }
+
         if (kvDataDiv) kvDataDiv.innerHTML = '';
         try {
             const kvResp = await fetch(`${apiEndpoints.listUserKv}?userId=${userId}`);
             const kvData = await kvResp.json().catch(() => ({}));
+            const kvStatus = kvData.status ?? kvResp.status;
+            const kvMessage = kvData.message ?? kvResp.statusText;
             if (kvResp.ok && kvData.success) {
                 Object.entries(kvData.kv || {}).forEach(([fullKey, val]) => {
                     const detailsEl = document.createElement('details');
@@ -1085,12 +1099,14 @@ async function showClient(userId) {
                     detailsEl.append(summaryEl, textarea, btn);
                     kvDataDiv?.appendChild(detailsEl);
                 });
-            } else if (kvDataDiv) {
-                kvDataDiv.textContent = 'Грешка при зареждане на KV данни';
+            } else {
+                if (kvDataDiv) kvDataDiv.textContent = 'Грешка при зареждане на KV данни';
+                alert(`KV върна ${kvStatus}: ${kvMessage}`);
             }
         } catch (err) {
             console.error('Error loading KV data:', err);
             if (kvDataDiv) kvDataDiv.textContent = 'Грешка при зареждане на KV данни';
+            alert(`KV върна грешка: ${err.message}`);
         }
 
         let hasError = false;
@@ -1110,11 +1126,21 @@ async function showClient(userId) {
             if (profileMacroThreshold) profileMacroThreshold.value = data.macroExceedThreshold ?? '';
             if (openFullProfileLink) openFullProfileLink.href = `clientProfile.html?userId=${encodeURIComponent(userId)}`;
             if (openUserDataLink) openUserDataLink.href = `Userdata.html?userId=${encodeURIComponent(userId)}`;
-            await Promise.all([
-                loadQueries(true),
-                loadFeedback(),
-                loadClientReplies(true)
-            ]);
+            try {
+                await loadQueries(true);
+            } catch (err) {
+                console.error('loadQueries error', err);
+            }
+            try {
+                await loadFeedback();
+            } catch (err) {
+                console.error('loadFeedback error', err);
+            }
+            try {
+                await loadClientReplies(true);
+            } catch (err) {
+                console.error('loadClientReplies error', err);
+            }
             unreadClients.delete(userId);
             unreadByClient.delete(userId);
             updateSectionDots(userId);
