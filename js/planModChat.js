@@ -13,6 +13,7 @@ import {
 } from './app.js';
 
 export let planModChatHistory = [];
+export let planModChatContext = null;
 let isSending = false;
 
 const planModificationPrompt = 'Моля, опишете накратко желаните от вас промени в плана.';
@@ -20,6 +21,7 @@ const planModificationPrompt = 'Моля, опишете накратко жел
 export function clearPlanModChat() {
   if (selectors.planModChatMessages) selectors.planModChatMessages.innerHTML = '';
   planModChatHistory.length = 0;
+  planModChatContext = null;
 }
 
 export function displayPlanModChatMessage(text, sender = 'bot', isError = false) {
@@ -76,6 +78,7 @@ async function sendPlanModChatMessage({ messageText, userId }) {
       history: planModChatHistory.slice(-10),
       source: 'planModChat'
     };
+    if (planModChatContext) payload.context = planModChatContext;
     if (chatModelOverride) payload.model = chatModelOverride;
     if (chatPromptOverride) payload.promptOverride = chatPromptOverride;
     const response = await fetch(apiEndpoints.chat, {
@@ -125,13 +128,14 @@ export function handlePlanModChatInputKeypress(e) {
   }
 }
 
-export async function openPlanModificationChat(userIdOverride = null, initialMessage = null) {
+export async function openPlanModificationChat(userIdOverride = null, initialMessage = null, context = null) {
   const uid = userIdOverride || currentUserId;
   if (!uid) {
     showToast('Моля, влезте първо.', true);
     return;
   }
   clearPlanModChat();
+  planModChatContext = context;
   openModal('planModChatModal');
   if (selectors.planModChatInput) selectors.planModChatInput.disabled = true;
   if (selectors.planModChatSend) selectors.planModChatSend.disabled = true;

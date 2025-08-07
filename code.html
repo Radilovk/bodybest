@@ -1133,9 +1133,9 @@
 
     <!-- Коригирана JavaScript Връзка -->
     <script type="module">
-      import { loadTemplateInto } from './js/templateLoader.js';
+      import { loadPartial } from './js/partialLoader.js';
       import { initializeSelectors } from './js/uiElements.js';
-      loadTemplateInto('partials/planModChatModal.html', 'planModChatModalContainer').then(() => {
+      loadPartial('planModChatModal.html', 'planModChatModalContainer').then(() => {
         initializeSelectors();
       });
     </script>

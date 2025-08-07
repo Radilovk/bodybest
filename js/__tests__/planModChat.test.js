@@ -458,3 +458,79 @@ describe('openPlanModificationChat errors', () => {
     expect(showToastMock).toHaveBeenCalledWith('srv', true);
   });
 });
+
+describe('openPlanModificationChat context', () => {
+  let app;
+  beforeEach(async () => {
+    jest.resetModules();
+    const planModChatMessages = document.createElement('div');
+    const selectors = {
+      chatWidget: { classList: { contains: () => true } },
+      chatInput: null,
+      planModChatMessages,
+      planModChatInput: { value: 'hello', disabled: false, focus: jest.fn() },
+      planModChatSend: { disabled: false }
+    };
+    jest.unstable_mockModule('../uiElements.js', () => ({
+      selectors,
+      initializeSelectors: jest.fn(),
+      trackerInfoTexts: {},
+      detailedMetricInfoTexts: {},
+      loadInfoTexts: jest.fn(() => Promise.resolve())
+    }));
+    jest.unstable_mockModule('../uiHandlers.js', () => ({
+      toggleMenu: jest.fn(),
+      closeMenu: jest.fn(),
+      handleOutsideMenuClick: jest.fn(),
+      handleMenuKeydown: jest.fn(),
+      initializeTheme: jest.fn(),
+      applyTheme: jest.fn(),
+      toggleTheme: jest.fn(),
+      updateThemeButtonText: jest.fn(),
+      activateTab: jest.fn(),
+      handleTabKeydown: jest.fn(),
+      openModal: jest.fn(),
+      closeModal: jest.fn(),
+      openInstructionsModal: jest.fn(),
+      openInfoModalWithDetails: jest.fn(),
+      openMainIndexInfo: jest.fn(),
+      toggleDailyNote: jest.fn(),
+      showTrackerTooltip: jest.fn(),
+      hideTrackerTooltip: jest.fn(),
+      handleTrackerTooltipShow: jest.fn(),
+      handleTrackerTooltipHide: jest.fn(),
+      loadAndApplyColors: jest.fn(),
+      showLoading: jest.fn(),
+      showToast: jest.fn(),
+      updateTabsOverflowIndicator: jest.fn()
+    }));
+    jest.unstable_mockModule('../chat.js', () => ({
+      toggleChatWidget: jest.fn(),
+      closeChatWidget: jest.fn(),
+      clearChat: jest.fn(),
+      displayMessage: jest.fn(),
+      displayTypingIndicator: jest.fn(),
+      scrollToChatBottom: jest.fn(),
+      setAutomatedChatPending: jest.fn()
+    }));
+    jest.unstable_mockModule('../config.js', () => ({
+      isLocalDevelopment: false,
+      workerBaseUrl: '',
+      apiEndpoints: { getPlanModificationPrompt: '/prompt', chat: '/chat' },
+      generateId: jest.fn(),
+      standaloneMacroUrl: 'macroAnalyticsCardStandalone.html'
+    }));
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ prompt: 'p' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, reply: 'ok' }) });
+    app = await import('../app.js');
+  });
+
+  test('sends userIdOverride and context', async () => {
+    await app.openPlanModificationChat('uX', 'start', 'admin');
+    const payload = JSON.parse(global.fetch.mock.calls[1][1].body);
+    expect(payload.userId).toBe('uX');
+    expect(payload.context).toBe('admin');
+  });
+});

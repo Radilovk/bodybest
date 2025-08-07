@@ -3,6 +3,7 @@ import { loadConfig, saveConfig } from './adminConfig.js';
 import { labelMap, statusMap } from './labelMap.js';
 import { fileToDataURL, fileToText, applyProgressFill } from './utils.js';
 import { loadTemplateInto } from './templateLoader.js';
+import { loadPartial } from './partialLoader.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 import { loadMaintenanceFlag, setMaintenanceFlag } from './maintenanceMode.js';
 import { renderTemplate } from '../utils/templateRenderer.js';
@@ -1031,7 +1032,7 @@ async function showClient(userId) {
         adminProfileContainer.innerHTML = '';
         history.replaceState(null, '', `?userId=${encodeURIComponent(userId)}`);
         await loadTemplateInto('editclient.html', 'adminProfileContainer');
-        await loadTemplateInto('partials/planModChatModal.html', 'planModChatModalContainer');
+        await loadPartial('planModChatModal.html', 'planModChatModalContainer');
         try {
             initializeSelectors();
         } catch (e) {
@@ -1039,7 +1040,7 @@ async function showClient(userId) {
         }
         const planModBtn = document.getElementById('planModBtn');
         if (planModBtn) {
-            planModBtn.addEventListener('click', () => openPlanModificationChat(userId));
+            planModBtn.addEventListener('click', () => openPlanModificationChat(userId, null, 'admin'));
         }
         const mod = await import('./editClient.js');
         try {
