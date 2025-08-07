@@ -60,6 +60,7 @@ test('recalculates macros automatically and shows spinner while loading', async 
   ];
   appState.fullDashboardData.planData = { week1Menu: { [currentDayKey]: dayMenu } };
   Object.assign(appState.todaysPlanMacros, macroUtils.calculatePlanMacros(dayMenu));
+  Object.assign(appState.currentIntakeMacros, { calories: 100, protein: 10, carbs: 15, fat: 5, fiber: 2 });
 
   const originalFetch = global.fetch;
   let resolveFetch;
@@ -77,7 +78,7 @@ test('recalculates macros automatically and shows spinner while loading', async 
   await promise;
 
   expect(selectors.macroMetricsPreview.classList.contains('hidden')).toBe(false);
-  expect(selectors.macroMetricsPreview.textContent).toContain('500');
+  expect(selectors.macroMetricsPreview.textContent).toContain('100');
   expect(container.innerHTML).not.toContain('spinner-border');
   global.fetch = originalFetch;
   const card = container.querySelector('macro-analytics-card');
@@ -112,8 +113,9 @@ test('валидира и отхвърля некоректни макро да�
 test('calculatePlanMacros се извиква само веднъж при кеширани стойности', async () => {
   jest.resetModules();
   const calcMock = jest.fn().mockReturnValue({ calories: 100, protein: 10, carbs: 20, fat: 5, fiber: 3 });
-  jest.unstable_mockModule('../macroUtils.js', () => ({ loadProductMacros: jest.fn(), calculateCurrentMacros: jest.fn(), calculatePlanMacros: calcMock, getNutrientOverride: jest.fn(), addMealMacros: jest.fn(), removeMealMacros: jest.fn(), scaleMacros: jest.fn(), registerNutrientOverrides: jest.fn() }));
+  jest.unstable_mockModule('../macroUtils.js', () => ({ loadProductMacros: jest.fn(), calculateCurrentMacros: jest.fn(), calculatePlanMacros: calcMock, getNutrientOverride: jest.fn(), addMealMacros: jest.fn(), removeMealMacros: jest.fn(), scaleMacros: jest.fn(), registerNutrientOverrides: jest.fn(), calculateMacroPercents: jest.fn(() => ({ protein_percent: 0, carbs_percent: 0, fat_percent: 0 })) }));
   const app = await import('../app.js');
+  Object.assign(app.currentIntakeMacros, { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
   const populate = await import('../populateUI.js');
   const { populateDashboardMacros } = populate;
   const { selectors } = await import('../uiElements.js');
@@ -147,6 +149,7 @@ test('игнорира подадения план и използва сума�
   ];
   const summed = macroUtils.calculatePlanMacros(dayMenu);
   Object.assign(appState.todaysPlanMacros, summed);
+  Object.assign(appState.currentIntakeMacros, { calories: 150, protein: 12, carbs: 20, fat: 6, fiber: 3 });
   await populateDashboardMacros(macros);
   const card = document.querySelector('macro-analytics-card');
   const [payload] = card.setData.mock.calls[0];
@@ -157,5 +160,5 @@ test('игнорира подадения план и използва сума�
     fat_grams: summed.fat,
     fiber_grams: summed.fiber
   });
-  expect(selectors.macroMetricsPreview.textContent).toContain(String(summed.calories));
+  expect(selectors.macroMetricsPreview.textContent).toContain('150');
 });

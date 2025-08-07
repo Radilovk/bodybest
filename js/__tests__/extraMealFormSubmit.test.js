@@ -24,7 +24,8 @@ beforeEach(async () => {
     removeMealMacros: jest.fn(),
     registerNutrientOverrides: jest.fn(),
     getNutrientOverride: jest.fn(() => null),
-    loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] })
+    loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
+    calculateMacroPercents: jest.fn(() => ({ protein_percent: 0, carbs_percent: 0, fat_percent: 0 }))
   }));
   addExtraMealWithOverrideMock = jest.fn();
   appendExtraMealCardMock = jest.fn();
