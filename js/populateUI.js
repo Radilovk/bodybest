@@ -357,16 +357,16 @@ export function appendExtraMealCard(name, quantity) {
     const list = selectors.dailyMealList;
     if (!list) return;
 
-    const li = document.createElement('li');
-    li.classList.add('card', 'meal-card', 'soft-shadow', 'completed', 'extra-meal');
+    const extraLi = document.createElement('li');
+    extraLi.classList.add('card', 'meal-card', 'soft-shadow', 'completed', 'extra-meal');
 
     const colorBar = document.createElement('div');
     colorBar.className = 'meal-color-bar';
-    li.appendChild(colorBar);
+    extraLi.appendChild(colorBar);
 
     const contentWrapper = document.createElement('div');
     contentWrapper.className = 'meal-content-wrapper';
-    li.appendChild(contentWrapper);
+    extraLi.appendChild(contentWrapper);
 
     const title = document.createElement('h2');
     title.className = 'meal-name';
@@ -383,7 +383,8 @@ export function appendExtraMealCard(name, quantity) {
     items.textContent = `Количество: ${quantity ?? ''}`;
     contentWrapper.appendChild(items);
 
-    list.appendChild(li);
+    const nextUncompleted = list.querySelector('li:not(.completed)');
+    list.insertBefore(extraLi, nextUncompleted || null);
 }
 
 export function addExtraMealWithOverride(name = '', macros = {}, grams) {
