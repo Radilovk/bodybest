@@ -1055,48 +1055,7 @@
       </div>
 
       <!-- Plan Modification Chat Modal -->
-      <div
-        id="planModChatModal"
-        class="modal"
-        role="dialog"
-        aria-labelledby="planModChatTitle"
-        aria-modal="true"
-        aria-hidden="true"
-      >
-        <div class="modal-content plan-mod-chat-content">
-          <div class="plan-mod-chat-header">
-            <h4 id="planModChatTitle"><img src="img/assisticon.png" class="icon assistant-icon" alt="" aria-hidden="true"> Промяна на план</h4>
-            <div class="chat-actions">
-              <button
-                id="planModChatClear"
-                class="plan-mod-chat-clear"
-                aria-label="Изчисти чата"
-              >
-                🗑
-              </button>
-              <button
-                id="planModChatClose"
-                class="plan-mod-chat-close"
-                aria-label="Затвори чата"
-              >
-                <svg class="icon"><use href="#icon-close"></use></svg>
-              </button>
-            </div>
-          </div>
-          <div id="planModChatMessages" class="plan-mod-chat-messages"></div>
-          <div class="plan-mod-chat-input-area">
-            <textarea
-              id="planModChatInput"
-              placeholder="Вашето съобщение..."
-              rows="2"
-              aria-label="Поле за въвеждане на съобщение"
-            ></textarea>
-            <button id="planModChatSend" aria-label="Изпрати съобщение">
-              <svg class="icon"><use href="#icon-send"></use></svg>
-            </button>
-          </div>
-        </div>
-      </div>
+      <div id="planModChatModalContainer"></div>
       <!-- ======================= END MODAL WINDOWS =========================== -->
 
       <!-- ======================================================================= -->
@@ -1173,6 +1132,13 @@
     <!-- End #appWrapper -->
 
     <!-- Коригирана JavaScript Връзка -->
+    <script type="module">
+      import { loadTemplateInto } from './js/templateLoader.js';
+      import { initializeSelectors } from './js/uiElements.js';
+      loadTemplateInto('partials/planModChatModal.html', 'planModChatModalContainer').then(() => {
+        initializeSelectors();
+      });
+    </script>
     <script type="module" src="js/app.js" defer></script>
     <script type="module" src="js/planModChat.js" defer></script>
   </body>
