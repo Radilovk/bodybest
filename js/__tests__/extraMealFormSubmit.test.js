@@ -4,6 +4,7 @@ import { jest } from '@jest/globals';
 let handleExtraMealFormSubmit;
 let showToastMock;
 let addExtraMealWithOverrideMock;
+let appendExtraMealCardMock;
 let currentIntakeMacrosRef;
 
 beforeEach(async () => {
@@ -26,10 +27,12 @@ beforeEach(async () => {
     loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] })
   }));
   addExtraMealWithOverrideMock = jest.fn();
+  appendExtraMealCardMock = jest.fn();
   jest.unstable_mockModule('../populateUI.js', () => ({
     addExtraMealWithOverride: addExtraMealWithOverrideMock,
     populateDashboardMacros: jest.fn(),
-    renderPendingMacroChart: jest.fn()
+    renderPendingMacroChart: jest.fn(),
+    appendExtraMealCard: appendExtraMealCardMock
   }));
   jest.unstable_mockModule('../app.js', () => {
     currentIntakeMacrosRef = {};
@@ -79,4 +82,5 @@ test('изпраща макро стойности при попълнени п�
     undefined,
     { calories: 120, protein: 10, carbs: 15, fat: 5 }
   );
+  expect(appendExtraMealCardMock).toHaveBeenCalledWith(undefined, 'малко');
 });

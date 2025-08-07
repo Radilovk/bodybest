@@ -353,6 +353,39 @@ export function renderPendingMacroChart() {
     card.setData(payload);
 }
 
+export function appendExtraMealCard(name, quantity) {
+    const list = selectors.dailyMealList;
+    if (!list) return;
+
+    const li = document.createElement('li');
+    li.classList.add('card', 'meal-card', 'soft-shadow', 'completed', 'extra-meal');
+
+    const colorBar = document.createElement('div');
+    colorBar.className = 'meal-color-bar';
+    li.appendChild(colorBar);
+
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = 'meal-content-wrapper';
+    li.appendChild(contentWrapper);
+
+    const title = document.createElement('h2');
+    title.className = 'meal-name';
+    title.textContent = name || 'Хранене';
+    const checkIcon = document.createElement('span');
+    checkIcon.className = 'check-icon';
+    checkIcon.setAttribute('aria-hidden', 'true');
+    checkIcon.innerHTML = '<svg class="icon"><use href="#icon-check"/></svg>';
+    title.appendChild(checkIcon);
+    contentWrapper.appendChild(title);
+
+    const items = document.createElement('div');
+    items.className = 'meal-items';
+    items.textContent = `Количество: ${quantity ?? ''}`;
+    contentWrapper.appendChild(items);
+
+    list.appendChild(li);
+}
+
 export function addExtraMealWithOverride(name = '', macros = {}, grams) {
     const hasMacros = macros && Object.keys(macros).length > 0;
     let gramValue = typeof grams === 'number' ? grams : undefined;

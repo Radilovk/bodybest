@@ -8,7 +8,8 @@ import { removeMealMacros, registerNutrientOverrides, getNutrientOverride, loadP
 import {
     addExtraMealWithOverride,
     populateDashboardMacros,
-    renderPendingMacroChart
+    renderPendingMacroChart,
+    appendExtraMealCard
 } from './populateUI.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 
@@ -468,6 +469,7 @@ export async function handleExtraMealFormSubmit(event) {
             fat: dataToSend.fat
         };
         addExtraMealWithOverride(dataToSend.foodDescription, entry);
+        appendExtraMealCard(dataToSend.foodDescription, dataToSend.quantityEstimate);
         // Автоматично опресняване на макро-картата
         renderPendingMacroChart();
         genericCloseModal('extraMealEntryModal');
