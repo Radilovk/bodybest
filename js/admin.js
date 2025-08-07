@@ -1038,9 +1038,10 @@ async function showClient(userId) {
         } catch (e) {
             console.warn('initializeSelectors warning', e);
         }
+        let planModClientName = userId;
         const planModBtn = document.getElementById('planModBtn');
         if (planModBtn) {
-            planModBtn.addEventListener('click', () => openPlanModificationChat(userId, null, 'admin'));
+            planModBtn.addEventListener('click', () => openPlanModificationChat(userId, null, 'admin', planModClientName));
         }
         const mod = await import('./editClient.js');
         try {
@@ -1101,6 +1102,7 @@ async function showClient(userId) {
             const clientInfo = allClients.find(c => c.userId === userId);
             const regDate = clientInfo?.registrationDate ? new Date(clientInfo.registrationDate).toLocaleDateString('bg-BG') : '';
             const name = clientInfo?.name || data.name || userId;
+            planModClientName = name;
             clientNameHeading.textContent = regDate ? `${name} - ${regDate}` : name;
             if (profileName) profileName.value = data.name || '';
             if (profileEmail) profileEmail.value = data.email || '';
