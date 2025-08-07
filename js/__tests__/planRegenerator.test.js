@@ -15,7 +15,7 @@ let setupPlanRegeneration;
 beforeEach(async () => {
   jest.resetModules();
   startPlanGenerationMock.mockReset();
-  startPlanGenerationMock.mockResolvedValue({ success: true });
+  startPlanGenerationMock.mockResolvedValue({ success: true, message: 'Готово' });
   global.alert = jest.fn();
   document.body.innerHTML = `
     <button id="regen"></button>
@@ -24,7 +24,7 @@ beforeEach(async () => {
   ({ setupPlanRegeneration } = await import('../planRegenerator.js'));
 });
 
-test('стартира нов план и управлява състоянието на бутона', async () => {
+test('стартира нов план, показва съобщение и управлява бутона', async () => {
   const regenBtn = document.getElementById('regen');
   const regenProgress = document.getElementById('regenProgress');
   setupPlanRegeneration({ regenBtn, regenProgress, getUserId: () => 'u1' });
@@ -32,5 +32,7 @@ test('стартира нов план и управлява състояние�
   expect(regenBtn.disabled).toBe(true);
   await Promise.resolve();
   expect(startPlanGenerationMock).toHaveBeenCalledWith({ userId: 'u1' });
+  expect(regenProgress.textContent).toBe('Готово');
+  expect(global.alert).toHaveBeenCalledWith('Готово');
   expect(regenBtn.disabled).toBe(false);
 });

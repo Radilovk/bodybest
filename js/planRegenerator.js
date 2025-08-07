@@ -19,9 +19,10 @@ export function setupPlanRegeneration({ regenBtn, regenProgress, getUserId }) {
       regenProgress.classList.remove('hidden');
     }
     try {
-      await startPlanGeneration({ userId });
-      if (regenProgress) regenProgress.textContent = 'Готово';
-      alert('Планът е обновен.');
+      const result = await startPlanGeneration({ userId });
+      const msg = result?.message || 'Готово';
+      if (regenProgress) regenProgress.textContent = msg;
+      alert(msg);
     } catch (err) {
       console.error('regeneratePlan error:', err);
       if (regenProgress) regenProgress.textContent = 'Грешка';
