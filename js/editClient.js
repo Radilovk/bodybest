@@ -5,6 +5,20 @@ import { setupPlanRegeneration } from './planRegenerator.js';
 let macroChart;
 let weightChart;
 
+function showMacroPlaceholder() {
+  const macroCanvas = document.getElementById('macro-chart');
+  if (!macroCanvas) return;
+  macroCanvas.style.display = 'none';
+  if (!document.getElementById('macro-chart-placeholder') && macroCanvas.parentElement) {
+    const p = document.createElement('p');
+    p.id = 'macro-chart-placeholder';
+    p.className = 'placeholder';
+    p.textContent = 'Няма налични макроси за визуализация.';
+    macroCanvas.parentElement.appendChild(p);
+  }
+}
+
+
 
 export function calcMacroGrams(calories, percent, calsPerGram) {
   const cal = Number(calories);
@@ -549,6 +563,7 @@ export async function initEditClient(userId) {
       await savePlan();
       editingCards.forEach(id => toggleEditMode(id, false));
       populateUI(planData);
+      if (!planData.caloriesMacros) showMacroPlaceholder();
       await initCharts(planData);
     });
   }
@@ -558,6 +573,7 @@ export async function initEditClient(userId) {
     globalCancelBtn.addEventListener('click', async () => {
       editingCards.forEach(id => toggleEditMode(id, false));
       populateUI(planData);
+      if (!planData.caloriesMacros) showMacroPlaceholder();
       await initCharts(planData);
     });
   }
@@ -663,13 +679,17 @@ export async function initEditClient(userId) {
       await savePlan();
       populateUI(planData);
       toggleEditMode(card.id, false);
-      if (card.id === 'caloriesMacros-card') await initCharts(planData);
+      if (card.id === 'caloriesMacros-card') {
+        if (!planData.caloriesMacros) showMacroPlaceholder();
+        await initCharts(planData);
+      }
     });
   });
 
   await loadData();
   setupMacroAutoCalc();
   populateUI(planData);
+  if (!planData.caloriesMacros) showMacroPlaceholder();
   await initCharts(planData);
   updateGlobalButtonsVisibility();
 }
@@ -680,34 +700,41 @@ export async function initCharts(data) {
   if (weightChart) weightChart.destroy();
   const macroCtx = document.getElementById('macro-chart');
   if (macroCtx) {
-    macroChart = new Chart(macroCtx, {
-      type: 'doughnut',
-      data: {
-        labels: [
-          `Протеини (${data.caloriesMacros.protein_percent}%)`,
-          `Въглехидрати (${data.caloriesMacros.carbs_percent}%)`,
-          `Мазнини (${data.caloriesMacros.fat_percent}%)`,
-          `Фибри (${data.caloriesMacros.fiber_percent}%)`
-        ],
-        datasets: [{
-          label: 'Разпределение на макроси',
-          data: [
-            data.caloriesMacros.protein_grams,
-            data.caloriesMacros.carbs_grams,
-            data.caloriesMacros.fat_grams,
-            data.caloriesMacros.fiber_grams
+    if (!data?.caloriesMacros) {
+      showMacroPlaceholder();
+    } else {
+      const placeholder = document.getElementById('macro-chart-placeholder');
+      if (placeholder) placeholder.remove();
+      macroCtx.style.display = '';
+      macroChart = new Chart(macroCtx, {
+        type: 'doughnut',
+        data: {
+          labels: [
+            `Протеини (${data.caloriesMacros.protein_percent}%)`,
+            `Въглехидрати (${data.caloriesMacros.carbs_percent}%)`,
+            `Мазнини (${data.caloriesMacros.fat_percent}%)`,
+            `Фибри (${data.caloriesMacros.fiber_percent}%)`
           ],
-          backgroundColor: [
-            'rgb(54,162,235)',
-            'rgb(255,205,86)',
-            'rgb(255,99,132)',
-            'rgb(111,207,151)'
-          ],
-          hoverOffset: 4
-        }]
-      },
-      options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: `Дневен прием (${data.caloriesMacros.calories} kcal)` } } }
-    });
+          datasets: [{
+            label: 'Разпределение на макроси',
+            data: [
+              data.caloriesMacros.protein_grams,
+              data.caloriesMacros.carbs_grams,
+              data.caloriesMacros.fat_grams,
+              data.caloriesMacros.fiber_grams
+            ],
+            backgroundColor: [
+              'rgb(54,162,235)',
+              'rgb(255,205,86)',
+              'rgb(255,99,132)',
+              'rgb(111,207,151)'
+            ],
+            hoverOffset: 4
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: `Дневен прием (${data.caloriesMacros.calories} kcal)` } } }
+      });
+    }
   }
   const weightCtx = document.getElementById('weight-chart');
   if (weightCtx) {
