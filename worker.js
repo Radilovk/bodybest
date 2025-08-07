@@ -606,38 +606,24 @@ export default {
         try {
             // --- 1. Обработка на генериране на първоначален план ---
             const listResultPlanStatus = await env.USER_METADATA_KV.list({ prefix: "plan_status_" });
-            const pendingKeysMeta = listResultPlanStatus.keys.filter(key => key.metadata?.status === 'pending');
 
-            if (pendingKeysMeta.length > 0) {
-                 const keyToProcess = pendingKeysMeta[0];
-                 const userId = keyToProcess.name.replace('plan_status_', '');
-                 await env.USER_METADATA_KV.put(keyToProcess.name, 'processing', { metadata: { status: 'processing' } });
-                 ctx.waitUntil(processSingleUserPlan(userId, env));
-                 processedUsersForPlan = 1;
-            } else {
-                 const allKeys = listResultPlanStatus.keys;
-                 for (const key of allKeys) {
-                     if (processedUsersForPlan >= MAX_PROCESS_PER_RUN_PLAN_GEN) break;
-                     if (key.metadata && key.metadata.status !== 'pending') { // Проверка дали key.metadata е дефинирано
-                         const status = await env.USER_METADATA_KV.get(key.name);
-                         if (status === 'pending') {
-                             const userId = key.name.replace('plan_status_', '');
-                             await env.USER_METADATA_KV.put(key.name, 'processing', { metadata: { status: 'processing' } });
-                             ctx.waitUntil(processSingleUserPlan(userId, env));
-                             processedUsersForPlan++;
-                         }
-                     } else if (!key.metadata) { // Ако metadata липсва
-                         const status = await env.USER_METADATA_KV.get(key.name);
-                         if (status === 'pending') {
-                             const userId = key.name.replace('plan_status_', '');
-                             await env.USER_METADATA_KV.put(key.name, 'processing', { metadata: { status: 'processing' } });
-                             ctx.waitUntil(processSingleUserPlan(userId, env));
-                             processedUsersForPlan++;
-                         }
-                     }
-                 }
+            for (const key of listResultPlanStatus.keys) {
+                if (processedUsersForPlan >= MAX_PROCESS_PER_RUN_PLAN_GEN) break;
+
+                const metaStatus = key.metadata?.status;
+                let status = metaStatus;
+                if (!status || !['pending', 'processing', 'error'].includes(status)) {
+                    status = await env.USER_METADATA_KV.get(key.name);
+                }
+                if (['pending', 'processing', 'error'].includes(status)) {
+                    const userId = key.name.replace('plan_status_', '');
+                    await env.USER_METADATA_KV.put(key.name, 'processing', { metadata: { status: 'processing' } });
+                    ctx.waitUntil(processSingleUserPlan(userId, env));
+                    processedUsersForPlan++;
+                }
             }
-            if (processedUsersForPlan === 0) console.log("[CRON-PlanGen] No pending users for plan generation.");
+
+            if (processedUsersForPlan === 0) console.log("[CRON-PlanGen] No users for plan generation.");
 
             planGenDuration = Date.now() - planGenStart;
 
