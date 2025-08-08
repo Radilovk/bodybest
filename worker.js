@@ -297,6 +297,7 @@ const MAX_CHAT_HISTORY_MESSAGES = 30;
 const PRINCIPLE_UPDATE_INTERVAL_DAYS = 7; // За ръчна актуализация на принципи, ако адаптивният не ги е променил
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS = 10;
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS = 7;
+const USER_ACTIVITY_LOG_LIST_LIMIT = 100;
 const RECENT_CHAT_MESSAGES_FOR_PRINCIPLES = 10;
 
 const AUTOMATED_FEEDBACK_TRIGGER_DAYS = 3; // След толкова дни предлагаме автоматичен чат
@@ -1024,20 +1025,20 @@ async function handleDashboardDataRequest(request, env) {
         const currentStatus = safeParseJson(currentStatusStr, {});
         const profile = safeParseJson(profileStr, {});
         
-        const logKeys = [];
-        const today = new Date();
-        for (let i = 0; i < USER_ACTIVITY_LOG_LOOKBACK_DAYS; i++) {
-            const date = new Date(today); date.setDate(today.getDate() - i);
-            logKeys.push(`${userId}_log_${date.toISOString().split('T')[0]}`);
-        }
-        const logStrings = await Promise.all(logKeys.map(key => env.USER_METADATA_KV.get(key)));
-        let logEntries = logStrings.map((logStr, i) => {
-            if (!logStr) return null;
-            const date = new Date(today);
-            date.setDate(today.getDate() - i);
-            const parsed = safeParseJson(logStr, {});
+        const logsList = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
+        const sortedLogKeys = logsList.keys
+            .map(k => k.name)
+            .sort((a, b) => new Date(b.split('_log_')[1]) - new Date(a.split('_log_')[1]))
+            .slice(0, USER_ACTIVITY_LOG_LIST_LIMIT);
+        const logRecords = await Promise.all(
+            sortedLogKeys.map(name => env.USER_METADATA_KV.get(name).then(str => ({ name, str })))
+        );
+        let logEntries = logRecords.map(({ name, str }) => {
+            if (!str) return null;
+            const parsed = safeParseJson(str, {});
+            const date = name.split('_log_')[1];
             const entry = {
-                date: date.toISOString().split('T')[0],
+                date,
                 data: parsed.data ? parsed.data : parsed
             };
             if (parsed.weight !== undefined) entry.weight = parsed.weight;
@@ -1049,8 +1050,6 @@ async function handleDashboardDataRequest(request, env) {
                 entry.data.weight = entry.weight;
             }
         });
-
-        logEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         let isFirstLoginWithReadyPlan = false;
         if (actualPlanStatus === 'ready' && !firstLoginFlagStr) {
@@ -1133,13 +1132,7 @@ async function handleLogRequest(request, env) {
 
         const todayStr = new Date().toISOString().split('T')[0];
         const dateToLog = inputData.date || todayStr; // Позволява подаване на дата, иначе днешна
-        const historyKey = `${userId}_daily_summary`;
-
-        let history = [];
-        const existingHistoryStr = await env.USER_METADATA_KV.get(historyKey);
-        if (existingHistoryStr) {
-            history = safeParseJson(existingHistoryStr, []);
-        }
+        const logKey = `${userId}_log_${dateToLog}`;
 
         // Копираме всички полета от inputData.data, ако съществува
         const log = { ...(inputData.data || {}) };
@@ -1158,21 +1151,13 @@ async function handleLogRequest(request, env) {
         delete log.userId;
         delete log.date;
 
-        const dailyEntry = {
-            date: dateToLog,
+        const record = {
             totals: inputData.totals || null,
             extraMeals: inputData.extraMeals || [],
             log
         };
 
-        history.push(dailyEntry);
-
-        const cutoff = new Date();
-        cutoff.setHours(0, 0, 0, 0);
-        cutoff.setDate(cutoff.getDate() - 100);
-        history = history.filter(d => new Date(d.date) >= cutoff);
-
-        await env.USER_METADATA_KV.put(historyKey, JSON.stringify(history));
+        await env.USER_METADATA_KV.put(logKey, JSON.stringify(record));
 
         // Ако е записано тегло, актуализираме и _current_status
         if (log.weight !== undefined && log.weight !== null && String(log.weight).trim() != "") {
@@ -1188,7 +1173,7 @@ async function handleLogRequest(request, env) {
            console.log(`LOG_REQUEST (${userId}): Updated current_status with weight ${log.weight}.`);
         }
 
-        console.log(`LOG_REQUEST (${userId}): Daily summary updated for date ${dateToLog}.`);
+        console.log(`LOG_REQUEST (${userId}): Daily log saved for date ${dateToLog}.`);
         return { success: true, message: 'Данните от дневника са записани успешно.', savedDate: dateToLog, savedData: log };
     } catch (error) {
         console.error("Error in handleLogRequest:", error.message, error.stack);
