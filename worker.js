@@ -1123,80 +1123,78 @@ async function handleDashboardDataRequest(request, env) {
 
 // ------------- START FUNCTION: handleLogRequest -------------
 async function handleLogRequest(request, env) {
-     try {
-         const inputData = await request.json();
-         const userId = inputData.userId;
-         if (!userId) {
-             console.warn("LOG_REQUEST_ERROR: Missing userId in input data.");
-             throw new Error("Липсва потребителско ID (userId).");
-         }
+    try {
+        const inputData = await request.json();
+        const userId = inputData.userId;
+        if (!userId) {
+            console.warn("LOG_REQUEST_ERROR: Missing userId in input data.");
+            throw new Error("Липсва потребителско ID (userId).");
+        }
 
-         const today = new Date().toISOString().split('T')[0];
-         const dateToLog = inputData.date || today; // Позволява подаване на дата, иначе днешна
-         const logKey = `${userId}_log_${dateToLog}`;
+        const todayStr = new Date().toISOString().split('T')[0];
+        const dateToLog = inputData.date || todayStr; // Позволява подаване на дата, иначе днешна
+        const historyKey = `${userId}_daily_summary`;
 
-         let currentLogData = {};
-         const existingLogStr = await env.USER_METADATA_KV.get(logKey);
-         if (existingLogStr) {
-             currentLogData = safeParseJson(existingLogStr, {});
-         }
+        let history = [];
+        const existingHistoryStr = await env.USER_METADATA_KV.get(historyKey);
+        if (existingHistoryStr) {
+            history = safeParseJson(existingHistoryStr, []);
+        }
 
-         // Копираме всички полета от inputData.data, ако съществува
-         const logDataToUpdate = { ...(inputData.data || {}) };
+        // Копираме всички полета от inputData.data, ако съществува
+        const log = { ...(inputData.data || {}) };
 
-         // Специфично обработваме полета извън 'data', ако са подадени директно
-         if (inputData.completedMealsStatus !== undefined) logDataToUpdate.completedMealsStatus = inputData.completedMealsStatus;
-         if (inputData.note !== undefined) logDataToUpdate.note = inputData.note;
-         if (inputData.weight !== undefined) logDataToUpdate.weight = inputData.weight;
-         if (inputData.mood !== undefined) logDataToUpdate.mood = inputData.mood;
-         if (inputData.energy !== undefined) logDataToUpdate.energy = inputData.energy;
-         if (inputData.sleep !== undefined) logDataToUpdate.sleep = inputData.sleep;
-         if (inputData.calmness !== undefined) logDataToUpdate.calmness = inputData.calmness;
-         if (inputData.hydration !== undefined) logDataToUpdate.hydration = inputData.hydration;
-         
-         // Премахваме служебните полета от обекта за запис, ако са влезли случайно
-         delete logDataToUpdate.userId;
-         delete logDataToUpdate.date;
+        // Специфично обработваме полета извън 'data', ако са подадени директно
+        if (inputData.completedMealsStatus !== undefined) log.completedMealsStatus = inputData.completedMealsStatus;
+        if (inputData.note !== undefined) log.note = inputData.note;
+        if (inputData.weight !== undefined) log.weight = inputData.weight;
+        if (inputData.mood !== undefined) log.mood = inputData.mood;
+        if (inputData.energy !== undefined) log.energy = inputData.energy;
+        if (inputData.sleep !== undefined) log.sleep = inputData.sleep;
+        if (inputData.calmness !== undefined) log.calmness = inputData.calmness;
+        if (inputData.hydration !== undefined) log.hydration = inputData.hydration;
 
+        // Премахваме служебните полета от обекта за запис, ако са влезли случайно
+        delete log.userId;
+        delete log.date;
 
-         for (const key in logDataToUpdate) {
-             if (logDataToUpdate.hasOwnProperty(key)) {
-                 if (key === 'completedMealsStatus' && typeof logDataToUpdate[key] === 'object' && logDataToUpdate[key] !== null) {
-                     // Дълбоко сливане за completedMealsStatus
-                     if (typeof currentLogData[key] !== 'object' || currentLogData[key] === null) {
-                         currentLogData[key] = {};
-                     }
-                     Object.assign(currentLogData[key], logDataToUpdate[key]);
-                 } else {
-                     currentLogData[key] = logDataToUpdate[key];
-                 }
-             }
-         }
-         currentLogData.lastUpdated = new Date().toISOString();
+        const dailyEntry = {
+            date: dateToLog,
+            totals: inputData.totals || null,
+            extraMeals: inputData.extraMeals || [],
+            log
+        };
 
-         await env.USER_METADATA_KV.put(logKey, JSON.stringify(currentLogData));
+        history.push(dailyEntry);
 
-         // Ако е записано тегло, актуализираме и _current_status
-         if (logDataToUpdate.weight !== undefined && logDataToUpdate.weight !== null && String(logDataToUpdate.weight).trim() !== "") {
-            const statusKey = `${userId}_current_status`;
-            let currentStatus = {};
-            const existingStatusStr = await env.USER_METADATA_KV.get(statusKey);
-            if (existingStatusStr) {
-                currentStatus = safeParseJson(existingStatusStr, {});
-            }
-            currentStatus.weight = logDataToUpdate.weight;
-            currentStatus.lastUpdated = new Date().toISOString();
-            await env.USER_METADATA_KV.put(statusKey, JSON.stringify(currentStatus));
-            console.log(`LOG_REQUEST (${userId}): Updated current_status with weight ${logDataToUpdate.weight}.`);
-         }
+        const cutoff = new Date();
+        cutoff.setHours(0, 0, 0, 0);
+        cutoff.setDate(cutoff.getDate() - 100);
+        history = history.filter(d => new Date(d.date) >= cutoff);
 
-         console.log(`LOG_REQUEST (${userId}): Log updated for date ${dateToLog}.`);
-         return { success: true, message: 'Данните от дневника са записани успешно.', savedDate: dateToLog, savedData: currentLogData };
-     } catch (error) {
-         console.error("Error in handleLogRequest:", error.message, error.stack);
-         const userId = (await request.json().catch(() => ({}))).userId || 'unknown_user';
-         return { success: false, message: `Грешка при запис на дневник: ${error.message}`, statusHint: 400, userId };
-     }
+        await env.USER_METADATA_KV.put(historyKey, JSON.stringify(history));
+
+        // Ако е записано тегло, актуализираме и _current_status
+        if (log.weight !== undefined && log.weight !== null && String(log.weight).trim() != "") {
+           const statusKey = `${userId}_current_status`;
+           let currentStatus = {};
+           const existingStatusStr = await env.USER_METADATA_KV.get(statusKey);
+           if (existingStatusStr) {
+               currentStatus = safeParseJson(existingStatusStr, {});
+           }
+           currentStatus.weight = log.weight;
+           currentStatus.lastUpdated = new Date().toISOString();
+           await env.USER_METADATA_KV.put(statusKey, JSON.stringify(currentStatus));
+           console.log(`LOG_REQUEST (${userId}): Updated current_status with weight ${log.weight}.`);
+        }
+
+        console.log(`LOG_REQUEST (${userId}): Daily summary updated for date ${dateToLog}.`);
+        return { success: true, message: 'Данните от дневника са записани успешно.', savedDate: dateToLog, savedData: log };
+    } catch (error) {
+        console.error("Error in handleLogRequest:", error.message, error.stack);
+        const userId = (await request.json().catch(() => ({}))).userId || 'unknown_user';
+        return { success: false, message: `Грешка при запис на дневник: ${error.message}`, statusHint: 400, userId };
+    }
 }
 // ------------- END FUNCTION: handleLogRequest -------------
 
@@ -4396,4 +4394,4 @@ async function handleUpdateKvRequest(request, env) {
 }
 // ------------- END FUNCTION: handleUpdateKvRequest -------------
 // ------------- INSERTION POINT: EndOfFile -------------
- export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, calculateAnalyticsIndexes, handleListUserKvRequest, handleUpdateKvRequest, handlePlanLogRequest };
+ export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, calculateAnalyticsIndexes, handleListUserKvRequest, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest };
