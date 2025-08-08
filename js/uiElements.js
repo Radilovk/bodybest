@@ -106,6 +106,20 @@ export function initializeSelectors() {
     if (selectors.mainMenu) selectors.menuClose = selectors.mainMenu.querySelector('.menu-close');
 }
 
+export function initializePlanModChatSelectors() {
+    const ids = [
+        'planModChatModal',
+        'planModChatMessages',
+        'planModChatInput',
+        'planModChatSend',
+        'planModChatClose',
+        'planModChatClear'
+    ];
+    ids.forEach(id => {
+        selectors[id] = document.getElementById(id);
+    });
+}
+
 export let trackerInfoTexts = {};
 export let detailedMetricInfoTexts = {};
 export let mainIndexInfoTexts = {};
