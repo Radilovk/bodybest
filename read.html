@@ -71,7 +71,7 @@
                     <span id="char-count">0 символа</span>
                 </div>
                 <textarea id="text-input" placeholder="Въведете или поставете текст тук..."></textarea>
-                <button id="clear-text-btn" title="Изчисти текста">×</button>
+                <button id="clear-text-btn" title="Изчисти текста">&times;</button>
             </div>
         </div>
         <div class="file-actions">
@@ -121,7 +121,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const textInput = document.getElementById('text-input'), charCount = document.getElementById('char-count'), clearTextBtn = document.getElementById('clear-text-btn'), importBtn = document.getElementById('import-btn'), fileInput = document.getElementById('file-input'), downloadBtn = document.getElementById('download-btn'), voiceSelect = document.getElementById('voice-select'), engineSelect = document.getElementById('engine-select'), speedControl = document.getElementById('speed-control'), speedValue = document.getElementById('speed-value'), playBtn = document.getElementById('play-btn'), playerControls = document.getElementById('player-controls'), progressBar = document.getElementById('progress-bar'), currentTimeDisplay = document.getElementById('current-time'), totalTimeDisplay = document.getElementById('total-time'), pauseBtn = document.getElementById('pause-btn'), stopBtn = document.getElementById('stop-btn'), statusSpinner = document.querySelector('#status .spinner'), statusMessage = document.getElementById('status-message');
-            // Уверете се, че няма наклонена черта накрая!
             const WORKER_URL = "https://read.radilov-k.workers.dev";
             let audio = null, generatedAudioBlob = null, generatedAudioUrl = null, isDraggingProgressBar = false;
             const setStatus = (message, isLoading = false) => { statusMessage.textContent = message; statusSpinner.style.display = isLoading ? 'block' : 'none'; };
