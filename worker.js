@@ -1,5 +1,3 @@
-const trackerInfoTextsPromise = import('./data/trackerInfoTexts.json', { assert: { type: 'json' } });
-
 // Cloudflare Worker Script (index.js) - Версия 2.3
 // Добавен е режим за дебъг чрез HTTP заглавие `X-Debug: 1`
 // Също така са запазени всички функционалности от предходните версии
@@ -1135,7 +1133,6 @@ async function handleDashboardDataRequest(request, env) {
 // ------------- START FUNCTION: handleLogRequest -------------
 async function handleLogRequest(request, env) {
     try {
-        const { default: trackerInfoTexts } = await trackerInfoTextsPromise;
         const inputData = await request.json();
         const userId = inputData.userId;
         if (!userId) {
@@ -1159,24 +1156,6 @@ async function handleLogRequest(request, env) {
         if (inputData.sleep !== undefined) log.sleep = inputData.sleep;
         if (inputData.calmness !== undefined) log.calmness = inputData.calmness;
         if (inputData.hydration !== undefined) log.hydration = inputData.hydration;
-
-        // Валидираме и описваме метриките (1–5)
-        for (const [metricKey, val] of Object.entries(log)) {
-            const levels = trackerInfoTexts[metricKey]?.levels;
-            if (!levels) continue; // не е скала 1-5
-            const parsedVal = parseInt(val, 10);
-            if (Number.isInteger(parsedVal) && parsedVal >= 1 && parsedVal <= 5) {
-                const rawDesc = levels[String(parsedVal)] || `Оценка ${parsedVal}`;
-                const desc = rawDesc.replace(/^\d+:\s*/, '');
-                log[metricKey] = `${desc} (${parsedVal})`;
-            } else {
-                const auditKey = `${userId}_invalid_rating_log_${Date.now()}`;
-                const auditRecord = { metric: metricKey, value: val, date: dateToLog };
-                await env.USER_METADATA_KV.put(auditKey, JSON.stringify(auditRecord));
-                console.error(`Invalid rating for ${metricKey}:`, val);
-                delete log[metricKey];
-            }
-        }
 
         // Премахваме служебните полета от обекта за запис, ако са влезли случайно
         delete log.userId;
