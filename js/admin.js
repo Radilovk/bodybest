@@ -40,7 +40,6 @@ const detailsSection = document.getElementById('clientDetails');
 const regenBtn = document.getElementById('regeneratePlan');
 const regenProgress = document.getElementById('regenProgress');
 const aiSummaryBtn = document.getElementById('aiSummary');
-const planModBtn = document.getElementById('planModBtn');
 const notesField = document.getElementById('adminNotes');
 const tagsField = document.getElementById('adminTags');
 const saveNotesBtn = document.getElementById('saveNotes');
@@ -110,7 +109,6 @@ const analysisModelInput = document.getElementById('analysisModel');
 const analysisPromptInput = document.getElementById('analysisPrompt');
 const testAnalysisBtn = document.getElementById('testAnalysisModel');
 
-if (planModBtn) planModBtn.addEventListener('click', () => openPlanModificationChat(activeUserId, null, 'admin', activeClientName));
 
 const modelOptionsList = document.getElementById('modelOptions');
 let availableModels = new Set(JSON.parse(localStorage.getItem('aiModelHistory') || '[]'));
@@ -1038,6 +1036,8 @@ async function showClient(userId) {
         history.replaceState(null, '', `?userId=${encodeURIComponent(userId)}`);
         await loadTemplateInto('editclient.html', 'adminProfileContainer');
         await loadPartial('planModChatModal.html', 'planModChatModalContainer');
+        const planModBtn = document.getElementById('planModBtn');
+        planModBtn?.addEventListener('click', () => openPlanModificationChat(userId, null, 'admin', activeClientName));
         try {
             initializeSelectors();
         } catch (e) {
