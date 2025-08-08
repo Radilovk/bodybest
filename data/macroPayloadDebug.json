@@ -1,13 +1,17 @@
 {
-  "error": "Invalid macro payload structure",
-  "payload": {
-    "plan": {
-      "calories": 0,
-      "protein_grams": 0,
-      "carbs_grams": 0,
-      "fat_grams": 0,
-      "fiber_grams": 0
-    },
-    "current": {}
+  "plan": {
+    "calories": 0,
+    "protein_grams": 0,
+    "carbs_grams": 0,
+    "fat_grams": 0,
+    "fiber_grams": 0
+  },
+  "current": {
+    "calories": 1000,
+    "protein_grams": 0,
+    "carbs_grams": 0,
+    "fat_grams": 0,
+    "fiber_grams": 0
   }
+}  }
 }
