@@ -1,179 +1,256 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Speechify TTS Pro</title>
-    <style>
-        :root {
-            --bg-color: #1a1a1a;
-            --surface-color: #2c2c2c;
-            --primary-color: #3b82f6;
-            --primary-hover-color: #2563eb;
-            --text-color: #e5e7eb;
-            --text-muted-color: #9ca3af;
-            --border-color: #4b5563;
-            --success-color: #22c55e;
-            --error-color: #ef4444;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            padding: 1rem;
-            min-height: 100vh;
-        }
-        .container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 1.5rem; }
-        h1 { text-align: center; color: white; font-size: 1.75rem; }
-        .card { background-color: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); }
-        .textarea-container { position: relative; }
-        .textarea-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-muted-color); }
-        #char-count { font-weight: 500; }
-        #text-input { width: 100%; height: 25vh; background-color: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; font-size: 1rem; line-height: 1.6; resize: vertical; }
-        #clear-text-btn { position: absolute; top: 2.7rem; right: 0.75rem; background: none; border: none; color: var(--text-muted-color); font-size: 1.5rem; cursor: pointer; padding: 0.25rem; }
-        #clear-text-btn:hover { color: white; }
-        .file-actions { display: flex; gap: 1rem; }
-        .settings-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
-        .control-group { display: flex; flex-direction: column; gap: 0.5rem; }
-        .control-group label { font-weight: 600; }
-        select, input[type="range"], .radio-group { width: 100%; padding: 0.75rem; background-color: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; }
-        .radio-group { display: flex; justify-content: space-around; padding: 0.5rem; }
-        .radio-group label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
-        button { padding: 0.85rem 1rem; font-size: 1rem; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; flex-grow: 1; display: flex; justify-content: center; align-items: center; gap: 0.5rem; }
-        .btn-primary { background-color: var(--primary-color); color: white; }
-        .btn-primary:hover:not(:disabled) { background-color: var(--primary-hover-color); }
-        .btn-secondary { background-color: var(--surface-color); color: var(--text-color); border: 1px solid var(--border-color); }
-        .btn-secondary:hover:not(:disabled) { background-color: #404040; }
-        .btn-download { background-color: var(--success-color); color: white; }
-        .btn-download:hover:not(:disabled) { background-color: #16a34a; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        #player-controls { display: none; flex-direction: column; gap: 0.75rem; }
-        .progress-container { display: flex; align-items: center; gap: 1rem; width: 100%; }
-        #progress-bar { flex-grow: 1; padding: 0; height: 8px; -webkit-appearance: none; appearance: none; background: var(--border-color); border-radius: 4px; outline: none; }
-        #progress-bar::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: var(--primary-color); border-radius: 50%; cursor: pointer; }
-        .time-display { font-family: monospace; font-size: 0.9rem; color: var(--text-muted-color); }
-        .player-buttons { display: flex; justify-content: center; gap: 1rem; }
-        #status { display: flex; align-items: center; justify-content: center; gap: 0.75rem; min-height: 24px; text-align: center; color: var(--text-muted-color); }
-        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.2); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; display: none; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Текст → Говор (Speechify)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#1a1a1a;--surface:#2c2c2c;--text:#e5e7eb;--muted:#9ca3af;--border:#3b3b3b;
+      --primary:#3b82f6;--primary-h:#2563eb;--ok:#22c55e;--err:#ef4444;
+    }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:16px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial}
+    .wrap{max-width:720px;margin:0 auto;padding:16px;display:grid;gap:16px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+    h1{margin:0 0 8px;font-size:22px}
+    label{font-weight:600}
+    textarea, select, input[type="range"]{width:100%;background:#111;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:12px}
+    button{border:0;border-radius:10px;padding:12px 14px;font-weight:700;cursor:pointer}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .btn-primary{background:var(--primary);color:#fff}
+    .btn-primary:hover{background:var(--primary-h)}
+    .btn{background:#333;color:var(--text)}
+    .btn:hover{background:#444}
+    .btn-ok{background:var(--ok);color:#fff}
+    .btn-ok:hover{filter:brightness(0.95)}
+    #status{min-height:24px;display:flex;align-items:center;gap:8px;color:var(--muted)}
+    .spin{width:18px;height:18px;border:3px solid #ffffff30;border-top-color:#fff;border-radius:50%;display:none;animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #player{display:none;gap:10px;align-items:center}
+    #download{display:none}
+    .muted{color:var(--muted);font-size:13px}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Текст към Говор</h1>
-        <div class="card">
-            <div class="textarea-container">
-                <div class="textarea-header">
-                    <label for="text-input">Вашият текст:</label>
-                    <span id="char-count">0 символа</span>
-                </div>
-                <textarea id="text-input" placeholder="Въведете или поставете текст тук..."></textarea>
-                <button id="clear-text-btn" title="Изчисти текста">&times;</button>
-            </div>
-        </div>
-        <div class="file-actions">
-            <button id="import-btn" class="btn-secondary">Импорт на .txt файл</button>
-            <input type="file" id="file-input" accept=".txt" hidden>
-            <button id="download-btn" class="btn-download" style="display: none;">Изтегли .mp3</button>
-        </div>
-        <div class="card">
-            <div class="settings-grid">
-                <div class="control-group">
-                    <label for="voice-select">Глас</label>
-                    <select id="voice-select">
-                        <option value="Borislav" selected>Борислав (Мъжки)</option>
-                        <option value="Daria">Дария (Женски)</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label>Качество на гласа</label>
-                    <div class="radio-group" id="engine-select">
-                       <label><input type="radio" name="engine" value="standard" checked> Стандартен</label>
-                       <label><input type="radio" name="engine" value="neural"> Невронен</label>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label for="speed-control">Скорост: <span id="speed-value">1.0</span>x</label>
-                    <input type="range" id="speed-control" min="0.5" max="2.0" step="0.1" value="1.0">
-                </div>
-            </div>
-        </div>
-        <button id="play-btn" class="btn-primary">Чети</button>
-        <div class="card" id="player-controls">
-             <div class="progress-container">
-                <span id="current-time" class="time-display">00:00</span>
-                <input type="range" id="progress-bar" value="0" step="0.1">
-                <span id="total-time" class="time-display">00:00</span>
-            </div>
-            <div class="player-buttons">
-                <button id="pause-btn" class="btn-secondary">Пауза</button>
-                <button id="stop-btn" class="btn-secondary">Стоп</button>
-            </div>
-        </div>
-        <div id="status">
-            <div class="spinner"></div>
-            <span id="status-message">Готово за работа.</span>
-        </div>
+<div class="wrap">
+  <h1>Текст → Говор</h1>
+
+  <div class="card">
+    <label for="text">Вашият текст</label>
+    <textarea id="text" rows="8" placeholder="Въведете текст…"></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+      <span id="count" class="muted">0 символа</span>
+      <div>
+        <button id="import" class="btn">Импорт .txt</button>
+        <input type="file" id="file" accept=".txt" hidden />
+        <button id="clear" class="btn">Изчисти</button>
+      </div>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const textInput = document.getElementById('text-input'), charCount = document.getElementById('char-count'), clearTextBtn = document.getElementById('clear-text-btn'), importBtn = document.getElementById('import-btn'), fileInput = document.getElementById('file-input'), downloadBtn = document.getElementById('download-btn'), voiceSelect = document.getElementById('voice-select'), engineSelect = document.getElementById('engine-select'), speedControl = document.getElementById('speed-control'), speedValue = document.getElementById('speed-value'), playBtn = document.getElementById('play-btn'), playerControls = document.getElementById('player-controls'), progressBar = document.getElementById('progress-bar'), currentTimeDisplay = document.getElementById('current-time'), totalTimeDisplay = document.getElementById('total-time'), pauseBtn = document.getElementById('pause-btn'), stopBtn = document.getElementById('stop-btn'), statusSpinner = document.querySelector('#status .spinner'), statusMessage = document.getElementById('status-message');
-            const WORKER_URL = "https://read.radilov-k.workers.dev";
-            let audio = null, generatedAudioBlob = null, generatedAudioUrl = null, isDraggingProgressBar = false;
-            const setStatus = (message, isLoading = false) => { statusMessage.textContent = message; statusSpinner.style.display = isLoading ? 'block' : 'none'; };
-            const formatTime = (seconds) => { const minutes = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`; };
-            const cleanupAudio = () => { if (audio) { audio.pause(); audio = null; } if (generatedAudioUrl) { URL.revokeObjectURL(generatedAudioUrl); generatedAudioUrl = null; } generatedAudioBlob = null; playerControls.style.display = 'none'; downloadBtn.style.display = 'none'; playBtn.disabled = false; };
-            const saveSettings = () => { localStorage.setItem('tts_text', textInput.value); localStorage.setItem('tts_voice', voiceSelect.value); localStorage.setItem('tts_engine', document.querySelector('input[name="engine"]:checked').value); localStorage.setItem('tts_speed', speedControl.value); };
-            const loadSettings = () => { textInput.value = localStorage.getItem('tts_text') || ''; voiceSelect.value = localStorage.getItem('tts_voice') || 'Borislav'; const savedEngine = localStorage.getItem('tts_engine') || 'standard'; document.querySelector(`input[name="engine"][value="${savedEngine}"]`).checked = true; speedControl.value = localStorage.getItem('tts_speed') || '1.0'; speedValue.textContent = parseFloat(speedControl.value).toFixed(1); charCount.textContent = `${textInput.value.length} символа`; };
-            playBtn.addEventListener('click', async () => {
-                const text = textInput.value.trim();
-                if (!text) { setStatus('Моля, въведете текст.', false); return; }
-                cleanupAudio();
-                setStatus('Свързване със сървъра...', true);
-                playBtn.disabled = true;
-                try {
-                    const response = await fetch(WORKER_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            text: text,
-                            voice: { name: voiceSelect.value, language: 'bg-BG', engine: document.querySelector('input[name="engine"]:checked').value },
-                            format: 'mp3',
-                            speed: parseFloat(speedControl.value)
-                        })
-                    });
-                    if (!response.ok) { const errorText = await response.text(); throw new Error(`Грешка: ${errorText}`); }
-                    setStatus('Изтегляне на аудиото...', true);
-                    generatedAudioBlob = await response.blob();
-                    generatedAudioUrl = URL.createObjectURL(generatedAudioBlob);
-                    audio = new Audio(generatedAudioUrl);
-                    audio.addEventListener('loadedmetadata', () => { progressBar.max = audio.duration; totalTimeDisplay.textContent = formatTime(audio.duration); playerControls.style.display = 'flex'; downloadBtn.style.display = 'flex'; setStatus('Готово за просвирване.', false); audio.play(); });
-                    audio.addEventListener('timeupdate', () => { if (!isDraggingProgressBar) { progressBar.value = audio.currentTime; currentTimeDisplay.textContent = formatTime(audio.currentTime); } });
-                    audio.addEventListener('play', () => { pauseBtn.textContent = 'Пауза'; });
-                    audio.addEventListener('pause', () => { pauseBtn.textContent = 'Продължи'; });
-                    audio.addEventListener('ended', () => { setStatus('Готово.', false); playBtn.disabled = false; pauseBtn.textContent = 'Пауза'; progressBar.value = 0; currentTimeDisplay.textContent = '00:00'; });
-                    audio.addEventListener('error', () => { setStatus('Грешка при зареждане на аудиото.', false); cleanupAudio(); });
-                } catch (error) { setStatus(error.message, false); cleanupAudio(); }
-            });
-            pauseBtn.addEventListener('click', () => { if (audio) { audio.paused ? audio.play() : audio.pause(); } });
-            stopBtn.addEventListener('click', () => { setStatus('Спряно.', false); cleanupAudio(); });
-            progressBar.addEventListener('input', () => { currentTimeDisplay.textContent = formatTime(progressBar.value); });
-            progressBar.addEventListener('change', () => { if(audio) audio.currentTime = progressBar.value; });
-            progressBar.addEventListener('mousedown', () => { isDraggingProgressBar = true; });
-            progressBar.addEventListener('mouseup', () => { isDraggingProgressBar = false; });
-            downloadBtn.addEventListener('click', () => { if (generatedAudioUrl) { const a = document.createElement('a'); a.href = generatedAudioUrl; a.download = `speechify_audio_${Date.now()}.mp3`; document.body.appendChild(a); a.click(); document.body.removeChild(a); } });
-            importBtn.addEventListener('click', () => fileInput.click());
-            fileInput.addEventListener('change', (event) => { const file = event.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = (e) => { textInput.value = e.target.result; textInput.dispatchEvent(new Event('input')); }; reader.readAsText(file); } });
-            clearTextBtn.addEventListener('click', () => { textInput.value = ''; textInput.dispatchEvent(new Event('input')); });
-            textInput.addEventListener('input', () => { charCount.textContent = `${textInput.value.length} символа`; saveSettings(); });
-            voiceSelect.addEventListener('change', saveSettings);
-            engineSelect.addEventListener('change', saveSettings);
-            speedControl.addEventListener('input', () => { speedValue.textContent = parseFloat(speedControl.value).toFixed(1); saveSettings(); });
-            loadSettings();
-        });
-    </script>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label for="voice">Глас (само български)</label>
+        <select id="voice">
+          <option value="">Зареждане…</option>
+        </select>
+        <div class="muted" id="voice-hint" style="margin-top:6px"></div>
+      </div>
+      <div>
+        <label for="speed">Скорост: <span id="speedv">1.0</span>x</label>
+        <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1.0" />
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div>
+        <label for="format">Формат</label>
+        <select id="format">
+          <option value="mp3" selected>mp3</option>
+          <option value="wav">wav</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:12px">
+        <button id="play" class="btn-primary" style="flex:1">Генерирай и пусни</button>
+        <button id="download" class="btn-ok">Изтегли</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="player">
+    <audio id="audio" controls style="width:100%"></audio>
+  </div>
+
+  <div id="status" class="card" style="display:flex;justify-content:space-between">
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="spin" id="spin"></div>
+      <span id="msg">Готово.</span>
+    </div>
+    <span id="meta" class="muted"></span>
+  </div>
+</div>
+
+<script>
+const WORKER_URL = "https://read.radilov-k.workers.dev"; // смени ако е друг
+const els = {
+  text: document.getElementById('text'),
+  count: document.getElementById('count'),
+  import: document.getElementById('import'),
+  file: document.getElementById('file'),
+  clear: document.getElementById('clear'),
+  voice: document.getElementById('voice'),
+  voiceHint: document.getElementById('voice-hint'),
+  speed: document.getElementById('speed'),
+  speedv: document.getElementById('speedv'),
+  format: document.getElementById('format'),
+  play: document.getElementById('play'),
+  download: document.getElementById('download'),
+  player: document.getElementById('player'),
+  audio: document.getElementById('audio'),
+  spin: document.getElementById('spin'),
+  msg: document.getElementById('msg'),
+  meta: document.getElementById('meta'),
+};
+
+function setBusy(on, message){
+  els.msg.textContent = message || (on ? 'Работи…' : 'Готово.');
+  els.spin.style.display = on ? 'inline-block' : 'none';
+  els.play.disabled = on;
+}
+
+function setError(message){
+  els.msg.textContent = message;
+  els.spin.style.display = 'none';
+  els.play.disabled = false;
+}
+
+function charCount(){ els.count.textContent = `${els.text.value.length} символа`; }
+
+function saveState(){
+  localStorage.setItem('tts_text', els.text.value);
+  localStorage.setItem('tts_speed', els.speed.value);
+  localStorage.setItem('tts_format', els.format.value);
+  localStorage.setItem('tts_voice_id', els.voice.value || '');
+}
+
+function loadState(){
+  els.text.value = localStorage.getItem('tts_text') || '';
+  els.speed.value = localStorage.getItem('tts_speed') || '1.0';
+  els.format.value = localStorage.getItem('tts_format') || 'mp3';
+  els.speedv.textContent = parseFloat(els.speed.value).toFixed(1);
+  charCount();
+}
+
+async function loadVoices(){
+  try{
+    const r = await fetch(WORKER_URL + "/voices");
+    if(!r.ok){ throw new Error(await r.text()); }
+    const data = await r.json(); // { voices: [{id,name,language}] }
+    const voices = data.voices || [];
+    if(!voices.length){
+      els.voice.innerHTML = `<option value="">Няма български гласове</option>`;
+      els.voiceHint.textContent = 'Свържи се със Speechify за активиране на BG гласове.';
+      return;
+    }
+    const saved = localStorage.getItem('tts_voice_id') || '';
+    els.voice.innerHTML = voices.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+    if(saved && voices.some(v => v.id === saved)) els.voice.value = saved;
+    els.voiceHint.textContent = `Намерени гласове: ${voices.length}`;
+  }catch(err){
+    els.voice.innerHTML = `<option value="">Грешка при зареждане</option>`;
+    els.voiceHint.textContent = String(err);
+  }
+}
+
+function resetAudio(){
+  if(els.audio.src) URL.revokeObjectURL(els.audio.src);
+  els.audio.removeAttribute('src');
+  els.audio.load();
+  els.player.style.display = 'none';
+  els.download.style.display = 'none';
+}
+
+async function synth(){
+  const text = els.text.value.trim();
+  if(!text){ setError('Моля, въведете текст.'); return; }
+  setBusy(true, 'Изпращане към сървъра…');
+  resetAudio();
+  try{
+    const payload = {
+      input: text,                                  // ← правилното поле
+      voice_id: els.voice.value || undefined,       // ← ако е празно, бекендът ще вземе дефолтен BG
+      audio_format: els.format.value,
+      speaking_rate: parseFloat(els.speed.value)
+    };
+
+    const r = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const ct = (r.headers.get("Content-Type") || "").toLowerCase();
+    els.meta.textContent = `${r.status} ${r.statusText} · ${ct}`;
+
+    if(!r.ok || !(ct.startsWith("audio/") || ct === "application/octet-stream")){
+      const txt = await r.text(); // JSON грешка от бекенда / Speechify
+      setError(`TTS грешка: ${txt}`);
+      return;
+    }
+
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+
+    els.audio.src = url;
+    els.player.style.display = 'block';
+    els.download.style.display = 'inline-block';
+    setBusy(false, 'Готово. Пускаме…');
+    await els.audio.play();
+  }catch(err){
+    setError(String(err?.message || err));
+  }finally{
+    els.play.disabled = false;
+  }
+}
+
+/* --- events --- */
+document.addEventListener('DOMContentLoaded', async () => {
+  loadState();
+  await loadVoices();
+});
+
+els.text.addEventListener('input', () => { charCount(); saveState(); });
+els.speed.addEventListener('input', () => { els.speedv.textContent = parseFloat(els.speed.value).toFixed(1); saveState(); });
+els.format.addEventListener('change', saveState);
+els.voice.addEventListener('change', saveState);
+
+els.import.addEventListener('click', () => els.file.click());
+els.file.addEventListener('change', e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    els.text.value = reader.result || '';
+    charCount(); saveState();
+  };
+  reader.readAsText(f);
+});
+
+els.clear.addEventListener('click', () => {
+  els.text.value = '';
+  charCount(); saveState(); resetAudio();
+});
+
+els.play.addEventListener('click', synth);
+
+els.download.addEventListener('click', () => {
+  if(!els.audio.src) return;
+  const a = document.createElement('a');
+  a.href = els.audio.src;
+  a.download = `speech_${Date.now()}.${els.format.value}`;
+  document.body.appendChild(a); a.click(); a.remove();
+});
+</script>
 </body>
 </html>
