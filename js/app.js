@@ -3,6 +3,7 @@ import { isLocalDevelopment, apiEndpoints } from './config.js';
 import { debugLog, enableDebug } from './logger.js';
 import { safeParseFloat, escapeHtml, fileToDataURL, normalizeDailyLogs } from './utils.js';
 import { selectors, initializeSelectors, loadInfoTexts } from './uiElements.js';
+import { getMetricDescription } from './metricUtils.js';
 import {
     initializeTheme,
     loadAndApplyColors,
@@ -642,7 +643,10 @@ export async function handleSaveLog() { // Exported for eventListeners.js
     logPayload.data.note = selectors.dailyNote?.value.trim() || "";
     logPayload.data.completedMealsStatus = { ...todaysMealCompletionStatus };
     selectors.dailyTracker?.querySelectorAll('.metric-rating:not(.daily-log-weight-metric) input[type="hidden"]').forEach(input => {
-        logPayload.data[input.id.replace('-rating-input', '')] = parseInt(input.value);
+        const metricKey = input.id.replace('-rating-input', '');
+        const metricValue = parseInt(input.value);
+        logPayload.data[metricKey] = metricValue;
+        logPayload.data[`${metricKey}Description`] = getMetricDescription(metricKey, metricValue);
     });
 
     let hasDataToSave = !!logPayload.data.note ||
