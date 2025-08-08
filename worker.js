@@ -1,4 +1,31 @@
-const trackerInfoTextsPromise = import('./data/trackerInfoTexts.json', { assert: { type: 'json' } });
+// Кеширане на информацията за тракерите с TTL
+export const TRACKER_INFO_TEXTS_TTL_MS = 60000;
+let trackerInfoTextsCache;
+let trackerInfoTextsCacheTime = 0;
+
+// Отделен loader за по-лесно подменяне в тестовете
+export const trackerInfoLoader = {
+  async load() {
+    const { default: data } = await import('./data/trackerInfoTexts.json', { assert: { type: 'json' } });
+    return data;
+  }
+};
+
+export async function getTrackerInfoTexts() {
+  const now = Date.now();
+  if (trackerInfoTextsCache && now - trackerInfoTextsCacheTime < TRACKER_INFO_TEXTS_TTL_MS) {
+    return trackerInfoTextsCache;
+  }
+  trackerInfoTextsCache = await trackerInfoLoader.load();
+  trackerInfoTextsCacheTime = now;
+  return trackerInfoTextsCache;
+}
+
+// Нулиране за тестове
+export function __clearTrackerInfoTextsCache() {
+  trackerInfoTextsCache = undefined;
+  trackerInfoTextsCacheTime = 0;
+}
 
 // Cloudflare Worker Script (index.js) - Версия 2.3
 // Добавен е режим за дебъг чрез HTTP заглавие `X-Debug: 1`
@@ -1135,7 +1162,7 @@ async function handleDashboardDataRequest(request, env) {
 // ------------- START FUNCTION: handleLogRequest -------------
 async function handleLogRequest(request, env) {
     try {
-        const { default: trackerInfoTexts } = await trackerInfoTextsPromise;
+        const trackerInfoTexts = await getTrackerInfoTexts();
         const inputData = await request.json();
         const userId = inputData.userId;
         if (!userId) {

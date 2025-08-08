@@ -93,4 +93,26 @@ describe('daily log', () => {
     const invalidKey = Object.keys(store).find(k => k.startsWith('u1_invalid_rating_log_'));
     expect(invalidKey).toBeTruthy();
   });
+
+  test('кешира trackerInfoTexts с TTL', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(0);
+    const mod = await import('../../worker.js');
+    mod.__clearTrackerInfoTextsCache();
+    const spy = jest.spyOn(mod.trackerInfoLoader, 'load')
+      .mockResolvedValueOnce({ a: 1 })
+      .mockResolvedValueOnce({ a: 2 });
+
+    const first = await mod.getTrackerInfoTexts();
+    const second = await mod.getTrackerInfoTexts();
+    expect(first).toBe(second);
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    jest.advanceTimersByTime(mod.TRACKER_INFO_TEXTS_TTL_MS + 1);
+    const third = await mod.getTrackerInfoTexts();
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(third).toEqual({ a: 2 });
+    expect(third).not.toBe(first);
+    jest.useRealTimers();
+  });
 });
