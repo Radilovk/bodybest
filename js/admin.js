@@ -8,7 +8,6 @@ import { loadMaintenanceFlag, setMaintenanceFlag } from './maintenanceMode.js';
 import { renderTemplate } from '../utils/templateRenderer.js';
 import { ensureChart } from './chartLoader.js';
 import { setupPlanRegeneration } from './planRegenerator.js';
-import { setCurrentUserId as setAppCurrentUserId } from './app.js';
 
 let activeUserId = null;
 let activeClientName = null;
@@ -247,7 +246,6 @@ let weightChart = null;
 let currentUserId = null;
 function setCurrentUserId(val) {
     currentUserId = val;
-    setAppCurrentUserId(val);
 }
 setupPlanRegeneration({
     regenBtn,
