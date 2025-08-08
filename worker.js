@@ -1026,24 +1026,40 @@ async function handleDashboardDataRequest(request, env) {
         const profile = safeParseJson(profileStr, {});
         
         const logsList = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
-        const sortedLogKeys = logsList.keys
-            .map(k => k.name)
-            .sort((a, b) => new Date(b.split('_log_')[1]) - new Date(a.split('_log_')[1]))
-            .slice(0, USER_ACTIVITY_LOG_LIST_LIMIT);
-        const logRecords = await Promise.all(
-            sortedLogKeys.map(name => env.USER_METADATA_KV.get(name).then(str => ({ name, str })))
-        );
-        let logEntries = logRecords.map(({ name, str }) => {
-            if (!str) return null;
-            const parsed = safeParseJson(str, {});
-            const date = name.split('_log_')[1];
-            return {
-                date,
-                data: parsed.log || parsed.data || {},
-                totals: parsed.totals || null,
-                extraMeals: parsed.extraMeals || []
-            };
-        }).filter(entry => entry !== null && entry.data && Object.keys(entry.data).length > 0);
+        let logEntries = [];
+        if (logsList.keys.length > 0) {
+            const sortedLogKeys = logsList.keys
+                .map(k => k.name)
+                .sort((a, b) => new Date(b.split('_log_')[1]) - new Date(a.split('_log_')[1]))
+                .slice(0, USER_ACTIVITY_LOG_LIST_LIMIT);
+            const logRecords = await Promise.all(
+                sortedLogKeys.map(name => env.USER_METADATA_KV.get(name).then(str => ({ name, str })))
+            );
+            logEntries = logRecords.map(({ name, str }) => {
+                if (!str) return null;
+                const parsed = safeParseJson(str, {});
+                const date = name.split('_log_')[1];
+                return {
+                    date,
+                    data: parsed.log || parsed.data || {},
+                    totals: parsed.totals || null,
+                    extraMeals: parsed.extraMeals || []
+                };
+            }).filter(entry => entry !== null && entry.data && Object.keys(entry.data).length > 0);
+        } else {
+            const allLogsStr = await env.USER_METADATA_KV.get(`${userId}_logs`);
+            const allLogs = safeParseJson(allLogsStr, []);
+            if (Array.isArray(allLogs)) {
+                logEntries = allLogs.map(l => ({
+                    date: l.date,
+                    data: l.data || l.log || {},
+                    totals: l.totals || null,
+                    extraMeals: l.extraMeals || []
+                })).filter(e => e.date && e.data && Object.keys(e.data).length > 0)
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, USER_ACTIVITY_LOG_LIST_LIMIT);
+            }
+        }
 
         let isFirstLoginWithReadyPlan = false;
         if (actualPlanStatus === 'ready' && !firstLoginFlagStr) {
@@ -3866,6 +3882,15 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
 
     const safePFloat = safeParseFloat;
     const safeGetL = safeGet; // Using the improved safeGet
+
+    logEntries = Array.isArray(logEntries)
+        ? logEntries.map(entry => ({
+            date: entry.date,
+            data: entry.data || entry.log || {},
+            totals: entry.totals || null,
+            extraMeals: entry.extraMeals || []
+        }))
+        : [];
 
     const getAvgLog = (logKey, defaultValue, logs, lookbackDays) => {
         let sum = 0;
