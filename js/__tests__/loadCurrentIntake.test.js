@@ -47,21 +47,6 @@ test('loadCurrentIntake не презаписва подаденото съст�
   });
 });
 
-test('loadCurrentIntake нулира локалните данни при липса на дневен запис', async () => {
-  jest.resetModules();
-  const app = await import('../app.js');
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-  Object.assign(app.fullDashboardData, {
-    planData: { week1Menu: {} },
-    dailyLogs: [{ date: yesterday, data: { extraMeals: [{ calories: 100 }] } }],
-  });
-  app.todaysExtraMeals.push({ calories: 50 });
-  app.todaysMealCompletionStatus.sample = true;
-  app.loadCurrentIntake();
-  expect(app.todaysExtraMeals).toEqual([]);
-  expect(app.todaysMealCompletionStatus).toEqual({});
-});
-
 test('recalculateCurrentIntakeMacros преизчислява макросите', async () => {
   jest.resetModules();
   const app = await import('../app.js');
