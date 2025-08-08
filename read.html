@@ -16,13 +16,7 @@
             --success-color: #22c55e;
             --error-color: #ef4444;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
@@ -32,229 +26,44 @@
             padding: 1rem;
             min-height: 100vh;
         }
-
-        .container {
-            width: 100%;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        h1 {
-            text-align: center;
-            color: white;
-            font-size: 1.75rem;
-        }
-
-        .card {
-            background-color: var(--surface-color);
-            padding: 1.5rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-
-        .textarea-container {
-            position: relative;
-        }
-
-        .textarea-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-            color: var(--text-muted-color);
-        }
-
-        #char-count {
-            font-weight: 500;
-        }
-
-        #text-input {
-            width: 100%;
-            height: 25vh;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1rem;
-            font-size: 1rem;
-            line-height: 1.6;
-            resize: vertical;
-        }
-
-        #clear-text-btn {
-            position: absolute;
-            top: 2.7rem;
-            right: 0.75rem;
-            background: none;
-            border: none;
-            color: var(--text-muted-color);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.25rem;
-        }
-        #clear-text-btn:hover {
-            color: white;
-        }
-
-        .file-actions {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .settings-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.25rem;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .control-group label {
-            font-weight: 600;
-        }
-
-        select, input[type="range"], .radio-group {
-            width: 100%;
-            padding: 0.75rem;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-
-        .radio-group {
-            display: flex;
-            justify-content: space-around;
-            padding: 0.5rem;
-        }
-        
-        .radio-group label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-        }
-
-        button {
-            padding: 0.85rem 1rem;
-            font-size: 1rem;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
+        .container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 1.5rem; }
+        h1 { text-align: center; color: white; font-size: 1.75rem; }
+        .card { background-color: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); }
+        .textarea-container { position: relative; }
+        .textarea-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-muted-color); }
+        #char-count { font-weight: 500; }
+        #text-input { width: 100%; height: 25vh; background-color: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; font-size: 1rem; line-height: 1.6; resize: vertical; }
+        #clear-text-btn { position: absolute; top: 2.7rem; right: 0.75rem; background: none; border: none; color: var(--text-muted-color); font-size: 1.5rem; cursor: pointer; padding: 0.25rem; }
+        #clear-text-btn:hover { color: white; }
+        .file-actions { display: flex; gap: 1rem; }
+        .settings-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+        .control-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .control-group label { font-weight: 600; }
+        select, input[type="range"], .radio-group { width: 100%; padding: 0.75rem; background-color: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; }
+        .radio-group { display: flex; justify-content: space-around; padding: 0.5rem; }
+        .radio-group label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+        button { padding: 0.85rem 1rem; font-size: 1rem; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; flex-grow: 1; display: flex; justify-content: center; align-items: center; gap: 0.5rem; }
+        .btn-primary { background-color: var(--primary-color); color: white; }
         .btn-primary:hover:not(:disabled) { background-color: var(--primary-hover-color); }
-
-        .btn-secondary {
-            background-color: var(--surface-color);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-        }
+        .btn-secondary { background-color: var(--surface-color); color: var(--text-color); border: 1px solid var(--border-color); }
         .btn-secondary:hover:not(:disabled) { background-color: #404040; }
-
         .btn-download { background-color: var(--success-color); color: white; }
         .btn-download:hover:not(:disabled) { background-color: #16a34a; }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        #player-controls {
-            display: none; /* Hidden by default */
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-        
-        .progress-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            width: 100%;
-        }
-        
-        #progress-bar {
-            flex-grow: 1;
-            padding: 0;
-            height: 8px;
-            -webkit-appearance: none;
-            appearance: none;
-            background: var(--border-color);
-            border-radius: 4px;
-            outline: none;
-        }
-
-        #progress-bar::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            background: var(--primary-color);
-            border-radius: 50%;
-            cursor: pointer;
-        }
-        
-        .time-display {
-            font-family: monospace;
-            font-size: 0.9rem;
-            color: var(--text-muted-color);
-        }
-        
-        .player-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-        }
-
-        #status {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            min-height: 24px;
-            text-align: center;
-            color: var(--text-muted-color);
-        }
-
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.2);
-            border-top-color: var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            display: none; /* Hidden by default */
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #player-controls { display: none; flex-direction: column; gap: 0.75rem; }
+        .progress-container { display: flex; align-items: center; gap: 1rem; width: 100%; }
+        #progress-bar { flex-grow: 1; padding: 0; height: 8px; -webkit-appearance: none; appearance: none; background: var(--border-color); border-radius: 4px; outline: none; }
+        #progress-bar::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: var(--primary-color); border-radius: 50%; cursor: pointer; }
+        .time-display { font-family: monospace; font-size: 0.9rem; color: var(--text-muted-color); }
+        .player-buttons { display: flex; justify-content: center; gap: 1rem; }
+        #status { display: flex; align-items: center; justify-content: center; gap: 0.75rem; min-height: 24px; text-align: center; color: var(--text-muted-color); }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.2); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-
     <div class="container">
         <h1>Текст към Говор</h1>
-
         <div class="card">
             <div class="textarea-container">
                 <div class="textarea-header">
@@ -265,13 +74,11 @@
                 <button id="clear-text-btn" title="Изчисти текста">×</button>
             </div>
         </div>
-
         <div class="file-actions">
             <button id="import-btn" class="btn-secondary">Импорт на .txt файл</button>
             <input type="file" id="file-input" accept=".txt" hidden>
             <button id="download-btn" class="btn-download" style="display: none;">Изтегли .mp3</button>
         </div>
-
         <div class="card">
             <div class="settings-grid">
                 <div class="control-group">
@@ -281,7 +88,6 @@
                         <option value="Daria">Дария (Женски)</option>
                     </select>
                 </div>
-
                 <div class="control-group">
                     <label>Качество на гласа</label>
                     <div class="radio-group" id="engine-select">
@@ -289,16 +95,13 @@
                        <label><input type="radio" name="engine" value="neural"> Невронен</label>
                     </div>
                 </div>
-
                 <div class="control-group">
                     <label for="speed-control">Скорост: <span id="speed-value">1.0</span>x</label>
                     <input type="range" id="speed-control" min="0.5" max="2.0" step="0.1" value="1.0">
                 </div>
             </div>
         </div>
-        
         <button id="play-btn" class="btn-primary">Чети</button>
-
         <div class="card" id="player-controls">
              <div class="progress-container">
                 <span id="current-time" class="time-display">00:00</span>
@@ -310,240 +113,65 @@
                 <button id="stop-btn" class="btn-secondary">Стоп</button>
             </div>
         </div>
-
         <div id="status">
             <div class="spinner"></div>
             <span id="status-message">Готово за работа.</span>
         </div>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- ЕЛЕМЕНТИ ---
-            const textInput = document.getElementById('text-input');
-            const charCount = document.getElementById('char-count');
-            const clearTextBtn = document.getElementById('clear-text-btn');
-            const importBtn = document.getElementById('import-btn');
-            const fileInput = document.getElementById('file-input');
-            const downloadBtn = document.getElementById('download-btn');
-            const voiceSelect = document.getElementById('voice-select');
-            const engineSelect = document.getElementById('engine-select');
-            const speedControl = document.getElementById('speed-control');
-            const speedValue = document.getElementById('speed-value');
-            const playBtn = document.getElementById('play-btn');
-            const playerControls = document.getElementById('player-controls');
-            const progressBar = document.getElementById('progress-bar');
-            const currentTimeDisplay = document.getElementById('current-time');
-            const totalTimeDisplay = document.getElementById('total-time');
-            const pauseBtn = document.getElementById('pause-btn');
-            const stopBtn = document.getElementById('stop-btn');
-            const statusSpinner = document.querySelector('#status .spinner');
-            const statusMessage = document.getElementById('status-message');
-
-            // --- КОНФИГУРАЦИЯ ---
+            const textInput = document.getElementById('text-input'), charCount = document.getElementById('char-count'), clearTextBtn = document.getElementById('clear-text-btn'), importBtn = document.getElementById('import-btn'), fileInput = document.getElementById('file-input'), downloadBtn = document.getElementById('download-btn'), voiceSelect = document.getElementById('voice-select'), engineSelect = document.getElementById('engine-select'), speedControl = document.getElementById('speed-control'), speedValue = document.getElementById('speed-value'), playBtn = document.getElementById('play-btn'), playerControls = document.getElementById('player-controls'), progressBar = document.getElementById('progress-bar'), currentTimeDisplay = document.getElementById('current-time'), totalTimeDisplay = document.getElementById('total-time'), pauseBtn = document.getElementById('pause-btn'), stopBtn = document.getElementById('stop-btn'), statusSpinner = document.querySelector('#status .spinner'), statusMessage = document.getElementById('status-message');
             const WORKER_URL = "https://read.radilov-k.workers.dev";
-
-            // --- СЪСТОЯНИЕ ---
-            let audio = null;
-            let generatedAudioBlob = null;
-            let generatedAudioUrl = null;
-            let isDraggingProgressBar = false;
-
-            // --- ПОМОЩНИ ФУНКЦИИ ---
-            const setStatus = (message, isLoading = false) => {
-                statusMessage.textContent = message;
-                statusSpinner.style.display = isLoading ? 'block' : 'none';
-            };
-
-            const formatTime = (seconds) => {
-                const minutes = Math.floor(seconds / 60);
-                const secs = Math.floor(seconds % 60);
-                return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-            };
-            
-            const cleanupAudio = () => {
-                if (audio) {
-                    audio.pause();
-                    audio = null;
-                }
-                if (generatedAudioUrl) {
-                    URL.revokeObjectURL(generatedAudioUrl);
-                    generatedAudioUrl = null;
-                }
-                generatedAudioBlob = null;
-                playerControls.style.display = 'none';
-                downloadBtn.style.display = 'none';
-                playBtn.disabled = false;
-            };
-
-            // --- ЛОГИКА ЗА ЗАПАЗВАНЕ/ЗАРЕЖДАНЕ ---
-            const saveSettings = () => {
-                localStorage.setItem('tts_text', textInput.value);
-                localStorage.setItem('tts_voice', voiceSelect.value);
-                localStorage.setItem('tts_engine', document.querySelector('input[name="engine"]:checked').value);
-                localStorage.setItem('tts_speed', speedControl.value);
-            };
-
-            const loadSettings = () => {
-                textInput.value = localStorage.getItem('tts_text') || '';
-                voiceSelect.value = localStorage.getItem('tts_voice') || 'Borislav';
-                const savedEngine = localStorage.getItem('tts_engine') || 'standard';
-                document.querySelector(`input[name="engine"][value="${savedEngine}"]`).checked = true;
-                speedControl.value = localStorage.getItem('tts_speed') || '1.0';
-                
-                speedValue.textContent = parseFloat(speedControl.value).toFixed(1);
-                charCount.textContent = `${textInput.value.length} символа`;
-            };
-
-            // --- ОСНОВНА ЛОГИКА ---
+            let audio = null, generatedAudioBlob = null, generatedAudioUrl = null, isDraggingProgressBar = false;
+            const setStatus = (message, isLoading = false) => { statusMessage.textContent = message; statusSpinner.style.display = isLoading ? 'block' : 'none'; };
+            const formatTime = (seconds) => { const minutes = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`; };
+            const cleanupAudio = () => { if (audio) { audio.pause(); audio = null; } if (generatedAudioUrl) { URL.revokeObjectURL(generatedAudioUrl); generatedAudioUrl = null; } generatedAudioBlob = null; playerControls.style.display = 'none'; downloadBtn.style.display = 'none'; playBtn.disabled = false; };
+            const saveSettings = () => { localStorage.setItem('tts_text', textInput.value); localStorage.setItem('tts_voice', voiceSelect.value); localStorage.setItem('tts_engine', document.querySelector('input[name="engine"]:checked').value); localStorage.setItem('tts_speed', speedControl.value); };
+            const loadSettings = () => { textInput.value = localStorage.getItem('tts_text') || ''; voiceSelect.value = localStorage.getItem('tts_voice') || 'Borislav'; const savedEngine = localStorage.getItem('tts_engine') || 'standard'; document.querySelector(`input[name="engine"][value="${savedEngine}"]`).checked = true; speedControl.value = localStorage.getItem('tts_speed') || '1.0'; speedValue.textContent = parseFloat(speedControl.value).toFixed(1); charCount.textContent = `${textInput.value.length} символа`; };
             playBtn.addEventListener('click', async () => {
                 const text = textInput.value.trim();
-                if (!text) {
-                    setStatus('Моля, въведете текст.', false);
-                    return;
-                }
-                
+                if (!text) { setStatus('Моля, въведете текст.', false); return; }
                 cleanupAudio();
                 setStatus('Свързване със сървъра...', true);
                 playBtn.disabled = true;
-
                 try {
                     const response = await fetch(WORKER_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             text: text,
-                            voice: {
-                                name: voiceSelect.value,
-                                language: 'bg-BG',
-                                engine: document.querySelector('input[name="engine"]:checked').value,
-                            },
+                            voice: { name: voiceSelect.value, language: 'bg-BG', engine: document.querySelector('input[name="engine"]:checked').value },
                             format: 'mp3',
                             speed: parseFloat(speedControl.value)
                         })
                     });
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(`Грешка от сървъра: ${errorText || response.statusText}`);
-                    }
-                    
+                    if (!response.ok) { const errorText = await response.text(); throw new Error(`Грешка: ${errorText}`); }
                     setStatus('Изтегляне на аудиото...', true);
                     generatedAudioBlob = await response.blob();
                     generatedAudioUrl = URL.createObjectURL(generatedAudioBlob);
-
                     audio = new Audio(generatedAudioUrl);
-                    
-                    audio.addEventListener('loadedmetadata', () => {
-                        progressBar.max = audio.duration;
-                        totalTimeDisplay.textContent = formatTime(audio.duration);
-                        playerControls.style.display = 'flex';
-                        downloadBtn.style.display = 'flex';
-                        setStatus('Готово за просвирване.', false);
-                        audio.play();
-                    });
-
-                    audio.addEventListener('timeupdate', () => {
-                        if (!isDraggingProgressBar) {
-                            progressBar.value = audio.currentTime;
-                            currentTimeDisplay.textContent = formatTime(audio.currentTime);
-                        }
-                    });
-
-                    audio.addEventListener('play', () => {
-                        pauseBtn.textContent = 'Пауза';
-                    });
-                    
-                    audio.addEventListener('pause', () => {
-                        pauseBtn.textContent = 'Продължи';
-                    });
-
-                    audio.addEventListener('ended', () => {
-                        setStatus('Готово.', false);
-                        playBtn.disabled = false;
-                        pauseBtn.textContent = 'Пауза';
-                        progressBar.value = 0;
-                        currentTimeDisplay.textContent = '00:00';
-                    });
-
-                    audio.addEventListener('error', () => {
-                        setStatus('Грешка при зареждане на аудиото.', false);
-                        cleanupAudio();
-                    });
-
-                } catch (error) {
-                    setStatus(error.message, false);
-                    cleanupAudio();
-                }
+                    audio.addEventListener('loadedmetadata', () => { progressBar.max = audio.duration; totalTimeDisplay.textContent = formatTime(audio.duration); playerControls.style.display = 'flex'; downloadBtn.style.display = 'flex'; setStatus('Готово за просвирване.', false); audio.play(); });
+                    audio.addEventListener('timeupdate', () => { if (!isDraggingProgressBar) { progressBar.value = audio.currentTime; currentTimeDisplay.textContent = formatTime(audio.currentTime); } });
+                    audio.addEventListener('play', () => { pauseBtn.textContent = 'Пауза'; });
+                    audio.addEventListener('pause', () => { pauseBtn.textContent = 'Продължи'; });
+                    audio.addEventListener('ended', () => { setStatus('Готово.', false); playBtn.disabled = false; pauseBtn.textContent = 'Пауза'; progressBar.value = 0; currentTimeDisplay.textContent = '00:00'; });
+                    audio.addEventListener('error', () => { setStatus('Грешка при зареждане на аудиото.', false); cleanupAudio(); });
+                } catch (error) { setStatus(error.message, false); cleanupAudio(); }
             });
-
-            // --- УПРАВЛЕНИЕ НА ПЛЕЪРА И ФАЙЛОВЕ ---
-            pauseBtn.addEventListener('click', () => {
-                if (audio) {
-                    audio.paused ? audio.play() : audio.pause();
-                }
-            });
-
-            stopBtn.addEventListener('click', () => {
-                setStatus('Спряно.', false);
-                cleanupAudio();
-            });
-
-            progressBar.addEventListener('input', () => {
-                currentTimeDisplay.textContent = formatTime(progressBar.value);
-            });
-            
-            progressBar.addEventListener('change', () => {
-                if(audio) audio.currentTime = progressBar.value;
-            });
-            
+            pauseBtn.addEventListener('click', () => { if (audio) { audio.paused ? audio.play() : audio.pause(); } });
+            stopBtn.addEventListener('click', () => { setStatus('Спряно.', false); cleanupAudio(); });
+            progressBar.addEventListener('input', () => { currentTimeDisplay.textContent = formatTime(progressBar.value); });
+            progressBar.addEventListener('change', () => { if(audio) audio.currentTime = progressBar.value; });
             progressBar.addEventListener('mousedown', () => { isDraggingProgressBar = true; });
             progressBar.addEventListener('mouseup', () => { isDraggingProgressBar = false; });
-
-
-            downloadBtn.addEventListener('click', () => {
-                if (generatedAudioUrl) {
-                    const a = document.createElement('a');
-                    a.href = generatedAudioUrl;
-                    a.download = `speechify_audio_${Date.now()}.mp3`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                }
-            });
-            
+            downloadBtn.addEventListener('click', () => { if (generatedAudioUrl) { const a = document.createElement('a'); a.href = generatedAudioUrl; a.download = `speechify_audio_${Date.now()}.mp3`; document.body.appendChild(a); a.click(); document.body.removeChild(a); } });
             importBtn.addEventListener('click', () => fileInput.click());
-            
-            fileInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        textInput.value = e.target.result;
-                        textInput.dispatchEvent(new Event('input')); // За да се обнови брояча и localStorage
-                    };
-                    reader.readAsText(file);
-                }
-            });
-
-            clearTextBtn.addEventListener('click', () => {
-                textInput.value = '';
-                textInput.dispatchEvent(new Event('input'));
-            });
-
-            textInput.addEventListener('input', () => {
-                charCount.textContent = `${textInput.value.length} символа`;
-                saveSettings();
-            });
-            
+            fileInput.addEventListener('change', (event) => { const file = event.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = (e) => { textInput.value = e.target.result; textInput.dispatchEvent(new Event('input')); }; reader.readAsText(file); } });
+            clearTextBtn.addEventListener('click', () => { textInput.value = ''; textInput.dispatchEvent(new Event('input')); });
+            textInput.addEventListener('input', () => { charCount.textContent = `${textInput.value.length} символа`; saveSettings(); });
             voiceSelect.addEventListener('change', saveSettings);
             engineSelect.addEventListener('change', saveSettings);
-            speedControl.addEventListener('input', () => {
-                speedValue.textContent = parseFloat(speedControl.value).toFixed(1);
-                saveSettings();
-            });
-
-            // --- ПЪРВОНАЧАЛНО ЗАРЕЖДАНЕ ---
+            speedControl.addEventListener('input', () => { speedValue.textContent = parseFloat(speedControl.value).toFixed(1); saveSettings(); });
             loadSettings();
         });
     </script>
