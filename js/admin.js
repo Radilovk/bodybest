@@ -11,6 +11,7 @@ import { ensureChart } from './chartLoader.js';
 import { setupPlanRegeneration } from './planRegenerator.js';
 import { initializeSelectors } from './uiElements.js';
 import { setupStaticEventListeners } from './eventListeners.js';
+import { setCurrentUserId as setAppCurrentUserId } from './app.js';
 
 let activeUserId = null;
 let activeClientName = null;
@@ -249,6 +250,7 @@ let weightChart = null;
 let currentUserId = null;
 function setCurrentUserId(val) {
     currentUserId = val;
+    setAppCurrentUserId(val);
 }
 setupPlanRegeneration({
     regenBtn,
@@ -1005,7 +1007,7 @@ if (closeProfileBtn) {
         sessionStorage.removeItem('activeTabId');
         if (adminProfileContainer) adminProfileContainer.innerHTML = '';
         history.replaceState(null, '', originalSearch);
-        currentUserId = null;
+        setCurrentUserId(null);
     });
 }
 
@@ -1110,7 +1112,7 @@ async function showClient(userId) {
 
         let hasError = false;
         if (profileResp.ok && data.success) {
-            currentUserId = userId;
+            setCurrentUserId(userId);
             detailsSection.classList.remove('hidden');
             resetTabs();
             openDetailsSections();
