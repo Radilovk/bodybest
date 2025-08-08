@@ -304,7 +304,7 @@ function populateDashboardDetailedAnalytics(analyticsData) {
 
             if (!isNaN(metric.currentValueNumeric)) {
                 const value = Number(metric.currentValueNumeric);
-                const percent = value <= 5 ? ((value - 1) / 4) * 100 : Math.max(0, Math.min(100, value));
+                const percent = value <= 5 ? value * 20 : Math.max(0, Math.min(100, value));
                 progress.setAttribute('aria-valuenow', `${Math.round(percent)}`);
                 applyProgressFill(fill, percent);
             }

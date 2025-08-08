@@ -3913,9 +3913,9 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
 
     const score1To5ToPercentage = (value, invert = false) => {
         const numValue = Number(value) || 0;
-        // Scale 1-5 to 0-100: (value - 1) * 25
-        // (1-1)*25=0, (2-1)*25=25, (3-1)*25=50, (4-1)*25=75, (5-1)*25=100
-        const score = Math.max(0, Math.min(100, (numValue - 1) * 25));
+        // Scale 1-5 to 0-100: value * 20
+        // 1→20, 2→40, 3→60, 4→80, 5→100
+        const score = Math.max(0, Math.min(100, numValue * 20));
         const finalScore = invert ? 100 - score : score;
         return Math.round(finalScore);
     };
