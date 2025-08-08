@@ -298,6 +298,7 @@ const PRINCIPLE_UPDATE_INTERVAL_DAYS = 7; // За ръчна актуализа�
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS = 10;
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS = 7;
 const RECENT_CHAT_MESSAGES_FOR_PRINCIPLES = 10;
+const MAX_DAILY_LOG_DAYS = 100;
 
 const AUTOMATED_FEEDBACK_TRIGGER_DAYS = 3; // След толкова дни предлагаме автоматичен чат
 const PRAISE_INTERVAL_DAYS = 3; // Интервал за нова похвала/значка
@@ -1024,32 +1025,29 @@ async function handleDashboardDataRequest(request, env) {
         const currentStatus = safeParseJson(currentStatusStr, {});
         const profile = safeParseJson(profileStr, {});
         
-        const logKeys = [];
-        const today = new Date();
-        for (let i = 0; i < USER_ACTIVITY_LOG_LOOKBACK_DAYS; i++) {
-            const date = new Date(today); date.setDate(today.getDate() - i);
-            logKeys.push(`${userId}_log_${date.toISOString().split('T')[0]}`);
-        }
-        const logStrings = await Promise.all(logKeys.map(key => env.USER_METADATA_KV.get(key)));
+        const logsList = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
+        const logKeys = logsList.keys
+            .map(k => k.name)
+            .sort((a, b) => new Date(a.split('_log_')[1]) - new Date(b.split('_log_')[1]));
+        const recentKeys = logKeys.slice(-USER_ACTIVITY_LOG_LOOKBACK_DAYS);
+        const logStrings = await Promise.all(recentKeys.map(key => env.USER_METADATA_KV.get(key)));
         let logEntries = logStrings.map((logStr, i) => {
             if (!logStr) return null;
-            const date = new Date(today);
-            date.setDate(today.getDate() - i);
+            const key = recentKeys[i];
+            const date = key.split('_log_')[1];
             const parsed = safeParseJson(logStr, {});
+            const data = parsed.log || parsed.data || parsed;
             const entry = {
-                date: date.toISOString().split('T')[0],
-                data: parsed.data ? parsed.data : parsed
+                date,
+                data,
+                totals: parsed.totals,
+                extraMeals: parsed.extraMeals
             };
-            if (parsed.weight !== undefined) entry.weight = parsed.weight;
+            if (data && data.weight !== undefined) entry.weight = data.weight;
             return entry;
-        }).filter(entry => entry !== null && entry.data && Object.keys(entry.data).length > 0);
+        }).filter(entry => entry && entry.data && Object.keys(entry.data).length > 0);
 
-        logEntries.forEach(entry => {
-            if (entry.data.weight === undefined && entry.weight !== undefined) {
-                entry.data.weight = entry.weight;
-            }
-        });
-
+        // Сортираме от най-новите към най-старите
         logEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         let isFirstLoginWithReadyPlan = false;
@@ -1133,16 +1131,16 @@ async function handleLogRequest(request, env) {
 
         const todayStr = new Date().toISOString().split('T')[0];
         const dateToLog = inputData.date || todayStr; // Позволява подаване на дата, иначе днешна
-        const historyKey = `${userId}_daily_summary`;
+        const logKey = `${userId}_log_${dateToLog}`;
 
-        let history = [];
-        const existingHistoryStr = await env.USER_METADATA_KV.get(historyKey);
-        if (existingHistoryStr) {
-            history = safeParseJson(existingHistoryStr, []);
+        let existingEntry = {};
+        const existingEntryStr = await env.USER_METADATA_KV.get(logKey);
+        if (existingEntryStr) {
+            existingEntry = safeParseJson(existingEntryStr, {});
         }
 
-        // Копираме всички полета от inputData.data, ако съществува
-        const log = { ...(inputData.data || {}) };
+        // Копираме всички полета от inputData.data, ако съществува, и ги слагаме под log
+        const log = { ...(existingEntry.log || {}), ...(inputData.data || {}) };
 
         // Специфично обработваме полета извън 'data', ако са подадени директно
         if (inputData.completedMealsStatus !== undefined) log.completedMealsStatus = inputData.completedMealsStatus;
@@ -1159,20 +1157,25 @@ async function handleLogRequest(request, env) {
         delete log.date;
 
         const dailyEntry = {
-            date: dateToLog,
-            totals: inputData.totals || null,
-            extraMeals: inputData.extraMeals || [],
-            log
+            totals: inputData.totals ?? existingEntry.totals ?? null,
+            extraMeals: Array.isArray(inputData.extraMeals) ? inputData.extraMeals : (existingEntry.extraMeals || []),
+            log,
+            lastUpdated: new Date().toISOString()
         };
 
-        history.push(dailyEntry);
+        await env.USER_METADATA_KV.put(logKey, JSON.stringify(dailyEntry));
 
-        const cutoff = new Date();
-        cutoff.setHours(0, 0, 0, 0);
-        cutoff.setDate(cutoff.getDate() - 100);
-        history = history.filter(d => new Date(d.date) >= cutoff);
-
-        await env.USER_METADATA_KV.put(historyKey, JSON.stringify(history));
+        // Почистваме стари записи, за да пазим само последните MAX_DAILY_LOG_DAYS
+        const listResult = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
+        const allKeys = listResult.keys
+            .map(k => k.name)
+            .sort((a, b) => new Date(a.split('_log_')[1]) - new Date(b.split('_log_')[1]));
+        if (allKeys.length > MAX_DAILY_LOG_DAYS) {
+            const keysToDelete = allKeys.slice(0, allKeys.length - MAX_DAILY_LOG_DAYS);
+            for (const k of keysToDelete) {
+                await env.USER_METADATA_KV.delete(k);
+            }
+        }
 
         // Ако е записано тегло, актуализираме и _current_status
         if (log.weight !== undefined && log.weight !== null && String(log.weight).trim() != "") {
@@ -1188,7 +1191,7 @@ async function handleLogRequest(request, env) {
            console.log(`LOG_REQUEST (${userId}): Updated current_status with weight ${log.weight}.`);
         }
 
-        console.log(`LOG_REQUEST (${userId}): Daily summary updated for date ${dateToLog}.`);
+        console.log(`LOG_REQUEST (${userId}): Daily log saved for date ${dateToLog}.`);
         return { success: true, message: 'Данните от дневника са записани успешно.', savedDate: dateToLog, savedData: log };
     } catch (error) {
         console.error("Error in handleLogRequest:", error.message, error.stack);
@@ -1279,7 +1282,15 @@ async function handleChatRequest(request, env) {
         const currW = currentStatus.weight ? `${safeParseFloat(currentStatus.weight,0).toFixed(1)} кг` : 'N/A';
         
         let recentLogsSummary = "Няма скорошни логове.";
-        const recentLogs = logStringsForChat.map((logStr, i) => { if(logStr) { const d=new Date(); d.setDate(d.getDate()-i); return {date:d.toISOString().split('T')[0], data:safeParseJson(logStr,{})};} return null;}).filter(l=>l&&l.data&&Object.keys(l.data).length>0).sort((a,b)=>new Date(b.date).getTime()-new Date(a.date).getTime());
+        const recentLogs = logStringsForChat.map((logStr, i) => {
+            if (logStr) {
+                const d = new Date(); d.setDate(d.getDate() - i);
+                const parsed = safeParseJson(logStr, {});
+                return { date: d.toISOString().split('T')[0], data: parsed.log || parsed };
+            }
+            return null;
+        }).filter(l => l && l.data && Object.keys(l.data).length > 0)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         if(recentLogs.length>0) recentLogsSummary = recentLogs.map(l=>{ const df=new Date(l.date).toLocaleDateString('bg-BG',{day:'2-digit',month:'short'}); const m=l.data.mood?`Настр:${l.data.mood}/5`:''; const e=l.data.energy?`Енерг:${l.data.energy}/5`:''; const s=l.data.sleep?`Сън:${l.data.sleep}/5`:''; const n=l.data.note?`Бел:"${l.data.note.substring(0,20)}..."`:''; const c=l.data.completedMealsStatus?`${Object.values(l.data.completedMealsStatus).filter(v=>v===true).length} изп. хран.`:''; return `${df}: ${[m,e,s,c,n].filter(Boolean).join('; ')}`;}).join('\n');
         
         const historyPrompt = storedChatHistory.slice(-10).map(e=>`${e.role==='model'?'АСИСТЕНТ':'ПОТРЕБИТЕЛ'}: ${e.parts?.[0]?.text||''}`).join('\n');
@@ -1788,7 +1799,11 @@ async function handleGeneratePraiseRequest(request, env) {
         }
         const logStrings = await Promise.all(logKeys.map(k => env.USER_METADATA_KV.get(k)));
         const logs = logStrings.map((ls, idx) => {
-            if (ls) { const d = new Date(today); d.setDate(today.getDate() - idx); return { date: d.toISOString().split('T')[0], data: safeParseJson(ls, {}) }; }
+            if (ls) {
+                const d = new Date(today); d.setDate(today.getDate() - idx);
+                const parsed = safeParseJson(ls, {});
+                return { date: d.toISOString().split('T')[0], data: parsed.log || parsed };
+            }
             return null;
         }).filter(Boolean);
 
@@ -1799,7 +1814,11 @@ async function handleGeneratePraiseRequest(request, env) {
         }
         const analyticsLogStrings = await Promise.all(analyticsLogKeys.map(k => env.USER_METADATA_KV.get(k)));
         const analyticsLogs = analyticsLogStrings.map((ls, idx) => {
-            if (ls) { const d = new Date(today); d.setDate(today.getDate() - idx); return { date: d.toISOString().split('T')[0], data: safeParseJson(ls, {}) }; }
+            if (ls) {
+                const d = new Date(today); d.setDate(today.getDate() - idx);
+                const parsed = safeParseJson(ls, {});
+                return { date: d.toISOString().split('T')[0], data: parsed.log || parsed };
+            }
             return null;
         }).filter(entry => entry && Object.keys(entry.data).length > 0);
 
@@ -2053,7 +2072,11 @@ async function handleAiHelperRequest(request, env) {
         }
         const logStrings = await Promise.all(logKeys.map(k => env.USER_METADATA_KV.get(k)));
         const logs = logStrings.map((s, idx) => {
-            if (s) { const d = new Date(today); d.setDate(today.getDate() - idx); return { date: d.toISOString().split('T')[0], data: safeParseJson(s, {}) }; }
+            if (s) {
+                const d = new Date(today); d.setDate(today.getDate() - idx);
+                const parsed = safeParseJson(s, {});
+                return { date: d.toISOString().split('T')[0], data: parsed.log || parsed };
+            }
             return null;
         }).filter(Boolean);
 
@@ -2786,7 +2809,7 @@ async function processSingleUserPlan(userId, env) {
             const logsList = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
             const logKeys = logsList.keys.map(k => k.name).sort();
             const logStrings = await Promise.all(logKeys.map(k => env.USER_METADATA_KV.get(k)));
-            logEntries = logStrings.map(s => safeParseJson(s, {}));
+            logEntries = logStrings.map(s => { const parsed = safeParseJson(s, {}); return parsed.log || parsed; });
         } catch (err) {
             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): неуспешно зареждане на дневници - ${err.message}`);
         }
@@ -2993,10 +3016,11 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
         let weightChangeLastWeek = "N/A";
         let weight7DaysAgo = null;
         // Търсене на тегло от преди ~7 дни (между 6-ия и 8-ия ден назад, за гъвкавост)
-        for (let i = 6; i < 9; i++) { 
+        for (let i = 6; i < 9; i++) {
             if (i < logStringsForWeightCheck.length && logStringsForWeightCheck[i]) {
-                const logD = safeParseJson(logStringsForWeightCheck[i], {});
-                const lw = safeParseFloat(logD?.weight || safeGet(logD, 'currentStatus.weight')); // Check both direct weight and nested
+                const parsedLog = safeParseJson(logStringsForWeightCheck[i], {});
+                const logD = parsedLog.log || parsedLog;
+                const lw = safeParseFloat(logD?.weight || safeGet(parsedLog, 'currentStatus.weight')); // Check both direct weight and nested
                 if (lw !== null) { weight7DaysAgo = lw; break; }
             }
         }
@@ -3008,10 +3032,11 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
         const logEntriesForAvg = [];
         for (let i = 0; i < 7; i++) { // Последните 7 дни
             if (i < logStringsForWeightCheck.length && logStringsForWeightCheck[i]) {
-                const ld = safeParseJson(logStringsForWeightCheck[i], {});
-                if(Object.keys(ld).length > 0) {
+                const parsedLd = safeParseJson(logStringsForWeightCheck[i], {});
+                const ld = parsedLd.log || parsedLd;
+                if (Object.keys(ld).length > 0) {
                     const d = new Date(); d.setDate(d.getDate() - i);
-                    logEntriesForAvg.push({ date: d.toISOString().split('T')[0] , data: ld });
+                    logEntriesForAvg.push({ date: d.toISOString().split('T')[0], data: ld });
                 }
             }
         }
@@ -3300,7 +3325,11 @@ function createUserConcernsSummary(logStrings = [], chatHistory = []) {
     for (let i = 0; i < logStrings.length; i++) {
         const logStr = logStrings[i];
         if (!logStr) continue;
-        const log = safeParseJson(logStr, {});
+        const parsed = safeParseJson(logStr, {});
+        const log = parsed.log || parsed;
+        const extrasArr = Array.isArray(parsed.extraMeals)
+            ? parsed.extraMeals
+            : Array.isArray(log.extraMeals) ? log.extraMeals : [];
         const date = new Date();
         date.setDate(date.getDate() - i);
         const dStr = date.toLocaleDateString('bg-BG', { day: '2-digit', month: 'short' });
@@ -3308,8 +3337,8 @@ function createUserConcernsSummary(logStrings = [], chatHistory = []) {
             const snippet = String(log.note).trim();
             if (snippet) notes.push(`${dStr}: \"${snippet.substring(0, 30)}${snippet.length > 30 ? '...' : ''}\"`);
         }
-        if (Array.isArray(log.extraMeals) && log.extraMeals.length > 0 && extras.length < 3) {
-            extras.push(`${dStr}: ${log.extraMeals.length}`);
+        if (extrasArr.length > 0 && extras.length < 3) {
+            extras.push(`${dStr}: ${extrasArr.length}`);
         }
     }
 
@@ -3351,7 +3380,10 @@ async function evaluatePlanChange(userId, requestData, env) {
             const d = new Date();
             d.setDate(d.getDate() - i);
             const logStr = await env.USER_METADATA_KV.get(`${userId}_log_${d.toISOString().split('T')[0]}`);
-            if (logStr) logs.push(safeParseJson(logStr, {}));
+            if (logStr) {
+                const parsed = safeParseJson(logStr, {});
+                logs.push(parsed.log || parsed);
+            }
         }
 
         let currentWeight = null;
