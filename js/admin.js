@@ -3,14 +3,11 @@ import { loadConfig, saveConfig } from './adminConfig.js';
 import { labelMap, statusMap } from './labelMap.js';
 import { fileToDataURL, fileToText, applyProgressFill } from './utils.js';
 import { loadTemplateInto } from './templateLoader.js';
-import { loadPartial } from './partialLoader.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
 import { loadMaintenanceFlag, setMaintenanceFlag } from './maintenanceMode.js';
 import { renderTemplate } from '../utils/templateRenderer.js';
 import { ensureChart } from './chartLoader.js';
 import { setupPlanRegeneration } from './planRegenerator.js';
-import { initializePlanModChatSelectors } from './uiElements.js';
-import { setupStaticEventListeners } from './eventListeners.js';
 import { setCurrentUserId as setAppCurrentUserId } from './app.js';
 
 let activeUserId = null;
@@ -41,7 +38,6 @@ const detailsSection = document.getElementById('clientDetails');
 const regenBtn = document.getElementById('regeneratePlan');
 const regenProgress = document.getElementById('regenProgress');
 const aiSummaryBtn = document.getElementById('aiSummary');
-const planModificationBtn = document.getElementById('planModificationBtn');
 const notesField = document.getElementById('adminNotes');
 const tagsField = document.getElementById('adminTags');
 const saveNotesBtn = document.getElementById('saveNotes');
@@ -114,13 +110,6 @@ const testAnalysisBtn = document.getElementById('testAnalysisModel');
 
 const modelOptionsList = document.getElementById('modelOptions');
 let availableModels = new Set(JSON.parse(localStorage.getItem('aiModelHistory') || '[]'));
-
-function togglePlanModificationBtn() {
-    if (!planModificationBtn) return;
-    const hasModal = !!document.getElementById('planModChatModal');
-    planModificationBtn.disabled = !hasModal;
-    planModificationBtn.classList.toggle('hidden', !hasModal);
-}
 
 function populateModelOptions() {
     if (!modelOptionsList) return;
@@ -1045,14 +1034,7 @@ async function showClient(userId) {
         adminProfileContainer.innerHTML = '';
         history.replaceState(null, '', `?userId=${encodeURIComponent(userId)}`);
         await loadTemplateInto('editclient.html', 'adminProfileContainer');
-        await loadPartial('planModChatModal.html', 'planModChatModalContainer');
-        try {
-            initializePlanModChatSelectors();
-            setupStaticEventListeners();
-        } catch (e) {
-            console.warn('initializePlanModChatSelectors warning', e);
-        }
-        togglePlanModificationBtn();
+        
         const mod = await import('./editClient.js');
         try {
             await mod.initEditClient(userId);
@@ -1956,7 +1938,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     generateEmailFieldsets();
     initEmailPreviews();
-    togglePlanModificationBtn();
 
     // Стартира асинхронните операции паралелно,
     // за да не блокират работата на интерфейса
