@@ -67,4 +67,30 @@ describe('daily log', () => {
     expect(stored.log.note).toBe('първи');
     expect(stored.log.weight).toBe('80');
   });
+
+  test('валидира оценки и записва описания', async () => {
+    const store = {
+      'u1_initial_answers': JSON.stringify({ name: 'U', weight: '70', height: '170', goal: 'lose' }),
+      'u1_final_plan': JSON.stringify({ caloriesMacros: { p: 1 } }),
+      'plan_status_u1': 'ready',
+      'u1_current_status': '{}',
+      'u1_profile': '{}'
+    };
+    const env = {
+      USER_METADATA_KV: {
+        get: jest.fn(async (key) => store[key] || null),
+        put: jest.fn(async (key, val) => { store[key] = val; }),
+        list: jest.fn(async ({ prefix }) => ({ keys: Object.keys(store).filter(k => k.startsWith(prefix)).map(name => ({ name })) }))
+      },
+      RESOURCES_KV: { get: jest.fn(async () => '{}') }
+    };
+    const dateStr = '2020-01-03';
+    await handleLogRequest(makeRequest({ userId: 'u1', date: dateStr, data: { mood: 4, energy: 2, sleep: 7 } }), env);
+    const stored = JSON.parse(store[`u1_log_${dateStr}`]);
+    expect(stored.log.mood).toBe('Добре/Позитивно (4)');
+    expect(stored.log.energy).toBe('По-ниска от обичайното (2)');
+    expect(stored.log.sleep).toBeUndefined();
+    const invalidKey = Object.keys(store).find(k => k.startsWith('u1_invalid_rating_log_'));
+    expect(invalidKey).toBeTruthy();
+  });
 });
