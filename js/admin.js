@@ -9,8 +9,8 @@ import { loadMaintenanceFlag, setMaintenanceFlag } from './maintenanceMode.js';
 import { renderTemplate } from '../utils/templateRenderer.js';
 import { ensureChart } from './chartLoader.js';
 import { setupPlanRegeneration } from './planRegenerator.js';
-import { openPlanModificationChat } from './planModChat.js';
 import { initializeSelectors } from './uiElements.js';
+import { setupStaticEventListeners } from './eventListeners.js';
 
 let activeUserId = null;
 let activeClientName = null;
@@ -1036,10 +1036,9 @@ async function showClient(userId) {
         history.replaceState(null, '', `?userId=${encodeURIComponent(userId)}`);
         await loadTemplateInto('editclient.html', 'adminProfileContainer');
         await loadPartial('planModChatModal.html', 'planModChatModalContainer');
-        const planModBtn = document.getElementById('planModBtn');
-        planModBtn?.addEventListener('click', () => openPlanModificationChat(userId, null, 'admin', activeClientName));
         try {
             initializeSelectors();
+            setupStaticEventListeners();
         } catch (e) {
             console.warn('initializeSelectors warning', e);
         }
