@@ -9,7 +9,7 @@ import { loadMaintenanceFlag, setMaintenanceFlag } from './maintenanceMode.js';
 import { renderTemplate } from '../utils/templateRenderer.js';
 import { ensureChart } from './chartLoader.js';
 import { setupPlanRegeneration } from './planRegenerator.js';
-import { initializeSelectors } from './uiElements.js';
+import { initializePlanModChatSelectors } from './uiElements.js';
 import { setupStaticEventListeners } from './eventListeners.js';
 import { setCurrentUserId as setAppCurrentUserId } from './app.js';
 
@@ -1047,10 +1047,10 @@ async function showClient(userId) {
         await loadTemplateInto('editclient.html', 'adminProfileContainer');
         await loadPartial('planModChatModal.html', 'planModChatModalContainer');
         try {
-            initializeSelectors();
+            initializePlanModChatSelectors();
             setupStaticEventListeners();
         } catch (e) {
-            console.warn('initializeSelectors warning', e);
+            console.warn('initializePlanModChatSelectors warning', e);
         }
         togglePlanModificationBtn();
         const mod = await import('./editClient.js');
