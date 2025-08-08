@@ -331,11 +331,7 @@ export function loadCurrentIntake(status = null, extraMeals = null) {
         if (!status || !extraMeals) {
             const todayStr = new Date().toISOString().split('T')[0];
             const todayLog = fullDashboardData?.dailyLogs?.find(l => l.date === todayStr)?.data;
-            if (!todayLog) {
-                todaysExtraMeals = [];
-                Object.keys(todaysMealCompletionStatus).forEach(k => delete todaysMealCompletionStatus[k]);
-                return;
-            }
+            if (!todayLog) return;
             const completed = todayLog.completedMealsStatus || {};
             Object.keys(todaysMealCompletionStatus).forEach(k => delete todaysMealCompletionStatus[k]);
             Object.assign(todaysMealCompletionStatus, completed);
