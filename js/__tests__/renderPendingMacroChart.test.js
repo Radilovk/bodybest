@@ -39,6 +39,7 @@ describe('renderPendingMacroChart', () => {
       currentUserId: 'u1',
       recalculateCurrentIntakeMacros: jest.fn(),
       resetAppState: jest.fn(),
+      resetDailyIntake: jest.fn(),
       updateMacrosAndAnalytics: jest.fn()
     }));
     jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn() }));
@@ -72,7 +73,7 @@ describe('renderPendingMacroChart', () => {
     renderPendingMacroChart();
     expect(ensureMacroAnalyticsElement).toHaveBeenCalledTimes(1);
     expect(card.setData).toHaveBeenCalledWith(
-      expect.objectContaining({ plan: expect.objectContaining({ protein_grams: 72 }) })
+      expect.objectContaining({ plan: expect.objectContaining({ protein_grams: macros.protein_grams }) })
     );
 
     appState.currentIntakeMacros.calories = 1500;

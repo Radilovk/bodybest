@@ -44,6 +44,8 @@ function setupMocks(selectors) {
     setChatPromptOverride: jest.fn(),
     recalculateCurrentIntakeMacros: jest.fn(),
     resetAppState: jest.fn(),
+    resetDailyIntake: jest.fn(),
+    updateMacrosAndAnalytics: jest.fn(),
     stopPlanStatusPolling: jest.fn(),
     stopAdminQueriesPolling: jest.fn()
   }));
