@@ -87,6 +87,16 @@ test('изпраща макро стойности при попълнени п�
   expect(appendExtraMealCardMock).toHaveBeenCalledWith(undefined, 'малко');
 });
 
+test('предава въведено количество без избрана опция', async () => {
+  document.body.innerHTML = `<form id="f">
+    <input id="quantityCustom" name="quantityCustom" value="200 гр">
+  </form>`;
+  const form = document.getElementById('f');
+  const e = { preventDefault: jest.fn(), target: form };
+  await handleExtraMealFormSubmit(e);
+  expect(appendExtraMealCardMock).toHaveBeenCalledWith(undefined, '200 гр');
+});
+
 test('добавя DOM елемент при успешно изпращане', async () => {
   document.body.innerHTML = `
     <ul id="dailyMealList"></ul>

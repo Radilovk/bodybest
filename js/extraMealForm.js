@@ -419,6 +419,22 @@ export async function handleExtraMealFormSubmit(event) {
 
     const dataToSend = { userId: currentUserId, timestamp: new Date().toISOString() };
 
+    let quantityDisplay = '';
+    if (selectedVisual) {
+        const radioValue = selectedVisual.value;
+        if (radioValue === 'other_quantity_describe') {
+            quantityDisplay = quantityCustomVal || 'Друго (неуточнено)';
+        } else if (radioValue === 'не_посочено_в_стъпка_2') {
+            quantityDisplay = '(описано в стъпка 1)';
+        } else {
+            const labelEl = selectedVisual.closest('.quantity-card-option')?.querySelector('.card-label');
+            quantityDisplay = labelEl ? labelEl.textContent.trim() : radioValue;
+        }
+    } else if (quantityCustomVal) {
+        quantityDisplay = quantityCustomVal;
+        dataToSend.quantityEstimate = quantityCustomVal;
+    }
+
     const numericFields = ['calories','protein','carbs','fat','fiber'];
     for (let [key, value] of formData.entries()) {
         if (key === 'quantityEstimateVisual') {
@@ -446,9 +462,11 @@ export async function handleExtraMealFormSubmit(event) {
     }
 
     if (!dataToSend.quantityCustom || dataToSend.quantityCustom.trim() === '' ||
-        (form.querySelector('input[name="quantityEstimateVisual"]:checked')?.value === 'other_quantity_describe' && dataToSend.quantityEstimate === dataToSend.quantityCustom) ) {
+        ((!selectedVisual || selectedVisual.value === 'other_quantity_describe') && dataToSend.quantityEstimate === dataToSend.quantityCustom) ) {
         delete dataToSend.quantityCustom;
     }
+
+    if (!quantityDisplay) quantityDisplay = dataToSend.quantityEstimate || '';
 
     showLoading(true, "Записване...");
     try {
@@ -468,7 +486,7 @@ export async function handleExtraMealFormSubmit(event) {
             fat: dataToSend.fat
         };
         addExtraMealWithOverride(dataToSend.foodDescription, entry);
-        appendExtraMealCard(dataToSend.foodDescription, dataToSend.quantityEstimate);
+        appendExtraMealCard(dataToSend.foodDescription, quantityDisplay);
         // Синхронизираме макросите и аналитиката
         updateMacrosAndAnalytics();
         genericCloseModal('extraMealEntryModal');
