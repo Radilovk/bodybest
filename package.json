@@ -15,7 +15,8 @@
     "coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "docs": "typedoc",
     "migrate-macros": "node scripts/migrate-final-plan-macros.js",
-    "deploy": "wrangler deploy && npm run migrate-macros"
+    "deploy": "wrangler deploy && npm run migrate-macros",
+    "sync-kv": "node scripts/sync-kv.js"
   },
   "keywords": [],
   "author": "",
