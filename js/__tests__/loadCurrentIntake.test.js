@@ -47,17 +47,27 @@ test('loadCurrentIntake не презаписва подаденото съст�
   });
 });
 
-test('loadCurrentIntake нулира локалните данни при липса на дневен запис', async () => {
+test('loadCurrentIntake запазва частично подаденото състояние', async () => {
+  jest.resetModules();
+  const app = await import('../app.js');
+  Object.assign(app.fullDashboardData, { planData: { week1Menu: {} } });
+  app.todaysMealCompletionStatus.sample = true;
+  app.todaysExtraMeals.length = 0;
+  app.todaysExtraMeals.push({ calories: 80, protein: 4, carbs: 8, fat: 2, fiber: 1 });
+  app.loadCurrentIntake(app.todaysMealCompletionStatus);
+  expect(app.todaysMealCompletionStatus).toEqual({ sample: true });
+  expect(app.todaysExtraMeals).toHaveLength(1);
+});
+
+test('loadCurrentIntake нулира локалните данни при смяна на деня', async () => {
   jest.resetModules();
   const app = await import('../app.js');
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-  Object.assign(app.fullDashboardData, {
-    planData: { week1Menu: {} },
-    dailyLogs: [{ date: yesterday, data: { extraMeals: [{ calories: 100 }] } }],
-  });
+  Object.assign(app.fullDashboardData, { planData: { week1Menu: {} } });
+  app.setLastIntakeDate(yesterday);
   app.todaysExtraMeals.push({ calories: 50 });
   app.todaysMealCompletionStatus.sample = true;
-  app.loadCurrentIntake();
+  app.loadCurrentIntake(app.todaysMealCompletionStatus, app.todaysExtraMeals);
   expect(app.todaysExtraMeals).toEqual([]);
   expect(app.todaysMealCompletionStatus).toEqual({});
 });
@@ -95,4 +105,6 @@ test('resetDailyIntake занулява стойностите при нов д�
     fat: 0,
     fiber: 0,
   });
+  const todayStr = new Date().toISOString().split('T')[0];
+  expect(app.lastIntakeDate).toBe(todayStr);
 });

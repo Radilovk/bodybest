@@ -126,12 +126,14 @@ export let todaysMealCompletionStatus = {}; // Updated by populateUI and eventLi
 export let todaysExtraMeals = []; // Extra meals logged for today
 export let todaysPlanMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }; // Cached plan macros for today
 export let currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }; // Calculated current macro intake
+export let lastIntakeDate = new Date().toISOString().split('T')[0]; // Последната дата, за която е зареден приемът
 export let activeTooltip = null; // Managed by uiHandlers via setActiveTooltip
 export let chatModelOverride = null; // Optional model override for next chat message
 export let chatPromptOverride = null; // Optional prompt override for next chat message
 
 export function setChatModelOverride(val) { chatModelOverride = val; }
 export function setChatPromptOverride(val) { chatPromptOverride = val; }
+export function setLastIntakeDate(val) { lastIntakeDate = val; }
 
 // Управление на интервал за проверка на статус на плана
 let planStatusInterval = null;
@@ -166,6 +168,7 @@ export function resetDailyIntake() {
     todaysMealCompletionStatus = {};
     todaysExtraMeals = [];
     currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+    lastIntakeDate = new Date().toISOString().split('T')[0];
 }
 
 // Функция за създаване на тестови данни
@@ -338,21 +341,32 @@ async function initializeApp() {
 // ==========================================================================
 // ЗАРЕЖДАНЕ И ОБНОВЯВАНЕ НА ДАННИ
 // ==========================================================================
+/**
+ * Зарежда текущия дневен прием на макронутриенти.
+ * - Ако има запис за днешния ден, използва данните от него.
+ * - При липса на запис нулира локалното състояние само когато не са подадени
+ *   външни стойности или е настъпила смяна на деня.
+ * Пример: при отворено приложение след полунощ старите данни се изчистват
+ * автоматично.
+ */
 export function loadCurrentIntake(status = null, extraMeals = null) {
     try {
         currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
         const todayStr = new Date().toISOString().split('T')[0];
         const todayLog = fullDashboardData?.dailyLogs?.find(l => l.date === todayStr)?.data;
+        const dayChanged = lastIntakeDate !== todayStr;
         if (todayLog) {
             const completed = todayLog.completedMealsStatus || {};
             Object.keys(todaysMealCompletionStatus).forEach(k => delete todaysMealCompletionStatus[k]);
             Object.assign(todaysMealCompletionStatus, completed);
             todaysExtraMeals = Array.isArray(todayLog.extraMeals) ? todayLog.extraMeals : [];
-        } else if (!status || !extraMeals) {
+        } else if ((!status && !extraMeals) || dayChanged) {
             todaysExtraMeals = [];
             Object.keys(todaysMealCompletionStatus).forEach(k => delete todaysMealCompletionStatus[k]);
         }
+
+        lastIntakeDate = todayStr;
 
         status = status || todaysMealCompletionStatus;
         extraMeals = extraMeals || todaysExtraMeals;
