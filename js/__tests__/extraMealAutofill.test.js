@@ -13,6 +13,12 @@ beforeEach(async () => {
     closeModal: jest.fn()
   }));
   jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
+  jest.unstable_mockModule('../macroUtils.js', () => ({
+    removeMealMacros: jest.fn(),
+    registerNutrientOverrides: jest.fn(),
+    getNutrientOverride: jest.fn(key => key === 'ябълка|x' ? { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 0 } : null),
+    loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] })
+  }));
   jest.unstable_mockModule('../populateUI.js', () => ({ addExtraMealWithOverride: jest.fn(), populateDashboardMacros: jest.fn(), renderPendingMacroChart: jest.fn(), appendExtraMealCard: jest.fn() }));
   jest.unstable_mockModule('../app.js', () => ({
     currentUserId: 'u1',
@@ -20,7 +26,8 @@ beforeEach(async () => {
     todaysMealCompletionStatus: {},
     currentIntakeMacros: {},
     fullDashboardData: { planData: { week1Menu: {}, caloriesMacros: { fiber_percent: 10, fiber_grams: 30 } } },
-    loadCurrentIntake: jest.fn()
+    loadCurrentIntake: jest.fn(),
+    updateMacrosAndAnalytics: jest.fn()
   }));
   ({ initializeExtraMealFormLogic } = await import('../extraMealForm.js'));
 });

@@ -429,8 +429,28 @@ export let fetchMacrosFromAi = async function (_foodDescription, quantity) {
         showToast('Количеството трябва да е положително число.', true);
         throw new Error('Invalid quantity');
     }
-    // TODO: Реална имплементация за извличане на макроси от AI
-    return {};
+    const name = (_foodDescription || '').toLowerCase().trim();
+    const qtyStr = String(quantity || '').toLowerCase().trim();
+    const cacheKey = `${name}|${qtyStr}`;
+    const cached = nutrientLookupCache[cacheKey] || getNutrientOverride(cacheKey);
+    if (cached) return cached;
+    try {
+        const resp = await fetch('/nutrient-lookup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ food: name, quantity })
+        });
+        if (!resp.ok) throw new Error('Nutrient lookup failed');
+        const data = await resp.json();
+        nutrientLookupCache[cacheKey] = data;
+        dynamicNutrientOverrides[cacheKey] = data;
+        registerNutrientOverrides(dynamicNutrientOverrides);
+        return data;
+    } catch (e) {
+        console.error('Nutrient lookup failed', e);
+        showToast('Неуспешно извличане на макроси', true);
+        throw e;
+    }
 };
 
 export function __setFetchMacrosFromAi(fn) {
