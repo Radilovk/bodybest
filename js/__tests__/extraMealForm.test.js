@@ -106,3 +106,69 @@ describe('extraMealForm populateSummary', () => {
     expect(summary.querySelector('[data-summary="fiber"]').textContent).toBe('5');
   });
 });
+
+describe('extraMealForm AI autofill', () => {
+  let handleExtraMealFormSubmit;
+  beforeEach(async () => {
+    jest.resetModules();
+    jest.unstable_mockModule('../uiHandlers.js', () => ({
+      showLoading: jest.fn(),
+      showToast: jest.fn(),
+      openModal: jest.fn(),
+      closeModal: jest.fn()
+    }));
+    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: { logExtraMeal: '/api' } }));
+    jest.unstable_mockModule('../macroUtils.js', () => ({
+      removeMealMacros: jest.fn(),
+      registerNutrientOverrides: jest.fn(),
+      getNutrientOverride: jest.fn(() => null),
+      loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] })
+    }));
+    jest.unstable_mockModule('../populateUI.js', () => ({
+      addExtraMealWithOverride: jest.fn(),
+      appendExtraMealCard: jest.fn()
+    }));
+    jest.unstable_mockModule('../app.js', () => ({
+      currentUserId: 'u1',
+      todaysExtraMeals: [],
+      currentIntakeMacros: {},
+      loadCurrentIntake: jest.fn(),
+      updateMacrosAndAnalytics: jest.fn()
+    }));
+    global.fetch = jest.fn((url) => {
+      if (url === '/nutrient-lookup') {
+        return Promise.resolve({ ok: true, json: async () => ({ calories: 120, protein: 11, carbs: 22, fat: 6, fiber: 4 }) });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({ success: true }) });
+    });
+    ({ handleExtraMealFormSubmit } = await import('../extraMealForm.js'));
+  });
+
+  test('запълва макро полетата чрез AI при липса на стойности', async () => {
+    document.body.innerHTML = `
+      <form id="f">
+        <input name="foodDescription" value="apple">
+        <input type="radio" name="quantityEstimateVisual" value="50g" checked>
+        <input name="calories">
+        <input name="protein">
+        <input name="carbs">
+        <input name="fat">
+        <input name="fiber">
+        <div id="extraMealSummary">
+          <span data-summary="calories"></span>
+          <span data-summary="protein"></span>
+          <span data-summary="carbs"></span>
+          <span data-summary="fat"></span>
+          <span data-summary="fiber"></span>
+        </div>
+      </form>`;
+    const form = document.getElementById('f');
+    await handleExtraMealFormSubmit({ preventDefault: jest.fn(), target: form });
+    const summary = document.getElementById('extraMealSummary');
+    expect(summary.querySelector('[data-summary="calories"]').textContent).toBe('120');
+    expect(summary.querySelector('[data-summary="protein"]').textContent).toBe('11');
+    expect(summary.querySelector('[data-summary="carbs"]').textContent).toBe('22');
+    expect(summary.querySelector('[data-summary="fat"]').textContent).toBe('6');
+    expect(summary.querySelector('[data-summary="fiber"]').textContent).toBe('4');
+  });
+});

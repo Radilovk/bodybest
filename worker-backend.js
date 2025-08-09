@@ -61,19 +61,21 @@ export default {
         return new Response('Invalid JSON', { status: 400, headers: corsHeaders });
       }
       const food = (body.food || '').trim();
+      const quantity = (body.quantity || '').trim();
       if (!food) {
         return new Response(JSON.stringify({ error: 'Missing food' }), {
           status: 400,
           headers: { 'Content-Type': 'application/json', ...corsHeaders }
         });
       }
-      const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(food));
+      const query = quantity ? `${quantity} ${food}` : food;
+      const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(query));
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       const cacheKey = `nutrient_cache_${hash}`;
       let cached = await env.USER_METADATA_KV.get(cacheKey, 'json');
       if (!cached) {
-        cached = await lookupNutrients(food, env);
+        cached = await lookupNutrients(query, env);
         await env.USER_METADATA_KV.put(cacheKey, JSON.stringify(cached), { expirationTtl: 86400 });
       }
       return new Response(JSON.stringify(cached), {
@@ -155,10 +157,10 @@ export default {
   }
 };
 
-async function lookupNutrients(food, env) {
+async function lookupNutrients(query, env) {
   if (env.NUTRITION_API_URL) {
     try {
-      const url = `${env.NUTRITION_API_URL}${encodeURIComponent(food)}`;
+      const url = `${env.NUTRITION_API_URL}${encodeURIComponent(query)}`;
       const headers = env.NUTRITION_API_KEY ? { 'X-Api-Key': env.NUTRITION_API_KEY } : {};
       const apiResp = await fetch(url, { headers });
       if (apiResp.ok) {
@@ -169,7 +171,8 @@ async function lookupNutrients(food, env) {
             calories: Number(item.calories) || 0,
             protein: Number(item.protein_g) || 0,
             carbs: Number(item.carbohydrates_total_g || item.carbs_g) || 0,
-            fat: Number(item.fat_total_g || item.fat_g) || 0
+            fat: Number(item.fat_total_g || item.fat_g) || 0,
+            fiber: Number(item.fiber_g || item.fiber) || 0
           };
         }
       }
@@ -181,8 +184,8 @@ async function lookupNutrients(food, env) {
     try {
       const cfEndpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/run/${env.MODEL}`;
       const messages = [
-        { role: 'system', content: 'Give nutrition data as JSON {calories, protein, carbs, fat} for the given food.' },
-        { role: 'user', content: food }
+        { role: 'system', content: 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food amount.' },
+        { role: 'user', content: query }
       ];
       const resp = await fetch(cfEndpoint, {
         method: 'POST',
@@ -202,14 +205,15 @@ async function lookupNutrients(food, env) {
           calories: Number(obj.calories) || 0,
           protein: Number(obj.protein) || 0,
           carbs: Number(obj.carbs) || 0,
-          fat: Number(obj.fat) || 0
+          fat: Number(obj.fat) || 0,
+          fiber: Number(obj.fiber) || 0
         };
       } catch {
-        return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+        return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
       }
     } catch (e) {
       console.error('AI nutrient lookup error', e);
     }
   }
-  return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 }
