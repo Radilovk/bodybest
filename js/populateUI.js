@@ -200,10 +200,17 @@ function populateDashboardDetailedAnalytics(analyticsData) {
         console.warn("Detailed analytics elements for dashboard not found.");
         return;
     }
-    cardsContainer.innerHTML = '';
+
+    // Запазваме макро картата, за да не се рестартира анимацията
+    Array.from(cardsContainer.children).forEach(child => {
+        if (child !== macroContainer) child.remove();
+    });
     if (macroContainer) {
         macroContainer.classList.remove('loading');
-        cardsContainer.appendChild(macroContainer);
+        if (!cardsContainer.contains(macroContainer)) {
+            cardsContainer.appendChild(macroContainer);
+        }
+        ensureMacroAnalyticsElement();
         populateDashboardMacros(todaysPlanMacros);
     }
     textualAnalysisContainer.innerHTML = '';
@@ -507,7 +514,8 @@ export async function populateDashboardMacros(macros) {
     }
 
     renderMacroPreviewGrid(currentIntakeMacros);
-    macroContainer.innerHTML = '';
+    const existingSpinner = macroContainer.querySelector('.spinner-border');
+    if (existingSpinner) existingSpinner.remove();
     const plan = {
         calories: todaysPlanMacros.calories,
         protein_grams: todaysPlanMacros.protein,

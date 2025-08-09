@@ -534,23 +534,63 @@ export class MacroAnalyticsCard extends HTMLElement {
     const skeleton = this.shadowRoot.querySelector('.chart-skeleton');
     if (skeleton) skeleton.remove();
     if (this.canvas.hasAttribute('hidden')) this.canvas.removeAttribute('hidden');
-    if (this.chart) this.chart.destroy();
-    const ctx = this.canvas.getContext('2d');
     const macroColors = macroColorVars.map(v => this.getCssVar(`--${v}`));
+    const labels = [
+      `${this.labels.macros.protein} (${plan.protein_percent}%)`,
+      `${this.labels.macros.carbs} (${plan.carbs_percent}%)`,
+      `${this.labels.macros.fat} (${plan.fat_percent}%)`,
+      `${this.labels.macros.fiber} (${plan.fiber_percent}%)`
+    ];
+    const planData = [plan.protein_grams, plan.carbs_grams, plan.fat_grams, plan.fiber_grams];
+    const currentData = current
+      ? [current.protein_grams, current.carbs_grams, current.fat_grams, current.fiber_grams]
+      : null;
+
+    if (this.chart) {
+      const ds0 = this.chart.data.datasets[0];
+      ds0.data = planData;
+      ds0.backgroundColor = current ? macroColors.map(c => `${c}80`) : macroColors;
+      ds0.cutout = current ? '80%' : '65%';
+      if (currentData) {
+        if (this.chart.data.datasets[1]) {
+          const ds1 = this.chart.data.datasets[1];
+          ds1.data = currentData;
+          ds1.backgroundColor = macroColors;
+          ds1.cutout = '75%';
+        } else {
+          this.chart.data.datasets.push({
+            label: this.locale === 'en' ? 'Intake (g)' : 'Прием (гр)',
+            data: currentData,
+            backgroundColor: macroColors,
+            borderWidth: 0,
+            borderRadius: 8,
+            cutout: '75%',
+            hoverOffset: 8
+          });
+        }
+      } else if (this.chart.data.datasets[1]) {
+        this.chart.data.datasets.splice(1, 1);
+      }
+      this.chart.data.labels = labels;
+      this.chart.update();
+      return;
+    }
+
+    const ctx = this.canvas.getContext('2d');
     const datasets = [
       {
         label: this.locale === 'en' ? 'Plan (g)' : 'План (гр)',
-        data: [plan.protein_grams, plan.carbs_grams, plan.fat_grams, plan.fiber_grams],
+        data: planData,
         backgroundColor: current ? macroColors.map((c) => `${c}80`) : macroColors,
         borderWidth: 0,
         cutout: current ? '80%' : '65%',
         hoverOffset: 8
       }
     ];
-    if (current) {
+    if (currentData) {
       datasets.push({
         label: this.locale === 'en' ? 'Intake (g)' : 'Прием (гр)',
-        data: [current.protein_grams, current.carbs_grams, current.fat_grams, current.fiber_grams],
+        data: currentData,
         backgroundColor: macroColors,
         borderWidth: 0,
         borderRadius: 8,
@@ -564,15 +604,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     const prefersReduced = this.motionQuery.matches;
     this.chart = new Chart(ctx, {
       type: 'doughnut',
-      data: {
-        labels: [
-          `${this.labels.macros.protein} (${plan.protein_percent}%)`,
-          `${this.labels.macros.carbs} (${plan.carbs_percent}%)`,
-          `${this.labels.macros.fat} (${plan.fat_percent}%)`,
-          `${this.labels.macros.fiber} (${plan.fiber_percent}%)`
-        ],
-        datasets
-      },
+      data: { labels, datasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
