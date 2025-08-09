@@ -205,6 +205,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     this.currentData = null;
     this.observer = null;
     this.refreshTimer = null;
+    this.lastFetchDate = null;
     this.locale = this.getAttribute('locale') || document.documentElement.lang || 'bg';
     // Множителят, над който приемът се счита за превишен (например 1.2 = 120%).
     this.exceedThreshold = parseFloat(this.getAttribute('exceed-threshold')) || 1.15;
@@ -249,6 +250,13 @@ export class MacroAnalyticsCard extends HTMLElement {
       const val = parseFloat(newVal);
       if (!Number.isNaN(val)) this.exceedThreshold = val;
       this.renderMetrics();
+      return;
+    }
+    if (newVal === null) {
+      if (name === 'plan-data') this.planData = undefined;
+      if (name === 'current-data') this.currentData = undefined;
+      this.renderMetrics();
+      this.renderChart();
       return;
     }
     try {
@@ -363,13 +371,29 @@ export class MacroAnalyticsCard extends HTMLElement {
         console.error('Failed to fetch macro data', e);
       }
     };
-    fetchData();
-    this.refreshTimer = setInterval(fetchData, interval);
+    const run = () => {
+      const today = new Date().toDateString();
+      if (this.lastFetchDate && today !== this.lastFetchDate) {
+        this.setData({ plan: undefined, current: undefined });
+      }
+      fetchData();
+    };
+    run();
+    this.refreshTimer = setInterval(run, interval);
   }
 
-  setData({ plan, current }) {
-    if (plan) this.setAttribute('plan-data', JSON.stringify(plan));
-    if (current) this.setAttribute('current-data', JSON.stringify(current));
+  setData(data) {
+    if ('plan' in data) {
+      const plan = data.plan;
+      if (plan) this.setAttribute('plan-data', JSON.stringify(plan));
+      else this.removeAttribute('plan-data');
+    }
+    if ('current' in data) {
+      const current = data.current;
+      if (current) this.setAttribute('current-data', JSON.stringify(current));
+      else this.removeAttribute('current-data');
+    }
+    if (data.plan || data.current) this.lastFetchDate = new Date().toDateString();
   }
 
   getCssVar(name) {
@@ -421,7 +445,15 @@ export class MacroAnalyticsCard extends HTMLElement {
     const hasCurrent = !!this.currentData;
     const hasMacroData =
       hasCurrent && ['calories','protein_grams','carbs_grams','fat_grams','fiber_grams'].some(k => typeof current[k] === 'number');
-    if (!plan) return;
+    if (!plan) {
+      this.grid.innerHTML = '';
+      if (this.warningEl) {
+        this.warningEl.classList.remove('show');
+        this.warningEl.textContent = '';
+      }
+      this.centerText.innerHTML = '';
+      return;
+    }
     this.grid.innerHTML = '';
     if (this.warningEl) {
       this.warningEl.classList.remove('show');

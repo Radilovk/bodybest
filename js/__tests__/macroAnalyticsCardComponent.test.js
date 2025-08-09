@@ -181,6 +181,57 @@ test('data-endpoint и refresh-interval извикват fetch периодич�
   expect(endpointCalls).toBe(2);
 });
 
+test('изчиства макросите при смяна на деня до нови данни', async () => {
+  const endpoint = '/macros';
+  let resolveFetch;
+  global.fetch = jest.fn((url) => {
+    if (url.includes('macroCard')) {
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          title: 'Калории и Макронутриенти',
+          caloriesLabel: 'Приети Калории',
+          macros: { protein: 'Белтъчини', carbs: 'Въглехидрати', fat: 'Мазнини' },
+          fromGoal: 'от целта',
+          subtitle: '{percent} от целта',
+          totalCaloriesLabel: 'от {calories} kcal',
+          exceedWarning: 'Превишение над 15%: {items}',
+          intakeVsPlanLabel: 'Прием vs План'
+        })
+      });
+    }
+    return new Promise((resolve) => { resolveFetch = resolve; });
+  });
+  const card = document.createElement('macro-analytics-card');
+  document.body.appendChild(card);
+  const plan = {
+    calories: 2000,
+    protein_grams: 150,
+    protein_percent: 75,
+    carbs_grams: 250,
+    carbs_percent: 50,
+    fat_grams: 70,
+    fat_percent: 35
+  };
+  const current = {
+    calories: 1200,
+    protein_grams: 60,
+    carbs_grams: 100,
+    fat_grams: 40
+  };
+  card.setData({ plan, current });
+  const utils = within(card.shadowRoot);
+  await waitFor(() => utils.getByText('Белтъчини'));
+  card.lastFetchDate = new Date(Date.now() - 86400000).toDateString();
+  card.setAttribute('data-endpoint', endpoint);
+  await waitFor(() => expect(utils.queryByText('Белтъчини')).toBeNull());
+  resolveFetch({
+    ok: true,
+    json: async () => ({ plan, current })
+  });
+  await waitFor(() => utils.getByText('Белтъчини'));
+});
+
 test('re-renders chart on theme change', async () => {
   const card = document.createElement('macro-analytics-card');
   document.body.appendChild(card);
