@@ -202,20 +202,9 @@ function populateDashboardDetailedAnalytics(analyticsData) {
     }
     cardsContainer.innerHTML = '';
     if (macroContainer) {
-        macroContainer.classList.add('loading');
-        macroContainer.innerHTML = `
-            <h5></h5>
-            <div class="chart-container">
-                <div class="chart-skeleton skeleton"></div>
-            </div>
-            <div class="macro-metrics-grid">
-                <div class="macro-metric metric-skeleton skeleton"></div>
-                <div class="macro-metric metric-skeleton skeleton"></div>
-                <div class="macro-metric metric-skeleton skeleton"></div>
-                <div class="macro-metric metric-skeleton skeleton"></div>
-                <div class="macro-metric metric-skeleton skeleton"></div>
-            </div>`;
+        macroContainer.classList.remove('loading');
         cardsContainer.appendChild(macroContainer);
+        populateDashboardMacros(todaysPlanMacros);
     }
     textualAnalysisContainer.innerHTML = '';
 
