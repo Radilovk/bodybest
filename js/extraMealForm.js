@@ -46,6 +46,22 @@ if (typeof fetch !== 'undefined') {
         });
 }
 
+export function getQuantityDisplay(selectedRadio, quantityCustom) {
+    const customVal = (quantityCustom || '').trim();
+    if (selectedRadio) {
+        const radioValue = selectedRadio.value;
+        if (radioValue === 'other_quantity_describe') {
+            return customVal || 'Друго (неуточнено)';
+        }
+        if (radioValue === 'не_посочено_в_стъпка_2') {
+            return '(описано в стъпка 1)';
+        }
+        const labelEl = selectedRadio.closest('.quantity-card-option')?.querySelector('.card-label');
+        return labelEl ? labelEl.textContent.trim() : radioValue;
+    }
+    return customVal || 'Не е посочено';
+}
+
 export async function initializeExtraMealFormLogic(formContainerElement) {
     const form = formContainerElement.querySelector('#extraMealEntryFormActual');
     if (!form) {
@@ -98,22 +114,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
 
         summaryContainer.querySelector('[data-summary="foodDescription"]').textContent = getElValue('foodDescription') || 'Няма описание';
 
-        let quantityDisplay = "";
         const selectedQuantityRadio = form.querySelector('input[name="quantityEstimateVisual"]:checked');
-        if (selectedQuantityRadio) {
-            const radioValue = selectedQuantityRadio.value;
-            if (radioValue === 'other_quantity_describe') {
-                const customVal = getElValue('quantityCustom').trim();
-                quantityDisplay = customVal ? customVal : "Друго (неуточнено)";
-            } else if (radioValue === 'не_посочено_в_стъпка_2') {
-                quantityDisplay = "(описано в стъпка 1)";
-            } else {
-                const cardLabelEl = selectedQuantityRadio.closest('.quantity-card-option')?.querySelector('.card-label');
-                quantityDisplay = cardLabelEl ? cardLabelEl.textContent.trim() : radioValue;
-            }
-        } else {
-            quantityDisplay = 'Не е посочено';
-        }
+        const quantityDisplay = getQuantityDisplay(selectedQuantityRadio, getElValue('quantityCustom'));
         summaryContainer.querySelector('[data-summary="quantityEstimate"]').textContent = quantityDisplay;
 
         let mealTimeDisplay = getSelectedText('mealTimeSelect');
@@ -486,19 +488,8 @@ export async function handleExtraMealFormSubmit(event) {
     const dataToSend = { userId: currentUserId, timestamp: new Date().toISOString() };
     if (parsedQuantity !== undefined) dataToSend.quantity = parsedQuantity;
 
-    let quantityDisplay = '';
-    if (selectedVisual) {
-        const radioValue = selectedVisual.value;
-        if (radioValue === 'other_quantity_describe') {
-            quantityDisplay = quantityCustomVal || 'Друго (неуточнено)';
-        } else if (radioValue === 'не_посочено_в_стъпка_2') {
-            quantityDisplay = '(описано в стъпка 1)';
-        } else {
-            const labelEl = selectedVisual.closest('.quantity-card-option')?.querySelector('.card-label');
-            quantityDisplay = labelEl ? labelEl.textContent.trim() : radioValue;
-        }
-    } else if (quantityCustomVal) {
-        quantityDisplay = quantityCustomVal;
+    let quantityDisplay = getQuantityDisplay(selectedVisual, quantityCustomVal);
+    if (!selectedVisual && quantityCustomVal) {
         dataToSend.quantityEstimate = quantityCustomVal;
     }
 
