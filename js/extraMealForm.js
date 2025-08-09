@@ -192,8 +192,14 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
 
     let activeSuggestionIndex = -1;
 
-    function applyMacroOverrides(name) {
-        const macros = getNutrientOverride(name);
+    function buildCacheKey(name, quantity = '') {
+        const n = (name || '').toLowerCase().trim();
+        const q = (quantity || '').toLowerCase().trim();
+        return `${n}|${q}`;
+    }
+
+    function applyMacroOverrides(name, quantity = '') {
+        const macros = getNutrientOverride(buildCacheKey(name, quantity));
         if (!macros) return;
         let filled = false;
         ['calories','protein','carbs','fat','fiber'].forEach(field => {
@@ -206,21 +212,21 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (filled && autoFillMsg) autoFillMsg.classList.remove('hidden');
     }
 
-    async function fetchNutrientsAndApply(name) {
-        const key = name.toLowerCase().trim();
-        if (!key || nutrientLookupCache[key] || getNutrientOverride(key)) return;
+    async function fetchMacrosFromAi(name, quantity = '') {
+        const cacheKey = buildCacheKey(name, quantity);
+        if (!cacheKey || nutrientLookupCache[cacheKey] || getNutrientOverride(cacheKey)) return;
         try {
             const resp = await fetch('/nutrient-lookup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ food: key })
+                body: JSON.stringify({ food: name.toLowerCase().trim(), quantity: quantity })
             });
             if (!resp.ok) return;
             const data = await resp.json();
-            nutrientLookupCache[key] = data;
-            dynamicNutrientOverrides[key] = data;
+            nutrientLookupCache[cacheKey] = data;
+            dynamicNutrientOverrides[cacheKey] = data;
             registerNutrientOverrides(dynamicNutrientOverrides);
-            applyMacroOverrides(key);
+            applyMacroOverrides(name, quantity);
         } catch (e) {
             console.error('Nutrient lookup failed', e);
         }
@@ -271,13 +277,23 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     }
 
 
+    function getCurrentQuantity() {
+        const selected = form.querySelector('input[name="quantityEstimateVisual"]:checked');
+        if (!selected) return '';
+        if (selected.value === 'other_quantity_describe') {
+            return form.querySelector('#quantityCustom')?.value.trim() || '';
+        }
+        return selected.value;
+    }
+
     if (foodDescriptionInput && quantityVisualRadios.length > 0) {
         foodDescriptionInput.addEventListener('input', function() {
             const description = this.value.toLowerCase();
+            const quantity = getCurrentQuantity();
             if (autoFillMsg) autoFillMsg.classList.add('hidden');
-            applyMacroOverrides(description);
-            if (description.length >= 3 && !getNutrientOverride(description)) {
-                fetchNutrientsAndApply(description);
+            applyMacroOverrides(description, quantity);
+            if (description.length >= 3 && !getNutrientOverride(buildCacheKey(description, quantity))) {
+                fetchMacrosFromAi(description, quantity);
             }
             let suggestedRadioValue = null;
             if (description.includes("фили") && (description.includes("2") || description.includes("две"))) {
