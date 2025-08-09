@@ -421,10 +421,30 @@ export async function openExtraMealModal() {
     }
 }
 
+export async function fetchMacrosFromAi(_foodDescription, quantity) {
+    const qty = Number(quantity);
+    if (!Number.isFinite(qty) || qty <= 0) {
+        showToast('Количеството трябва да е положително число.', true);
+        throw new Error('Invalid quantity');
+    }
+    // TODO: Реална имплементация за извличане на макроси от AI
+    return {};
+}
+
 export async function handleExtraMealFormSubmit(event) {
     event.preventDefault();
     const form = event.target;
     const formData = new FormData(form);
+
+    const quantityField = formData.get('quantity');
+    let parsedQuantity;
+    if (quantityField !== null && quantityField !== undefined && quantityField !== '') {
+        parsedQuantity = Number(quantityField);
+        if (!Number.isFinite(parsedQuantity) || parsedQuantity <= 0) {
+            showToast('Количеството трябва да е положително число.', true);
+            return;
+        }
+    }
 
     const selectedVisual = form.querySelector('input[name="quantityEstimateVisual"]:checked');
     const quantityCustomVal = (formData.get('quantityCustom') || '').trim();
@@ -434,6 +454,7 @@ export async function handleExtraMealFormSubmit(event) {
     }
 
     const dataToSend = { userId: currentUserId, timestamp: new Date().toISOString() };
+    if (parsedQuantity !== undefined) dataToSend.quantity = parsedQuantity;
 
     let quantityDisplay = '';
     if (selectedVisual) {

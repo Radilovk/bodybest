@@ -2,6 +2,7 @@
 import { jest } from '@jest/globals';
 
 let handleExtraMealFormSubmit;
+let fetchMacrosFromAi;
 let showToastMock;
 let addExtraMealWithOverrideMock;
 let appendExtraMealCardMock;
@@ -49,12 +50,21 @@ beforeEach(async () => {
     };
   });
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
-  ({ handleExtraMealFormSubmit } = await import('../extraMealForm.js'));
+  ({ handleExtraMealFormSubmit, fetchMacrosFromAi } = await import('../extraMealForm.js'));
   fetch.mockClear();
 });
 
 test('показва съобщение при липса на количество', async () => {
   document.body.innerHTML = `<form id="f"><input id="quantityCustom" name="quantityCustom"></form>`;
+  const form = document.getElementById('f');
+  const e = { preventDefault: jest.fn(), target: form };
+  await handleExtraMealFormSubmit(e);
+  expect(showToastMock).toHaveBeenCalled();
+  expect(fetch).not.toHaveBeenCalled();
+});
+
+test('показва грешка при неположително количество', async () => {
+  document.body.innerHTML = `<form id="f"><input name="quantity" value="-3"></form>`;
   const form = document.getElementById('f');
   const e = { preventDefault: jest.fn(), target: form };
   await handleExtraMealFormSubmit(e);
@@ -114,4 +124,9 @@ test('добавя DOM елемент при успешно изпращане',
   const e = { preventDefault: jest.fn(), target: form };
   await handleExtraMealFormSubmit(e);
   expect(document.querySelectorAll('#dailyMealList li.meal-card')).toHaveLength(1);
+});
+
+test('fetchMacrosFromAi хвърля грешка при неположително количество', async () => {
+  await expect(fetchMacrosFromAi('ябълка', 0)).rejects.toThrow('Invalid quantity');
+  expect(showToastMock).toHaveBeenCalled();
 });
