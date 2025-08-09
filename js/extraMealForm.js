@@ -136,10 +136,11 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         }
         summaryContainer.querySelector('[data-summary="replacedPlanned"]').textContent = replacedDisplay;
 
-        ['calories','protein','carbs','fat','fiber'].forEach(field => {
+        ['calories', 'protein', 'carbs', 'fat', 'fiber'].forEach(field => {
             const el = summaryContainer.querySelector(`[data-summary="${field}"]`);
             if (el) {
-                const val = getElValue(field);
+                const input = form.querySelector(`input[name="${field}"]`);
+                const val = input?.value || '';
                 el.textContent = val ? val : '-';
             }
         });
