@@ -544,6 +544,12 @@ wrangler kv key put prompt_chat "$(cat templates/prompt_chat.txt)" --binding=RES
 wrangler kv key put recipe_data "$(cat data/recipes.json)" --binding=RESOURCES_KV
 ```
 
+За автоматично синхронизиране на всички файлове от директорията `kv/DIET_RESOURCES` към `RESOURCES_KV` използвайте:
+
+```bash
+npm run sync-kv
+```
+
 ### Required Worker Secrets
 
 Before deploying, configure the following secrets in Cloudflare (via the dashboard or `wrangler secret put`):
