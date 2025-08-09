@@ -335,22 +335,20 @@ export function loadCurrentIntake(status = null, extraMeals = null) {
     try {
         currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
-        // Ако не са подадени състояние и допълнителни хранения, зареждаме от дневника
-        if (!status || !extraMeals) {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const todayLog = fullDashboardData?.dailyLogs?.find(l => l.date === todayStr)?.data;
-            if (!todayLog) {
-                todaysExtraMeals = [];
-                Object.keys(todaysMealCompletionStatus).forEach(k => delete todaysMealCompletionStatus[k]);
-                return;
-            }
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayLog = fullDashboardData?.dailyLogs?.find(l => l.date === todayStr)?.data;
+        if (todayLog) {
             const completed = todayLog.completedMealsStatus || {};
             Object.keys(todaysMealCompletionStatus).forEach(k => delete todaysMealCompletionStatus[k]);
             Object.assign(todaysMealCompletionStatus, completed);
             todaysExtraMeals = Array.isArray(todayLog.extraMeals) ? todayLog.extraMeals : [];
-            status = todaysMealCompletionStatus;
-            extraMeals = todaysExtraMeals;
+        } else if (!status || !extraMeals) {
+            todaysExtraMeals = [];
+            Object.keys(todaysMealCompletionStatus).forEach(k => delete todaysMealCompletionStatus[k]);
         }
+
+        status = status || todaysMealCompletionStatus;
+        extraMeals = extraMeals || todaysExtraMeals;
 
         currentIntakeMacros = calculateCurrentMacros(
             fullDashboardData.planData?.week1Menu || {},

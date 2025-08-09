@@ -31,6 +31,7 @@ describe('extraMealForm populateSummary', () => {
       currentUserId: 'u1',
       todaysExtraMeals: [],
       currentIntakeMacros: {},
+      fullDashboardData: {},
       loadCurrentIntake: jest.fn(),
       updateMacrosAndAnalytics: jest.fn(),
     }));
@@ -121,6 +122,7 @@ describe('extraMealForm populateSummary', () => {
       currentUserId: 'u1',
       todaysExtraMeals: [],
       currentIntakeMacros: {},
+      fullDashboardData: {},
       loadCurrentIntake: jest.fn(),
       updateMacrosAndAnalytics: jest.fn(),
     }));
