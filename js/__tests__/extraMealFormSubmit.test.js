@@ -97,7 +97,7 @@ test('изпраща макро стойности при попълнени п�
   expect(body.fiber).toBe(3);
   expect(addExtraMealWithOverrideMock).toHaveBeenCalledWith(
     undefined,
-    { calories: 120, protein: 10, carbs: 15, fat: 5 }
+    { calories: 120, protein: 10, carbs: 15, fat: 5, fiber: 3 }
   );
   expect(appendExtraMealCardMock).toHaveBeenCalledWith(undefined, 'малко');
 });
@@ -145,6 +145,7 @@ test('извлича макроси от AI при празни полета', a
   const body = JSON.parse(fetch.mock.calls[0][1].body);
   expect(body.calories).toBe(50);
   expect(form.querySelector('#extraMealSummary [data-summary="protein"]').textContent).toBe('1');
+  expect(form.querySelector('#extraMealSummary [data-summary="fiber"]').textContent).toBe('2');
 });
 
 test('добавя DOM елемент при успешно изпращане', async () => {

@@ -60,4 +60,5 @@ test('автопопълва макросите при разпозната хр
   input.dispatchEvent(new Event('input', { bubbles: true }));
   expect(container.querySelector('input[name="calories"]').value).toBe('52');
   expect(container.querySelector('input[name="protein"]').value).toBe('0.3');
+  expect(container.querySelector('input[name="fiber"]').value).toBe('0');
 });
