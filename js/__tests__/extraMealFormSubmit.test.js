@@ -3,7 +3,7 @@ import { jest } from '@jest/globals';
 
 let handleExtraMealFormSubmit;
 let fetchMacrosFromAi;
-let setFetchMacrosFromAi;
+let setNutrientLookupFn;
 let extraMealFormModule;
 let showToastMock;
 let addExtraMealWithOverrideMock;
@@ -55,7 +55,7 @@ beforeEach(async () => {
   extraMealFormModule = await import('../extraMealForm.js');
   handleExtraMealFormSubmit = extraMealFormModule.handleExtraMealFormSubmit;
   fetchMacrosFromAi = extraMealFormModule.fetchMacrosFromAi;
-  setFetchMacrosFromAi = extraMealFormModule.__setFetchMacrosFromAi;
+  setNutrientLookupFn = extraMealFormModule.__setNutrientLookupFn;
   fetch.mockClear();
 });
 
@@ -137,7 +137,7 @@ test('извлича макроси от AI при празни полета', a
     fat: 0.2,
     fiber: 2
   });
-  setFetchMacrosFromAi(mockAi);
+  setNutrientLookupFn(mockAi);
   const form = document.getElementById('f');
   const e = { preventDefault: jest.fn(), target: form };
   await handleExtraMealFormSubmit(e);
