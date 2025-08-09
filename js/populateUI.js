@@ -2,7 +2,7 @@
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort } from './utils.js';
 import { generateId, apiEndpoints, standaloneMacroUrl } from './config.js';
-import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake, currentUserId, todaysPlanMacros, updateMacrosAndAnalytics } from './app.js';
+import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, currentUserId, todaysPlanMacros, updateMacrosAndAnalytics, resetDailyIntake } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
 import { getNutrientOverride, scaleMacros, calculatePlanMacros, calculateMacroPercents } from './macroUtils.js';
@@ -108,6 +108,15 @@ export async function populateUI() {
     const data = fullDashboardData; // Access global state
     if (!data || Object.keys(data).length === 0) {
         showToast("Липсват данни за показване.", true); return;
+    }
+    const todayDateStr = new Date().toISOString().split('T')[0];
+    const lastDate = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('lastDashboardDate') : null;
+    if (lastDate !== todayDateStr) {
+        resetDailyIntake();
+        updateMacrosAndAnalytics();
+        if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('lastDashboardDate', todayDateStr);
+        }
     }
     try { populateUserInfo(data.userName); } catch(e) { console.error("Error in populateUserInfo:", e); }
     try { populateDashboardMainIndexes(data.analytics?.current); } catch(e) { console.error("Error in populateDashboardMainIndexes:", e); }
@@ -578,17 +587,7 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
     const dailyPlanData = safeGet(week1Menu, currentDayKey, []);
     Object.assign(todaysPlanMacros, calculatePlanMacros(dailyPlanData));
 
-    // Reset макросите ако денят се е сменил
-    const lastDate = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('lastDashboardDate') : null;
-    if (lastDate !== todayDateStr) {
-        loadCurrentIntake();
-        updateMacrosAndAnalytics();
-        if (typeof sessionStorage !== 'undefined') {
-            sessionStorage.setItem('lastDashboardDate', todayDateStr);
-        }
-    } else {
-        populateDashboardMacros(todaysPlanMacros);
-    }
+    populateDashboardMacros(todaysPlanMacros);
 
     if (!dailyPlanData || dailyPlanData.length === 0) {
         listElement.innerHTML = '<li class="placeholder">Няма налично меню за днес.</li>'; return;

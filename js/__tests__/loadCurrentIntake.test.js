@@ -78,3 +78,21 @@ test('recalculateCurrentIntakeMacros преизчислява макросите
     fiber: 1,
   });
 });
+
+test('resetDailyIntake занулява стойностите при нов ден', async () => {
+  jest.resetModules();
+  const app = await import('../app.js');
+  app.todaysMealCompletionStatus.sample = true;
+  app.todaysExtraMeals.push({ calories: 100, protein: 5, carbs: 10, fat: 2, fiber: 1 });
+  Object.assign(app.currentIntakeMacros, { calories: 100, protein: 5, carbs: 10, fat: 2, fiber: 1 });
+  app.resetDailyIntake();
+  expect(app.todaysMealCompletionStatus).toEqual({});
+  expect(app.todaysExtraMeals).toEqual([]);
+  expect(app.currentIntakeMacros).toEqual({
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    fiber: 0,
+  });
+});

@@ -161,6 +161,13 @@ export function resetAppState() {
     chatPromptOverride = null;
 }
 
+// Нулира дневния прием при смяна на деня
+export function resetDailyIntake() {
+    todaysMealCompletionStatus = {};
+    todaysExtraMeals = [];
+    currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+}
+
 // Функция за създаване на тестови данни
 
 function createTestData() {
