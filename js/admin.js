@@ -69,6 +69,9 @@ const exportCsvBtn = document.getElementById('exportCsv');
 const generatePraiseBtn = document.getElementById('generatePraise');
 const profileForm = document.getElementById('profileForm');
 const profileName = document.getElementById('profileName');
+const profileFullname = document.getElementById('profileFullname');
+const profileAge = document.getElementById('profileAge');
+const profileHeight = document.getElementById('profileHeight');
 const profileEmail = document.getElementById('profileEmail');
 const profilePhone = document.getElementById('profilePhone');
 const profileMacroThreshold = document.getElementById('profileMacroThreshold');
@@ -1112,6 +1115,9 @@ async function showClient(userId) {
             activeClientName = name;
             clientNameHeading.textContent = regDate ? `${name} - ${regDate}` : name;
             if (profileName) profileName.value = data.name || '';
+            if (profileFullname) profileFullname.value = data.fullname || '';
+            if (profileAge) profileAge.value = data.age ?? '';
+            if (profileHeight) profileHeight.value = data.height ?? '';
             if (profileEmail) profileEmail.value = data.email || '';
             if (profilePhone) profilePhone.value = data.phone || '';
             if (profileMacroThreshold) profileMacroThreshold.value = data.macroExceedThreshold ?? '';
@@ -1339,6 +1345,9 @@ if (profileForm) {
                 body: JSON.stringify({
                     userId: currentUserId,
                     name: profileName.value.trim(),
+                    fullname: profileFullname.value.trim(),
+                    age: profileAge.value ? parseInt(profileAge.value, 10) : undefined,
+                    height: profileHeight.value ? parseFloat(profileHeight.value) : undefined,
                     email: profileEmail.value.trim(),
                     phone: profilePhone.value.trim(),
                     macroExceedThreshold: profileMacroThreshold.value ? parseFloat(profileMacroThreshold.value) : undefined
