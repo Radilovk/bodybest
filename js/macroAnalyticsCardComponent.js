@@ -356,7 +356,9 @@ export class MacroAnalyticsCard extends HTMLElement {
       try {
         const res = await fetch(endpoint);
         const data = await res.json();
-        this.setData({ plan: data.plan, current: data.current });
+        if (data.plan && data.current) {
+          this.setData(data);
+        }
       } catch (e) {
         console.error('Failed to fetch macro data', e);
       }
@@ -367,9 +369,7 @@ export class MacroAnalyticsCard extends HTMLElement {
 
   setData({ plan, current }) {
     if (plan) this.setAttribute('plan-data', JSON.stringify(plan));
-    else this.removeAttribute('plan-data');
     if (current) this.setAttribute('current-data', JSON.stringify(current));
-    else this.removeAttribute('current-data');
   }
 
   getCssVar(name) {
