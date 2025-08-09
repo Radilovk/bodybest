@@ -713,6 +713,7 @@ export async function handleSaveLog() { // Exported for eventListeners.js
             }
         }
         await refreshAnalytics(true);
+        updateAnalyticsSections(fullDashboardData.analytics);
         await populateUI();
         initializeAchievements(currentUserId);
         showToast(result.message || "Логът е запазен!", false);
