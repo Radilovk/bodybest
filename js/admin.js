@@ -1052,6 +1052,9 @@ async function showClient(userId) {
             dashResp.json().catch(() => ({}))
         ]);
 
+        let initialAnswers = dashData.initialAnswers || {};
+        let userKv = {};
+
         const profileStatus = data.status ?? profileResp.status;
         const profileMessage = data.message ?? profileResp.statusText;
         if (!profileResp.ok || !data.success) {
@@ -1071,7 +1074,12 @@ async function showClient(userId) {
             const kvStatus = kvData.status ?? kvResp.status;
             const kvMessage = kvData.message ?? kvResp.statusText;
             if (kvResp.ok && kvData.success) {
-                Object.entries(kvData.kv || {}).forEach(([fullKey, val]) => {
+                userKv = kvData.kv || {};
+                const iaStr = userKv[`${userId}_initial_answers`];
+                if (iaStr) {
+                    try { initialAnswers = JSON.parse(iaStr); } catch {}
+                }
+                Object.entries(userKv).forEach(([fullKey, val]) => {
                     const detailsEl = document.createElement('details');
                     const summaryEl = document.createElement('summary');
                     summaryEl.textContent = fullKey.replace(`${userId}_`, '');
@@ -1107,13 +1115,13 @@ async function showClient(userId) {
             openDetailsSections();
             const clientInfo = allClients.find(c => c.userId === userId);
             const regDate = clientInfo?.registrationDate ? new Date(clientInfo.registrationDate).toLocaleDateString('bg-BG') : '';
-            const name = clientInfo?.name || data.name || userId;
+            const name = clientInfo?.name || data.name || initialAnswers.name || userId;
             activeUserId = userId;
             activeClientName = name;
             clientNameHeading.textContent = regDate ? `${name} - ${regDate}` : name;
-            if (profileName) profileName.value = data.name || '';
-            if (profileEmail) profileEmail.value = data.email || '';
-            if (profilePhone) profilePhone.value = data.phone || '';
+            if (profileName) profileName.value = data.name || initialAnswers.name || '';
+            if (profileEmail) profileEmail.value = data.email || userKv[`${userId}_email`] || initialAnswers.email || '';
+            if (profilePhone) profilePhone.value = data.phone || userKv[`${userId}_phone`] || initialAnswers.phone || '';
             if (profileMacroThreshold) profileMacroThreshold.value = data.macroExceedThreshold ?? '';
             if (openFullProfileLink) openFullProfileLink.href = `clientProfile.html?userId=${encodeURIComponent(userId)}`;
             if (openUserDataLink) openUserDataLink.href = `Userdata.html?userId=${encodeURIComponent(userId)}`;
