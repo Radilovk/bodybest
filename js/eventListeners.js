@@ -24,7 +24,8 @@ import {
     fullDashboardData, activeTooltip, currentUserId,
     setChatModelOverride, setChatPromptOverride,
     recalculateCurrentIntakeMacros,
-    refreshAnalytics
+    refreshAnalytics,
+    autoSaveCompletedMeals
 } from './app.js';
 import {
     openPlanModificationChat,
@@ -313,6 +314,7 @@ function handleDelegatedClicks(event) {
             // Автоматично опресняване на макро-картата
             renderPendingMacroChart();
             refreshAnalytics();
+            autoSaveCompletedMeals();
             showToast(`Храненето е ${isCompleted ? 'отбелязано' : 'размаркирано'}.`, false, 2000);
         }
         return;
