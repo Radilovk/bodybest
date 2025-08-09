@@ -11,7 +11,7 @@ import {
     openModal, closeModal,
     showLoading, showToast, updateTabsOverflowIndicator
 } from './uiHandlers.js';
-import { populateUI, populateProgressHistory, populateDashboardMacros, setMacroExceedThreshold, updateAnalyticsSections } from './populateUI.js';
+import { populateUI, populateProgressHistory, populateDashboardMacros, setMacroExceedThreshold } from './populateUI.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
 import { setupStaticEventListeners, setupDynamicEventListeners, initializeCollapsibleCards } from './eventListeners.js';
 import { loadProductMacros, calculateCurrentMacros, calculatePlanMacros } from './macroUtils.js';
@@ -622,22 +622,6 @@ export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
 // ==========================================================================
 // ФУНКЦИИ ЗА УПРАВЛЕНИЕ НА ДАННИ (ЗАПИС)
 // ==========================================================================
-export async function refreshAnalytics(skipUiUpdate = false) {
-    if (!currentUserId) return;
-    try {
-        const resp = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}`);
-        const data = await resp.json().catch(() => ({}));
-        if (resp.ok && data.analytics) {
-            fullDashboardData.analytics = data.analytics;
-            if (!skipUiUpdate) {
-                updateAnalyticsSections(data.analytics);
-            }
-        }
-    } catch (err) {
-        console.error('Failed to refresh analytics', err);
-    }
-}
-
 export async function handleSaveLog() { // Exported for eventListeners.js
     const logPayload = { userId: currentUserId, date: new Date().toISOString().split('T')[0], data: {} };
     const weightInputElement = document.getElementById('dailyLogWeightInput');
@@ -712,7 +696,6 @@ export async function handleSaveLog() { // Exported for eventListeners.js
                 }
             }
         }
-        await refreshAnalytics(true);
         await populateUI();
         initializeAchievements(currentUserId);
         showToast(result.message || "Логът е запазен!", false);
