@@ -2,7 +2,7 @@
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort } from './utils.js';
 import { generateId, apiEndpoints, standaloneMacroUrl } from './config.js';
-import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake, recalculateCurrentIntakeMacros, currentUserId, todaysPlanMacros, refreshAnalytics } from './app.js';
+import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake, recalculateCurrentIntakeMacros, currentUserId, todaysPlanMacros } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
 import { getNutrientOverride, scaleMacros, calculatePlanMacros, calculateMacroPercents } from './macroUtils.js';
@@ -331,13 +331,6 @@ function populateDashboardDetailedAnalytics(analyticsData) {
     }
 }
 
-export function updateAnalyticsSections(analyticsData) {
-    if (!analyticsData) return;
-    fullDashboardData.analytics = analyticsData;
-    populateDashboardMainIndexes(analyticsData.current);
-    populateDashboardDetailedAnalytics(analyticsData);
-}
-
 export function renderPendingMacroChart() {
     const card = ensureMacroAnalyticsElement();
     if (!card) return;
@@ -411,7 +404,6 @@ export function addExtraMealWithOverride(name = '', macros = {}, grams) {
     recalculateCurrentIntakeMacros();
     populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
     renderPendingMacroChart();
-    refreshAnalytics();
 }
 
 function renderMacroPreviewGrid(macros) {
