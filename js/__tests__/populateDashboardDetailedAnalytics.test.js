@@ -56,7 +56,8 @@ test('преобразува стойности 1 и 4 в 20% и 80%', async () 
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),
     recalculateCurrentIntakeMacros: jest.fn(),
-    currentUserId: 'u1'
+    currentUserId: 'u1',
+    updateMacrosAndAnalytics: jest.fn()
   }));
   const { populateUI } = await import('../populateUI.js');
   await populateUI();
