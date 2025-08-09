@@ -561,7 +561,8 @@ export async function handleExtraMealFormSubmit(event) {
             calories: dataToSend.calories,
             protein: dataToSend.protein,
             carbs: dataToSend.carbs,
-            fat: dataToSend.fat
+            fat: dataToSend.fat,
+            fiber: dataToSend.fiber
         };
         addExtraMealWithOverride(dataToSend.foodDescription, entry);
         appendExtraMealCard(dataToSend.foodDescription, quantityDisplay);

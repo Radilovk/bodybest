@@ -171,7 +171,8 @@ async function lookupNutrients(query, env) {
             calories: Number(item.calories) || 0,
             protein: Number(item.protein_g) || 0,
             carbs: Number(item.carbohydrates_total_g || item.carbs_g) || 0,
-            fat: Number(item.fat_total_g || item.fat_g) || 0
+            fat: Number(item.fat_total_g || item.fat_g) || 0,
+            fiber: Number(item.fiber_g || item.fiber) || 0
           };
         }
       }
@@ -183,7 +184,7 @@ async function lookupNutrients(query, env) {
     try {
       const cfEndpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/run/${env.MODEL}`;
       const messages = [
-        { role: 'system', content: 'Give nutrition data as JSON {calories, protein, carbs, fat} for the given food.' },
+        { role: 'system', content: 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food.' },
         { role: 'user', content: query }
       ];
       const resp = await fetch(cfEndpoint, {
@@ -204,14 +205,15 @@ async function lookupNutrients(query, env) {
           calories: Number(obj.calories) || 0,
           protein: Number(obj.protein) || 0,
           carbs: Number(obj.carbs) || 0,
-          fat: Number(obj.fat) || 0
+          fat: Number(obj.fat) || 0,
+          fiber: Number(obj.fiber) || 0
         };
       } catch {
-        return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+        return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
       }
     } catch (e) {
       console.error('AI nutrient lookup error', e);
     }
   }
-  return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 }

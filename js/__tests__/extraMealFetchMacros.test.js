@@ -49,9 +49,11 @@ test('успешно извличане се кешира', async () => {
   });
   const r1 = await fetchMacrosFromAi('банан', 100);
   expect(r1.calories).toBe(100);
+  expect(r1.fiber).toBe(3);
   expect(fetch).toHaveBeenCalledTimes(1);
   const r2 = await fetchMacrosFromAi('банан', 100);
   expect(r2.calories).toBe(100);
+  expect(r2.fiber).toBe(3);
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
