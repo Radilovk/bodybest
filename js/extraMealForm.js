@@ -2,7 +2,7 @@
 import { selectors } from './uiElements.js';
 import { showLoading, showToast, openModal as genericOpenModal, closeModal as genericCloseModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
-import { currentUserId, todaysExtraMeals, currentIntakeMacros, loadCurrentIntake, updateMacrosAndAnalytics } from './app.js';
+import { currentUserId, todaysExtraMeals, currentIntakeMacros, loadCurrentIntake, updateMacrosAndAnalytics, fullDashboardData } from './app.js';
 import nutrientOverrides from '../kv/DIET_RESOURCES/nutrient_overrides.json' with { type: 'json' };
 import { removeMealMacros, registerNutrientOverrides, getNutrientOverride, loadProductMacros } from './macroUtils.js';
 import {
@@ -556,6 +556,16 @@ export async function handleExtraMealFormSubmit(event) {
             fiber: dataToSend.fiber
         };
         addExtraMealWithOverride(dataToSend.foodDescription, entry);
+        // Актуализираме дневните логове с новото хранене
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (!Array.isArray(fullDashboardData.dailyLogs)) fullDashboardData.dailyLogs = [];
+        let todayLog = fullDashboardData.dailyLogs.find(l => l.date === todayStr);
+        if (!todayLog) {
+            todayLog = { date: todayStr, data: { extraMeals: [] } };
+            fullDashboardData.dailyLogs.push(todayLog);
+        }
+        if (!Array.isArray(todayLog.data.extraMeals)) todayLog.data.extraMeals = [];
+        todayLog.data.extraMeals.push(entry);
         appendExtraMealCard(dataToSend.foodDescription, quantityDisplay);
         // Синхронизираме макросите и аналитиката
         updateMacrosAndAnalytics();
