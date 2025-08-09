@@ -586,9 +586,9 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
         if (typeof sessionStorage !== 'undefined') {
             sessionStorage.setItem('lastDashboardDate', todayDateStr);
         }
+    } else {
+        populateDashboardMacros(todaysPlanMacros);
     }
-
-    populateDashboardMacros(todaysPlanMacros);
 
     if (!dailyPlanData || dailyPlanData.length === 0) {
         listElement.innerHTML = '<li class="placeholder">Няма налично меню за днес.</li>'; return;

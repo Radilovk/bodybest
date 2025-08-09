@@ -449,8 +449,12 @@ describe('progress bar width handling', () => {
 
 test('ресет на макросите при смяна на деня', async () => {
   sessionStorage.setItem('lastDashboardDate', '2000-01-01');
-  const { loadCurrentIntake } = await import('../app.js');
+  const { loadCurrentIntake, updateMacrosAndAnalytics } = await import('../app.js');
+  const spy = jest.spyOn(populateModule, 'populateDashboardMacros');
   await populateUI();
   expect(loadCurrentIntake).toHaveBeenCalled();
+  expect(updateMacrosAndAnalytics).toHaveBeenCalled();
+  expect(spy).not.toHaveBeenCalled();
   expect(sessionStorage.getItem('lastDashboardDate')).toBe(new Date().toISOString().split('T')[0]);
+  spy.mockRestore();
 });
