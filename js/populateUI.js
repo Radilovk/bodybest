@@ -2,7 +2,7 @@
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort } from './utils.js';
 import { generateId, apiEndpoints, standaloneMacroUrl } from './config.js';
-import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake, recalculateCurrentIntakeMacros, currentUserId, todaysPlanMacros, refreshAnalytics } from './app.js';
+import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, loadCurrentIntake, currentUserId, todaysPlanMacros, updateMacrosAndAnalytics } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
 import { getNutrientOverride, scaleMacros, calculatePlanMacros, calculateMacroPercents } from './macroUtils.js';
@@ -407,11 +407,8 @@ export function addExtraMealWithOverride(name = '', macros = {}, grams) {
     const scaled = gramValue ? scaleMacros(base, gramValue) : base;
     const entry = gramValue ? { ...scaled, grams: gramValue } : scaled;
     todaysExtraMeals.push(entry);
-    // Обновяваме текущите макроси с новото хранене
-    recalculateCurrentIntakeMacros();
-    populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
-    renderPendingMacroChart();
-    refreshAnalytics();
+    // Обновяваме макросите и аналитиката след добавяне на хранене
+    updateMacrosAndAnalytics();
 }
 
 function renderMacroPreviewGrid(macros) {

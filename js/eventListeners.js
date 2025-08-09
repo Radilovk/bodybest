@@ -13,19 +13,16 @@ import { apiEndpoints } from './config.js';
 import {
     macroChartInstance,
     progressChartInstance,
-    populateDashboardMacros,
-    renderPendingMacroChart,
     macroExceedThreshold
 } from './populateUI.js';
 import {
     handleSaveLog, handleFeedbackFormSubmit, // from app.js
     handleChatSend, handleChatInputKeypress, // from app.js / chat.js
     todaysMealCompletionStatus,
-    fullDashboardData, activeTooltip, currentUserId,
+    activeTooltip, currentUserId,
     setChatModelOverride, setChatPromptOverride,
-    recalculateCurrentIntakeMacros,
-    refreshAnalytics,
-    autoSaveCompletedMeals
+    autoSaveCompletedMeals,
+    updateMacrosAndAnalytics
 } from './app.js';
 import {
     openPlanModificationChat,
@@ -309,11 +306,7 @@ function handleDelegatedClicks(event) {
         if (day && index !== undefined) {
             const isCompleted = mealCard.classList.toggle('completed');
             todaysMealCompletionStatus[`${day}_${index}`] = isCompleted;
-            recalculateCurrentIntakeMacros();
-            populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
-            // Автоматично опресняване на макро-картата
-            renderPendingMacroChart();
-            refreshAnalytics();
+            updateMacrosAndAnalytics();
             autoSaveCompletedMeals();
             showToast(`Храненето е ${isCompleted ? 'отбелязано' : 'размаркирано'}.`, false, 2000);
         }

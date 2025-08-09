@@ -38,7 +38,8 @@ describe('renderPendingMacroChart', () => {
       loadCurrentIntake: jest.fn(),
       currentUserId: 'u1',
       recalculateCurrentIntakeMacros: jest.fn(),
-      resetAppState: jest.fn()
+      resetAppState: jest.fn(),
+      updateMacrosAndAnalytics: jest.fn()
     }));
     jest.unstable_mockModule('../uiHandlers.js', () => ({ showToast: jest.fn() }));
     jest.unstable_mockModule('../chartLoader.js', () => ({ ensureChart: jest.fn() }));

@@ -2,13 +2,11 @@
 import { selectors } from './uiElements.js';
 import { showLoading, showToast, openModal as genericOpenModal, closeModal as genericCloseModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
-import { currentUserId, todaysExtraMeals, currentIntakeMacros, fullDashboardData, loadCurrentIntake } from './app.js';
+import { currentUserId, todaysExtraMeals, currentIntakeMacros, loadCurrentIntake, updateMacrosAndAnalytics } from './app.js';
 import nutrientOverrides from '../kv/DIET_RESOURCES/nutrient_overrides.json' with { type: 'json' };
 import { removeMealMacros, registerNutrientOverrides, getNutrientOverride, loadProductMacros } from './macroUtils.js';
 import {
     addExtraMealWithOverride,
-    populateDashboardMacros,
-    renderPendingMacroChart,
     appendExtraMealCard
 } from './populateUI.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
@@ -470,8 +468,8 @@ export async function handleExtraMealFormSubmit(event) {
         };
         addExtraMealWithOverride(dataToSend.foodDescription, entry);
         appendExtraMealCard(dataToSend.foodDescription, dataToSend.quantityEstimate);
-        // Автоматично опресняване на макро-картата
-        renderPendingMacroChart();
+        // Синхронизираме макросите и аналитиката
+        updateMacrosAndAnalytics();
         genericCloseModal('extraMealEntryModal');
     } catch (error) {
         showToast(`Грешка: ${error.message}`, true);
@@ -485,9 +483,8 @@ export function deleteExtraMeal(index) {
     if (removed) {
         removeMealMacros(removed, currentIntakeMacros);
         loadCurrentIntake();
-        populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
-        // Автоматично опресняване на макро-картата
-        renderPendingMacroChart();
+        // Опресняваме макросите и аналитиката след изтриване
+        updateMacrosAndAnalytics();
         showToast('Храненето е изтрито.', false, 2000);
     }
 }

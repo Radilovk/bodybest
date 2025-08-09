@@ -44,7 +44,8 @@ beforeEach(async () => {
       currentIntakeMacros: currentIntakeMacrosRef,
       fullDashboardData: { planData: { week1Menu: {}, caloriesMacros: { fiber_percent: 10, fiber_grams: 30 } } },
       planHasRecContent: false,
-      loadCurrentIntake: jest.fn()
+      loadCurrentIntake: jest.fn(),
+      updateMacrosAndAnalytics: jest.fn()
     };
   });
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });

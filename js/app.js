@@ -11,7 +11,14 @@ import {
     openModal, closeModal,
     showLoading, showToast, updateTabsOverflowIndicator
 } from './uiHandlers.js';
-import { populateUI, populateProgressHistory, populateDashboardMacros, setMacroExceedThreshold, updateAnalyticsSections } from './populateUI.js';
+import {
+    populateUI,
+    populateProgressHistory,
+    populateDashboardMacros,
+    setMacroExceedThreshold,
+    updateAnalyticsSections,
+    renderPendingMacroChart
+} from './populateUI.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
 import { setupStaticEventListeners, setupDynamicEventListeners, initializeCollapsibleCards } from './eventListeners.js';
 import { loadProductMacros, calculateCurrentMacros, calculatePlanMacros } from './macroUtils.js';
@@ -365,6 +372,13 @@ export function recalculateCurrentIntakeMacros() {
     } catch (err) {
         console.error('Error recalculating current intake:', err);
     }
+}
+
+export function updateMacrosAndAnalytics() {
+    recalculateCurrentIntakeMacros();
+    populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
+    renderPendingMacroChart();
+    refreshAnalytics();
 }
 
 /**
