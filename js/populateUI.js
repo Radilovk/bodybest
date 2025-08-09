@@ -220,7 +220,7 @@ function populateDashboardDetailedAnalytics(analyticsData) {
             cardsContainer.appendChild(macroContainer);
         }
         ensureMacroAnalyticsElement();
-        populateDashboardMacros(todaysPlanMacros);
+        populateDashboardMacros();
     }
     textualAnalysisContainer.innerHTML = '';
 
@@ -502,25 +502,47 @@ export async function populateDashboardMacros(macros) {
         selectors.macroAnalyticsCardContainer = macroContainer;
     }
 
-    if (!macros) {
-        renderMacroPreviewGrid(null);
-        macroContainer.innerHTML = '<div class="spinner-border" role="status"></div>';
-        try {
-            const res = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}&recalcMacros=1`);
-            const data = await res.json();
-            const newMacros = data?.planData?.caloriesMacros;
-            if (newMacros) {
-                await populateDashboardMacros(newMacros);
+    if (macros == null) {
+        let shouldFetch = macros === null;
+        if (macros === undefined) {
+            const hasExistingPlan = typeof todaysPlanMacros.calories === 'number' && todaysPlanMacros.calories > 0;
+            if (hasExistingPlan) {
+                macros = {
+                    calories: todaysPlanMacros.calories,
+                    protein_grams: todaysPlanMacros.protein,
+                    carbs_grams: todaysPlanMacros.carbs,
+                    fat_grams: todaysPlanMacros.fat,
+                    fiber_grams: todaysPlanMacros.fiber
+                };
             } else {
-                macroContainer.innerHTML = '<p class="placeholder">Липсват данни за макроси.</p>';
+                shouldFetch = true;
             }
-        } catch (e) {
-            console.error('Failed to recalc macros', e);
-            showToast('Неуспешно изчисляване на макроси.', true);
-            macroContainer.innerHTML = '<p class="placeholder">Липсват данни за макроси.</p>';
         }
-        return;
+        if (shouldFetch) {
+            renderMacroPreviewGrid(null);
+            macroContainer.innerHTML = '<div class="spinner-border" role="status"></div>';
+            try {
+                const res = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}&recalcMacros=1`);
+                const data = await res.json();
+                macros = data?.planData?.caloriesMacros;
+                if (!macros) {
+                    macroContainer.innerHTML = '<p class="placeholder">Липсват данни за макроси.</p>';
+                    return;
+                }
+            } catch (e) {
+                console.error('Failed to recalc macros', e);
+                showToast('Неуспешно изчисляване на макроси.', true);
+                macroContainer.innerHTML = '<p class="placeholder">Липсват данни за макроси.</p>';
+                return;
+            }
+        }
     }
+
+    todaysPlanMacros.calories = macros.calories ?? todaysPlanMacros.calories;
+    todaysPlanMacros.protein = macros.protein_grams ?? macros.protein ?? todaysPlanMacros.protein;
+    todaysPlanMacros.carbs = macros.carbs_grams ?? macros.carbs ?? todaysPlanMacros.carbs;
+    todaysPlanMacros.fat = macros.fat_grams ?? macros.fat ?? todaysPlanMacros.fat;
+    todaysPlanMacros.fiber = macros.fiber_grams ?? macros.fiber ?? todaysPlanMacros.fiber;
 
     renderMacroPreviewGrid(currentIntakeMacros);
     const existingSpinner = macroContainer.querySelector('.spinner-border');
@@ -587,7 +609,7 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
     const dailyPlanData = safeGet(week1Menu, currentDayKey, []);
     Object.assign(todaysPlanMacros, calculatePlanMacros(dailyPlanData));
 
-    populateDashboardMacros(todaysPlanMacros);
+    populateDashboardMacros();
 
     if (!dailyPlanData || dailyPlanData.length === 0) {
         listElement.innerHTML = '<li class="placeholder">Няма налично меню за днес.</li>'; return;

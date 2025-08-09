@@ -52,7 +52,8 @@ test('макро картата остава видима след обновя�
     currentIntakeMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
     currentUserId: 'u1',
     todaysPlanMacros: { calories: 2000, protein: 150, carbs: 250, fat: 70, fiber: 30 },
-    updateMacrosAndAnalytics: jest.fn()
+    updateMacrosAndAnalytics: jest.fn(),
+    resetDailyIntake: jest.fn()
   }));
   jest.unstable_mockModule('../macroUtils.js', () => ({
     getNutrientOverride: jest.fn(),
@@ -64,7 +65,7 @@ test('макро картата остава видима след обновя�
 
   const { populateDashboardMacros, updateAnalyticsSections } = await import('../populateUI.js');
 
-  await populateDashboardMacros({ calories: 2000 });
+  await populateDashboardMacros();
   expect(selectors.macroAnalyticsCardContainer.querySelector('macro-analytics-card')).not.toBeNull();
 
   updateAnalyticsSections({ current: {}, detailed: [] });

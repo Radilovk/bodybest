@@ -95,7 +95,13 @@ test('recalculates macros automatically and shows spinner while loading', async 
   };
   const [payload] = card.setData.mock.calls[0];
   expect(payload).toMatchObject({
-    plan: expect.objectContaining({ calories: 500, protein_grams: 25, carbs_grams: 30, fat_grams: 25, fiber_grams: 7 }),
+    plan: expect.objectContaining({
+      calories: macros.calories,
+      protein_grams: macros.protein_grams,
+      carbs_grams: macros.carbs_grams,
+      fat_grams: macros.fat_grams,
+      fiber_grams: macros.fiber_grams
+    }),
     current: expectedCurrent
   });
 });
@@ -132,16 +138,14 @@ test('calculatePlanMacros се извиква само веднъж при ке�
   expect(calcMock).toHaveBeenCalledTimes(1);
 });
 
-test('игнорира подадения план и използва сумата от дневното меню', async () => {
+test('използва подадените планови макроси', async () => {
   setupDom();
   const macros = {
-    plan: {
-      calories: 1900,
-      protein_grams: 140,
-      carbs_grams: 190,
-      fat_grams: 63,
-      fiber_grams: 28
-    }
+    calories: 1900,
+    protein_grams: 140,
+    carbs_grams: 190,
+    fat_grams: 63,
+    fiber_grams: 28
   };
   const dayMenu = [
     { meal_name: 'Омлет', macros: { calories: 300, protein: 20, carbs: 10, fat: 15, fiber: 2 } },
@@ -154,11 +158,11 @@ test('игнорира подадения план и използва сума�
   const card = document.querySelector('macro-analytics-card');
   const [payload] = card.setData.mock.calls[0];
   expect(payload.plan).toMatchObject({
-    calories: summed.calories,
-    protein_grams: summed.protein,
-    carbs_grams: summed.carbs,
-    fat_grams: summed.fat,
-    fiber_grams: summed.fiber
+    calories: macros.calories,
+    protein_grams: macros.protein_grams,
+    carbs_grams: macros.carbs_grams,
+    fat_grams: macros.fat_grams,
+    fiber_grams: macros.fiber_grams
   });
   expect(selectors.macroMetricsPreview.textContent).toContain('150');
 });
