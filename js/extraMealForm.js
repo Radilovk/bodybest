@@ -421,7 +421,7 @@ export async function openExtraMealModal() {
     }
 }
 
-export async function fetchMacrosFromAi(_foodDescription, quantity) {
+export let fetchMacrosFromAi = async function (_foodDescription, quantity) {
     const qty = Number(quantity);
     if (!Number.isFinite(qty) || qty <= 0) {
         showToast('Количеството трябва да е положително число.', true);
@@ -429,6 +429,10 @@ export async function fetchMacrosFromAi(_foodDescription, quantity) {
     }
     // TODO: Реална имплементация за извличане на макроси от AI
     return {};
+};
+
+export function __setFetchMacrosFromAi(fn) {
+    fetchMacrosFromAi = fn;
 }
 
 export async function handleExtraMealFormSubmit(event) {
@@ -451,6 +455,32 @@ export async function handleExtraMealFormSubmit(event) {
     if (!selectedVisual && !quantityCustomVal) {
         showToast('Моля, изберете количество или въведете стойност.', true);
         return;
+    }
+
+    const macroFields = ['calories', 'protein', 'carbs', 'fat', 'fiber'];
+    const macrosEmpty = macroFields.every(field => {
+        const val = formData.get(field);
+        return val === null || val === undefined || String(val).trim() === '';
+    });
+
+    if (macrosEmpty && parsedQuantity !== undefined) {
+        try {
+            const desc = (formData.get('foodDescription') || '').toString().trim();
+            const macros = await fetchMacrosFromAi(desc, parsedQuantity);
+            macroFields.forEach(field => {
+                if (macros[field] !== undefined) {
+                    formData.set(field, macros[field]);
+                    const input = form.querySelector(`input[name="${field}"]`);
+                    if (input) input.value = macros[field];
+                    const summaryEl = form.querySelector(`#extraMealSummary [data-summary="${field}"]`);
+                    if (summaryEl) summaryEl.textContent = macros[field];
+                }
+            });
+            const autoFillMsgEl = form.querySelector('#autoFillMsg');
+            if (autoFillMsgEl) autoFillMsgEl.classList.remove('hidden');
+        } catch (err) {
+            console.error('Неуспешно извличане на макроси', err);
+        }
     }
 
     const dataToSend = { userId: currentUserId, timestamp: new Date().toISOString() };

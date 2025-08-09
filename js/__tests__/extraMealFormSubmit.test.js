@@ -3,6 +3,8 @@ import { jest } from '@jest/globals';
 
 let handleExtraMealFormSubmit;
 let fetchMacrosFromAi;
+let setFetchMacrosFromAi;
+let extraMealFormModule;
 let showToastMock;
 let addExtraMealWithOverrideMock;
 let appendExtraMealCardMock;
@@ -50,7 +52,10 @@ beforeEach(async () => {
     };
   });
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
-  ({ handleExtraMealFormSubmit, fetchMacrosFromAi } = await import('../extraMealForm.js'));
+  extraMealFormModule = await import('../extraMealForm.js');
+  handleExtraMealFormSubmit = extraMealFormModule.handleExtraMealFormSubmit;
+  fetchMacrosFromAi = extraMealFormModule.fetchMacrosFromAi;
+  setFetchMacrosFromAi = extraMealFormModule.__setFetchMacrosFromAi;
   fetch.mockClear();
 });
 
@@ -105,6 +110,41 @@ test('предава въведено количество без избрана
   const e = { preventDefault: jest.fn(), target: form };
   await handleExtraMealFormSubmit(e);
   expect(appendExtraMealCardMock).toHaveBeenCalledWith(undefined, '200 гр');
+});
+
+test('извлича макроси от AI при празни полета', async () => {
+  document.body.innerHTML = `<form id="f">
+    <input name="foodDescription" value="банан">
+    <input name="quantity" value="100">
+    <input type="radio" name="quantityEstimateVisual" value="малко" checked>
+    <input name="calories">
+    <input name="protein">
+    <input name="carbs">
+    <input name="fat">
+    <input name="fiber">
+    <div id="extraMealSummary">
+      <span data-summary="calories"></span>
+      <span data-summary="protein"></span>
+      <span data-summary="carbs"></span>
+      <span data-summary="fat"></span>
+      <span data-summary="fiber"></span>
+    </div>
+  </form>`;
+  const mockAi = jest.fn().mockResolvedValue({
+    calories: 50,
+    protein: 1,
+    carbs: 12,
+    fat: 0.2,
+    fiber: 2
+  });
+  setFetchMacrosFromAi(mockAi);
+  const form = document.getElementById('f');
+  const e = { preventDefault: jest.fn(), target: form };
+  await handleExtraMealFormSubmit(e);
+  expect(mockAi).toHaveBeenCalledWith('банан', 100);
+  const body = JSON.parse(fetch.mock.calls[0][1].body);
+  expect(body.calories).toBe(50);
+  expect(form.querySelector('#extraMealSummary [data-summary="protein"]').textContent).toBe('1');
 });
 
 test('добавя DOM елемент при успешно изпращане', async () => {
