@@ -15,6 +15,29 @@ const dynamicNutrientOverrides = { ...nutrientOverrides };
 registerNutrientOverrides(dynamicNutrientOverrides);
 const nutrientLookupCache = {};
 
+function buildCacheKey(name, quantity = '') {
+    const n = (name || '').toLowerCase().trim();
+    const q = String(quantity || '').toLowerCase().trim();
+    return `${n}|${q}`;
+}
+
+let nutrientLookup = async function (name, quantity = '') {
+    const cacheKey = buildCacheKey(name, quantity);
+    const cached = nutrientLookupCache[cacheKey] || getNutrientOverride(cacheKey);
+    if (cached) return cached;
+    const resp = await fetch('/nutrient-lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ food: (name || '').toLowerCase().trim(), quantity })
+    });
+    if (!resp.ok) throw new Error('Nutrient lookup failed');
+    const data = await resp.json();
+    nutrientLookupCache[cacheKey] = data;
+    dynamicNutrientOverrides[cacheKey] = data;
+    registerNutrientOverrides(dynamicNutrientOverrides);
+    return data;
+};
+
 let productMacrosLoaded = false;
 let productList = [];
 async function ensureProductMacrosLoaded() {
@@ -194,12 +217,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
 
     let activeSuggestionIndex = -1;
 
-    function buildCacheKey(name, quantity = '') {
-        const n = (name || '').toLowerCase().trim();
-        const q = (quantity || '').toLowerCase().trim();
-        return `${n}|${q}`;
-    }
-
     function applyMacroOverrides(name, quantity = '') {
         const macros = getNutrientOverride(buildCacheKey(name, quantity));
         if (!macros) return;
@@ -214,20 +231,9 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (filled && autoFillMsg) autoFillMsg.classList.remove('hidden');
     }
 
-    async function fetchMacrosFromAi(name, quantity = '') {
-        const cacheKey = buildCacheKey(name, quantity);
-        if (!cacheKey || nutrientLookupCache[cacheKey] || getNutrientOverride(cacheKey)) return;
+    async function fetchAndApplyMacros(name, quantity = '') {
         try {
-            const resp = await fetch('/nutrient-lookup', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ food: name.toLowerCase().trim(), quantity: quantity })
-            });
-            if (!resp.ok) return;
-            const data = await resp.json();
-            nutrientLookupCache[cacheKey] = data;
-            dynamicNutrientOverrides[cacheKey] = data;
-            registerNutrientOverrides(dynamicNutrientOverrides);
+            await nutrientLookup(name, quantity);
             applyMacroOverrides(name, quantity);
         } catch (e) {
             console.error('Nutrient lookup failed', e);
@@ -295,7 +301,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             if (autoFillMsg) autoFillMsg.classList.add('hidden');
             applyMacroOverrides(description, quantity);
             if (description.length >= 3 && !getNutrientOverride(buildCacheKey(description, quantity))) {
-                fetchMacrosFromAi(description, quantity);
+                fetchAndApplyMacros(description, quantity);
             }
             let suggestedRadioValue = null;
             if (description.includes("фили") && (description.includes("2") || description.includes("две"))) {
@@ -423,38 +429,23 @@ export async function openExtraMealModal() {
     }
 }
 
-export let fetchMacrosFromAi = async function (_foodDescription, quantity) {
+export async function fetchMacrosFromAi(_foodDescription, quantity) {
     const qty = Number(quantity);
     if (!Number.isFinite(qty) || qty <= 0) {
         showToast('Количеството трябва да е положително число.', true);
         throw new Error('Invalid quantity');
     }
-    const name = (_foodDescription || '').toLowerCase().trim();
-    const qtyStr = String(quantity || '').toLowerCase().trim();
-    const cacheKey = `${name}|${qtyStr}`;
-    const cached = nutrientLookupCache[cacheKey] || getNutrientOverride(cacheKey);
-    if (cached) return cached;
     try {
-        const resp = await fetch('/nutrient-lookup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ food: name, quantity })
-        });
-        if (!resp.ok) throw new Error('Nutrient lookup failed');
-        const data = await resp.json();
-        nutrientLookupCache[cacheKey] = data;
-        dynamicNutrientOverrides[cacheKey] = data;
-        registerNutrientOverrides(dynamicNutrientOverrides);
-        return data;
+        return await nutrientLookup(_foodDescription, qty);
     } catch (e) {
         console.error('Nutrient lookup failed', e);
         showToast('Неуспешно извличане на макроси', true);
         throw e;
     }
-};
+}
 
-export function __setFetchMacrosFromAi(fn) {
-    fetchMacrosFromAi = fn;
+export function __setNutrientLookupFn(fn) {
+    nutrientLookup = fn;
 }
 
 export async function handleExtraMealFormSubmit(event) {
