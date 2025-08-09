@@ -67,13 +67,15 @@ export default {
           headers: { 'Content-Type': 'application/json', ...corsHeaders }
         });
       }
-      const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(food));
+      const quantity = (body.quantity || '').trim();
+      const foodQuery = [quantity, food].filter(Boolean).join(' ');
+      const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(foodQuery));
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       const cacheKey = `nutrient_cache_${hash}`;
       let cached = await env.USER_METADATA_KV.get(cacheKey, 'json');
       if (!cached) {
-        cached = await lookupNutrients(food, env);
+        cached = await lookupNutrients(foodQuery, env);
         await env.USER_METADATA_KV.put(cacheKey, JSON.stringify(cached), { expirationTtl: 86400 });
       }
       return new Response(JSON.stringify(cached), {
@@ -155,10 +157,10 @@ export default {
   }
 };
 
-async function lookupNutrients(food, env) {
+async function lookupNutrients(query, env) {
   if (env.NUTRITION_API_URL) {
     try {
-      const url = `${env.NUTRITION_API_URL}${encodeURIComponent(food)}`;
+      const url = `${env.NUTRITION_API_URL}${encodeURIComponent(query)}`;
       const headers = env.NUTRITION_API_KEY ? { 'X-Api-Key': env.NUTRITION_API_KEY } : {};
       const apiResp = await fetch(url, { headers });
       if (apiResp.ok) {
@@ -182,7 +184,7 @@ async function lookupNutrients(food, env) {
       const cfEndpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/run/${env.MODEL}`;
       const messages = [
         { role: 'system', content: 'Give nutrition data as JSON {calories, protein, carbs, fat} for the given food.' },
-        { role: 'user', content: food }
+        { role: 'user', content: query }
       ];
       const resp = await fetch(cfEndpoint, {
         method: 'POST',
