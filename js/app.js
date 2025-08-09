@@ -638,6 +638,39 @@ export async function refreshAnalytics(skipUiUpdate = false) {
     }
 }
 
+export async function autoSaveCompletedMeals() {
+    if (!currentUserId) return;
+    const payload = {
+        userId: currentUserId,
+        date: new Date().toISOString().split('T')[0],
+        data: { completedMealsStatus: { ...todaysMealCompletionStatus } }
+    };
+    try {
+        const response = await fetch(apiEndpoints.log, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
+
+        const savedDate = result.savedDate || payload.date;
+        const savedData = result.savedData || payload.data;
+        const idx = (fullDashboardData.dailyLogs || []).findIndex(l => l.date === savedDate);
+        if (idx > -1) {
+            fullDashboardData.dailyLogs[idx].data = {
+                ...fullDashboardData.dailyLogs[idx].data,
+                ...savedData
+            };
+        } else {
+            if (!fullDashboardData.dailyLogs) fullDashboardData.dailyLogs = [];
+            fullDashboardData.dailyLogs.push({ date: savedDate, data: savedData });
+        }
+    } catch (err) {
+        showToast(`Грешка при авто-запис: ${err.message}`, true);
+    }
+}
+
 export async function handleSaveLog() { // Exported for eventListeners.js
     const logPayload = { userId: currentUserId, date: new Date().toISOString().split('T')[0], data: {} };
     const weightInputElement = document.getElementById('dailyLogWeightInput');
