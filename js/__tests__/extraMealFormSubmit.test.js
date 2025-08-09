@@ -86,3 +86,22 @@ test('изпраща макро стойности при попълнени п�
   );
   expect(appendExtraMealCardMock).toHaveBeenCalledWith(undefined, 'малко');
 });
+
+test('добавя DOM елемент при успешно изпращане', async () => {
+  document.body.innerHTML = `
+    <ul id="dailyMealList"></ul>
+    <form id="f">
+      <input type="radio" name="quantityEstimateVisual" value="малко" checked>
+    </form>`;
+  const selectors = (await import('../uiElements.js')).selectors;
+  selectors.dailyMealList = document.getElementById('dailyMealList');
+  appendExtraMealCardMock.mockImplementation(() => {
+    const li = document.createElement('li');
+    li.classList.add('meal-card');
+    selectors.dailyMealList.appendChild(li);
+  });
+  const form = document.getElementById('f');
+  const e = { preventDefault: jest.fn(), target: form };
+  await handleExtraMealFormSubmit(e);
+  expect(document.querySelectorAll('#dailyMealList li.meal-card')).toHaveLength(1);
+});
