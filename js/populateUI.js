@@ -582,6 +582,7 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
     const lastDate = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('lastDashboardDate') : null;
     if (lastDate !== todayDateStr) {
         loadCurrentIntake();
+        updateMacrosAndAnalytics();
         if (typeof sessionStorage !== 'undefined') {
             sessionStorage.setItem('lastDashboardDate', todayDateStr);
         }
