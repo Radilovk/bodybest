@@ -268,6 +268,40 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         computeQuantity();
     }
 
+    function levenshtein(a = '', b = '') {
+        const m = Array.from({ length: b.length + 1 }, () => Array(a.length + 1).fill(0));
+        for (let i = 0; i <= a.length; i++) m[0][i] = i;
+        for (let j = 0; j <= b.length; j++) m[j][0] = j;
+        for (let j = 1; j <= b.length; j++) {
+            for (let i = 1; i <= a.length; i++) {
+                const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                m[j][i] = Math.min(
+                    m[j - 1][i] + 1,
+                    m[j][i - 1] + 1,
+                    m[j - 1][i - 1] + cost
+                );
+            }
+        }
+        return m[b.length][a.length];
+    }
+
+    function findClosestProduct(desc = '') {
+        const query = desc.toLowerCase();
+        let best = null;
+        let bestDist = Infinity;
+        for (const p of productList) {
+            const name = p.name.toLowerCase();
+            if (name.includes(query)) return p;
+            const dist = levenshtein(name, query);
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = p;
+            }
+        }
+        const threshold = Math.max(1, Math.floor(query.length * 0.3));
+        return bestDist <= threshold ? best : null;
+    }
+
     function computeQuantity() {
         if (!quantityHiddenInput) return;
         const grams = Number(measureSelect?.selectedOptions[0]?.dataset.grams || 0);
@@ -277,7 +311,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         const description = foodDescriptionInput?.value?.trim().toLowerCase();
         if (autoFillMsg) autoFillMsg.classList.add('hidden');
         if (description && total > 0) {
-            const product = productList.find(p => p.name.toLowerCase() === description);
+            const product = findClosestProduct(description); // напр. "яб" → "ябълка"
             if (product) {
                 const factor = total / 100;
                 MACRO_FIELDS.forEach(field => {
