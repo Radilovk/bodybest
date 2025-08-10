@@ -71,6 +71,8 @@
                     <span class="card-content"><span class="card-icon-wrapper"><span class="card-icon">➕</span></span><span class="card-text-wrapper"><span class="card-label">Уточни</span></span></span>
                 </label>
             </div>
+            <select id="measureSelect" class="hidden input-focus-animate" style="margin-top: var(--space-sm);" aria-label="Мерна единица"></select>
+            <input type="number" id="measureCount" class="hidden input-focus-animate" style="margin-top: var(--space-sm);" min="0" step="1" placeholder="Брой" aria-label="Брой мерни единици">
         </fieldset>
         <input type="text" id="quantityCustom" name="quantityCustom" class="input-focus-animate" style="margin-top: var(--space-sm);" placeholder="Напр. 100гр, 2 с.л., специфично количество" aria-label="Уточнение за количество">
         <input type="number" id="quantity" name="quantity" class="hidden input-focus-animate" min="0" step="0.01" inputmode="decimal" aria-hidden="true">
