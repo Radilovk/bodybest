@@ -123,6 +123,15 @@ test('validateMacroCalories предупреждава при голямо от�
   warnSpy.mockRestore();
 });
 
+test('validateMacroCalories коригира калориите при разминаване', () => {
+  const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  const macros = { calories: 57, protein: 10, carbs: 20, fat: 10 };
+  __testExports.validateMacroCalories(macros);
+  expect(macros.calories).toBe(210);
+  expect(warnSpy).toHaveBeenCalled();
+  warnSpy.mockRestore();
+});
+
 test('validateMacroCalories не предупреждава при съвпадение с фибри', () => {
   const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   addMealMacros({ calories: 350, protein: 30, carbs: 40, fat: 10, fiber: 10 }, { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });

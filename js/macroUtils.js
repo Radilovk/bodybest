@@ -184,6 +184,20 @@ function resolveMacros(meal, grams) {
 }
 
 /**
+ * Преизчислява калориите от макронутриентите.
+ * Фибрите се изваждат от въглехидратите за нетно съдържание и се оценяват по 2 kcal/грам.
+ * @param {{calories:number, protein:number, carbs:number, fat:number, fiber:number, alcohol?:number}} macros
+ * @param {boolean} [carbsIncludeFiber=true] - Ако въглехидратите включват фибри, изважда ги за нетно съдържание.
+ * @returns {{calories:number, protein:number, carbs:number, fat:number, fiber:number, alcohol?:number}}
+ */
+export function recalculateCalories(macros = {}, carbsIncludeFiber = true) {
+  const { protein = 0, carbs = 0, fat = 0, fiber = 0, alcohol = 0 } = macros;
+  const netCarbs = carbsIncludeFiber ? carbs - fiber : carbs;
+  const calc = protein * 4 + netCarbs * 4 + fat * 9 + fiber * 2 + alcohol * 7;
+  return { ...macros, calories: calc };
+}
+
+/**
  * Проверява дали калориите съответстват на макросите.
  * Фибрите се изваждат от въглехидратите за нетно съдържание и се
  * оценяват по 2 kcal/грам.
@@ -201,6 +215,7 @@ function validateMacroCalories(macros = {}, threshold = 0.05, carbsIncludeFiber 
     console.warn(
       `[macroUtils] Calorie mismatch: expected ${calc.toFixed(2)}, received ${calories}`
     );
+    Object.assign(macros, recalculateCalories(macros, carbsIncludeFiber));
   }
 }
 
@@ -288,4 +303,10 @@ export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, ext
 
   return acc;
 }
-export const __testExports = { macrosByIdOrName, nutrientCache, resolveMacros, validateMacroCalories };
+export const __testExports = {
+  macrosByIdOrName,
+  nutrientCache,
+  resolveMacros,
+  validateMacroCalories,
+  recalculateCalories
+};
