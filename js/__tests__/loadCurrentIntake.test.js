@@ -29,19 +29,25 @@ test('loadCurrentIntake агрегира макросите от логовет�
   });
 });
 
-test('loadCurrentIntake запазва данните когато е подаден само статус', async () => {
+test('loadCurrentIntake не презаписва подаденото състояние', async () => {
   jest.resetModules();
   const app = await import('../app.js');
   Object.assign(app.fullDashboardData, { planData: { week1Menu: {} } });
   app.todaysMealCompletionStatus.sample = true;
   app.todaysExtraMeals.length = 0;
-  app.todaysExtraMeals.push({ calories: 100 });
-  app.loadCurrentIntake(app.todaysMealCompletionStatus, null);
+  app.todaysExtraMeals.push({ calories: 100, protein: 5, carbs: 10, fat: 2, fiber: 1 });
+  app.loadCurrentIntake(app.todaysMealCompletionStatus, app.todaysExtraMeals);
   expect(app.todaysMealCompletionStatus).toEqual({ sample: true });
-  expect(app.todaysExtraMeals).toEqual([{ calories: 100 }]);
+  expect(app.currentIntakeMacros).toEqual({
+    calories: 100,
+    protein: 5,
+    carbs: 10,
+    fat: 2,
+    fiber: 1,
+  });
 });
 
-test('loadCurrentIntake нулира данните при липса на дневен запис', async () => {
+test('loadCurrentIntake нулира локалните данни при липса на дневен запис', async () => {
   jest.resetModules();
   const app = await import('../app.js');
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
@@ -52,21 +58,6 @@ test('loadCurrentIntake нулира данните при липса на дн�
   app.todaysExtraMeals.push({ calories: 50 });
   app.todaysMealCompletionStatus.sample = true;
   app.loadCurrentIntake();
-  expect(app.todaysExtraMeals).toEqual([]);
-  expect(app.todaysMealCompletionStatus).toEqual({});
-});
-
-test('loadCurrentIntake нулира данните при смяна на деня дори при подадено състояние', async () => {
-  jest.resetModules();
-  const app = await import('../app.js');
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-  Object.assign(app.fullDashboardData, {
-    planData: { week1Menu: {} },
-    dailyLogs: [{ date: yesterday, data: { extraMeals: [{ calories: 100 }] } }],
-  });
-  app.todaysExtraMeals.push({ calories: 50 });
-  app.todaysMealCompletionStatus.sample = true;
-  app.loadCurrentIntake(app.todaysMealCompletionStatus, app.todaysExtraMeals);
   expect(app.todaysExtraMeals).toEqual([]);
   expect(app.todaysMealCompletionStatus).toEqual({});
 });
