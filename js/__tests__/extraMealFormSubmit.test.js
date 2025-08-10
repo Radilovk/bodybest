@@ -4,6 +4,7 @@ import { jest } from '@jest/globals';
 let handleExtraMealFormSubmit;
 let fetchMacrosFromAi;
 let setNutrientLookupFn;
+let initializeExtraMealFormLogic;
 let extraMealFormModule;
 let showToastMock;
 let addExtraMealWithOverrideMock;
@@ -55,6 +56,7 @@ beforeEach(async () => {
   handleExtraMealFormSubmit = extraMealFormModule.handleExtraMealFormSubmit;
   fetchMacrosFromAi = extraMealFormModule.fetchMacrosFromAi;
   setNutrientLookupFn = extraMealFormModule.__setNutrientLookupFn;
+  initializeExtraMealFormLogic = extraMealFormModule.initializeExtraMealFormLogic;
   fetch.mockClear();
 });
 
@@ -164,6 +166,50 @@ test('добавя DOM елемент при успешно изпращане',
   const e = { preventDefault: jest.fn(), target: form };
   await handleExtraMealFormSubmit(e);
   expect(document.querySelectorAll('#dailyMealList li.meal-card')).toHaveLength(1);
+});
+
+test('количество след описание', async () => {
+  jest.useFakeTimers();
+  const overrides = {};
+  const macroUtils = await import('../macroUtils.js');
+  macroUtils.getNutrientOverride.mockImplementation(key => overrides[key] || null);
+  setNutrientLookupFn(async (name, quantity) => {
+    const key = `${name}|${quantity}`;
+    overrides[key] = { calories: 60, protein: 1, carbs: 12, fat: 0.2, fiber: 3 };
+    return overrides[key];
+  });
+  document.body.innerHTML = `<div id="c">
+    <form id="extraMealEntryFormActual">
+      <div class="form-step"></div>
+      <div class="form-wizard-navigation">
+        <button id="emPrevStepBtn"></button>
+        <button id="emNextStepBtn"></button>
+        <button id="emSubmitBtn"></button>
+        <button id="emCancelBtn"></button>
+      </div>
+      <textarea id="foodDescription"></textarea>
+      <div id="foodSuggestionsDropdown"></div>
+      <input type="radio" name="quantityEstimateVisual" value="other_quantity_describe" checked>
+      <input id="quantityCustom">
+      <div id="autoFillMsg" class="hidden"></div>
+      <input name="calories">
+      <input name="protein">
+      <input name="carbs">
+      <input name="fat">
+      <input name="fiber">
+      <div class="form-step"></div>
+    </form>
+  </div>`;
+  const container = document.getElementById('c');
+  await initializeExtraMealFormLogic(container);
+  const desc = container.querySelector('#foodDescription');
+  desc.value = 'банан';
+  const qty = container.querySelector('#quantityCustom');
+  qty.value = '200';
+  qty.dispatchEvent(new Event('input', { bubbles: true }));
+  await jest.runOnlyPendingTimersAsync();
+  expect(container.querySelector('input[name="calories"]').value).toBe('60');
+  jest.useRealTimers();
 });
 
 test('fetchMacrosFromAi хвърля грешка при неположително количество', async () => {

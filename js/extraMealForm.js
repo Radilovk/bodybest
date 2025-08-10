@@ -372,28 +372,24 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         }
     }, 300);
 
-    function handleQuantityChange() {
+    function recomputeMacros() {
         const description = foodDescriptionInput?.value?.trim().toLowerCase();
         const quantity = getCurrentQuantity();
         if (autoFillMsg) autoFillMsg.classList.add('hidden');
-        computeQuantity();
-        if (description) {
-            applyMacroOverrides(description, quantity);
-            const overrideExists =
-                getNutrientOverride(buildCacheKey(description, quantity)) ||
-                getNutrientOverride(description.toLowerCase().trim());
-            if (!overrideExists) {
-                fetchAndApplyMacros(description, quantity);
-            }
+        if (!description) return;
+        applyMacroOverrides(description, quantity);
+        const overrideExists =
+            getNutrientOverride(buildCacheKey(description, quantity)) ||
+            getNutrientOverride(description.toLowerCase().trim());
+        if (!overrideExists && description.length >= 3) {
+            fetchAndApplyMacros(description, quantity);
         }
     }
 
-    if (quantityVisualRadios.length > 0) {
-        quantityVisualRadios.forEach(r => r.addEventListener('change', handleQuantityChange));
-    }
     if (quantityCustomInput) {
-        quantityCustomInput.addEventListener('input', handleQuantityChange);
+        quantityCustomInput.addEventListener('input', recomputeMacros);
     }
+    quantityVisualRadios.forEach(r => r.addEventListener('change', recomputeMacros));
 
     function showSuggestions(inputValue) {
         if (!suggestionsDropdown || !foodDescriptionInput) return;
@@ -455,15 +451,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         foodDescriptionInput.addEventListener('input', function() {
             const description = this.value.toLowerCase();
             updateMeasureOptions(description);
-            const quantity = getCurrentQuantity();
-            if (autoFillMsg) autoFillMsg.classList.add('hidden');
-            applyMacroOverrides(description, quantity);
-            const overrideExists =
-                getNutrientOverride(buildCacheKey(description, quantity)) ||
-                getNutrientOverride(description.toLowerCase().trim());
-            if (description.length >= 3 && !overrideExists) {
-                fetchAndApplyMacros(description, quantity);
-            }
+            recomputeMacros();
             let suggestedRadioValue = null;
             if (description.includes("фили") && (description.includes("2") || description.includes("две"))) {
                 suggestedRadioValue = "малко_количество";
