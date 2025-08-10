@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "prebuild": "npm run validate-json",
     "start": "vite preview",
     "lint": "eslint .",
+    "validate-json": "node scripts/validate-json.js",
     "test": "node scripts/validateMacros.js && sh ./scripts/test.sh",
     "test:watch": "sh ./scripts/test.sh --watch",
     "test:file": "node scripts/test.sh --runTestsByPath",
