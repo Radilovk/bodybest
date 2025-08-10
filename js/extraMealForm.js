@@ -4,7 +4,7 @@ import { showLoading, showToast, openModal as genericOpenModal, closeModal as ge
 import { apiEndpoints } from './config.js';
 import { currentUserId, todaysExtraMeals, currentIntakeMacros, loadCurrentIntake, updateMacrosAndAnalytics, fullDashboardData } from './app.js';
 import nutrientOverrides from '../kv/DIET_RESOURCES/nutrient_overrides.json' with { type: 'json' };
-import { removeMealMacros, registerNutrientOverrides, getNutrientOverride, loadProductMacros } from './macroUtils.js';
+import { removeMealMacros, registerNutrientOverrides, getNutrientOverride, loadProductMacros, scaleMacros } from './macroUtils.js';
 import {
     addExtraMealWithOverride,
     appendExtraMealCard
@@ -319,11 +319,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (description && total > 0) {
             const product = findClosestProduct(description); // напр. "яб" → "ябълка"
             if (product) {
-                const factor = total / 100;
-                MACRO_FIELDS.forEach(field => {
-                    const input = form.querySelector(`input[name="${field}"]`);
-                    if (input) input.value = ((product[field] ?? 0) * factor).toFixed(2);
-                });
+                const scaled = scaleMacros(product, total);
+                MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = scaled[f].toFixed(2));
                 if (autoFillMsg) autoFillMsg.classList.remove('hidden');
             } else {
                 applyMacroOverrides(description, total);

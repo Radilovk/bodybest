@@ -20,7 +20,8 @@ beforeEach(async () => {
     removeMealMacros: jest.fn(),
     registerNutrientOverrides: jest.fn(),
     getNutrientOverride: jest.fn(() => null),
-    loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] })
+    loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
+    scaleMacros: jest.fn()
   }));
   jest.unstable_mockModule('../populateUI.js', () => ({
     addExtraMealWithOverride: jest.fn(),
