@@ -20,8 +20,8 @@ const nutrientLookupCache = {};
 
 function buildCacheKey(name, quantity = '') {
     const n = (name || '').toLowerCase().trim();
-    const q = String(quantity || '').toLowerCase().trim();
-    return `${n}|${q}`;
+    const q = String(quantity ?? '').toLowerCase().trim();
+    return q ? `${n}|${q}` : n;
 }
 
 let nutrientLookup = async function (name, quantity = '') {
@@ -285,7 +285,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 if (autoFillMsg) autoFillMsg.classList.remove('hidden');
             } else {
                 applyMacroOverrides(description, total);
-                if (!getNutrientOverride(buildCacheKey(description, total))) {
+                if (!getNutrientOverride(buildCacheKey(description, total)) &&
+                    !getNutrientOverride(buildCacheKey(description))) {
                     fetchAndApplyMacros(description, total);
                 }
             }
@@ -296,7 +297,22 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     if (measureCountInput) measureCountInput.addEventListener('input', computeQuantity);
 
     function applyMacroOverrides(name, quantity = '') {
-        const macros = getNutrientOverride(buildCacheKey(name, quantity));
+        const keyWithQty = buildCacheKey(name, quantity);
+        let macros = getNutrientOverride(keyWithQty);
+        if (!macros) {
+            const base = getNutrientOverride(buildCacheKey(name));
+            const qtyNum = Number(quantity);
+            if (base && Number.isFinite(qtyNum) && qtyNum > 0) {
+                macros = {};
+                MACRO_FIELDS.forEach(field => {
+                    macros[field] = ((base[field] ?? 0) * qtyNum) / 100;
+                });
+                dynamicNutrientOverrides[keyWithQty] = macros;
+                registerNutrientOverrides(dynamicNutrientOverrides);
+            } else if (base) {
+                macros = base;
+            }
+        }
         if (!macros) return;
         let filled = false;
         MACRO_FIELDS.forEach(field => {
@@ -381,7 +397,9 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             const quantity = getCurrentQuantity();
             if (autoFillMsg) autoFillMsg.classList.add('hidden');
             applyMacroOverrides(description, quantity);
-            if (description.length >= 3 && !getNutrientOverride(buildCacheKey(description, quantity))) {
+            if (description.length >= 3 &&
+                !getNutrientOverride(buildCacheKey(description, quantity)) &&
+                !getNutrientOverride(buildCacheKey(description))) {
                 fetchAndApplyMacros(description, quantity);
             }
             let suggestedRadioValue = null;

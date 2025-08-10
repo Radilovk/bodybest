@@ -2,6 +2,7 @@
 import { jest } from '@jest/globals';
 
 let initializeExtraMealFormLogic;
+let getNutrientOverrideMock;
 
 beforeEach(async () => {
   jest.resetModules();
@@ -13,10 +14,11 @@ beforeEach(async () => {
     closeModal: jest.fn()
   }));
   jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
+  getNutrientOverrideMock = jest.fn();
   jest.unstable_mockModule('../macroUtils.js', () => ({
     removeMealMacros: jest.fn(),
     registerNutrientOverrides: jest.fn(),
-    getNutrientOverride: jest.fn(key => key === 'ябълка|x' ? { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 0 } : null),
+    getNutrientOverride: getNutrientOverrideMock,
     loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] })
   }));
   jest.unstable_mockModule('../populateUI.js', () => ({ addExtraMealWithOverride: jest.fn(), populateDashboardMacros: jest.fn(), appendExtraMealCard: jest.fn() }));
@@ -33,6 +35,9 @@ beforeEach(async () => {
 });
 
 test('автопопълва макросите при разпозната храна', async () => {
+  getNutrientOverrideMock.mockImplementation(key =>
+    key === 'ябълка|x' ? { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 0 } : null
+  );
   document.body.innerHTML = `<div id="c">
     <form id="extraMealEntryFormActual">
       <div class="form-step"></div>
@@ -61,4 +66,38 @@ test('автопопълва макросите при разпозната хр
   expect(container.querySelector('input[name="calories"]').value).toBe('52');
   expect(container.querySelector('input[name="protein"]').value).toBe('0.3');
   expect(container.querySelector('input[name="fiber"]').value).toBe('0');
+});
+
+test('скалира макросите при override само по име', async () => {
+  getNutrientOverrideMock.mockImplementation(key =>
+    key === 'ябълка' ? { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 0 } : null
+  );
+  document.body.innerHTML = `<div id="c">
+    <form id="extraMealEntryFormActual">
+      <div class="form-step"></div>
+      <div class="form-wizard-navigation">
+        <button id="emPrevStepBtn"></button>
+        <button id="emNextStepBtn"></button>
+        <button id="emSubmitBtn"></button>
+        <button id="emCancelBtn"></button>
+      </div>
+      <textarea id="foodDescription"></textarea>
+      <div id="foodSuggestionsDropdown"></div>
+      <input id="quantity" value="150">
+      <input type="radio" name="quantityEstimateVisual" value="x" checked>
+      <input name="calories">
+      <input name="protein">
+      <input name="carbs">
+      <input name="fat">
+      <input name="fiber">
+      <div class="form-step"></div>
+    </form>
+  </div>`;
+  const container = document.getElementById('c');
+  await initializeExtraMealFormLogic(container);
+  const input = container.querySelector('#foodDescription');
+  input.value = 'ябълка';
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  expect(container.querySelector('input[name="calories"]').value).toBe('78');
+  expect(container.querySelector('input[name="carbs"]').value).toBe('21');
 });
