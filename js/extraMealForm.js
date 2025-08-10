@@ -219,6 +219,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     const measureSelect = form.querySelector('#measureSelect');
     const measureCountInput = form.querySelector('#measureCount');
     const quantityHiddenInput = form.querySelector('#quantity');
+    const quantityCustomInput = form.querySelector('#quantityCustom');
     const mealTimeSpecificInput = form.querySelector('#mealTimeSpecific');
     const reasonRadioGroup = form.querySelectorAll('input[name="reasonPrimary"]');
     const reasonOtherText = form.querySelector('#reasonOtherText');
@@ -361,6 +362,29 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         } catch (e) {
             console.error('Nutrient lookup failed', e);
         }
+    }
+
+    function handleQuantityChange() {
+        const description = foodDescriptionInput?.value?.trim().toLowerCase();
+        const quantity = getCurrentQuantity();
+        if (autoFillMsg) autoFillMsg.classList.add('hidden');
+        computeQuantity();
+        if (description) {
+            applyMacroOverrides(description, quantity);
+            const overrideExists =
+                getNutrientOverride(buildCacheKey(description, quantity)) ||
+                getNutrientOverride(description.toLowerCase().trim());
+            if (!overrideExists) {
+                fetchAndApplyMacros(description, quantity);
+            }
+        }
+    }
+
+    if (quantityVisualRadios.length > 0) {
+        quantityVisualRadios.forEach(r => r.addEventListener('change', handleQuantityChange));
+    }
+    if (quantityCustomInput) {
+        quantityCustomInput.addEventListener('input', handleQuantityChange);
     }
 
     function showSuggestions(inputValue) {
