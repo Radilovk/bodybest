@@ -454,9 +454,18 @@ export async function handleExtraMealFormSubmit(event) {
     const form = event.target;
     const formData = new FormData(form);
 
-    const quantityField = formData.get('quantity');
+    const quantityCustomVal = (formData.get('quantityCustom') || '').trim();
+    let quantityField = (formData.get('quantity') || '').toString().trim();
+    if (!quantityField && quantityCustomVal) {
+        const match = quantityCustomVal.match(/[\d.,]+/);
+        if (match) {
+            quantityField = match[0].replace(',', '.');
+            formData.set('quantity', quantityField);
+        }
+    }
+
     let parsedQuantity;
-    if (quantityField !== null && quantityField !== undefined && quantityField !== '') {
+    if (quantityField) {
         parsedQuantity = Number(quantityField);
         if (!Number.isFinite(parsedQuantity) || parsedQuantity <= 0) {
             showToast('Количеството трябва да е положително число.', true);
@@ -465,7 +474,6 @@ export async function handleExtraMealFormSubmit(event) {
     }
 
     const selectedVisual = form.querySelector('input[name="quantityEstimateVisual"]:checked');
-    const quantityCustomVal = (formData.get('quantityCustom') || '').trim();
     if (!selectedVisual && !quantityCustomVal) {
         showToast('Моля, изберете количество или въведете стойност.', true);
         return;
