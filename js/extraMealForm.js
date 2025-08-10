@@ -12,6 +12,8 @@ import {
 import { sanitizeHTML } from './htmlSanitizer.js';
 import { getLocalDate } from './utils.js';
 
+const MACRO_FIELDS = ['calories','protein','carbs','fat','fiber'];
+
 const dynamicNutrientOverrides = { ...nutrientOverrides };
 registerNutrientOverrides(dynamicNutrientOverrides);
 const nutrientLookupCache = {};
@@ -176,7 +178,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         }
         summaryContainer.querySelector('[data-summary="replacedPlanned"]').textContent = replacedDisplay;
 
-        ['calories', 'protein', 'carbs', 'fat', 'fiber'].forEach(field => {
+        MACRO_FIELDS.forEach(field => {
             const el = summaryContainer.querySelector(`[data-summary="${field}"]`);
             if (el) {
                 const input = form.querySelector(`input[name="${field}"]`);
@@ -276,7 +278,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             const product = productList.find(p => p.name.toLowerCase() === description);
             if (product) {
                 const factor = total / 100;
-                ['calories','protein','carbs','fat','fiber'].forEach(field => {
+                MACRO_FIELDS.forEach(field => {
                     const input = form.querySelector(`input[name="${field}"]`);
                     if (input) input.value = ((product[field] ?? 0) * factor).toFixed(2);
                 });
@@ -297,7 +299,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         const macros = getNutrientOverride(buildCacheKey(name, quantity));
         if (!macros) return;
         let filled = false;
-        ['calories','protein','carbs','fat','fiber'].forEach(field => {
+        MACRO_FIELDS.forEach(field => {
             const input = form.querySelector(`input[name="${field}"]`);
             if (input && !input.value) {
                 input.value = macros[field] ?? '';
@@ -557,8 +559,7 @@ export async function handleExtraMealFormSubmit(event) {
         return;
     }
 
-    const macroFields = ['calories', 'protein', 'carbs', 'fat', 'fiber'];
-    const macrosEmpty = macroFields.every(field => {
+    const macrosEmpty = MACRO_FIELDS.every(field => {
         const val = formData.get(field);
         return val === null || val === undefined || String(val).trim() === '';
     });
@@ -567,7 +568,7 @@ export async function handleExtraMealFormSubmit(event) {
         try {
             const desc = (formData.get('foodDescription') || '').toString().trim();
             const macros = await fetchMacrosFromAi(desc, parsedQuantity);
-            macroFields.forEach(field => {
+            MACRO_FIELDS.forEach(field => {
                 if (macros[field] !== undefined) {
                     formData.set(field, macros[field]);
                     const input = form.querySelector(`input[name="${field}"]`);
@@ -591,11 +592,10 @@ export async function handleExtraMealFormSubmit(event) {
         dataToSend.quantityEstimate = quantityCustomVal;
     }
 
-    const numericFields = ['calories','protein','carbs','fat','fiber'];
     for (let [key, value] of formData.entries()) {
         if (key === 'quantityEstimateVisual') {
             dataToSend['quantityEstimate'] = value;
-        } else if (numericFields.includes(key)) {
+        } else if (MACRO_FIELDS.includes(key)) {
             const num = parseFloat(value);
             if (!isNaN(num)) dataToSend[key] = num;
         } else {
@@ -635,13 +635,8 @@ export async function handleExtraMealFormSubmit(event) {
         const result = await response.json();
         if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
         showToast(result.message || "Храненето е записано!", false);
-        const entry = {
-            calories: dataToSend.calories,
-            protein: dataToSend.protein,
-            carbs: dataToSend.carbs,
-            fat: dataToSend.fat,
-            fiber: dataToSend.fiber
-        };
+        const entry = {};
+        MACRO_FIELDS.forEach(field => { entry[field] = dataToSend[field]; });
         addExtraMealWithOverride(dataToSend.foodDescription, entry);
         // Актуализираме дневните логове с новото хранене
         const todayStr = getLocalDate();
