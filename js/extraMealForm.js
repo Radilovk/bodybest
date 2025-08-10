@@ -62,7 +62,9 @@ async function ensureProductMeasuresLoaded() {
     if (productMeasuresLoaded) return;
     try {
         const { default: data } = await import('../kv/DIET_RESOURCES/product_measure.json', { with: { type: 'json' } });
-        productMeasures = data || {};
+        productMeasures = Object.fromEntries(
+            Object.entries(data || {}).map(([k, v]) => [k.toLowerCase(), v])
+        );
     } catch (e) {
         console.error('Неуспешно зареждане на мерни единици', e);
     }
