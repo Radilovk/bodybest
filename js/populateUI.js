@@ -388,8 +388,10 @@ export function appendExtraMealCard(name, quantity) {
     items.textContent = `Количество: ${quantity ?? ''}`;
     contentWrapper.appendChild(items);
 
-    const nextUncompleted = list.querySelector('li:not(.completed)');
-    list.insertBefore(extraLi, nextUncompleted || null);
+    // Поставяме картата след последното приключено хранене или най-отгоре при липса на такива
+    const completed = list.querySelectorAll('li.completed');
+    const anchor = completed.length ? completed[completed.length - 1].nextSibling : list.firstChild;
+    list.insertBefore(extraLi, anchor);
 }
 
 export function addExtraMealWithOverride(name = '', macros = {}, grams) {
