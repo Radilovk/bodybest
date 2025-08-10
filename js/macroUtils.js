@@ -20,7 +20,7 @@ const MAX_OVERRIDE_CACHE = 50;
 
 /**
  * Регистрира overrides за хранителни стойности.
- * @param {Record<string, {calories:number, protein:number, carbs:number, fat:number, fiber:number}>} overrides
+ * @param {Record<string, {calories:number, protein:number, carbs:number, fat:number, fiber:number, alcohol?:number}>} overrides
  */
 export function registerNutrientOverrides(overrides = {}) {
   nutrientOverrides = overrides || {};
@@ -30,7 +30,7 @@ export function registerNutrientOverrides(overrides = {}) {
 /**
  * Връща хранителни стойности за име на храна с кеширане.
  * @param {string} name
- * @returns {{calories:number, protein:number, carbs:number, fat:number, fiber:number}|null}
+ * @returns {{calories:number, protein:number, carbs:number, fat:number, fiber:number, alcohol?:number}|null}
  */
 export function getNutrientOverride(name = '') {
   const key = name.toLowerCase().trim();
@@ -64,7 +64,8 @@ export async function loadProductMacros() {
       protein: Number(p.protein) || 0,
       carbs: Number(p.carbs) || 0,
       fat: Number(p.fat) || 0,
-      fiber: Number(p.fiber) || 0
+      fiber: Number(p.fiber) || 0,
+      ...(p.alcohol != null ? { alcohol: Number(p.alcohol) || 0 } : {})
     };
   });
   registerNutrientOverrides(overrides);
@@ -74,43 +75,48 @@ export async function loadProductMacros() {
 /**
  * Нормализира макросите като попълва липсващи полета със стойност 0.
  * @param {Object} macros
- * @returns {{calories:number, protein:number, carbs:number, fat:number, fiber:number}}
- */
+ * @returns {{calories:number, protein:number, carbs:number, fat:number, fiber:number, alcohol?:number}}
+*/
 function mapGramFields(obj = {}) {
   const mapped = { ...obj };
   if (mapped.protein_grams != null) mapped.protein = mapped.protein_grams;
   if (mapped.carbs_grams != null) mapped.carbs = mapped.carbs_grams;
   if (mapped.fat_grams != null) mapped.fat = mapped.fat_grams;
   if (mapped.fiber_grams != null) mapped.fiber = mapped.fiber_grams;
+  if (mapped.alcohol_grams != null) mapped.alcohol = mapped.alcohol_grams;
   return mapped;
 }
 
 export function normalizeMacros(macros = {}) {
   const m = mapGramFields(macros);
-  return {
+  const normalized = {
     calories: Number(m.calories) || 0,
     protein: Number(m.protein) || 0,
     carbs: Number(m.carbs) || 0,
     fat: Number(m.fat) || 0,
     fiber: Number(m.fiber) || 0
   };
+  if (m.alcohol != null) normalized.alcohol = Number(m.alcohol) || 0;
+  return normalized;
 }
 
 /**
  * Скалира макросите спрямо грамовете.
- * @param {{calories:number, protein:number, carbs:number, fat:number, fiber:number}} macros
+ * @param {{calories:number, protein:number, carbs:number, fat:number, fiber:number, alcohol?:number}} macros
  * @param {number} grams
- * @returns {{calories:number, protein:number, carbs:number, fat:number, fiber:number}}
- */
+ * @returns {{calories:number, protein:number, carbs:number, fat:number, fiber:number, alcohol?:number}}
+*/
 export function scaleMacros(macros = {}, grams = 100) {
   const factor = grams / 100;
-  return {
+  const scaled = {
     calories: (Number(macros.calories) || 0) * factor,
     protein: (Number(macros.protein) || 0) * factor,
     carbs: (Number(macros.carbs) || 0) * factor,
     fat: (Number(macros.fat) || 0) * factor,
     fiber: (Number(macros.fiber) || 0) * factor
   };
+  if (macros.alcohol != null) scaled.alcohol = (Number(macros.alcohol) || 0) * factor;
+  return scaled;
 }
 
 /**
@@ -152,7 +158,8 @@ function resolveMacros(meal, grams) {
       protein: Number(meal.protein) || 0,
       carbs: Number(meal.carbs) || 0,
       fat: Number(meal.fat) || 0,
-      fiber: Number(meal.fiber) || 0
+      fiber: Number(meal.fiber) || 0,
+      ...(meal.alcohol != null ? { alcohol: Number(meal.alcohol) || 0 } : {})
     };
   } else {
     const override = getNutrientOverride(meal.meal_name || meal.name);
@@ -166,7 +173,10 @@ function resolveMacros(meal, grams) {
         protein: Number(baseMacros?.['белтъчини']) || 0,
         carbs: Number(baseMacros?.['въглехидрати']) || 0,
         fat: Number(baseMacros?.['мазнини']) || 0,
-        fiber: Number(baseMacros?.['фибри']) || 0
+        fiber: Number(baseMacros?.['фибри']) || 0,
+        ...(baseMacros?.['алкохол'] != null
+          ? { alcohol: Number(baseMacros?.['алкохол']) || 0 }
+          : {})
       };
     }
   }
@@ -181,8 +191,8 @@ function resolveMacros(meal, grams) {
  * @param {number} [threshold=0.05] - Допустимото относително отклонение.
  */
 function validateMacroCalories(macros = {}, threshold = 0.05) {
-  const { calories = 0, protein = 0, carbs = 0, fat = 0, fiber = 0 } = macros;
-  const calc = protein * 4 + (carbs - fiber) * 4 + fat * 9 + fiber * 2;
+  const { calories = 0, protein = 0, carbs = 0, fat = 0, fiber = 0, alcohol = 0 } = macros;
+  const calc = protein * 4 + (carbs - fiber) * 4 + fat * 9 + fiber * 2 + alcohol * 7;
   if (!calc) return;
   const diff = Math.abs(calc - calories);
   if (diff / calc > threshold) {

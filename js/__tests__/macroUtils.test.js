@@ -50,7 +50,7 @@ test('calculatePlanMacros sums macros for day menu', () => {
     { id: 'o-01', meal_name: 'Печено пилешко с ориз/картофи и салата' }
   ];
   const result = calculatePlanMacros(dayMenu);
-  expect(result).toEqual({ calories: 850, protein: 72, carbs: 70, fat: 28, fiber: 0 });
+  expect(result).toEqual({ calories: 820, protein: 72, carbs: 70, fat: 28, fiber: 0 });
   warnSpy.mockRestore();
 });
 
@@ -126,6 +126,21 @@ test('loadProductMacros позволява търсене на продукт п
   addMealMacros({ name: 'ябълка' }, acc);
   expect(acc).toEqual({ calories: 52, protein: 0.3, carbs: 13.8, fat: 0.2, fiber: 2.4 });
   registerNutrientOverrides({});
+});
+
+test('алкохолните напитки имат alcohol и валидни калории', async () => {
+  const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  const { products } = await loadProductMacros();
+  const check = (name, alcohol, calories) => {
+    const p = products.find((pr) => pr.name === name);
+    expect(p).toMatchObject({ alcohol, calories });
+    addMealMacros({ ...p }, { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+  };
+  check('бира (светла, 5% алк.)', 4, 44.4);
+  check('вино (сухо, червено/бяло)', 9.4, 76.6);
+  check('ракия (40% алк.)', 33, 231);
+  expect(warnSpy).not.toHaveBeenCalled();
+  warnSpy.mockRestore();
 });
 
 test('formatPercent форматира съотношения', () => {

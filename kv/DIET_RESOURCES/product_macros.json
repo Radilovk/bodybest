@@ -1054,20 +1054,22 @@
   },
   {
     "name": "бира (светла, 5% алк.)",
-    "calories": 16.4,
+    "calories": 44.4,
     "protein": 0.5,
     "carbs": 3.6,
     "fat": 0,
     "fiber": 0,
+    "alcohol": 4,
     "category": "НАПИТКИ"
   },
   {
     "name": "вино (сухо, червено/бяло)",
-    "calories": 10.8,
+    "calories": 76.6,
     "protein": 0.1,
     "carbs": 2.6,
     "fat": 0,
     "fiber": 0,
+    "alcohol": 9.4,
     "category": "НАПИТКИ"
   },
   {
@@ -1077,6 +1079,7 @@
     "carbs": 0,
     "fat": 0,
     "fiber": 0,
+    "alcohol": 33,
     "category": "НАПИТКИ"
   },
   {
