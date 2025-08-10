@@ -58,6 +58,7 @@ async function ensureProductMacrosLoaded() {
 
 let productMeasures = {};
 let productMeasuresLoaded = false;
+let productMeasureNames = [];
 async function ensureProductMeasuresLoaded() {
     if (productMeasuresLoaded) return;
     try {
@@ -65,6 +66,7 @@ async function ensureProductMeasuresLoaded() {
         productMeasures = Object.fromEntries(
             (Array.isArray(data) ? data : []).map(p => [p.name.toLowerCase(), p.measures])
         );
+        productMeasureNames = Object.keys(productMeasures);
     } catch (e) {
         console.error('Неуспешно зареждане на мерни единици', e);
     }
@@ -72,20 +74,6 @@ async function ensureProductMeasuresLoaded() {
 }
 
 let extraMealFormLoaded = false;
-let commonFoods = [];
-let commonFoodsErrorShown = false;
-if (typeof fetch !== 'undefined') {
-    fetch(new URL("../data/commonFoods.json", import.meta.url))
-        .then(r => r.json())
-        .then(d => { if (Array.isArray(d)) commonFoods = d; })
-        .catch(e => {
-            console.error("Failed to load foods", e);
-            if (!commonFoodsErrorShown) {
-                showToast("Неуспешно зареждане на списъка с храни", true);
-                commonFoodsErrorShown = true;
-            }
-        });
-}
 
 export function getQuantityDisplay(selectedRadio, quantityCustom) {
     const customVal = (quantityCustom || '').trim();
@@ -392,34 +380,21 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (!suggestionsDropdown || !foodDescriptionInput) return;
         suggestionsDropdown.innerHTML = '';
         if (!inputValue || inputValue.length < 1) { suggestionsDropdown.classList.add('hidden'); return; }
-        const filtered = productList.filter(p => p.name.toLowerCase().includes(inputValue.toLowerCase()));
+        const filtered = productMeasureNames.filter(name => name.includes(inputValue.toLowerCase())).slice(0, 5);
         if (filtered.length === 0) { suggestionsDropdown.classList.add('hidden'); return; }
         activeSuggestionIndex = -1;
-        const grouped = filtered.reduce((acc, p) => {
-            const cat = p.category || 'Друго';
-            (acc[cat] = acc[cat] || []).push(p);
-            return acc;
-        }, {});
-        Object.entries(grouped).forEach(([cat, items]) => {
-            const header = document.createElement('div');
-            header.textContent = cat;
-            header.className = 'suggestion-category';
-            header.setAttribute('role', 'presentation');
-            header.style.cssText = 'font-weight:600;padding:0.25rem 0.5rem;background:var(--surface-background);';
-            suggestionsDropdown.appendChild(header);
-            items.slice(0, 5).forEach((item) => {
-                const div = document.createElement('div');
-                div.textContent = item.name;
-                div.setAttribute('role', 'option');
-                div.tabIndex = -1;
-                div.addEventListener('click', () => {
-                    foodDescriptionInput.value = item.name;
-                    suggestionsDropdown.classList.add('hidden');
-                    foodDescriptionInput.focus();
-                    foodDescriptionInput.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
-                });
-                suggestionsDropdown.appendChild(div);
+        filtered.forEach((name) => {
+            const div = document.createElement('div');
+            div.textContent = name;
+            div.setAttribute('role', 'option');
+            div.tabIndex = -1;
+            div.addEventListener('click', () => {
+                foodDescriptionInput.value = name;
+                suggestionsDropdown.classList.add('hidden');
+                foodDescriptionInput.focus();
+                foodDescriptionInput.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
             });
+            suggestionsDropdown.appendChild(div);
         });
         suggestionsDropdown.classList.remove('hidden');
     }
