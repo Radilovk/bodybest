@@ -224,6 +224,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     const reasonOtherText = form.querySelector('#reasonOtherText');
     const replacedPlannedRadioGroup = form.querySelectorAll('input[name="replacedPlanned"]');
     const skippedMealSelect = form.querySelector('#skippedMeal');
+    const quantityCustomInput = form.querySelector('#quantityCustom');
 
     const macroInputsGrid = form.querySelector('.macro-inputs-grid');
     let autoFillMsg;
@@ -411,16 +412,23 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         return selected.value;
     }
 
+    function refreshMacros() {
+        if (!foodDescriptionInput) return;
+        const description = foodDescriptionInput.value.trim().toLowerCase();
+        const quantity = getCurrentQuantity();
+        if (autoFillMsg) autoFillMsg.classList.add('hidden');
+        if (!description) return;
+        applyMacroOverrides(description, quantity);
+        if (description.length >= 3 && !getNutrientOverride(buildCacheKey(description, quantity))) {
+            fetchAndApplyMacros(description, quantity);
+        }
+    }
+
     if (foodDescriptionInput && quantityVisualRadios.length > 0) {
         foodDescriptionInput.addEventListener('input', function() {
             const description = this.value.toLowerCase();
             updateMeasureOptions(description);
-            const quantity = getCurrentQuantity();
-            if (autoFillMsg) autoFillMsg.classList.add('hidden');
-            applyMacroOverrides(description, quantity);
-            if (description.length >= 3 && !getNutrientOverride(buildCacheKey(description, quantity))) {
-                fetchAndApplyMacros(description, quantity);
-            }
+            refreshMacros();
             let suggestedRadioValue = null;
             if (description.includes("фили") && (description.includes("2") || description.includes("две"))) {
                 suggestedRadioValue = "малко_количество";
@@ -456,6 +464,14 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             }
             else if (e.key === 'Escape') { suggestionsDropdown.classList.add('hidden'); activeSuggestionIndex = -1; }
         });
+    }
+
+    quantityVisualRadios.forEach(radio => {
+        radio.addEventListener('change', refreshMacros);
+    });
+
+    if (quantityCustomInput) {
+        quantityCustomInput.addEventListener('input', refreshMacros);
     }
 
     if (mealTimeSelect) {
