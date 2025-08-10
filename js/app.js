@@ -395,7 +395,9 @@ export function recalculateCurrentIntakeMacros() {
 
 export function updateMacrosAndAnalytics() {
     recalculateCurrentIntakeMacros();
-    populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
+    // Използваме вече кешираните дневни макроси,
+    // за да избегнем презаписване с глобални стойности
+    populateDashboardMacros();
     renderPendingMacroChart();
     refreshAnalytics();
 }
