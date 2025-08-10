@@ -16,8 +16,7 @@ import {
     populateProgressHistory,
     populateDashboardMacros,
     setMacroExceedThreshold,
-    updateAnalyticsSections,
-    renderPendingMacroChart
+    updateAnalyticsSections
 } from './populateUI.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
 import { setupStaticEventListeners, setupDynamicEventListeners, initializeCollapsibleCards } from './eventListeners.js';
@@ -398,7 +397,6 @@ export function updateMacrosAndAnalytics() {
     // Използваме вече кешираните дневни макроси,
     // за да избегнем презаписване с глобални стойности
     populateDashboardMacros();
-    renderPendingMacroChart();
     refreshAnalytics();
 }
 

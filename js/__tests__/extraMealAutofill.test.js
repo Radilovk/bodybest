@@ -19,7 +19,7 @@ beforeEach(async () => {
     getNutrientOverride: jest.fn(key => key === 'ябълка|x' ? { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 0 } : null),
     loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] })
   }));
-  jest.unstable_mockModule('../populateUI.js', () => ({ addExtraMealWithOverride: jest.fn(), populateDashboardMacros: jest.fn(), renderPendingMacroChart: jest.fn(), appendExtraMealCard: jest.fn() }));
+  jest.unstable_mockModule('../populateUI.js', () => ({ addExtraMealWithOverride: jest.fn(), populateDashboardMacros: jest.fn(), appendExtraMealCard: jest.fn() }));
   jest.unstable_mockModule('../app.js', () => ({
     currentUserId: 'u1',
     todaysExtraMeals: [],

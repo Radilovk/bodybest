@@ -3,7 +3,6 @@ import { jest } from '@jest/globals';
 
 let populateModule;
 let populateDashboardMacros;
-let renderPendingMacroChart;
 let selectors;
 let appState;
 let macroUtils;
@@ -27,7 +26,7 @@ jest.unstable_mockModule('../eventListeners.js', () => ({
 beforeAll(async () => {
   appState = await import('../app.js');
   populateModule = await import('../populateUI.js');
-  ({ populateDashboardMacros, renderPendingMacroChart } = populateModule);
+  ({ populateDashboardMacros } = populateModule);
   ({ selectors } = await import('../uiElements.js'));
   macroUtils = await import('../macroUtils.js');
 });
@@ -83,8 +82,6 @@ test('recalculates macros automatically and shows spinner while loading', async 
   global.fetch = originalFetch;
   const card = container.querySelector('macro-analytics-card');
   expect(card).not.toBeNull();
-  card.setData.mockClear();
-  renderPendingMacroChart();
   expect(card.setData).toHaveBeenCalled();
   const expectedCurrent = {
     calories: appState.currentIntakeMacros.calories,
