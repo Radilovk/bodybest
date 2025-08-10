@@ -7,6 +7,7 @@ describe('normalizeDailyLogs', () => {
       date: '2024-01-01',
       weight: 80,
       completedMealsStatus: { breakfast: true },
+      extraMeals: [{ foodDescription: 'Смути' }],
       data: { note: 'hi' }
     }];
     const result = normalizeDailyLogs(input);
@@ -16,7 +17,8 @@ describe('normalizeDailyLogs', () => {
         data: {
           note: 'hi',
           weight: 80,
-          completedMealsStatus: { breakfast: true }
+          completedMealsStatus: { breakfast: true },
+          extraMeals: [{ foodDescription: 'Смути' }]
         }
       }
     ]);
@@ -28,7 +30,8 @@ describe('normalizeDailyLogs', () => {
       data: {
         note: 'ok',
         weight: 70,
-        completedMealsStatus: { lunch: false }
+        completedMealsStatus: { lunch: false },
+        extraMeals: [{ foodDescription: 'Сок' }]
       }
     }];
     expect(normalizeDailyLogs(input)).toEqual(input);

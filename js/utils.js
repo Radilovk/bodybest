@@ -276,7 +276,8 @@ export function normalizeDailyLogs(logs = []) {
         data: {
             ...log.data,
             weight: log.data?.weight ?? log.weight,
-            completedMealsStatus: log.data?.completedMealsStatus ?? log.completedMealsStatus
+            completedMealsStatus: log.data?.completedMealsStatus ?? log.completedMealsStatus,
+            extraMeals: log.data?.extraMeals ?? log.extraMeals
         }
     }));
 }
