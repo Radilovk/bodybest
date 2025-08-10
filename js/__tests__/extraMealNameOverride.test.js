@@ -46,11 +46,13 @@ test('автопопълва макросите при override само по и
       <textarea id="foodDescription"></textarea>
       <div id="foodSuggestionsDropdown"></div>
       <input type="radio" name="quantityEstimateVisual" value="x" checked>
-      <input name="calories">
-      <input name="protein">
-      <input name="carbs">
-      <input name="fat">
-      <input name="fiber">
+      <div class="macro-inputs-grid">
+        <input name="calories">
+        <input name="protein">
+        <input name="carbs">
+        <input name="fat">
+        <input name="fiber">
+      </div>
       <div class="form-step"></div>
     </form>
   </div>`;
@@ -64,4 +66,7 @@ test('автопопълва макросите при override само по и
   expect(container.querySelector('input[name="carbs"]').value).toBe('15');
   expect(container.querySelector('input[name="fat"]').value).toBe('0.5');
   expect(container.querySelector('input[name="fiber"]').value).toBe('3');
+  const autoFillMsg = container.querySelector('#autoFillMsg');
+  expect(autoFillMsg).not.toBeNull();
+  expect(autoFillMsg.classList.contains('hidden')).toBe(false);
 });
