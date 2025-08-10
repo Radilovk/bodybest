@@ -373,6 +373,34 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
 
     if (quantityCustomInput) {
         quantityCustomInput.addEventListener('input', recomputeMacros);
+        quantityCustomInput.addEventListener('input', () => {
+            const match = quantityCustomInput.value.match(/(\d+(?:[.,]\d+)?)\s*(кг|kg|g|гр|ml|мл)/i);
+            if (!match) return;
+            let grams = parseFloat(match[1].replace(',', '.'));
+            const unit = match[2].toLowerCase();
+            if (unit === 'kg' || unit === 'кг') grams *= 1000;
+            if (quantityHiddenInput) quantityHiddenInput.value = String(grams);
+            const desc = quantityCustomInput.value.replace(match[0], '').trim().toLowerCase();
+            if (desc && foodDescriptionInput && !foodDescriptionInput.value) {
+                foodDescriptionInput.value = desc;
+            }
+            const productDesc = desc || foodDescriptionInput?.value?.trim().toLowerCase();
+            if (!productDesc) return;
+            const product = findClosestProduct(productDesc);
+            if (product) {
+                const scaled = scaleMacros(product, grams);
+                MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = scaled[f].toFixed(2));
+                if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+            } else {
+                applyMacroOverrides(productDesc, grams);
+                const overrideExists =
+                    getNutrientOverride(buildCacheKey(productDesc, grams)) ||
+                    getNutrientOverride(productDesc.toLowerCase().trim());
+                if (!overrideExists && productDesc.length >= 3) {
+                    fetchAndApplyMacros(productDesc, grams);
+                }
+            }
+        });
     }
     quantityVisualRadios.forEach(r => r.addEventListener('change', recomputeMacros));
 
