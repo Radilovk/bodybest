@@ -1,6 +1,7 @@
 import fs from 'fs';
+import { getLocalDate } from '../js/utils.js';
 
-const today = new Date().toISOString().split('T')[0];
+const today = getLocalDate();
 
 let toml;
 try {

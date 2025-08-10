@@ -10,6 +10,7 @@ import {
     appendExtraMealCard
 } from './populateUI.js';
 import { sanitizeHTML } from './htmlSanitizer.js';
+import { getLocalDate } from './utils.js';
 
 const dynamicNutrientOverrides = { ...nutrientOverrides };
 registerNutrientOverrides(dynamicNutrientOverrides);
@@ -557,7 +558,7 @@ export async function handleExtraMealFormSubmit(event) {
         };
         addExtraMealWithOverride(dataToSend.foodDescription, entry);
         // Актуализираме дневните логове с новото хранене
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getLocalDate();
         if (!Array.isArray(fullDashboardData.dailyLogs)) fullDashboardData.dailyLogs = [];
         let todayLog = fullDashboardData.dailyLogs.find(l => l.date === todayStr);
         if (!todayLog) {

@@ -49,6 +49,15 @@ export const escapeHtml = (text) => {
 };
 
 /**
+ * Връща датата във формат YYYY-MM-DD според локалната часова зона.
+ * @param {Date} [date=new Date()] - Дата за форматиране.
+ * @returns {string} Датата в локален формат.
+ */
+export function getLocalDate(date = new Date()) {
+    return date.toLocaleDateString('en-CA');
+}
+
+/**
  * Форматира дата в кратък български формат (напр. "1 ян").
  * @param {string|number|Date} date - Датата за форматиране.
  * @returns {string} Форматираната дата.

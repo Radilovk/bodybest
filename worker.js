@@ -1,4 +1,5 @@
 // Cloudflare Worker Script (index.js) - Версия 2.3
+import { getLocalDate } from './js/utils.js';
 // Добавен е режим за дебъг чрез HTTP заглавие `X-Debug: 1`
 // Също така са запазени всички функционалности от предходните версии
 // Включва:
@@ -1140,7 +1141,7 @@ async function handleLogRequest(request, env) {
             throw new Error("Липсва потребителско ID (userId).");
         }
 
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getLocalDate();
         const dateToLog = inputData.date || todayStr; // Позволява подаване на дата, иначе днешна
         const logKey = `${userId}_log_${dateToLog}`;
 
@@ -1394,10 +1395,10 @@ async function handleLogExtraMealRequest(request, env) {
                 logDateStr = mealDate.toISOString().split('T')[0];
             } catch (e) {
                 console.warn(`LOG_EXTRA_MEAL_WARN (${userId}): Invalid mealTimeSpecific format: ${inputData.mealTimeSpecific}. Defaulting to today.`);
-                logDateStr = new Date().toISOString().split('T')[0];
+                logDateStr = getLocalDate();
             }
         } else {
-            logDateStr = new Date().toISOString().split('T')[0];
+            logDateStr = getLocalDate();
         }
 
         const logKey = `${userId}_log_${logDateStr}`;
