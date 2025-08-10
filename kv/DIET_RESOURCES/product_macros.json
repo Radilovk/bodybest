@@ -1079,4 +1079,147 @@
     "fiber": 0,
     "category": "НАПИТКИ"
   }
+[
+  // Нови тестени закуски (към категория "ХЛЯБ, ТЕСТЕНИ ИЗДЕЛИЯ И ЗАКУСКИ")
+  {
+    "name": "кашкавалка",
+    "calories": 310,
+    "protein": 12,
+    "carbs": 38,
+    "fat": 12,
+    "fiber": 2,
+    "category": "ХЛЯБ, ТЕСТЕНИ ИЗДЕЛИЯ И ЗАКУСКИ"
+  },
+  {
+    "name": "геврек",
+    "calories": 280,
+    "protein": 9,
+    "carbs": 55,
+    "fat": 2.5,
+    "fiber": 2.8,
+    "category": "ХЛЯБ, ТЕСТЕНИ ИЗДЕЛИЯ И ЗАКУСКИ"
+  },
+  {
+    "name": "принцеса с кайма",
+    "calories": 290,
+    "protein": 14,
+    "carbs": 25,
+    "fat": 14,
+    "fiber": 1.5,
+    "category": "ХЛЯБ, ТЕСТЕНИ ИЗДЕЛИЯ И ЗАКУСКИ"
+  },
+  
+  // Нови храни от тип "Fast Food"
+  {
+    "name": "хотдог (класически)",
+    "calories": 270,
+    "protein": 10,
+    "carbs": 24,
+    "fat": 15,
+    "fiber": 1.5,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+  {
+    "name": "сандвич (опакован, с шунка и кашкавал)",
+    "calories": 260,
+    "protein": 12,
+    "carbs": 28,
+    "fat": 11,
+    "fiber": 2.2,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+  {
+    "name": "паста карбонара (сготвена)",
+    "calories": 190,
+    "protein": 9,
+    "carbs": 22,
+    "fat": 8,
+    "fiber": 1.5,
+    "category": "FAST FOOD И ГОТОВИ ЯСТИЯ"
+  },
+
+  // Нова категория и продукт: "СНАКСОВЕ"
+  {
+    "name": "чипс (картофен, солен)",
+    "calories": 536,
+    "protein": 7,
+    "carbs": 53,
+    "fat": 35,
+    "fiber": 3.5,
+    "category": "СНАКСОВЕ И СОЛЕНИ ИЗКУШЕНИЯ"
+  },
+
+  // Нови напитки
+  {
+    "name": "кока-кола (без захар)",
+    "calories": 0.3,
+    "protein": 0,
+    "carbs": 0,
+    "fat": 0,
+    "fiber": 0,
+    "category": "НАПИТКИ"
+  },
+  {
+    "name": "фанта / спрайт",
+    "calories": 38,
+    "protein": 0,
+    "carbs": 9.2,
+    "fat": 0,
+    "fiber": 0,
+    "category": "НАПИТКИ"
+  },
+  {
+    "name": "капучино (със стандартно мляко, без захар)",
+    "calories": 42,
+    "protein": 2.5,
+    "carbs": 3,
+    "fat": 2.5,
+    "fiber": 0,
+    "category": "НАПИТКИ"
+  },
+  {
+    "name": "фрапе / айс кафе (без захар)",
+    "calories": 15,
+    "protein": 1,
+    "carbs": 2,
+    "fat": 0.2,
+    "fiber": 0,
+    "category": "НАПИТКИ"
+  },
+  {
+    "name": "студен чай (с вкус на лимон/праскова)",
+    "calories": 20,
+    "protein": 0,
+    "carbs": 4.8,
+    "fat": 0,
+    "fiber": 0,
+    "category": "НАПИТКИ"
+  },
+  {
+    "name": "енергийна напитка (стандартна)",
+    "calories": 45,
+    "protein": 0,
+    "carbs": 11,
+    "fat": 0,
+    "fiber": 0,
+    "category": "НАПИТКИ"
+  },
+  {
+    "name": "айрян",
+    "calories": 35,
+    "protein": 2,
+    "carbs": 2.5,
+    "fat": 1.8,
+    "fiber": 0,
+    "category": "НАПИТКИ"
+  },
+  {
+    "name": "боза",
+    "calories": 80,
+    "protein": 1.5,
+    "carbs": 18,
+    "fat": 0.3,
+    "fiber": 0.5,
+    "category": "НАПИТКИ"
+  }
 ]
