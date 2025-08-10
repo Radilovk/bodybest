@@ -98,8 +98,16 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         return;
     }
 
+    const foodDescriptionInput = form.querySelector('#foodDescription');
+    const measureOptionsContainer = form.querySelector('#measureOptions');
+    if (measureOptionsContainer) measureOptionsContainer.classList.add('hidden');
+
     await ensureProductMacrosLoaded();
     await ensureProductMeasuresLoaded();
+
+    if (foodDescriptionInput && foodDescriptionInput.value.trim()) {
+        updateMeasureOptions(foodDescriptionInput.value.trim().toLowerCase());
+    }
 
     const steps = Array.from(form.querySelectorAll('.form-step'));
     const navigationContainer = form.querySelector('.form-wizard-navigation');
@@ -200,12 +208,9 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     if (nextBtn) nextBtn.addEventListener('click', () => { if (currentStepIndex < totalSteps - 1) { currentStepIndex++; showCurrentStep(); }});
     if (prevBtn) prevBtn.addEventListener('click', () => { if (currentStepIndex > 0) { currentStepIndex--; showCurrentStep(); }});
 
-    const foodDescriptionInput = form.querySelector('#foodDescription');
     const suggestionsDropdown = form.querySelector('#foodSuggestionsDropdown');
     const quantityVisualRadios = form.querySelectorAll('input[name="quantityEstimateVisual"]');
     const mealTimeSelect = form.querySelector('#mealTimeSelect');
-    const measureOptionsContainer = form.querySelector('#measureOptions');
-    if (measureOptionsContainer) measureOptionsContainer.classList.add('hidden');
     const quantityHiddenInput = form.querySelector('#quantity');
     const quantityCustomInput = form.querySelector('#quantityCustom');
     const mealTimeSpecificInput = form.querySelector('#mealTimeSpecific');
@@ -451,7 +456,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         return selected.value;
     }
 
-    if (foodDescriptionInput && quantityVisualRadios.length > 0) {
+    if (foodDescriptionInput) {
         foodDescriptionInput.addEventListener('input', function() {
             const description = this.value.toLowerCase();
             if (description) {
