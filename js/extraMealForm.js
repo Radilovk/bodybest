@@ -321,7 +321,10 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 if (autoFillMsg) autoFillMsg.classList.remove('hidden');
             } else {
                 applyMacroOverrides(description, total);
-                if (!getNutrientOverride(buildCacheKey(description, total))) {
+                const overrideExists =
+                    getNutrientOverride(buildCacheKey(description, total)) ||
+                    getNutrientOverride(description.toLowerCase().trim());
+                if (!overrideExists) {
                     fetchAndApplyMacros(description, total);
                 }
             }
@@ -418,7 +421,10 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             const quantity = getCurrentQuantity();
             if (autoFillMsg) autoFillMsg.classList.add('hidden');
             applyMacroOverrides(description, quantity);
-            if (description.length >= 3 && !getNutrientOverride(buildCacheKey(description, quantity))) {
+            const overrideExists =
+                getNutrientOverride(buildCacheKey(description, quantity)) ||
+                getNutrientOverride(description.toLowerCase().trim());
+            if (description.length >= 3 && !overrideExists) {
                 fetchAndApplyMacros(description, quantity);
             }
             let suggestedRadioValue = null;
