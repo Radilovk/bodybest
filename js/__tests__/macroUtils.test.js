@@ -110,6 +110,17 @@ test('validateMacroCalories не предупреждава при съвпад�
   warnSpy.mockRestore();
 });
 
+test('validateMacroCalories приема net carbs при carbsIncludeFiber=false', () => {
+  const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  __testExports.validateMacroCalories(
+    { calories: 310, protein: 30, carbs: 20, fat: 10, fiber: 10 },
+    0.05,
+    false
+  );
+  expect(warnSpy).not.toHaveBeenCalled();
+  warnSpy.mockRestore();
+});
+
 test('getNutrientOverride кешира резултатите', () => {
   registerNutrientOverrides({ 'ябълка': { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 2.4 } });
   expect(__testExports.nutrientCache.size).toBe(0);

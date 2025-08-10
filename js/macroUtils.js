@@ -189,10 +189,12 @@ function resolveMacros(meal, grams) {
  * оценяват по 2 kcal/грам.
  * @param {{calories:number, protein:number, carbs:number, fat:number, fiber:number}} macros
  * @param {number} [threshold=0.05] - Допустимото относително отклонение.
+ * @param {boolean} [carbsIncludeFiber=true] - Ако въглехидратите включват фибри, изважда ги за нетно съдържание.
  */
-function validateMacroCalories(macros = {}, threshold = 0.05) {
+function validateMacroCalories(macros = {}, threshold = 0.05, carbsIncludeFiber = true) {
   const { calories = 0, protein = 0, carbs = 0, fat = 0, fiber = 0, alcohol = 0 } = macros;
-  const calc = protein * 4 + (carbs - fiber) * 4 + fat * 9 + fiber * 2 + alcohol * 7;
+  const netCarbs = carbsIncludeFiber ? carbs - fiber : carbs;
+  const calc = protein * 4 + netCarbs * 4 + fat * 9 + fiber * 2 + alcohol * 7;
   if (!calc) return;
   const diff = Math.abs(calc - calories);
   if (diff / calc > threshold) {
@@ -281,4 +283,4 @@ export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, ext
 
   return acc;
 }
-export const __testExports = { macrosByIdOrName, nutrientCache, resolveMacros };
+export const __testExports = { macrosByIdOrName, nutrientCache, resolveMacros, validateMacroCalories };
