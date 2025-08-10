@@ -290,3 +290,65 @@ describe('quantity card selection', () => {
     expect(first.closest('.quantity-card-option').classList.contains('selected')).toBe(false);
   });
 });
+
+describe('autocomplete suggestions', () => {
+  test('предлага краставица при въвеждане на „краст“', async () => {
+    jest.resetModules();
+    jest.unstable_mockModule('../uiHandlers.js', () => ({
+      showLoading: jest.fn(),
+      showToast: jest.fn(),
+      openModal: jest.fn(),
+      closeModal: jest.fn(),
+    }));
+    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
+    jest.unstable_mockModule('../app.js', () => ({
+      currentUserId: 'u1',
+      todaysExtraMeals: [],
+      currentIntakeMacros: {},
+      fullDashboardData: {},
+      loadCurrentIntake: jest.fn(),
+      updateMacrosAndAnalytics: jest.fn(),
+    }));
+    jest.unstable_mockModule('../macroUtils.js', () => ({
+      removeMealMacros: jest.fn(),
+      registerNutrientOverrides: jest.fn(),
+      getNutrientOverride: jest.fn(),
+      loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
+      scaleMacros: jest.fn(),
+    }));
+    jest.unstable_mockModule('../populateUI.js', () => ({
+      addExtraMealWithOverride: jest.fn(),
+      appendExtraMealCard: jest.fn(),
+    }));
+
+    const originalFetch = global.fetch;
+    global.fetch = undefined;
+    const { initializeExtraMealFormLogic } = await import('../extraMealForm.js');
+    global.fetch = originalFetch;
+
+    document.body.innerHTML = `
+      <form id="extraMealEntryFormActual">
+        <div class="form-step">
+          <textarea id="foodDescription"></textarea>
+          <div id="foodSuggestionsDropdown"></div>
+        </div>
+        <div class="form-step" style="display:none"></div>
+        <div class="form-wizard-navigation">
+          <button id="emPrevStepBtn"></button>
+          <button id="emNextStepBtn"></button>
+          <button id="emSubmitBtn"></button>
+          <button id="emCancelBtn"></button>
+        </div>
+      </form>
+    `;
+
+    await initializeExtraMealFormLogic(document);
+
+    const desc = document.getElementById('foodDescription');
+    desc.value = 'краст';
+    desc.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const suggestions = Array.from(document.querySelectorAll('#foodSuggestionsDropdown div[role="option"]')).map(el => el.textContent);
+    expect(suggestions).toContain('краставица');
+  });
+});
