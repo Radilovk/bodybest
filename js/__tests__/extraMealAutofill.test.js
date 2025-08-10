@@ -122,8 +122,9 @@ test('частично описание попълва макроси от пъ�
       </div>
       <textarea id="foodDescription"></textarea>
       <div id="foodSuggestionsDropdown"></div>
-      <select id="measureSelect"><option data-grams="100" selected>100g</option></select>
-      <input id="measureCount" value="1">
+      <div id="measureOptions">
+        <label class="quantity-card-option"><input type="radio" name="measureOption" data-grams="100" checked><span class="card-content"></span></label>
+      </div>
       <input id="quantity">
       <input name="calories">
       <input name="protein">
@@ -137,9 +138,8 @@ test('частично описание попълва макроси от пъ�
   await initializeExtraMealFormLogic(container);
   const input = container.querySelector('#foodDescription');
   input.value = 'яб';
-  input.dispatchEvent(new Event('input', { bubbles: true }));
-  const count = container.querySelector('#measureCount');
-  count.dispatchEvent(new Event('input', { bubbles: true }));
+  const measureRadio = container.querySelector('#measureOptions input');
+  measureRadio.dispatchEvent(new Event('change', { bubbles: true }));
   expect(container.querySelector('input[name="calories"]').value).toBe('52.00');
   expect(container.querySelector('input[name="protein"]').value).toBe('0.30');
   expect(container.querySelector('input[name="carbs"]').value).toBe('14.00');
@@ -320,8 +320,9 @@ test('грешка в описанието попълва макроси от н
       </div>
       <textarea id="foodDescription"></textarea>
       <div id="foodSuggestionsDropdown"></div>
-      <select id="measureSelect"><option data-grams="100" selected>100g</option></select>
-      <input id="measureCount" value="1">
+      <div id="measureOptions">
+        <label class="quantity-card-option"><input type="radio" name="measureOption" data-grams="100" checked><span class="card-content"></span></label>
+      </div>
       <input id="quantity">
       <input name="calories">
       <input name="protein">
@@ -335,9 +336,8 @@ test('грешка в описанието попълва макроси от н
   await initializeExtraMealFormLogic(container);
   const input = container.querySelector('#foodDescription');
   input.value = 'ябалка';
-  input.dispatchEvent(new Event('input', { bubbles: true }));
-  const count = container.querySelector('#measureCount');
-  count.dispatchEvent(new Event('input', { bubbles: true }));
+  const measureRadio = container.querySelector('#measureOptions input');
+  measureRadio.dispatchEvent(new Event('change', { bubbles: true }));
   expect(container.querySelector('input[name="calories"]').value).toBe('52.00');
   expect(container.querySelector('input[name="protein"]').value).toBe('0.30');
   expect(container.querySelector('input[name="carbs"]').value).toBe('14.00');

@@ -56,8 +56,9 @@ test('computeQuantity използва scaleMacros за попълване на 
       </div>
       <textarea id="foodDescription"></textarea>
       <div id="foodSuggestionsDropdown"></div>
-      <select id="measureSelect"><option data-grams="100" selected>100g</option></select>
-      <input id="measureCount" value="2">
+      <div id="measureOptions">
+        <label class="quantity-card-option"><input type="radio" name="measureOption" data-grams="200" checked><span class="card-content"></span></label>
+      </div>
       <input id="quantity">
       <input name="calories">
       <input name="protein">
@@ -71,9 +72,8 @@ test('computeQuantity използва scaleMacros за попълване на 
   await initializeExtraMealFormLogic(container);
   const desc = container.querySelector('#foodDescription');
   desc.value = 'ябълка';
-  desc.dispatchEvent(new Event('input', { bubbles: true }));
-  const count = container.querySelector('#measureCount');
-  count.dispatchEvent(new Event('input', { bubbles: true }));
+  const measureRadio = container.querySelector('#measureOptions input');
+  measureRadio.dispatchEvent(new Event('change', { bubbles: true }));
   expect(scaleMacrosMock).toHaveBeenCalledWith(
     expect.objectContaining({ name: 'ябълка' }),
     200
