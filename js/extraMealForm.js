@@ -204,8 +204,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     const suggestionsDropdown = form.querySelector('#foodSuggestionsDropdown');
     const quantityVisualRadios = form.querySelectorAll('input[name="quantityEstimateVisual"]');
     const mealTimeSelect = form.querySelector('#mealTimeSelect');
-    const measureSelect = form.querySelector('#measureSelect');
-    const measureCountInput = form.querySelector('#measureCount');
+    const measureOptionsContainer = form.querySelector('#measureOptions');
+    if (measureOptionsContainer) measureOptionsContainer.classList.add('hidden');
     const quantityHiddenInput = form.querySelector('#quantity');
     const quantityCustomInput = form.querySelector('#quantityCustom');
     const mealTimeSpecificInput = form.querySelector('#mealTimeSpecific');
@@ -229,31 +229,37 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     let activeSuggestionIndex = -1;
 
     function updateMeasureOptions(name) {
-        if (!measureSelect || !measureCountInput) return;
+        if (!measureOptionsContainer) return;
         const measures = productMeasures[(name || '').toLowerCase()] || [];
-        measureSelect.innerHTML = '';
-        if (measures.length > 0) {
-            const frag = document.createDocumentFragment();
-            const placeholder = document.createElement('option');
-            placeholder.value = '';
-            placeholder.textContent = '-- Мерна единица --';
-            frag.appendChild(placeholder);
-            measures.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.grams;
-                opt.textContent = m.label;
-                opt.dataset.grams = m.grams;
-                frag.appendChild(opt);
-            });
-            measureSelect.appendChild(frag);
-            measureSelect.classList.remove('hidden');
-            measureCountInput.classList.remove('hidden');
-            measureCountInput.value = 1;
-        } else {
-            measureSelect.classList.add('hidden');
-            measureCountInput.classList.add('hidden');
-            measureCountInput.value = '';
-        }
+        measureOptionsContainer.innerHTML = '';
+        const frag = document.createDocumentFragment();
+        measures.forEach(m => {
+            const label = document.createElement('label');
+            label.className = 'quantity-card-option';
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = 'measureOption';
+            radio.dataset.grams = m.grams;
+            const content = document.createElement('span');
+            content.className = 'card-content';
+            content.innerHTML = `<span class="card-label">1 ${m.label}</span><span class="card-desc">~${m.grams} g</span>`;
+            label.append(radio, content);
+            frag.appendChild(label);
+        });
+        const otherLabel = document.createElement('label');
+        otherLabel.className = 'quantity-card-option';
+        const otherRadio = document.createElement('input');
+        otherRadio.type = 'radio';
+        otherRadio.name = 'measureOption';
+        otherRadio.value = 'other';
+        const otherContent = document.createElement('span');
+        otherContent.className = 'card-content';
+        otherContent.innerHTML = '<span class="card-label">Друго</span>';
+        otherLabel.append(otherRadio, otherContent);
+        frag.appendChild(otherLabel);
+
+        measureOptionsContainer.appendChild(frag);
+        measureOptionsContainer.classList.remove('hidden');
         computeQuantity();
     }
 
@@ -298,9 +304,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
 
     function computeQuantity() {
         if (!quantityHiddenInput) return;
-        const grams = Number(measureSelect?.selectedOptions[0]?.dataset.grams || 0);
-        const count = Number(measureCountInput?.value || 0);
-        const total = grams * count;
+        const selectedMeasure = measureOptionsContainer?.querySelector('input[name="measureOption"]:checked');
+        const total = Number(selectedMeasure?.dataset.grams || 0);
         quantityHiddenInput.value = total > 0 ? String(total) : '';
         const description = foodDescriptionInput?.value?.trim().toLowerCase();
         if (autoFillMsg) autoFillMsg.classList.add('hidden');
@@ -322,8 +327,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         }
     }
 
-    if (measureSelect) measureSelect.addEventListener('change', computeQuantity);
-    if (measureCountInput) measureCountInput.addEventListener('input', computeQuantity);
+    if (measureOptionsContainer) measureOptionsContainer.addEventListener('change', computeQuantity);
 
     function applyMacroOverrides(name, quantity = '') {
         const key = buildCacheKey(name, quantity);
@@ -450,7 +454,13 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     if (foodDescriptionInput && quantityVisualRadios.length > 0) {
         foodDescriptionInput.addEventListener('input', function() {
             const description = this.value.toLowerCase();
-            updateMeasureOptions(description);
+            if (description) {
+                updateMeasureOptions(description);
+            } else if (measureOptionsContainer) {
+                measureOptionsContainer.classList.add('hidden');
+                measureOptionsContainer.innerHTML = '';
+                computeQuantity();
+            }
             recomputeMacros();
             let suggestedRadioValue = null;
             if (description.includes("фили") && (description.includes("2") || description.includes("две"))) {
