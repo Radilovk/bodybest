@@ -287,17 +287,22 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
 
     function findClosestProduct(desc = '') {
         const query = desc.toLowerCase();
+        if (!query) return null;
+
+        const direct = productList.filter(p => p.name.toLowerCase().includes(query));
+        if (direct.length) return direct[0]; // напр. "яб" → "ябълка"
+
         let best = null;
         let bestDist = Infinity;
         for (const p of productList) {
             const name = p.name.toLowerCase();
-            if (name.includes(query)) return p;
             const dist = levenshtein(name, query);
             if (dist < bestDist) {
                 bestDist = dist;
                 best = p;
             }
         }
+
         const threshold = Math.max(1, Math.floor(query.length * 0.3));
         return bestDist <= threshold ? best : null;
     }
