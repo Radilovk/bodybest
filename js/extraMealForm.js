@@ -63,7 +63,7 @@ async function ensureProductMeasuresLoaded() {
     try {
         const { default: data } = await import('../kv/DIET_RESOURCES/product_measure.json', { with: { type: 'json' } });
         productMeasures = Object.fromEntries(
-            Object.entries(data || {}).map(([k, v]) => [k.toLowerCase(), v])
+            (Array.isArray(data) ? data : []).map(p => [p.name.toLowerCase(), p.measures])
         );
     } catch (e) {
         console.error('Неуспешно зареждане на мерни единици', e);
