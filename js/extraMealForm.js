@@ -296,17 +296,18 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     if (measureCountInput) measureCountInput.addEventListener('input', computeQuantity);
 
     function applyMacroOverrides(name, quantity = '') {
-        const macros = getNutrientOverride(buildCacheKey(name, quantity));
+        const key = buildCacheKey(name, quantity);
+        const macros =
+            getNutrientOverride(key) ||
+            getNutrientOverride(name.toLowerCase().trim());
         if (!macros) return;
-        let filled = false;
         MACRO_FIELDS.forEach(field => {
             const input = form.querySelector(`input[name="${field}"]`);
             if (input && !input.value) {
                 input.value = macros[field] ?? '';
-                filled = true;
             }
         });
-        if (filled && autoFillMsg) autoFillMsg.classList.remove('hidden');
+        if (autoFillMsg) autoFillMsg.classList.remove('hidden');
     }
 
     async function fetchAndApplyMacros(name, quantity = '') {
