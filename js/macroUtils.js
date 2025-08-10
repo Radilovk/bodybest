@@ -268,15 +268,20 @@ export function calculatePlanMacros(dayMenu = []) {
 export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, extraMeals = []) {
   const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
+  const prepareMeal = (meal) =>
+    meal && typeof meal.macros === 'object'
+      ? { ...mapGramFields(meal.macros), grams: meal.grams }
+      : mapGramFields(meal);
+
   Object.entries(planMenu).forEach(([day, meals]) => {
     (meals || []).forEach((meal, idx) => {
       const key = `${day}_${idx}`;
-      if (completionStatus[key]) addMealMacros(mapGramFields(meal?.macros || meal), acc);
+      if (completionStatus[key]) addMealMacros(prepareMeal(meal), acc);
     });
   });
 
   if (Array.isArray(extraMeals)) {
-    extraMeals.forEach((m) => addMealMacros(mapGramFields(m), acc));
+    extraMeals.forEach((m) => addMealMacros(prepareMeal(m), acc));
   }
 
   return acc;
