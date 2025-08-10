@@ -1,5 +1,4 @@
 // Cloudflare Worker Script (index.js) - Версия 2.3
-import { getLocalDate } from './js/utils.js';
 // Добавен е режим за дебъг чрез HTTP заглавие `X-Debug: 1`
 // Също така са запазени всички функционалности от предходните версии
 // Включва:
@@ -13,6 +12,15 @@ import { getLocalDate } from './js/utils.js';
 // - Запазени всички предходни функционалности.
 
 // Вградените помощни функции позволяват worker.js да е самодостатъчен
+
+/**
+ * Връща датата във формат YYYY-MM-DD според локалната часова зона.
+ * @param {Date} [date=new Date()] - Дата за форматиране.
+ * @returns {string} Датата в локален формат.
+ */
+function getLocalDate(date = new Date()) {
+  return date.toLocaleDateString('en-CA');
+}
 
 // Рендериране на шаблони {{key}}
 function renderTemplate(str, data = {}) {
