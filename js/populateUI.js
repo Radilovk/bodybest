@@ -2,7 +2,7 @@
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
 import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort, getLocalDate } from './utils.js';
 import { generateId, apiEndpoints, standaloneMacroUrl } from './config.js';
-import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, currentUserId, todaysPlanMacros, updateMacrosAndAnalytics, resetDailyIntake } from './app.js';
+import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, currentUserId, todaysPlanMacros, updateMacrosAndAnalytics, ensureFreshDailyIntake } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
 import { ensureChart } from './chartLoader.js';
 import { getNutrientOverride, scaleMacros, calculatePlanMacros, calculateMacroPercents } from './macroUtils.js';
@@ -109,15 +109,8 @@ export async function populateUI() {
     if (!data || Object.keys(data).length === 0) {
         showToast("Липсват данни за показване.", true); return;
     }
-    const todayDateStr = getLocalDate();
-    const lastDate = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('lastDashboardDate') : null;
-    if (lastDate !== todayDateStr) {
-        resetDailyIntake();
-        updateMacrosAndAnalytics();
-        if (typeof sessionStorage !== 'undefined') {
-            sessionStorage.setItem('lastDashboardDate', todayDateStr);
-        }
-    }
+    ensureFreshDailyIntake();
+    updateMacrosAndAnalytics();
     try { populateUserInfo(data.userName); } catch(e) { console.error("Error in populateUserInfo:", e); }
     try { populateDashboardMainIndexes(data.analytics?.current); } catch(e) { console.error("Error in populateDashboardMainIndexes:", e); }
     try { populateDashboardDetailedAnalytics(data.analytics); } catch(e) { console.error("Error in populateDashboardDetailedAnalytics:", e); }

@@ -168,6 +168,17 @@ export function resetDailyIntake() {
     currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 }
 
+export function ensureFreshDailyIntake() {
+    const todayDateStr = getLocalDate();
+    const lastDate = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('lastDashboardDate') : null;
+    if (lastDate !== todayDateStr) {
+        resetDailyIntake();
+        if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('lastDashboardDate', todayDateStr);
+        }
+    }
+}
+
 // Функция за създаване на тестови данни
 
 function createTestData() {
@@ -340,6 +351,7 @@ async function initializeApp() {
 // ==========================================================================
 export function loadCurrentIntake(status = null, extraMeals = null) {
     try {
+        ensureFreshDailyIntake();
         currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
         const todayStr = getLocalDate();
@@ -349,9 +361,10 @@ export function loadCurrentIntake(status = null, extraMeals = null) {
             Object.keys(todaysMealCompletionStatus).forEach(k => delete todaysMealCompletionStatus[k]);
             Object.assign(todaysMealCompletionStatus, completed);
             todaysExtraMeals = Array.isArray(todayLog.extraMeals) ? todayLog.extraMeals : [];
-        } else if (!status || !extraMeals) {
-            todaysExtraMeals = [];
-            Object.keys(todaysMealCompletionStatus).forEach(k => delete todaysMealCompletionStatus[k]);
+        } else {
+            resetDailyIntake();
+            status = null;
+            extraMeals = null;
         }
 
         status = status || todaysMealCompletionStatus;
@@ -369,6 +382,7 @@ export function loadCurrentIntake(status = null, extraMeals = null) {
 
 export function recalculateCurrentIntakeMacros() {
     try {
+        ensureFreshDailyIntake();
         currentIntakeMacros = calculateCurrentMacros(
             fullDashboardData.planData?.week1Menu || {},
             todaysMealCompletionStatus,
