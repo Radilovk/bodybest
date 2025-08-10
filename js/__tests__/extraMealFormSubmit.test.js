@@ -35,7 +35,6 @@ beforeEach(async () => {
   jest.unstable_mockModule('../populateUI.js', () => ({
     addExtraMealWithOverride: addExtraMealWithOverrideMock,
     populateDashboardMacros: jest.fn(),
-    renderPendingMacroChart: jest.fn(),
     appendExtraMealCard: appendExtraMealCardMock
   }));
   jest.unstable_mockModule('../app.js', () => {

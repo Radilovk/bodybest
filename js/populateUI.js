@@ -336,27 +336,6 @@ export function updateAnalyticsSections(analyticsData) {
     populateDashboardDetailedAnalytics(analyticsData);
 }
 
-export function renderPendingMacroChart() {
-    const card = ensureMacroAnalyticsElement();
-    if (!card) return;
-    const plan = {
-        calories: todaysPlanMacros.calories,
-        protein_grams: todaysPlanMacros.protein,
-        carbs_grams: todaysPlanMacros.carbs,
-        fat_grams: todaysPlanMacros.fat,
-        fiber_grams: todaysPlanMacros.fiber
-    };
-    const current = {
-        calories: currentIntakeMacros.calories,
-        protein_grams: currentIntakeMacros.protein,
-        carbs_grams: currentIntakeMacros.carbs,
-        fat_grams: currentIntakeMacros.fat,
-        fiber_grams: currentIntakeMacros.fiber
-    };
-    const payload = { plan, current };
-    logMacroPayload(payload);
-    card.setData(payload);
-}
 
 export function appendExtraMealCard(name, quantity) {
     const list = selectors.dailyMealList;
@@ -571,6 +550,7 @@ export async function populateDashboardMacros(macros) {
         console.warn('macro-analytics-card не е зареден');
         return;
     }
+    logMacroPayload(payload);
     card.setData(payload); // компонентът се актуализира със стойностите
 }
 
