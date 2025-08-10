@@ -1046,7 +1046,10 @@ async function handleDashboardDataRequest(request, env) {
                     totals: parsed.totals || null,
                     extraMeals: parsed.extraMeals || []
                 };
-            }).filter(entry => entry !== null && entry.data && Object.keys(entry.data).length > 0);
+            }).filter(entry => entry && (
+                (entry.data && Object.keys(entry.data).length > 0) ||
+                (entry.extraMeals && entry.extraMeals.length > 0)
+            ));
         } else {
             const allLogsStr = await env.USER_METADATA_KV.get(`${userId}_logs`);
             const allLogs = safeParseJson(allLogsStr, []);
@@ -1056,7 +1059,10 @@ async function handleDashboardDataRequest(request, env) {
                     data: l.data || l.log || {},
                     totals: l.totals || null,
                     extraMeals: l.extraMeals || []
-                })).filter(e => e.date && e.data && Object.keys(e.data).length > 0)
+                })).filter(e => e.date && (
+                    (e.data && Object.keys(e.data).length > 0) ||
+                    (e.extraMeals && e.extraMeals.length > 0)
+                ))
                     .sort((a, b) => new Date(b.date) - new Date(a.date))
                     .slice(0, USER_ACTIVITY_LOG_LIST_LIMIT);
             }
