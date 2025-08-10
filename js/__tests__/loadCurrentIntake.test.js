@@ -6,6 +6,7 @@ test('loadCurrentIntake агрегира макросите от логовет�
   jest.resetModules();
   const app = await import('../app.js');
   const todayStr = getLocalDate();
+  sessionStorage.setItem('lastDashboardDate', todayStr);
   Object.assign(app.fullDashboardData, {
     planData: { week1Menu: {} },
     dailyLogs: [
@@ -30,21 +31,23 @@ test('loadCurrentIntake агрегира макросите от логовет�
   });
 });
 
-test('loadCurrentIntake не презаписва подаденото състояние', async () => {
+test('loadCurrentIntake нулира подаденото състояние при липса на дневен запис', async () => {
   jest.resetModules();
   const app = await import('../app.js');
+  const todayStr = getLocalDate();
+  sessionStorage.setItem('lastDashboardDate', todayStr);
   Object.assign(app.fullDashboardData, { planData: { week1Menu: {} } });
   app.todaysMealCompletionStatus.sample = true;
-  app.todaysExtraMeals.length = 0;
   app.todaysExtraMeals.push({ calories: 100, protein: 5, carbs: 10, fat: 2, fiber: 1 });
   app.loadCurrentIntake(app.todaysMealCompletionStatus, app.todaysExtraMeals);
-  expect(app.todaysMealCompletionStatus).toEqual({ sample: true });
+  expect(app.todaysMealCompletionStatus).toEqual({});
+  expect(app.todaysExtraMeals).toEqual([]);
   expect(app.currentIntakeMacros).toEqual({
-    calories: 100,
-    protein: 5,
-    carbs: 10,
-    fat: 2,
-    fiber: 1,
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    fiber: 0,
   });
 });
 
@@ -52,6 +55,7 @@ test('loadCurrentIntake нулира локалните данни при лип
   jest.resetModules();
   const app = await import('../app.js');
   const yesterday = getLocalDate(new Date(Date.now() - 86400000));
+  sessionStorage.setItem('lastDashboardDate', getLocalDate());
   Object.assign(app.fullDashboardData, {
     planData: { week1Menu: {} },
     dailyLogs: [{ date: yesterday, data: { extraMeals: [{ calories: 100 }] } }],
@@ -66,6 +70,7 @@ test('loadCurrentIntake нулира локалните данни при лип
 test('recalculateCurrentIntakeMacros преизчислява макросите', async () => {
   jest.resetModules();
   const app = await import('../app.js');
+  sessionStorage.setItem('lastDashboardDate', getLocalDate());
   Object.assign(app.fullDashboardData, { planData: { week1Menu: {} } });
   app.todaysMealCompletionStatus.sample = true;
   app.todaysExtraMeals.length = 0;
