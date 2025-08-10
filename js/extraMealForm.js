@@ -270,11 +270,22 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         const count = Number(measureCountInput?.value || 0);
         const total = grams * count;
         quantityHiddenInput.value = total > 0 ? String(total) : '';
-        const description = foodDescriptionInput?.value.toLowerCase();
+        const description = foodDescriptionInput?.value?.trim().toLowerCase();
+        if (autoFillMsg) autoFillMsg.classList.add('hidden');
         if (description && total > 0) {
-            applyMacroOverrides(description, total);
-            if (!getNutrientOverride(buildCacheKey(description, total))) {
-                fetchAndApplyMacros(description, total);
+            const product = productList.find(p => p.name.toLowerCase() === description);
+            if (product) {
+                const factor = total / 100;
+                ['calories','protein','carbs','fat','fiber'].forEach(field => {
+                    const input = form.querySelector(`input[name="${field}"]`);
+                    if (input) input.value = ((product[field] ?? 0) * factor).toFixed(2);
+                });
+                if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+            } else {
+                applyMacroOverrides(description, total);
+                if (!getNutrientOverride(buildCacheKey(description, total))) {
+                    fetchAndApplyMacros(description, total);
+                }
             }
         }
     }
