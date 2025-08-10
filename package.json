@@ -8,7 +8,7 @@
     "build": "vite build",
     "start": "vite preview",
     "lint": "eslint .",
-    "test": "sh ./scripts/test.sh",
+    "test": "node scripts/validateMacros.js && sh ./scripts/test.sh",
     "test:watch": "sh ./scripts/test.sh --watch",
     "test:file": "node scripts/test.sh --runTestsByPath",
     "test:related": "node scripts/test-related.js",
