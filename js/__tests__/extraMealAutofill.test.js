@@ -2,6 +2,16 @@
 import { jest } from '@jest/globals';
 
 let initializeExtraMealFormLogic;
+const scaleMacrosImpl = (m, g) => {
+  const factor = g / 100;
+  return {
+    calories: (m.calories || 0) * factor,
+    protein: (m.protein || 0) * factor,
+    carbs: (m.carbs || 0) * factor,
+    fat: (m.fat || 0) * factor,
+    fiber: (m.fiber || 0) * factor,
+  };
+};
 
 beforeEach(async () => {
   jest.resetModules();
@@ -17,7 +27,8 @@ beforeEach(async () => {
     removeMealMacros: jest.fn(),
     registerNutrientOverrides: jest.fn(),
     getNutrientOverride: jest.fn(key => key === 'ябълка|x' ? { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 0 } : null),
-    loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] })
+    loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
+    scaleMacros: jest.fn(scaleMacrosImpl)
   }));
   jest.unstable_mockModule('../populateUI.js', () => ({ addExtraMealWithOverride: jest.fn(), populateDashboardMacros: jest.fn(), appendExtraMealCard: jest.fn() }));
   jest.unstable_mockModule('../app.js', () => ({
@@ -85,7 +96,8 @@ test('частично описание попълва макроси от пъ�
         { name: 'ябълка', calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 0 },
         { name: 'ябълков сок', calories: 30, protein: 0.1, carbs: 7, fat: 0, fiber: 0 }
       ]
-    })
+    }),
+    scaleMacros: jest.fn(scaleMacrosImpl)
   }));
   jest.unstable_mockModule('../populateUI.js', () => ({ addExtraMealWithOverride: jest.fn(), populateDashboardMacros: jest.fn(), appendExtraMealCard: jest.fn() }));
   jest.unstable_mockModule('../app.js', () => ({
@@ -147,7 +159,8 @@ test('попълва макроси при смяна на количество 
     removeMealMacros: jest.fn(),
     registerNutrientOverrides: jest.fn(),
     getNutrientOverride: jest.fn(key => key === 'ябълка|малко_количество' ? { calories: 26, protein: 0.15, carbs: 7, fat: 0.1, fiber: 1 } : null),
-    loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] })
+    loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
+    scaleMacros: jest.fn(scaleMacrosImpl)
   }));
   jest.unstable_mockModule('../populateUI.js', () => ({ addExtraMealWithOverride: jest.fn(), populateDashboardMacros: jest.fn(), appendExtraMealCard: jest.fn() }));
   jest.unstable_mockModule('../app.js', () => ({
@@ -210,7 +223,8 @@ test('попълва макроси при ръчно въведено коли�
     removeMealMacros: jest.fn(),
     registerNutrientOverrides: jest.fn(),
     getNutrientOverride: jest.fn(key => key === 'ябълка|120g' ? { calories: 60, protein: 0.3, carbs: 15, fat: 0.2, fiber: 2 } : null),
-    loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] })
+    loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
+    scaleMacros: jest.fn(scaleMacrosImpl)
   }));
   jest.unstable_mockModule('../populateUI.js', () => ({ addExtraMealWithOverride: jest.fn(), populateDashboardMacros: jest.fn(), appendExtraMealCard: jest.fn() }));
   jest.unstable_mockModule('../app.js', () => ({
@@ -280,7 +294,8 @@ test('грешка в описанието попълва макроси от н
         { name: 'ябълков сок', calories: 30, protein: 0.1, carbs: 7, fat: 0, fiber: 0 },
         { name: 'ябълка', calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 0 }
       ]
-    })
+    }),
+    scaleMacros: jest.fn(scaleMacrosImpl)
   }));
   jest.unstable_mockModule('../populateUI.js', () => ({ addExtraMealWithOverride: jest.fn(), populateDashboardMacros: jest.fn(), appendExtraMealCard: jest.fn() }));
   jest.unstable_mockModule('../app.js', () => ({

@@ -1,6 +1,17 @@
 import { jest } from "@jest/globals";
 import { handleLogExtraMealRequest } from '../../worker.js';
 
+const scaleMacrosImpl = (m, g) => {
+  const factor = g / 100;
+  return {
+    calories: (m.calories || 0) * factor,
+    protein: (m.protein || 0) * factor,
+    carbs: (m.carbs || 0) * factor,
+    fat: (m.fat || 0) * factor,
+    fiber: (m.fiber || 0) * factor,
+  };
+};
+
 describe('handleLogExtraMealRequest', () => {
   test('returns success and stores data', async () => {
     const env = { USER_METADATA_KV: { get: jest.fn().mockResolvedValue(null), put: jest.fn() } };
@@ -40,6 +51,7 @@ describe('extraMealForm populateSummary', () => {
       registerNutrientOverrides: jest.fn(),
       getNutrientOverride: jest.fn(),
       loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
+      scaleMacros: jest.fn(scaleMacrosImpl),
     }));
     jest.unstable_mockModule('../populateUI.js', () => ({
       addExtraMealWithOverride: jest.fn(),
@@ -131,6 +143,7 @@ describe('extraMealForm populateSummary', () => {
       registerNutrientOverrides: jest.fn((o) => Object.assign(overridesStore, o)),
       getNutrientOverride: jest.fn((k) => overridesStore[k]),
       loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
+      scaleMacros: jest.fn(scaleMacrosImpl),
     }));
     jest.unstable_mockModule('../populateUI.js', () => ({
       addExtraMealWithOverride: jest.fn(),
@@ -194,7 +207,7 @@ describe('extraMealForm populateSummary', () => {
     desc.value = 'непозната храна';
     desc.dispatchEvent(new Event('input', { bubbles: true }));
 
-    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 350));
 
     document.getElementById('emNextStepBtn').click();
 
@@ -232,6 +245,7 @@ describe('quantity card selection', () => {
       registerNutrientOverrides: jest.fn(),
       getNutrientOverride: jest.fn(),
       loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
+      scaleMacros: jest.fn(scaleMacrosImpl),
     }));
     jest.unstable_mockModule('../populateUI.js', () => ({
       addExtraMealWithOverride: jest.fn(),
