@@ -194,7 +194,7 @@ describe('extraMealForm populateSummary', () => {
     desc.value = 'непозната храна';
     desc.dispatchEvent(new Event('input', { bubbles: true }));
 
-    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 350));
 
     document.getElementById('emNextStepBtn').click();
 

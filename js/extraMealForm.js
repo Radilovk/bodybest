@@ -24,6 +24,14 @@ function buildCacheKey(name, quantity = '') {
     return `${n}|${q}`;
 }
 
+function debounce(fn, delay) {
+    let timeoutId;
+    return (...args) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn(...args), delay);
+    };
+}
+
 let nutrientLookup = async function (name, quantity = '') {
     const cacheKey = buildCacheKey(name, quantity);
     const cached = nutrientLookupCache[cacheKey] || getNutrientOverride(cacheKey);
@@ -125,6 +133,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
 
     let currentStepIndex = 0;
     const totalSteps = steps.length;
+
+    let debouncedFetchAndApplyMacros;
 
     if (totalSteps === 0) {
         if(navigationContainer) navigationContainer.style.display = 'none';
@@ -330,7 +340,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                     getNutrientOverride(buildCacheKey(description, total)) ||
                     getNutrientOverride(description.toLowerCase().trim());
                 if (!overrideExists) {
-                    fetchAndApplyMacros(description, total);
+                    debouncedFetchAndApplyMacros(description, total);
                 }
             }
         }
@@ -362,6 +372,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             console.error('Nutrient lookup failed', e);
         }
     }
+
+    debouncedFetchAndApplyMacros = debounce(fetchAndApplyMacros, 300);
 
     function showSuggestions(inputValue) {
         if (!suggestionsDropdown || !foodDescriptionInput) return;
@@ -430,7 +442,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 getNutrientOverride(buildCacheKey(description, quantity)) ||
                 getNutrientOverride(description.toLowerCase().trim());
             if (description.length >= 3 && !overrideExists) {
-                fetchAndApplyMacros(description, quantity);
+                debouncedFetchAndApplyMacros(description, quantity);
             }
             let suggestedRadioValue = null;
             if (description.includes("фили") && (description.includes("2") || description.includes("две"))) {

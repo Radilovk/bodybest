@@ -60,8 +60,43 @@ test('извиква nutrient lookup при непозната храна', asyn
   const input = container.querySelector('#foodDescription');
   input.value = 'непозната храна';
   input.dispatchEvent(new Event('input', { bubbles: true }));
-  await new Promise(r => setTimeout(r, 0));
+  await new Promise(r => setTimeout(r, 350));
   expect(global.fetch).toHaveBeenCalledWith('/nutrient-lookup', expect.objectContaining({ method: 'POST' }));
   expect(container.querySelector('input[name="calories"]').value).toBe('100');
   expect(container.querySelector('input[name="fiber"]').value).toBe('3');
+});
+
+test('прави единична заявка при бързи последователни въвеждания', async () => {
+  document.body.innerHTML = `<div id="c">
+    <form id="extraMealEntryFormActual">
+      <div class="form-step"></div>
+      <div class="form-wizard-navigation">
+        <button id="emPrevStepBtn"></button>
+        <button id="emNextStepBtn"></button>
+        <button id="emSubmitBtn"></button>
+        <button id="emCancelBtn"></button>
+      </div>
+      <textarea id="foodDescription"></textarea>
+      <div id="foodSuggestionsDropdown"></div>
+      <input type="radio" name="quantityEstimateVisual" value="x" checked>
+      <input name="calories">
+      <input name="protein">
+      <input name="carbs">
+      <input name="fat">
+      <input name="fiber">
+      <div class="form-step"></div>
+    </form>
+  </div>`;
+  const container = document.getElementById('c');
+  await initializeExtraMealFormLogic(container);
+  const input = container.querySelector('#foodDescription');
+  input.value = 'яб';
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.value = 'ябъл';
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.value = 'ябълка';
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 350));
+  const nutrientCalls = global.fetch.mock.calls.filter(c => c[0] === '/nutrient-lookup');
+  expect(nutrientCalls.length).toBe(1);
 });
