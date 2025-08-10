@@ -54,6 +54,19 @@ async function ensureProductMacrosLoaded() {
     productMacrosLoaded = true;
 }
 
+let productMeasures = {};
+let productMeasuresLoaded = false;
+async function ensureProductMeasuresLoaded() {
+    if (productMeasuresLoaded) return;
+    try {
+        const { default: data } = await import('../kv/DIET_RESOURCES/product_measure.json', { with: { type: 'json' } });
+        productMeasures = data || {};
+    } catch (e) {
+        console.error('Неуспешно зареждане на мерни единици', e);
+    }
+    productMeasuresLoaded = true;
+}
+
 let extraMealFormLoaded = false;
 let commonFoods = [];
 let commonFoodsErrorShown = false;
@@ -94,6 +107,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     }
 
     await ensureProductMacrosLoaded();
+    await ensureProductMeasuresLoaded();
 
     const steps = Array.from(form.querySelectorAll('.form-step'));
     const navigationContainer = form.querySelector('.form-wizard-navigation');
@@ -198,6 +212,9 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     const suggestionsDropdown = form.querySelector('#foodSuggestionsDropdown');
     const quantityVisualRadios = form.querySelectorAll('input[name="quantityEstimateVisual"]');
     const mealTimeSelect = form.querySelector('#mealTimeSelect');
+    const measureSelect = form.querySelector('#measureSelect');
+    const measureCountInput = form.querySelector('#measureCount');
+    const quantityHiddenInput = form.querySelector('#quantity');
     const mealTimeSpecificInput = form.querySelector('#mealTimeSpecific');
     const reasonRadioGroup = form.querySelectorAll('input[name="reasonPrimary"]');
     const reasonOtherText = form.querySelector('#reasonOtherText');
@@ -217,6 +234,53 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     }
 
     let activeSuggestionIndex = -1;
+
+    function updateMeasureOptions(name) {
+        if (!measureSelect || !measureCountInput) return;
+        const measures = productMeasures[(name || '').toLowerCase()] || [];
+        measureSelect.innerHTML = '';
+        if (measures.length > 0) {
+            const frag = document.createDocumentFragment();
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = '-- Мерна единица --';
+            frag.appendChild(placeholder);
+            measures.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.grams;
+                opt.textContent = m.label;
+                opt.dataset.grams = m.grams;
+                frag.appendChild(opt);
+            });
+            measureSelect.appendChild(frag);
+            measureSelect.classList.remove('hidden');
+            measureCountInput.classList.remove('hidden');
+            measureCountInput.value = 1;
+        } else {
+            measureSelect.classList.add('hidden');
+            measureCountInput.classList.add('hidden');
+            measureCountInput.value = '';
+        }
+        computeQuantity();
+    }
+
+    function computeQuantity() {
+        if (!quantityHiddenInput) return;
+        const grams = Number(measureSelect?.selectedOptions[0]?.dataset.grams || 0);
+        const count = Number(measureCountInput?.value || 0);
+        const total = grams * count;
+        quantityHiddenInput.value = total > 0 ? String(total) : '';
+        const description = foodDescriptionInput?.value.toLowerCase();
+        if (description && total > 0) {
+            applyMacroOverrides(description, total);
+            if (!getNutrientOverride(buildCacheKey(description, total))) {
+                fetchAndApplyMacros(description, total);
+            }
+        }
+    }
+
+    if (measureSelect) measureSelect.addEventListener('change', computeQuantity);
+    if (measureCountInput) measureCountInput.addEventListener('input', computeQuantity);
 
     function applyMacroOverrides(name, quantity = '') {
         const macros = getNutrientOverride(buildCacheKey(name, quantity));
@@ -287,6 +351,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
 
 
     function getCurrentQuantity() {
+        const hiddenVal = form.querySelector('#quantity')?.value;
+        if (hiddenVal) return hiddenVal;
         const selected = form.querySelector('input[name="quantityEstimateVisual"]:checked');
         if (!selected) return '';
         if (selected.value === 'other_quantity_describe') {
@@ -298,6 +364,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     if (foodDescriptionInput && quantityVisualRadios.length > 0) {
         foodDescriptionInput.addEventListener('input', function() {
             const description = this.value.toLowerCase();
+            updateMeasureOptions(description);
             const quantity = getCurrentQuantity();
             if (autoFillMsg) autoFillMsg.classList.add('hidden');
             applyMacroOverrides(description, quantity);
