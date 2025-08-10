@@ -208,3 +208,71 @@ describe('extraMealForm populateSummary', () => {
     global.fetch = originalFetch;
   });
 });
+
+describe('quantity card selection', () => {
+  test('добавя selected клас към избраната карта', async () => {
+    jest.resetModules();
+    jest.unstable_mockModule('../uiHandlers.js', () => ({
+      showLoading: jest.fn(),
+      showToast: jest.fn(),
+      openModal: jest.fn(),
+      closeModal: jest.fn(),
+    }));
+    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
+    jest.unstable_mockModule('../app.js', () => ({
+      currentUserId: 'u1',
+      todaysExtraMeals: [],
+      currentIntakeMacros: {},
+      fullDashboardData: {},
+      loadCurrentIntake: jest.fn(),
+      updateMacrosAndAnalytics: jest.fn(),
+    }));
+    jest.unstable_mockModule('../macroUtils.js', () => ({
+      removeMealMacros: jest.fn(),
+      registerNutrientOverrides: jest.fn(),
+      getNutrientOverride: jest.fn(),
+      loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
+    }));
+    jest.unstable_mockModule('../populateUI.js', () => ({
+      addExtraMealWithOverride: jest.fn(),
+      appendExtraMealCard: jest.fn(),
+    }));
+
+    const originalFetch = global.fetch;
+    global.fetch = undefined;
+    const { initializeExtraMealFormLogic } = await import('../extraMealForm.js');
+    global.fetch = originalFetch;
+
+    document.body.innerHTML = `
+      <form id="extraMealEntryFormActual">
+        <div class="form-step">
+          <label class="quantity-card-option"><input type="radio" name="quantityEstimateVisual" value="a"></label>
+          <label class="quantity-card-option"><input type="radio" name="quantityEstimateVisual" value="b"></label>
+        </div>
+        <div class="form-step" style="display:none"></div>
+        <div class="form-wizard-navigation">
+          <button id="emPrevStepBtn"></button>
+          <button id="emNextStepBtn"></button>
+          <button id="emSubmitBtn"></button>
+          <button id="emCancelBtn"></button>
+        </div>
+      </form>
+    `;
+
+    await initializeExtraMealFormLogic(document);
+
+    const radios = document.querySelectorAll('input[name="quantityEstimateVisual"]');
+    const first = radios[0];
+    const second = radios[1];
+
+    first.checked = true;
+    first.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(first.closest('.quantity-card-option').classList.contains('selected')).toBe(true);
+    expect(second.closest('.quantity-card-option').classList.contains('selected')).toBe(false);
+
+    second.checked = true;
+    second.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(second.closest('.quantity-card-option').classList.contains('selected')).toBe(true);
+    expect(first.closest('.quantity-card-option').classList.contains('selected')).toBe(false);
+  });
+});

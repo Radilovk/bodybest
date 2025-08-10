@@ -315,14 +315,17 @@
   white-space: normal;
 }
 
-#extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked) {
+#extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked),
+#extraMealEntryModal .quantity-card-option.selected {
   border-color: var(--primary-color);
   background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 50%, transparent);
 }
 
 #extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked) .card-label,
-#extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked) .card-icon {
+#extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked) .card-icon,
+#extraMealEntryModal .quantity-card-option.selected .card-label,
+#extraMealEntryModal .quantity-card-option.selected .card-icon {
   color: var(--primary-color);
   font-weight: 700;
 }
@@ -409,13 +412,16 @@ body.dark-theme #extraMealEntryModal .quantity-card-option:hover {
   border-color: var(--accent-color);
   background-color: color-mix(in srgb, var(--accent-color) 5%, transparent);
 }
-body.dark-theme #extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked) {
+body.dark-theme #extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked),
+body.dark-theme #extraMealEntryModal .quantity-card-option.selected {
   border-color: var(--primary-color);
   background-color: color-mix(in srgb, var(--primary-color) 15%, var(--input-bg) 85%);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 60%, transparent);
 }
 body.dark-theme #extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked) .card-label,
-body.dark-theme #extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked) .card-icon {
+body.dark-theme #extraMealEntryModal .quantity-card-option:has(input[type="radio"]:checked) .card-icon,
+body.dark-theme #extraMealEntryModal .quantity-card-option.selected .card-label,
+body.dark-theme #extraMealEntryModal .quantity-card-option.selected .card-icon {
   color: var(--primary-color); /* За избрана карта, текстът и иконата стават в основния цвят на темата */
 }
 

@@ -501,6 +501,15 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             genericCloseModal(selectors.extraMealEntryModal.id);
         });
     }
+    quantityVisualRadios.forEach(radio => {
+        const label = radio.closest('.quantity-card-option');
+        if (radio.checked && label) label.classList.add('selected');
+        radio.addEventListener('change', function() {
+            form.querySelectorAll('.quantity-card-option').forEach(l => l.classList.remove('selected'));
+            const currentLabel = this.closest('.quantity-card-option');
+            if (this.checked && currentLabel) currentLabel.classList.add('selected');
+        });
+    });
     form.querySelectorAll('.icon-radio-label input[type="radio"]').forEach(radio => {
         const label = radio.closest('.icon-radio-label');
         if(radio.checked && label) label.classList.add('selected');
