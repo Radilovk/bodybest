@@ -338,18 +338,35 @@ async function initializeApp() {
 // ==========================================================================
 // ЗАРЕЖДАНЕ И ОБНОВЯВАНЕ НА ДАННИ
 // ==========================================================================
+/**
+ * Обновява локалните данни за дневен прием и изчислява текущите макроси.
+ * - Използва логовете за днешната дата, ако са налични.
+ * - При липса на лог нулира данните само когато не са подадени стойности
+ *   **или** е настъпила смяна на деня.
+ * - Ако е подаден статус или допълнителни хранения, те се запазват.
+ * @param {Object|null} status Изпълнени хранения за деня.
+ * @param {Array|null} extraMeals Допълнителни хранения за деня.
+ */
 export function loadCurrentIntake(status = null, extraMeals = null) {
     try {
         currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
         const todayStr = new Date().toISOString().split('T')[0];
         const todayLog = fullDashboardData?.dailyLogs?.find(l => l.date === todayStr)?.data;
+        const latestLogDate = (fullDashboardData.dailyLogs || []).reduce(
+            (latest, log) => {
+                return !latest || new Date(log.date) > new Date(latest) ? log.date : latest;
+            },
+            null
+        );
+        const isNewDay = latestLogDate && latestLogDate !== todayStr;
+
         if (todayLog) {
             const completed = todayLog.completedMealsStatus || {};
             Object.keys(todaysMealCompletionStatus).forEach(k => delete todaysMealCompletionStatus[k]);
             Object.assign(todaysMealCompletionStatus, completed);
             todaysExtraMeals = Array.isArray(todayLog.extraMeals) ? todayLog.extraMeals : [];
-        } else if (!status || !extraMeals) {
+        } else if ((!status && !extraMeals) || isNewDay) {
             todaysExtraMeals = [];
             Object.keys(todaysMealCompletionStatus).forEach(k => delete todaysMealCompletionStatus[k]);
         }
