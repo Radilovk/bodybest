@@ -1,6 +1,6 @@
 // populateUI.js - Попълване на UI с данни
 import { selectors, trackerInfoTexts, detailedMetricInfoTexts } from './uiElements.js';
-import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort } from './utils.js';
+import { safeGet, safeParseFloat, capitalizeFirstLetter, escapeHtml, applyProgressFill, getCssVar, formatDateBgShort, getLocalDate } from './utils.js';
 import { generateId, apiEndpoints, standaloneMacroUrl } from './config.js';
 import { fullDashboardData, todaysMealCompletionStatus, currentIntakeMacros, planHasRecContent, todaysExtraMeals, currentUserId, todaysPlanMacros, updateMacrosAndAnalytics, resetDailyIntake } from './app.js';
 import { showToast } from './uiHandlers.js'; // For populateDashboardDetailedAnalytics accordion
@@ -109,7 +109,7 @@ export async function populateUI() {
     if (!data || Object.keys(data).length === 0) {
         showToast("Липсват данни за показване.", true); return;
     }
-    const todayDateStr = new Date().toISOString().split('T')[0];
+    const todayDateStr = getLocalDate();
     const lastDate = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('lastDashboardDate') : null;
     if (lastDate !== todayDateStr) {
         resetDailyIntake();
@@ -599,7 +599,7 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
     }
 
     const today = new Date();
-    const todayDateStr = today.toISOString().split('T')[0];
+    const todayDateStr = getLocalDate(today);
     const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     const currentDayKey = dayNames[today.getDay()];
     const todayTitle = today.toLocaleDateString('bg-BG', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -682,7 +682,7 @@ function populateDashboardLog(dailyLogs, currentStatus, initialData) {
     }
 
     const today = new Date();
-    const todayDateStr = today.toISOString().split('T')[0];
+    const todayDateStr = getLocalDate(today);
     if (selectors.dailyLogDate) selectors.dailyLogDate.textContent = `за ${today.toLocaleDateString('bg-BG', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
 
     const todaysLog = dailyLogs?.find(log => log.date === todayDateStr)?.data || {};

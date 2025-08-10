@@ -1,7 +1,7 @@
 // app.js - Основен Файл на Приложението
 import { isLocalDevelopment, apiEndpoints } from './config.js';
 import { debugLog, enableDebug } from './logger.js';
-import { safeParseFloat, escapeHtml, fileToDataURL, normalizeDailyLogs } from './utils.js';
+import { safeParseFloat, escapeHtml, fileToDataURL, normalizeDailyLogs, getLocalDate } from './utils.js';
 import { selectors, initializeSelectors, loadInfoTexts } from './uiElements.js';
 import { getMetricDescription } from './metricUtils.js';
 import {
@@ -342,7 +342,7 @@ export function loadCurrentIntake(status = null, extraMeals = null) {
     try {
         currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getLocalDate();
         const todayLog = fullDashboardData?.dailyLogs?.find(l => l.date === todayStr)?.data;
         if (todayLog) {
             const completed = todayLog.completedMealsStatus || {};
@@ -661,7 +661,7 @@ export async function autoSaveCompletedMeals() {
     if (!currentUserId) return;
     const payload = {
         userId: currentUserId,
-        date: new Date().toISOString().split('T')[0],
+        date: getLocalDate(),
         data: { completedMealsStatus: { ...todaysMealCompletionStatus } }
     };
     try {
@@ -691,7 +691,7 @@ export async function autoSaveCompletedMeals() {
 }
 
 export async function handleSaveLog() { // Exported for eventListeners.js
-    const logPayload = { userId: currentUserId, date: new Date().toISOString().split('T')[0], data: {} };
+    const logPayload = { userId: currentUserId, date: getLocalDate(), data: {} };
     const weightInputElement = document.getElementById('dailyLogWeightInput');
 
     if (weightInputElement) {

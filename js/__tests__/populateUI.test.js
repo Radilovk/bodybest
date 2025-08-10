@@ -1,5 +1,6 @@
 /** @jest-environment jsdom */
 import { jest } from '@jest/globals';
+import { getLocalDate } from '../utils.js';
 
 let populateUI, populateModule;
 
@@ -87,6 +88,7 @@ beforeEach(async () => {
     currentIntakeMacros: {},
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),
+    resetDailyIntake: jest.fn(),
     updateMacrosAndAnalytics: jest.fn(),
     currentUserId: 'u1'
   }));
@@ -141,6 +143,7 @@ test('обновява макро картата чрез setData', async () => 
     currentIntakeMacros: {},
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),
+    resetDailyIntake: jest.fn(),
     updateMacrosAndAnalytics: jest.fn(),
     currentUserId: 'u1'
   }));
@@ -178,6 +181,7 @@ test('hides modules when values are zero, except engagement card', async () => {
     todaysExtraMeals: [],
     currentIntakeMacros: {},
     loadCurrentIntake: jest.fn(),
+    resetDailyIntake: jest.fn(),
     updateMacrosAndAnalytics: jest.fn(),
     currentUserId: 'u1'
   }));
@@ -191,7 +195,7 @@ test('hides modules when values are zero, except engagement card', async () => {
 
 test('показва картата за историята на теглото при наследен формат', async () => {
   jest.resetModules();
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDate();
   const fullData = {
     userName: 'Иван',
     analytics: { current: {}, streak: {} },
@@ -215,6 +219,7 @@ test('показва картата за историята на теглото 
     currentIntakeMacros: {},
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),
+    resetDailyIntake: jest.fn(),
     updateMacrosAndAnalytics: jest.fn(),
     currentUserId: 'u1'
   }));
@@ -251,6 +256,7 @@ test('populates daily plan with color bars and meal types', async () => {
     currentIntakeMacros: {},
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),
+    resetDailyIntake: jest.fn(),
     updateMacrosAndAnalytics: jest.fn(),
     currentUserId: 'u1'
   }));
@@ -297,6 +303,7 @@ test('handles meal type variations', async () => {
     currentIntakeMacros: {},
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),
+    resetDailyIntake: jest.fn(),
     updateMacrosAndAnalytics: jest.fn(),
     currentUserId: 'u1'
   }));
@@ -323,7 +330,7 @@ test('applies success color to completed meal bar', async () => {
         ]
       }
     },
-    dailyLogs: [{ date: new Date().toISOString().split('T')[0], data: { completedMealsStatus: { [mealStatusKey]: true } } }],
+    dailyLogs: [{ date: getLocalDate(), data: { completedMealsStatus: { [mealStatusKey]: true } } }],
     currentStatus: {},
     initialData: {},
     initialAnswers: {}
@@ -335,6 +342,7 @@ test('applies success color to completed meal bar', async () => {
     currentIntakeMacros: {},
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),
+    resetDailyIntake: jest.fn(),
     updateMacrosAndAnalytics: jest.fn(),
     currentUserId: 'u1'
   }));
@@ -424,6 +432,7 @@ describe('progress bar width handling', () => {
       currentIntakeMacros: {},
       planHasRecContent: false,
       loadCurrentIntake: jest.fn(),
+      resetDailyIntake: jest.fn(),
       updateMacrosAndAnalytics: jest.fn(),
       currentUserId: 'u1'
     }));
@@ -455,6 +464,6 @@ test('ресет на макросите при смяна на деня', async
   expect(loadCurrentIntake).toHaveBeenCalled();
   expect(updateMacrosAndAnalytics).toHaveBeenCalled();
   expect(spy).not.toHaveBeenCalled();
-  expect(sessionStorage.getItem('lastDashboardDate')).toBe(new Date().toISOString().split('T')[0]);
+  expect(sessionStorage.getItem('lastDashboardDate')).toBe(getLocalDate());
   spy.mockRestore();
 });
