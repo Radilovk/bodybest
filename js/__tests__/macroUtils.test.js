@@ -20,52 +20,54 @@ test('calculateCurrentMacros sums macros from completed meals and extras', () =>
   };
 
   const extraMeals = [
-    { calories: 100, protein_grams: 5, carbs_grams: 10, fat_grams: 2, fiber_grams: 0 }
+    { calories: 68, protein_grams: 5, carbs_grams: 10, fat_grams: 2, fiber_grams: 5 }
   ];
 
   const result = calculateCurrentMacros(planMenu, completionStatus, extraMeals);
-  expect(result).toEqual({ calories: 880, protein: 67, carbs: 48, fat: 42, fiber: 0 });
+  expect(result).toEqual({ calories: 848, protein: 67, carbs: 48, fat: 42, fiber: 5 });
 });
 
 test('calculateCurrentMacros използва meal.macros и overrides', () => {
   registerNutrientOverrides({
-    'override meal': { calories: 50, protein: 5, carbs: 5, fat: 2, fiber: 1 }
+    'override meal': { calories: 56, protein: 5, carbs: 5, fat: 2, fiber: 1 }
   });
   const planMenu = {
     monday: [
       { meal_name: 'Override Meal' },
-      { macros: { calories: 100, protein_grams: 10, carbs_grams: 20, fat_grams: 5, fiber_grams: 3 } }
+      { macros: { calories: 159, protein_grams: 10, carbs_grams: 20, fat_grams: 5, fiber_grams: 3 } }
     ]
   };
   const completionStatus = { monday_0: true, monday_1: true };
   const result = calculateCurrentMacros(planMenu, completionStatus, []);
-  expect(result).toEqual({ calories: 150, protein: 15, carbs: 25, fat: 7, fiber: 4 });
+  expect(result).toEqual({ calories: 215, protein: 15, carbs: 25, fat: 7, fiber: 4 });
   registerNutrientOverrides({});
 });
 
 test('calculatePlanMacros sums macros for day menu', () => {
+  const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   const dayMenu = [
     { id: 'z-01', meal_name: 'Протеинов шейк' },
     { id: 'o-01', meal_name: 'Печено пилешко с ориз/картофи и салата' }
   ];
   const result = calculatePlanMacros(dayMenu);
   expect(result).toEqual({ calories: 850, protein: 72, carbs: 70, fat: 28, fiber: 0 });
+  warnSpy.mockRestore();
 });
 
 test('calculatePlanMacros използва наличното поле macros', () => {
   const dayMenu = [
-    { macros: { calories: 100, protein_grams: 10, carbs_grams: 20, fat_grams: 5, fiber_grams: 3 } },
-    { macros: { calories: 200, protein_grams: 20, carbs_grams: 30, fat_grams: 10, fiber_grams: 5 } }
+    { macros: { calories: 159, protein_grams: 10, carbs_grams: 20, fat_grams: 5, fiber_grams: 3 } },
+    { macros: { calories: 280, protein_grams: 20, carbs_grams: 30, fat_grams: 10, fiber_grams: 5 } }
   ];
   const result = calculatePlanMacros(dayMenu);
-  expect(result).toEqual({ calories: 300, protein: 30, carbs: 50, fat: 15, fiber: 8 });
+  expect(result).toEqual({ calories: 439, protein: 30, carbs: 50, fat: 15, fiber: 8 });
 });
 
 test('addMealMacros и removeMealMacros актуализират и clamp-ват акумулатора', () => {
   const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
-  const meal = { calories: 290, protein_grams: 20, carbs_grams: 30, fat_grams: 10, fiber_grams: 5 };
+  const meal = { calories: 280, protein_grams: 20, carbs_grams: 30, fat_grams: 10, fiber_grams: 5 };
   addMealMacros(meal, acc);
-  expect(acc).toEqual({ calories: 290, protein: 20, carbs: 30, fat: 10, fiber: 5 });
+  expect(acc).toEqual({ calories: 280, protein: 20, carbs: 30, fat: 10, fiber: 5 });
   removeMealMacros(meal, acc);
   expect(acc).toEqual({ calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
   // repeat removal to ensure clamp to 0
@@ -75,29 +77,36 @@ test('addMealMacros и removeMealMacros актуализират и clamp-ват
 
 test('removeMealMacros нормализира липсващи полета', () => {
   const acc = { calories: 100, protein: 10, carbs: 10, fat: 5, fiber: 2 };
-  removeMealMacros({ calories: 150, protein_grams: 20 }, acc);
-  expect(acc).toEqual({ calories: 0, protein: 0, carbs: 10, fat: 5, fiber: 2 });
+  removeMealMacros({ calories: 80, protein_grams: 20 }, acc);
+  expect(acc).toEqual({ calories: 20, protein: 0, carbs: 10, fat: 5, fiber: 2 });
 });
 
 test('scaleMacros скалира макросите спрямо грамовете', () => {
-  const base = { calories: 290, protein: 20, carbs: 30, fat: 10, fiber: 5 };
-  expect(scaleMacros(base, 150)).toEqual({ calories: 435, protein: 30, carbs: 45, fat: 15, fiber: 7.5 });
-  expect(scaleMacros(base, 75)).toEqual({ calories: 217.5, protein: 15, carbs: 22.5, fat: 7.5, fiber: 3.75 });
+  const base = { calories: 280, protein: 20, carbs: 30, fat: 10, fiber: 5 };
+  expect(scaleMacros(base, 150)).toEqual({ calories: 420, protein: 30, carbs: 45, fat: 15, fiber: 7.5 });
+  expect(scaleMacros(base, 75)).toEqual({ calories: 210, protein: 15, carbs: 22.5, fat: 7.5, fiber: 3.75 });
 });
 
 test('resolveMacros при grams използва scaleMacros', () => {
-  const meal = { calories: 290, protein: 20, carbs: 30, fat: 10, fiber: 5 };
+  const meal = { calories: 280, protein: 20, carbs: 30, fat: 10, fiber: 5 };
   const result150 = __testExports.resolveMacros(meal, 150);
   const result75 = __testExports.resolveMacros(meal, 75);
-  expect(result150).toEqual({ calories: 435, protein: 30, carbs: 45, fat: 15, fiber: 7.5 });
-  expect(result75).toEqual({ calories: 217.5, protein: 15, carbs: 22.5, fat: 7.5, fiber: 3.75 });
+  expect(result150).toEqual({ calories: 420, protein: 30, carbs: 45, fat: 15, fiber: 7.5 });
+  expect(result75).toEqual({ calories: 210, protein: 15, carbs: 22.5, fat: 7.5, fiber: 3.75 });
 });
 
 test('validateMacroCalories предупреждава при голямо отклонение', () => {
   const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
-  addMealMacros({ calories: 500, protein: 30, carbs: 30, fat: 10, fiber: 0 }, acc);
+  addMealMacros({ calories: 500, protein: 30, carbs: 40, fat: 10, fiber: 10 }, acc);
   expect(warnSpy).toHaveBeenCalled();
+  warnSpy.mockRestore();
+});
+
+test('validateMacroCalories не предупреждава при съвпадение с фибри', () => {
+  const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  addMealMacros({ calories: 350, protein: 30, carbs: 40, fat: 10, fiber: 10 }, { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+  expect(warnSpy).not.toHaveBeenCalled();
   warnSpy.mockRestore();
 });
 

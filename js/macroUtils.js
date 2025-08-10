@@ -173,9 +173,16 @@ function resolveMacros(meal, grams) {
   return typeof grams === 'number' ? scaleMacros(macros, grams) : macros;
 }
 
+/**
+ * Проверява дали калориите съответстват на макросите.
+ * Фибрите се изваждат от въглехидратите за нетно съдържание и се
+ * оценяват по 2 kcal/грам.
+ * @param {{calories:number, protein:number, carbs:number, fat:number, fiber:number}} macros
+ * @param {number} [threshold=0.05] - Допустимото относително отклонение.
+ */
 function validateMacroCalories(macros = {}, threshold = 0.05) {
-  const { calories = 0, protein = 0, carbs = 0, fat = 0 } = macros;
-  const calc = protein * 4 + carbs * 4 + fat * 9;
+  const { calories = 0, protein = 0, carbs = 0, fat = 0, fiber = 0 } = macros;
+  const calc = protein * 4 + (carbs - fiber) * 4 + fat * 9 + fiber * 2;
   if (!calc) return;
   const diff = Math.abs(calc - calories);
   if (diff / calc > threshold) {
