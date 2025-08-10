@@ -3,8 +3,8 @@ import path from 'path';
 
 const THRESHOLD = 0.05;
 
-function calcCalories({ protein = 0, carbs = 0, fat = 0, fiber = 0 }) {
-  return protein * 4 + (carbs - fiber) * 4 + fat * 9 + fiber * 2;
+function calcCalories({ protein = 0, carbs = 0, fat = 0, fiber = 0, alcohol = 0 }) {
+  return protein * 4 + (carbs - fiber) * 4 + fat * 9 + fiber * 2 + alcohol * 7;
 }
 
 async function loadJson(file) {
