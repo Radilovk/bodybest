@@ -355,14 +355,22 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (autoFillMsg) autoFillMsg.classList.remove('hidden');
     }
 
-    async function fetchAndApplyMacros(name, quantity = '') {
+    function debounce(fn, delay) {
+        let t;
+        return (...args) => {
+            clearTimeout(t);
+            t = setTimeout(() => fn(...args), delay);
+        };
+    }
+
+    const fetchAndApplyMacros = debounce(async (name, quantity = '') => {
         try {
             await nutrientLookup(name, quantity);
             applyMacroOverrides(name, quantity);
         } catch (e) {
             console.error('Nutrient lookup failed', e);
         }
-    }
+    }, 300);
 
     function handleQuantityChange() {
         const description = foodDescriptionInput?.value?.trim().toLowerCase();
