@@ -200,6 +200,28 @@ describe('handleSendTestEmailRequest', () => {
     expect(fetch).toHaveBeenCalledWith('https://php.example.com/mailer.php', expect.any(Object));
   });
 
+  test('falls back to default PHP endpoint when none configured', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      text: async () => ''
+    });
+    const request = {
+      headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
+      json: async () => ({ recipient: 'demo@example.com', subject: 'S', body: 'B' })
+    };
+    const env = { WORKER_ADMIN_TOKEN: 'secret' };
+    const res = await handleSendTestEmailRequest(request, env);
+    expect(res.success).toBe(true);
+    expect(fetch).toHaveBeenCalledWith(
+      'https://mybody.best/mailer/mail.php',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: 'demo@example.com', subject: 'S', message: 'B', body: 'B', fromName: '' })
+      })
+    );
+  });
+
   test('forwards fromName to mailer', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
