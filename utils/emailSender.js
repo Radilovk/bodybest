@@ -28,11 +28,10 @@ export async function sendEmailUniversal(to, subject, body, env = {}) {
     return;
   }
 
-  const phpUrl = env.MAIL_PHP_URL || globalThis['process']?.env?.MAIL_PHP_URL;
-  if (!phpUrl) {
-    throw new Error('MAILER_ENDPOINT_URL или MAIL_PHP_URL не са настроени');
-  }
-  const { sendEmail } = await import('../sendEmailWorker.js');
+  const { sendEmail, DEFAULT_MAIL_PHP_URL } = await import('../sendEmailWorker.js');
+  const phpUrl = env.MAIL_PHP_URL ||
+    globalThis['process']?.env?.MAIL_PHP_URL ||
+    DEFAULT_MAIL_PHP_URL;
   const phpEnv = {
     MAIL_PHP_URL: phpUrl,
     FROM_NAME: fromName

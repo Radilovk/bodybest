@@ -7,6 +7,7 @@
  */
 const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
 const MAIL_PHP_URL_VAR_NAME = 'MAIL_PHP_URL';
+export const DEFAULT_MAIL_PHP_URL = 'https://radilovk.github.io/bodybest/mailer/mail.php';
 
 async function recordUsage(env, identifier = '') {
   try {
@@ -53,10 +54,7 @@ async function checkRateLimit(env, identifier, limit = 3, windowMs = 60000) {
 }
 
 async function sendViaPhp(to, subject, message, env = {}) {
-  const url = env[MAIL_PHP_URL_VAR_NAME];
-  if (!url) {
-    throw new Error('MAIL_PHP_URL is required');
-  }
+  const url = env[MAIL_PHP_URL_VAR_NAME] || DEFAULT_MAIL_PHP_URL;
   const fromName = env.FROM_NAME || '';
   const resp = await fetch(url, {
     method: 'POST',

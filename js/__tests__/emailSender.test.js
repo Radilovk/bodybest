@@ -39,6 +39,12 @@ test('uses MAIL_PHP_URL when endpoint missing', async () => {
   delete process.env.MAIL_PHP_URL;
 });
 
-test('throws when no mail endpoint configured', async () => {
-  await expect(sendEmailUniversal('n@a.bg', 'S', 'B')).rejects.toThrow('MAILER_ENDPOINT_URL или MAIL_PHP_URL не са настроени');
+test('falls back to default PHP endpoint when none configured', async () => {
+  global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  await sendEmailUniversal('n@a.bg', 'S', 'B');
+  expect(fetch).toHaveBeenCalledWith(
+    'https://radilovk.github.io/bodybest/mailer/mail.php',
+    expect.any(Object)
+  );
+  fetch.mockRestore();
 });

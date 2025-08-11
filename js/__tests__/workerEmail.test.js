@@ -57,6 +57,27 @@ describe('handleSendEmailRequest and sendEmailUniversal', () => {
     fetch.mockRestore();
   });
 
+  test('handleSendEmailRequest falls back to default PHP endpoint', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+      clone: () => ({ text: async () => '{}' }),
+      headers: { get: () => 'application/json' }
+    });
+    const req = {
+      headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
+      json: async () => ({ to: 'a@b.bg', subject: 'S', message: 'B' })
+    };
+    const env = { WORKER_ADMIN_TOKEN: 'secret' };
+    const res = await handleSendEmailRequest(req, env);
+    expect(fetch).toHaveBeenCalledWith(
+      'https://radilovk.github.io/bodybest/mailer/mail.php',
+      expect.any(Object)
+    );
+    expect(res.status).toBe(200);
+    fetch.mockRestore();
+  });
+
   test('sendEmail forwards data to PHP endpoint', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
