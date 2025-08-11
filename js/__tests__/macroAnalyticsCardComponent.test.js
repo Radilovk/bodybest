@@ -79,6 +79,31 @@ test('рендерира метриките и реагира на highlightMacr
   expect(proteinDiv.classList.contains('active')).toBe(false);
 });
 
+test('закръгля стойностите до цяло число', async () => {
+  const card = document.createElement('macro-analytics-card');
+  document.body.appendChild(card);
+  const plan = {
+    calories: 1999.4,
+    protein_grams: 149.6,
+    protein_percent: 75,
+    carbs_grams: 250.2,
+    carbs_percent: 50,
+    fat_grams: 70.3,
+    fat_percent: 35
+  };
+  const current = {
+    calories: 1200.6,
+    protein_grams: 60.7,
+    carbs_grams: 100.2,
+    fat_grams: 40.5
+  };
+  card.setData({ plan, current });
+  const utils = within(card.shadowRoot);
+  await waitFor(() => utils.getByText('Белтъчини'));
+  expect(utils.getByText('61 / 150г')).toBeTruthy();
+  expect(utils.getByText('1201 / 1999 kcal')).toBeTruthy();
+});
+
 test('показва предупреждение при превишаване на макросите', async () => {
   const card = document.createElement('macro-analytics-card');
   document.body.appendChild(card);

@@ -428,7 +428,10 @@ export class MacroAnalyticsCard extends HTMLElement {
       this.warningEl.textContent = '';
     }
     const consumedCaloriesRaw = hasMacroData ? current.calories : undefined;
-    const consumedCalories = typeof consumedCaloriesRaw === 'number' ? consumedCaloriesRaw : '--';
+    const consumedCalories =
+      typeof consumedCaloriesRaw === 'number' ? Math.round(consumedCaloriesRaw) : '--';
+    const planCalories =
+      typeof plan.calories === 'number' ? Math.round(plan.calories) : plan.calories;
     const caloriesExceeded =
       typeof consumedCaloriesRaw === 'number' &&
       plan.calories &&
@@ -437,7 +440,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     this.centerText.innerHTML = `
       <div class="calories-value">${consumedCalories}</div>
       <div class="calories-separator"></div>
-      <div class="calories-value">${plan.calories}</div>
+      <div class="calories-value">${planCalories}</div>
       <div class="total-calories-label">${this.labels.intakeVsPlanLabel || 'Прием vs План'}</div>`;
     const calDiv = document.createElement('div');
     calDiv.className = 'macro-metric calories';
@@ -450,11 +453,14 @@ export class MacroAnalyticsCard extends HTMLElement {
     calDiv.setAttribute('role', 'button');
     calDiv.setAttribute('tabindex', '0');
     calDiv.setAttribute('aria-pressed', 'false');
-    calDiv.setAttribute('aria-label', `${this.labels.caloriesLabel}: ${consumedCalories} ${this.labels.totalCaloriesLabel.replace('{calories}', plan.calories)}`);
+    calDiv.setAttribute(
+      'aria-label',
+      `${this.labels.caloriesLabel}: ${consumedCalories} ${this.labels.totalCaloriesLabel.replace('{calories}', planCalories)}`
+    );
     calDiv.innerHTML = `
       <span class="macro-icon"><i class="bi bi-fire"></i></span>
       <div class="macro-label">${this.labels.caloriesLabel}</div>
-      <div class="macro-value">${consumedCalories} / ${plan.calories} kcal</div>`;
+      <div class="macro-value">${consumedCalories} / ${planCalories} kcal</div>`;
     calDiv.addEventListener('click', () => this.highlightCalories(calDiv));
     calDiv.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -474,16 +480,19 @@ export class MacroAnalyticsCard extends HTMLElement {
     macros.forEach((item, idx) => {
       const label = this.labels.macros[item.key];
       const currentRaw = hasMacroData ? current[`${item.key}_grams`] : undefined;
-      const displayCurrent = typeof currentRaw === 'number' ? currentRaw : '--';
-      const targetVal = plan[`${item.key}_grams`];
-      const percent = formatPercent(currentRaw / targetVal);
+      const displayCurrent =
+        typeof currentRaw === 'number' ? Math.round(currentRaw) : '--';
+      const targetValRaw = plan[`${item.key}_grams`];
+      const targetVal =
+        typeof targetValRaw === 'number' ? Math.round(targetValRaw) : targetValRaw;
+      const percent = formatPercent(currentRaw / targetValRaw);
       const subtitle = this.labels.subtitle
         ? this.labels.subtitle.replace('{percent}', percent)
         : `${percent} ${this.labels.fromGoal}`.trim();
       const div = document.createElement('div');
       div.className = `macro-metric ${item.key}`;
-      if (typeof currentRaw === 'number' && typeof targetVal === 'number') {
-        const ratio = currentRaw / targetVal;
+      if (typeof currentRaw === 'number' && typeof targetValRaw === 'number') {
+        const ratio = currentRaw / targetValRaw;
         // Клас "over" се добавя само при надвишение над прага.
         if (ratio > this.exceedThreshold) div.classList.add('over');
         else if (ratio < 1) div.classList.add('under');
@@ -505,7 +514,11 @@ export class MacroAnalyticsCard extends HTMLElement {
         }
       });
       this.grid.appendChild(div);
-      if (typeof currentRaw === 'number' && targetVal && currentRaw > targetVal * this.exceedThreshold) {
+      if (
+        typeof currentRaw === 'number' &&
+        targetValRaw &&
+        currentRaw > targetValRaw * this.exceedThreshold
+      ) {
         // Запомняме макросите, превишили прага, за текстово предупреждение.
         overMacros.push(label);
       }
