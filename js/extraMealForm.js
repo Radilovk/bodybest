@@ -73,7 +73,8 @@ async function ensureProductMeasuresLoaded() {
     productMeasuresLoaded = true;
 }
 
-let extraMealFormLoaded = false;
+// Кеширана версия на шаблона за формата, за да се избягва повторно изтегляне
+let extraMealFormTemplate = '';
 
 export function getQuantityDisplay(selectedRadio, quantityCustom) {
     const customVal = (quantityCustom || '').trim();
@@ -558,10 +559,15 @@ export async function openExtraMealModal() {
         console.error("Selectors (extraMealEntryModal or extraMealFormContainer) are not defined.");
         return;
     }
-    const modal = selectors.extraMealEntryModal, formContainer = selectors.extraMealFormContainer;
-    if (!modal || !formContainer) { console.error("Extra meal modal or form container not found via selectors."); return; }
+    const modal = selectors.extraMealEntryModal,
+        formContainer = selectors.extraMealFormContainer;
+    if (!modal || !formContainer) {
+        console.error("Extra meal modal or form container not found via selectors.");
+        return;
+    }
 
-    if (!extraMealFormLoaded) {
+    // Зареждаме и кешираме шаблона само веднъж
+    if (!extraMealFormTemplate) {
         formContainer.innerHTML = `<div class="placeholder-form-loading"><svg class="icon spinner" style="width:30px;height:30px;"><use href="#icon-spinner"/></svg><p>Зареждане...</p></div>`;
         try {
             const templateUrl = 'extra-meal-entry-form.html';
@@ -572,29 +578,22 @@ export async function openExtraMealModal() {
             const response = await fetch(resolved);
             if (!response.ok) throw new Error(`Грешка зареждане форма: ${response.status}`);
             const raw = await response.text();
-            formContainer.innerHTML = sanitizeHTML(raw);
-            await initializeExtraMealFormLogic(formContainer);
-            extraMealFormLoaded = true;
-            genericOpenModal('extraMealEntryModal');
-            const actualForm = formContainer.querySelector('#extraMealEntryFormActual');
-            if (actualForm) {
-                actualForm.removeEventListener('submit', handleExtraMealFormSubmit);
-                actualForm.addEventListener('submit', handleExtraMealFormSubmit);
-            }
+            extraMealFormTemplate = sanitizeHTML(raw);
         } catch (error) {
             formContainer.innerHTML = `<p style="color:var(--color-danger);text-align:center;">Грешка при зареждане на формата: ${error.message}</p><button class="button-secondary modal-close-btn" data-modal-close="extraMealEntryModal" style="margin-top:1rem;">Затвори</button>`;
             genericOpenModal('extraMealEntryModal');
+            return;
         }
-    } else {
-        const actualForm = formContainer.querySelector('#extraMealEntryFormActual');
-        if (actualForm) {
-            actualForm.reset();
-            const firstQuantityRadio = actualForm.querySelector('input[name="quantityEstimateVisual"][value="не_посочено_в_стъпка_2"]');
-            if (firstQuantityRadio) firstQuantityRadio.checked = true;
-            await initializeExtraMealFormLogic(formContainer);
-        }
-        genericOpenModal('extraMealEntryModal');
     }
+
+    // Създаваме нов DOM от кеширания шаблон при всяко отваряне
+    formContainer.innerHTML = extraMealFormTemplate;
+    await initializeExtraMealFormLogic(formContainer);
+    const actualForm = formContainer.querySelector('#extraMealEntryFormActual');
+    if (actualForm) {
+        actualForm.addEventListener('submit', handleExtraMealFormSubmit);
+    }
+    genericOpenModal('extraMealEntryModal');
 }
 
 export async function fetchMacrosFromAi(_foodDescription, quantity) {
