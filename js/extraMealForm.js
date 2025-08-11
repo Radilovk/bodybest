@@ -262,6 +262,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     if (measureInput) measureInput.classList.add('hidden');
     const quantityHiddenInput = form.querySelector('#quantity');
     const quantityCustomInput = form.querySelector('#quantityCustom');
+    const quantityCountInput = form.querySelector('#quantityCountInput');
     const mealTimeSpecificInput = form.querySelector('#mealTimeSpecific');
     const reasonRadioGroup = form.querySelectorAll('input[name="reasonPrimary"]');
     const reasonOtherText = form.querySelector('#reasonOtherText');
@@ -355,6 +356,30 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             }
         }
     }
+
+    function computeQuantityFromManual() {
+        if (!quantityHiddenInput || !quantityCustomInput || !measureInput || !quantityCountInput) return;
+        const count = parseFloat(quantityCountInput.value);
+        const label = measureInput.value.trim().toLowerCase();
+        const desc = foodDescriptionInput?.value?.trim().toLowerCase() || '';
+        if (!desc || !label || !(count > 0)) return;
+        const key = fuzzyFindProductKey(desc);
+        const measure = key ? (productMeasures[key] || []).find(m => m.label.toLowerCase() === label) : null;
+        if (!measure) return;
+        const grams = measure.grams * count;
+        quantityHiddenInput.value = String(grams);
+        quantityCustomInput.value = `${grams} гр`;
+        if (autoFillMsg) autoFillMsg.classList.add('hidden');
+        const product = findClosestProduct(desc);
+        if (product) {
+            const scaled = scaleMacros(product, grams);
+            MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = scaled[f].toFixed(2));
+            if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+        }
+    }
+
+    if (quantityCountInput) quantityCountInput.addEventListener('input', computeQuantityFromManual);
+    if (measureInput) measureInput.addEventListener('input', computeQuantityFromManual);
 
     // quantityCustom интелигентно парсване "2 ябълки" => 2 * default grams
     if (quantityCustomInput) {
