@@ -90,6 +90,21 @@ async function ensureProductMeasuresLoaded() {
 
 let extraMealFormLoaded = false;
 
+export async function openExtraMealModal() {
+    genericOpenModal('extraMealEntryModal');
+    if (extraMealFormLoaded || !selectors.extraMealFormContainer) return;
+    try {
+        const resp = await fetch('extra-meal-entry-form.html');
+        if (!resp.ok) throw new Error('Failed to load extra meal form');
+        selectors.extraMealFormContainer.innerHTML = await resp.text();
+        await initializeExtraMealFormLogic(selectors.extraMealFormContainer);
+        extraMealFormLoaded = true;
+    } catch (err) {
+        console.error('Неуспешно зареждане на формата за извънредно хранене', err);
+        showToast('Грешка при зареждане на формата.', true);
+    }
+}
+
 export function getQuantityDisplay(selectedRadio, quantityCustom) {
     const customVal = (quantityCustom || '').trim();
     if (selectedRadio) {
