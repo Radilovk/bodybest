@@ -43,6 +43,14 @@
   margin-top: var(--space-sm);
 }
 
+/* --- Индикатор за зареждане при изчисление --- */
+#extraMealEntryModal .lookup-spinner {
+  width: 20px;
+  height: 20px;
+  margin-left: var(--space-xs);
+  vertical-align: middle;
+}
+
 /* --- Радио бутони с икони (за усещане) --- */
 #extraMealEntryModal .radio-group-icons {
   display: flex;

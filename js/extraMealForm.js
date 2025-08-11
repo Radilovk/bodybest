@@ -262,6 +262,14 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     const quantityHiddenInput = form.querySelector('#quantity');
     const quantityCustomInput = form.querySelector('#quantityCustom');
     const quantityCountInput = form.querySelector('#quantityCountInput');
+    let quantityLookupLoading = false;
+    let quantityLookupSpinner;
+    if (quantityCustomInput) {
+        quantityLookupSpinner = document.createElement('svg');
+        quantityLookupSpinner.classList.add('icon', 'spinner', 'lookup-spinner', 'hidden');
+        quantityLookupSpinner.innerHTML = '<use href="#icon-spinner"></use>';
+        quantityCustomInput.insertAdjacentElement('afterend', quantityLookupSpinner);
+    }
     const reasonRadioGroup = form.querySelectorAll('input[name="reasonPrimary"]');
     const reasonOtherText = form.querySelector('#reasonOtherText');
     const replacedPlannedRadioGroup = form.querySelectorAll('input[name="replacedPlanned"]');
@@ -405,7 +413,9 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             lookupTimer = setTimeout(async () => {
                 const desc = foodDescriptionInput?.value?.trim();
                 const qty = quantityCustomInput.value.trim();
-                if (!desc || !qty) return;
+                if (!desc || !qty || quantityLookupLoading) return;
+                quantityLookupLoading = true;
+                quantityLookupSpinner?.classList.remove('hidden');
                 try {
                     const data = await nutrientLookup(desc, qty);
                     MACRO_FIELDS.forEach(f => {
@@ -415,6 +425,9 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                     if (autoFillMsg) autoFillMsg.classList.remove('hidden');
                 } catch (err) {
                     console.error('Невъзможно изчисление на макроси', err);
+                } finally {
+                    quantityLookupSpinner?.classList.add('hidden');
+                    quantityLookupLoading = false;
                 }
             }, 300);
         });
