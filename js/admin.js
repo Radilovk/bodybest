@@ -1645,7 +1645,7 @@ async function sendTestEmail() {
         alert('Имейлът е изпратен успешно.');
     } catch (err) {
         console.error('Error sending test email:', err);
-        alert('Грешка при изпращане.');
+        alert(err.message || 'Грешка при изпращане.');
     }
 }
 
