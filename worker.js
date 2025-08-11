@@ -1047,7 +1047,7 @@ async function handleDashboardDataRequest(request, env) {
         if (logsList.keys.length > 0) {
             const sortedLogKeys = logsList.keys
                 .map(k => k.name)
-                .sort((a, b) => new Date(b.split('_log_')[1]) - new Date(a.split('_log_')[1]))
+                .sort((a, b) => new Date(b.split('_log_')[1]).getTime() - new Date(a.split('_log_')[1]).getTime())
                 .slice(0, USER_ACTIVITY_LOG_LIST_LIMIT);
             const logRecords = await Promise.all(
                 sortedLogKeys.map(name => env.USER_METADATA_KV.get(name).then(str => ({ name, str })))
@@ -1079,7 +1079,7 @@ async function handleDashboardDataRequest(request, env) {
                     (e.data && Object.keys(e.data).length > 0) ||
                     (e.extraMeals && e.extraMeals.length > 0)
                 ))
-                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                     .slice(0, USER_ACTIVITY_LOG_LIST_LIMIT);
             }
         }
