@@ -22,14 +22,19 @@ export async function sendEmailUniversal(to, subject, body, env = {}) {
       body: JSON.stringify({ to, subject, message: body, body, fromName })
     });
     if (!resp.ok) {
-      throw new Error(`Mailer responded with ${resp.status}`);
+      const text = await resp.text().catch(() => '');
+      throw new Error(`Mailer responded with ${resp.status}${text ? `: ${text}` : ''}`);
     }
     return;
   }
 
+  const phpUrl = env.MAIL_PHP_URL || globalThis['process']?.env?.MAIL_PHP_URL;
+  if (!phpUrl) {
+    throw new Error('MAILER_ENDPOINT_URL или MAIL_PHP_URL не са настроени');
+  }
   const { sendEmail } = await import('../sendEmailWorker.js');
   const phpEnv = {
-    MAIL_PHP_URL: env.MAIL_PHP_URL || globalThis['process']?.env?.MAIL_PHP_URL,
+    MAIL_PHP_URL: phpUrl,
     FROM_NAME: fromName
   };
   await sendEmail(to, subject, body, phpEnv);

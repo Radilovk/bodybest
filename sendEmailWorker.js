@@ -53,7 +53,10 @@ async function checkRateLimit(env, identifier, limit = 3, windowMs = 60000) {
 }
 
 async function sendViaPhp(to, subject, message, env = {}) {
-  const url = env[MAIL_PHP_URL_VAR_NAME] || 'https://radilovk.github.io/bodybest/mailer/mail.php';
+  const url = env[MAIL_PHP_URL_VAR_NAME];
+  if (!url) {
+    throw new Error('MAIL_PHP_URL is required');
+  }
   const fromName = env.FROM_NAME || '';
   const resp = await fetch(url, {
     method: 'POST',
@@ -61,7 +64,8 @@ async function sendViaPhp(to, subject, message, env = {}) {
     body: JSON.stringify({ to, subject, message, body: message, fromName })
   });
   if (!resp.ok) {
-    throw new Error(`PHP mailer error ${resp.status}`);
+    const text = await resp.text().catch(() => '');
+    throw new Error(`PHP mailer error ${resp.status}${text ? `: ${text}` : ''}`);
   }
 }
 
@@ -76,7 +80,11 @@ export async function handleSendEmailRequest(request, env = {}) {
     const identifier = token || request.headers?.get?.('CF-Connecting-IP') || '';
     const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
     if (expected && token !== expected) {
-      return { status: 403, body: { success: false, message: 'Invalid token' } };
+      console.warn('handleSendEmailRequest: missing or invalid WORKER_ADMIN_TOKEN');
+      return {
+        status: 403,
+        body: { success: false, message: 'Missing or invalid WORKER_ADMIN_TOKEN' }
+      };
     }
 
     if (await checkRateLimit(env, identifier)) {
@@ -103,7 +111,10 @@ export async function handleSendEmailRequest(request, env = {}) {
     return { status: 200, body: { success: true } };
   } catch (err) {
     console.error('Error in handleSendEmailRequest:', err);
-    return { status: 500, body: { success: false, message: 'Internal error' } };
+    return {
+      status: 500,
+      body: { success: false, message: err.message || 'Internal error' }
+    };
   }
 }
 

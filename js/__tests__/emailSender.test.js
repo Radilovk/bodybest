@@ -38,3 +38,7 @@ test('uses MAIL_PHP_URL when endpoint missing', async () => {
   fetch.mockRestore();
   delete process.env.MAIL_PHP_URL;
 });
+
+test('throws when no mail endpoint configured', async () => {
+  await expect(sendEmailUniversal('n@a.bg', 'S', 'B')).rejects.toThrow('MAILER_ENDPOINT_URL или MAIL_PHP_URL не са настроени');
+});

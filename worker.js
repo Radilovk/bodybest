@@ -42,7 +42,10 @@ async function parseJsonSafe(resp, label = 'response') {
 
 // Минимална логика за изпращане на имейл чрез PHP
 async function sendEmail(to, subject, message, env = {}) {
-  const url = env.MAIL_PHP_URL || 'https://radilovk.github.io/bodybest/mailer/mail.php';
+  const url = env.MAIL_PHP_URL;
+  if (!url) {
+    throw new Error('MAIL_PHP_URL is required');
+  }
   const fromName = env.FROM_NAME || '';
   const resp = await fetch(url, {
     method: 'POST',
@@ -50,7 +53,8 @@ async function sendEmail(to, subject, message, env = {}) {
     body: JSON.stringify({ to, subject, message, body: message, fromName })
   });
   if (!resp.ok) {
-    throw new Error(`PHP mailer error ${resp.status}`);
+    const text = await resp.text().catch(() => '');
+    throw new Error(`PHP mailer error ${resp.status}${text ? `: ${text}` : ''}`);
   }
 }
 
@@ -65,12 +69,17 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
       body: JSON.stringify({ to, subject, message: body, body, fromName })
     });
     if (!resp.ok) {
-      throw new Error(`Mailer responded with ${resp.status}`);
+      const text = await resp.text().catch(() => '');
+      throw new Error(`Mailer responded with ${resp.status}${text ? `: ${text}` : ''}`);
     }
     return;
   }
+  const phpUrl = env.MAIL_PHP_URL || globalThis['process']?.env?.MAIL_PHP_URL;
+  if (!phpUrl) {
+    throw new Error('MAILER_ENDPOINT_URL или MAIL_PHP_URL не са настроени');
+  }
   const phpEnv = {
-    MAIL_PHP_URL: env.MAIL_PHP_URL || globalThis['process']?.env?.MAIL_PHP_URL,
+    MAIL_PHP_URL: phpUrl,
     FROM_NAME: fromName
   };
   await sendEmail(to, subject, body, phpEnv);
@@ -2659,11 +2668,15 @@ async function handleSendTestEmailRequest(request, env) {
             return { success: false, message: 'Missing field: body (use "body", "text" or "message")', statusHint: 400 };
         }
 
+        if (!env.MAILER_ENDPOINT_URL && !env.MAIL_PHP_URL && !globalThis['process']?.env?.MAILER_ENDPOINT_URL && !globalThis['process']?.env?.MAIL_PHP_URL) {
+            return { success: false, message: 'MAILER_ENDPOINT_URL или MAIL_PHP_URL не са настроени', statusHint: 500 };
+        }
+
         await sendEmailUniversal(recipient, subject, body, env);
         return { success: true };
     } catch (error) {
         console.error('Error in handleSendTestEmailRequest:', error.message, error.stack);
-        return { success: false, message: 'Грешка при изпращане.', statusHint: 500 };
+        return { success: false, message: error.message || 'Грешка при изпращане.', statusHint: 500 };
     }
 }
 // ------------- END FUNCTION: handleSendTestEmailRequest -------------

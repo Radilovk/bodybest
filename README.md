@@ -298,9 +298,9 @@ means the Node dependencies haven't been installed. Run `npm install` and then
 try again. Recent versions of the worker rely on the `MAILER_ENDPOINT_URL`
 environment variable instead of dynamic imports. If this variable is missing, the
 worker uses the helper from `sendEmailWorker.js` and posts directly to
-`MAIL_PHP_URL` (defaults to `https://radilovk.github.io/bodybest/mailer/mail.php`). A **500** error from
-`/api/sendTestEmail` usually indicates a problem with the PHP backend. Inspect
-the worker logs for details.
+`MAIL_PHP_URL`. A **500** error from `/api/sendTestEmail` usually indicates a problem
+with the PHP backend or липсваща конфигурация. GitHub Pages не изпълнява PHP и не
+може да се използва като пощенски бекенд.
 
 If TypeScript complains that it cannot find `Buffer` or the type definition file
 for **`node`**, make sure Node.js types are installed and enabled:
@@ -1136,7 +1136,7 @@ To send a test email задайте `WORKER_ADMIN_TOKEN`. Може да посо
 | Variable | Purpose |
 |----------|---------|
 | `MAILER_ENDPOINT_URL` | Endpoint called by `worker.js` when sending emails. If omitted, the worker posts to `sendEmailWorker.js`. The request payload includes both `message` and `body` fields for compatibility. |
-| `MAIL_PHP_URL` | Legacy PHP endpoint if you prefer your own backend. Defaults to `https://radilovk.github.io/bodybest/mailer/mail.php`. |
+| `MAIL_PHP_URL` | PHP endpoint if you prefer your own backend. Required when `MAILER_ENDPOINT_URL` is not set. Must point to работещ PHP сървър (GitHub Pages не се поддържа). |
 | `EMAIL_PASSWORD` | Password used by `mailer.js` when authenticating with the SMTP server. |
 | `FROM_EMAIL` | Sender address used by `mailer.js` and the PHP backend. |
 | `FROM_NAME` | Optional display name for the sender shown in outgoing emails. |

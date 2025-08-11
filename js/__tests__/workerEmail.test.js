@@ -44,10 +44,10 @@ describe('handleSendEmailRequest and sendEmailUniversal', () => {
       headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
       json: async () => ({ to: 'a@b.bg', subject: 'S', message: 'B' })
     };
-    const env = { WORKER_ADMIN_TOKEN: 'secret' };
+    const env = { WORKER_ADMIN_TOKEN: 'secret', MAIL_PHP_URL: 'https://php.example.com/mailer.php' };
     const res = await handleSendEmailRequest(req, env);
     expect(fetch).toHaveBeenCalledWith(
-      'https://radilovk.github.io/bodybest/mailer/mail.php',
+      'https://php.example.com/mailer.php',
       expect.objectContaining({
         body: JSON.stringify({ to: 'a@b.bg', subject: 'S', message: 'B', body: 'B', fromName: '' }),
         headers: { 'Content-Type': 'application/json' }
@@ -64,9 +64,9 @@ describe('handleSendEmailRequest and sendEmailUniversal', () => {
       clone: () => ({ text: async () => '{}' }),
       headers: { get: () => 'application/json' }
     });
-    await sendEmailUniversal('t@e.com', 'Hi', 'Body', {});
+    await sendEmailUniversal('t@e.com', 'Hi', 'Body', { MAIL_PHP_URL: 'https://php.example.com/mailer.php' });
     expect(fetch).toHaveBeenCalledWith(
-      'https://radilovk.github.io/bodybest/mailer/mail.php',
+      'https://php.example.com/mailer.php',
       expect.objectContaining({
         body: JSON.stringify({ to: 't@e.com', subject: 'Hi', message: 'Body', body: 'Body', fromName: '' }),
         headers: { 'Content-Type': 'application/json' }
@@ -76,8 +76,8 @@ describe('handleSendEmailRequest and sendEmailUniversal', () => {
   });
 
   test('sendEmail throws when backend reports failure', async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 });
-    await expect(sendEmailUniversal('x@y.z', 'S', 'B', {})).rejects.toThrow('PHP mailer error 500');
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500, text: async () => 'fail' });
+    await expect(sendEmailUniversal('x@y.z', 'S', 'B', { MAIL_PHP_URL: 'https://php.example.com/mailer.php' })).rejects.toThrow('PHP mailer error 500');
     fetch.mockRestore();
   });
 });
@@ -173,10 +173,10 @@ describe('handleSendTestEmailRequest', () => {
       headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
       json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b' })
     };
-    const env = { WORKER_ADMIN_TOKEN: 'secret' };
+    const env = { WORKER_ADMIN_TOKEN: 'secret', MAIL_PHP_URL: 'https://php.example.com/mailer.php' };
     const res = await handleSendTestEmailRequest(request, env);
     expect(res.success).toBe(true);
-    expect(fetch).toHaveBeenCalledWith('https://radilovk.github.io/bodybest/mailer/mail.php', expect.any(Object));
+    expect(fetch).toHaveBeenCalledWith('https://php.example.com/mailer.php', expect.any(Object));
   });
 
   test('forwards fromName to mailer', async () => {
@@ -214,7 +214,8 @@ describe('handleSendTestEmailRequest', () => {
     };
     const env = {
       WORKER_ADMIN_TOKEN: 'secret',
-      USER_METADATA_KV: { put: jest.fn() }
+      USER_METADATA_KV: { put: jest.fn() },
+      MAIL_PHP_URL: 'https://php.example.com/mailer.php'
     };
     await handleSendTestEmailRequest(request, env);
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith(
@@ -222,7 +223,7 @@ describe('handleSendTestEmailRequest', () => {
       expect.any(String)
     );
     expect(fetch).toHaveBeenCalledWith(
-      'https://radilovk.github.io/bodybest/mailer/mail.php',
+      'https://php.example.com/mailer.php',
       expect.any(Object)
     );
   });
@@ -247,20 +248,20 @@ describe('handleSendTestEmailRequest', () => {
 });
 
 describe('sendAnalysisLinkEmail and sendContactEmail', () => {
-  let sendAnalysisLinkEmail, sendContactEmail, sendEmailUniversal;
+  let sendAnalysisLinkEmail, sendContactEmail;
   beforeEach(async () => {
     jest.resetModules();
-    jest.unstable_mockModule('../../utils/emailSender.js', () => ({
-      sendEmailUniversal: jest.fn().mockResolvedValue(true)
-    }));
     ({ sendAnalysisLinkEmail, sendContactEmail } = await import('../../worker.js'));
-    ({ sendEmailUniversal } = await import('../../utils/emailSender.js'));
   });
   afterEach(() => {
     jest.resetModules();
+    if (global.fetch && typeof global.fetch.mockRestore === 'function') {
+      global.fetch.mockRestore();
+    }
   });
 
   test('sendAnalysisLinkEmail loads subject/body from KV', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true });
     const kv = {
       get: jest.fn(async key => {
         if (key === 'analysis_email_subject') return 'KV subject';
@@ -269,40 +270,43 @@ describe('sendAnalysisLinkEmail and sendContactEmail', () => {
         return null;
       })
     };
-    const env = { RESOURCES_KV: kv };
+    const env = { RESOURCES_KV: kv, MAIL_PHP_URL: 'https://php.example.com/mailer.php' };
     await sendAnalysisLinkEmail('a@b.bg', 'Иван', 'http://link', env);
-    expect(sendEmailUniversal).toHaveBeenCalledWith(
-      'a@b.bg',
-      'KV subject',
-      'Hi Иван http://link',
-      env
+    expect(fetch).toHaveBeenCalledWith(
+      'https://php.example.com/mailer.php',
+      expect.objectContaining({
+        body: JSON.stringify({ to: 'a@b.bg', subject: 'KV subject', message: 'Hi Иван http://link', body: 'Hi Иван http://link', fromName: '' })
+      })
     );
   });
 
   test('sendAnalysisLinkEmail respects send flag', async () => {
+    global.fetch = jest.fn();
     const env = { send_analysis_email: '0' };
     const ok = await sendAnalysisLinkEmail('a@b.bg', 'Иван', 'http://link', env);
     expect(ok).toBe(false);
-    expect(sendEmailUniversal).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   test('sendContactEmail uses contact_form_label from KV', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true });
     const kv = {
       get: jest.fn(async key => (key === 'contact_form_label' ? 'форма X' : null))
     };
-    const env = { RESOURCES_KV: kv };
+    const env = { RESOURCES_KV: kv, MAIL_PHP_URL: 'https://php.example.com/mailer.php' };
     await sendContactEmail('c@e.bg', 'Петър', env);
-    expect(sendEmailUniversal).toHaveBeenCalledWith(
-      'c@e.bg',
-      'Благодарим за връзката',
-      'Получихме вашето съобщение от форма X.',
-      env
+    expect(fetch).toHaveBeenCalledWith(
+      'https://php.example.com/mailer.php',
+      expect.objectContaining({
+        body: JSON.stringify({ to: 'c@e.bg', subject: 'Благодарим за връзката', message: 'Получихме вашето съобщение от форма X.', body: 'Получихме вашето съобщение от форма X.', fromName: '' })
+      })
     );
   });
 
   test('sendContactEmail respects send flag', async () => {
+    global.fetch = jest.fn();
     const env = { send_contact_email: '0' };
     await sendContactEmail('c@e.bg', 'Петър', env);
-    expect(sendEmailUniversal).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
   });
 });
