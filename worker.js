@@ -13,7 +13,7 @@
 
 // Вградените помощни функции позволяват worker.js да е самодостатъчен
 
-import { DEFAULT_MAIL_PHP_URL } from './sendEmailWorker.js';
+import { sendEmail, DEFAULT_MAIL_PHP_URL } from './sendEmailWorker.js';
 
 /**
  * Връща датата във формат YYYY-MM-DD според локалната часова зона.
@@ -39,21 +39,6 @@ async function parseJsonSafe(resp, label = 'response') {
     const bodyText = await resp.clone().text().catch(() => '[unavailable]');
     console.error(`Failed to parse JSON from ${label}:`, bodyText);
     throw new Error('Invalid JSON response');
-  }
-}
-
-// Минимална логика за изпращане на имейл чрез PHP
-async function sendEmail(to, subject, message, env = {}) {
-  const url = env.MAIL_PHP_URL || DEFAULT_MAIL_PHP_URL;
-  const fromName = env.FROM_NAME || '';
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ to, subject, message, body: message, fromName })
-  });
-  if (!resp.ok) {
-    const text = await resp.text().catch(() => '');
-    throw new Error(`PHP mailer error ${resp.status}${text ? `: ${text}` : ''}`);
   }
 }
 
