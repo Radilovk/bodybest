@@ -1,4 +1,4 @@
-// extraMealForm.js - Логика за Формата за Извънредно Хранене
+// extraMealForm.js - Логика за Формата за Извънредно Хранене (оптимизирана)
 import { selectors } from './uiElements.js';
 import { showLoading, showToast, openModal as genericOpenModal, closeModal as genericCloseModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
@@ -18,10 +18,10 @@ const dynamicNutrientOverrides = { ...nutrientOverrides };
 registerNutrientOverrides(dynamicNutrientOverrides);
 const nutrientLookupCache = {};
 
-// --- OPTIMIZED: Синоними за продуктите
+// --- Синоними за продуктите (разширявай при нужда)
 const PRODUCT_SYNONYMS = {
     'ябълка': ['ябълки', 'apple', 'зелена ябълка', 'червена ябълка'],
-    // добави и за други продукти по нужда
+    // Може да добавиш още синоними за други продукти
 };
 
 function buildCacheKey(name, quantity = '') {
@@ -73,10 +73,10 @@ async function ensureProductMeasuresLoaded() {
             (Array.isArray(data) ? data : []).map(p => [p.name.toLowerCase(), p.measures])
         );
         productMeasureNames = Object.keys(productMeasures);
-        // --- OPTIMIZED: Добавяме синоними
+        // Добавяме синоними
         Object.entries(PRODUCT_SYNONYMS).forEach(([main, synonyms]) => {
             synonyms.forEach(syn => {
-                if (!productMeasures[syn.toLowerCase()]) {
+                if (!productMeasures[syn.toLowerCase()] && productMeasures[main]) {
                     productMeasures[syn.toLowerCase()] = productMeasures[main];
                     productMeasureNames.push(syn.toLowerCase());
                 }
@@ -106,17 +106,36 @@ export function getQuantityDisplay(selectedRadio, quantityCustom) {
     return customVal || 'Не е посочено';
 }
 
-// --- OPTIMIZED: Подобрено търсене на продукт и fuzzy match
+// --- Подобрено търсене на продукт и fuzzy match
 function normalizeProductName(str = '') {
     // Вземи само първата дума, премахни пунктуация, малки букви
     return (str.split(/[ ,.;\-]/)[0] || '').toLowerCase().trim();
+}
+
+function levenshtein(a = '', b = '') {
+    const m = Array.from({ length: b.length + 1 }, () => Array(a.length + 1).fill(0));
+    for (let i = 0; i <= a.length; i++) m[0][i] = i;
+    for (let j = 0; j <= b.length; j++) m[j][0] = j;
+    for (let j = 1; j <= b.length; j++) {
+        for (let i = 1; i <= a.length; i++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            m[j][i] = Math.min(
+                m[j - 1][i] + 1,
+                m[j][i - 1] + 1,
+                m[j - 1][i - 1] + cost
+            );
+        }
+    }
+    return m[b.length][a.length];
 }
 
 function fuzzyFindProductKey(desc = '') {
     let query = normalizeProductName(desc);
     if (productMeasures[query]) return query;
     // Синоними
-    if (PRODUCT_SYNONYMS[query]) return query;
+    for (const [main, synonyms] of Object.entries(PRODUCT_SYNONYMS)) {
+        if (main === query || synonyms.includes(query)) return main;
+    }
     // Fuzzy по разстояние Левенщайн
     let best = null, bestDist = Infinity;
     for (const key of productMeasureNames) {
@@ -126,9 +145,36 @@ function fuzzyFindProductKey(desc = '') {
             bestDist = dist;
         }
     }
-    // threshold = 1 за къси думи, иначе 2-3
     if (bestDist <= Math.max(1, Math.floor(query.length * 0.3))) return best;
     return null;
+}
+
+function findClosestProduct(desc = '') {
+    const query = desc.toLowerCase();
+    if (!query) return null;
+    const direct = productList.filter(p => p.name.toLowerCase().includes(query));
+    if (direct.length) return direct[0];
+    let best = null;
+    let bestDist = Infinity;
+    for (const p of productList) {
+        const name = p.name.toLowerCase();
+        const dist = levenshtein(name, query);
+        if (dist < bestDist) {
+            bestDist = dist;
+            best = p;
+        }
+    }
+    const threshold = Math.max(1, Math.floor(query.length * 0.3));
+    return bestDist <= threshold ? best : null;
+}
+
+// --- toggle за quantityVisual
+function toggleQuantityVisual(show, form) {
+    const quantityVisualRadios = form.querySelectorAll('input[name="quantityEstimateVisual"]');
+    quantityVisualRadios.forEach(radio => {
+        const label = radio.closest('.quantity-card-option');
+        if (label) label.style.display = show ? '' : 'none';
+    });
 }
 
 export async function initializeExtraMealFormLogic(formContainerElement) {
@@ -154,12 +200,34 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     let currentStepIndex = 0;
     const totalSteps = steps.length;
 
-    if (totalSteps === 0) {
-        if(navigationContainer) navigationContainer.style.display = 'none';
-        return;
+    function updateStepIndicator() {
+        if (stepProgressBar) {
+            const progressPercentage = totalSteps > 1 ? ((currentStepIndex + 1) / totalSteps) * 100 : (totalSteps === 1 ? 100 : 0);
+            stepProgressBar.style.width = progressPercentage + '%';
+        }
+        if (currentStepNumberEl) currentStepNumberEl.textContent = currentStepIndex + 1;
+        if (totalStepNumberEl) totalStepNumberEl.textContent = totalSteps;
     }
-
-    // ... (оставям останалата логика за стъпките без промяна)
+    function showCurrentStep() {
+        steps.forEach((step, index) => {
+            step.style.display = (index === currentStepIndex) ? 'block' : 'none';
+            if (index === currentStepIndex) {
+                step.classList.add('active-step');
+                const firstInput = step.querySelector('input:not([type="hidden"]):not(:disabled), textarea:not(:disabled), select:not(:disabled)');
+                if (firstInput) setTimeout(() => { try { firstInput.focus({ preventScroll: true }); } catch(e){} }, 60);
+            } else {
+                step.classList.remove('active-step');
+            }
+        });
+        if (prevBtn) prevBtn.style.display = (currentStepIndex > 0) ? 'inline-flex' : 'none';
+        if (nextBtn) nextBtn.style.display = (currentStepIndex < totalSteps - 1) ? 'inline-flex' : 'none';
+        if (submitBtn) submitBtn.style.display = (currentStepIndex === totalSteps - 1) ? 'inline-flex' : 'none';
+        if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+        updateStepIndicator();
+        if (currentStepIndex === totalSteps - 1) populateSummary();
+    }
+    if (nextBtn) nextBtn.addEventListener('click', () => { if (currentStepIndex < totalSteps - 1) { currentStepIndex++; showCurrentStep(); }});
+    if (prevBtn) prevBtn.addEventListener('click', () => { if (currentStepIndex > 0) { currentStepIndex--; showCurrentStep(); }});
 
     const foodDescriptionInput = form.querySelector('#foodDescription');
     const suggestionsDropdown = form.querySelector('#foodSuggestionsDropdown');
@@ -175,27 +243,28 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     const replacedPlannedRadioGroup = form.querySelectorAll('input[name="replacedPlanned"]');
     const skippedMealSelect = form.querySelector('#skippedMeal');
     const macroInputsGrid = form.querySelector('.macro-inputs-grid');
-
-    // --- OPTIMIZED: Покажи/скрий quantityVisual при наличие на конкретни мерки
-    function toggleQuantityVisual(show) {
-        quantityVisualRadios.forEach(radio => {
-            const label = radio.closest('.quantity-card-option');
-            if (label) label.style.display = show ? '' : 'none';
-        });
+    let autoFillMsg;
+    if (macroInputsGrid) {
+        autoFillMsg = document.createElement('div');
+        autoFillMsg.id = 'autoFillMsg';
+        autoFillMsg.className = 'auto-fill-msg hidden';
+        autoFillMsg.style.cssText = 'display:flex;align-items:center;gap:0.25rem;font-size:0.8rem;color:var(--text-color-muted);margin-top:var(--space-xs);';
+        autoFillMsg.innerHTML = '<i class="bi bi-magic"></i><span>Стойностите са попълнени автоматично</span>';
+        macroInputsGrid.parentElement?.appendChild(autoFillMsg);
+        macroInputsGrid.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => autoFillMsg.classList.add('hidden')));
     }
 
-    // --- OPTIMIZED: updateMeasureOptions с fuzzy и автоматичен избор
+    // --- measureOptions с fuzzy и автоматичен избор
     function updateMeasureOptions(desc) {
         if (!measureOptionsContainer) return;
         const key = fuzzyFindProductKey(desc);
         measureOptionsContainer.innerHTML = '';
         if (!key || !productMeasures[key]) {
             measureOptionsContainer.classList.add('hidden');
-            toggleQuantityVisual(true);
+            toggleQuantityVisual(true, form);
             return;
         }
-        // Ако има мерки, скрий quantityVisual
-        toggleQuantityVisual(false);
+        toggleQuantityVisual(false, form);
         const measures = productMeasures[key] || [];
         const frag = document.createDocumentFragment();
         measures.forEach((m, i) => {
@@ -205,7 +274,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             radio.type = 'radio';
             radio.name = 'measureOption';
             radio.dataset.grams = m.grams;
-            if (i === 0) radio.checked = true; // Автоматичен избор на първата мярка
+            if (i === 0) radio.checked = true;
             const content = document.createElement('span');
             content.className = 'card-content';
             content.innerHTML = `<span class="card-label">${m.label}</span><span class="card-desc">~${m.grams} g</span>`;
@@ -229,17 +298,27 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         computeQuantity();
     }
 
-    // ... останалата логика остава същата, но:
-    // - quantityVisual остава видим само ако няма мерки
-    // - при input във foodDescription, винаги се вика updateMeasureOptions
-    // - при избор на autocomplete - updateMeasureOptions
-    // - quantityCustom парсва "2 ябълки" => 2 * default грамове, ако е възможно
+    function computeQuantity() {
+        if (!quantityHiddenInput) return;
+        const selectedMeasure = measureOptionsContainer?.querySelector('input[name="measureOption"]:checked');
+        const total = Number(selectedMeasure?.dataset.grams || 0);
+        quantityHiddenInput.value = total > 0 ? String(total) : '';
+        const description = foodDescriptionInput?.value?.trim().toLowerCase();
+        if (autoFillMsg) autoFillMsg.classList.add('hidden');
+        if (description && total > 0) {
+            const product = findClosestProduct(description);
+            if (product) {
+                const scaled = scaleMacros(product, total);
+                MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = scaled[f].toFixed(2));
+                if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+            }
+        }
+    }
 
-    // OPTIMIZED: quantityCustom интелигентно парсване
+    // quantityCustom интелигентно парсване "2 ябълки" => 2 * default grams
     if (quantityCustomInput) {
         quantityCustomInput.addEventListener('input', () => {
             let val = quantityCustomInput.value.trim();
-            // Парсирай "2 ябълки" или "2 x ябълка"
             let match = val.match(/^(\d+)\s*[xх*]?\s*(.+)$/i);
             if (match) {
                 let count = parseInt(match[1], 10);
@@ -248,18 +327,18 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 if (key && productMeasures[key] && productMeasures[key][0]) {
                     let grams = count * productMeasures[key][0].grams;
                     quantityHiddenInput.value = grams;
-                    // Попълни макроси
                     const product = findClosestProduct(key);
                     if (product) {
                         const scaled = scaleMacros(product, grams);
                         MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = scaled[f].toFixed(2));
+                        if (autoFillMsg) autoFillMsg.classList.remove('hidden');
                     }
                 }
             }
         });
     }
 
-    // OPTIMIZED: при избор на autocomplete, автоматично зареди мерките
+    // autocomplete и автоматично зареждане на мерки
     function showSuggestions(inputValue) {
         if (!suggestionsDropdown || !foodDescriptionInput) return;
         suggestionsDropdown.innerHTML = '';
@@ -286,20 +365,18 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     if (foodDescriptionInput) {
         foodDescriptionInput.addEventListener('input', function() {
             updateMeasureOptions(this.value);
-            // Останалата логика...
             showSuggestions(this.value);
         });
     }
 
-    // --- Fallback при грешки
+    // Fallback при грешки
     if (!productMeasuresLoaded) {
         if (measureOptionsContainer) {
             measureOptionsContainer.innerHTML = '<span style="color:red">Неуспешно зареждане на мерки. Моля, въведете ръчно количество.</span>';
             measureOptionsContainer.classList.remove('hidden');
-            toggleQuantityVisual(true);
+            toggleQuantityVisual(true, form);
         }
     }
 
-    // ... всичко друго остава като в предишната версия
     if (steps.length > 0) showCurrentStep();
 }
