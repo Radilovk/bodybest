@@ -37,42 +37,19 @@
         </h4>
         <fieldset class="form-group">
             <legend id="quantityLegend">Приблизително количество:</legend>
-            <div id="quantityCardGroup" class="quantity-card-selector-grid" role="radiogroup" aria-labelledby="quantityLegend" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-sm); margin-bottom: var(--space-md);">
-                <!-- Карти за количество (структурата е запазена, но стиловете ще дойдат от extra_meal_form_styles.css) -->
-                <label class="quantity-card-option">
-                    <input type="radio" name="quantityEstimateVisual" value="не_посочено_в_стъпка_2" checked required>
-                    <span class="card-content"><span class="card-icon-wrapper"><i class="bi bi-pencil-square"></i></span><span class="card-text-wrapper"><span class="card-label">Вече описано</span></span></span>
-                </label>
-                <label class="quantity-card-option">
-                    <input type="radio" name="quantityEstimateVisual" value="хапка_глътка">
-                    <span class="card-content"><span class="card-icon-wrapper"><span class="card-icon">▪️</span></span><span class="card-text-wrapper"><span class="card-label">Малко</span></span></span>
-                </label>
-                <label class="quantity-card-option">
-                    <input type="radio" name="quantityEstimateVisual" value="малко_количество">
-                    <span class="card-content"><span class="card-icon-wrapper"><span class="card-icon">◾</span></span><span class="card-text-wrapper"><span class="card-label">Междинно</span></span></span>
-                </label>
-                <label class="quantity-card-option">
-                    <input type="radio" name="quantityEstimateVisual" value="средно_количество">
-                    <span class="card-content"><span class="card-icon-wrapper"><span class="card-icon">◼️</span></span><span class="card-text-wrapper"><span class="card-label">Основно</span></span></span>
-                </label>
-                <label class="quantity-card-option">
-                    <input type="radio" name="quantityEstimateVisual" value="голямо_количество">
-                    <span class="card-content"><span class="card-icon-wrapper"><span class="card-icon">⬛</span></span><span class="card-text-wrapper"><span class="card-label">Много</span></span></span>
-                </label>
-                <label class="quantity-card-option">
-                    <input type="radio" name="quantityEstimateVisual" value="малка_чаша_кенче">
-                    <span class="card-content"><span class="card-icon-wrapper"><i class="bi bi-cup-straw"></i></span><span class="card-text-wrapper"><span class="card-label">Чаша</span></span></span>
-                </label>
-                <label class="quantity-card-option">
-                    <input type="radio" name="quantityEstimateVisual" value="голяма_чаша_бутилка_малка">
-                    <span class="card-content"><span class="card-icon-wrapper"><i class="bi bi-bottle"></i></span><span class="card-text-wrapper"><span class="card-label">Бутилка</span></span></span>
-                </label>
-                <label class="quantity-card-option">
-                    <input type="radio" name="quantityEstimateVisual" value="other_quantity_describe">
-                    <span class="card-content"><span class="card-icon-wrapper"><span class="card-icon">➕</span></span><span class="card-text-wrapper"><span class="card-label">Уточни</span></span></span>
-                </label>
+            <div class="quantity-input-wrapper" style="display:flex;gap:var(--space-sm);flex-wrap:wrap;margin-bottom:var(--space-md);">
+                <input type="number" id="quantityCountInput" name="quantityCountInput" list="quantityCountList" min="0" step="0.5" class="input-focus-animate" placeholder="Бройка" aria-label="Бройка" aria-describedby="quantityLegend">
+                <datalist id="quantityCountList">
+                    <option value="0.5"></option>
+                    <option value="1"></option>
+                    <option value="2"></option>
+                    <option value="3"></option>
+                    <option value="4"></option>
+                    <option value="5"></option>
+                </datalist>
+                <input type="text" id="measureInput" name="measureInput" list="measureSuggestionList" class="input-focus-animate" placeholder="Размер/мярка" aria-label="Размер/мярка" aria-describedby="quantityLegend">
+                <datalist id="measureSuggestionList"></datalist>
             </div>
-            <div id="measureOptions" class="measure-radio-group"></div>
         </fieldset>
         <input type="text" id="quantityCustom" name="quantityCustom" class="input-focus-animate" style="margin-top: var(--space-sm);" placeholder="Напр. 100гр, 2 с.л., специфично количество" aria-label="Уточнение за количество">
         <input type="number" id="quantity" name="quantity" class="hidden input-focus-animate" min="0" step="0.01" inputmode="decimal" aria-hidden="true">
