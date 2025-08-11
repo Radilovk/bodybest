@@ -1428,7 +1428,6 @@ async function handleLogExtraMealRequest(request, env) {
             foodDescription: inputData.foodDescription || "Не е посочено",
             quantityEstimate: inputData.quantityEstimate || null, // e.g., "малка порция", "средна порция", "голяма порция"
             quantityCustom: inputData.quantityCustom || null, // e.g., "100гр пиле", "1 ябълка"
-            mealTimeSelect: inputData.mealTimeSelect || "не е посочено", // e.g., "междинно", "късна вечеря"
             reasonPrimary: inputData.reasonPrimary || "не е посочено", // e.g., "глад", "социално събитие"
             reasonOtherText: inputData.reasonOtherText || null,
             feelingAfter: inputData.feelingAfter || "не е посочено", // e.g., "добре", "виновен", "подут"

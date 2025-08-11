@@ -254,7 +254,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     const foodDescriptionInput = form.querySelector('#foodDescription');
     const suggestionsDropdown = form.querySelector('#foodSuggestionsDropdown');
     const quantityVisualRadios = form.querySelectorAll('input[name="quantityEstimateVisual"]');
-    const mealTimeSelect = form.querySelector('#mealTimeSelect');
     const measureOptionsContainer = form.querySelector('#measureOptions');
     if (measureOptionsContainer) measureOptionsContainer.classList.add('hidden');
     const measureInput = form.querySelector('#measureInput');
@@ -263,7 +262,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     const quantityHiddenInput = form.querySelector('#quantity');
     const quantityCustomInput = form.querySelector('#quantityCustom');
     const quantityCountInput = form.querySelector('#quantityCountInput');
-    const mealTimeSpecificInput = form.querySelector('#mealTimeSpecific');
     const reasonRadioGroup = form.querySelectorAll('input[name="reasonPrimary"]');
     const reasonOtherText = form.querySelector('#reasonOtherText');
     const replacedPlannedRadioGroup = form.querySelectorAll('input[name="replacedPlanned"]');
@@ -381,17 +379,18 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     if (quantityCountInput) quantityCountInput.addEventListener('input', computeQuantityFromManual);
     if (measureInput) measureInput.addEventListener('input', computeQuantityFromManual);
 
-    // quantityCustom интелигентно парсване "2 ябълки" => 2 * default grams
+    // динамична калкулация при промяна на quantityCustom
     if (quantityCustomInput) {
+        let lookupTimer;
         quantityCustomInput.addEventListener('input', () => {
             let val = quantityCustomInput.value.trim();
-            let match = val.match(/^(\d+)\s*[xх*]?\s*(.+)$/i);
+            const match = val.match(/^(\d+)\s*[xх*]?\s*(.+)$/i);
             if (match) {
-                let count = parseInt(match[1], 10);
-                let prod = match[2].trim().toLowerCase();
-                let key = fuzzyFindProductKey(prod);
+                const count = parseInt(match[1], 10);
+                const prod = match[2].trim().toLowerCase();
+                const key = fuzzyFindProductKey(prod);
                 if (key && productMeasures[key] && productMeasures[key][0]) {
-                    let grams = count * productMeasures[key][0].grams;
+                    const grams = count * productMeasures[key][0].grams;
                     quantityHiddenInput.value = grams;
                     const product = findClosestProduct(key);
                     if (product) {
@@ -401,6 +400,23 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                     }
                 }
             }
+
+            clearTimeout(lookupTimer);
+            lookupTimer = setTimeout(async () => {
+                const desc = foodDescriptionInput?.value?.trim();
+                const qty = quantityCustomInput.value.trim();
+                if (!desc || !qty) return;
+                try {
+                    const data = await nutrientLookup(desc, qty);
+                    MACRO_FIELDS.forEach(f => {
+                        const field = form.querySelector(`input[name="${f}"]`);
+                        if (field && data[f] !== undefined) field.value = Number(data[f]).toFixed(2);
+                    });
+                    if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+                } catch (err) {
+                    console.error('Невъзможно изчисление на макроси', err);
+                }
+            }, 300);
         });
     }
 
@@ -422,7 +438,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 foodDescriptionInput.focus();
                 updateMeasureOptions(name);
                 updateMeasureSuggestions(name);
-                foodDescriptionInput.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
             });
             suggestionsDropdown.appendChild(div);
         });
@@ -434,6 +449,14 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             updateMeasureOptions(this.value);
             updateMeasureSuggestions(this.value);
             showSuggestions(this.value);
+        });
+        // Enter избира първото предложение
+        foodDescriptionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !suggestionsDropdown.classList.contains('hidden')) {
+                e.preventDefault();
+                const first = suggestionsDropdown.querySelector('div');
+                if (first) first.click();
+            }
         });
     }
 
