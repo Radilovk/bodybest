@@ -164,6 +164,13 @@ function fuzzyFindProductKey(desc = '') {
     return null;
 }
 
+export function getMeasureLabels(desc = '') {
+    const key = fuzzyFindProductKey(desc);
+    return key && productMeasures[key]
+        ? productMeasures[key].map(m => m.label)
+        : [];
+}
+
 function findClosestProduct(desc = '') {
     const query = desc.toLowerCase();
     if (!query) return null;
@@ -250,6 +257,9 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     const mealTimeSelect = form.querySelector('#mealTimeSelect');
     const measureOptionsContainer = form.querySelector('#measureOptions');
     if (measureOptionsContainer) measureOptionsContainer.classList.add('hidden');
+    const measureInput = form.querySelector('#measureInput');
+    const measureSuggestionList = form.querySelector('#measureSuggestionList');
+    if (measureInput) measureInput.classList.add('hidden');
     const quantityHiddenInput = form.querySelector('#quantity');
     const quantityCustomInput = form.querySelector('#quantityCustom');
     const mealTimeSpecificInput = form.querySelector('#mealTimeSpecific');
@@ -313,6 +323,22 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         computeQuantity();
     }
 
+    function updateMeasureSuggestions(desc) {
+        if (!measureSuggestionList || !measureInput) return;
+        const labels = getMeasureLabels(desc);
+        measureSuggestionList.innerHTML = '';
+        if (labels.length === 0) {
+            measureInput.classList.add('hidden');
+            return;
+        }
+        labels.forEach(l => {
+            const opt = document.createElement('option');
+            opt.value = l;
+            measureSuggestionList.appendChild(opt);
+        });
+        measureInput.classList.remove('hidden');
+    }
+
     function computeQuantity() {
         if (!quantityHiddenInput) return;
         const selectedMeasure = measureOptionsContainer?.querySelector('input[name="measureOption"]:checked');
@@ -369,8 +395,9 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 foodDescriptionInput.value = name;
                 suggestionsDropdown.classList.add('hidden');
                 foodDescriptionInput.focus();
-                foodDescriptionInput.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
                 updateMeasureOptions(name);
+                updateMeasureSuggestions(name);
+                foodDescriptionInput.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
             });
             suggestionsDropdown.appendChild(div);
         });
@@ -380,6 +407,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     if (foodDescriptionInput) {
         foodDescriptionInput.addEventListener('input', function() {
             updateMeasureOptions(this.value);
+            updateMeasureSuggestions(this.value);
             showSuggestions(this.value);
         });
     }
