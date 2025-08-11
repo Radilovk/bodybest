@@ -71,7 +71,7 @@ describe('handleSendEmailRequest and sendEmailUniversal', () => {
     const env = { WORKER_ADMIN_TOKEN: 'secret' };
     const res = await handleSendEmailRequest(req, env);
     expect(fetch).toHaveBeenCalledWith(
-      'https://radilovk.github.io/bodybest/mailer/mail.php',
+      'https://mybody.best/mailer/mail.php',
       expect.any(Object)
     );
     expect(res.status).toBe(200);
