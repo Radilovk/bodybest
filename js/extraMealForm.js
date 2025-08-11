@@ -18,11 +18,7 @@ const dynamicNutrientOverrides = { ...nutrientOverrides };
 registerNutrientOverrides(dynamicNutrientOverrides);
 const nutrientLookupCache = {};
 
-// --- Синоними за продуктите (разширявай при нужда)
-const PRODUCT_SYNONYMS = {
-    'ябълка': ['ябълки', 'apple', 'зелена ябълка', 'червена ябълка'],
-    // Може да добавиш още синоними за други продукти
-};
+// aliases се зареждат динамично от product_measure.json
 
 function buildCacheKey(name, quantity = '') {
     const n = (name || '').toLowerCase().trim();
@@ -54,7 +50,14 @@ async function ensureProductMacrosLoaded() {
     try {
         const { overrides, products } = await loadProductMacros();
         Object.assign(dynamicNutrientOverrides, overrides);
-        productList = Array.isArray(products) ? products : [];
+        let aliasMap = {};
+        try {
+            const { default: measureData } = await import('../kv/DIET_RESOURCES/product_measure.json', { with: { type: 'json' } });
+            aliasMap = Object.fromEntries((measureData || []).map(p => [p.name.toLowerCase(), p.aliases || []]));
+        } catch { /* ignore */ }
+        productList = Array.isArray(products)
+            ? products.map(p => ({ ...p, aliases: aliasMap[p.name.toLowerCase()] || [] }))
+            : [];
         registerNutrientOverrides(dynamicNutrientOverrides);
     } catch (e) {
         console.error('Неуспешно зареждане на продуктови макроси', e);
@@ -63,23 +66,26 @@ async function ensureProductMacrosLoaded() {
 }
 
 let productMeasures = {};
+let aliasToMain = {};
 let productMeasuresLoaded = false;
 let productMeasureNames = [];
 async function ensureProductMeasuresLoaded() {
     if (productMeasuresLoaded) return;
     try {
         const { default: data } = await import('../kv/DIET_RESOURCES/product_measure.json', { with: { type: 'json' } });
-        productMeasures = Object.fromEntries(
-            (Array.isArray(data) ? data : []).map(p => [p.name.toLowerCase(), p.measures])
-        );
-        productMeasureNames = Object.keys(productMeasures);
-        // Добавяме синоними
-        Object.entries(PRODUCT_SYNONYMS).forEach(([main, synonyms]) => {
-            synonyms.forEach(syn => {
-                if (!productMeasures[syn.toLowerCase()] && productMeasures[main]) {
-                    productMeasures[syn.toLowerCase()] = productMeasures[main];
-                    productMeasureNames.push(syn.toLowerCase());
-                }
+        productMeasures = {};
+        aliasToMain = {};
+        (Array.isArray(data) ? data : []).forEach(p => {
+            const main = (p.name || '').toLowerCase();
+            if (!main) return;
+            productMeasures[main] = p.measures;
+            productMeasureNames.push(main);
+            (p.aliases || []).forEach(a => {
+                const alias = (a || '').toLowerCase();
+                if (!alias) return;
+                productMeasures[alias] = p.measures;
+                productMeasureNames.push(alias);
+                aliasToMain[alias] = main;
             });
         });
     } catch (e) {
@@ -145,13 +151,9 @@ function levenshtein(a = '', b = '') {
 }
 
 function fuzzyFindProductKey(desc = '') {
-    let query = normalizeProductName(desc);
+    const query = normalizeProductName(desc);
+    if (aliasToMain[query]) return aliasToMain[query];
     if (productMeasures[query]) return query;
-    // Синоними
-    for (const [main, synonyms] of Object.entries(PRODUCT_SYNONYMS)) {
-        if (main === query || synonyms.includes(query)) return main;
-    }
-    // Fuzzy по разстояние Левенщайн
     let best = null, bestDist = Infinity;
     for (const key of productMeasureNames) {
         const dist = levenshtein(key, query);
@@ -160,7 +162,9 @@ function fuzzyFindProductKey(desc = '') {
             bestDist = dist;
         }
     }
-    if (bestDist <= Math.max(1, Math.floor(query.length * 0.3))) return best;
+    if (bestDist <= Math.max(1, Math.floor(query.length * 0.3))) {
+        return aliasToMain[best] || best;
+    }
     return null;
 }
 
@@ -174,16 +178,21 @@ export function getMeasureLabels(desc = '') {
 function findClosestProduct(desc = '') {
     const query = desc.toLowerCase();
     if (!query) return null;
-    const direct = productList.filter(p => p.name.toLowerCase().includes(query));
+    const direct = productList.filter(p => {
+        const names = [p.name, ...(p.aliases || [])].map(n => n.toLowerCase());
+        return names.some(n => n.includes(query));
+    });
     if (direct.length) return direct[0];
     let best = null;
     let bestDist = Infinity;
     for (const p of productList) {
-        const name = p.name.toLowerCase();
-        const dist = levenshtein(name, query);
-        if (dist < bestDist) {
-            bestDist = dist;
-            best = p;
+        const names = [p.name, ...(p.aliases || [])];
+        for (const n of names) {
+            const dist = levenshtein(n.toLowerCase(), query);
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = p;
+            }
         }
     }
     const threshold = Math.max(1, Math.floor(query.length * 0.3));
@@ -281,8 +290,16 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
 
     // --- measureOptions с fuzzy и автоматичен избор
     function updateMeasureOptions(desc) {
-        if (!measureOptionsContainer) return;
         const key = fuzzyFindProductKey(desc);
+        if (!measureOptionsContainer) {
+            if (!key || !productMeasures[key]) {
+                toggleQuantityVisual(true, form);
+                return;
+            }
+            toggleQuantityVisual(false, form);
+            computeQuantity();
+            return;
+        }
         measureOptionsContainer.innerHTML = '';
         if (!key || !productMeasures[key]) {
             measureOptionsContainer.classList.add('hidden');
@@ -340,21 +357,38 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     }
 
     function computeQuantity() {
-        if (!quantityHiddenInput) return;
         const selectedMeasure = measureOptionsContainer?.querySelector('input[name="measureOption"]:checked');
-        const total = Number(selectedMeasure?.dataset.grams || 0);
-        quantityHiddenInput.value = total > 0 ? String(total) : '';
+        let total = Number(selectedMeasure?.dataset.grams || 0);
+        if (!selectedMeasure) {
+            const visual = form.querySelector('input[name="quantityEstimateVisual"]:checked');
+            if (visual && visual.value === 'x') total = 100;
+        }
+        if (quantityHiddenInput) {
+            quantityHiddenInput.value = total > 0 ? String(total) : '';
+        }
         const description = foodDescriptionInput?.value?.trim().toLowerCase();
         if (autoFillMsg) autoFillMsg.classList.add('hidden');
         if (description && total > 0) {
-            const product = findClosestProduct(description);
-            if (product) {
-                const scaled = scaleMacros(product, total);
-                MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = scaled[f].toFixed(2));
+        const format = (n, fixed = true) => fixed ? n.toFixed(2) : String(Number(n.toFixed(2)));
+        const product = findClosestProduct(description);
+        if (product) {
+            const scaled = scaleMacros(product, total);
+            MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = format(scaled[f]));
+            if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+        } else {
+            const override = getNutrientOverride(buildCacheKey(description, 'x'));
+            if (override) {
+                const scaled = scaleMacros(override, total);
+                MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = format(scaled[f], false));
                 if (autoFillMsg) autoFillMsg.classList.remove('hidden');
             }
         }
     }
+
+    if (measureOptionsContainer) {
+        measureOptionsContainer.addEventListener('change', computeQuantity);
+    }
+}
 
     // quantityCustom интелигентно парсване "2 ябълки" => 2 * default grams
     if (quantityCustomInput) {
