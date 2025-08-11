@@ -7,7 +7,7 @@
  */
 const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
 const MAIL_PHP_URL_VAR_NAME = 'MAIL_PHP_URL';
-export const DEFAULT_MAIL_PHP_URL = 'https://radilovk.github.io/bodybest/mailer/mail.php';
+export const DEFAULT_MAIL_PHP_URL = 'https://mybody.best/mailer/mail.php';
 
 async function recordUsage(env, identifier = '') {
   try {
