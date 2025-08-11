@@ -119,6 +119,7 @@ export async function handleSendEmailRequest(request, env = {}) {
 export default {
   async fetch(request, env) {
     const defaultAllowedOrigins = [
+      'https://mybody.best',
       'https://radilovk.github.io',
       'https://radilov-k.github.io',
       'http://localhost:5173',
