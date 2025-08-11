@@ -13,6 +13,8 @@
 
 // Вградените помощни функции позволяват worker.js да е самодостатъчен
 
+import { DEFAULT_MAIL_PHP_URL } from './sendEmailWorker.js';
+
 /**
  * Връща датата във формат YYYY-MM-DD според локалната часова зона.
  * @param {Date} [date=new Date()] - Дата за форматиране.
@@ -42,10 +44,7 @@ async function parseJsonSafe(resp, label = 'response') {
 
 // Минимална логика за изпращане на имейл чрез PHP
 async function sendEmail(to, subject, message, env = {}) {
-  const url = env.MAIL_PHP_URL;
-  if (!url) {
-    throw new Error('MAIL_PHP_URL is required');
-  }
+  const url = env.MAIL_PHP_URL || DEFAULT_MAIL_PHP_URL;
   const fromName = env.FROM_NAME || '';
   const resp = await fetch(url, {
     method: 'POST',
@@ -74,10 +73,9 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
     }
     return;
   }
-  const phpUrl = env.MAIL_PHP_URL || globalThis['process']?.env?.MAIL_PHP_URL;
-  if (!phpUrl) {
-    throw new Error('MAILER_ENDPOINT_URL или MAIL_PHP_URL не са настроени');
-  }
+  const phpUrl = env.MAIL_PHP_URL ||
+    globalThis['process']?.env?.MAIL_PHP_URL ||
+    DEFAULT_MAIL_PHP_URL;
   const phpEnv = {
     MAIL_PHP_URL: phpUrl,
     FROM_NAME: fromName
@@ -416,6 +414,7 @@ export default {
         }
 
         const defaultAllowedOrigins = [
+            'https://mybody.best',
             'https://radilovk.github.io',
             'https://radilov-k.github.io',
             'http://localhost:5173',
@@ -2666,10 +2665,6 @@ async function handleSendTestEmailRequest(request, env) {
         }
         if (typeof body !== 'string' || !body) {
             return { success: false, message: 'Missing field: body (use "body", "text" or "message")', statusHint: 400 };
-        }
-
-        if (!env.MAILER_ENDPOINT_URL && !env.MAIL_PHP_URL && !globalThis['process']?.env?.MAILER_ENDPOINT_URL && !globalThis['process']?.env?.MAIL_PHP_URL) {
-            return { success: false, message: 'MAILER_ENDPOINT_URL или MAIL_PHP_URL не са настроени', statusHint: 500 };
         }
 
         await sendEmailUniversal(recipient, subject, body, env);
