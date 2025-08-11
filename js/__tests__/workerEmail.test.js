@@ -200,6 +200,23 @@ describe('handleSendTestEmailRequest', () => {
     expect(fetch).toHaveBeenCalledWith('https://php.example.com/mailer.php', expect.any(Object));
   });
 
+  test('falls back to default PHP endpoint when no mailer config', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+      clone: () => ({ text: async () => '{}' }),
+      headers: { get: () => 'application/json' }
+    });
+    const request = {
+      headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
+      json: async () => ({ recipient: 't@e.com', subject: 's', body: 'b' })
+    };
+    const env = { WORKER_ADMIN_TOKEN: 'secret' };
+    const res = await handleSendTestEmailRequest(request, env);
+    expect(res.success).toBe(true);
+    expect(fetch).toHaveBeenCalledWith('https://radilovk.github.io/bodybest/mailer/mail.php', expect.any(Object));
+  });
+
   test('forwards fromName to mailer', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,

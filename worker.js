@@ -40,24 +40,6 @@ async function parseJsonSafe(resp, label = 'response') {
   }
 }
 
-// Минимална логика за изпращане на имейл чрез PHP
-async function sendEmail(to, subject, message, env = {}) {
-  const url = env.MAIL_PHP_URL;
-  if (!url) {
-    throw new Error('MAIL_PHP_URL is required');
-  }
-  const fromName = env.FROM_NAME || '';
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ to, subject, message, body: message, fromName })
-  });
-  if (!resp.ok) {
-    const text = await resp.text().catch(() => '');
-    throw new Error(`PHP mailer error ${resp.status}${text ? `: ${text}` : ''}`);
-  }
-}
-
 // Унифицирано изпращане на имейл
 async function sendEmailUniversal(to, subject, body, env = {}) {
   const endpoint = env.MAILER_ENDPOINT_URL || globalThis['process']?.env?.MAILER_ENDPOINT_URL;
@@ -74,10 +56,8 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
     }
     return;
   }
-  const phpUrl = env.MAIL_PHP_URL || globalThis['process']?.env?.MAIL_PHP_URL;
-  if (!phpUrl) {
-    throw new Error('MAILER_ENDPOINT_URL или MAIL_PHP_URL не са настроени');
-  }
+  const { sendEmail, DEFAULT_MAIL_PHP_URL } = await import('./sendEmailWorker.js');
+  const phpUrl = env.MAIL_PHP_URL || globalThis['process']?.env?.MAIL_PHP_URL || DEFAULT_MAIL_PHP_URL;
   const phpEnv = {
     MAIL_PHP_URL: phpUrl,
     FROM_NAME: fromName
@@ -2666,10 +2646,6 @@ async function handleSendTestEmailRequest(request, env) {
         }
         if (typeof body !== 'string' || !body) {
             return { success: false, message: 'Missing field: body (use "body", "text" or "message")', statusHint: 400 };
-        }
-
-        if (!env.MAILER_ENDPOINT_URL && !env.MAIL_PHP_URL && !globalThis['process']?.env?.MAILER_ENDPOINT_URL && !globalThis['process']?.env?.MAIL_PHP_URL) {
-            return { success: false, message: 'MAILER_ENDPOINT_URL или MAIL_PHP_URL не са настроени', statusHint: 500 };
         }
 
         await sendEmailUniversal(recipient, subject, body, env);
