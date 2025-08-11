@@ -16,6 +16,7 @@
   "include": [
     "worker.js",
     "worker-backend.js",
+    "sendEmailWorker.js",
     "mailer.js",
     "mailer.d.ts",
     "global.d.ts",
