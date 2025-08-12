@@ -47,7 +47,7 @@ beforeEach(async () => {
   ({ initializeExtraMealFormLogic } = await import('../extraMealForm.js'));
 });
 
-test('парсира "100гр ябълка" и попълва калории 52', async () => {
+test('парсира описание и количество 100 гр', async () => {
   document.body.innerHTML = `<div id="c">
     <form id="extraMealEntryFormActual">
       <div class="form-step"></div>
@@ -70,8 +70,11 @@ test('парсира "100гр ябълка" и попълва калории 52'
   </div>`;
   const container = document.getElementById('c');
   await initializeExtraMealFormLogic(container);
+  const desc = container.querySelector('#foodDescription');
+  desc.value = 'ябълка';
+  desc.dispatchEvent(new Event('input', { bubbles: true }));
   const qc = container.querySelector('#quantityCustom');
-  qc.value = '100гр ябълка';
+  qc.value = '100';
   qc.dispatchEvent(new Event('input', { bubbles: true }));
   expect(container.querySelector('#quantity').value).toBe('100');
   const calories = parseFloat(container.querySelector('input[name="calories"]').value);
