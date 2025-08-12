@@ -155,20 +155,24 @@ function populateDashboardMainIndexes(currentAnalytics) {
             applyProgressFill(selectors.goalProgressFill, goalProgressPercent);
         }
         if (selectors.goalProgressBar) selectors.goalProgressBar.setAttribute('aria-valuenow', `${Math.round(goalProgressPercent)}`);
+        const goal = safeGet(fullDashboardData.initialAnswers, 'goal', '').toLowerCase();
+        const startWeight = safeParseFloat(safeGet(fullDashboardData.initialData, 'weight'));
+        const lossKgTarget = safeParseFloat(safeGet(fullDashboardData.initialAnswers, 'lossKg'));
+        let goalName = 'Цел';
+        let goalTitle = '';
+        if (goal === 'отслабване' && !isNaN(startWeight) && !isNaN(lossKgTarget) && lossKgTarget > 0) {
+            const targetWeight = startWeight - lossKgTarget;
+            goalName = `${targetWeight.toFixed(1)} кг`;
+            goalTitle = `Цел: ${goalName}`;
+        } else if (goal) {
+            goalName = capitalizeFirstLetter(goal);
+            goalTitle = goalName;
+        }
+        if (selectors.goalName) selectors.goalName.textContent = goalName;
+        if (selectors.goalCard && goalTitle) {
+            selectors.goalCard.setAttribute('title', goalTitle);
+        }
         if (selectors.goalProgressText) {
-            const goal = safeGet(fullDashboardData.initialAnswers, 'goal', '').toLowerCase();
-            const startWeight = safeParseFloat(safeGet(fullDashboardData.initialData, 'weight'));
-            const lossKgTarget = safeParseFloat(safeGet(fullDashboardData.initialAnswers, 'lossKg'));
-            let goalDesc = '';
-            if (goal === 'отслабване' && !isNaN(startWeight) && !isNaN(lossKgTarget) && lossKgTarget > 0) {
-                const targetWeight = startWeight - lossKgTarget;
-                goalDesc = `Цел: ${targetWeight.toFixed(1)} кг`;
-            } else if (goal) {
-                goalDesc = capitalizeFirstLetter(goal);
-            }
-            if (selectors.goalCard && goalDesc) {
-                selectors.goalCard.setAttribute('title', goalDesc);
-            }
             selectors.goalProgressText.textContent = `${Math.round(goalProgressPercent)}%`;
         }
     }
