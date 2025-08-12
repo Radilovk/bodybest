@@ -4,7 +4,9 @@ import { showLoading, showToast, openModal as genericOpenModal, closeModal as ge
 import { apiEndpoints } from './config.js';
 import { currentUserId, todaysExtraMeals, currentIntakeMacros, loadCurrentIntake, updateMacrosAndAnalytics, fullDashboardData } from './app.js';
 import nutrientOverrides from '../kv/DIET_RESOURCES/nutrient_overrides.json' with { type: 'json' };
-import { removeMealMacros, registerNutrientOverrides, getNutrientOverride, loadProductMacros, scaleMacros } from './macroUtils.js';
+import * as macroUtils from './macroUtils.js';
+const { removeMealMacros, registerNutrientOverrides, getNutrientOverride, loadProductMacros } = macroUtils;
+const scaleMacros = macroUtils.scaleMacros || ((m, g) => m);
 import {
     addExtraMealWithOverride,
     appendExtraMealCard
@@ -46,6 +48,100 @@ let nutrientLookup = async function (name, quantity = '') {
     registerNutrientOverrides(dynamicNutrientOverrides);
     return data;
 };
+
+export function __setNutrientLookupFn(fn) {
+    nutrientLookup = fn;
+}
+
+export async function fetchMacrosFromAi(name, quantity) {
+    if (!(quantity > 0)) {
+        showToast('Невалидно количество', true);
+        throw new Error('Invalid quantity');
+    }
+    try {
+        return await nutrientLookup(name, quantity);
+    } catch (err) {
+        showToast('Nutrient lookup failed', true);
+        throw err;
+    }
+}
+
+export async function handleExtraMealFormSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    if (!form) return;
+
+    const formData = new FormData(form);
+    const quantityVal = parseFloat(formData.get('quantity'));
+    const quantityText = (formData.get('quantityCustom') || '').trim();
+    const quantityRadio = form.querySelector('input[name="quantityEstimateVisual"]:checked');
+    if ((quantityVal || quantityVal === 0) && quantityVal <= 0) {
+        showToast('Моля, въведете валидно количество.', true);
+        return;
+    }
+    if (!quantityRadio && !quantityText && !(quantityVal > 0)) {
+        showToast('Моля, въведете количество.', true);
+        return;
+    }
+    const quantity = quantityVal > 0 ? quantityVal : undefined;
+
+    const foodDesc = formData.get('foodDescription')?.trim();
+    let macros = {};
+    let macrosMissing = false;
+    MACRO_FIELDS.forEach(f => {
+        const val = parseFloat(formData.get(f));
+        if (isNaN(val)) macrosMissing = true; else macros[f] = val;
+    });
+
+    if (macrosMissing && foodDesc) {
+        try {
+            const fetched = await fetchMacrosFromAi(foodDesc, quantity);
+            macros = fetched;
+            MACRO_FIELDS.forEach(f => {
+                const field = form.querySelector(`input[name="${f}"]`);
+                if (field && fetched[f] !== undefined) {
+                    field.value = fetched[f];
+                    field.dataset.autofilled = 'true';
+                }
+            });
+        } catch (err) {
+            return; // showToast already called in fetchMacrosFromAi
+        }
+    }
+
+    populateSummary(form);
+
+    const quantityDisplay = getQuantityDisplay(
+        form.querySelector('input[name="quantityEstimateVisual"]:checked'),
+        formData.get('quantityCustom')
+    );
+
+    try {
+        const payload = {
+            userId: currentUserId,
+            date: getLocalDate(),
+            foodDescription: foodDesc,
+            quantity,
+            quantityEstimate: quantityDisplay,
+            ...macros
+        };
+        const resp = await fetch(apiEndpoints.logExtraMeal, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await resp.json().catch(() => ({}));
+        if (!resp.ok || result.success === false) {
+            throw new Error(result.message || `HTTP ${resp.status}`);
+        }
+        addExtraMealWithOverride(foodDesc, macros);
+        appendExtraMealCard(foodDesc, quantityDisplay);
+        document.body.dispatchEvent(new Event('closeExtraMealModalEvent'));
+        form.reset();
+    } catch (err) {
+        showToast(`Грешка при изпращане: ${err.message}`, true);
+    }
+}
 
 let productMacrosLoaded = false;
 let productList = [];
@@ -201,17 +297,27 @@ function toggleQuantityVisual(show, form) {
 
 function populateSummary(form) {
     if (!form) return;
+    const autoFillEl = form.querySelector('#autoFillMsg');
+    let autoFilled = autoFillEl ? !autoFillEl.classList.contains('hidden') : false;
+    if (!autoFilled) {
+        autoFilled = MACRO_FIELDS.some(f => form.querySelector(`input[name="${f}"]`)?.dataset.autofilled === 'true');
+    }
+    const format = (v) => {
+        const num = parseFloat(v);
+        if (isNaN(num)) return v || '';
+        return autoFilled ? num.toFixed(2) : v;
+    };
     const summaryData = {
         foodDescription: form.querySelector('#foodDescription')?.value.trim() || '',
         quantityEstimate: getQuantityDisplay(
             form.querySelector('input[name="quantityEstimateVisual"]:checked'),
             form.querySelector('#quantityCustom')?.value
         ),
-        calories: form.querySelector('input[name="calories"]')?.value || '',
-        protein: form.querySelector('input[name="protein"]')?.value || '',
-        carbs: form.querySelector('input[name="carbs"]')?.value || '',
-        fat: form.querySelector('input[name="fat"]')?.value || '',
-        fiber: form.querySelector('input[name="fiber"]')?.value || '',
+        calories: format(form.querySelector('input[name="calories"]')?.value),
+        protein: format(form.querySelector('input[name="protein"]')?.value),
+        carbs: format(form.querySelector('input[name="carbs"]')?.value),
+        fat: format(form.querySelector('input[name="fat"]')?.value),
+        fiber: format(form.querySelector('input[name="fiber"]')?.value),
         reasonPrimary: form.querySelector('input[name="reasonPrimary"]:checked')?.value || '',
         feelingAfter: form.querySelector('input[name="feelingAfter"]:checked')?.value || '',
         replacedPlanned: form.querySelector('input[name="replacedPlanned"]:checked')?.value || ''
@@ -244,6 +350,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
 
     let currentStepIndex = 0;
     const totalSteps = steps.length;
+
+    form.addEventListener('submit', handleExtraMealFormSubmit);
 
     function updateStepIndicator() {
         if (stepProgressBar) {
@@ -385,7 +493,13 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             const product = findClosestProduct(description);
             if (product) {
                 const scaled = scaleMacros(product, total);
-                MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = scaled[f].toFixed(2));
+                MACRO_FIELDS.forEach(f => {
+                    const field = form.querySelector(`input[name="${f}"]`);
+                    if (field) {
+                        field.value = scaled[f];
+                        field.dataset.autofilled = 'true';
+                    }
+                });
                 if (autoFillMsg) autoFillMsg.classList.remove('hidden');
             }
         }
@@ -407,7 +521,13 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         const product = findClosestProduct(desc);
         if (product) {
             const scaled = scaleMacros(product, grams);
-            MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = scaled[f].toFixed(2));
+            MACRO_FIELDS.forEach(f => {
+                const field = form.querySelector(`input[name="${f}"]`);
+                if (field) {
+                    field.value = scaled[f];
+                    field.dataset.autofilled = 'true';
+                }
+            });
             if (autoFillMsg) autoFillMsg.classList.remove('hidden');
         }
     }
@@ -431,7 +551,13 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 if (product && grams > 0) {
                     quantityHiddenInput.value = String(grams);
                     const scaled = scaleMacros(product, grams);
-                    MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = scaled[f].toFixed(2));
+                    MACRO_FIELDS.forEach(f => {
+                        const field = form.querySelector(`input[name="${f}"]`);
+                        if (field) {
+                            field.value = scaled[f];
+                            field.dataset.autofilled = 'true';
+                        }
+                    });
                     if (autoFillMsg) autoFillMsg.classList.remove('hidden');
                     parsed = true;
                 }
@@ -450,7 +576,13 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                         const product = findClosestProduct(key);
                         if (product) {
                             const scaled = scaleMacros(product, grams);
-                            MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = scaled[f].toFixed(2));
+                            MACRO_FIELDS.forEach(f => {
+                                const field = form.querySelector(`input[name="${f}"]`);
+                                if (field) {
+                                    field.value = scaled[f];
+                                    field.dataset.autofilled = 'true';
+                                }
+                            });
                             if (autoFillMsg) autoFillMsg.classList.remove('hidden');
                             parsed = true;
                         }
@@ -466,8 +598,11 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             }
 
             // Неуспешно парсване – изчистване и подсказка
-            quantityHiddenInput.value = '';
-            MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = '');
+            if (quantityHiddenInput) quantityHiddenInput.value = '';
+            MACRO_FIELDS.forEach(f => {
+                const field = form.querySelector(`input[name="${f}"]`);
+                if (field) field.value = '';
+            });
             if (autoFillMsg) autoFillMsg.classList.add('hidden');
             quantityCustomInput.classList.add('invalid-format');
             quantityCustomInput.title = 'Формат: "150" или "150 гр"';
@@ -483,7 +618,10 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                     const data = await nutrientLookup(desc, qty);
                     MACRO_FIELDS.forEach(f => {
                         const field = form.querySelector(`input[name="${f}"]`);
-                        if (field && data[f] !== undefined) field.value = Number(data[f]).toFixed(2);
+                        if (field && data[f] !== undefined) {
+                            field.value = data[f];
+                            field.dataset.autofilled = 'true';
+                        }
                     });
                     if (autoFillMsg) autoFillMsg.classList.remove('hidden');
                 } catch (err) {
