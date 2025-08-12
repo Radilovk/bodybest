@@ -1028,6 +1028,7 @@ async function handleDashboardDataRequest(request, env) {
         const profile = safeParseJson(profileStr, {});
         
         const logsList = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
+        /** @type {UserLogEntry[]} */
         let logEntries = [];
         if (logsList.keys.length > 0) {
             const sortedLogKeys = logsList.keys
@@ -1041,12 +1042,12 @@ async function handleDashboardDataRequest(request, env) {
                 if (!str) return null;
                 const parsed = safeParseJson(str, {});
                 const date = name.split('_log_')[1];
-                return {
+                return /** @type {UserLogEntry} */ ({
                     date,
                     data: parsed.log || parsed.data || {},
                     totals: parsed.totals || null,
                     extraMeals: parsed.extraMeals || []
-                };
+                });
             }).filter(entry => entry && (
                 (entry.data && Object.keys(entry.data).length > 0) ||
                 (entry.extraMeals && entry.extraMeals.length > 0)
@@ -1055,7 +1056,7 @@ async function handleDashboardDataRequest(request, env) {
             const allLogsStr = await env.USER_METADATA_KV.get(`${userId}_logs`);
             const allLogs = safeParseJson(allLogsStr, []);
             if (Array.isArray(allLogs)) {
-                logEntries = allLogs.map(l => ({
+                logEntries = allLogs.map(l => /** @type {UserLogEntry} */ ({
                     date: l.date,
                     data: l.data || l.log || {},
                     totals: l.totals || null,
@@ -3020,13 +3021,19 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
             weightChangeLastWeek = `${ch >= 0 ? '+' : ''}${ch.toFixed(1)} кг`;
         }
 
+        /** @type {UserLogEntry[]} */
         const logEntriesForAvg = [];
         for (let i = 0; i < 7; i++) { // Последните 7 дни
             if (i < logStringsForWeightCheck.length && logStringsForWeightCheck[i]) {
                 const ld = safeParseJson(logStringsForWeightCheck[i], {});
                 if(Object.keys(ld).length > 0) {
                     const d = new Date(); d.setDate(d.getDate() - i);
-                    logEntriesForAvg.push({ date: d.toISOString().split('T')[0] , data: ld });
+                    logEntriesForAvg.push({
+                        date: d.toISOString().split('T')[0],
+                        data: ld,
+                        totals: ld.totals || null,
+                        extraMeals: ld.extraMeals || []
+                    });
                 }
             }
         }
@@ -3883,6 +3890,15 @@ async function callCfAi(model, payload, env) {
 // ------------- END FUNCTION: callCfAi -------------
 
 // ------------- START FUNCTION: calculateAnalyticsIndexes -------------
+/**
+ * Изчислява аналитични индекси на базата на потребителските логове.
+ * @param {string} userId
+ * @param {any} initialAnswers
+ * @param {any} finalPlan
+ * @param {UserLogEntry[]} [logEntries=[]]
+ * @param {Record<string, unknown>} [currentStatus={}]
+ * @param {any} env
+ */
 async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries = [], currentStatus = {}, env) {
     const userLogId = initialAnswers?.email || userId || 'calcAnalyticsUser'; // Enhanced logging ID
     // console.log(`ANALYTICS_CALC (${userLogId}): Starting calculation.`);
@@ -3891,7 +3907,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
     const safeGetL = safeGet; // Using the improved safeGet
 
     logEntries = Array.isArray(logEntries)
-        ? logEntries.map(entry => ({
+        ? logEntries.map(entry => /** @type {UserLogEntry} */ ({
             date: entry.date,
             data: entry.data || entry.log || {},
             totals: entry.totals || null,
