@@ -768,7 +768,12 @@
             
             document.getElementById('client-name').textContent = `${data.client.name},`;
             const { title = '', target = '' } = data.client.mainGoal || {};
-            let goalLine = title && target ? `${title} - ${target}` : (title || target);
+            let goalLine;
+            if (title && target) {
+                goalLine = title !== target ? `${title} - ${target}` : title;
+            } else {
+                goalLine = title || target;
+            }
             goalLine = goalLine.replace(/^[Оо]сновна цел[:\s-]*/, '').trim();
             document.getElementById('main-goal').textContent = goalLine;
             document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
