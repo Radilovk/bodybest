@@ -770,7 +770,7 @@
             const { title = '', target = '' } = data.client.mainGoal || {};
             let goalLine = title && target ? `${title} - ${target}` : (title || target);
             goalLine = goalLine.replace(/^[Оо]сновна цел[:\s-]*/, '').trim();
-            document.getElementById('main-goal-text').textContent = goalLine;
+            document.getElementById('main-goal').textContent = goalLine;
             document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
             document.getElementById('dashboard-grid').innerHTML = generateDashboardHTML(data.healthDashboard);
             document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
