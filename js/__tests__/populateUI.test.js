@@ -10,7 +10,7 @@ beforeEach(async () => {
     <h1 id="headerTitle"></h1>
     <div id="goalCard"></div><div id="engagementCard"></div><div id="healthCard"></div>
     <div id="progressHistoryCard"></div>
-    <div id="goalProgressFill"></div><div id="goalProgressBar"></div><span id="goalProgressText"></span>
+    <span id="goalName"></span><div id="goalProgressFill"></div><div id="goalProgressBar"></div><span id="goalProgressText"></span>
     <div id="engagementProgressFill"></div><div id="engagementProgressBar"></div><span id="engagementProgressText"></span>
     <div id="healthProgressFill"></div><div id="healthProgressBar"></div><span id="healthProgressText"></span>
     <div id="streakGrid"></div>
@@ -27,6 +27,7 @@ beforeEach(async () => {
     progressHistoryCard: document.getElementById('progressHistoryCard'),
     goalProgressFill: document.getElementById('goalProgressFill'),
     goalProgressBar: document.getElementById('goalProgressBar'),
+    goalName: document.getElementById('goalName'),
     goalProgressText: document.getElementById('goalProgressText'),
     engagementProgressFill: document.getElementById('engagementProgressFill'),
     engagementProgressBar: document.getElementById('engagementProgressBar'),
@@ -79,8 +80,8 @@ beforeEach(async () => {
       planData: {},
       dailyLogs: [],
       currentStatus: {},
-      initialData: {},
-      initialAnswers: {}
+      initialData: { weight: 80 },
+      initialAnswers: { goal: 'отслабване', lossKg: 5 }
     },
     todaysMealCompletionStatus: {},
     todaysExtraMeals: [],
@@ -105,6 +106,7 @@ afterEach(() => {
 test('populates dashboard sections', async () => {
   await populateUI();
   expect(document.getElementById('headerTitle').textContent).toBe('Табло: Иван');
+  expect(document.getElementById('goalName').textContent).toBe('75.0 кг');
   expect(document.getElementById('goalProgressText').textContent).toBe('50%');
   expect(document.getElementById('engagementProgressText').textContent).toBe('80%');
   expect(document.getElementById('healthProgressText').textContent).toBe('70%');

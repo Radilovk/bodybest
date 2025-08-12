@@ -10,7 +10,7 @@ export function initializeSelectors() {
         menuOverlay: 'menu-overlay',
         themeToggleMenu: 'theme-toggle-menu', logoutButton: 'logoutButton', menuContactLink: 'menu-contact-link', menuPersonalizationLink: 'menu-personalization-link', menuFeedbackBtn: 'menu-feedback-btn',
         tabsContainer: '.tabs[role="tablist"]', tabButtons: '.tabs button[role="tab"]',
-        goalProgressBar: 'goalProgressBar', goalProgressFill: 'goalProgressFill', goalProgressText: 'goalProgressText',
+        goalName: 'goalName', goalProgressBar: 'goalProgressBar', goalProgressFill: 'goalProgressFill', goalProgressText: 'goalProgressText',
         engagementProgressBar: 'engagementProgressBar', engagementProgressFill: 'engagementProgressFill', engagementProgressText: 'engagementProgressText',
         healthProgressBar: 'healthProgressBar', healthProgressFill: 'healthProgressFill', healthProgressText: 'healthProgressText',
         goalCard: 'goalCard', engagementCard: 'engagementCard', healthCard: 'healthCard', streakCard: 'streakCard',
