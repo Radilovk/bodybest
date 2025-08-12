@@ -199,6 +199,29 @@ function toggleQuantityVisual(show, form) {
     });
 }
 
+function populateSummary(form) {
+    if (!form) return;
+    const summaryData = {
+        foodDescription: form.querySelector('#foodDescription')?.value.trim() || '',
+        quantityEstimate: getQuantityDisplay(
+            form.querySelector('input[name="quantityEstimateVisual"]:checked'),
+            form.querySelector('#quantityCustom')?.value
+        ),
+        calories: form.querySelector('input[name="calories"]')?.value || '',
+        protein: form.querySelector('input[name="protein"]')?.value || '',
+        carbs: form.querySelector('input[name="carbs"]')?.value || '',
+        fat: form.querySelector('input[name="fat"]')?.value || '',
+        fiber: form.querySelector('input[name="fiber"]')?.value || '',
+        reasonPrimary: form.querySelector('input[name="reasonPrimary"]:checked')?.value || '',
+        feelingAfter: form.querySelector('input[name="feelingAfter"]:checked')?.value || '',
+        replacedPlanned: form.querySelector('input[name="replacedPlanned"]:checked')?.value || ''
+    };
+    Object.entries(summaryData).forEach(([key, value]) => {
+        const el = form.querySelector(`[data-summary="${key}"]`);
+        if (el) el.textContent = value;
+    });
+}
+
 export async function initializeExtraMealFormLogic(formContainerElement) {
     const form = formContainerElement.querySelector('#extraMealEntryFormActual');
     if (!form) {
@@ -246,7 +269,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (submitBtn) submitBtn.style.display = (currentStepIndex === totalSteps - 1) ? 'inline-flex' : 'none';
         if (cancelBtn) cancelBtn.style.display = 'inline-flex';
         updateStepIndicator();
-        if (currentStepIndex === totalSteps - 1) populateSummary();
+        if (currentStepIndex === totalSteps - 1) populateSummary(form);
     }
     if (nextBtn) nextBtn.addEventListener('click', () => { if (currentStepIndex < totalSteps - 1) { currentStepIndex++; showCurrentStep(); }});
     if (prevBtn) prevBtn.addEventListener('click', () => { if (currentStepIndex > 0) { currentStepIndex--; showCurrentStep(); }});
@@ -254,6 +277,11 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     const foodDescriptionInput = form.querySelector('#foodDescription');
     const suggestionsDropdown = form.querySelector('#foodSuggestionsDropdown');
     const quantityVisualRadios = form.querySelectorAll('input[name="quantityEstimateVisual"]');
+    quantityVisualRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            quantityVisualRadios.forEach(r => r.closest('.quantity-card-option')?.classList.toggle('selected', r.checked));
+        });
+    });
     const measureOptionsContainer = form.querySelector('#measureOptions');
     if (measureOptionsContainer) measureOptionsContainer.classList.add('hidden');
     const measureInput = form.querySelector('#measureInput');
