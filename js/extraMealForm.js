@@ -391,23 +391,58 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     if (quantityCustomInput) {
         let lookupTimer;
         quantityCustomInput.addEventListener('input', () => {
-            let val = quantityCustomInput.value.trim();
-            const match = val.match(/^(\d+)\s*[xх*]?\s*(.+)$/i);
-            if (match) {
-                const count = parseInt(match[1], 10);
-                const prod = match[2].trim().toLowerCase();
-                const key = fuzzyFindProductKey(prod);
-                if (key && productMeasures[key] && productMeasures[key][0]) {
-                    const grams = count * productMeasures[key][0].grams;
-                    quantityHiddenInput.value = grams;
-                    const product = findClosestProduct(key);
-                    if (product) {
-                        const scaled = scaleMacros(product, grams);
-                        MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = scaled[f].toFixed(2));
-                        if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+            const val = quantityCustomInput.value.trim();
+            let parsed = false;
+
+            // 1) Чисто число или "<число> гр"
+            const gramsMatch = val.match(/^(\d+(?:[.,]\d+)?)\s*(гр|g)?$/i);
+            if (gramsMatch) {
+                const grams = parseFloat(gramsMatch[1].replace(',', '.'));
+                const desc = foodDescriptionInput?.value?.trim();
+                const product = desc ? findClosestProduct(desc) : null;
+                if (product && grams > 0) {
+                    quantityHiddenInput.value = String(grams);
+                    const scaled = scaleMacros(product, grams);
+                    MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = scaled[f].toFixed(2));
+                    if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+                    parsed = true;
+                }
+            }
+
+            // 2) "<брой> x <продукт>"
+            if (!parsed) {
+                const match = val.match(/^(\d+)\s*[xх*]?\s*(.+)$/i);
+                if (match) {
+                    const count = parseInt(match[1], 10);
+                    const prod = match[2].trim().toLowerCase();
+                    const key = fuzzyFindProductKey(prod);
+                    if (key && productMeasures[key] && productMeasures[key][0]) {
+                        const grams = count * productMeasures[key][0].grams;
+                        quantityHiddenInput.value = grams;
+                        const product = findClosestProduct(key);
+                        if (product) {
+                            const scaled = scaleMacros(product, grams);
+                            MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = scaled[f].toFixed(2));
+                            if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+                            parsed = true;
+                        }
                     }
                 }
             }
+
+            if (parsed) {
+                quantityCustomInput.classList.remove('invalid-format');
+                quantityCustomInput.removeAttribute('title');
+                clearTimeout(lookupTimer);
+                return;
+            }
+
+            // Неуспешно парсване – изчистване и подсказка
+            quantityHiddenInput.value = '';
+            MACRO_FIELDS.forEach(f => form.querySelector(`input[name="${f}"]`).value = '');
+            if (autoFillMsg) autoFillMsg.classList.add('hidden');
+            quantityCustomInput.classList.add('invalid-format');
+            quantityCustomInput.title = 'Формат: "150" или "150 гр"';
 
             clearTimeout(lookupTimer);
             lookupTimer = setTimeout(async () => {
