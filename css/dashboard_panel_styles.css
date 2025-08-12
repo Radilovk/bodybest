@@ -565,14 +565,10 @@ body.vivid-theme .tracker .metric-rating .rating-value {
 }
 
 
-.tracker .daily-log-weight-metric {
-  border-bottom: 1px dashed var(--border-color-soft); 
-  padding-bottom: var(--space-lg); 
-}
 .tracker .daily-log-weight-metric .daily-log-weight-input-field {
-  flex-grow: 1; 
+  flex-grow: 1;
   max-width: 200px; /* Ограничена ширина */
-  padding: 0.6rem 0.8rem; 
+  padding: 0.6rem 0.8rem;
   font-size: 0.95rem;
 }
 
@@ -635,11 +631,17 @@ body.vivid-theme .tracker .metric-rating .rating-value {
     border-color: var(--toast-bg) transparent transparent transparent;
 }
 
-#openExtraMealModalBtn, #add-note-btn {
+#openExtraMealModalBtn {
     width: 100%;
     margin-bottom: var(--space-sm);
     justify-content: flex-start;
     padding-left: var(--space-md);
+}
+#add-note-btn {
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: var(--space-md);
+    margin-bottom: var(--space-xs);
 }
 #openExtraMealModalBtn, #add-note-btn, #planModificationBtn {
     color: var(--card-bg);
@@ -648,7 +650,10 @@ body.vivid-theme .tracker .metric-rating .rating-value {
     margin-right: var(--space-sm);
     font-size: 1.1em;
 }
-#daily-note { margin-top: var(--space-md); margin-bottom: var(--space-xs); }
+.daily-note-section {
+    margin-top: var(--space-lg);
+}
+#daily-note { margin-top: var(--space-xs); margin-bottom: var(--space-xs); }
 #saveLogBtn {
     width: 100%;
     margin-top: var(--space-lg);
