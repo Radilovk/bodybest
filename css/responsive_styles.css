@@ -123,8 +123,13 @@
   #planModChatSend svg { width: 18px; height: 18px; }
 
   .tracker .metric-rating {
-    flex-direction: column; 
-    align-items: flex-start; 
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: var(--space-xl);
+    gap: var(--space-xs);
+  }
+  .tracker .metric-rating:last-child {
+    margin-bottom: 0;
   }
   .tracker .metric-rating label {
     flex-basis: auto; 
