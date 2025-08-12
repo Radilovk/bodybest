@@ -159,14 +159,17 @@ function populateDashboardMainIndexes(currentAnalytics) {
             const goal = safeGet(fullDashboardData.initialAnswers, 'goal', '').toLowerCase();
             const startWeight = safeParseFloat(safeGet(fullDashboardData.initialData, 'weight'));
             const lossKgTarget = safeParseFloat(safeGet(fullDashboardData.initialAnswers, 'lossKg'));
-            let goalDesc = `${Math.round(goalProgressPercent)}%`;
+            let goalDesc = '';
             if (goal === 'отслабване' && !isNaN(startWeight) && !isNaN(lossKgTarget) && lossKgTarget > 0) {
-                 const targetWeight = startWeight - lossKgTarget;
-                 goalDesc = `Цел: ${targetWeight.toFixed(1)} кг | ${Math.round(goalProgressPercent)}%`;
+                const targetWeight = startWeight - lossKgTarget;
+                goalDesc = `Цел: ${targetWeight.toFixed(1)} кг`;
             } else if (goal) {
-                goalDesc = `${capitalizeFirstLetter(goal)} | ${Math.round(goalProgressPercent)}%`;
+                goalDesc = capitalizeFirstLetter(goal);
             }
-            selectors.goalProgressText.textContent = goalDesc;
+            if (selectors.goalCard && goalDesc) {
+                selectors.goalCard.setAttribute('title', goalDesc);
+            }
+            selectors.goalProgressText.textContent = `${Math.round(goalProgressPercent)}%`;
         }
     }
 
