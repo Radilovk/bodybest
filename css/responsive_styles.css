@@ -128,7 +128,7 @@
   }
   .tracker .metric-rating label {
     flex-basis: auto; 
-    margin-bottom: var(--space-sm); 
+    margin-bottom: var(--space-xs); 
   }
   .tracker .daily-log-weight-metric .daily-log-weight-input-field,
   .tracker .rating-squares {
