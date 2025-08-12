@@ -637,11 +637,14 @@ body.vivid-theme .tracker .metric-rating .rating-value {
 
 #openExtraMealModalBtn, #add-note-btn {
     width: 100%;
-    margin-bottom: var(--space-sm); 
-    justify-content: flex-start; 
-    padding-left: var(--space-md); 
+    margin-bottom: var(--space-sm);
+    justify-content: flex-start;
+    padding-left: var(--space-md);
 }
-#add-note-btn .menu-icon { 
+#openExtraMealModalBtn, #add-note-btn, #planModificationBtn {
+    color: var(--card-bg);
+}
+#add-note-btn .menu-icon {
     margin-right: var(--space-sm);
     font-size: 1.1em;
 }
