@@ -168,6 +168,7 @@ describe('extraMealForm populateSummary', () => {
           <textarea id="foodDescription"></textarea>
           <div id="foodSuggestionsDropdown"></div>
           <input type="radio" name="quantityEstimateVisual" value="x">
+          <input type="text" id="quantityCustom">
           <input type="number" name="calories">
           <input type="number" name="protein">
           <input type="number" name="carbs">
@@ -201,22 +202,139 @@ describe('extraMealForm populateSummary', () => {
 
     const desc = document.getElementById('foodDescription');
     const qty = document.querySelector('input[name="quantityEstimateVisual"]');
+    const qtyCustom = document.getElementById('quantityCustom');
     qty.checked = true;
     desc.value = 'непозната храна';
-    desc.dispatchEvent(new Event('input', { bubbles: true }));
+    qtyCustom.value = '100гр';
+    qtyCustom.dispatchEvent(new Event('input', { bubbles: true }));
 
     await new Promise((r) => setTimeout(r, 350));
 
     document.getElementById('emNextStepBtn').click();
 
     const summary = document.getElementById('extraMealSummary');
-    expect(summary.querySelector('[data-summary="calories"]').textContent).toBe('150');
-    expect(summary.querySelector('[data-summary="protein"]').textContent).toBe('15');
-    expect(summary.querySelector('[data-summary="carbs"]').textContent).toBe('25');
-    expect(summary.querySelector('[data-summary="fat"]').textContent).toBe('5');
-    expect(summary.querySelector('[data-summary="fiber"]').textContent).toBe('4');
+    expect(summary.querySelector('[data-summary="calories"]').textContent).toBe('150.00');
+    expect(summary.querySelector('[data-summary="protein"]').textContent).toBe('15.00');
+    expect(summary.querySelector('[data-summary="carbs"]').textContent).toBe('25.00');
+    expect(summary.querySelector('[data-summary="fat"]').textContent).toBe('5.00');
+    expect(summary.querySelector('[data-summary="fiber"]').textContent).toBe('4.00');
 
     global.fetch = originalFetch;
+  });
+
+  test('попълва резюме с всички данни', async () => {
+    jest.resetModules();
+    jest.unstable_mockModule('../uiHandlers.js', () => ({
+      showLoading: jest.fn(),
+      showToast: jest.fn(),
+      openModal: jest.fn(),
+      closeModal: jest.fn(),
+    }));
+    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
+    jest.unstable_mockModule('../app.js', () => ({
+      currentUserId: 'u1',
+      todaysExtraMeals: [],
+      currentIntakeMacros: {},
+      fullDashboardData: {},
+      loadCurrentIntake: jest.fn(),
+      updateMacrosAndAnalytics: jest.fn(),
+    }));
+    jest.unstable_mockModule('../macroUtils.js', () => ({
+      removeMealMacros: jest.fn(),
+      registerNutrientOverrides: jest.fn(),
+      getNutrientOverride: jest.fn(),
+      loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
+      scaleMacros: jest.fn(scaleMacrosImpl),
+    }));
+    jest.unstable_mockModule('../populateUI.js', () => ({
+      addExtraMealWithOverride: jest.fn(),
+      appendExtraMealCard: jest.fn(),
+    }));
+
+    const originalFetch = global.fetch;
+    global.fetch = undefined;
+    const { initializeExtraMealFormLogic } = await import('../extraMealForm.js');
+    global.fetch = originalFetch;
+
+    document.body.innerHTML = `
+      <form id="extraMealEntryFormActual">
+        <div class="form-step">
+          <textarea id="foodDescription" name="foodDescription"></textarea>
+          <div id="foodSuggestionsDropdown"></div>
+        </div>
+        <div class="form-step" style="display:none">
+          <label class="quantity-card-option">
+            <input type="radio" name="quantityEstimateVisual" value="other_quantity_describe">
+          </label>
+          <input type="text" id="quantityCustom" name="quantityCustom">
+        </div>
+        <div class="form-step" style="display:none">
+          <input type="number" name="calories">
+          <input type="number" name="protein">
+          <input type="number" name="carbs">
+          <input type="number" name="fat">
+          <input type="number" name="fiber">
+        </div>
+        <div class="form-step" style="display:none">
+          <label><input type="radio" name="reasonPrimary" value="глад" checked></label>
+          <label><input type="radio" name="feelingAfter" value="ситост_доволство" checked></label>
+          <label><input type="radio" name="replacedPlanned" value="да_частично" checked></label>
+        </div>
+        <div class="form-step" style="display:none">
+          <div id="extraMealSummary">
+            <span data-summary="foodDescription"></span>
+            <span data-summary="quantityEstimate"></span>
+            <span data-summary="reasonPrimary"></span>
+            <span data-summary="feelingAfter"></span>
+            <span data-summary="replacedPlanned"></span>
+            <span data-summary="calories"></span>
+            <span data-summary="protein"></span>
+            <span data-summary="carbs"></span>
+            <span data-summary="fat"></span>
+            <span data-summary="fiber"></span>
+          </div>
+        </div>
+        <div class="form-wizard-navigation">
+          <button id="emPrevStepBtn"></button>
+          <button id="emNextStepBtn"></button>
+          <button id="emSubmitBtn"></button>
+          <button id="emCancelBtn"></button>
+        </div>
+      </form>
+    `;
+
+    await initializeExtraMealFormLogic(document);
+
+    document.getElementById('foodDescription').value = 'Ябълка';
+    const qtyInput = document.getElementById('quantityCustom');
+    qtyInput.value = '100гр';
+    document.querySelector('input[name="quantityEstimateVisual"]').checked = true;
+
+    const setVal = (name, val) => {
+      const input = document.querySelector(`input[name="${name}"]`);
+      if (input) input.value = val;
+    };
+
+    setVal('calories', '100');
+    setVal('protein', '20');
+    setVal('carbs', '30');
+    setVal('fat', '10');
+    setVal('fiber', '5');
+
+    const nextBtn = document.getElementById('emNextStepBtn');
+    for (let i = 0; i < 4; i++) nextBtn.click();
+
+    const summary = document.getElementById('extraMealSummary');
+    expect(summary.querySelector('[data-summary="foodDescription"]').textContent).toBe('Ябълка');
+    expect(summary.querySelector('[data-summary="quantityEstimate"]').textContent).toBe('100гр');
+    expect(summary.querySelector('[data-summary="calories"]').textContent).toBe('100');
+    expect(summary.querySelector('[data-summary="protein"]').textContent).toBe('20');
+    expect(summary.querySelector('[data-summary="carbs"]').textContent).toBe('30');
+    expect(summary.querySelector('[data-summary="fat"]').textContent).toBe('10');
+    expect(summary.querySelector('[data-summary="fiber"]').textContent).toBe('5');
+    expect(summary.querySelector('[data-summary="reasonPrimary"]').textContent).toBe('глад');
+    expect(summary.querySelector('[data-summary="feelingAfter"]').textContent).toBe('ситост_доволство');
+    expect(summary.querySelector('[data-summary="replacedPlanned"]').textContent).toBe('да_частично');
   });
 });
 
