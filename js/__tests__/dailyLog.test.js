@@ -67,4 +67,29 @@ describe('daily log', () => {
     expect(stored.log.note).toBe('първи');
     expect(stored.log.weight).toBe('80');
   });
+
+  test('изтрива дневник и обновява индекса', async () => {
+    const store = {
+      'u1_initial_answers': JSON.stringify({ name: 'U', weight: '70', height: '170', goal: 'lose' }),
+      'u1_final_plan': JSON.stringify({ caloriesMacros: { p: 1 } }),
+      'plan_status_u1': 'ready',
+      'u1_current_status': '{}',
+      'u1_profile': '{}'
+    };
+    const env = {
+      USER_METADATA_KV: {
+        get: jest.fn(async key => store[key] || null),
+        put: jest.fn(async (key, val) => { store[key] = val; }),
+        delete: jest.fn(async key => { delete store[key]; }),
+        list: jest.fn().mockResolvedValue({ keys: [] })
+      },
+      RESOURCES_KV: { get: jest.fn(async () => '{}') }
+    };
+    const dateStr = '2020-01-02';
+    await handleLogRequest(makeRequest({ userId: 'u1', date: dateStr, data: { note: 'x' } }), env);
+    expect(JSON.parse(store['u1_logs_index'])).toEqual([dateStr]);
+    await handleLogRequest(makeRequest({ userId: 'u1', date: dateStr, delete: true }), env);
+    expect(store[`u1_log_${dateStr}`]).toBeUndefined();
+    expect(JSON.parse(store['u1_logs_index'])).toEqual([]);
+  });
 });
