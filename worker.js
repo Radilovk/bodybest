@@ -3541,6 +3541,35 @@ async function evaluatePlanChange(userId, requestData, env) {
 }
 // ------------- END FUNCTION: evaluatePlanChange -------------
 
+// Помощни функции за атомична работа с опашката от събития
+async function enqueueUserEventRecord(record, env) {
+    const kv = env.USER_METADATA_KV;
+    for (let attempt = 0; attempt < 5; attempt++) {
+        const currentStr = await kv.get('events_queue');
+        let arr = safeParseJson(currentStr, []);
+        if (!Array.isArray(arr)) arr = [];
+        arr.push(record);
+        await kv.put('events_queue', JSON.stringify(arr));
+        const verify = safeParseJson(await kv.get('events_queue'), []);
+        if (verify.some(e => e.key === record.key)) return;
+    }
+    throw new Error('QUEUE_APPEND_CONFLICT');
+}
+
+async function dequeueUserEventRecord(env) {
+    const kv = env.USER_METADATA_KV;
+    for (let attempt = 0; attempt < 5; attempt++) {
+        const currentStr = await kv.get('events_queue');
+        let arr = safeParseJson(currentStr, []);
+        if (!Array.isArray(arr) || arr.length === 0) return null;
+        const record = arr.shift();
+        await kv.put('events_queue', JSON.stringify(arr));
+        const verify = safeParseJson(await kv.get('events_queue'), []);
+        if (!verify.some(e => e.key === record.key)) return record;
+    }
+    throw new Error('QUEUE_DEQUEUE_CONFLICT');
+}
+
 // ------------- START FUNCTION: createUserEvent -------------
 async function createUserEvent(eventType, userId, payload, env) {
     if (!eventType || !userId) return { success: false, message: 'Невалидни параметри.' };
@@ -3569,6 +3598,11 @@ async function createUserEvent(eventType, userId, payload, env) {
         payload
     };
     await env.USER_METADATA_KV.put(key, JSON.stringify(data));
+    try {
+        await enqueueUserEventRecord({ key, type: eventType, userId }, env);
+    } catch (err) {
+        console.error(`EVENT_QUEUE_APPEND_ERROR (${userId}):`, err);
+    }
     if (eventType === 'planMod') {
         try {
             await env.USER_METADATA_KV.put(`pending_plan_mod_${userId}`, JSON.stringify(payload || {}));
@@ -4483,28 +4517,21 @@ const EVENT_HANDLERS = {
 };
 
 async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
-    const list = await env.USER_METADATA_KV.list({ prefix: 'event_' });
-    const events = [];
-    for (const key of list.keys) {
-        const eventStr = await env.USER_METADATA_KV.get(key.name);
-        const eventData = safeParseJson(eventStr, null);
-        if (!eventData || !eventData.type || !eventData.userId) {
-            await env.USER_METADATA_KV.delete(key.name);
-            continue;
-        }
-        events.push({ key: key.name, data: eventData });
-    }
-    events.sort((a, b) => (a.data.createdTimestamp || 0) - (b.data.createdTimestamp || 0));
     let processed = 0;
-    for (const { key, data } of events) {
-        if (processed >= maxToProcess) break;
-        const handler = EVENT_HANDLERS[data.type];
-        if (handler) {
-            ctx.waitUntil(handler(data.userId, env, data.payload));
-        } else {
-            console.log(`[CRON-UserEvent] Unknown event type ${data.type} for user ${data.userId}`);
+    while (processed < maxToProcess) {
+        const record = await dequeueUserEventRecord(env);
+        if (!record) break;
+        const eventStr = await env.USER_METADATA_KV.get(record.key);
+        const data = safeParseJson(eventStr, null);
+        if (data && record.type && record.userId) {
+            const handler = EVENT_HANDLERS[record.type];
+            if (handler) {
+                ctx.waitUntil(handler(record.userId, env, data.payload));
+            } else {
+                console.log(`[CRON-UserEvent] Unknown event type ${record.type} for user ${record.userId}`);
+            }
         }
-        await env.USER_METADATA_KV.delete(key);
+        await env.USER_METADATA_KV.delete(record.key);
         processed++;
     }
     if (processed > 0) console.log(`[CRON-UserEvent] Processed ${processed} event(s).`);
