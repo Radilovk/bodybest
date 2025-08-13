@@ -1013,20 +1013,18 @@ async function handleDashboardDataRequest(request, env) {
         const currentStatus = safeParseJson(currentStatusStr, {});
         const profile = safeParseJson(profileStr, {});
         
-        const logsList = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
         let logEntries = [];
-        if (logsList.keys.length > 0) {
-            const sortedLogKeys = logsList.keys
-                .map(k => k.name)
-                .sort((a, b) => new Date(b.split('_log_')[1]).getTime() - new Date(a.split('_log_')[1]).getTime())
+        const logDates = await getUserLogDates(env, userId);
+        if (logDates.length > 0) {
+            const sortedDates = logDates
+                .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
                 .slice(0, USER_ACTIVITY_LOG_LIST_LIMIT);
             const logRecords = await Promise.all(
-                sortedLogKeys.map(name => env.USER_METADATA_KV.get(name).then(str => ({ name, str })))
+                sortedDates.map(date => env.USER_METADATA_KV.get(`${userId}_log_${date}`).then(str => ({ date, str })))
             );
-            logEntries = logRecords.map(({ name, str }) => {
+            logEntries = logRecords.map(({ date, str }) => {
                 if (!str) return null;
                 const parsed = safeParseJson(str, {});
-                const date = name.split('_log_')[1];
                 return {
                     date,
                     data: parsed.log || parsed.data || {},
@@ -1138,6 +1136,19 @@ async function handleLogRequest(request, env) {
         const dateToLog = inputData.date || todayStr; // Позволява подаване на дата, иначе днешна
         const logKey = `${userId}_log_${dateToLog}`;
 
+        if (inputData.delete) {
+            await env.USER_METADATA_KV.delete(logKey);
+            const indexKey = `${userId}_logs_index`;
+            const idxStr = await env.USER_METADATA_KV.get(indexKey);
+            let idxArr = idxStr ? safeParseJson(idxStr, []) : [];
+            if (Array.isArray(idxArr)) {
+                idxArr = idxArr.filter(d => d !== dateToLog);
+                await env.USER_METADATA_KV.put(indexKey, JSON.stringify(idxArr));
+            }
+            console.log(`LOG_REQUEST (${userId}): Daily log deleted for date ${dateToLog}.`);
+            return { success: true, message: 'Дневникът е изтрит успешно.', deletedDate: dateToLog };
+        }
+
         // Копираме всички полета от inputData.data, ако съществува
         const log = { ...(inputData.data || {}) };
 
@@ -1191,6 +1202,16 @@ async function handleLogRequest(request, env) {
            currentStatus.lastUpdated = new Date().toISOString();
            await env.USER_METADATA_KV.put(statusKey, JSON.stringify(currentStatus));
            console.log(`LOG_REQUEST (${userId}): Updated current_status with weight ${log.weight}.`);
+        }
+
+        const indexKey = `${userId}_logs_index`;
+        const idxStr = await env.USER_METADATA_KV.get(indexKey);
+        let idxArr = idxStr ? safeParseJson(idxStr, []) : [];
+        if (!Array.isArray(idxArr)) idxArr = [];
+        if (!idxArr.includes(dateToLog)) {
+            idxArr.push(dateToLog);
+            idxArr.sort();
+            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(idxArr));
         }
 
         console.log(`LOG_REQUEST (${userId}): Daily log saved for date ${dateToLog}.`);
@@ -2787,10 +2808,19 @@ async function processSingleUserPlan(userId, env) {
             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): неуспешно зареждане на current_status - ${err.message}`);
         }
         try {
-            const logsList = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
-            const logKeys = logsList.keys.map(k => k.name).sort();
-            const logStrings = await Promise.all(logKeys.map(k => env.USER_METADATA_KV.get(k)));
-            logEntries = logStrings.map(s => safeParseJson(s, {}));
+            const logDates = await getUserLogDates(env, userId);
+            if (logDates.length > 0) {
+                const logKeys = logDates.sort().map(d => `${userId}_log_${d}`);
+                const logStrings = await Promise.all(logKeys.map(k => env.USER_METADATA_KV.get(k)));
+                logEntries = logStrings.map(s => {
+                    const obj = safeParseJson(s, {});
+                    return obj.log || obj.data || obj;
+                });
+            } else {
+                const aggregatedStr = await env.USER_METADATA_KV.get(`${userId}_logs`);
+                const aggregated = safeParseJson(aggregatedStr, []);
+                logEntries = Array.isArray(aggregated) ? aggregated.map(l => l.log || l.data || l) : [];
+            }
         } catch (err) {
             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): неуспешно зареждане на дневници - ${err.message}`);
         }
@@ -3208,6 +3238,28 @@ const safeParseJson = (jsonString, defaultValue = null) => {
     }
 };
 // ------------- END FUNCTION: safeParseJson -------------
+
+// ------------- START FUNCTION: getUserLogDates -------------
+async function getUserLogDates(env, userId) {
+    const indexKey = `${userId}_logs_index`;
+    let dates = [];
+    try {
+        const idxStr = await env.USER_METADATA_KV.get(indexKey);
+        dates = idxStr ? safeParseJson(idxStr, []) : [];
+        if (!Array.isArray(dates)) dates = [];
+    } catch (err) {
+        dates = [];
+    }
+    if (dates.length === 0) {
+        const list = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
+        dates = list.keys.map(k => k.name.split('_log_')[1]).filter(Boolean);
+        if (dates.length > 0) {
+            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(dates));
+        }
+    }
+    return dates;
+}
+// ------------- END FUNCTION: getUserLogDates -------------
 
 // ------------- START FUNCTION: updatePlanUserArrays -------------
 async function updatePlanUserArrays(userId, status, env) {
