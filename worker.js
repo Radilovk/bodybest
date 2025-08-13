@@ -4547,13 +4547,43 @@ async function handleListUserKvRequest(request, env) {
     if (!userId) {
         return { success: false, message: 'Missing userId' };
     }
+
+    const cursor = url.searchParams.get('cursor') || undefined;
+    const limitParam = url.searchParams.get('limit');
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+    const listOpts = { prefix: `${userId}_` };
+    if (cursor) listOpts.cursor = cursor;
+    if (limit) listOpts.limit = limit;
+
+    const indexKey = `${userId}_kv_index`;
+
     try {
-        const list = await env.USER_METADATA_KV.list({ prefix: `${userId}_` });
+        // Използвай кеширания индекс, когато е наличен и не е поискана страница.
+        if (!cursor) {
+            const idxStr = await env.USER_METADATA_KV.get(indexKey);
+            const cached = idxStr ? safeParseJson(idxStr, {}) : null;
+            if (cached && Object.keys(cached).length > 0) {
+                return { success: true, kv: cached, listComplete: true };
+            }
+        }
+
+        const list = await env.USER_METADATA_KV.list(listOpts);
         const kv = {};
         for (const { name } of list.keys) {
             kv[name] = await env.USER_METADATA_KV.get(name);
         }
-        return { success: true, kv };
+
+        // Обнови индекса само при първо изброяване.
+        if (!cursor) {
+            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(kv));
+        }
+
+        return {
+            success: true,
+            kv,
+            cursor: list.cursor,
+            listComplete: list.list_complete
+        };
     } catch (error) {
         console.error('Error in handleListUserKvRequest:', error.message, error.stack);
         return { success: false, message: 'Failed to list KV data' };
