@@ -608,30 +608,23 @@ export default {
 
         try {
             // --- 1. Обработка на генериране на първоначален план ---
-            const listResultPlanStatus = await env.USER_METADATA_KV.list({ prefix: "plan_status_" });
-
-            for (const key of listResultPlanStatus.keys) {
-                if (processedUsersForPlan >= MAX_PROCESS_PER_RUN_PLAN_GEN) break;
-
-                const metaStatus = key.metadata?.status;
-                let status = metaStatus;
-                if (!status || !['pending', 'processing', 'error'].includes(status)) {
-                    status = await env.USER_METADATA_KV.get(key.name);
+            const pendingStr = await env.USER_METADATA_KV.get('pending_plan_users');
+            let pendingUsers = safeParseJson(pendingStr, []);
+            if (!Array.isArray(pendingUsers)) pendingUsers = [];
+            const toProcessPlan = pendingUsers.slice(0, MAX_PROCESS_PER_RUN_PLAN_GEN);
+            let remainingPending = pendingUsers.slice(MAX_PROCESS_PER_RUN_PLAN_GEN);
+            for (const userId of toProcessPlan) {
+                const initialAnswers = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
+                if (!initialAnswers) {
+                    await setPlanStatus(userId, 'pending_inputs', env);
+                    console.log(`[CRON-PlanGen] Missing initial answers for ${userId}`);
+                    continue;
                 }
-                if (['pending', 'processing', 'error'].includes(status)) {
-                    const userId = key.name.replace('plan_status_', '');
-                    const initialAnswers = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
-                    if (!initialAnswers) {
-                        await env.USER_METADATA_KV.put(key.name, 'pending_inputs', { metadata: { status: 'pending_inputs' } });
-                        console.log(`[CRON-PlanGen] Missing initial answers for ${userId}`);
-                        continue;
-                    }
-                    await env.USER_METADATA_KV.put(key.name, 'processing', { metadata: { status: 'processing' } });
-                    ctx.waitUntil(processSingleUserPlan(userId, env));
-                    processedUsersForPlan++;
-                }
+                await setPlanStatus(userId, 'processing', env);
+                ctx.waitUntil(processSingleUserPlan(userId, env));
+                processedUsersForPlan++;
             }
-
+            await env.USER_METADATA_KV.put('pending_plan_users', JSON.stringify(remainingPending));
             if (processedUsersForPlan === 0) console.log("[CRON-PlanGen] No users for plan generation.");
 
             planGenDuration = Date.now() - planGenStart;
@@ -639,28 +632,23 @@ export default {
             const userEventsStart = Date.now();
             processedUserEvents = await processPendingUserEvents(env, ctx);
             userEventsDuration = Date.now() - userEventsStart;
-            // --- Потребители с готов план ---
-            const listResultReadyPlans = await env.USER_METADATA_KV.list({ prefix: "plan_status_" });
-            const usersWithReadyPlan = [];
-            for (const key of listResultReadyPlans.keys) {
-                const userId = key.name.replace('plan_status_', '');
-                let status = key.metadata?.status;
-                if(status !== 'ready') status = await env.USER_METADATA_KV.get(key.name); // Прочитане на стойността, ако metadata не е 'ready'
-                if (status === 'ready') usersWithReadyPlan.push(userId);
-            }
+
+            // --- 2. Обработка на актуализация на принципи (ръчна/стандартна) ---
+            const readyStr = await env.USER_METADATA_KV.get('ready_plan_users');
+            let readyUsers = safeParseJson(readyStr, []);
+            if (!Array.isArray(readyUsers)) readyUsers = [];
+            const toProcessReady = readyUsers.slice(0, MAX_PROCESS_PER_RUN_PRINCIPLES);
+            let remainingReady = readyUsers.slice(MAX_PROCESS_PER_RUN_PRINCIPLES);
 
             const principlesStart = Date.now();
-            // --- 2. Обработка на актуализация на принципи (ръчна/стандартна) ---
-            for (const userId of usersWithReadyPlan) {
-                if (processedUsersForPrinciples >= MAX_PROCESS_PER_RUN_PRINCIPLES) break;
-
+            for (const userId of toProcessReady) {
                 let isActive = false;
                 for (let i = 0; i < USER_ACTIVITY_LOG_LOOKBACK_DAYS; i++) {
                     const date = new Date(); date.setDate(date.getDate() - i);
                     const listResultLog = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_${date.toISOString().split('T')[0]}`, limit: 1 });
                     if (listResultLog.keys.length > 0) { isActive = true; break; }
                 }
-                if (!isActive) continue;
+                if (!isActive) { remainingReady.push(userId); continue; }
 
                 const lastUpdateTsStrForPrinciples = await env.USER_METADATA_KV.get(`${userId}_last_significant_update_ts`);
                 const lastUpdateTsForPrinciples = lastUpdateTsStrForPrinciples ? parseInt(lastUpdateTsStrForPrinciples, 10) : 0;
@@ -668,12 +656,13 @@ export default {
 
                 if (daysSinceLastPrincipleUpdate >= PRINCIPLE_UPDATE_INTERVAL_DAYS) {
                     console.log(`[CRON-Principles] User ${userId} due for standard principle update.`);
-                    // Извикваме handlePrincipleAdjustment без calledFromQuizAnalysis = true (default е false)
-                    // handlePrincipleAdjustment е async, но тук не е нужно да го await-ваме директно, тъй като е продължителна операция
                     ctx.waitUntil(handlePrincipleAdjustment(userId, env));
                     processedUsersForPrinciples++;
+                } else {
+                    remainingReady.push(userId);
                 }
             }
+            await env.USER_METADATA_KV.put('ready_plan_users', JSON.stringify(remainingReady));
             if (processedUsersForPrinciples === 0) console.log("[CRON-Principles] No users for standard principle update.");
 
             principlesDuration = Date.now() - principlesStart;
@@ -733,7 +722,7 @@ async function handleRegisterRequest(request, env, ctx) {
         const credentialContent = JSON.stringify({ userId, email: trimmedEmail, passwordHash: hashedPasswordWithSalt });
         await env.USER_METADATA_KV.put(`credential_${userId}`, credentialContent);
         await env.USER_METADATA_KV.put(`email_to_uuid_${trimmedEmail}`, userId);
-        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
+        await setPlanStatus(userId, 'pending', env);
 
         let sendVal = env.SEND_WELCOME_EMAIL;
         if (sendVal === undefined && env.RESOURCES_KV) {
@@ -772,7 +761,7 @@ async function handleRegisterDemoRequest(request, env, ctx) {
             if (trimmedEmail) {
                 const userId = await env.USER_METADATA_KV.get(`email_to_uuid_${trimmedEmail}`);
                 if (userId) {
-                    await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'demo', { metadata: { status: 'demo' } });
+                    await setPlanStatus(userId, 'demo', env);
                 }
             }
         } catch (err) {
@@ -833,7 +822,7 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         }
         questionnaireData.submissionDate = new Date().toISOString();
         await env.USER_METADATA_KV.put(`${userId}_initial_answers`, JSON.stringify(questionnaireData));
-        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata: { status: 'pending' } });
+        await setPlanStatus(userId, 'pending', env);
         await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
 
@@ -1510,7 +1499,7 @@ async function validatePlanPrerequisites(env, userId) {
         env.USER_METADATA_KV.get(`${userId}_initial_answers`)
     ]);
     if (!initialAnswersStr) {
-        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        await setPlanStatus(userId, 'error', env);
         return { ok: false, message: 'Липсват първоначални отговори.' };
     }
     let parsedInitial;
@@ -1520,24 +1509,24 @@ async function validatePlanPrerequisites(env, userId) {
         parsedInitial = null;
     }
     if (!parsedInitial || typeof parsedInitial !== 'object' || Object.keys(parsedInitial).length === 0) {
-        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        await setPlanStatus(userId, 'error', env);
         return { ok: false, message: 'Некоректни първоначални отговори.' };
     }
     if (!modelName) {
-        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        await setPlanStatus(userId, 'error', env);
         return { ok: false, message: 'Липсва model_plan_generation.' };
     }
     if (!promptTemplate) {
-        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        await setPlanStatus(userId, 'error', env);
         return { ok: false, message: 'Липсва prompt_unified_plan_generation_v2.' };
     }
     const provider = getModelProvider(modelName);
     if (provider === 'gemini' && !env[GEMINI_API_KEY_SECRET_NAME]) {
-        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        await setPlanStatus(userId, 'error', env);
         return { ok: false, message: 'Липсва GEMINI_API_KEY.' };
     }
     if (provider === 'openai' && !env[OPENAI_API_KEY_SECRET_NAME]) {
-        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+        await setPlanStatus(userId, 'error', env);
         return { ok: false, message: 'Липсва OPENAI_API_KEY.' };
     }
     // Опционални данни (напр. дневници) не се валидират тук, липсата им е допустима.
@@ -1575,7 +1564,7 @@ async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = pr
         if (!precheck.ok) {
             return { success: false, message: precheck.message, statusHint: 400 };
         }
-        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'processing', { metadata: { status: 'processing' } });
+        await setPlanStatus(userId, 'processing', env);
         if (ctx) {
             ctx.waitUntil(planProcessor(userId, env));
         } else {
@@ -1605,7 +1594,7 @@ async function handleUpdatePlanRequest(request, env) {
             data: planData.caloriesMacros || null
         };
         await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
-        await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'ready', { metadata: { status: 'ready' } });
+        await setPlanStatus(userId, 'ready', env);
         return { success: true, message: 'Планът е обновен успешно' };
     } catch (error) {
         console.error('Error in handleUpdatePlanRequest:', error.message, error.stack);
@@ -2922,12 +2911,12 @@ async function processSingleUserPlan(userId, env) {
         await env.USER_METADATA_KV.put(`${userId}_final_plan`, finalPlanString);
 
         if (planBuilder.generationMetadata.errors.length > 0) {
-            await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+            await setPlanStatus(userId, 'error', env);
             await env.USER_METADATA_KV.put(`${userId}_processing_error`, planBuilder.generationMetadata.errors.join('\n---\n'));
             await addLog('Процесът завърши с грешка');
             console.log(`PROCESS_USER_PLAN (${userId}): Finished with errors. Status set to 'error'.`);
         } else {
-            await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'ready', { metadata: { status: 'ready' } });
+            await setPlanStatus(userId, 'ready', env);
             await env.USER_METADATA_KV.delete(`${userId}_processing_error`); // Изтриваме евентуална стара грешка
             await env.USER_METADATA_KV.delete(`pending_plan_mod_${userId}`);
             await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
@@ -2941,7 +2930,7 @@ async function processSingleUserPlan(userId, env) {
         console.error(`PROCESS_USER_PLAN (${userId}): >>> FATAL Processing Error <<< :`, error.name, error.message, error.stack);
         try {
             await addLog(`Фатална грешка: ${error.message}`);
-            await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'error', { metadata: { status: 'error' } });
+            await setPlanStatus(userId, 'error', env);
             const detailedErrorMessage = `[${new Date().toISOString()}] FATAL ERROR during plan generation for user ${userId}: ${error.name}: ${error.message}\nStack: ${error.stack}`;
             await env.USER_METADATA_KV.put(`${userId}_processing_error`, detailedErrorMessage);
             console.log(`PROCESS_USER_PLAN (${userId}): Set status to 'error' after fatal exception.`);
@@ -3220,6 +3209,46 @@ const safeParseJson = (jsonString, defaultValue = null) => {
 };
 // ------------- END FUNCTION: safeParseJson -------------
 
+// ------------- START FUNCTION: updatePlanUserArrays -------------
+async function updatePlanUserArrays(userId, status, env) {
+    const pendingKey = 'pending_plan_users';
+    const readyKey = 'ready_plan_users';
+    const [pendingStr, readyStr] = await Promise.all([
+        env.USER_METADATA_KV.get(pendingKey),
+        env.USER_METADATA_KV.get(readyKey)
+    ]);
+    let pending = safeParseJson(pendingStr, []);
+    let ready = safeParseJson(readyStr, []);
+    if (!Array.isArray(pending)) pending = [];
+    if (!Array.isArray(ready)) ready = [];
+    const remove = arr => {
+        const idx = arr.indexOf(userId);
+        if (idx !== -1) arr.splice(idx, 1);
+    };
+    if (status === 'pending') {
+        if (!pending.includes(userId)) pending.push(userId);
+        remove(ready);
+    } else if (status === 'ready') {
+        if (!ready.includes(userId)) ready.push(userId);
+        remove(pending);
+    } else {
+        remove(pending);
+        remove(ready);
+    }
+    await Promise.all([
+        env.USER_METADATA_KV.put(pendingKey, JSON.stringify(pending)),
+        env.USER_METADATA_KV.put(readyKey, JSON.stringify(ready))
+    ]);
+}
+// ------------- END FUNCTION: updatePlanUserArrays -------------
+
+// ------------- START FUNCTION: setPlanStatus -------------
+async function setPlanStatus(userId, status, env) {
+    await env.USER_METADATA_KV.put(`plan_status_${userId}`, status, { metadata: { status } });
+    await updatePlanUserArrays(userId, status, env);
+}
+// ------------- END FUNCTION: setPlanStatus -------------
+
 
 // ------------- START FUNCTION: createFallbackPrincipleSummary -------------
 function createFallbackPrincipleSummary(principlesText) {
@@ -3440,7 +3469,7 @@ async function createUserEvent(eventType, userId, payload, env) {
     if (eventType === 'planMod') {
         try {
             await env.USER_METADATA_KV.put(`pending_plan_mod_${userId}`, JSON.stringify(payload || {}));
-            await env.USER_METADATA_KV.put(`plan_status_${userId}`, 'pending', { metadata:{status:'pending'} });
+            await setPlanStatus(userId, 'pending', env);
         } catch (err) {
             console.error(`EVENT_SAVE_PENDING_MOD_ERROR (${userId}):`, err);
         }
@@ -4418,4 +4447,4 @@ async function handleUpdateKvRequest(request, env) {
 }
 // ------------- END FUNCTION: handleUpdateKvRequest -------------
 // ------------- INSERTION POINT: EndOfFile -------------
- export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, calculateAnalyticsIndexes, handleListUserKvRequest, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest };
+ export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, calculateAnalyticsIndexes, handleListUserKvRequest, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus };
