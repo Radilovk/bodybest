@@ -1,6 +1,10 @@
 /** @jest-environment node */
 import { jest } from '@jest/globals';
-import { handleListUserKvRequest, handleUpdateKvRequest } from '../../worker.js';
+import {
+  handleListUserKvRequest,
+  handleUpdateKvRequest,
+  rebuildUserKvIndex
+} from '../../worker.js';
 
 test('lists user KV entries with pagination', async () => {
   const list = jest.fn().mockResolvedValue({
@@ -51,4 +55,20 @@ test('updates KV entry', async () => {
   const res = await handleUpdateKvRequest(req, env);
   expect(put).toHaveBeenCalledWith('user1_c', '3');
   expect(res.success).toBe(true);
+});
+
+test('rebuilds KV index for user', async () => {
+  const list = jest.fn().mockResolvedValue({
+    keys: [{ name: 'user2_a' }],
+    list_complete: true
+  });
+  const get = jest.fn().mockResolvedValue('5');
+  const put = jest.fn();
+  const env = { USER_METADATA_KV: { list, get, put } };
+  await rebuildUserKvIndex('user2', env);
+  expect(list).toHaveBeenCalledWith({ prefix: 'user2_' });
+  expect(put).toHaveBeenCalledWith(
+    'user2_kv_index',
+    JSON.stringify({ user2_a: '5' })
+  );
 });

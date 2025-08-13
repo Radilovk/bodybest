@@ -618,6 +618,11 @@ export default {
             const toProcessPlan = pendingUsers.slice(0, MAX_PROCESS_PER_RUN_PLAN_GEN);
             let remainingPending = pendingUsers.slice(MAX_PROCESS_PER_RUN_PLAN_GEN);
             for (const userId of toProcessPlan) {
+                const idxStr = await env.USER_METADATA_KV.get(`${userId}_kv_index`);
+                const idx = idxStr ? safeParseJson(idxStr, {}) : {};
+                if (Object.keys(idx).length === 0) {
+                    ctx.waitUntil(rebuildUserKvIndex(userId, env));
+                }
                 const initialAnswers = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
                 if (!initialAnswers) {
                     await setPlanStatus(userId, 'pending_inputs', env);
@@ -646,6 +651,11 @@ export default {
 
             const principlesStart = Date.now();
             for (const userId of toProcessReady) {
+                const idxStr = await env.USER_METADATA_KV.get(`${userId}_kv_index`);
+                const idx = idxStr ? safeParseJson(idxStr, {}) : {};
+                if (Object.keys(idx).length === 0) {
+                    ctx.waitUntil(rebuildUserKvIndex(userId, env));
+                }
                 const lastActiveStr = await env.USER_METADATA_KV.get(`${userId}_lastActive`);
                 const lastActiveDate = lastActiveStr ? new Date(lastActiveStr) : null;
                 const inactive = !lastActiveDate || ((Date.now() - lastActiveDate.getTime()) / (1000 * 60 * 60 * 24) > USER_ACTIVITY_LOG_LOOKBACK_DAYS);
@@ -4590,6 +4600,27 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 
+// ------------- START FUNCTION: rebuildUserKvIndex -------------
+async function rebuildUserKvIndex(userId, env) {
+    try {
+        let cursor;
+        const prefix = `${userId}_`;
+        const kv = {};
+        do {
+            const list = await env.USER_METADATA_KV.list({ prefix, cursor });
+            for (const { name } of list.keys) {
+                const val = await env.USER_METADATA_KV.get(name);
+                if (val !== null) kv[name] = val;
+            }
+            cursor = list.list_complete ? undefined : list.cursor;
+        } while (cursor);
+        await env.USER_METADATA_KV.put(`${userId}_kv_index`, JSON.stringify(kv));
+    } catch (error) {
+        console.error(`Error in rebuildUserKvIndex for ${userId}:`, error.message, error.stack);
+    }
+}
+// ------------- END FUNCTION: rebuildUserKvIndex -------------
+
 // ------------- START FUNCTION: handleListUserKvRequest -------------
 async function handleListUserKvRequest(request, env) {
     const url = new URL(request.url);
@@ -4726,6 +4757,7 @@ async function handleUpdateKvRequest(request, env) {
     calculateAnalyticsIndexes,
     handleListUserKvRequest,
     handleUpdateKvRequest,
+    rebuildUserKvIndex,
     handleLogRequest,
     handlePlanLogRequest,
     setPlanStatus
