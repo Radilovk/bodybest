@@ -556,6 +556,8 @@ export default {
                 responseBody = await handleGetContactRequestsRequest(request, env);
             } else if (method === 'POST' && path === '/api/contact') {
                 responseBody = await handleContactFormRequest(request, env);
+            } else if (method === 'POST' && path === '/api/validateIndexes') {
+                responseBody = await handleValidateIndexesRequest(request, env);
             } else if (method === 'POST' && path === '/api/sendTestEmail') {
                 responseBody = await handleSendTestEmailRequest(request, env);
             } else if (method === 'GET' && path === '/api/getMaintenanceMode') {
@@ -2524,8 +2526,9 @@ async function handleSetAiConfig(request, env) {
 // ------------- START FUNCTION: handleListAiPresets -------------
 async function handleListAiPresets(request, env) {
     try {
-        const { keys } = await env.RESOURCES_KV.list({ prefix: 'aiPreset_' });
-        const presets = keys.map(k => k.name.replace(/^aiPreset_/, ''));
+        const idxStr = await env.RESOURCES_KV.get('aiPresets_index');
+        const keys = idxStr ? safeParseJson(idxStr, []) : [];
+        const presets = keys.map(k => k.replace(/^aiPreset_/, ''));
         return { success: true, presets };
     } catch (error) {
         console.error('Error in handleListAiPresets:', error.message, error.stack);
@@ -2570,7 +2573,16 @@ async function handleSaveAiPreset(request, env) {
         if (!name || !cfg || typeof cfg !== 'object') {
             return { success: false, message: 'Липсват данни.', statusHint: 400 };
         }
-        await env.RESOURCES_KV.put(`aiPreset_${name}`, JSON.stringify(cfg));
+        const presetKey = `aiPreset_${name}`;
+        await env.RESOURCES_KV.put(presetKey, JSON.stringify(cfg));
+        try {
+            const idxStr = await env.RESOURCES_KV.get('aiPresets_index');
+            const idx = idxStr ? safeParseJson(idxStr, []) : [];
+            if (!idx.includes(presetKey)) idx.push(presetKey);
+            await env.RESOURCES_KV.put('aiPresets_index', JSON.stringify(idx));
+        } catch (err) {
+            console.error('Failed to update aiPresets_index:', err.message);
+        }
         return { success: true };
     } catch (error) {
         console.error('Error in handleSaveAiPreset:', error.message, error.stack);
@@ -2622,11 +2634,16 @@ async function handleContactFormRequest(request, env) {
             return { success: false, message: 'Missing field: email', statusHint: 400 };
         }
         const ts = Date.now();
+        const reqKey = `contact_${ts}`;
         try {
             await env.CONTACT_REQUESTS_KV.put(
-                `contact_${ts}`,
+                reqKey,
                 JSON.stringify({ email: email.trim(), name: name.trim(), message: message.trim(), ts })
             );
+            const idxStr = await env.CONTACT_REQUESTS_KV.get('contactRequests_index');
+            const idx = idxStr ? safeParseJson(idxStr, []) : [];
+            idx.push(reqKey);
+            await env.CONTACT_REQUESTS_KV.put('contactRequests_index', JSON.stringify(idx));
         } catch (err) {
             console.error('Failed to store contact request:', err.message);
         }
@@ -2652,9 +2669,10 @@ async function handleGetContactRequestsRequest(request, env) {
         if (expected && token !== expected) {
             return { success: false, message: 'Невалиден токен.', statusHint: 403 };
         }
-        const { keys } = await env.CONTACT_REQUESTS_KV.list({ prefix: 'contact_' });
+        const idxStr = await env.CONTACT_REQUESTS_KV.get('contactRequests_index');
+        const keys = idxStr ? safeParseJson(idxStr, []) : [];
         const requests = [];
-        for (const { name: key } of keys) {
+        for (const key of keys) {
             const val = await env.CONTACT_REQUESTS_KV.get(key);
             if (val) requests.push(safeParseJson(val, null));
         }
@@ -2665,6 +2683,33 @@ async function handleGetContactRequestsRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleGetContactRequestsRequest -------------
+
+// ------------- START FUNCTION: handleValidateIndexesRequest -------------
+async function handleValidateIndexesRequest(request, env) {
+    try {
+        const auth = request.headers?.get?.('Authorization') || '';
+        const token = auth.replace(/^Bearer\s+/i, '').trim();
+        const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
+        if (expected && token !== expected) {
+            return { success: false, message: 'Невалиден токен.', statusHint: 403 };
+        }
+        const presetList = await env.RESOURCES_KV.list({ prefix: 'aiPreset_' });
+        await env.RESOURCES_KV.put(
+            'aiPresets_index',
+            JSON.stringify(presetList.keys.map(k => k.name))
+        );
+        const contactList = await env.CONTACT_REQUESTS_KV.list({ prefix: 'contact_' });
+        await env.CONTACT_REQUESTS_KV.put(
+            'contactRequests_index',
+            JSON.stringify(contactList.keys.map(k => k.name))
+        );
+        return { success: true };
+    } catch (error) {
+        console.error('Error in handleValidateIndexesRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при обновяване на индексите.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleValidateIndexesRequest -------------
 
 // ------------- START FUNCTION: handleSendTestEmailRequest -------------
 async function handleSendTestEmailRequest(request, env) {
@@ -4607,4 +4652,76 @@ async function handleUpdateKvRequest(request, env) {
 }
 // ------------- END FUNCTION: handleUpdateKvRequest -------------
 // ------------- INSERTION POINT: EndOfFile -------------
- export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, calculateAnalyticsIndexes, handleListUserKvRequest, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus };
+ export {
+    processSingleUserPlan,
+    handleLogExtraMealRequest,
+    handleGetProfileRequest,
+    handleUpdateProfileRequest,
+    handleUpdatePlanRequest,
+    handleRegeneratePlanRequest,
+    handleCheckPlanPrerequisitesRequest,
+    handleRequestPasswordReset,
+    handlePerformPasswordReset,
+    shouldTriggerAutomatedFeedbackChat,
+    processPendingUserEvents,
+    handleDashboardDataRequest,
+    handleRecordFeedbackChatRequest,
+    handleSubmitFeedbackRequest,
+    handleGetAchievementsRequest,
+    handleGeneratePraiseRequest,
+    handleAnalyzeInitialAnswers,
+    handleGetInitialAnalysisRequest,
+    handleReAnalyzeQuestionnaireRequest,
+    handleAnalysisStatusRequest,
+    createUserEvent,
+    handleUploadTestResult,
+    handleUploadIrisDiag,
+    handleAiHelperRequest,
+    handleAnalyzeImageRequest,
+    handleRunImageModelRequest,
+    handleListClientsRequest,
+    handleDeleteClientRequest,
+    handleAddAdminQueryRequest,
+    handleGetAdminQueriesRequest,
+    handleAddClientReplyRequest,
+    handleGetClientRepliesRequest,
+    handleGetFeedbackMessagesRequest,
+    handleGetPlanModificationPrompt,
+    handleGetAiConfig,
+    handleSetAiConfig,
+    handleListAiPresets,
+    handleGetAiPreset,
+    handleSaveAiPreset,
+    handleTestAiModelRequest,
+    handleContactFormRequest,
+    handleGetContactRequestsRequest,
+    handleValidateIndexesRequest,
+    handleSendTestEmailRequest,
+    handleGetMaintenanceMode,
+    handleSetMaintenanceMode,
+    handleRegisterRequest,
+    handleRegisterDemoRequest,
+    handleSubmitQuestionnaire,
+    handleSubmitDemoQuestionnaire,
+    callCfAi,
+    callModel,
+    callGeminiVisionAPI,
+    handlePrincipleAdjustment,
+    createFallbackPrincipleSummary,
+    createPlanUpdateSummary,
+    createUserConcernsSummary,
+    evaluatePlanChange,
+    handleChatRequest,
+    populatePrompt,
+    createPraiseReplacements,
+    buildCfImagePayload,
+    sendAnalysisLinkEmail,
+    sendContactEmail,
+    getEmailConfig,
+    calculateAnalyticsIndexes,
+    handleListUserKvRequest,
+    handleUpdateKvRequest,
+    handleLogRequest,
+    handlePlanLogRequest,
+    setPlanStatus
+ };
