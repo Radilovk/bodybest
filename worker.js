@@ -3621,13 +3621,10 @@ async function createUserEvent(eventType, userId, payload, env) {
 
     if (eventType === 'planMod') {
         try {
-            const existing = await env.USER_METADATA_KV.list({ prefix: `event_planMod_${userId}` });
-            for (const { name } of existing.keys) {
-                const val = await env.USER_METADATA_KV.get(name);
-                const parsed = safeParseJson(val, null);
-                if (parsed && parsed.status === 'pending') {
-                    return { success: false, message: 'Вече има чакаща заявка за промяна на плана.' };
-                }
+            const pendingKey = `planMod_pending_${userId}`;
+            const isPending = await env.USER_METADATA_KV.get(pendingKey);
+            if (isPending) {
+                return { success: false, message: 'Вече има чакаща заявка за промяна на плана.' };
             }
         } catch (err) {
             console.error(`EVENT_CHECK_ERROR (${userId}):`, err);
@@ -3651,6 +3648,7 @@ async function createUserEvent(eventType, userId, payload, env) {
     if (eventType === 'planMod') {
         try {
             await env.USER_METADATA_KV.put(`pending_plan_mod_${userId}`, JSON.stringify(payload || {}));
+            await env.USER_METADATA_KV.put(`planMod_pending_${userId}`, '1', { expirationTtl: 60 });
             await setPlanStatus(userId, 'pending', env);
         } catch (err) {
             console.error(`EVENT_SAVE_PENDING_MOD_ERROR (${userId}):`, err);
@@ -4577,6 +4575,13 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
             }
         }
         await env.USER_METADATA_KV.delete(record.key);
+        if (record.type === 'planMod') {
+            try {
+                await env.USER_METADATA_KV.delete(`planMod_pending_${record.userId}`);
+            } catch (err) {
+                console.error(`EVENT_PENDING_DELETE_ERROR (${record.userId}):`, err);
+            }
+        }
         processed++;
     }
     if (processed > 0) console.log(`[CRON-UserEvent] Processed ${processed} event(s).`);
