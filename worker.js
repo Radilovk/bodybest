@@ -735,6 +735,7 @@ async function handleRegisterRequest(request, env, ctx) {
         await env.USER_METADATA_KV.put(`email_to_uuid_${trimmedEmail}`, userId);
         await setPlanStatus(userId, 'pending', env);
         await addUserIdToIndex(userId, env);
+        await env.USER_METADATA_KV.put(`${userId}_logs_index`, JSON.stringify([]));
 
         let sendVal = env.SEND_WELCOME_EMAIL;
         if (sendVal === undefined && env.RESOURCES_KV) {
@@ -1200,7 +1201,7 @@ async function handleLogRequest(request, env) {
             }
         };
 
-        await env.USER_METADATA_KV.put(logKey, JSON.stringify(mergedRecord));
+        await createDailyLog(env, userId, dateToLog, mergedRecord);
 
         // Обновяваме последната активност на потребителя
         await env.USER_METADATA_KV.put(`${userId}_lastActive`, todayStr);
@@ -1218,17 +1219,6 @@ async function handleLogRequest(request, env) {
            await env.USER_METADATA_KV.put(statusKey, JSON.stringify(currentStatus));
            console.log(`LOG_REQUEST (${userId}): Updated current_status with weight ${log.weight}.`);
         }
-
-        const indexKey = `${userId}_logs_index`;
-        const idxStr = await env.USER_METADATA_KV.get(indexKey);
-        let idxArr = idxStr ? safeParseJson(idxStr, []) : [];
-        if (!Array.isArray(idxArr)) idxArr = [];
-        if (!idxArr.includes(dateToLog)) {
-            idxArr.push(dateToLog);
-            idxArr.sort();
-            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(idxArr));
-        }
-
         console.log(`LOG_REQUEST (${userId}): Daily log saved for date ${dateToLog}.`);
         return { success: true, message: 'Данните от дневника са записани успешно.', savedDate: dateToLog, savedData: log };
     } catch (error) {
@@ -1464,7 +1454,7 @@ async function handleLogExtraMealRequest(request, env) {
         currentLogData.extraMeals.push(extraMealEntry);
         currentLogData.lastUpdated = new Date().toISOString();
 
-        await env.USER_METADATA_KV.put(logKey, JSON.stringify(currentLogData));
+        await createDailyLog(env, userId, logDateStr, currentLogData);
         console.log(`LOG_EXTRA_MEAL_SUCCESS (${userId}): Extra meal logged for date ${logDateStr}. Entries now: ${currentLogData.extraMeals.length}`);
         return { success: true, message: 'Извънредното хранене е записано успешно.', savedDate: logDateStr };
     } catch (error) {
@@ -3345,25 +3335,36 @@ const safeParseJson = (jsonString, defaultValue = null) => {
 };
 // ------------- END FUNCTION: safeParseJson -------------
 
+// ------------- START FUNCTION: createDailyLog -------------
+async function createDailyLog(env, userId, dateStr, dataObj) {
+    const logKey = `${userId}_log_${dateStr}`;
+    await env.USER_METADATA_KV.put(logKey, JSON.stringify(dataObj));
+    const indexKey = `${userId}_logs_index`;
+    try {
+        const idxStr = await env.USER_METADATA_KV.get(indexKey);
+        let idxArr = idxStr ? safeParseJson(idxStr, []) : [];
+        if (!Array.isArray(idxArr)) idxArr = [];
+        if (!idxArr.includes(dateStr)) {
+            idxArr.push(dateStr);
+            idxArr.sort();
+            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(idxArr));
+        }
+    } catch (err) {
+        console.warn(`createDailyLog index update failed for ${userId}:`, err.message);
+    }
+}
+// ------------- END FUNCTION: createDailyLog -------------
+
 // ------------- START FUNCTION: getUserLogDates -------------
 async function getUserLogDates(env, userId) {
     const indexKey = `${userId}_logs_index`;
-    let dates = [];
     try {
         const idxStr = await env.USER_METADATA_KV.get(indexKey);
-        dates = idxStr ? safeParseJson(idxStr, []) : [];
-        if (!Array.isArray(dates)) dates = [];
+        const dates = idxStr ? safeParseJson(idxStr, []) : [];
+        return Array.isArray(dates) ? dates : [];
     } catch (err) {
-        dates = [];
+        return [];
     }
-    if (dates.length === 0) {
-        const list = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
-        dates = list.keys.map(k => k.name.split('_log_')[1]).filter(Boolean);
-        if (dates.length > 0) {
-            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(dates));
-        }
-    }
-    return dates;
 }
 // ------------- END FUNCTION: getUserLogDates -------------
 
