@@ -642,13 +642,10 @@ export default {
 
             const principlesStart = Date.now();
             for (const userId of toProcessReady) {
-                let isActive = false;
-                for (let i = 0; i < USER_ACTIVITY_LOG_LOOKBACK_DAYS; i++) {
-                    const date = new Date(); date.setDate(date.getDate() - i);
-                    const listResultLog = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_${date.toISOString().split('T')[0]}`, limit: 1 });
-                    if (listResultLog.keys.length > 0) { isActive = true; break; }
-                }
-                if (!isActive) { remainingReady.push(userId); continue; }
+                const lastActiveStr = await env.USER_METADATA_KV.get(`${userId}_lastActive`);
+                const lastActiveDate = lastActiveStr ? new Date(lastActiveStr) : null;
+                const inactive = !lastActiveDate || ((Date.now() - lastActiveDate.getTime()) / (1000 * 60 * 60 * 24) > USER_ACTIVITY_LOG_LOOKBACK_DAYS);
+                if (inactive) { remainingReady.push(userId); continue; }
 
                 const lastUpdateTsStrForPrinciples = await env.USER_METADATA_KV.get(`${userId}_last_significant_update_ts`);
                 const lastUpdateTsForPrinciples = lastUpdateTsStrForPrinciples ? parseInt(lastUpdateTsStrForPrinciples, 10) : 0;
@@ -1178,6 +1175,9 @@ async function handleLogRequest(request, env) {
         };
 
         await env.USER_METADATA_KV.put(logKey, JSON.stringify(mergedRecord));
+
+        // Обновяваме последната активност на потребителя
+        await env.USER_METADATA_KV.put(`${userId}_lastActive`, todayStr);
 
         // Ако е записано тегло, актуализираме и _current_status
         if (log.weight !== undefined && log.weight !== null && String(log.weight).trim() != "") {
