@@ -21,6 +21,7 @@ test('save preset and retrieve it', async () => {
   const saveRes = await handleSaveAiPreset(reqSave, env);
   expect(saveRes.success).toBe(true);
   expect(kv._store['aiPreset_test']).toBe(JSON.stringify({ model_plan_generation: 'm1' }));
+  expect(JSON.parse(kv._store.aiPresets_index)).toContain('aiPreset_test');
 
   const listRes = await handleListAiPresets({}, env);
   expect(listRes.success).toBe(true);
