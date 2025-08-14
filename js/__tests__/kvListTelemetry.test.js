@@ -7,10 +7,10 @@ describe('kv list telemetry', () => {
     global.fetch = originalFetch;
   });
 
-  test('counts list calls and sends telemetry once per hour', async () => {
+  test('counts list calls and sends telemetry every 15 minutes', async () => {
     const env = {
       TEST_KV: { list: async () => ({ keys: [] }) },
-      TELEMETRY_ENDPOINT: 'https://example.com/telemetry'
+      MONITORING_ENDPOINT: 'https://example.com/telemetry'
     };
     global.fetch = jest.fn(() => Promise.resolve({ ok: true, json: async () => ({}), text: async () => '' }));
 
