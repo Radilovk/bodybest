@@ -526,8 +526,6 @@ export default {
                 }
             } else if (method === 'GET' && path === '/api/listClients') {
                 responseBody = await handleListClientsRequest(request, env);
-            } else if (method === 'POST' && path === '/api/deleteClient') {
-                responseBody = await handleDeleteClientRequest(request, env);
             } else if (method === 'POST' && path === '/api/addAdminQuery') {
                 responseBody = await handleAddAdminQueryRequest(request, env);
             } else if (method === 'GET' && path === '/api/getAdminQueries') {
@@ -556,8 +554,6 @@ export default {
                 responseBody = await handleGetContactRequestsRequest(request, env);
             } else if (method === 'POST' && path === '/api/contact') {
                 responseBody = await handleContactFormRequest(request, env);
-            } else if (method === 'POST' && path === '/api/validateIndexes') {
-                responseBody = await handleValidateIndexesRequest(request, env);
             } else if (method === 'POST' && path === '/api/sendTestEmail') {
                 responseBody = await handleSendTestEmailRequest(request, env);
             } else if (method === 'GET' && path === '/api/getMaintenanceMode') {
@@ -724,7 +720,6 @@ async function handleRegisterRequest(request, env, ctx) {
         await env.USER_METADATA_KV.put(`credential_${userId}`, credentialContent);
         await env.USER_METADATA_KV.put(`email_to_uuid_${trimmedEmail}`, userId);
         await setPlanStatus(userId, 'pending', env);
-        await addUserIdToIndex(userId, env);
 
         let sendVal = env.SEND_WELCOME_EMAIL;
         if (sendVal === undefined && env.RESOURCES_KV) {
@@ -2274,34 +2269,15 @@ async function handleRunImageModelRequest(request, env) {
 }
 // ------------- END FUNCTION: handleRunImageModelRequest -------------
 
-// ------------- START FUNCTION: getAllUserIds -------------
-async function getAllUserIds(env) {
-    return safeParseJson(await env.USER_METADATA_KV.get('all_user_ids'), []);
-}
-// ------------- END FUNCTION: getAllUserIds -------------
-
-// ------------- START FUNCTION: addUserIdToIndex -------------
-async function addUserIdToIndex(userId, env) {
-    const ids = await getAllUserIds(env);
-    if (!ids.includes(userId)) {
-        ids.push(userId);
-        await env.USER_METADATA_KV.put('all_user_ids', JSON.stringify(ids));
-    }
-}
-// ------------- END FUNCTION: addUserIdToIndex -------------
-
-// ------------- START FUNCTION: removeUserIdFromIndex -------------
-async function removeUserIdFromIndex(userId, env) {
-    const ids = await getAllUserIds(env);
-    const filtered = ids.filter(id => id !== userId);
-    await env.USER_METADATA_KV.put('all_user_ids', JSON.stringify(filtered));
-}
-// ------------- END FUNCTION: removeUserIdFromIndex -------------
-
 // ------------- START FUNCTION: handleListClientsRequest -------------
 async function handleListClientsRequest(request, env) {
     try {
-        const ids = await getAllUserIds(env);
+        const list = await env.USER_METADATA_KV.list();
+        const ids = new Set();
+        for (const key of list.keys) {
+            const m = key.name.match(/^(.*)_initial_answers$/);
+            if (m) ids.add(m[1]);
+        }
         const clients = [];
         for (const id of ids) {
             const [ansStr, profileStr, planStatus, statusStr] = await Promise.all([
@@ -2331,35 +2307,6 @@ async function handleListClientsRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleListClientsRequest -------------
-
-// ------------- START FUNCTION: handleDeleteClientRequest -------------
-async function handleDeleteClientRequest(request, env) {
-    try {
-        const { userId } = await request.json();
-        if (!userId) return { success: false, message: 'Липсва userId.', statusHint: 400 };
-        const credentialStr = await env.USER_METADATA_KV.get(`credential_${userId}`);
-        if (credentialStr) {
-            const cred = safeParseJson(credentialStr, {});
-            if (cred.email) {
-                await env.USER_METADATA_KV.delete(`email_to_uuid_${cred.email}`);
-            }
-        }
-        const keysToDelete = [
-            `credential_${userId}`,
-            `${userId}_profile`,
-            `${userId}_initial_answers`,
-            `plan_status_${userId}`,
-            `${userId}_current_status`
-        ];
-        await Promise.all(keysToDelete.map(k => env.USER_METADATA_KV.delete(k)));
-        await removeUserIdFromIndex(userId, env);
-        return { success: true };
-    } catch (error) {
-        console.error('Error in handleDeleteClientRequest:', error.message, error.stack);
-        return { success: false, message: 'Грешка при изтриване на клиент.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleDeleteClientRequest -------------
 
 // ------------- START FUNCTION: handleAddAdminQueryRequest -------------
 async function handleAddAdminQueryRequest(request, env) {
@@ -2526,9 +2473,8 @@ async function handleSetAiConfig(request, env) {
 // ------------- START FUNCTION: handleListAiPresets -------------
 async function handleListAiPresets(request, env) {
     try {
-        const idxStr = await env.RESOURCES_KV.get('aiPresets_index');
-        const keys = idxStr ? safeParseJson(idxStr, []) : [];
-        const presets = keys.map(k => k.replace(/^aiPreset_/, ''));
+        const { keys } = await env.RESOURCES_KV.list({ prefix: 'aiPreset_' });
+        const presets = keys.map(k => k.name.replace(/^aiPreset_/, ''));
         return { success: true, presets };
     } catch (error) {
         console.error('Error in handleListAiPresets:', error.message, error.stack);
@@ -2573,16 +2519,7 @@ async function handleSaveAiPreset(request, env) {
         if (!name || !cfg || typeof cfg !== 'object') {
             return { success: false, message: 'Липсват данни.', statusHint: 400 };
         }
-        const presetKey = `aiPreset_${name}`;
-        await env.RESOURCES_KV.put(presetKey, JSON.stringify(cfg));
-        try {
-            const idxStr = await env.RESOURCES_KV.get('aiPresets_index');
-            const idx = idxStr ? safeParseJson(idxStr, []) : [];
-            if (!idx.includes(presetKey)) idx.push(presetKey);
-            await env.RESOURCES_KV.put('aiPresets_index', JSON.stringify(idx));
-        } catch (err) {
-            console.error('Failed to update aiPresets_index:', err.message);
-        }
+        await env.RESOURCES_KV.put(`aiPreset_${name}`, JSON.stringify(cfg));
         return { success: true };
     } catch (error) {
         console.error('Error in handleSaveAiPreset:', error.message, error.stack);
@@ -2634,16 +2571,11 @@ async function handleContactFormRequest(request, env) {
             return { success: false, message: 'Missing field: email', statusHint: 400 };
         }
         const ts = Date.now();
-        const reqKey = `contact_${ts}`;
         try {
             await env.CONTACT_REQUESTS_KV.put(
-                reqKey,
+                `contact_${ts}`,
                 JSON.stringify({ email: email.trim(), name: name.trim(), message: message.trim(), ts })
             );
-            const idxStr = await env.CONTACT_REQUESTS_KV.get('contactRequests_index');
-            const idx = idxStr ? safeParseJson(idxStr, []) : [];
-            idx.push(reqKey);
-            await env.CONTACT_REQUESTS_KV.put('contactRequests_index', JSON.stringify(idx));
         } catch (err) {
             console.error('Failed to store contact request:', err.message);
         }
@@ -2669,10 +2601,9 @@ async function handleGetContactRequestsRequest(request, env) {
         if (expected && token !== expected) {
             return { success: false, message: 'Невалиден токен.', statusHint: 403 };
         }
-        const idxStr = await env.CONTACT_REQUESTS_KV.get('contactRequests_index');
-        const keys = idxStr ? safeParseJson(idxStr, []) : [];
+        const { keys } = await env.CONTACT_REQUESTS_KV.list({ prefix: 'contact_' });
         const requests = [];
-        for (const key of keys) {
+        for (const { name: key } of keys) {
             const val = await env.CONTACT_REQUESTS_KV.get(key);
             if (val) requests.push(safeParseJson(val, null));
         }
@@ -2683,33 +2614,6 @@ async function handleGetContactRequestsRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleGetContactRequestsRequest -------------
-
-// ------------- START FUNCTION: handleValidateIndexesRequest -------------
-async function handleValidateIndexesRequest(request, env) {
-    try {
-        const auth = request.headers?.get?.('Authorization') || '';
-        const token = auth.replace(/^Bearer\s+/i, '').trim();
-        const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
-        if (expected && token !== expected) {
-            return { success: false, message: 'Невалиден токен.', statusHint: 403 };
-        }
-        const presetList = await env.RESOURCES_KV.list({ prefix: 'aiPreset_' });
-        await env.RESOURCES_KV.put(
-            'aiPresets_index',
-            JSON.stringify(presetList.keys.map(k => k.name))
-        );
-        const contactList = await env.CONTACT_REQUESTS_KV.list({ prefix: 'contact_' });
-        await env.CONTACT_REQUESTS_KV.put(
-            'contactRequests_index',
-            JSON.stringify(contactList.keys.map(k => k.name))
-        );
-        return { success: true };
-    } catch (error) {
-        console.error('Error in handleValidateIndexesRequest:', error.message, error.stack);
-        return { success: false, message: 'Грешка при обновяване на индексите.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleValidateIndexesRequest -------------
 
 // ------------- START FUNCTION: handleSendTestEmailRequest -------------
 async function handleSendTestEmailRequest(request, env) {
@@ -3586,45 +3490,19 @@ async function evaluatePlanChange(userId, requestData, env) {
 }
 // ------------- END FUNCTION: evaluatePlanChange -------------
 
-// Помощни функции за атомична работа с опашката от събития
-async function enqueueUserEventRecord(record, env) {
-    const kv = env.USER_METADATA_KV;
-    for (let attempt = 0; attempt < 5; attempt++) {
-        const currentStr = await kv.get('events_queue');
-        let arr = safeParseJson(currentStr, []);
-        if (!Array.isArray(arr)) arr = [];
-        arr.push(record);
-        await kv.put('events_queue', JSON.stringify(arr));
-        const verify = safeParseJson(await kv.get('events_queue'), []);
-        if (verify.some(e => e.key === record.key)) return;
-    }
-    throw new Error('QUEUE_APPEND_CONFLICT');
-}
-
-async function dequeueUserEventRecord(env) {
-    const kv = env.USER_METADATA_KV;
-    for (let attempt = 0; attempt < 5; attempt++) {
-        const currentStr = await kv.get('events_queue');
-        let arr = safeParseJson(currentStr, []);
-        if (!Array.isArray(arr) || arr.length === 0) return null;
-        const record = arr.shift();
-        await kv.put('events_queue', JSON.stringify(arr));
-        const verify = safeParseJson(await kv.get('events_queue'), []);
-        if (!verify.some(e => e.key === record.key)) return record;
-    }
-    throw new Error('QUEUE_DEQUEUE_CONFLICT');
-}
-
 // ------------- START FUNCTION: createUserEvent -------------
 async function createUserEvent(eventType, userId, payload, env) {
     if (!eventType || !userId) return { success: false, message: 'Невалидни параметри.' };
 
     if (eventType === 'planMod') {
         try {
-            const pendingKey = `planMod_pending_${userId}`;
-            const isPending = await env.USER_METADATA_KV.get(pendingKey);
-            if (isPending) {
-                return { success: false, message: 'Вече има чакаща заявка за промяна на плана.' };
+            const existing = await env.USER_METADATA_KV.list({ prefix: `event_planMod_${userId}` });
+            for (const { name } of existing.keys) {
+                const val = await env.USER_METADATA_KV.get(name);
+                const parsed = safeParseJson(val, null);
+                if (parsed && parsed.status === 'pending') {
+                    return { success: false, message: 'Вече има чакаща заявка за промяна на плана.' };
+                }
             }
         } catch (err) {
             console.error(`EVENT_CHECK_ERROR (${userId}):`, err);
@@ -3640,15 +3518,9 @@ async function createUserEvent(eventType, userId, payload, env) {
         payload
     };
     await env.USER_METADATA_KV.put(key, JSON.stringify(data));
-    try {
-        await enqueueUserEventRecord({ key, type: eventType, userId }, env);
-    } catch (err) {
-        console.error(`EVENT_QUEUE_APPEND_ERROR (${userId}):`, err);
-    }
     if (eventType === 'planMod') {
         try {
             await env.USER_METADATA_KV.put(`pending_plan_mod_${userId}`, JSON.stringify(payload || {}));
-            await env.USER_METADATA_KV.put(`planMod_pending_${userId}`, '1', { expirationTtl: 60 });
             await setPlanStatus(userId, 'pending', env);
         } catch (err) {
             console.error(`EVENT_SAVE_PENDING_MOD_ERROR (${userId}):`, err);
@@ -4560,28 +4432,28 @@ const EVENT_HANDLERS = {
 };
 
 async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
+    const list = await env.USER_METADATA_KV.list({ prefix: 'event_' });
+    const events = [];
+    for (const key of list.keys) {
+        const eventStr = await env.USER_METADATA_KV.get(key.name);
+        const eventData = safeParseJson(eventStr, null);
+        if (!eventData || !eventData.type || !eventData.userId) {
+            await env.USER_METADATA_KV.delete(key.name);
+            continue;
+        }
+        events.push({ key: key.name, data: eventData });
+    }
+    events.sort((a, b) => (a.data.createdTimestamp || 0) - (b.data.createdTimestamp || 0));
     let processed = 0;
-    while (processed < maxToProcess) {
-        const record = await dequeueUserEventRecord(env);
-        if (!record) break;
-        const eventStr = await env.USER_METADATA_KV.get(record.key);
-        const data = safeParseJson(eventStr, null);
-        if (data && record.type && record.userId) {
-            const handler = EVENT_HANDLERS[record.type];
-            if (handler) {
-                ctx.waitUntil(handler(record.userId, env, data.payload));
-            } else {
-                console.log(`[CRON-UserEvent] Unknown event type ${record.type} for user ${record.userId}`);
-            }
+    for (const { key, data } of events) {
+        if (processed >= maxToProcess) break;
+        const handler = EVENT_HANDLERS[data.type];
+        if (handler) {
+            ctx.waitUntil(handler(data.userId, env, data.payload));
+        } else {
+            console.log(`[CRON-UserEvent] Unknown event type ${data.type} for user ${data.userId}`);
         }
-        await env.USER_METADATA_KV.delete(record.key);
-        if (record.type === 'planMod') {
-            try {
-                await env.USER_METADATA_KV.delete(`planMod_pending_${record.userId}`);
-            } catch (err) {
-                console.error(`EVENT_PENDING_DELETE_ERROR (${record.userId}):`, err);
-            }
-        }
+        await env.USER_METADATA_KV.delete(key);
         processed++;
     }
     if (processed > 0) console.log(`[CRON-UserEvent] Processed ${processed} event(s).`);
@@ -4597,43 +4469,13 @@ async function handleListUserKvRequest(request, env) {
     if (!userId) {
         return { success: false, message: 'Missing userId' };
     }
-
-    const cursor = url.searchParams.get('cursor') || undefined;
-    const limitParam = url.searchParams.get('limit');
-    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
-    const listOpts = { prefix: `${userId}_` };
-    if (cursor) listOpts.cursor = cursor;
-    if (limit) listOpts.limit = limit;
-
-    const indexKey = `${userId}_kv_index`;
-
     try {
-        // Използвай кеширания индекс, когато е наличен и не е поискана страница.
-        if (!cursor) {
-            const idxStr = await env.USER_METADATA_KV.get(indexKey);
-            const cached = idxStr ? safeParseJson(idxStr, {}) : null;
-            if (cached && Object.keys(cached).length > 0) {
-                return { success: true, kv: cached, listComplete: true };
-            }
-        }
-
-        const list = await env.USER_METADATA_KV.list(listOpts);
+        const list = await env.USER_METADATA_KV.list({ prefix: `${userId}_` });
         const kv = {};
         for (const { name } of list.keys) {
             kv[name] = await env.USER_METADATA_KV.get(name);
         }
-
-        // Обнови индекса само при първо изброяване.
-        if (!cursor) {
-            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(kv));
-        }
-
-        return {
-            success: true,
-            kv,
-            cursor: list.cursor,
-            listComplete: list.list_complete
-        };
+        return { success: true, kv };
     } catch (error) {
         console.error('Error in handleListUserKvRequest:', error.message, error.stack);
         return { success: false, message: 'Failed to list KV data' };
@@ -4657,76 +4499,4 @@ async function handleUpdateKvRequest(request, env) {
 }
 // ------------- END FUNCTION: handleUpdateKvRequest -------------
 // ------------- INSERTION POINT: EndOfFile -------------
- export {
-    processSingleUserPlan,
-    handleLogExtraMealRequest,
-    handleGetProfileRequest,
-    handleUpdateProfileRequest,
-    handleUpdatePlanRequest,
-    handleRegeneratePlanRequest,
-    handleCheckPlanPrerequisitesRequest,
-    handleRequestPasswordReset,
-    handlePerformPasswordReset,
-    shouldTriggerAutomatedFeedbackChat,
-    processPendingUserEvents,
-    handleDashboardDataRequest,
-    handleRecordFeedbackChatRequest,
-    handleSubmitFeedbackRequest,
-    handleGetAchievementsRequest,
-    handleGeneratePraiseRequest,
-    handleAnalyzeInitialAnswers,
-    handleGetInitialAnalysisRequest,
-    handleReAnalyzeQuestionnaireRequest,
-    handleAnalysisStatusRequest,
-    createUserEvent,
-    handleUploadTestResult,
-    handleUploadIrisDiag,
-    handleAiHelperRequest,
-    handleAnalyzeImageRequest,
-    handleRunImageModelRequest,
-    handleListClientsRequest,
-    handleDeleteClientRequest,
-    handleAddAdminQueryRequest,
-    handleGetAdminQueriesRequest,
-    handleAddClientReplyRequest,
-    handleGetClientRepliesRequest,
-    handleGetFeedbackMessagesRequest,
-    handleGetPlanModificationPrompt,
-    handleGetAiConfig,
-    handleSetAiConfig,
-    handleListAiPresets,
-    handleGetAiPreset,
-    handleSaveAiPreset,
-    handleTestAiModelRequest,
-    handleContactFormRequest,
-    handleGetContactRequestsRequest,
-    handleValidateIndexesRequest,
-    handleSendTestEmailRequest,
-    handleGetMaintenanceMode,
-    handleSetMaintenanceMode,
-    handleRegisterRequest,
-    handleRegisterDemoRequest,
-    handleSubmitQuestionnaire,
-    handleSubmitDemoQuestionnaire,
-    callCfAi,
-    callModel,
-    callGeminiVisionAPI,
-    handlePrincipleAdjustment,
-    createFallbackPrincipleSummary,
-    createPlanUpdateSummary,
-    createUserConcernsSummary,
-    evaluatePlanChange,
-    handleChatRequest,
-    populatePrompt,
-    createPraiseReplacements,
-    buildCfImagePayload,
-    sendAnalysisLinkEmail,
-    sendContactEmail,
-    getEmailConfig,
-    calculateAnalyticsIndexes,
-    handleListUserKvRequest,
-    handleUpdateKvRequest,
-    handleLogRequest,
-    handlePlanLogRequest,
-    setPlanStatus
- };
+ export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, calculateAnalyticsIndexes, handleListUserKvRequest, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus };
