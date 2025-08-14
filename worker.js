@@ -4510,19 +4510,45 @@ async function handleListUserKvRequest(request, env) {
     if (!userId) {
         return { success: false, message: 'Missing userId' };
     }
+    const cursor = url.searchParams.get('cursor') || undefined;
+    const limitParam = url.searchParams.get('limit');
+    const limit = limitParam ? Number(limitParam) : undefined;
     try {
-        const list = await env.USER_METADATA_KV.list({ prefix: `${userId}_` });
+        if (!cursor) {
+            const indexStr = await env.USER_METADATA_KV.get(`${userId}_kv_index`);
+            if (indexStr) {
+                const kv = safeParseJson(indexStr, {});
+                return { success: true, kv, listComplete: true, nextCursor: null };
+            }
+        }
+        const list = await env.USER_METADATA_KV.list({ prefix: `${userId}_`, limit, cursor });
         const kv = {};
         for (const { name } of list.keys) {
             kv[name] = await env.USER_METADATA_KV.get(name);
         }
-        return { success: true, kv };
+        return {
+            success: true,
+            kv,
+            nextCursor: list.cursor || null,
+            listComplete: list.list_complete
+        };
     } catch (error) {
         console.error('Error in handleListUserKvRequest:', error.message, error.stack);
         return { success: false, message: 'Failed to list KV data' };
     }
 }
 // ------------- END FUNCTION: handleListUserKvRequest -------------
+
+// ------------- START FUNCTION: rebuildUserKvIndex -------------
+async function rebuildUserKvIndex(userId, env) {
+    const list = await env.USER_METADATA_KV.list({ prefix: `${userId}_` });
+    const kv = {};
+    for (const { name } of list.keys) {
+        kv[name] = await env.USER_METADATA_KV.get(name);
+    }
+    await env.USER_METADATA_KV.put(`${userId}_kv_index`, JSON.stringify(kv));
+}
+// ------------- END FUNCTION: rebuildUserKvIndex -------------
 
 // ------------- START FUNCTION: handleUpdateKvRequest -------------
 async function handleUpdateKvRequest(request, env) {
@@ -4540,4 +4566,4 @@ async function handleUpdateKvRequest(request, env) {
 }
 // ------------- END FUNCTION: handleUpdateKvRequest -------------
 // ------------- INSERTION POINT: EndOfFile -------------
- export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, calculateAnalyticsIndexes, handleListUserKvRequest, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus };
+ export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus };

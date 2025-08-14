@@ -28,7 +28,7 @@ test('lists user KV entries with pagination', async () => {
   expect(res).toEqual({
     success: true,
     kv: { user1_a: '1', user1_b: '2' },
-    cursor: 'next-c',
+    nextCursor: 'next-c',
     listComplete: false
   });
 });
@@ -42,7 +42,7 @@ test('returns cached index when available', async () => {
   const req = new Request('https://example.com/api/listUserKv?userId=user1');
   const res = await handleListUserKvRequest(req, env);
   expect(list).not.toHaveBeenCalled();
-  expect(res).toEqual({ success: true, kv: { user1_a: '1' }, listComplete: true });
+  expect(res).toEqual({ success: true, kv: { user1_a: '1' }, listComplete: true, nextCursor: null });
 });
 
 test('updates KV entry', async () => {
