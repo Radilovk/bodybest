@@ -481,9 +481,11 @@ export default {
                 .concat(defaultAllowedOrigins)
         ));
         const requestOrigin = request.headers.get('Origin');
-        const originToSend = requestOrigin === null
-            ? 'null'
-            : allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0];
+        const originAllowed = requestOrigin && allowedOrigins.includes(requestOrigin);
+        if (requestOrigin && !originAllowed) {
+            console.warn(`Refused origin ${requestOrigin}`);
+        }
+        const originToSend = originAllowed ? requestOrigin : '*';
         const corsHeaders = {
             'Access-Control-Allow-Origin': originToSend,
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
