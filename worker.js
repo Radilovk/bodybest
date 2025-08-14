@@ -69,7 +69,7 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
 }
 
 // --- KV list telemetry instrumentation ---
-let kvListCount = 0;
+let kvListCounter = 0;
 let kvListLastSent = 0;
 
 /**
@@ -86,7 +86,7 @@ function withKvListCounting(env) {
           get(obj, key) {
             if (key === 'list') {
               return async (...args) => {
-                kvListCount++;
+                kvListCounter++;
                 return obj.list(...args);
               };
             }
@@ -100,20 +100,21 @@ function withKvListCounting(env) {
 }
 
 /**
- * Изпраща телеметрия за kv.list веднъж на час и ресетира брояча.
+ * Изпраща телеметрия за kv.list на всеки 15 минути и ресетира брояча.
  * @param {Object} env
  */
 async function maybeSendKvListTelemetry(env) {
   const now = Date.now();
-  if (now - kvListLastSent >= 60 * 60 * 1000) {
+  if (now - kvListLastSent >= 15 * 60 * 1000) {
     kvListLastSent = now;
     const payload = {
       ts: new Date(now).toISOString(),
-      kv_list_count: kvListCount
+      kv_list_count: kvListCounter
     };
     try {
-      if (env.TELEMETRY_ENDPOINT) {
-        await fetch(env.TELEMETRY_ENDPOINT, {
+      const endpoint = env.MONITORING_ENDPOINT || env.TELEMETRY_ENDPOINT;
+      if (endpoint) {
+        await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -124,11 +125,12 @@ async function maybeSendKvListTelemetry(env) {
     } catch (err) {
       console.error('[KV] Telemetry send failed', err);
     }
-    const threshold = parseInt(env.KV_LIST_ALERT_THRESHOLD || '1000', 10);
-    if (kvListCount > threshold) {
-      console.warn(`[ALERT] kv.list count ${kvListCount} exceeds ${threshold}`);
+    const threshold = parseInt(env.KV_LIST_ALERT_THRESHOLD || '100', 10);
+    const hourlyEstimate = kvListCounter * 4; // 15 мин -> час
+    if (hourlyEstimate > threshold) {
+      console.warn(`[ALERT] kv.list rate ${hourlyEstimate}/h exceeds ${threshold}/h`);
     }
-    kvListCount = 0;
+    kvListCounter = 0;
   }
 }
 
