@@ -618,11 +618,6 @@ export default {
             const toProcessPlan = pendingUsers.slice(0, MAX_PROCESS_PER_RUN_PLAN_GEN);
             let remainingPending = pendingUsers.slice(MAX_PROCESS_PER_RUN_PLAN_GEN);
             for (const userId of toProcessPlan) {
-                const idxStr = await env.USER_METADATA_KV.get(`${userId}_kv_index`);
-                const idx = idxStr ? safeParseJson(idxStr, {}) : {};
-                if (Object.keys(idx).length === 0) {
-                    ctx.waitUntil(rebuildUserKvIndex(userId, env));
-                }
                 const initialAnswers = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
                 if (!initialAnswers) {
                     await setPlanStatus(userId, 'pending_inputs', env);
@@ -651,11 +646,6 @@ export default {
 
             const principlesStart = Date.now();
             for (const userId of toProcessReady) {
-                const idxStr = await env.USER_METADATA_KV.get(`${userId}_kv_index`);
-                const idx = idxStr ? safeParseJson(idxStr, {}) : {};
-                if (Object.keys(idx).length === 0) {
-                    ctx.waitUntil(rebuildUserKvIndex(userId, env));
-                }
                 const lastActiveStr = await env.USER_METADATA_KV.get(`${userId}_lastActive`);
                 const lastActiveDate = lastActiveStr ? new Date(lastActiveStr) : null;
                 const inactive = !lastActiveDate || ((Date.now() - lastActiveDate.getTime()) / (1000 * 60 * 60 * 24) > USER_ACTIVITY_LOG_LOOKBACK_DAYS);
@@ -735,7 +725,6 @@ async function handleRegisterRequest(request, env, ctx) {
         await env.USER_METADATA_KV.put(`email_to_uuid_${trimmedEmail}`, userId);
         await setPlanStatus(userId, 'pending', env);
         await addUserIdToIndex(userId, env);
-        await env.USER_METADATA_KV.put(`${userId}_logs_index`, JSON.stringify([]));
 
         let sendVal = env.SEND_WELCOME_EMAIL;
         if (sendVal === undefined && env.RESOURCES_KV) {
@@ -1201,7 +1190,7 @@ async function handleLogRequest(request, env) {
             }
         };
 
-        await createDailyLog(env, userId, dateToLog, mergedRecord);
+        await env.USER_METADATA_KV.put(logKey, JSON.stringify(mergedRecord));
 
         // Обновяваме последната активност на потребителя
         await env.USER_METADATA_KV.put(`${userId}_lastActive`, todayStr);
@@ -1219,6 +1208,17 @@ async function handleLogRequest(request, env) {
            await env.USER_METADATA_KV.put(statusKey, JSON.stringify(currentStatus));
            console.log(`LOG_REQUEST (${userId}): Updated current_status with weight ${log.weight}.`);
         }
+
+        const indexKey = `${userId}_logs_index`;
+        const idxStr = await env.USER_METADATA_KV.get(indexKey);
+        let idxArr = idxStr ? safeParseJson(idxStr, []) : [];
+        if (!Array.isArray(idxArr)) idxArr = [];
+        if (!idxArr.includes(dateToLog)) {
+            idxArr.push(dateToLog);
+            idxArr.sort();
+            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(idxArr));
+        }
+
         console.log(`LOG_REQUEST (${userId}): Daily log saved for date ${dateToLog}.`);
         return { success: true, message: 'Данните от дневника са записани успешно.', savedDate: dateToLog, savedData: log };
     } catch (error) {
@@ -1454,7 +1454,7 @@ async function handleLogExtraMealRequest(request, env) {
         currentLogData.extraMeals.push(extraMealEntry);
         currentLogData.lastUpdated = new Date().toISOString();
 
-        await createDailyLog(env, userId, logDateStr, currentLogData);
+        await env.USER_METADATA_KV.put(logKey, JSON.stringify(currentLogData));
         console.log(`LOG_EXTRA_MEAL_SUCCESS (${userId}): Extra meal logged for date ${logDateStr}. Entries now: ${currentLogData.extraMeals.length}`);
         return { success: true, message: 'Извънредното хранене е записано успешно.', savedDate: logDateStr };
     } catch (error) {
@@ -3335,36 +3335,25 @@ const safeParseJson = (jsonString, defaultValue = null) => {
 };
 // ------------- END FUNCTION: safeParseJson -------------
 
-// ------------- START FUNCTION: createDailyLog -------------
-async function createDailyLog(env, userId, dateStr, dataObj) {
-    const logKey = `${userId}_log_${dateStr}`;
-    await env.USER_METADATA_KV.put(logKey, JSON.stringify(dataObj));
-    const indexKey = `${userId}_logs_index`;
-    try {
-        const idxStr = await env.USER_METADATA_KV.get(indexKey);
-        let idxArr = idxStr ? safeParseJson(idxStr, []) : [];
-        if (!Array.isArray(idxArr)) idxArr = [];
-        if (!idxArr.includes(dateStr)) {
-            idxArr.push(dateStr);
-            idxArr.sort();
-            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(idxArr));
-        }
-    } catch (err) {
-        console.warn(`createDailyLog index update failed for ${userId}:`, err.message);
-    }
-}
-// ------------- END FUNCTION: createDailyLog -------------
-
 // ------------- START FUNCTION: getUserLogDates -------------
 async function getUserLogDates(env, userId) {
     const indexKey = `${userId}_logs_index`;
+    let dates = [];
     try {
         const idxStr = await env.USER_METADATA_KV.get(indexKey);
-        const dates = idxStr ? safeParseJson(idxStr, []) : [];
-        return Array.isArray(dates) ? dates : [];
+        dates = idxStr ? safeParseJson(idxStr, []) : [];
+        if (!Array.isArray(dates)) dates = [];
     } catch (err) {
-        return [];
+        dates = [];
     }
+    if (dates.length === 0) {
+        const list = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
+        dates = list.keys.map(k => k.name.split('_log_')[1]).filter(Boolean);
+        if (dates.length > 0) {
+            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(dates));
+        }
+    }
+    return dates;
 }
 // ------------- END FUNCTION: getUserLogDates -------------
 
@@ -4601,27 +4590,6 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
 }
 // ------------- END BLOCK: UserEventHandlers -------------
 
-// ------------- START FUNCTION: rebuildUserKvIndex -------------
-async function rebuildUserKvIndex(userId, env) {
-    try {
-        let cursor;
-        const prefix = `${userId}_`;
-        const kv = {};
-        do {
-            const list = await env.USER_METADATA_KV.list({ prefix, cursor });
-            for (const { name } of list.keys) {
-                const val = await env.USER_METADATA_KV.get(name);
-                if (val !== null) kv[name] = val;
-            }
-            cursor = list.list_complete ? undefined : list.cursor;
-        } while (cursor);
-        await env.USER_METADATA_KV.put(`${userId}_kv_index`, JSON.stringify(kv));
-    } catch (error) {
-        console.error(`Error in rebuildUserKvIndex for ${userId}:`, error.message, error.stack);
-    }
-}
-// ------------- END FUNCTION: rebuildUserKvIndex -------------
-
 // ------------- START FUNCTION: handleListUserKvRequest -------------
 async function handleListUserKvRequest(request, env) {
     const url = new URL(request.url);
@@ -4758,7 +4726,6 @@ async function handleUpdateKvRequest(request, env) {
     calculateAnalyticsIndexes,
     handleListUserKvRequest,
     handleUpdateKvRequest,
-    rebuildUserKvIndex,
     handleLogRequest,
     handlePlanLogRequest,
     setPlanStatus
