@@ -68,72 +68,6 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
   await sendEmail(to, subject, body, phpEnv);
 }
 
-// --- KV list telemetry instrumentation ---
-let kvListCounter = 0;
-let kvListLastSent = 0;
-
-/**
- * Обвива env и брои всяко извикване на `.list()` върху KV namespace.
- * @param {Object} env
- * @returns {Object} proxied env
- */
-function withKvListCounting(env) {
-  return new Proxy(env, {
-    get(target, prop) {
-      const value = target[prop];
-      if (value && typeof value.list === 'function') {
-        return new Proxy(value, {
-          get(obj, key) {
-            if (key === 'list') {
-              return async (...args) => {
-                kvListCounter++;
-                return obj.list(...args);
-              };
-            }
-            return obj[key];
-          }
-        });
-      }
-      return value;
-    }
-  });
-}
-
-/**
- * Изпраща телеметрия за kv.list на всеки 15 минути и ресетира брояча.
- * @param {Object} env
- */
-async function maybeSendKvListTelemetry(env) {
-  const now = Date.now();
-  if (now - kvListLastSent >= 15 * 60 * 1000) {
-    kvListLastSent = now;
-    const payload = {
-      ts: new Date(now).toISOString(),
-      kv_list_count: kvListCounter
-    };
-    try {
-      const endpoint = env.MONITORING_ENDPOINT || env.TELEMETRY_ENDPOINT;
-      if (endpoint) {
-        await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      } else {
-        console.log('[KV] Telemetry', payload);
-      }
-    } catch (err) {
-      console.error('[KV] Telemetry send failed', err);
-    }
-    const threshold = parseInt(env.KV_LIST_ALERT_THRESHOLD || '100', 10);
-    const hourlyEstimate = kvListCounter * 4; // 15 мин -> час
-    if (hourlyEstimate > threshold) {
-      console.warn(`[ALERT] kv.list rate ${hourlyEstimate}/h exceeds ${threshold}/h`);
-    }
-    kvListCounter = 0;
-  }
-}
-
 const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
 const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
 <html lang="bg">
@@ -454,8 +388,6 @@ export default {
      * @returns {Promise<Response>}
      */
     async fetch(request, env, ctx) {
-        env = withKvListCounting(env);
-        await maybeSendKvListTelemetry(env);
         const url = new URL(request.url);
         const path = url.pathname;
         const method = request.method;
@@ -481,11 +413,9 @@ export default {
                 .concat(defaultAllowedOrigins)
         ));
         const requestOrigin = request.headers.get('Origin');
-        const originAllowed = requestOrigin && allowedOrigins.includes(requestOrigin);
-        if (requestOrigin && !originAllowed) {
-            console.warn(`Refused origin ${requestOrigin}`);
-        }
-        const originToSend = originAllowed ? requestOrigin : '*';
+        const originToSend = requestOrigin === null
+            ? 'null'
+            : allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0];
         const corsHeaders = {
             'Access-Control-Allow-Origin': originToSend,
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -663,8 +593,6 @@ export default {
 
     // ------------- START FUNCTION: scheduled -------------
     async scheduled(event, env, ctx) {
-        env = withKvListCounting(env);
-        await maybeSendKvListTelemetry(env);
         console.log(`[CRON] Trigger executing at: ${new Date(event.scheduledTime)}`);
         if (!env.USER_METADATA_KV) {
             console.error("[CRON] USER_METADATA_KV binding missing. Check configuration.");
@@ -4834,9 +4762,4 @@ async function handleUpdateKvRequest(request, env) {
     handleLogRequest,
     handlePlanLogRequest,
     setPlanStatus
-};
-
-export {
-    withKvListCounting as _withKvListCounting,
-    maybeSendKvListTelemetry as _maybeSendKvListTelemetry
-};
+ };
