@@ -577,6 +577,9 @@ domains from which the application (for example the admin panel) will be
 loaded. If the variable is not set, the default list includes
 `https://radilovk.github.io`, `https://radilov-k.github.io`,
 `http://localhost:5173`, `http://localhost:3000` and `null`.
+To allow broad access set the variable to `*` or supply your own list.
+Requests from origins outside this list receive HTTP 403 without CORS headers,
+with a warning logged for easier diagnostics.
 
 Add the variable in `wrangler.toml`:
 

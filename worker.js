@@ -480,10 +480,16 @@ export default {
                 : [])
                 .concat(defaultAllowedOrigins)
         ));
-        const requestOrigin = request.headers.get('Origin');
-        const originToSend = requestOrigin === null
-            ? 'null'
-            : allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0];
+        const requestOrigin = request.headers.get('Origin') || 'null';
+        const allowAll = allowedOrigins.includes('*');
+        if (!allowAll && !allowedOrigins.includes(requestOrigin)) {
+            console.warn(`CORS отказан за Origin: ${requestOrigin}`);
+            return new Response('Forbidden', {
+                status: 403,
+                headers: { 'Vary': 'Origin' }
+            });
+        }
+        const originToSend = allowAll ? '*' : requestOrigin;
         const corsHeaders = {
             'Access-Control-Allow-Origin': originToSend,
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
