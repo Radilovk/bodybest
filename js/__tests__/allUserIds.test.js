@@ -8,7 +8,6 @@ beforeEach(async () => {
   jest.resetModules()
   global.crypto = webcrypto
   global.TextEncoder = TextEncoder
-  jest.spyOn(global.crypto, 'randomUUID').mockReturnValue('u1')
   ;({ handleListClientsRequest, handleDeleteClientRequest } = await import('../../worker.js'))
 })
 
