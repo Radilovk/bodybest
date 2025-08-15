@@ -2288,6 +2288,10 @@ async function handleListClientsRequest(request, env) {
                     .map(k => k.name)
                     .filter(n => n.endsWith('_initial_answers'))
                     .map(n => n.replace('_initial_answers', ''));
+                if (userIds.length > 0) {
+                    await env.USER_METADATA_KV.put('all_user_ids', JSON.stringify(userIds));
+                    console.log(`Rebuilt all_user_ids index with ${userIds.length} entries`);
+                }
             } catch (err) {
                 console.warn('Fallback listing failed in handleListClientsRequest:', err.message);
                 userIds = [];
