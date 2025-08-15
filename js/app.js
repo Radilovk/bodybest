@@ -136,6 +136,7 @@ export function setChatPromptOverride(val) { chatPromptOverride = val; }
 let planStatusInterval = null;
 let planStatusTimeout = null;
 let adminQueriesInterval = null; // Интервал за проверка на администраторски съобщения
+let lastSavedDailyLogSerialized = null; // Кеш на последно записания дневен лог
 
 export function setActiveTooltip(tooltip) { activeTooltip = tooltip; }
 
@@ -158,6 +159,7 @@ export function resetAppState() {
     todaysPlanMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
     activeTooltip = null;
     chatPromptOverride = null;
+    lastSavedDailyLogSerialized = null;
 }
 
 // Нулира дневния прием при смяна на деня
@@ -432,6 +434,7 @@ export async function loadDashboardData() {
             if(selectors.appWrapper) selectors.appWrapper.style.display = 'block';
 
             await populateUI();
+            scheduleEndOfDaySave();
             initializeAchievements(currentUserId);
             setupDynamicEventListeners();
             await checkAdminQueries(currentUserId);
@@ -529,6 +532,7 @@ export async function loadDashboardData() {
         }
 
         await populateUI();
+        scheduleEndOfDaySave();
         await populateProgressHistory(fullDashboardData.dailyLogs, fullDashboardData.initialData);
 
         const plan = fullDashboardData.planData;
@@ -704,7 +708,7 @@ export async function autoSaveCompletedMeals() {
     }
 }
 
-export async function handleSaveLog() { // Exported for eventListeners.js
+function collectDailyLogPayload({ suppressMessages = false } = {}) {
     const logPayload = { userId: currentUserId, date: getLocalDate(), data: {} };
     const weightInputElement = document.getElementById('dailyLogWeightInput');
 
@@ -714,12 +718,14 @@ export async function handleSaveLog() { // Exported for eventListeners.js
             const weightValue = safeParseFloat(weightValueStr);
             if (weightValue !== null && !isNaN(weightValue) && weightValue >= 20 && weightValue <= 300) {
                 logPayload.data.weight = weightValue;
-            } else {
+            } else if (!suppressMessages) {
                 showToast("Моля, въведете валидно тегло (число между 20 и 300), ако желаете да го запишете.", true, 4000);
             }
         }
     } else {
-        console.warn("Weight input element ('dailyLogWeightInput') not found in log. Skipping weight save.");
+        if (!suppressMessages) {
+            console.warn("Weight input element ('dailyLogWeightInput') not found in log. Skipping weight save.");
+        }
     }
 
     logPayload.data.note = selectors.dailyNote?.value.trim() || "";
@@ -731,21 +737,86 @@ export async function handleSaveLog() { // Exported for eventListeners.js
         logPayload.data[`${metricKey}Description`] = getMetricDescription(metricKey, metricValue);
     });
 
-    let hasDataToSave = !!logPayload.data.note ||
-                        Object.keys(logPayload.data.completedMealsStatus).length > 0 ||
-                        logPayload.data.weight !== undefined;
+    return logPayload;
+}
 
-    if(!hasDataToSave) {
-        for(const key in logPayload.data) {
-            if(key!=='note' && key!=='completedMealsStatus' && key!=='weight' &&
-               logPayload.data[key]!==null && logPayload.data[key]!==undefined) {
-                hasDataToSave=true;
+function hasDataToSave(logPayload) {
+    let hasData = !!logPayload.data.note ||
+                  Object.keys(logPayload.data.completedMealsStatus).length > 0 ||
+                  logPayload.data.weight !== undefined;
+
+    if (!hasData) {
+        for (const key in logPayload.data) {
+            if (key !== 'note' && key !== 'completedMealsStatus' && key !== 'weight' &&
+                logPayload.data[key] !== null && logPayload.data[key] !== undefined) {
+                hasData = true;
                 break;
             }
         }
     }
+    return hasData;
+}
 
-    if (!hasDataToSave) { showToast("Няма нови данни за запис.", false, 2000); return; }
+function hasLogChanged(logPayload) {
+    const serialized = JSON.stringify(logPayload);
+    return serialized !== lastSavedDailyLogSerialized;
+}
+
+function cacheLastLog(logPayload) {
+    lastSavedDailyLogSerialized = JSON.stringify(logPayload);
+}
+
+export async function autoSaveDailyLog() {
+    if (!currentUserId) return;
+    const logPayload = collectDailyLogPayload({ suppressMessages: true });
+    if (!hasDataToSave(logPayload) || !hasLogChanged(logPayload)) return;
+    try {
+        const response = await fetch(apiEndpoints.log, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(logPayload)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
+
+        const savedDate = result.savedDate || logPayload.date;
+        const savedData = result.savedData || logPayload.data;
+        const idx = (fullDashboardData.dailyLogs || []).findIndex(l => l.date === savedDate);
+        if (idx > -1) {
+            fullDashboardData.dailyLogs[idx].data = {
+                ...fullDashboardData.dailyLogs[idx].data,
+                ...savedData
+            };
+        } else {
+            if (!fullDashboardData.dailyLogs) fullDashboardData.dailyLogs = [];
+            fullDashboardData.dailyLogs.push({ date: savedDate, data: savedData });
+        }
+        cacheLastLog({ userId: logPayload.userId, date: savedDate, data: savedData });
+    } catch (err) {
+        console.error('Auto-save failed', err);
+    }
+}
+
+export function calcMsToMidnight(now = new Date()) {
+    const next = new Date(now);
+    next.setHours(24, 0, 0, 0);
+    return next.getTime() - now.getTime();
+}
+
+let endOfDaySaveTimeout = null;
+export function scheduleEndOfDaySave(saveFn = autoSaveDailyLog) {
+    if (endOfDaySaveTimeout) clearTimeout(endOfDaySaveTimeout);
+    const delay = calcMsToMidnight();
+    endOfDaySaveTimeout = setTimeout(async () => {
+        endOfDaySaveTimeout = null;
+        await saveFn();
+        scheduleEndOfDaySave(saveFn);
+    }, delay);
+}
+
+export async function handleSaveLog() { // Exported for eventListeners.js
+    const logPayload = collectDailyLogPayload();
+
+    if (!hasDataToSave(logPayload)) { showToast("Няма нови данни за запис.", false, 2000); return; }
+    if (!hasLogChanged(logPayload)) { showToast("Няма промени за запис.", false, 2000); return; }
 
     showLoading(true, "Запазване на лога...");
     try {
@@ -778,6 +849,7 @@ export async function handleSaveLog() { // Exported for eventListeners.js
                 }
             }
         }
+        cacheLastLog({ userId: logPayload.userId, date: result.savedDate, data: result.savedData || logPayload.data });
         await refreshAnalytics(true);
         updateAnalyticsSections(fullDashboardData.analytics);
         await populateUI();
