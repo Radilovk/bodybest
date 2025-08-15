@@ -43,6 +43,35 @@ test('handleListClientsRequest използва all_user_ids', async () => {
   ])
 })
 
+test('handleListClientsRequest пада назад към list при липсващ индекс', async () => {
+  const store = {
+    'u1_initial_answers': JSON.stringify({ name: 'Иван', submissionDate: '2024-01-02' }),
+    'u1_profile': JSON.stringify({ email: 'ivan@example.com' }),
+    'plan_status_u1': 'ready',
+    'u1_current_status': JSON.stringify({ adminTags: ['vip'], lastUpdated: '2024-01-10' })
+  }
+  const env = {
+    USER_METADATA_KV: {
+      get: jest.fn(async key => store[key] || null),
+      list: jest.fn(async () => ({ keys: [{ name: 'u1_initial_answers' }] }))
+    }
+  }
+  const res = await handleListClientsRequest({}, env)
+  expect(env.USER_METADATA_KV.list).toHaveBeenCalled()
+  expect(res.success).toBe(true)
+  expect(res.clients).toEqual([
+    {
+      userId: 'u1',
+      name: 'Иван',
+      email: 'ivan@example.com',
+      registrationDate: '2024-01-02',
+      status: 'ready',
+      tags: ['vip'],
+      lastUpdated: '2024-01-10'
+    }
+  ])
+})
+
 test('handleDeleteClientRequest премахва userId и ключове', async () => {
   const store = {
     all_user_ids: JSON.stringify(['u1', 'u2']),

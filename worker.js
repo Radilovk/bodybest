@@ -2280,7 +2280,19 @@ async function handleRunImageModelRequest(request, env) {
 async function handleListClientsRequest(request, env) {
     try {
         const idsStr = await env.USER_METADATA_KV.get('all_user_ids');
-        const userIds = safeParseJson(idsStr, []);
+        let userIds = safeParseJson(idsStr, []);
+        if (!Array.isArray(userIds) || userIds.length === 0) {
+            try {
+                const list = await env.USER_METADATA_KV.list({ prefix: '' });
+                userIds = list.keys
+                    .map(k => k.name)
+                    .filter(n => n.endsWith('_initial_answers'))
+                    .map(n => n.replace('_initial_answers', ''));
+            } catch (err) {
+                console.warn('Fallback listing failed in handleListClientsRequest:', err.message);
+                userIds = [];
+            }
+        }
         const clients = [];
         for (const id of userIds) {
             const [ansStr, profileStr, planStatus, statusStr] = await Promise.all([
