@@ -3555,34 +3555,38 @@ async function evaluatePlanChange(userId, requestData, env) {
 }
 // ------------- END FUNCTION: evaluatePlanChange -------------
 
+// ------------- START FUNCTION: readQueue -------------
+async function readQueue(env) {
+    const queueStr = await env.USER_METADATA_KV.get('events_queue');
+    const queue = safeParseJson(queueStr, []);
+    return Array.isArray(queue) ? queue : [];
+}
+// ------------- END FUNCTION: readQueue -------------
+
+// ------------- START FUNCTION: writeQueue -------------
+async function writeQueue(env, queue) {
+    await env.USER_METADATA_KV.put('events_queue', JSON.stringify(queue));
+}
+// ------------- END FUNCTION: writeQueue -------------
+
 // ------------- START FUNCTION: createUserEvent -------------
 async function createUserEvent(eventType, userId, payload, env) {
     if (!eventType || !userId) return { success: false, message: 'Невалидни параметри.' };
 
+    const queue = await readQueue(env);
     if (eventType === 'planMod') {
-        try {
-            const existing = await env.USER_METADATA_KV.list({ prefix: `event_planMod_${userId}` });
-            for (const { name } of existing.keys) {
-                const val = await env.USER_METADATA_KV.get(name);
-                const parsed = safeParseJson(val, null);
-                if (parsed && parsed.status === 'pending') {
-                    return { success: false, message: 'Вече има чакаща заявка за промяна на плана.' };
-                }
-            }
-        } catch (err) {
-            console.error(`EVENT_CHECK_ERROR (${userId}):`, err);
+        const duplicate = queue.some(ev => ev.type === 'planMod' && ev.userId === userId);
+        if (duplicate) {
+            return { success: false, message: 'Вече има чакаща заявка за промяна на плана.' };
         }
     }
 
-    const key = `event_${eventType}_${userId}_${Date.now()}`;
-    const data = {
-        type: eventType,
-        userId,
-        status: 'pending',
-        createdTimestamp: Date.now(),
-        payload
-    };
-    await env.USER_METADATA_KV.put(key, JSON.stringify(data));
+    const timestamp = Date.now();
+    const key = `event_${eventType}_${userId}_${timestamp}`;
+    await env.USER_METADATA_KV.put(key, JSON.stringify(payload || {}));
+    queue.push({ key, type: eventType, userId, createdTimestamp: timestamp });
+    await writeQueue(env, queue);
+
     if (eventType === 'planMod') {
         try {
             await env.USER_METADATA_KV.put(`pending_plan_mod_${userId}`, JSON.stringify(payload || {}));
@@ -4497,29 +4501,25 @@ const EVENT_HANDLERS = {
 };
 
 async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
-    const list = await env.USER_METADATA_KV.list({ prefix: 'event_' });
-    const events = [];
-    for (const key of list.keys) {
-        const eventStr = await env.USER_METADATA_KV.get(key.name);
-        const eventData = safeParseJson(eventStr, null);
-        if (!eventData || !eventData.type || !eventData.userId) {
-            await env.USER_METADATA_KV.delete(key.name);
-            continue;
-        }
-        events.push({ key: key.name, data: eventData });
-    }
-    events.sort((a, b) => (a.data.createdTimestamp || 0) - (b.data.createdTimestamp || 0));
+    let queue = await readQueue(env);
+    const toProcess = queue.slice(0, maxToProcess);
     let processed = 0;
-    for (const { key, data } of events) {
-        if (processed >= maxToProcess) break;
-        const handler = EVENT_HANDLERS[data.type];
+    for (const ev of toProcess) {
+        const handler = EVENT_HANDLERS[ev.type];
+        const payloadStr = await env.USER_METADATA_KV.get(ev.key);
+        const payload = safeParseJson(payloadStr, null);
         if (handler) {
-            ctx.waitUntil(handler(data.userId, env, data.payload));
+            ctx.waitUntil(handler(ev.userId, env, payload));
         } else {
-            console.log(`[CRON-UserEvent] Unknown event type ${data.type} for user ${data.userId}`);
+            console.log(`[CRON-UserEvent] Unknown event type ${ev.type} for user ${ev.userId}`);
         }
-        await env.USER_METADATA_KV.delete(key);
+        await env.USER_METADATA_KV.delete(ev.key);
         processed++;
+    }
+    if (processed > 0) {
+        const processedKeys = new Set(toProcess.map(ev => ev.key));
+        queue = (await readQueue(env)).filter(ev => !processedKeys.has(ev.key));
+        await writeQueue(env, queue);
     }
     if (processed > 0) console.log(`[CRON-UserEvent] Processed ${processed} event(s).`);
     else console.log('[CRON-UserEvent] No pending events.');

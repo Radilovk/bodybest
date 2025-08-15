@@ -4,8 +4,8 @@ import { processPendingUserEvents } from '../../worker.js';
   describe('processPendingUserEvents', () => {
     test('processes testResult event', async () => {
       const store = {
-        events_queue: JSON.stringify([{ key: 'event_testResult_u1_1', type: 'testResult', userId: 'u1' }]),
-        event_testResult_u1_1: JSON.stringify({ type: 'testResult', userId: 'u1', createdTimestamp: 1, payload: { value: 5 } })
+        events_queue: JSON.stringify([{ key: 'event_testResult_u1_1', type: 'testResult', userId: 'u1', createdTimestamp: 1 }]),
+        event_testResult_u1_1: JSON.stringify({ value: 5 })
       };
       const env = {
         USER_METADATA_KV: {

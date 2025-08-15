@@ -27,8 +27,8 @@ describe('интегритет на индекси и опашки', () => {
 
     test('едновременен enqueue и dequeue поддържат опашката активна', async () => {
       const store = {
-        events_queue: JSON.stringify([{ key: 'event_test_u1', type: 'testResult', userId: 'u1' }]),
-        event_test_u1: JSON.stringify({ type: 'testResult', userId: 'u1', createdTimestamp: 1, payload: {} })
+        events_queue: JSON.stringify([{ key: 'event_test_u1', type: 'testResult', userId: 'u1', createdTimestamp: 1 }]),
+        event_test_u1: JSON.stringify({})
       };
       const env = {
         USER_METADATA_KV: {
