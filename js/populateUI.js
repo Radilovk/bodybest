@@ -1083,8 +1083,9 @@ export async function populateProgressHistory(dailyLogs, initialData) {
 
     const initialWeight = safeParseFloat(initialData?.weight);
     if (initialWeight !== null) {
-        const submissionDate = safeGet(fullDashboardData.initialAnswers, 'submissionDate', new Date().toISOString());
-        labels.push(formatDateBgShort(submissionDate));
+        const registrationDate = initialData?.registrationDate ??
+            safeGet(fullDashboardData.initialAnswers, 'submissionDate', new Date().toISOString());
+        labels.push(formatDateBgShort(registrationDate));
         weightData.push(initialWeight);
     }
 
@@ -1101,9 +1102,10 @@ export async function populateProgressHistory(dailyLogs, initialData) {
         }
     });
 
-    if (weightData.length === 1) {
+    const lastWeight = weightData[weightData.length - 1];
+    if (lastWeight !== undefined && labels[labels.length - 1] !== todayStr) {
         labels.push(todayStr);
-        weightData.push(weightData[0]); // права линия
+        weightData.push(lastWeight);
     }
 
     if (weightData.length === 0) {
@@ -1147,6 +1149,8 @@ export async function populateProgressHistory(dailyLogs, initialData) {
                 data: weightData,
                 borderColor: colors.border,
                 backgroundColor: colors.fill,
+                pointRadius: 4,
+                pointHoverRadius: 6,
                 tension: 0.1,
                 fill: false,
                 spanGaps: true
