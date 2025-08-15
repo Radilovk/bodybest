@@ -4496,8 +4496,8 @@ const EVENT_HANDLERS = {
     }
 };
 
-async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
-    const list = await env.USER_METADATA_KV.list({ prefix: 'event_' });
+async function processPendingUserEvents(env, ctx, limit = 5, cursor) {
+    const list = await env.USER_METADATA_KV.list({ prefix: 'event_', limit, cursor });
     const events = [];
     for (const key of list.keys) {
         const eventStr = await env.USER_METADATA_KV.get(key.name);
@@ -4511,7 +4511,6 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
     events.sort((a, b) => (a.data.createdTimestamp || 0) - (b.data.createdTimestamp || 0));
     let processed = 0;
     for (const { key, data } of events) {
-        if (processed >= maxToProcess) break;
         const handler = EVENT_HANDLERS[data.type];
         if (handler) {
             ctx.waitUntil(handler(data.userId, env, data.payload));
@@ -4520,6 +4519,12 @@ async function processPendingUserEvents(env, ctx, maxToProcess = 5) {
         }
         await env.USER_METADATA_KV.delete(key);
         processed++;
+    }
+    if (!list.list_complete && list.cursor) {
+        env.lastUserEventCursor = list.cursor;
+        ctx.waitUntil(processPendingUserEvents(env, ctx, limit, list.cursor));
+    } else {
+        env.lastUserEventCursor = null;
     }
     if (processed > 0) console.log(`[CRON-UserEvent] Processed ${processed} event(s).`);
     else console.log('[CRON-UserEvent] No pending events.');
