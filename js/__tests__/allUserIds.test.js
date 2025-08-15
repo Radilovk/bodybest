@@ -53,11 +53,17 @@ test('handleListClientsRequest пада назад към list при липсв
   const env = {
     USER_METADATA_KV: {
       get: jest.fn(async key => store[key] || null),
-      list: jest.fn(async () => ({ keys: [{ name: 'u1_initial_answers' }] }))
+      list: jest.fn(async () => ({ keys: [{ name: 'u1_initial_answers' }] })),
+      put: jest.fn(async (key, val) => { store[key] = val })
     }
   }
+  const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
   const res = await handleListClientsRequest({}, env)
   expect(env.USER_METADATA_KV.list).toHaveBeenCalled()
+  expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('all_user_ids', JSON.stringify(['u1']))
+  expect(JSON.parse(store.all_user_ids)).toEqual(['u1'])
+  expect(logSpy).toHaveBeenCalledWith('Rebuilt all_user_ids index with 1 entries')
+  logSpy.mockRestore()
   expect(res.success).toBe(true)
   expect(res.clients).toEqual([
     {
