@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { handleSaveAiPreset, handleListAiPresets, handleGetAiPreset } from '../../worker.js';
+import { handleSaveAiPreset, handleListAiPresets, handleGetAiPreset, resetAiPresetIndexCache } from '../../worker.js';
 
 function createStore(initial = {}) {
   const store = { ...initial };
@@ -11,6 +11,8 @@ function createStore(initial = {}) {
   };
 }
 
+beforeEach(() => resetAiPresetIndexCache());
+
 test('save preset and retrieve it', async () => {
   const kv = createStore();
   const env = { RESOURCES_KV: kv, WORKER_ADMIN_TOKEN: 'secret' };
@@ -21,7 +23,7 @@ test('save preset and retrieve it', async () => {
   const saveRes = await handleSaveAiPreset(reqSave, env);
   expect(saveRes.success).toBe(true);
   expect(kv._store['aiPreset_test']).toBe(JSON.stringify({ model_plan_generation: 'm1' }));
-  expect(JSON.parse(kv._store.aiPresets_index)).toContain('aiPreset_test');
+  expect(JSON.parse(kv._store.aiPreset_index)).toContain('test');
 
   const listRes = await handleListAiPresets({}, env);
   expect(listRes.success).toBe(true);
