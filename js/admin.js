@@ -37,6 +37,7 @@ const detailsSection = document.getElementById('clientDetails');
 const regenBtn = document.getElementById('regeneratePlan');
 const regenProgress = document.getElementById('regenProgress');
 const aiSummaryBtn = document.getElementById('aiSummary');
+const deleteClientBtn = document.getElementById('deleteClient');
 const notesField = document.getElementById('adminNotes');
 const tagsField = document.getElementById('adminTags');
 const saveNotesBtn = document.getElementById('saveNotes');
@@ -1231,6 +1232,31 @@ if (aiSummaryBtn) {
         const data = await resp.json();
         const summary = data.aiResponse?.result || data.aiResponse;
         alert(summary || 'Няма данни');
+    });
+}
+
+if (deleteClientBtn) {
+    deleteClientBtn.addEventListener('click', async () => {
+        if (!currentUserId) return;
+        if (!confirm('Сигурни ли сте, че искате да изтриете профила?')) return;
+        try {
+            const resp = await fetch(apiEndpoints.deleteClient, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUserId })
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok || !data.success) {
+                alert(data.message || 'Грешка при изтриване.');
+                return;
+            }
+            alert('Профилът е изтрит.');
+            closeProfileBtn?.click();
+            await loadClients();
+        } catch (err) {
+            console.error('Error deleting client:', err);
+            alert('Грешка при изтриване на профила.');
+        }
     });
 }
 
