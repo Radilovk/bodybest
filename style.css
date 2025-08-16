@@ -108,7 +108,7 @@ header.scrolled { padding: 15px 0; background: var(--header-bg); backdrop-filter
 .logo-link { text-decoration: none; }
 .logo { width: 225px; height: auto; display: block; }
 nav { display: flex; align-items: center; }
-nav ul { display: flex; list-style: none; align-items: center; }
+nav ul { display: flex; list-style: none; align-items: center; background-color: inherit; }
 nav ul li { margin-left: 35px; }
 nav ul li a { font-family: 'Montserrat', sans-serif; font-weight: 600; color: var(--secondary-color); text-decoration: none; transition: var(--transition); position: relative; font-size: 1.1rem; }
 .dark-theme nav ul li a { color: var(--light-text); }

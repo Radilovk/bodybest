@@ -21,17 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Мобилно меню
     if (mobileMenuBtn && nav) {
-        const applyHeaderColor = () => {
-            const bg = getComputedStyle(document.documentElement)
-                .getPropertyValue('--mobile-menu-bg') || '#ffffff';
-            nav.style.background = bg.trim();
-        };
         const closeNav = () => {
             body.classList.remove('nav-open');
             mobileMenuBtn.setAttribute('aria-expanded', 'false');
         };
         const toggleNav = () => {
-            applyHeaderColor();
             const open = body.classList.toggle('nav-open');
             mobileMenuBtn.setAttribute('aria-expanded', open);
         };
