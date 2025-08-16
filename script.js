@@ -1,4 +1,4 @@
-import { toggleTheme, initializeTheme } from './js/uiHandlers.js';
+import { toggleTheme, initializeTheme } from './js/themeControls.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const header = document.getElementById('header');
