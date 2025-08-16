@@ -2,7 +2,8 @@ import { jest } from '@jest/globals';
 import {
   handleContactFormRequest,
   handleGetContactRequestsRequest,
-  handleValidateIndexesRequest
+  handleValidateIndexesRequest,
+  resetAiPresetIndexCache
 } from '../../worker.js';
 
 function createStore(initial = {}) {
@@ -18,6 +19,8 @@ function createStore(initial = {}) {
     _store: store
   };
 }
+
+beforeEach(() => resetAiPresetIndexCache());
 
 test('saves contact request and lists via index', async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: true });
@@ -56,7 +59,7 @@ test('validateIndexes rebuilds indexes', async () => {
   const req = { headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) } };
   const res = await handleValidateIndexesRequest(req, env);
   expect(res.success).toBe(true);
-  expect(JSON.parse(resKv._store.aiPresets_index)).toEqual(['aiPreset_demo']);
+  expect(JSON.parse(resKv._store.aiPreset_index)).toEqual(['demo']);
   expect(JSON.parse(contactKv._store.contactRequests_index)).toEqual(['contact_1']);
 });
 
