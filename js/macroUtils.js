@@ -219,10 +219,12 @@ function validateMacroCalories(macros = {}, threshold = 0.05, carbsIncludeFiber 
   }
 }
 
-export function addMealMacros(meal, acc) {
+export function addMealMacros(meal, acc, skipValidation = false) {
   const mapped = mapGramFields(meal);
   const m = normalizeMacros(resolveMacros(mapped, mapped?.grams));
-  validateMacroCalories(m);
+  if (!skipValidation) {
+    validateMacroCalories(m);
+  }
   acc.calories = (acc.calories || 0) + m.calories;
   acc.protein = (acc.protein || 0) + m.protein;
   acc.carbs = (acc.carbs || 0) + m.carbs;
@@ -231,10 +233,12 @@ export function addMealMacros(meal, acc) {
   return acc;
 }
 
-export function removeMealMacros(meal, acc) {
+export function removeMealMacros(meal, acc, skipValidation = false) {
   const mapped = mapGramFields(meal);
   const m = normalizeMacros(resolveMacros(mapped, mapped?.grams));
-  validateMacroCalories(m);
+  if (!skipValidation) {
+    validateMacroCalories(m);
+  }
   acc.calories = Math.max(0, (acc.calories || 0) - m.calories);
   acc.protein = Math.max(0, (acc.protein || 0) - m.protein);
   acc.carbs = Math.max(0, (acc.carbs || 0) - m.carbs);
@@ -248,7 +252,7 @@ export function removeMealMacros(meal, acc) {
  * @param {Array} dayMenu - Масив от хранения за текущия ден.
  * @returns {{ calories:number, protein:number, carbs:number, fat:number, fiber:number }}
  */
-export function calculatePlanMacros(dayMenu = []) {
+export function calculatePlanMacros(dayMenu = [], carbsIncludeFiber = true, skipValidation = false) {
   const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
   if (!Array.isArray(dayMenu)) return acc;
   dayMenu.forEach((meal) => {
@@ -262,14 +266,16 @@ export function calculatePlanMacros(dayMenu = []) {
         fat: Number(mapped.fat) || 0,
         fiber: Number(mapped.fiber) || 0
       };
-      validateMacroCalories(normalized);
+      if (!skipValidation) {
+        validateMacroCalories(normalized, 0.05, carbsIncludeFiber);
+      }
       acc.calories += normalized.calories;
       acc.protein += normalized.protein;
       acc.carbs += normalized.carbs;
       acc.fat += normalized.fat;
       acc.fiber += normalized.fiber;
     } else {
-      addMealMacros(meal, acc);
+      addMealMacros(meal, acc, skipValidation);
     }
   });
   return acc;
@@ -282,7 +288,7 @@ export function calculatePlanMacros(dayMenu = []) {
  * @param {Array} extraMeals - Допълнителни хранения с макроси { calories, protein, carbs, fat, fiber }.
  * @returns {{ calories:number, protein:number, carbs:number, fat:number, fiber:number }}
  */
-export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, extraMeals = []) {
+export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, extraMeals = [], skipValidation = false) {
   const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
   const prepareMeal = (meal) =>
@@ -293,12 +299,12 @@ export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, ext
   Object.entries(planMenu).forEach(([day, meals]) => {
     (meals || []).forEach((meal, idx) => {
       const key = `${day}_${idx}`;
-      if (completionStatus[key]) addMealMacros(prepareMeal(meal), acc);
+      if (completionStatus[key]) addMealMacros(prepareMeal(meal), acc, skipValidation);
     });
   });
 
   if (Array.isArray(extraMeals)) {
-    extraMeals.forEach((m) => addMealMacros(prepareMeal(m), acc));
+    extraMeals.forEach((m) => addMealMacros(prepareMeal(m), acc, skipValidation));
   }
 
   return acc;

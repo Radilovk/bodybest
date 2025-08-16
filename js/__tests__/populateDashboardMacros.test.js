@@ -58,7 +58,7 @@ test('recalculates macros automatically and shows spinner while loading', async 
     { meal_name: 'Салата', macros: { calories: 200, protein: 5, carbs: 20, fat: 10, fiber: 5 } }
   ];
   appState.fullDashboardData.planData = { week1Menu: { [currentDayKey]: dayMenu } };
-  Object.assign(appState.todaysPlanMacros, macroUtils.calculatePlanMacros(dayMenu));
+  Object.assign(appState.todaysPlanMacros, macroUtils.calculatePlanMacros(dayMenu, true, true));
   Object.assign(appState.currentIntakeMacros, { calories: 100, protein: 10, carbs: 15, fat: 5, fiber: 2 });
 
   const originalFetch = global.fetch;
@@ -148,7 +148,7 @@ test('използва подадените планови макроси', asyn
     { meal_name: 'Омлет', macros: { calories: 300, protein: 20, carbs: 10, fat: 15, fiber: 2 } },
     { meal_name: 'Салата', macros: { calories: 200, protein: 5, carbs: 20, fat: 10, fiber: 5 } }
   ];
-  const summed = macroUtils.calculatePlanMacros(dayMenu);
+  const summed = macroUtils.calculatePlanMacros(dayMenu, true, true);
   Object.assign(appState.todaysPlanMacros, summed);
   Object.assign(appState.currentIntakeMacros, { calories: 150, protein: 12, carbs: 20, fat: 6, fiber: 3 });
   await populateDashboardMacros(macros);

@@ -592,7 +592,7 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
     if(selectors.dailyPlanTitle) selectors.dailyPlanTitle.textContent = `📅 Меню (${capitalizeFirstLetter(todayTitle)})`;
 
     const dailyPlanData = safeGet(week1Menu, currentDayKey, []);
-    Object.assign(todaysPlanMacros, calculatePlanMacros(dailyPlanData));
+    Object.assign(todaysPlanMacros, calculatePlanMacros(dailyPlanData, true, true));
 
     populateDashboardMacros();
 

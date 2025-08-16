@@ -430,7 +430,7 @@ export async function loadDashboardData() {
             const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
             const currentDayKey = dayNames[new Date().getDay()];
             const dayMenu = fullDashboardData.planData?.week1Menu?.[currentDayKey] || [];
-            todaysPlanMacros = calculatePlanMacros(dayMenu);
+            todaysPlanMacros = calculatePlanMacros(dayMenu, true, true);
             loadCurrentIntake();
             chatHistory = []; // Reset chat history for test user on reload
 
@@ -498,7 +498,7 @@ export async function loadDashboardData() {
         const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
         const currentDayKey = dayNames[new Date().getDay()];
         const dayMenu = fullDashboardData.planData?.week1Menu?.[currentDayKey] || [];
-        todaysPlanMacros = calculatePlanMacros(dayMenu);
+        todaysPlanMacros = calculatePlanMacros(dayMenu, true, true);
         loadCurrentIntake();
         await populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
 
