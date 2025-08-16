@@ -1,11 +1,7 @@
 // uiHandlers.js - Управление на UI елементи (Меню, Тема, Табове, Модали, Tooltips и др.)
 import { selectors } from './uiElements.js';
 import { loadConfig } from './adminConfig.js';
-import {
-    fullDashboardData,
-    activeTooltip, // state from app.js that this module will modify
-    setActiveTooltip // function from app.js to update activeTooltip state
-} from './app.js';
+import { activeTooltip, setActiveTooltip } from './tooltipState.js';
 import { trackerInfoTexts, detailedMetricInfoTexts, mainIndexInfoTexts } from './uiElements.js';
 import { colorGroups } from './themeConfig.js';
 import { capitalizeFirstLetter, safeGet, escapeHtml } from './utils.js';
@@ -150,9 +146,9 @@ export function closeModal(modalId) {
     }, { once: true });
 }
 
-export function openInfoModalWithDetails(key, type) {
+export function openInfoModalWithDetails(key, type, dashboardData = {}) {
     let title = "Информация", body = "Няма налична информация.";
-    const currentFullDashboardData = fullDashboardData; // Accessing from app.js import
+    const currentFullDashboardData = dashboardData;
 
     if (type === 'recipe') {
         const recipe = safeGet(currentFullDashboardData, ['recipeData', key]);

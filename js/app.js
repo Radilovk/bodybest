@@ -18,6 +18,7 @@ import {
     setMacroExceedThreshold,
     updateAnalyticsSections
 } from './populateUI.js';
+import { activeTooltip, setActiveTooltip } from './tooltipState.js';
 // КОРЕКЦИЯ: Премахваме handleDelegatedClicks от импорта тук
 import { setupStaticEventListeners, setupDynamicEventListeners, initializeCollapsibleCards } from './eventListeners.js';
 import { loadProductMacros, calculateCurrentMacros, calculatePlanMacros } from './macroUtils.js';
@@ -125,7 +126,6 @@ export let todaysMealCompletionStatus = {}; // Updated by populateUI and eventLi
 export let todaysExtraMeals = []; // Extra meals logged for today
 export let todaysPlanMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }; // Cached plan macros for today
 export let currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }; // Calculated current macro intake
-export let activeTooltip = null; // Managed by uiHandlers via setActiveTooltip
 export let chatModelOverride = null; // Optional model override for next chat message
 export let chatPromptOverride = null; // Optional prompt override for next chat message
 
@@ -138,7 +138,7 @@ let planStatusTimeout = null;
 let adminQueriesInterval = null; // Интервал за проверка на администраторски съобщения
 let lastSavedDailyLogSerialized = null; // Кеш на последно записания дневен лог
 
-export function setActiveTooltip(tooltip) { activeTooltip = tooltip; }
+export { activeTooltip, setActiveTooltip };
 
 export function triggerAssistantWiggle() {
     const icon = selectors.chatFab?.querySelector('.assistant-icon');
@@ -157,7 +157,7 @@ export function resetAppState() {
     chatHistory = [];
     todaysMealCompletionStatus = {};
     todaysPlanMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
-    activeTooltip = null;
+    setActiveTooltip(null);
     chatPromptOverride = null;
     lastSavedDailyLogSerialized = null;
 }
