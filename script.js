@@ -8,7 +8,7 @@
 
 // --- ЧАСТ 1: ИНТЕГРИРАНИ МОДУЛИ (от отделните JS файлове) ---
 
-import { toggleTheme, initializeTheme } from './js/themeControls.js';
+import { toggleTheme, initializeTheme } from './js/uiHandlers.js';
 
 /**
  * @description Конфигурация и глобални променливи (от config.js)
