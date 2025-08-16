@@ -21,7 +21,7 @@ describe('kv list telemetry', () => {
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
     const body = JSON.parse(global.fetch.mock.calls[0][1].body);
-    expect(body.kv_list_count).toBe(2);
+    expect(body.kv_list_counts.TEST_KV).toBe(2);
 
     global.fetch.mockClear();
     await _maybeSendKvListTelemetry(wrapped);
