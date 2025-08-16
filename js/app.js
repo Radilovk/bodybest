@@ -293,6 +293,10 @@ export { planHasRecContent };
  * Извиква се при събитието DOMContentLoaded.
  */
 async function initializeApp() {
+    if (!document.getElementById('appWrapper')) {
+        debugLog('initializeApp пропуснат: липсва #appWrapper');
+        return;
+    }
     try {
         debugLog("initializeApp starting from app.js...");
         try {
