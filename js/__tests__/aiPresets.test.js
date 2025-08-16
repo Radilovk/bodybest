@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { handleSaveAiPreset, handleListAiPresets, handleGetAiPreset } from '../../worker.js';
+import { handleSaveAiPreset, handleListAiPresets, handleGetAiPreset, handleDeleteAiPreset, resetAiPresetIndexCache } from '../../worker.js';
 
 function createStore(initial = {}) {
   const store = { ...initial };
@@ -7,9 +7,12 @@ function createStore(initial = {}) {
     list: jest.fn(async ({ prefix } = {}) => ({ keys: Object.keys(store).filter(k => !prefix || k.startsWith(prefix)).map(name => ({ name })) })),
     get: jest.fn(async key => store[key] || null),
     put: jest.fn(async (key, value) => { store[key] = String(value); }),
+    delete: jest.fn(async key => { delete store[key]; }),
     _store: store
   };
 }
+
+beforeEach(() => resetAiPresetIndexCache());
 
 test('save preset and retrieve it', async () => {
   const kv = createStore();
@@ -21,7 +24,7 @@ test('save preset and retrieve it', async () => {
   const saveRes = await handleSaveAiPreset(reqSave, env);
   expect(saveRes.success).toBe(true);
   expect(kv._store['aiPreset_test']).toBe(JSON.stringify({ model_plan_generation: 'm1' }));
-  expect(JSON.parse(kv._store.aiPresets_index)).toContain('aiPreset_test');
+  expect(JSON.parse(kv._store.aiPreset_index)).toContain('test');
 
   const listRes = await handleListAiPresets({}, env);
   expect(listRes.success).toBe(true);
@@ -30,4 +33,20 @@ test('save preset and retrieve it', async () => {
   const getRes = await handleGetAiPreset({ url: 'https://x/api/getAiPreset?name=test' }, env);
   expect(getRes.success).toBe(true);
   expect(getRes.config.model_plan_generation).toBe('m1');
+});
+
+test('delete preset updates index and cache', async () => {
+  const kv = createStore({ aiPreset_test: JSON.stringify({ a: 1 }), aiPreset_index: JSON.stringify(['test']) });
+  const env = { RESOURCES_KV: kv, WORKER_ADMIN_TOKEN: 'secret' };
+  await handleListAiPresets({}, env);
+  const reqDel = {
+    headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) },
+    json: async () => ({ name: 'test' })
+  };
+  const delRes = await handleDeleteAiPreset(reqDel, env);
+  expect(delRes.success).toBe(true);
+  expect(kv._store.aiPreset_test).toBeUndefined();
+  expect(JSON.parse(kv._store.aiPreset_index)).toEqual([]);
+  const listRes = await handleListAiPresets({}, env);
+  expect(listRes.presets).toEqual([]);
 });
