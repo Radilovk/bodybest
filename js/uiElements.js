@@ -1,5 +1,5 @@
 // uiElements.js - Селектори и UI текстове
-import { showLoading } from './uiHandlers.js'; // Needed for error in initializeSelectors
+import { showLoading } from './loading.js'; // Needed for error in initializeSelectors
 
 export const selectors = {};
 
