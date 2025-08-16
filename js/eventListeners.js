@@ -22,7 +22,8 @@ import {
     activeTooltip, currentUserId,
     setChatModelOverride, setChatPromptOverride,
     autoSaveCompletedMeals,
-    updateMacrosAndAnalytics
+    updateMacrosAndAnalytics,
+    fullDashboardData
 } from './app.js';
 import {
     openPlanModificationChat,
@@ -272,7 +273,7 @@ function handleDelegatedClicks(event) {
             type = infoButton.dataset.type || 'colorVar';
             key = infoButton.dataset.key;
         }
-        if (type && key) openInfoModalWithDetails(key, type);
+        if (type && key) openInfoModalWithDetails(key, type, fullDashboardData);
         return;
     }
     const ratingSquare = target.closest('.rating-square');

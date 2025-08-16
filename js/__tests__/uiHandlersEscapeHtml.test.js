@@ -20,19 +20,13 @@ describe('uiHandlers escapeHtml usage', () => {
       loadInfoTexts: jest.fn(() => Promise.resolve())
     }));
 
-    jest.unstable_mockModule('../app.js', () => ({
-      fullDashboardData: { recipeData: { r1: { title: 'T <b>', body: 'B <i>\nline' } } },
+    jest.unstable_mockModule('../tooltipState.js', () => ({
       activeTooltip: null,
-      setActiveTooltip: jest.fn(),
-      todaysMealCompletionStatus: {},
-      todaysExtraMeals: [],
-      currentIntakeMacros: {},
-      planHasRecContent: false,
-      loadCurrentIntake: jest.fn()
+      setActiveTooltip: jest.fn()
     }));
 
     const { openInfoModalWithDetails } = await import('../uiHandlers.js');
-    openInfoModalWithDetails('r1', 'recipe');
+    openInfoModalWithDetails('r1', 'recipe', { recipeData: { r1: { title: 'T <b>', body: 'B <i>\nline' } } });
 
     expect(selectors.infoModalTitle.innerHTML).toBe('T &lt;b&gt;');
     expect(selectors.infoModalBody.innerHTML).toBe('B &lt;i&gt;<br>line');
@@ -56,15 +50,9 @@ describe('uiHandlers escapeHtml usage', () => {
       loadInfoTexts: jest.fn(() => Promise.resolve())
     }));
 
-    jest.unstable_mockModule('../app.js', () => ({
-      fullDashboardData: {},
+    jest.unstable_mockModule('../tooltipState.js', () => ({
       activeTooltip: null,
-      setActiveTooltip: jest.fn(),
-      todaysMealCompletionStatus: {},
-      todaysExtraMeals: [],
-      currentIntakeMacros: {},
-      planHasRecContent: false,
-      loadCurrentIntake: jest.fn()
+      setActiveTooltip: jest.fn()
     }));
 
     const { openMainIndexInfo } = await import('../uiHandlers.js');
