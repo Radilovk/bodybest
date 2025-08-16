@@ -13,11 +13,6 @@ body {
   border-radius: 50%;
   background: var(--color-danger);
 }
-#clientsList li {
-  margin-bottom: 5px;
-  display: flex;
-  gap: 5px;
-}
 #clientsList {
   max-height: 400px;
   overflow-y: auto;
@@ -82,18 +77,23 @@ pre { background: var(--surface-background, #f5f5f5); padding: 10px; overflow: a
   gap: 8px;
   width: 100%;
 }
+
+.clients-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 8px;
+  width: 100%;
+}
 #clientsList {
   flex: 1 1 100%;
 }
 #clientsControls {
   flex: 1 1 100%;
 }
-#clientsList li,
 .client-card {
-  margin-bottom: 5px;
   display: flex;
+  align-items: center;
   gap: 5px;
-  flex: 1 1 200px;
 }
 .main-content {
   flex: 3 1 400px;
