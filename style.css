@@ -121,6 +121,20 @@ nav ul li a.active::after { width: 100%; }
 .mobile-menu-btn { display: none; background: none; border: none; font-size: 1.8rem; color: var(--secondary-color); cursor: pointer; z-index: 1001; }
 .dark-theme .mobile-menu-btn { color: var(--light-text); }
 
+.login-btn {
+    display: inline-block;
+    padding: 8px 18px;
+    border: 2px solid var(--primary-color);
+    border-radius: 50px;
+    color: var(--primary-color);
+    transition: var(--transition);
+}
+
+.login-btn:hover {
+    background: var(--primary-color);
+    color: #fff;
+}
+
 /* 5. СЕКЦИИ НА СТРАНИЦАТА (Hero, Process, Tech, Features, Programs, CTA) - ОТ ai_studio_code.css */
 /* Hero */
 .hero { min-height: 100vh; display: flex; align-items: center; text-align: center; }
