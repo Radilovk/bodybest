@@ -688,13 +688,15 @@ async function renderClients() {
     });
     if (clientsCount) clientsCount.textContent = `Общ брой клиенти: ${list.length}`;
     if (list.length === 0) {
-        const li = document.createElement('li');
-        li.textContent = 'Няма намерени клиенти.';
-        clientsList?.appendChild(li);
+        const empty = document.createElement('div');
+        empty.className = 'client-card';
+        empty.textContent = 'Няма намерени клиенти.';
+        clientsList?.appendChild(empty);
         return;
     }
     await Promise.all(list.map(async c => {
-        const li = document.createElement('li');
+        const card = document.createElement('div');
+        card.className = 'client-card';
         const btn = document.createElement('button');
         btn.className = 'client-open';
         const dateText = c.registrationDate ? ` - ${new Date(c.registrationDate).toLocaleDateString('bg-BG')}` : '';
@@ -716,7 +718,7 @@ async function renderClients() {
             btn.appendChild(dot);
         }
         btn.addEventListener('click', () => showClient(c.userId));
-        li.appendChild(btn);
+        card.appendChild(btn);
 
         const needsPlan =
             c.status === 'pending' ||
@@ -731,8 +733,8 @@ async function renderClients() {
             const progress = document.createElement('span');
             progress.className = 'regen-progress hidden';
             progress.setAttribute('aria-live', 'polite');
-            li.appendChild(regen);
-            li.appendChild(progress);
+            card.appendChild(regen);
+            card.appendChild(progress);
             regen.addEventListener('click', e => e.stopPropagation());
             setupPlanRegeneration({
                 regenBtn: regen,
@@ -741,7 +743,7 @@ async function renderClients() {
             });
         }
 
-        clientsList?.appendChild(li);
+        clientsList?.appendChild(card);
     }));
 }
 
