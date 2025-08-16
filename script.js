@@ -23,9 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mobileMenuBtn && nav) {
         const applyHeaderColor = () => {
             const bg = getComputedStyle(document.documentElement)
-                .getPropertyValue('--header-bg-solid')
-                .trim();
-            if (bg) nav.style.background = bg;
+                .getPropertyValue('--mobile-menu-bg') || '#ffffff';
+            nav.style.background = bg.trim();
         };
         const closeNav = () => {
             body.classList.remove('nav-open');

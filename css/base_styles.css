@@ -26,6 +26,8 @@
   --font-color-muted: var(--text-color-muted);
   --font-color-on-primary: var(--text-color-on-primary);
   --header-title-color: var(--bg-color);
+  --header-bg-solid: #ffffff;
+  --mobile-menu-bg: var(--header-bg-solid);
 
   --bg-color: #F0F4F8;
   --bg-gradient: linear-gradient(135deg, #e6eff5 0%, #f0f4f8 100%);
