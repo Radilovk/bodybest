@@ -21,9 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Мобилно меню
     if (mobileMenuBtn && nav) {
+        // КОРЕКЦИЯ: използвай --mobile-menu-bg вместо --header-bg-solid!
         const applyHeaderColor = () => {
             const bg = getComputedStyle(document.documentElement)
-                .getPropertyValue('--header-bg-solid')
+                .getPropertyValue('--mobile-menu-bg')
                 .trim();
             if (bg) nav.style.background = bg;
         };
