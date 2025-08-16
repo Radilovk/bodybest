@@ -290,6 +290,10 @@ const COMMAND_R_PLUS_SECRET_NAME = 'command-r-plus';
 const CF_AI_TOKEN_SECRET_NAME = 'CF_AI_TOKEN';
 const CF_ACCOUNT_ID_VAR_NAME = 'CF_ACCOUNT_ID';
 const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
+const AI_PRESET_INDEX_KEY = 'aiPreset_index';
+let aiPresetIndexCache = null;
+let aiPresetIndexCacheTime = 0;
+const AI_PRESET_INDEX_TTL_MS = 5 * 60 * 1000;
 
 const GEMINI_API_URL_BASE = `https://generativelanguage.googleapis.com/v1beta/models/`;
 // Очаквани Bindings: RESOURCES_KV, USER_METADATA_KV
@@ -548,6 +552,8 @@ export default {
                 responseBody = await handleGetAiPreset(request, env);
             } else if (method === 'POST' && path === '/api/saveAiPreset') {
                 responseBody = await handleSaveAiPreset(request, env);
+            } else if (method === 'POST' && path === '/api/deleteAiPreset') {
+                responseBody = await handleDeleteAiPreset(request, env);
             } else if (method === 'POST' && path === '/api/testAiModel') {
                 responseBody = await handleTestAiModelRequest(request, env);
             } else if (method === 'GET' && path === '/api/listContactRequests') {
@@ -2530,8 +2536,27 @@ async function handleSetAiConfig(request, env) {
 // ------------- START FUNCTION: handleListAiPresets -------------
 async function handleListAiPresets(request, env) {
     try {
+        const now = Date.now();
+        if (Array.isArray(aiPresetIndexCache) && aiPresetIndexCache.length && now - aiPresetIndexCacheTime < AI_PRESET_INDEX_TTL_MS) {
+            return { success: true, presets: aiPresetIndexCache };
+        }
+        const idxStr = await env.RESOURCES_KV.get(AI_PRESET_INDEX_KEY);
+        if (idxStr) {
+            const idx = safeParseJson(idxStr, []);
+            if (idx.length) {
+                aiPresetIndexCache = idx;
+                aiPresetIndexCacheTime = now;
+                return { success: true, presets: idx };
+            }
+        }
         const { keys } = await env.RESOURCES_KV.list({ prefix: 'aiPreset_' });
-        const presets = keys.map(k => k.name.replace(/^aiPreset_/, ''));
+        const presets = keys
+            .map(k => k.name)
+            .filter(name => name !== AI_PRESET_INDEX_KEY)
+            .map(name => name.replace(/^aiPreset_/, ''));
+        aiPresetIndexCache = presets;
+        aiPresetIndexCacheTime = now;
+        await env.RESOURCES_KV.put(AI_PRESET_INDEX_KEY, JSON.stringify(presets));
         return { success: true, presets };
     } catch (error) {
         console.error('Error in handleListAiPresets:', error.message, error.stack);
@@ -2577,6 +2602,24 @@ async function handleSaveAiPreset(request, env) {
             return { success: false, message: 'Липсват данни.', statusHint: 400 };
         }
         await env.RESOURCES_KV.put(`aiPreset_${name}`, JSON.stringify(cfg));
+        try {
+            const idxStr = await env.RESOURCES_KV.get(AI_PRESET_INDEX_KEY);
+            const idx = idxStr ? safeParseJson(idxStr, []) : [];
+            if (!idx.includes(name)) {
+                idx.push(name);
+                await env.RESOURCES_KV.put(AI_PRESET_INDEX_KEY, JSON.stringify(idx));
+            }
+            aiPresetIndexCache = idx;
+            aiPresetIndexCacheTime = Date.now();
+        } catch (idxErr) {
+            console.error('Failed to update AI preset index:', idxErr.message);
+            if (Array.isArray(aiPresetIndexCache)) {
+                if (!aiPresetIndexCache.includes(name)) aiPresetIndexCache.push(name);
+            } else {
+                aiPresetIndexCache = [name];
+            }
+            aiPresetIndexCacheTime = Date.now();
+        }
         return { success: true };
     } catch (error) {
         console.error('Error in handleSaveAiPreset:', error.message, error.stack);
@@ -2584,6 +2627,43 @@ async function handleSaveAiPreset(request, env) {
     }
 }
 // ------------- END FUNCTION: handleSaveAiPreset -------------
+
+// ------------- START FUNCTION: handleDeleteAiPreset -------------
+async function handleDeleteAiPreset(request, env) {
+    try {
+        const auth = request.headers.get('Authorization') || '';
+        const token = auth.replace(/^Bearer\s+/i, '').trim();
+        const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
+        if (expected && token !== expected) {
+            return { success: false, message: 'Невалиден токен.', statusHint: 403 };
+        }
+        const body = await request.json();
+        const name = body.name && String(body.name).trim();
+        if (!name) {
+            return { success: false, message: 'Липсва име.', statusHint: 400 };
+        }
+        await env.RESOURCES_KV.delete(`aiPreset_${name}`);
+        try {
+            const idxStr = await env.RESOURCES_KV.get(AI_PRESET_INDEX_KEY);
+            let idx = idxStr ? safeParseJson(idxStr, []) : [];
+            idx = idx.filter(n => n !== name);
+            await env.RESOURCES_KV.put(AI_PRESET_INDEX_KEY, JSON.stringify(idx));
+            aiPresetIndexCache = idx;
+            aiPresetIndexCacheTime = Date.now();
+        } catch (idxErr) {
+            console.error('Failed to update AI preset index:', idxErr.message);
+            if (Array.isArray(aiPresetIndexCache)) {
+                aiPresetIndexCache = aiPresetIndexCache.filter(n => n !== name);
+                aiPresetIndexCacheTime = Date.now();
+            }
+        }
+        return { success: true };
+    } catch (error) {
+        console.error('Error in handleDeleteAiPreset:', error.message, error.stack);
+        return { success: false, message: 'Грешка при изтриване на пресета.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleDeleteAiPreset -------------
 
 // ------------- START FUNCTION: handleTestAiModelRequest -------------
 async function handleTestAiModelRequest(request, env) {
@@ -2692,8 +2772,13 @@ async function handleValidateIndexesRequest(request, env) {
             return { success: false, message: 'Невалиден токен.', statusHint: 403 };
         }
         const { keys: presetKeys } = await env.RESOURCES_KV.list({ prefix: 'aiPreset_' });
-        const presetIds = presetKeys.map(k => k.name);
-        await env.RESOURCES_KV.put('aiPresets_index', JSON.stringify(presetIds));
+        const presetIds = presetKeys
+            .map(k => k.name)
+            .filter(name => name !== AI_PRESET_INDEX_KEY)
+            .map(name => name.replace(/^aiPreset_/, ''));
+        aiPresetIndexCache = presetIds;
+        aiPresetIndexCacheTime = Date.now();
+        await env.RESOURCES_KV.put(AI_PRESET_INDEX_KEY, JSON.stringify(presetIds));
         const { keys: contactKeys } = await env.CONTACT_REQUESTS_KV.list({ prefix: 'contact_' });
         const contactIds = contactKeys.map(k => k.name);
         await env.CONTACT_REQUESTS_KV.put('contactRequests_index', JSON.stringify(contactIds));
@@ -4627,5 +4712,12 @@ async function handleUpdateKvRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleUpdateKvRequest -------------
+
+// ------------- START FUNCTION: resetAiPresetIndexCache -------------
+function resetAiPresetIndexCache() {
+    aiPresetIndexCache = null;
+    aiPresetIndexCacheTime = 0;
+}
+// ------------- END FUNCTION: resetAiPresetIndexCache -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache };
