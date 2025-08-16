@@ -2628,11 +2628,20 @@ async function handleContactFormRequest(request, env) {
             return { success: false, message: 'Missing field: email', statusHint: 400 };
         }
         const ts = Date.now();
+        const key = `contact_${ts}`;
         try {
             await env.CONTACT_REQUESTS_KV.put(
-                `contact_${ts}`,
+                key,
                 JSON.stringify({ email: email.trim(), name: name.trim(), message: message.trim(), ts })
             );
+            try {
+                const idxStr = await env.CONTACT_REQUESTS_KV.get('contactRequests_index');
+                const idx = idxStr ? safeParseJson(idxStr, []) : [];
+                idx.push(key);
+                await env.CONTACT_REQUESTS_KV.put('contactRequests_index', JSON.stringify(idx));
+            } catch (idxErr) {
+                console.error('Failed to update contact index:', idxErr.message);
+            }
         } catch (err) {
             console.error('Failed to store contact request:', err.message);
         }
@@ -2658,9 +2667,10 @@ async function handleGetContactRequestsRequest(request, env) {
         if (expected && token !== expected) {
             return { success: false, message: 'Невалиден токен.', statusHint: 403 };
         }
-        const { keys } = await env.CONTACT_REQUESTS_KV.list({ prefix: 'contact_' });
+        const indexStr = await env.CONTACT_REQUESTS_KV.get('contactRequests_index');
+        const ids = indexStr ? safeParseJson(indexStr, []) : [];
         const requests = [];
-        for (const { name: key } of keys) {
+        for (const key of ids) {
             const val = await env.CONTACT_REQUESTS_KV.get(key);
             if (val) requests.push(safeParseJson(val, null));
         }
@@ -2671,6 +2681,29 @@ async function handleGetContactRequestsRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleGetContactRequestsRequest -------------
+
+// ------------- START FUNCTION: handleValidateIndexesRequest -------------
+async function handleValidateIndexesRequest(request, env) {
+    try {
+        const auth = request.headers?.get?.('Authorization') || '';
+        const token = auth.replace(/^Bearer\s+/i, '').trim();
+        const expected = env[WORKER_ADMIN_TOKEN_SECRET_NAME];
+        if (expected && token !== expected) {
+            return { success: false, message: 'Невалиден токен.', statusHint: 403 };
+        }
+        const { keys: presetKeys } = await env.RESOURCES_KV.list({ prefix: 'aiPreset_' });
+        const presetIds = presetKeys.map(k => k.name);
+        await env.RESOURCES_KV.put('aiPresets_index', JSON.stringify(presetIds));
+        const { keys: contactKeys } = await env.CONTACT_REQUESTS_KV.list({ prefix: 'contact_' });
+        const contactIds = contactKeys.map(k => k.name);
+        await env.CONTACT_REQUESTS_KV.put('contactRequests_index', JSON.stringify(contactIds));
+        return { success: true };
+    } catch (error) {
+        console.error('Error in handleValidateIndexesRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при валидиране на индексите.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleValidateIndexesRequest -------------
 
 // ------------- START FUNCTION: handleSendTestEmailRequest -------------
 async function handleSendTestEmailRequest(request, env) {
@@ -4595,4 +4628,4 @@ async function handleUpdateKvRequest(request, env) {
 }
 // ------------- END FUNCTION: handleUpdateKvRequest -------------
 // ------------- INSERTION POINT: EndOfFile -------------
- export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus };
