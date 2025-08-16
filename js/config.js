@@ -37,6 +37,7 @@ export const apiEndpoints = {
     generatePraise: `${workerBaseUrl}/api/generatePraise`,
     aiHelper: `${workerBaseUrl}/api/aiHelper`,
     listClients: `${workerBaseUrl}/api/listClients`,
+    deleteClient: `${workerBaseUrl}/api/deleteClient`,
     addAdminQuery: `${workerBaseUrl}/api/addAdminQuery`,
     getAdminQueries: `${workerBaseUrl}/api/getAdminQueries`,
     peekAdminQueries: `${workerBaseUrl}/api/peekAdminQueries`,

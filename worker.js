@@ -530,6 +530,8 @@ export default {
                 }
             } else if (method === 'GET' && path === '/api/listClients') {
                 responseBody = await handleListClientsRequest(request, env);
+            } else if (method === 'POST' && path === '/api/deleteClient') {
+                responseBody = await handleDeleteClientRequest(request, env);
             } else if (method === 'POST' && path === '/api/addAdminQuery') {
                 responseBody = await handleAddAdminQueryRequest(request, env);
             } else if (method === 'GET' && path === '/api/getAdminQueries') {
