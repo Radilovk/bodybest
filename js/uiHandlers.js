@@ -9,6 +9,8 @@ import {
 import { trackerInfoTexts, detailedMetricInfoTexts, mainIndexInfoTexts } from './uiElements.js';
 import { colorGroups } from './themeConfig.js';
 import { capitalizeFirstLetter, safeGet, escapeHtml } from './utils.js';
+import { showLoading } from './loading.js';
+export { showLoading };
 
 // Продължителност на анимацията при скриване/показване на модали
 const MODAL_TRANSITION_MS = 300;
@@ -325,18 +327,6 @@ export function handleTrackerTooltipHide(event) {
     const targetLabel = event.target.closest('label[data-tooltip-key]');
     if (infoBtn || targetLabel) {
         hideTrackerTooltip();
-    }
-}
-
-export function showLoading(show, message = "Зареждане...") {
-    if (!selectors.loadingOverlay || !selectors.loadingOverlayText) return;
-    selectors.loadingOverlayText.textContent = message;
-    if (show) {
-        selectors.loadingOverlay.classList.remove('hidden');
-    } else {
-        setTimeout(() => {
-            selectors.loadingOverlay.classList.add('hidden');
-        }, 150);
     }
 }
 
