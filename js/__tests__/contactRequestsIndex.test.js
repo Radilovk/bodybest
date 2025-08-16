@@ -39,7 +39,9 @@ test('saves contact request and lists via index', async () => {
   expect(idx.length).toBe(1);
 
   const reqList = { headers: { get: h => (h === 'Authorization' ? 'Bearer secret' : null) } };
+  kv.list.mockClear();
   const listRes = await handleGetContactRequestsRequest(reqList, env);
+  expect(kv.list).not.toHaveBeenCalled();
   expect(listRes.requests[0].email).toBe('a@b.com');
 });
 
