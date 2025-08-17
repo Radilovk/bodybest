@@ -18,7 +18,8 @@ const medalIcons = [
 function showAchievementEmoji(iconHtml) {
     const emojiEl = document.getElementById('achievementModalEmoji');
     if (!emojiEl) return;
-    emojiEl.innerHTML = iconHtml;
+    // Използваме textContent, за да предотвратим инжектиране на HTML
+    emojiEl.textContent = iconHtml;
     emojiEl.setAttribute('aria-hidden', 'false');
     emojiEl.style.animation = 'none';
     // Trigger reflow to restart animation
@@ -56,7 +57,10 @@ export async function initializeAchievements(userId) {
     achievements = JSON.parse(localStorage.getItem(`achievements_${currentUserId}`) || '[]');
     let updated = false;
     achievements = achievements.map(a => {
-        if (!a.emoji) { a.emoji = medalIcons[Math.floor(Math.random() * medalIcons.length)]; updated = true; }
+        if (!a.emoji || /<.*>/.test(a.emoji)) {
+            a.emoji = medalIcons[Math.floor(Math.random() * medalIcons.length)];
+            updated = true;
+        }
         return a;
     });
     if (updated) saveAchievements();
@@ -66,7 +70,10 @@ export async function initializeAchievements(userId) {
             const data = await res.json();
             if (res.ok && data.success && Array.isArray(data.achievements)) {
                 achievements = data.achievements.map(a => {
-                    if (!a.emoji) { a.emoji = medalIcons[Math.floor(Math.random() * medalIcons.length)]; updated = true; }
+                    if (!a.emoji || /<.*>/.test(a.emoji)) {
+                        a.emoji = medalIcons[Math.floor(Math.random() * medalIcons.length)];
+                        updated = true;
+                    }
                     return a;
                 });
                 saveAchievements();
@@ -99,14 +106,17 @@ function renderAchievements(newIndex = -1) {
         const el = document.createElement('div');
         el.className = 'achievement-medal';
         if (index === newIndex) el.classList.add('new');
-        el.innerHTML = a.emoji || '🏅';
+        // Показваме само емоджита без HTML
+        el.textContent = a.emoji || '🏅';
         el.dataset.index = index;
         selectors.streakGrid.appendChild(el);
     });
 }
 
 export function createAchievement(title, message, emoji = null) {
-    const chosen = emoji || medalIcons[Math.floor(Math.random() * medalIcons.length)];
+    const chosen = emoji && !/<.*>/.test(emoji)
+        ? emoji
+        : medalIcons[Math.floor(Math.random() * medalIcons.length)];
     achievements.push({ date: Date.now(), title, message, emoji: chosen });
     if (achievements.length > 7) achievements.shift();
     saveAchievements();
