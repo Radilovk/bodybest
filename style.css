@@ -137,7 +137,33 @@ nav ul li a.active::after { width: 100%; }
 
 /* 5. СЕКЦИИ НА СТРАНИЦАТА (Hero, Process, Tech, Features, Programs, CTA) - ОТ ai_studio_code.css */
 /* Hero */
-.hero { min-height: 100vh; display: flex; align-items: center; text-align: center; }
+.hero {
+    min-height: calc(100vh - 60px);
+    display: flex;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    padding-bottom: 40px;
+}
+.hero::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 20px;
+    width: 24px;
+    height: 24px;
+    margin-left: -12px;
+    border-left: 2px solid var(--text-color-secondary);
+    border-bottom: 2px solid var(--text-color-secondary);
+    transform: translateY(0) rotate(-45deg);
+    animation: scroll-indicator 2s infinite;
+    pointer-events: none;
+}
+@keyframes scroll-indicator {
+    0% { transform: translateY(0) rotate(-45deg); opacity: 1; }
+    80% { transform: translateY(10px) rotate(-45deg); opacity: 0; }
+    100% { opacity: 0; }
+}
 .hero-content { max-width: 800px; margin: 0 auto; }
 .hero p { font-size: clamp(1.2rem, 3vw, 1.5rem); margin-top: 1.5rem; margin-bottom: 2.5rem; color: var(--text-color-secondary); max-width: 700px; margin-left:auto; margin-right:auto; }
 .hero-btns { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
