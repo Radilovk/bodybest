@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (heroSection && !prefersReducedMotion) {
         setTimeout(() => {
-            const scrollDistance = Math.min(window.innerHeight * 0.15, 200);
+            const scrollDistance = Math.min(window.innerHeight * 0.25, 325);
             window.scrollTo({ top: scrollDistance, behavior: 'smooth' });
             setTimeout(() => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
