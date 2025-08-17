@@ -4718,11 +4718,22 @@ async function rebuildUserKvIndex(userId, env) {
 // ------------- START FUNCTION: handleUpdateKvRequest -------------
 async function handleUpdateKvRequest(request, env) {
     try {
-        const { key, value } = await request.json();
+        const { key, value, userId: bodyUserId } = await request.json();
         if (!key) {
             return { success: false, message: 'Missing key' };
         }
         await env.USER_METADATA_KV.put(key, String(value));
+        const keyMatch = typeof key === 'string' ? key.match(/^([^_]+)_/) : null;
+        const rawUserId =
+            typeof bodyUserId === 'string' && bodyUserId
+                ? bodyUserId
+                : keyMatch
+                ? keyMatch[1]
+                : '';
+        const userId = /^[A-Za-z0-9_-]+$/.test(rawUserId) ? rawUserId : null;
+        if (userId) {
+            await rebuildUserKvIndex(userId, env);
+        }
         return { success: true };
     } catch (error) {
         console.error('Error in handleUpdateKvRequest:', error.message, error.stack);
