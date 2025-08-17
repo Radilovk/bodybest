@@ -171,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     userIdInput.value = savedId;
     userIdInput.disabled = true;
+    document.getElementById('chat-input').focus();
 
     const storedHistory = sessionStorage.getItem('chatHistory');
     if (storedHistory) {
