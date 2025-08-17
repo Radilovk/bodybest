@@ -308,10 +308,14 @@ const RECENT_CHAT_MESSAGES_FOR_PRINCIPLES = 10;
 const AUTOMATED_FEEDBACK_TRIGGER_DAYS = 3; // След толкова дни предлагаме автоматичен чат
 const PRAISE_INTERVAL_DAYS = 3; // Интервал за нова похвала/значка
 const MEDAL_ICONS = [
-    '<i class="bi bi-award-fill"></i>',
-    '<i class="bi bi-trophy-fill"></i>',
-    '<i class="bi bi-fire"></i>',
-    '<i class="bi bi-stars"></i>'
+    '🥇',
+    '🥈',
+    '🥉',
+    '🏅',
+    '🏆',
+    '🎖️',
+    '🌟',
+    '✨'
 ];
 const AI_CONFIG_KEYS = [
     'model_plan_generation',
