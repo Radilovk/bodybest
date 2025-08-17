@@ -5,9 +5,9 @@ async function validateFile(file) {
   try {
     const data = await fs.readFile(path.resolve(file), 'utf8');
     JSON.parse(data);
-    console.log(`✓ ${file}`);
+    console.log(`[OK] ${file}`);
   } catch (err) {
-    console.error(`✗ ${file}: ${err.message}`);
+    console.error(`[ERROR] ${file}: ${err.message}`);
     process.exitCode = 1;
   }
 }

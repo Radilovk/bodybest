@@ -589,7 +589,7 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
     const currentDayKey = dayNames[today.getDay()];
     const todayTitle = today.toLocaleDateString('bg-BG', { weekday: 'long', day: 'numeric', month: 'long' });
 
-    if(selectors.dailyPlanTitle) selectors.dailyPlanTitle.textContent = `📅 Меню (${capitalizeFirstLetter(todayTitle)})`;
+    if (selectors.dailyPlanTitle) selectors.dailyPlanTitle.innerHTML = `<svg class="icon"><use href="#icon-calendar"></use></svg> Меню (${capitalizeFirstLetter(todayTitle)})`;
 
     const dailyPlanData = safeGet(week1Menu, currentDayKey, []);
     Object.assign(todaysPlanMacros, calculatePlanMacros(dailyPlanData, true, true));
@@ -826,7 +826,7 @@ function populateProfileTab(userName, initialData, currentStatus, initialAnswers
              const challengesHtml = `
                 <div class="info-note note-base" style="flex-direction: column; align-items: flex-start;">
                     <p style="margin:0; display:flex; align-items:center;">
-                        <strong style="display:inline-block; margin-right:5px;">🧗 Най-голямо предизвикателство (от въпросника):</strong>
+                        <strong style="display:inline-block; margin-right:5px;"><i class="bi bi-flag" aria-hidden="true"></i> Най-голямо предизвикателство (от въпросника):</strong>
                     </p>
                     <p style="margin:0; padding-left: 1.5em;">${mainChallengeText}</p>
                 </div>`;
@@ -970,14 +970,14 @@ function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
         if (initialAnswers.q1745890775342) activityContent.push(`<strong>Продължителност:</strong> ${initialAnswers.q1745890775342}`);
     } else if (initialAnswers?.physicalActivity === 'Не') activityContent.push('Не са посочени планирани спортни занимания.');
     const dailyActivityLevel = initialAnswers?.q1745878295708; if (dailyActivityLevel) activityContent.push(`<strong>Ежедневна активност (общо ниво):</strong> ${dailyActivityLevel}`);
-    if (activityContent.length > 0) strategiesData.push({title: "🏃 Физическа активност (от въпросник)", content: activityContent.map(item => `<span>${item}</span>`).join('<br>')});
+    if (activityContent.length > 0) strategiesData.push({ title: '<i class="bi bi-activity" aria-hidden="true"></i> Физическа активност (от въпросник)', content: activityContent.map(item => `<span>${item}</span>`).join('<br>') });
     renderAccordionGroup(selectors.recStrategiesContent, strategiesData, '<div class="card placeholder"><p>Няма налични стратегии.</p></div>', true);
     if (selectors.recSupplementsContent) {
         const placeholderEl = selectors.recSupplementsContent.querySelector('p.placeholder'); if (placeholderEl) placeholderEl.remove();
         let supplementsHtml = ''; const supps = safeGet(hydrationCookingSupplements, 'supplement_suggestions', []);
         if (supps.length > 0) {
             supplementsHtml += '<ul>';
-            supps.forEach(s => { supplementsHtml += `<li><strong>💊 ${s.supplement_name||'?'}</strong>${s.reasoning?`: ${s.reasoning}`:''}${s.dosage_suggestion?` <span class="text-muted">(Препоръка: ${s.dosage_suggestion})</span>`:''}${s.caution?` <br><em class="text-muted fs-sm" style="display:block; margin-top:0.2rem;">Внимание: ${s.caution}</em>`:''}</li>`; });
+            supps.forEach(s => { supplementsHtml += `<li><strong><i class="bi bi-capsule" aria-hidden="true"></i> ${s.supplement_name||'?'}</strong>${s.reasoning?`: ${s.reasoning}`:''}${s.dosage_suggestion?` <span class="text-muted">(Препоръка: ${s.dosage_suggestion})</span>`:''}${s.caution?` <br><em class="text-muted fs-sm" style="display:block; margin-top:0.2rem;">Внимание: ${s.caution}</em>`:''}</li>`; });
             supplementsHtml += '</ul>';
         } else supplementsHtml = '<p class="placeholder">Няма специфични препоръки за добавки.</p>';
         selectors.recSupplementsContent.innerHTML = supplementsHtml;
