@@ -1774,7 +1774,10 @@ async function handleGetAchievementsRequest(request, env) {
         let achievements = safeParseJson(achStr, []);
         let updated = false;
         achievements = achievements.map(a => {
-            if (!a.emoji) { a.emoji = MEDAL_ICONS[Math.floor(Math.random() * MEDAL_ICONS.length)]; updated = true; }
+            if (!a.emoji || /<.*>/.test(a.emoji)) {
+                a.emoji = MEDAL_ICONS[Math.floor(Math.random() * MEDAL_ICONS.length)];
+                updated = true;
+            }
             return a;
         });
         if (updated) await env.USER_METADATA_KV.put(`${userId}_achievements`, JSON.stringify(achievements));
@@ -1795,7 +1798,16 @@ async function handleGeneratePraiseRequest(request, env) {
         const now = Date.now();
         const lastTsStr = await env.USER_METADATA_KV.get(`${userId}_last_praise_ts`);
         const achStr = await env.USER_METADATA_KV.get(`${userId}_achievements`);
-        const achievements = safeParseJson(achStr, []);
+        let achievements = safeParseJson(achStr, []);
+        let updated = false;
+        achievements = achievements.map(a => {
+            if (!a.emoji || /<.*>/.test(a.emoji)) {
+                a.emoji = MEDAL_ICONS[Math.floor(Math.random() * MEDAL_ICONS.length)];
+                updated = true;
+            }
+            return a;
+        });
+        if (updated) await env.USER_METADATA_KV.put(`${userId}_achievements`, JSON.stringify(achievements));
 
         if (!lastTsStr && achievements.length === 0) {
             const title = 'Първа стъпка';
