@@ -209,17 +209,11 @@ nav.tabs.styled-tabs .tab-btn[aria-selected="true"]::after {
     transform: translateX(-50%) scaleX(1);
 }
 
-main {
-  padding-top: var(--space-md);
+main { 
+  padding-top: var(--space-md); 
 }
 .tab-content { display: none; animation: fadeInPanel 0.45s ease-out; }
 .tab-content.active-tab-content { display: block; }
-/* Центрирани и унифицирани заглавия на табове */
-.tab-content h2 {
-  justify-content: center;
-  text-align: center;
-  font-size: var(--fs-lg);
-}
 @keyframes fadeInPanel {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
