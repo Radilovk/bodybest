@@ -347,6 +347,20 @@ body.dark-theme .chat-messages .message.bot { color: #e0e0e0; }
   height: 32px;
   animation: assistantPulse 2s infinite;
 }
+
+@keyframes assistantFloat {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-6px); }
+}
+@keyframes assistantGlow {
+  0%,100% { filter: drop-shadow(0 0 0 var(--secondary-color)); }
+  50%     { filter: drop-shadow(0 0 8px var(--secondary-color)); }
+}
+.assistant-icon.attention {
+  animation: assistantFloat 3s ease-in-out infinite,
+             assistantGlow 3s ease-in-out infinite,
+             assistantPulse 2s infinite;
+}
 @keyframes assistantWiggle {
   0%   { transform: rotate(0deg); }
   15%  { transform: rotate(-10deg); }
@@ -362,4 +376,5 @@ body.dark-theme .chat-messages .message.bot { color: #e0e0e0; }
 @media (prefers-reduced-motion: reduce) {
   #chat-fab .assistant-icon { animation: none; }
   .assistant-icon.wiggle { animation: none; }
+  .assistant-icon.attention { animation: none; }
 }

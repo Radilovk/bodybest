@@ -86,6 +86,7 @@ async function checkAdminQueries(userId) {
             });
             if (!selectors.chatWidget?.classList.contains('visible')) {
                 if (selectors.chatFab) selectors.chatFab.classList.add('notification');
+                setAssistantAttention(true);
                 triggerAssistantWiggle();
                 setAutomatedChatPending(true);
             }
@@ -140,6 +141,12 @@ let lastSavedDailyLogSerialized = null; // Кеш на последно запи
 
 export { activeTooltip, setActiveTooltip };
 
+export function setAssistantAttention(active) {
+    const icon = selectors.chatFab?.querySelector('.assistant-icon');
+    if (!icon) return;
+    icon.classList.toggle('attention', active);
+}
+
 export function triggerAssistantWiggle() {
     const icon = selectors.chatFab?.querySelector('.assistant-icon');
     if (!icon) return;
@@ -149,6 +156,8 @@ export function triggerAssistantWiggle() {
     }
     icon.addEventListener('animationend', handleEnd, { once: true });
 }
+
+selectors.chatFab?.addEventListener('click', () => setAssistantAttention(false));
 
 // Функция за нулиране на глобалното състояние при изход
 export function resetAppState() {
