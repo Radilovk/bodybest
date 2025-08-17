@@ -4,12 +4,14 @@ import { openModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
 
 const medalIcons = [
+    '🥇',
+    '🥈',
+    '🥉',
     '🏅',
     '🏆',
-    '🔥',
-    '⭐',
-    '✅',
-    '😄'
+    '🎖️',
+    '🌟',
+    '✨'
 ];
 
 // Анимирано показване на иконка в модала за постижение
@@ -97,7 +99,7 @@ function renderAchievements(newIndex = -1) {
         const el = document.createElement('div');
         el.className = 'achievement-medal';
         if (index === newIndex) el.classList.add('new');
-        el.innerHTML = a.emoji || '<i class="bi bi-award"></i>';
+        el.innerHTML = a.emoji || '🏅';
         el.dataset.index = index;
         selectors.streakGrid.appendChild(el);
     });
@@ -128,7 +130,7 @@ export function handleAchievementClick(e) {
     const modalTitle = document.getElementById('achievementModalTitle');
     if (body) body.textContent = ach.message;
     if (modalTitle) modalTitle.textContent = ach.title;
-    showAchievementEmoji(ach.emoji || '<i class="bi bi-award"></i>');
+    showAchievementEmoji(ach.emoji || '🏅');
     openModal('achievementModal');
 }
 
