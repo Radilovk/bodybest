@@ -183,7 +183,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch { /* ignore parse errors */ }
     }
 
-    document.getElementById('chat-send').addEventListener('click', sendMessage);
+    const sendBtn = document.getElementById('chat-send');
+    sendBtn.addEventListener('mousedown', e => e.preventDefault());
+    sendBtn.addEventListener('click', e => {
+        e.preventDefault();
+        sendMessage();
+        setTimeout(() => document.getElementById('chat-input').focus(), 0);
+    });
     document.getElementById('chat-input').addEventListener('keypress', e => {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     });
