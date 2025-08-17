@@ -9,6 +9,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const openModalBtns = document.querySelectorAll('.open-modal-btn');
     let authModule;
 
+    // Кратка анимация при зареждане: превъртане надолу и обратно
+    const heroSection = document.querySelector('.hero');
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (heroSection && !prefersReducedMotion) {
+        setTimeout(() => {
+            const scrollDistance = Math.min(window.innerHeight * 0.15, 200);
+            window.scrollTo({ top: scrollDistance, behavior: 'smooth' });
+            setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 800);
+        }, 300);
+    }
+
     // Динамично зареждане на логиката за вход/регистрация
     openModalBtns.forEach(btn => {
         btn.addEventListener('click', async (e) => {
