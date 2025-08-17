@@ -190,8 +190,11 @@ document.addEventListener('DOMContentLoaded', () => {
         sendMessage();
         setTimeout(() => document.getElementById('chat-input').focus(), 0);
     });
-    document.getElementById('chat-input').addEventListener('keypress', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    document.getElementById('chat-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
     });
     document.getElementById('chat-clear').addEventListener('click', clearChat);
     document.getElementById('chat-upload').addEventListener('click', openImageDialog);
