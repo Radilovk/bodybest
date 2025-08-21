@@ -62,24 +62,30 @@ test('updates KV entry and rebuilds index', async () => {
   expect(res.success).toBe(true);
 });
 
-test('extracts userId from request body when key lacks prefix', async () => {
+test('rejects update when key lacks required prefix', async () => {
   const put = jest.fn();
-  const list = jest
-    .fn()
-    .mockResolvedValue({ keys: [{ name: 'user3_kv_only' }], list_complete: true });
-  const get = jest.fn().mockResolvedValue('v');
-  const env = { USER_METADATA_KV: { put, list, get } };
+  const env = { USER_METADATA_KV: { put, list: jest.fn(), get: jest.fn() } };
   const req = new Request('https://example.com/api/updateKv', {
     method: 'POST',
     body: JSON.stringify({ key: 'kv_only', value: 'v', userId: 'user3' })
   });
-  await worker.handleUpdateKvRequest(req, env);
-  expect(put).toHaveBeenNthCalledWith(1, 'kv_only', 'v');
-  expect(put).toHaveBeenNthCalledWith(
-    2,
-    'user3_kv_index',
-    JSON.stringify({ user3_kv_only: 'v' })
-  );
+  const res = await worker.handleUpdateKvRequest(req, env);
+  expect(res.success).toBe(false);
+  expect(res.message).toMatch(/prefix/i);
+  expect(put).not.toHaveBeenCalled();
+});
+
+test('rejects update when key prefix mismatches userId', async () => {
+  const put = jest.fn();
+  const env = { USER_METADATA_KV: { put, list: jest.fn(), get: jest.fn() } };
+  const req = new Request('https://example.com/api/updateKv', {
+    method: 'POST',
+    body: JSON.stringify({ key: 'user4_kv', value: 'v', userId: 'user3' })
+  });
+  const res = await worker.handleUpdateKvRequest(req, env);
+  expect(res.success).toBe(false);
+  expect(res.message).toMatch(/prefix/i);
+  expect(put).not.toHaveBeenCalled();
 });
 
 test('rebuilds KV index for user', async () => {
