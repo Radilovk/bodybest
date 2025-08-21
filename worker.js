@@ -4722,18 +4722,30 @@ async function handleUpdateKvRequest(request, env) {
         if (!key) {
             return { success: false, message: 'Missing key' };
         }
-        await env.USER_METADATA_KV.put(key, String(value));
+
         const keyMatch = typeof key === 'string' ? key.match(/^([^_]+)_/) : null;
-        const rawUserId =
-            typeof bodyUserId === 'string' && bodyUserId
+        const rawUserIdFromKey = keyMatch ? keyMatch[1] : null;
+        const rawBodyUserId =
+            typeof bodyUserId === 'string' && /^[A-Za-z0-9_-]+$/.test(bodyUserId)
                 ? bodyUserId
-                : keyMatch
-                ? keyMatch[1]
-                : '';
-        const userId = /^[A-Za-z0-9_-]+$/.test(rawUserId) ? rawUserId : null;
-        if (userId) {
-            await rebuildUserKvIndex(userId, env);
+                : null;
+        const userId = rawBodyUserId ?? rawUserIdFromKey;
+        if (!userId) {
+            return {
+                success: false,
+                message: 'Missing userId or key prefix'
+            };
         }
+        const expectedPrefix = `${userId}_`;
+        if (!key.startsWith(expectedPrefix)) {
+            return {
+                success: false,
+                message: 'Key prefix does not match userId'
+            };
+        }
+
+        await env.USER_METADATA_KV.put(key, String(value));
+        await rebuildUserKvIndex(userId, env);
         return { success: true };
     } catch (error) {
         console.error('Error in handleUpdateKvRequest:', error.message, error.stack);
