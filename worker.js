@@ -298,12 +298,50 @@ const AI_PRESET_INDEX_TTL_MS = 5 * 60 * 1000;
 const GEMINI_API_URL_BASE = `https://generativelanguage.googleapis.com/v1beta/models/`;
 // Очаквани Bindings: RESOURCES_KV, USER_METADATA_KV
 
-const MAX_CHAT_HISTORY_MESSAGES = 30;
+const DEFAULT_MAX_CHAT_HISTORY_MESSAGES = 30;
 const PRINCIPLE_UPDATE_INTERVAL_DAYS = 7; // За ръчна актуализация на принципи, ако адаптивният не ги е променил
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS = 10;
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS = 7;
 const USER_ACTIVITY_LOG_LIST_LIMIT = 100;
 const RECENT_CHAT_MESSAGES_FOR_PRINCIPLES = 10;
+
+async function getMaxChatHistoryMessages(env) {
+    let val = env.MAX_CHAT_HISTORY_MESSAGES;
+    if (val === undefined && env.RESOURCES_KV) {
+        val = await env.RESOURCES_KV.get('MAX_CHAT_HISTORY_MESSAGES');
+    }
+    const parsed = parseInt(val, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MAX_CHAT_HISTORY_MESSAGES;
+}
+
+async function summarizeAndTrimChatHistory(history, env, maxMessages) {
+    if (history.length <= maxMessages) return history;
+    try {
+        const hasSummary = history[0]?.summary === true;
+        const existingSummary = hasSummary ? history[0].parts?.[0]?.text || '' : '';
+        const startIdx = hasSummary ? 1 : 0;
+        const summarizable = history.slice(startIdx, history.length - (maxMessages - 1));
+        if (summarizable.length === 0) {
+            return history.slice(-maxMessages);
+        }
+        const textBlock = (existingSummary ? `${existingSummary}\n` : '') +
+            summarizable.map(m => `${m.role === 'model' ? 'АСИСТЕНТ' : 'ПОТРЕБИТЕЛ'}: ${m.parts?.[0]?.text || ''}`).join('\n');
+        const tpl = await env.RESOURCES_KV?.get('prompt_chat_summary');
+        const prompt = tpl ? tpl.replace('%%CHAT_HISTORY%%', textBlock)
+            : `Резюмирай накратко на български следния чат между потребител и асистент:\n${textBlock}\nКратко резюме:`;
+        const model = await env.RESOURCES_KV?.get('model_chat_summary') || await env.RESOURCES_KV?.get('model_chat');
+        if (!model) {
+            console.warn('CHAT_SUMMARY_WARN: Missing summary model, trimming without summarizing.');
+            return history.slice(-maxMessages);
+        }
+        const summaryText = await callModel(model, prompt, env, { temperature: 0.3, maxTokens: 200 });
+        const recent = history.slice(-(maxMessages - 1));
+        return [{ role: 'system', parts: [{ text: summaryText.trim() }], summary: true }, ...recent];
+    } catch (err) {
+        console.error('CHAT_SUMMARY_ERROR:', err);
+        return history.slice(-maxMessages);
+    }
+}
 
 const AUTOMATED_FEEDBACK_TRIGGER_DAYS = 3; // След толкова дни предлагаме автоматичен чат
 const PRAISE_INTERVAL_DAYS = 3; // Интервал за нова похвала/значка
@@ -1302,12 +1340,13 @@ async function handleChatRequest(request, env) {
         }
         const currentStatus = safeParseJson(currentStatusStr, {});
         const currentPrinciples = safeGet(finalPlan, 'principlesWeek2_4', 'Общи принципи.');
+        const maxChatHistory = await getMaxChatHistoryMessages(env);
         if (Object.keys(initialAnswers).length === 0 || Object.keys(finalPlan).length === 0) {
             console.error(`CHAT_REQUEST_ERROR (${userId}): Critical data (initialAnswers or finalPlan) empty after parsing.`);
             return { success: false, message: 'Грешка при зареждане на данни за чат асистента.', statusHint: 500 };
         }
         storedChatHistory.push({ role: 'user', parts: [{ text: message }] });
-        if (storedChatHistory.length > MAX_CHAT_HISTORY_MESSAGES) storedChatHistory = storedChatHistory.slice(-MAX_CHAT_HISTORY_MESSAGES);
+        storedChatHistory = await summarizeAndTrimChatHistory(storedChatHistory, env, maxChatHistory);
         
         const userName = initialAnswers.name || 'Потребител'; const userGoal = initialAnswers.goal || 'N/A';
         const userConditions = (Array.isArray(initialAnswers.medicalConditions) ? initialAnswers.medicalConditions.filter(c => c && c.toLowerCase() !== 'нямам').join(', ') : 'Няма') || 'Няма специфични';
@@ -1327,7 +1366,10 @@ async function handleChatRequest(request, env) {
         const recentLogs = logStringsForChat.map((logStr, i) => { if(logStr) { const d=new Date(); d.setDate(d.getDate()-i); return {date:d.toISOString().split('T')[0], data:safeParseJson(logStr,{})};} return null;}).filter(l=>l&&l.data&&Object.keys(l.data).length>0).sort((a,b)=>new Date(b.date).getTime()-new Date(a.date).getTime());
         if(recentLogs.length>0) recentLogsSummary = recentLogs.map(l=>{ const df=new Date(l.date).toLocaleDateString('bg-BG',{day:'2-digit',month:'short'}); const m=l.data.mood?`Настр:${l.data.mood}/5`:''; const e=l.data.energy?`Енерг:${l.data.energy}/5`:''; const s=l.data.sleep?`Сън:${l.data.sleep}/5`:''; const n=l.data.note?`Бел:"${l.data.note.substring(0,20)}..."`:''; const c=l.data.completedMealsStatus?`${Object.values(l.data.completedMealsStatus).filter(v=>v===true).length} изп. хран.`:''; return `${df}: ${[m,e,s,c,n].filter(Boolean).join('; ')}`;}).join('\n');
         
-        const historyPrompt = storedChatHistory.slice(-10).map(e=>`${e.role==='model'?'АСИСТЕНТ':'ПОТРЕБИТЕЛ'}: ${e.parts?.[0]?.text||''}`).join('\n');
+        const summaryEntry = storedChatHistory[0]?.summary ? storedChatHistory[0] : null;
+        const recentForPrompt = storedChatHistory.slice(-(summaryEntry ? 9 : 10));
+        const historyForPrompt = summaryEntry ? [summaryEntry, ...recentForPrompt] : recentForPrompt;
+        const historyPrompt = historyForPrompt.map(e=>`${e.summary?'РЕЗЮМЕ':e.role==='model'?'АСИСТЕНТ':'ПОТРЕБИТЕЛ'}: ${e.parts?.[0]?.text||''}`).join('\n');
         const chatPromptTpl = promptOverride || await env.RESOURCES_KV.get('prompt_chat');
         const chatModel = await env.RESOURCES_KV.get('model_chat');
         const modelToUse = model || chatModel;
@@ -1388,7 +1430,7 @@ async function handleChatRequest(request, env) {
         }
         
         storedChatHistory.push({role:'model',parts:[{text:respToUser}]});
-        if(storedChatHistory.length>MAX_CHAT_HISTORY_MESSAGES) storedChatHistory=storedChatHistory.slice(-MAX_CHAT_HISTORY_MESSAGES);
+        storedChatHistory = await summarizeAndTrimChatHistory(storedChatHistory, env, maxChatHistory);
         
         // Asynchronous save of chat history
         env.USER_METADATA_KV.put(`${userId}_chat_history`,JSON.stringify(storedChatHistory)).catch(err=>{console.error(`CHAT_ERROR (${userId}): Failed async chat history save:`,err);});
@@ -4804,4 +4846,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory };
