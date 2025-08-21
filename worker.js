@@ -4687,10 +4687,10 @@ async function handleListUserKvRequest(request, env) {
             }
         }
         const list = await env.USER_METADATA_KV.list({ prefix: `${userId}_`, limit, cursor });
-        const kv = {};
-        for (const { name } of list.keys) {
-            kv[name] = await env.USER_METADATA_KV.get(name);
-        }
+        const kvEntries = await Promise.all(
+            list.keys.map(async ({ name }) => [name, await env.USER_METADATA_KV.get(name)])
+        );
+        const kv = Object.fromEntries(kvEntries);
         return {
             success: true,
             kv,
