@@ -2,7 +2,162 @@ import { jest } from '@jest/globals';
 
 const workerModule = await import('../worker.js');
 
-describe('processSingleUserPlan - успешен сценарий', () => {
+const baseInitialAnswers = {
+  name: 'Иван',
+  email: 'ivan@example.com',
+  goal: 'Подобряване на формата',
+  weight: 82,
+  height: 178,
+  gender: 'мъж',
+  age: 34,
+  medicalConditions: ['нямам'],
+  physicalActivity: 'Да',
+  q1745877358368: ['бягане'],
+  q1745878063775: '3 пъти седмично',
+  q1745890775342: '45 минути',
+  q1745878295708: 'Умерена',
+  stressLevel: 'Средно',
+  sleepHours: 7,
+  sleepInterrupt: 'Не',
+  mainChallenge: 'Постоянство',
+  lossKg: 5,
+  q1745806494081: 'Брюкселско зеле',
+  submissionDate: '2024-01-01T00:00:00.000Z'
+};
+
+function createFetchStub(callModelMock, env) {
+  return jest.fn(async (_url, options) => {
+    const body = JSON.parse(options.body);
+    const modelName = body.model;
+    const responseText = await callModelMock(modelName, body.messages?.[0]?.content ?? '', env, {
+      temperature: options.temperature,
+      maxTokens: options.max_tokens
+    });
+    return {
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: { content: responseText }
+          }
+        ]
+      })
+    };
+  });
+}
+
+function buildTestEnvironment(userId, { failFirstFlush = false } = {}) {
+  const kvStore = new Map();
+  const logKey = `${userId}_plan_log`;
+  const logErrorKey = `${logKey}_flush_error`;
+  let flushFailureTriggered = false;
+
+  const userMetadataKv = {
+    get: jest.fn(async (key) => {
+      if (kvStore.has(key)) {
+        return kvStore.get(key);
+      }
+      if (key === `${userId}_initial_answers`) {
+        return JSON.stringify(baseInitialAnswers);
+      }
+      if (key === `${userId}_final_plan`) {
+        return JSON.stringify({
+          caloriesMacros: { calories: 2000 },
+          principlesWeek2_4: ['- Стар принцип']
+        });
+      }
+      if (key === `${userId}_current_status`) {
+        return JSON.stringify({ weight: 80 });
+      }
+      if (key === `${userId}_logs` || key.startsWith(`${userId}_log_`)) {
+        return JSON.stringify([]);
+      }
+      if (key === `${userId}_chat_history`) {
+        return JSON.stringify([]);
+      }
+      if (key === `pending_plan_users` || key === `ready_plan_users`) {
+        return kvStore.get(key) ?? JSON.stringify([]);
+      }
+      if (key === logKey) {
+        return kvStore.get(key) ?? null;
+      }
+      return null;
+    }),
+    put: jest.fn(async (key, value) => {
+      if (
+        failFirstFlush &&
+        key === logKey &&
+        value !== JSON.stringify([]) &&
+        !flushFailureTriggered
+      ) {
+        flushFailureTriggered = true;
+        throw new Error('Simulated flush failure');
+      }
+      kvStore.set(key, value);
+    }),
+    delete: jest.fn(async (key) => {
+      kvStore.delete(key);
+    }),
+    list: jest.fn(async () => ({ keys: [], list_complete: true }))
+  };
+
+  const resourcesKv = {
+    get: jest.fn(async (key) => {
+      switch (key) {
+        case 'question_definitions':
+          return JSON.stringify([
+            { id: 'goal', text: 'Каква е целта Ви?' },
+            { id: 'medicalConditions', text: 'Медицински състояния' }
+          ]);
+        case 'base_diet_model':
+        case 'allowed_meal_combinations':
+        case 'eating_psychology':
+          return '';
+        case 'recipe_data':
+          return JSON.stringify({});
+        case 'model_plan_generation':
+          return 'gpt-plan';
+        case 'prompt_unified_plan_generation_v2':
+          return '{"profileSummary":"Профил за %%USER_NAME%%","caloriesMacros":{"calories":2100,"fiber_percent":10,"fiber_grams":30},"week1Menu":{"monday":[]},"principlesWeek2_4":["- Баланс"],"detailedTargets":{"hydration":"2L"}}';
+        default:
+          return null;
+      }
+    })
+  };
+
+  const env = {
+    USER_METADATA_KV: userMetadataKv,
+    RESOURCES_KV: resourcesKv,
+    OPENAI_API_KEY: 'test-openai-key'
+  };
+
+  const callModelMock = jest.fn(async () => JSON.stringify({
+    profileSummary: 'Обобщение',
+    caloriesMacros: {
+      calories: 2100,
+      protein_grams: 140,
+      carbs_grams: 210,
+      fat_grams: 70,
+      fiber_percent: 10,
+      fiber_grams: 30
+    },
+    week1Menu: {
+      monday: [
+        {
+          meal_name: 'Закуска',
+          items: [{ name: 'Овесена каша', portion: '1 купа' }]
+        }
+      ]
+    },
+    principlesWeek2_4: ['- Поддържайте хидратация'],
+    detailedTargets: { hydration: '2L вода' },
+    generationMetadata: { errors: [] }
+  }));
+
+  return { env, kvStore, userMetadataKv, resourcesKv, callModelMock, logKey, logErrorKey };
+}
+
+describe('processSingleUserPlan - буфериран лог', () => {
   let originalFetch;
 
   beforeEach(() => {
@@ -16,146 +171,13 @@ describe('processSingleUserPlan - успешен сценарий', () => {
 
   test('генерира план и записва ключовите стъпки в логовете', async () => {
     const userId = 'test-user';
-    const kvStore = new Map();
+    const { env, userMetadataKv, callModelMock, logKey } = buildTestEnvironment(userId);
 
-    const initialAnswers = {
-      name: 'Иван',
-      email: 'ivan@example.com',
-      goal: 'Подобряване на формата',
-      weight: 82,
-      height: 178,
-      gender: 'мъж',
-      age: 34,
-      medicalConditions: ['нямам'],
-      physicalActivity: 'Да',
-      q1745877358368: ['бягане'],
-      q1745878063775: '3 пъти седмично',
-      q1745890775342: '45 минути',
-      q1745878295708: 'Умерена',
-      stressLevel: 'Средно',
-      sleepHours: 7,
-      sleepInterrupt: 'Не',
-      mainChallenge: 'Постоянство',
-      lossKg: 5,
-      q1745806494081: 'Брюкселско зеле',
-      submissionDate: '2024-01-01T00:00:00.000Z'
-    };
-
-    const userMetadataKv = {
-      get: jest.fn(async (key) => {
-        if (kvStore.has(key)) {
-          return kvStore.get(key);
-        }
-        if (key === `${userId}_initial_answers`) {
-          return JSON.stringify(initialAnswers);
-        }
-        if (key === `${userId}_final_plan`) {
-          return JSON.stringify({
-            caloriesMacros: { calories: 2000 },
-            principlesWeek2_4: ['- Стар принцип']
-          });
-        }
-        if (key === `${userId}_current_status`) {
-          return JSON.stringify({ weight: 80 });
-        }
-        if (key === `${userId}_logs` || key.startsWith(`${userId}_log_`)) {
-          return JSON.stringify([]);
-        }
-        if (key === `${userId}_chat_history`) {
-          return JSON.stringify([]);
-        }
-        if (key === `pending_plan_users` || key === `ready_plan_users`) {
-          return kvStore.get(key) ?? JSON.stringify([]);
-        }
-        if (key === `${userId}_plan_log`) {
-          return kvStore.get(key) ?? null;
-        }
-        return null;
-      }),
-      put: jest.fn(async (key, value) => {
-        kvStore.set(key, value);
-      }),
-      delete: jest.fn(async (key) => {
-        kvStore.delete(key);
-      }),
-      list: jest.fn(async () => ({ keys: [], list_complete: true }))
-    };
-
-    const resourcesKv = {
-      get: jest.fn(async (key) => {
-        switch (key) {
-          case 'question_definitions':
-            return JSON.stringify([
-              { id: 'goal', text: 'Каква е целта Ви?' },
-              { id: 'medicalConditions', text: 'Медицински състояния' }
-            ]);
-          case 'base_diet_model':
-          case 'allowed_meal_combinations':
-          case 'eating_psychology':
-            return '';
-          case 'recipe_data':
-            return JSON.stringify({});
-          case 'model_plan_generation':
-            return 'gpt-plan';
-          case 'prompt_unified_plan_generation_v2':
-            return '{"profileSummary":"Профил за %%USER_NAME%%","caloriesMacros":{"calories":2100,"fiber_percent":10,"fiber_grams":30},"week1Menu":{"monday":[]},"principlesWeek2_4":["- Баланс"],"detailedTargets":{"hydration":"2L"}}';
-          default:
-            return null;
-        }
-      })
-    };
-
-    const env = {
-      USER_METADATA_KV: userMetadataKv,
-      RESOURCES_KV: resourcesKv,
-      OPENAI_API_KEY: 'test-openai-key'
-    };
-
-    const callModelMock = jest.fn(async () => JSON.stringify({
-      profileSummary: 'Обобщение',
-      caloriesMacros: {
-        calories: 2100,
-        protein_grams: 140,
-        carbs_grams: 210,
-        fat_grams: 70,
-        fiber_percent: 10,
-        fiber_grams: 30
-      },
-      week1Menu: {
-        monday: [
-          {
-            meal_name: 'Закуска',
-            items: [{ name: 'Овесена каша', portion: '1 купа' }]
-          }
-        ]
-      },
-      principlesWeek2_4: ['- Поддържайте хидратация'],
-      detailedTargets: { hydration: '2L вода' },
-      generationMetadata: { errors: [] }
-    }));
-
-    global.fetch = jest.fn(async (_url, options) => {
-      const body = JSON.parse(options.body);
-      const modelName = body.model;
-      const responseText = await callModelMock(modelName, body.messages?.[0]?.content ?? '', env, {
-        temperature: options.temperature,
-        maxTokens: options.max_tokens
-      });
-      return {
-        ok: true,
-        json: async () => ({
-          choices: [
-            {
-              message: { content: responseText }
-            }
-          ]
-        })
-      };
-    });
+    global.fetch = createFetchStub(callModelMock, env);
 
     await workerModule.processSingleUserPlan(userId, env);
 
-    const logCalls = userMetadataKv.put.mock.calls.filter(([key]) => key === `${userId}_plan_log`);
+    const logCalls = userMetadataKv.put.mock.calls.filter(([key]) => key === logKey);
     expect(logCalls.length).toBeGreaterThan(0);
 
     const finalLogEntries = JSON.parse(logCalls[logCalls.length - 1][1]);
@@ -187,5 +209,44 @@ describe('processSingleUserPlan - успешен сценарий', () => {
       env,
       expect.any(Object)
     );
+  });
+
+  test('запазва критична грешка, когато flush на лога се провали', async () => {
+    const userId = 'flush-failure-user';
+    const { env, kvStore, userMetadataKv, callModelMock, logKey, logErrorKey } = buildTestEnvironment(
+      userId,
+      { failFirstFlush: true }
+    );
+
+    global.fetch = createFetchStub(callModelMock, env);
+
+    await workerModule.processSingleUserPlan(userId, env);
+
+    const flushErrorCall = userMetadataKv.put.mock.calls.find(([key]) => key === logErrorKey);
+    expect(flushErrorCall).toBeDefined();
+
+    const flushErrorPayload = JSON.parse(flushErrorCall[1]);
+    expect(flushErrorPayload.message).toBe('Simulated flush failure');
+
+    const finalLogEntries = JSON.parse(kvStore.get(logKey));
+    const finalMessages = finalLogEntries.map((entry) => entry.replace(/^\[[^\]]+\]\s*/, ''));
+
+    const expectedSteps = [
+      'Старт на генериране на плана',
+      'Зареждане на изходни данни',
+      'Подготовка на модела',
+      'Извикване на AI модела',
+      'Планът е генериран',
+      'Запис на генерирания план',
+      'Планът е готов',
+      'Процесът приключи'
+    ];
+
+    for (const step of expectedSteps) {
+      expect(finalMessages.some((msg) => msg.includes(step))).toBe(true);
+    }
+
+    const flushFailureLogLine = finalMessages.find((msg) => msg.includes('Неуспешен запис на лог'));
+    expect(flushFailureLogLine).toContain('Simulated flush failure');
   });
 });
