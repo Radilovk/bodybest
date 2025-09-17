@@ -674,7 +674,11 @@ export default {
                 ctx.waitUntil(processSingleUserPlan(userId, env));
                 processedUsersForPlan++;
             }
-            await env.USER_METADATA_KV.put('pending_plan_users', JSON.stringify(remainingPending));
+            const pendingUsersJson = JSON.stringify(pendingUsers);
+            const remainingPendingJson = JSON.stringify(remainingPending);
+            if (remainingPendingJson !== pendingUsersJson) {
+                await env.USER_METADATA_KV.put('pending_plan_users', remainingPendingJson);
+            }
             if (processedUsersForPlan === 0) console.log("[CRON-PlanGen] No users for plan generation.");
 
             planGenDuration = Date.now() - planGenStart;
@@ -709,7 +713,11 @@ export default {
                     remainingReady.push(userId);
                 }
             }
-            await env.USER_METADATA_KV.put('ready_plan_users', JSON.stringify(remainingReady));
+            const readyUsersJson = JSON.stringify(readyUsers);
+            const remainingReadyJson = JSON.stringify(remainingReady);
+            if (remainingReadyJson !== readyUsersJson) {
+                await env.USER_METADATA_KV.put('ready_plan_users', remainingReadyJson);
+            }
             if (processedUsersForPrinciples === 0) console.log("[CRON-Principles] No users for standard principle update.");
 
             principlesDuration = Date.now() - principlesStart;
@@ -727,10 +735,35 @@ export default {
             principlesProcessed: processedUsersForPrinciples,
             principlesMs: principlesDuration
         };
-        try {
-            await env.USER_METADATA_KV.put(`cron_metrics_${metrics.ts}`, JSON.stringify(metrics));
-        } catch(storeErr) {
-            console.error("[CRON] Failed to store metrics:", storeErr.message);
+        const hasActivity =
+            metrics.planProcessed > 0 ||
+            metrics.eventsProcessed > 0 ||
+            metrics.principlesProcessed > 0;
+        if (hasActivity) {
+            const metricsDate = getLocalDate(new Date(event.scheduledTime));
+            const metricsKey = `cron_metrics_${metricsDate}`;
+            try {
+                const existingMetricsStr = await env.USER_METADATA_KV.get(metricsKey);
+                const existingMetrics = existingMetricsStr
+                    ? safeParseJson(existingMetricsStr, {})
+                    : {};
+                const aggregatedMetrics = {
+                    date: metricsDate,
+                    runs: Number(existingMetrics?.runs || 0) + 1,
+                    planProcessed: Number(existingMetrics?.planProcessed || 0) + metrics.planProcessed,
+                    planMs: Number(existingMetrics?.planMs || 0) + metrics.planMs,
+                    eventsProcessed: Number(existingMetrics?.eventsProcessed || 0) + metrics.eventsProcessed,
+                    eventsMs: Number(existingMetrics?.eventsMs || 0) + metrics.eventsMs,
+                    principlesProcessed: Number(existingMetrics?.principlesProcessed || 0) + metrics.principlesProcessed,
+                    principlesMs: Number(existingMetrics?.principlesMs || 0) + metrics.principlesMs,
+                    lastTs: metrics.ts
+                };
+                await env.USER_METADATA_KV.put(metricsKey, JSON.stringify(aggregatedMetrics));
+            } catch(storeErr) {
+                console.error("[CRON] Failed to store metrics:", storeErr.message);
+            }
+        } else {
+            console.log('[CRON] No activity detected; metrics storage skipped.');
         }
         console.log(`[CRON] Trigger finished. PlanGen: ${processedUsersForPlan}, Principles: ${processedUsersForPrinciples}, UserEvents: ${processedUserEvents}`);
     }
