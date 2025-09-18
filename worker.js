@@ -1214,8 +1214,9 @@ async function handleDashboardDataRequest(request, env) {
 
 // ------------- START FUNCTION: handleLogRequest -------------
 async function handleLogRequest(request, env) {
+    let inputData;
     try {
-        const inputData = await request.json();
+        inputData = await request.json();
         const userId = inputData.userId;
         if (!userId) {
             console.warn("LOG_REQUEST_ERROR: Missing userId in input data.");
@@ -1275,40 +1276,73 @@ async function handleLogRequest(request, env) {
             }
         };
 
-        await env.USER_METADATA_KV.put(logKey, JSON.stringify(mergedRecord));
+        const serializedRecord = JSON.stringify(mergedRecord);
+        const payloadChanged = !existingStr || existingStr !== serializedRecord;
 
-        // Обновяваме последната активност на потребителя
-        await env.USER_METADATA_KV.put(`${userId}_lastActive`, todayStr);
-
-        // Ако е записано тегло, актуализираме и _current_status
-        if (log.weight !== undefined && log.weight !== null && String(log.weight).trim() != "") {
-           const statusKey = `${userId}_current_status`;
-           let currentStatus = {};
-           const existingStatusStr = await env.USER_METADATA_KV.get(statusKey);
-           if (existingStatusStr) {
-               currentStatus = safeParseJson(existingStatusStr, {});
-           }
-           currentStatus.weight = log.weight;
-           currentStatus.lastUpdated = new Date().toISOString();
-           await env.USER_METADATA_KV.put(statusKey, JSON.stringify(currentStatus));
-           console.log(`LOG_REQUEST (${userId}): Updated current_status with weight ${log.weight}.`);
+        if (payloadChanged) {
+            await env.USER_METADATA_KV.put(logKey, serializedRecord);
+        } else {
+            console.log(`LOG_REQUEST (${userId}): No changes detected for date ${dateToLog}, skipping log update.`);
         }
 
-        const indexKey = `${userId}_logs_index`;
-        const idxStr = await env.USER_METADATA_KV.get(indexKey);
-        let idxArr = idxStr ? safeParseJson(idxStr, []) : [];
-        if (!Array.isArray(idxArr)) idxArr = [];
-        if (!idxArr.includes(dateToLog)) {
-            idxArr.push(dateToLog);
-            idxArr.sort();
-            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(idxArr));
+        const lastActiveKey = `${userId}_lastActive`;
+        // Записваме последната активност само ако датата е нова
+        const previousLastActive = await env.USER_METADATA_KV.get(lastActiveKey);
+        if (previousLastActive !== dateToLog) {
+            await env.USER_METADATA_KV.put(lastActiveKey, dateToLog);
         }
 
-        console.log(`LOG_REQUEST (${userId}): Daily log saved for date ${dateToLog}.`);
-        return { success: true, message: 'Данните от дневника са записани успешно.', savedDate: dateToLog, savedData: log };
+        if (log.weight !== undefined && log.weight !== null && String(log.weight).trim() !== "") {
+            const statusKey = `${userId}_current_status`;
+            const existingStatusStr = await env.USER_METADATA_KV.get(statusKey);
+            const currentStatus = existingStatusStr ? safeParseJson(existingStatusStr, {}) : {};
+            const storedWeight = currentStatus.weight;
+            const newWeightValue = typeof log.weight === 'string' ? log.weight.trim() : log.weight;
+            const storedWeightValue = typeof storedWeight === 'string' ? storedWeight.trim() : storedWeight;
+            const weightChanged = storedWeightValue === undefined || storedWeightValue === null
+                ? newWeightValue !== '' && newWeightValue !== null && newWeightValue !== undefined
+                : String(storedWeightValue) !== String(newWeightValue);
+            const timestamp = new Date().toISOString();
+
+            if (weightChanged) {
+                const updatedStatus = { ...currentStatus, weight: log.weight, lastUpdated: timestamp };
+                await env.USER_METADATA_KV.put(statusKey, JSON.stringify(updatedStatus));
+                console.log(`LOG_REQUEST (${userId}): Updated current_status with weight ${log.weight}.`);
+            } else {
+                // Само обновяваме локалния timestamp, без да натоварваме KV със същата стойност
+                currentStatus.lastUpdated = timestamp;
+                console.log(`LOG_REQUEST (${userId}): Weight unchanged (${log.weight}), skipping current_status KV update.`);
+            }
+        }
+
+        if (payloadChanged) {
+            const indexKey = `${userId}_logs_index`;
+            const idxStr = await env.USER_METADATA_KV.get(indexKey);
+            let idxArr = idxStr ? safeParseJson(idxStr, []) : [];
+            if (!Array.isArray(idxArr)) idxArr = [];
+            if (!idxArr.includes(dateToLog)) {
+                idxArr.push(dateToLog);
+                idxArr.sort();
+                await env.USER_METADATA_KV.put(indexKey, JSON.stringify(idxArr));
+            }
+        }
+
+        if (payloadChanged) {
+            console.log(`LOG_REQUEST (${userId}): Daily log saved for date ${dateToLog}.`);
+        } else {
+            console.log(`LOG_REQUEST (${userId}): Daily log already up to date for date ${dateToLog}.`);
+        }
+
+        return {
+            success: true,
+            message: payloadChanged ? 'Данните от дневника са записани успешно.' : 'Дневникът вече съдържа подадените данни.',
+            savedDate: dateToLog,
+            savedData: log,
+            updated: payloadChanged
+        };
     } catch (error) {
         console.error("Error in handleLogRequest:", error.message, error.stack);
-        const userId = (await request.json().catch(() => ({}))).userId || 'unknown_user';
+        const userId = inputData?.userId || 'unknown_user';
         return { success: false, message: `Грешка при запис на дневник: ${error.message}`, statusHint: 400, userId };
     }
 }
