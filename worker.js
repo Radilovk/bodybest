@@ -2983,21 +2983,58 @@ async function handleSetMaintenanceMode(request, env) {
 async function processSingleUserPlan(userId, env) {
     console.log(`PROCESS_USER_PLAN (${userId}): Starting plan generation.`);
     const logKey = `${userId}_plan_log`;
-    let logMessages = [];
-    const addLog = async (msg) => {
-        logMessages.push(`[${new Date().toISOString()}] ${msg}`);
+    const logBuffer = [];
+    const checkpointMatchers = [
+        /Старт/i,
+        /Прекъснато/i,
+        /Грешка/i,
+        /Планът е генериран/i,
+        /Запис на генерирания план/i,
+        /Планът е готов/i,
+        /Процесът завърши с грешка/i,
+        /Процесът приключи/i
+    ];
+    const persistCriticalLog = async (reason, err) => {
+        if (!env?.USER_METADATA_KV?.put) return;
         try {
-            await env.USER_METADATA_KV.put(logKey, JSON.stringify(logMessages));
-        } catch (err) {
-            console.error(`PROCESS_USER_PLAN_LOG_ERROR (${userId}):`, err.message);
+            const fallbackEntry = {
+                ts: new Date().toISOString(),
+                reason,
+                error: err?.message || 'unknown',
+                lastEntry: logBuffer.length > 0 ? logBuffer[logBuffer.length - 1] : null,
+                size: logBuffer.length
+            };
+            await env.USER_METADATA_KV.put(`${logKey}_critical`, JSON.stringify(fallbackEntry));
+        } catch (criticalErr) {
+            console.error(`PROCESS_USER_PLAN_LOG_CRITICAL (${userId}):`, criticalErr.message);
         }
     };
+    const flushLog = async (reason = 'checkpoint') => {
+        if (!env?.USER_METADATA_KV?.put) return false;
+        try {
+            await env.USER_METADATA_KV.put(logKey, JSON.stringify(logBuffer));
+            return true;
+        } catch (err) {
+            console.error(`PROCESS_USER_PLAN_LOG_ERROR (${userId}):`, err.message);
+            await persistCriticalLog(reason, err);
+            return false;
+        }
+    };
+    const addLog = async (msg, { checkpoint, reason } = {}) => {
+        const entry = `[${new Date().toISOString()}] ${msg}`;
+        logBuffer.push(entry);
+        const shouldFlush = checkpoint ?? checkpointMatchers.some(regex => regex.test(msg));
+        if (shouldFlush) {
+            await flushLog(reason || 'checkpoint');
+        }
+        return entry;
+    };
     await env.USER_METADATA_KV.put(logKey, JSON.stringify([]));
-    await addLog('Старт на генериране на плана');
+    await addLog('Старт на генериране на плана', { checkpoint: true, reason: 'start' });
     try {
         const precheck = await validatePlanPrerequisites(env, userId);
         if (!precheck.ok) {
-            await addLog(`Прекъснато: ${precheck.message}`);
+            await addLog(`Прекъснато: ${precheck.message}`, { checkpoint: true, reason: 'precheck-failed' });
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${precheck.message}`);
             return;
         }
@@ -3007,7 +3044,7 @@ async function processSingleUserPlan(userId, env) {
         const previousPlanStr = await env.USER_METADATA_KV.get(`${userId}_final_plan`);
         if (!initialAnswersString) {
             const msg = 'Initial answers not found. Cannot generate plan.';
-            await addLog(`Грешка: ${msg}`);
+            await addLog(`Грешка: ${msg}`, { checkpoint: true, reason: 'initial-data-error' });
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${msg}`);
             throw new Error(`Initial answers not found for ${userId}. Cannot generate plan.`);
         }
@@ -3197,7 +3234,7 @@ async function processSingleUserPlan(userId, env) {
         } catch (e) {
             const errorMsg = `Unified Plan Generation Error for ${userId}: ${e.message}. Raw response (start): ${rawAiResponse.substring(0, 500)}...`;
             console.error(errorMsg);
-            await addLog(`Грешка при AI: ${e.message}`);
+            await addLog(`Грешка при AI: ${e.message}`, { checkpoint: true, reason: 'ai-error' });
             await env.USER_METADATA_KV.put(`${userId}_last_plan_raw_error`, rawAiResponse.substring(0, 300));
             planBuilder.generationMetadata.errors.push(errorMsg);
         }
@@ -3211,7 +3248,7 @@ async function processSingleUserPlan(userId, env) {
         if (planBuilder.generationMetadata.errors.length > 0) {
             await setPlanStatus(userId, 'error', env);
             await env.USER_METADATA_KV.put(`${userId}_processing_error`, planBuilder.generationMetadata.errors.join('\n---\n'));
-            await addLog('Процесът завърши с грешка');
+            await addLog('Процесът завърши с грешка', { checkpoint: true, reason: 'status-error' });
             console.log(`PROCESS_USER_PLAN (${userId}): Finished with errors. Status set to 'error'.`);
         } else {
             await setPlanStatus(userId, 'ready', env);
@@ -3221,13 +3258,13 @@ async function processSingleUserPlan(userId, env) {
             const summary = createPlanUpdateSummary(planBuilder, previousPlan);
             await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summary));
 
-            await addLog('Планът е готов');
+            await addLog('Планът е готов', { checkpoint: true, reason: 'status-ready' });
             console.log(`PROCESS_USER_PLAN (${userId}): Successfully generated and saved UNIFIED plan. Status set to 'ready'.`);
         }
     } catch (error) {
         console.error(`PROCESS_USER_PLAN (${userId}): >>> FATAL Processing Error <<< :`, error.name, error.message, error.stack);
         try {
-            await addLog(`Фатална грешка: ${error.message}`);
+            await addLog(`Фатална грешка: ${error.message}`, { checkpoint: true, reason: 'fatal-error' });
             await setPlanStatus(userId, 'error', env);
             const detailedErrorMessage = `[${new Date().toISOString()}] FATAL ERROR during plan generation for user ${userId}: ${error.name}: ${error.message}\nStack: ${error.stack}`;
             await env.USER_METADATA_KV.put(`${userId}_processing_error`, detailedErrorMessage);
@@ -3236,7 +3273,7 @@ async function processSingleUserPlan(userId, env) {
             console.error(`PROCESS_USER_PLAN (${userId}): CRITICAL - Failed to set error status after fatal exception:`, statusError.message, statusError.stack);
         }
     } finally {
-        await addLog('Процесът приключи');
+        await addLog('Процесът приключи', { checkpoint: true, reason: 'final' });
         console.log(`PROCESS_USER_PLAN (${userId}): Finished processing cycle.`);
     }
 }
