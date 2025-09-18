@@ -68,6 +68,48 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
   await sendEmail(to, subject, body, phpEnv);
 }
 
+const resourceCache = new Map();
+
+async function getCachedResource(key, kv, ttlMs = 300000) {
+  const now = Date.now();
+  const cached = resourceCache.get(key);
+  if (cached) {
+    if (cached.expiresAt > now && Object.prototype.hasOwnProperty.call(cached, 'value')) {
+      return cached.value;
+    }
+    if (cached.promise) {
+      return cached.promise;
+    }
+    resourceCache.delete(key);
+  }
+  if (!kv || typeof kv.get !== 'function') {
+    return undefined;
+  }
+  const fetchPromise = (async () => {
+    try {
+      const value = await kv.get(key);
+      resourceCache.set(key, { value, expiresAt: Date.now() + ttlMs });
+      return value;
+    } catch (error) {
+      resourceCache.delete(key);
+      throw error;
+    }
+  })();
+  resourceCache.set(key, { promise: fetchPromise, expiresAt: now + ttlMs });
+  return fetchPromise;
+}
+
+function clearResourceCache(keys) {
+  if (!keys) {
+    resourceCache.clear();
+    return;
+  }
+  const list = Array.isArray(keys) ? keys : [keys];
+  for (const key of list) {
+    resourceCache.delete(key);
+  }
+}
+
 const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
 const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
 <html lang="bg">
@@ -309,7 +351,7 @@ const callModelRef = { current: null };
 async function getMaxChatHistoryMessages(env) {
     let val = env.MAX_CHAT_HISTORY_MESSAGES;
     if (val === undefined && env.RESOURCES_KV) {
-        val = await env.RESOURCES_KV.get('MAX_CHAT_HISTORY_MESSAGES');
+        val = await getCachedResource('MAX_CHAT_HISTORY_MESSAGES', env.RESOURCES_KV);
     }
     const parsed = parseInt(val, 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MAX_CHAT_HISTORY_MESSAGES;
@@ -327,10 +369,12 @@ async function summarizeAndTrimChatHistory(history, env, maxMessages) {
         }
         const textBlock = (existingSummary ? `${existingSummary}\n` : '') +
             summarizable.map(m => `${m.role === 'model' ? 'АСИСТЕНТ' : 'ПОТРЕБИТЕЛ'}: ${m.parts?.[0]?.text || ''}`).join('\n');
-        const tpl = await env.RESOURCES_KV?.get('prompt_chat_summary');
+        const tpl = env.RESOURCES_KV ? await getCachedResource('prompt_chat_summary', env.RESOURCES_KV) : undefined;
         const prompt = tpl ? tpl.replace('%%CHAT_HISTORY%%', textBlock)
             : `Резюмирай накратко на български следния чат между потребител и асистент:\n${textBlock}\nКратко резюме:`;
-        const model = await env.RESOURCES_KV?.get('model_chat_summary') || await env.RESOURCES_KV?.get('model_chat');
+        const model = env.RESOURCES_KV
+            ? (await getCachedResource('model_chat_summary', env.RESOURCES_KV) || await getCachedResource('model_chat', env.RESOURCES_KV))
+            : undefined;
         if (!model) {
             console.warn('CHAT_SUMMARY_WARN: Missing summary model, trimming without summarizing.');
             return history.slice(-maxMessages);
@@ -1081,7 +1125,7 @@ async function handleDashboardDataRequest(request, env) {
         ] = await Promise.all([
             env.USER_METADATA_KV.get(`${userId}_initial_answers`),
             env.USER_METADATA_KV.get(`${userId}_final_plan`),
-            env.RESOURCES_KV.get('recipe_data'),
+            getCachedResource('recipe_data', env.RESOURCES_KV),
             env.USER_METADATA_KV.get(`plan_status_${userId}`),
             env.USER_METADATA_KV.get(`${userId}_current_status`),
             env.USER_METADATA_KV.get(`${userId}_welcome_seen`),
@@ -1438,8 +1482,8 @@ async function handleChatRequest(request, env) {
         const recentForPrompt = storedChatHistory.slice(-(summaryEntry ? 9 : 10));
         const historyForPrompt = summaryEntry ? [summaryEntry, ...recentForPrompt] : recentForPrompt;
         const historyPrompt = historyForPrompt.map(e=>`${e.summary?'РЕЗЮМЕ':e.role==='model'?'АСИСТЕНТ':'ПОТРЕБИТЕЛ'}: ${e.parts?.[0]?.text||''}`).join('\n');
-        const chatPromptTpl = promptOverride || await env.RESOURCES_KV.get('prompt_chat');
-        const chatModel = await env.RESOURCES_KV.get('model_chat');
+        const chatPromptTpl = promptOverride || await getCachedResource('prompt_chat', env.RESOURCES_KV);
+        const chatModel = await getCachedResource('model_chat', env.RESOURCES_KV);
         const modelToUse = model || chatModel;
         const geminiKey = env[GEMINI_API_KEY_SECRET_NAME];
         const openaiKey = env[OPENAI_API_KEY_SECRET_NAME];
@@ -2002,7 +2046,7 @@ async function handleGeneratePraiseRequest(request, env) {
         const promptTpl = await env.RESOURCES_KV.get('prompt_praise_generation');
         const geminiKey = env[GEMINI_API_KEY_SECRET_NAME];
         const openaiKey = env[OPENAI_API_KEY_SECRET_NAME];
-        const model = await env.RESOURCES_KV.get('model_chat') || await env.RESOURCES_KV.get('model_plan_generation');
+        const model = await getCachedResource('model_chat', env.RESOURCES_KV) || await env.RESOURCES_KV.get('model_plan_generation');
 
         let title = 'Браво!';
         let message = 'Продължавай в същия дух!';
@@ -2599,7 +2643,7 @@ async function handleGetPlanModificationPrompt(request, env) {
         if (!userId) return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
 
         const promptTpl = await env.RESOURCES_KV.get('prompt_plan_modification');
-        const model = await env.RESOURCES_KV.get('model_chat');
+        const model = await getCachedResource('model_chat', env.RESOURCES_KV);
 
         if (!promptTpl || !model) {
             console.error(`PLAN_MOD_PROMPT_ERROR (${userId}): Missing prompt or model.`);
@@ -2648,10 +2692,15 @@ async function handleSetAiConfig(request, env) {
         if (!updates || typeof updates !== 'object') {
             return { success: false, message: 'Липсват данни.', statusHint: 400 };
         }
+        const touchedKeys = [];
         for (const [key, value] of Object.entries(updates)) {
             if (AI_CONFIG_KEYS.includes(key)) {
                 await env.RESOURCES_KV.put(key, String(value));
+                touchedKeys.push(key);
             }
+        }
+        if (touchedKeys.length) {
+            clearResourceCache(touchedKeys);
         }
         return { success: true };
     } catch (error) {
@@ -3082,7 +3131,7 @@ async function processSingleUserPlan(userId, env) {
             env.RESOURCES_KV.get('base_diet_model'),
             env.RESOURCES_KV.get('allowed_meal_combinations'),
             env.RESOURCES_KV.get('eating_psychology'),
-            env.RESOURCES_KV.get('recipe_data'),
+            getCachedResource('recipe_data', env.RESOURCES_KV),
             env[GEMINI_API_KEY_SECRET_NAME],
             env[OPENAI_API_KEY_SECRET_NAME],
             env.RESOURCES_KV.get('model_plan_generation'),
@@ -4624,7 +4673,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         const promptTemplateTextual = await env.RESOURCES_KV.get('prompt_analytics_textual_summary');
         const geminiApiKeyForAnalysis = env[GEMINI_API_KEY_SECRET_NAME];
         const openaiApiKeyForAnalysis = env[OPENAI_API_KEY_SECRET_NAME];
-        const analysisModelForText = await env.RESOURCES_KV.get('model_chat') || await env.RESOURCES_KV.get('model_plan_generation'); // Use a suitable model
+        const analysisModelForText = await getCachedResource('model_chat', env.RESOURCES_KV) || await env.RESOURCES_KV.get('model_plan_generation'); // Use a suitable model
 
         const providerForAnalysis = getModelProvider(analysisModelForText);
         if (promptTemplateTextual && analysisModelForText &&
@@ -4941,4 +4990,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache };
