@@ -18,7 +18,8 @@
     "docs": "typedoc",
     "migrate-macros": "node scripts/migrate-final-plan-macros.js",
     "deploy": "wrangler deploy && npm run migrate-macros",
-    "sync-kv": "node scripts/sync-kv.js"
+    "sync-kv": "node scripts/sync-kv.js",
+    "log:generate": "node scripts/generateChangeLog.js"
   },
   "keywords": [],
   "author": "",
