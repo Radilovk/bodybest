@@ -304,6 +304,7 @@ const USER_ACTIVITY_LOG_LOOKBACK_DAYS = 10;
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS = 7;
 const USER_ACTIVITY_LOG_LIST_LIMIT = 100;
 const RECENT_CHAT_MESSAGES_FOR_PRINCIPLES = 10;
+const callModelRef = { current: null };
 
 async function getMaxChatHistoryMessages(env) {
     let val = env.MAX_CHAT_HISTORY_MESSAGES;
@@ -334,7 +335,7 @@ async function summarizeAndTrimChatHistory(history, env, maxMessages) {
             console.warn('CHAT_SUMMARY_WARN: Missing summary model, trimming without summarizing.');
             return history.slice(-maxMessages);
         }
-        const summaryText = await callModel(model, prompt, env, { temperature: 0.3, maxTokens: 200 });
+        const summaryText = await callModelRef.current(model, prompt, env, { temperature: 0.3, maxTokens: 200 });
         const recent = history.slice(-(maxMessages - 1));
         return [{ role: 'system', parts: [{ text: summaryText.trim() }], summary: true }, ...recent];
     } catch (err) {
@@ -1478,7 +1479,7 @@ async function handleChatRequest(request, env) {
             '%%RECENT_LOGS_SUMMARY%%':recentLogsSummary
         };
         const populatedPrompt = populatePrompt(chatPromptTpl,r);
-        const aiRespRaw = await callModel(modelToUse, populatedPrompt, env, { temperature: 0.7, maxTokens: 800 });
+        const aiRespRaw = await callModelRef.current(modelToUse, populatedPrompt, env, { temperature: 0.7, maxTokens: 800 });
 
         let respToUser = aiRespRaw.trim(); let planModReq=null; const sig='[PLAN_MODIFICATION_REQUEST]'; const sigIdx=respToUser.lastIndexOf(sig);
         if(sigIdx!==-1){
@@ -2011,7 +2012,7 @@ async function handleGeneratePraiseRequest(request, env) {
             const replacements = createPraiseReplacements(initialAnswers, logs, avgMetric, mealAdh);
             const populated = populatePrompt(promptTpl, replacements);
             try {
-                const raw = await callModel(model, populated, env, { temperature: 0.6, maxTokens: 400 });
+                const raw = await callModelRef.current(model, populated, env, { temperature: 0.6, maxTokens: 400 });
                 const cleaned = cleanGeminiJson(raw);
                 const parsed = safeParseJson(cleaned, null);
                 if (parsed && parsed.title && parsed.message) {
@@ -2097,7 +2098,7 @@ async function handleAnalyzeInitialAnswers(userId, env) {
             return;
         }
         const populated = populatePrompt(promptTpl, { '%%ANSWERS_JSON%%': JSON.stringify(answers) });
-        const raw = await callModel(modelName, populated, env, { temperature: 0.5, maxTokens: 2500 });
+        const raw = await callModelRef.current(modelName, populated, env, { temperature: 0.5, maxTokens: 2500 });
         const cleaned = cleanGeminiJson(raw);
         await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'ready');
@@ -2365,7 +2366,7 @@ async function handleAnalyzeImageRequest(request, env) {
             console.log('Received image:', String(image || imageData).substring(0, 100));
             console.log('Prompt:', finalPrompt);
             const textPrompt = finalPrompt || `Опиши съдържанието на това изображение: ${base64}`;
-            aiResp = await callModel(modelName, textPrompt, env, { temperature: 0.2, maxTokens: 200 });
+            aiResp = await callModelRef.current(modelName, textPrompt, env, { temperature: 0.2, maxTokens: 200 });
         }
 
         return { success: true, result: aiResp };
@@ -2805,7 +2806,7 @@ async function handleTestAiModelRequest(request, env) {
         if (!model) {
             return { success: false, message: 'Липсва модел.', statusHint: 400 };
         }
-        await callModel(model, 'Здравей', env, { temperature: 0, maxTokens: 5 });
+        await callModelRef.current(model, 'Здравей', env, { temperature: 0, maxTokens: 5 });
         return { success: true };
     } catch (error) {
         console.error('Error in handleTestAiModelRequest:', error.message, error.stack);
@@ -3198,7 +3199,7 @@ async function processSingleUserPlan(userId, env) {
         try {
             await addLog('Извикване на AI модела');
             console.log(`PROCESS_USER_PLAN (${userId}): Calling model ${planModelName} for unified plan. Prompt length: ${finalPrompt.length}`);
-            rawAiResponse = await callModel(planModelName, finalPrompt, env, { temperature: 0.1, maxTokens: 20000 });
+            rawAiResponse = await callModelRef.current(planModelName, finalPrompt, env, { temperature: 0.1, maxTokens: 20000 });
             const cleanedJson = cleanGeminiJson(rawAiResponse);
             generatedPlanObject = safeParseJson(cleanedJson, {});
             const requiredSections = ["profileSummary", "week1Menu", "principlesWeek2_4", "detailedTargets"];
@@ -3210,7 +3211,7 @@ async function processSingleUserPlan(userId, env) {
                 planBuilder.generationMetadata.errors.push(missMsg);
                 try {
                     const repairPrompt = `Return JSON with keys ${missingSections.join(', ')} based on this plan: ${cleanedJson}`;
-                    const repairResponse = await callModel(planModelName, repairPrompt, env, { temperature: 0.1, maxTokens: 1000 });
+                    const repairResponse = await callModelRef.current(planModelName, repairPrompt, env, { temperature: 0.1, maxTokens: 1000 });
                     const repairedObject = safeParseJson(cleanGeminiJson(repairResponse), {});
                     missingSections.forEach(key => {
                         if (repairedObject[key]) generatedPlanObject[key] = repairedObject[key];
@@ -3433,7 +3434,7 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
         const modelForAdjustment = await env.RESOURCES_KV.get('model_principle_adjustment') || planModelName; // Specific model or fallback
         
         console.log(`PRINCIPLE_ADJUST (${userId}): Calling model ${modelForAdjustment} for principle adjustment. Prompt length: ${populatedPrompt.length}`);
-        const updatedPrinciplesTextRaw = await callModel(modelForAdjustment, populatedPrompt, env, { temperature: 0.55, maxTokens: 1500 });
+        const updatedPrinciplesTextRaw = await callModelRef.current(modelForAdjustment, populatedPrompt, env, { temperature: 0.55, maxTokens: 1500 });
         const updatedPrinciplesText = cleanGeminiJson(updatedPrinciplesTextRaw); // Добавено почистване
 
         // Опитваме се да парснем отговора, ако очакваме JSON структура с принципи и резюме
@@ -4256,6 +4257,12 @@ async function callModel(model, prompt, env, { temperature = 0.7, maxTokens = 80
     return callGeminiAPI(prompt, key, { temperature, maxOutputTokens: maxTokens }, [], model);
 }
 
+callModelRef.current = callModel;
+
+function setCallModelImplementation(fn) {
+    callModelRef.current = typeof fn === 'function' ? fn : callModel;
+}
+
 // ------------- START FUNCTION: buildCfImagePayload -------------
 function buildCfImagePayload(model, imageUrl, promptText) {
     if (model.startsWith('@cf/')) {
@@ -4646,7 +4653,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
                 '%%CURRENT_LOG_CONSISTENCY_PERCENT%%': consistencyMetric?.currentValueText ?? 'N/A'
             };
             const populatedTextualPrompt = populatePrompt(promptTemplateTextual, replacementsForTextual);
-            textualAnalysisSummary = await callModel(analysisModelForText, populatedTextualPrompt, env, { temperature: 0.6, maxTokens: 400 });
+            textualAnalysisSummary = await callModelRef.current(analysisModelForText, populatedTextualPrompt, env, { temperature: 0.6, maxTokens: 400 });
             textualAnalysisSummary = cleanGeminiJson(textualAnalysisSummary.replace(/```json\n?|\n?```/g, '').trim()); // Ensure it's clean text
         } else {
             console.warn(`ANALYTICS_CALC_WARN (${userLogId}): Cannot generate textual analysis due to missing KV resources (prompt, API key, or model).`);
@@ -4934,4 +4941,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory };

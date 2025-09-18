@@ -2,6 +2,39 @@ import { jest } from '@jest/globals';
 
 const workerModule = await import('../worker.js');
 
+const callModelMock = jest.fn();
+
+const minimalUnifiedPlanTemplate = JSON.stringify({
+  profileSummary: 'Профил за %%USER_NAME%%',
+  caloriesMacros: { calories: 2100, fiber_percent: 10, fiber_grams: 30 },
+  week1Menu: { monday: [] },
+  principlesWeek2_4: ['- Баланс'],
+  detailedTargets: { hydration: '2L вода' }
+});
+
+const successfulPlanResponse = JSON.stringify({
+  profileSummary: 'Обобщение',
+  caloriesMacros: {
+    calories: 2100,
+    protein_grams: 140,
+    carbs_grams: 210,
+    fat_grams: 70,
+    fiber_percent: 10,
+    fiber_grams: 30
+  },
+  week1Menu: {
+    monday: [
+      {
+        meal_name: 'Закуска',
+        items: [{ name: 'Овесена каша', portion: '1 купа' }]
+      }
+    ]
+  },
+  principlesWeek2_4: ['- Поддържайте хидратация'],
+  detailedTargets: { hydration: '2L вода' },
+  generationMetadata: { errors: [] }
+});
+
 const baseInitialAnswers = {
   name: 'Иван',
   email: 'ivan@example.com',
@@ -24,27 +57,6 @@ const baseInitialAnswers = {
   q1745806494081: 'Брюкселско зеле',
   submissionDate: '2024-01-01T00:00:00.000Z'
 };
-
-function createFetchStub(callModelMock, env) {
-  return jest.fn(async (_url, options) => {
-    const body = JSON.parse(options.body);
-    const modelName = body.model;
-    const responseText = await callModelMock(modelName, body.messages?.[0]?.content ?? '', env, {
-      temperature: options.temperature,
-      maxTokens: options.max_tokens
-    });
-    return {
-      ok: true,
-      json: async () => ({
-        choices: [
-          {
-            message: { content: responseText }
-          }
-        ]
-      })
-    };
-  });
-}
 
 function buildTestEnvironment(userId, { failFirstFlush = false } = {}) {
   const kvStore = new Map();
@@ -118,7 +130,7 @@ function buildTestEnvironment(userId, { failFirstFlush = false } = {}) {
         case 'model_plan_generation':
           return 'gpt-plan';
         case 'prompt_unified_plan_generation_v2':
-          return '{"profileSummary":"Профил за %%USER_NAME%%","caloriesMacros":{"calories":2100,"fiber_percent":10,"fiber_grams":30},"week1Menu":{"monday":[]},"principlesWeek2_4":["- Баланс"],"detailedTargets":{"hydration":"2L"}}';
+          return minimalUnifiedPlanTemplate;
         default:
           return null;
       }
@@ -131,30 +143,7 @@ function buildTestEnvironment(userId, { failFirstFlush = false } = {}) {
     OPENAI_API_KEY: 'test-openai-key'
   };
 
-  const callModelMock = jest.fn(async () => JSON.stringify({
-    profileSummary: 'Обобщение',
-    caloriesMacros: {
-      calories: 2100,
-      protein_grams: 140,
-      carbs_grams: 210,
-      fat_grams: 70,
-      fiber_percent: 10,
-      fiber_grams: 30
-    },
-    week1Menu: {
-      monday: [
-        {
-          meal_name: 'Закуска',
-          items: [{ name: 'Овесена каша', portion: '1 купа' }]
-        }
-      ]
-    },
-    principlesWeek2_4: ['- Поддържайте хидратация'],
-    detailedTargets: { hydration: '2L вода' },
-    generationMetadata: { errors: [] }
-  }));
-
-  return { env, kvStore, userMetadataKv, resourcesKv, callModelMock, logKey, logErrorKey };
+  return { env, kvStore, userMetadataKv, resourcesKv, logKey, logErrorKey };
 }
 
 describe('processSingleUserPlan - буфериран лог', () => {
@@ -162,25 +151,27 @@ describe('processSingleUserPlan - буфериран лог', () => {
 
   beforeEach(() => {
     originalFetch = global.fetch;
+    global.fetch = jest.fn();
+    callModelMock.mockReset();
+    workerModule.setCallModelImplementation(callModelMock);
   });
 
   afterEach(() => {
+    workerModule.setCallModelImplementation();
     global.fetch = originalFetch;
     jest.restoreAllMocks();
   });
 
   test('генерира план и записва ключовите стъпки в логовете', async () => {
     const userId = 'test-user';
-    const { env, userMetadataKv, callModelMock, logKey } = buildTestEnvironment(userId);
-
-    global.fetch = createFetchStub(callModelMock, env);
+    const { env, kvStore, logKey } = buildTestEnvironment(userId);
+    callModelMock.mockResolvedValue(successfulPlanResponse);
 
     await workerModule.processSingleUserPlan(userId, env);
 
-    const logCalls = userMetadataKv.put.mock.calls.filter(([key]) => key === logKey);
-    expect(logCalls.length).toBeGreaterThan(0);
-
-    const finalLogEntries = JSON.parse(logCalls[logCalls.length - 1][1]);
+    const storedLog = kvStore.get(logKey);
+    expect(storedLog).toBeTruthy();
+    const finalLogEntries = JSON.parse(storedLog);
     expect(Array.isArray(finalLogEntries)).toBe(true);
 
     const finalMessages = finalLogEntries.map((entry) => entry.replace(/^\[[^\]]+\]\s*/, ''));
@@ -213,19 +204,17 @@ describe('processSingleUserPlan - буфериран лог', () => {
 
   test('запазва критична грешка, когато flush на лога се провали', async () => {
     const userId = 'flush-failure-user';
-    const { env, kvStore, userMetadataKv, callModelMock, logKey, logErrorKey } = buildTestEnvironment(
+    const { env, kvStore, logKey, logErrorKey } = buildTestEnvironment(
       userId,
       { failFirstFlush: true }
     );
-
-    global.fetch = createFetchStub(callModelMock, env);
+    callModelMock.mockResolvedValue(successfulPlanResponse);
 
     await workerModule.processSingleUserPlan(userId, env);
 
-    const flushErrorCall = userMetadataKv.put.mock.calls.find(([key]) => key === logErrorKey);
-    expect(flushErrorCall).toBeDefined();
-
-    const flushErrorPayload = JSON.parse(flushErrorCall[1]);
+    const flushErrorStored = kvStore.get(logErrorKey);
+    expect(flushErrorStored).toBeTruthy();
+    const flushErrorPayload = JSON.parse(flushErrorStored);
     expect(flushErrorPayload.message).toBe('Simulated flush failure');
 
     const finalLogEntries = JSON.parse(kvStore.get(logKey));
@@ -248,5 +237,12 @@ describe('processSingleUserPlan - буфериран лог', () => {
 
     const flushFailureLogLine = finalMessages.find((msg) => msg.includes('Неуспешен запис на лог'));
     expect(flushFailureLogLine).toContain('Simulated flush failure');
+
+    expect(callModelMock).toHaveBeenCalledWith(
+      'gpt-plan',
+      expect.any(String),
+      env,
+      expect.any(Object)
+    );
   });
 });
