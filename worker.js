@@ -341,6 +341,8 @@ const GEMINI_API_URL_BASE = `https://generativelanguage.googleapis.com/v1beta/mo
 // Очаквани Bindings: RESOURCES_KV, USER_METADATA_KV
 
 const DEFAULT_MAX_CHAT_HISTORY_MESSAGES = 30;
+const CHAT_CONTEXT_VERSION = 1;
+const CHAT_CONTEXT_TTL_MS = 12 * 60 * 60 * 1000; // 12 часа валидност
 const PRINCIPLE_UPDATE_INTERVAL_DAYS = 7; // За ръчна актуализация на принципи, ако адаптивният не ги е променил
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS = 10;
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS = 7;
@@ -1378,6 +1380,14 @@ async function handleLogRequest(request, env) {
             console.log(`LOG_REQUEST (${userId}): Daily log already up to date for date ${dateToLog}.`);
         }
 
+        await refreshChatContextAfterLog(
+            userId,
+            env,
+            dateToLog,
+            payloadChanged ? mergedRecord : existingRecord,
+            { weight: log.weight }
+        );
+
         return {
             success: true,
             message: payloadChanged ? 'Данните от дневника са записани успешно.' : 'Дневникът вече съдържа подадените данни.',
@@ -1428,136 +1438,211 @@ async function handleChatRequest(request, env) {
     const { userId, message, model, promptOverride, source, history } = await request.json();
     if (!userId || !message) return { success: false, message: 'Липсва userId или съобщение.', statusHint: 400 };
     try {
-        const [ initialAnswersStr, finalPlanStr, planStatus, storedChatHistoryStr, currentStatusStr, ...logStringsForChat ] = await Promise.all([
-            env.USER_METADATA_KV.get(`${userId}_initial_answers`), env.USER_METADATA_KV.get(`${userId}_final_plan`),
-            env.USER_METADATA_KV.get(`plan_status_${userId}`),
-            env.USER_METADATA_KV.get(`${userId}_chat_history`), env.USER_METADATA_KV.get(`${userId}_current_status`),
-            ...Array.from({ length: 3 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return env.USER_METADATA_KV.get(`${userId}_log_${d.toISOString().split('T')[0]}`); })
-        ]);
-        const actualPlanStatus = planStatus || 'unknown';
-        if (actualPlanStatus !== 'ready' || !initialAnswersStr || !finalPlanStr) {
-             let errMsg = 'Данните, необходими за чат асистента, все още не са готови.';
-             if (actualPlanStatus === 'pending' || actualPlanStatus === 'processing') errMsg = `Вашият план все още се генерира (статус: ${actualPlanStatus}). Моля, изчакайте преди да използвате чат асистента.`;
-             else if (actualPlanStatus === 'error') errMsg = 'Възникна грешка при генерирането на Вашия план. Моля, свържете се с поддръжка.';
-             console.warn(`CHAT_REQUEST_WARN (${userId}): Chat attempted but plan not ready. Status: ${actualPlanStatus}`);
-             return { success: false, message: errMsg, statusHint: 404 };
+        const chatContextKey = getChatContextKey(userId);
+        let promptData = null;
+        let useContext = false;
+
+        if (env?.USER_METADATA_KV?.get) {
+            try {
+                const contextStr = await env.USER_METADATA_KV.get(chatContextKey);
+                if (contextStr) {
+                    const parsedContext = safeParseJson(contextStr, null);
+                    if (parsedContext && isChatContextFresh(parsedContext) && parsedContext.planStatus === 'ready') {
+                        const contextPrompt = createPromptDataFromContext(parsedContext);
+                        if (contextPrompt) {
+                            promptData = contextPrompt;
+                            useContext = true;
+                        }
+                    }
+                }
+            } catch (ctxErr) {
+                console.warn(`CHAT_CONTEXT_WARN (${userId}): неуспешно зареждане на кеш - ${ctxErr.message}`);
+            }
         }
-        const initialAnswers = safeParseJson(initialAnswersStr, {}); const finalPlan = safeParseJson(finalPlanStr, {});
+
+        const today = new Date();
+        const todayLocaleDate = today.toLocaleDateString('bg-BG');
+
+        let storedChatHistoryStr;
+        let planStatus = 'unknown';
+        if (!useContext) {
+            const logDates = Array.from({ length: 3 }, (_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                return getLocalDate(d);
+            });
+            const results = await Promise.all([
+                env.USER_METADATA_KV.get(`${userId}_initial_answers`),
+                env.USER_METADATA_KV.get(`${userId}_final_plan`),
+                env.USER_METADATA_KV.get(`plan_status_${userId}`),
+                env.USER_METADATA_KV.get(`${userId}_chat_history`),
+                env.USER_METADATA_KV.get(`${userId}_current_status`),
+                ...logDates.map(dateKey => env.USER_METADATA_KV.get(`${userId}_log_${dateKey}`))
+            ]);
+            const [initialAnswersStr, finalPlanStr, planStatusRaw, chatHistoryStr, currentStatusStr, ...logStrings] = results;
+            storedChatHistoryStr = chatHistoryStr;
+            const actualPlanStatus = planStatusRaw || 'unknown';
+
+            if (actualPlanStatus !== 'ready' || !initialAnswersStr || !finalPlanStr) {
+                let errMsg = 'Данните, необходими за чат асистента, все още не са готови.';
+                if (actualPlanStatus === 'pending' || actualPlanStatus === 'processing') {
+                    errMsg = `Вашият план все още се генерира (статус: ${actualPlanStatus}). Моля, изчакайте преди да използвате чат асистента.`;
+                } else if (actualPlanStatus === 'error') {
+                    errMsg = 'Възникна грешка при генерирането на Вашия план. Моля, свържете се с поддръжка.';
+                }
+                console.warn(`CHAT_REQUEST_WARN (${userId}): Chat attempted but plan not ready. Status: ${actualPlanStatus}`);
+                if (env?.USER_METADATA_KV?.delete) {
+                    await env.USER_METADATA_KV.delete(chatContextKey).catch(() => {});
+                }
+                return { success: false, message: errMsg, statusHint: 404 };
+            }
+
+            const initialAnswers = safeParseJson(initialAnswersStr, {});
+            const finalPlan = safeParseJson(finalPlanStr, {});
+            const currentStatus = safeParseJson(currentStatusStr, {});
+            if (Object.keys(initialAnswers).length === 0 || Object.keys(finalPlan).length === 0) {
+                console.error(`CHAT_REQUEST_ERROR (${userId}): Critical data (initialAnswers or finalPlan) empty after parsing.`);
+                return { success: false, message: 'Грешка при зареждане на данни за чат асистента.', statusHint: 500 };
+            }
+
+            const sanitizedLogs = logStrings
+                .map((logStr, idx) => {
+                    if (!logStr) return null;
+                    const parsedLog = safeParseJson(logStr, {});
+                    return sanitizeLogEntryForContext(logDates[idx], parsedLog);
+                })
+                .filter(Boolean);
+
+            promptData = buildPromptDataFromRaw(initialAnswers, finalPlan, currentStatus, sanitizedLogs);
+            planStatus = actualPlanStatus;
+
+            const contextPayload = await assembleChatContext(userId, env, {
+                initialAnswers,
+                finalPlan,
+                currentStatus,
+                logEntries: sanitizedLogs,
+                planStatus
+            });
+            await persistChatContext(userId, env, contextPayload);
+        } else {
+            storedChatHistoryStr = await env.USER_METADATA_KV.get(`${userId}_chat_history`);
+        }
+
+        if (!promptData) {
+            console.error(`CHAT_REQUEST_ERROR (${userId}): Missing prompt data after context resolution.`);
+            return { success: false, message: 'Грешка при зареждане на данни за чат асистента.', statusHint: 500 };
+        }
+
         let storedChatHistory = safeParseJson(storedChatHistoryStr, []);
-        if(source === 'planModChat' && Array.isArray(history)) {
+        if (source === 'planModChat' && Array.isArray(history)) {
             storedChatHistory = history.map(h => ({
                 role: h.sender === 'user' ? 'user' : 'model',
                 parts: [{ text: h.text || '' }]
             }));
         }
-        const currentStatus = safeParseJson(currentStatusStr, {});
-        const currentPrinciples = safeGet(finalPlan, 'principlesWeek2_4', 'Общи принципи.');
+
         const maxChatHistory = await getMaxChatHistoryMessages(env);
-        if (Object.keys(initialAnswers).length === 0 || Object.keys(finalPlan).length === 0) {
-            console.error(`CHAT_REQUEST_ERROR (${userId}): Critical data (initialAnswers or finalPlan) empty after parsing.`);
-            return { success: false, message: 'Грешка при зареждане на данни за чат асистента.', statusHint: 500 };
-        }
         storedChatHistory.push({ role: 'user', parts: [{ text: message }] });
         storedChatHistory = await summarizeAndTrimChatHistory(storedChatHistory, env, maxChatHistory);
-        
-        const userName = initialAnswers.name || 'Потребител'; const userGoal = initialAnswers.goal || 'N/A';
-        const userConditions = (Array.isArray(initialAnswers.medicalConditions) ? initialAnswers.medicalConditions.filter(c => c && c.toLowerCase() !== 'нямам').join(', ') : 'Няма') || 'Няма специфични';
-        const userPreferences = `${initialAnswers.foodPreference || 'N/A'}. Не харесва: ${initialAnswers.q1745806494081 || initialAnswers.q1745806409218 || 'Няма'}`;
-        const calMac = finalPlan.caloriesMacros; const initCalMac = calMac ? `Кал: ${calMac.calories||'?'} P:${calMac.protein_grams||'?'}g C:${calMac.carbs_grams||'?'}g F:${calMac.fat_grams||'?'}g` : 'N/A';
-        const planSum = finalPlan.profileSummary || 'Персонализиран хранителен подход';
-        const allowedF = safeGet(finalPlan, 'allowedForbiddenFoods.main_allowed_foods', []).slice(0,7).join(', ')+ (safeGet(finalPlan, 'allowedForbiddenFoods.main_allowed_foods', []).length > 7 ? '...' : '');
-        const forbiddenF = safeGet(finalPlan, 'allowedForbiddenFoods.main_forbidden_foods', []).slice(0,5).join(', ')+ (safeGet(finalPlan, 'allowedForbiddenFoods.main_forbidden_foods', []).length > 5 ? '...' : '');
-        const hydrTarget = safeGet(finalPlan, 'hydrationCookingSupplements.hydration_recommendations.daily_liters', 'N/A');
-        const cookMethods = safeGet(finalPlan, 'hydrationCookingSupplements.cooking_methods.recommended', []).join(', ') || 'N/A';
-        const suppSuggest = safeGet(finalPlan, 'hydrationCookingSupplements.supplement_suggestions', []).map(s => s.supplement_name).join(', ') || 'няма препоръки';
-        const today = new Date(); const todayKey = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][today.getDay()];
-        const todayMeals = safeGet(finalPlan, ['week1Menu', todayKey], []).map(m => m.meal_name||'?').join(', ') || 'няма планирани за днес';
-        const currW = currentStatus.weight ? `${safeParseFloat(currentStatus.weight,0).toFixed(1)} кг` : 'N/A';
-        
-        let recentLogsSummary = "Няма скорошни логове.";
-        const recentLogs = logStringsForChat.map((logStr, i) => { if(logStr) { const d=new Date(); d.setDate(d.getDate()-i); return {date:d.toISOString().split('T')[0], data:safeParseJson(logStr,{})};} return null;}).filter(l=>l&&l.data&&Object.keys(l.data).length>0).sort((a,b)=>new Date(b.date).getTime()-new Date(a.date).getTime());
-        if(recentLogs.length>0) recentLogsSummary = recentLogs.map(l=>{ const df=new Date(l.date).toLocaleDateString('bg-BG',{day:'2-digit',month:'short'}); const m=l.data.mood?`Настр:${l.data.mood}/5`:''; const e=l.data.energy?`Енерг:${l.data.energy}/5`:''; const s=l.data.sleep?`Сън:${l.data.sleep}/5`:''; const n=l.data.note?`Бел:"${l.data.note.substring(0,20)}..."`:''; const c=l.data.completedMealsStatus?`${Object.values(l.data.completedMealsStatus).filter(v=>v===true).length} изп. хран.`:''; return `${df}: ${[m,e,s,c,n].filter(Boolean).join('; ')}`;}).join('\n');
-        
+
         const summaryEntry = storedChatHistory[0]?.summary ? storedChatHistory[0] : null;
         const recentForPrompt = storedChatHistory.slice(-(summaryEntry ? 9 : 10));
         const historyForPrompt = summaryEntry ? [summaryEntry, ...recentForPrompt] : recentForPrompt;
-        const historyPrompt = historyForPrompt.map(e=>`${e.summary?'РЕЗЮМЕ':e.role==='model'?'АСИСТЕНТ':'ПОТРЕБИТЕЛ'}: ${e.parts?.[0]?.text||''}`).join('\n');
+        const historyPrompt = historyForPrompt
+            .map(entry => `${entry.summary ? 'РЕЗЮМЕ' : entry.role === 'model' ? 'АСИСТЕНТ' : 'ПОТРЕБИТЕЛ'}: ${entry.parts?.[0]?.text || ''}`)
+            .join('\n');
+
         const chatPromptTpl = promptOverride || await getCachedResource('prompt_chat', env.RESOURCES_KV);
         const chatModel = await getCachedResource('model_chat', env.RESOURCES_KV);
         const modelToUse = model || chatModel;
         const geminiKey = env[GEMINI_API_KEY_SECRET_NAME];
         const openaiKey = env[OPENAI_API_KEY_SECRET_NAME];
 
-        if(!chatPromptTpl||!modelToUse) {
+        if (!chatPromptTpl || !modelToUse) {
             console.error(`CHAT_REQUEST_ERROR (${userId}): Missing chat prompt template or chat model name.`);
-            return {success:false, message:'Грешка в конфигурацията на чат асистента. Моля, опитайте по-късно.', statusHint:500};
+            return { success: false, message: 'Грешка в конфигурацията на чат асистента. Моля, опитайте по-късно.', statusHint: 500 };
         }
         const provider = getModelProvider(modelToUse);
-        if(provider==='gemini' && !geminiKey) {
+        if (provider === 'gemini' && !geminiKey) {
             console.error(`CHAT_REQUEST_ERROR (${userId}): Gemini API key missing.`);
-            return {success:false,message:'Липсва конфигурация за AI модела.',statusHint:500};
+            return { success: false, message: 'Липсва конфигурация за AI модела.', statusHint: 500 };
         }
-        if(provider==='openai' && !openaiKey) {
+        if (provider === 'openai' && !openaiKey) {
             console.error(`CHAT_REQUEST_ERROR (${userId}): OpenAI API key missing.`);
-            return {success:false,message:'Липсва конфигурация за AI модела.',statusHint:500};
+            return { success: false, message: 'Липсва конфигурация за AI модела.', statusHint: 500 };
         }
 
         const r = {
-            '%%USER_NAME%%':userName, '%%USER_GOAL%%':userGoal, '%%USER_CONDITIONS%%':userConditions, 
-            '%%USER_PREFERENCES%%':userPreferences, '%%INITIAL_CALORIES_MACROS%%':initCalMac, 
-            '%%PLAN_APPROACH_SUMMARY%%':planSum, '%%ALLOWED_FOODS_SUMMARY%%':allowedF,
-            '%%FORBIDDEN_FOODS_SUMMARY%%':forbiddenF, '%%CURRENT_PRINCIPLES%%': currentPrinciples,
-            '%%HYDRATION_TARGET%%':hydrTarget, '%%COOKING_METHODS%%':cookMethods, 
-            '%%SUPPLEMENT_SUGGESTIONS%%':suppSuggest, '%%TODAY_DATE%%':today.toLocaleDateString('bg-BG'), 
-            '%%CURRENT_WEIGHT%%':currW, 
-            '%%RECENT_AVG_MOOD%%':recentLogs.length>0?(recentLogs.reduce((s,l)=>s+(safeParseFloat(l.data?.mood,0)),0)/recentLogs.length).toFixed(1)+'/5':'N/A', 
-            '%%RECENT_AVG_ENERGY%%':recentLogs.length>0?(recentLogs.reduce((s,l)=>s+(safeParseFloat(l.data?.energy,0)),0)/recentLogs.length).toFixed(1)+'/5':'N/A', 
-            '%%RECENT_AVG_CALMNESS%%':recentLogs.length>0?(recentLogs.reduce((s,l)=>s+(safeParseFloat(l.data?.calmness,0)),0)/recentLogs.length).toFixed(1)+'/5':'N/A', 
-            '%%RECENT_AVG_SLEEP%%':recentLogs.length>0?(recentLogs.reduce((s,l)=>s+(safeParseFloat(l.data?.sleep,0)),0)/recentLogs.length).toFixed(1)+'/5':'N/A', 
-            '%%RECENT_ADHERENCE%%':recentLogs.length>0?`${recentLogs.map(l=>Object.values(l.data?.completedMealsStatus||{}).filter(v=>v===true).length).reduce((s,c)=>s+c,0)} изп. хран. за последните ${recentLogs.length} дни`:'N/A', 
-            '%%TODAYS_MEALS_NAMES%%':todayMeals, 
-            '%%TODAYS_COMPLETED_MEALS_KEYS%%':safeGet(recentLogs.find(l=>l.date===today.toISOString().split('T')[0]),'data.completedMealsStatus')?JSON.stringify(Object.keys(recentLogs.find(l=>l.date===today.toISOString().split('T')[0]).data.completedMealsStatus).filter(k=>recentLogs.find(l=>l.date===today.toISOString().split('T')[0]).data.completedMealsStatus[k]===true)):'Няма данни за днес', 
-            '%%HISTORY%%':historyPrompt||'Няма предишна история на чата.',
-            '%%USER_MESSAGE%%':message,
-            '%%USER_REQUEST%%':message,
-            '%%RECENT_LOGS_SUMMARY%%':recentLogsSummary
+            '%%USER_NAME%%': promptData.userName,
+            '%%USER_GOAL%%': promptData.userGoal,
+            '%%USER_CONDITIONS%%': promptData.userConditions,
+            '%%USER_PREFERENCES%%': promptData.userPreferences,
+            '%%INITIAL_CALORIES_MACROS%%': promptData.initCalMac,
+            '%%PLAN_APPROACH_SUMMARY%%': promptData.planSum,
+            '%%ALLOWED_FOODS_SUMMARY%%': promptData.allowedF,
+            '%%FORBIDDEN_FOODS_SUMMARY%%': promptData.forbiddenF,
+            '%%CURRENT_PRINCIPLES%%': promptData.currentPrinciples,
+            '%%HYDRATION_TARGET%%': promptData.hydrTarget,
+            '%%COOKING_METHODS%%': promptData.cookMethods,
+            '%%SUPPLEMENT_SUGGESTIONS%%': promptData.suppSuggest,
+            '%%TODAY_DATE%%': todayLocaleDate,
+            '%%CURRENT_WEIGHT%%': promptData.currW,
+            '%%RECENT_AVG_MOOD%%': promptData.avgMood,
+            '%%RECENT_AVG_ENERGY%%': promptData.avgEnergy,
+            '%%RECENT_AVG_CALMNESS%%': promptData.avgCalmness,
+            '%%RECENT_AVG_SLEEP%%': promptData.avgSleep,
+            '%%RECENT_ADHERENCE%%': promptData.adherence,
+            '%%TODAYS_MEALS_NAMES%%': promptData.todayMeals,
+            '%%TODAYS_COMPLETED_MEALS_KEYS%%': promptData.todaysCompletedMealsKeys,
+            '%%HISTORY%%': historyPrompt || 'Няма предишна история на чата.',
+            '%%USER_MESSAGE%%': message,
+            '%%USER_REQUEST%%': message,
+            '%%RECENT_LOGS_SUMMARY%%': promptData.recentLogsSummary
         };
-        const populatedPrompt = populatePrompt(chatPromptTpl,r);
+        const populatedPrompt = populatePrompt(chatPromptTpl, r);
         const aiRespRaw = await callModelRef.current(modelToUse, populatedPrompt, env, { temperature: 0.7, maxTokens: 800 });
 
-        let respToUser = aiRespRaw.trim(); let planModReq=null; const sig='[PLAN_MODIFICATION_REQUEST]'; const sigIdx=respToUser.lastIndexOf(sig);
-        if(sigIdx!==-1){
-            planModReq=respToUser.substring(sigIdx+sig.length).trim();
-            respToUser=respToUser.substring(0,sigIdx).trim();
+        let respToUser = aiRespRaw.trim();
+        let planModReq = null;
+        const sig = '[PLAN_MODIFICATION_REQUEST]';
+        const sigIdx = respToUser.lastIndexOf(sig);
+        if (sigIdx !== -1) {
+            planModReq = respToUser.substring(sigIdx + sig.length).trim();
+            respToUser = respToUser.substring(0, sigIdx).trim();
             console.log(`CHAT_INFO (${userId}): Plan modification signal detected: "${planModReq}"`);
-            try{
+            try {
                 const evaluation = await evaluatePlanChange(userId, { source: 'chat', request: planModReq }, env);
-                if(source === 'planModChat') {
+                if (source === 'planModChat') {
                     const evRes = await createUserEvent('planMod', userId, { description: planModReq, originalMessage: message, evaluation }, env);
-                    if(evRes && evRes.message) respToUser += `\n\n${evRes.message}`;
+                    if (evRes && evRes.message) respToUser += `\n\n${evRes.message}`;
                 }
-            }catch(kvErr){
-                console.error(`CHAT_ERROR (${userId}): Failed save pending modification request:`,kvErr);
+            } catch (kvErr) {
+                console.error(`CHAT_ERROR (${userId}): Failed save pending modification request:`, kvErr);
             }
         }
-        
-        storedChatHistory.push({role:'model',parts:[{text:respToUser}]});
+
+        storedChatHistory.push({ role: 'model', parts: [{ text: respToUser }] });
         storedChatHistory = await summarizeAndTrimChatHistory(storedChatHistory, env, maxChatHistory);
-        
+
         // Asynchronous save of chat history
-        env.USER_METADATA_KV.put(`${userId}_chat_history`,JSON.stringify(storedChatHistory)).catch(err=>{console.error(`CHAT_ERROR (${userId}): Failed async chat history save:`,err);});
-        
-        console.log(`CHAT_REQUEST_SUCCESS (${userId}): Replied to user.`)
-        return {success:true, reply:respToUser};
+        env.USER_METADATA_KV.put(`${userId}_chat_history`, JSON.stringify(storedChatHistory)).catch(err => {
+            console.error(`CHAT_ERROR (${userId}): Failed async chat history save:`, err);
+        });
+
+        console.log(`CHAT_REQUEST_SUCCESS (${userId}): Replied to user.`);
+        return { success: true, reply: respToUser };
 
     } catch (error) {
-        console.error(`Error in handleChatRequest for userId ${userId}:`,error.message, error.stack);
-        let userMsg='Възникна грешка при обработка на Вашата заявка към чат асистента.';
-        if(error.message.includes("Gemini API Error") || error.message.includes("OpenAI API Error") || error.message.includes("CF AI error"))
-            userMsg=`Грешка от AI асистента: ${error.message.replace(/(Gemini|OpenAI) API Error \([^)]+\): /,'')}`;
-        else if(error.message.includes("blocked")) userMsg='Отговорът от AI асистента беше блокиран поради съображения за безопасност. Моля, преформулирайте въпроса си.';
-        else if(error instanceof ReferenceError) userMsg='Грешка: Вътрешен проблем с конфигурацията на асистента.';
-        return {success:false,message:userMsg,statusHint:500};
+        console.error(`Error in handleChatRequest for userId ${userId}:`, error.message, error.stack);
+        let userMsg = 'Възникна грешка при обработка на Вашата заявка към чат асистента.';
+        if (error.message.includes('Gemini API Error') || error.message.includes('OpenAI API Error') || error.message.includes('CF AI error')) {
+            userMsg = `Грешка от AI асистента: ${error.message.replace(/(Gemini|OpenAI) API Error \([^)]+\): /, '')}`;
+        } else if (error.message.includes('blocked')) {
+            userMsg = 'Отговорът от AI асистента беше блокиран поради съображения за безопасност. Моля, преформулирайте въпроса си.';
+        } else if (error instanceof ReferenceError) {
+            userMsg = 'Грешка: Вътрешен проблем с конфигурацията на асистента.';
+        }
+        return { success: false, message: userMsg, statusHint: 500 };
     }
 }
 // ------------- END FUNCTION: handleChatRequest -------------
@@ -1623,6 +1708,7 @@ async function handleLogExtraMealRequest(request, env) {
         currentLogData.lastUpdated = new Date().toISOString();
 
         await env.USER_METADATA_KV.put(logKey, JSON.stringify(currentLogData));
+        await refreshChatContextAfterLog(userId, env, logDateStr, currentLogData);
         console.log(`LOG_EXTRA_MEAL_SUCCESS (${userId}): Extra meal logged for date ${logDateStr}. Entries now: ${currentLogData.extraMeals.length}`);
         return { success: true, message: 'Извънредното хранене е записано успешно.', savedDate: logDateStr };
     } catch (error) {
@@ -3312,7 +3398,8 @@ async function processSingleUserPlan(userId, env) {
         const finalPlanString = JSON.stringify(planBuilder, null, 2);
         await env.USER_METADATA_KV.put(`${userId}_final_plan`, finalPlanString);
 
-        if (planBuilder.generationMetadata.errors.length > 0) {
+        const planStatusValue = planBuilder.generationMetadata.errors.length > 0 ? 'error' : 'ready';
+        if (planStatusValue === 'error') {
             await setPlanStatus(userId, 'error', env);
             await env.USER_METADATA_KV.put(`${userId}_processing_error`, planBuilder.generationMetadata.errors.join('\n---\n'));
             await addLog('Процесът завърши с грешка', { checkpoint: true, reason: 'status-error' });
@@ -3327,6 +3414,22 @@ async function processSingleUserPlan(userId, env) {
 
             await addLog('Планът е готов', { checkpoint: true, reason: 'status-ready' });
             console.log(`PROCESS_USER_PLAN (${userId}): Successfully generated and saved UNIFIED plan. Status set to 'ready'.`);
+        }
+
+        try {
+            const chatContext = await assembleChatContext(userId, env, {
+                initialAnswers,
+                finalPlan: planBuilder,
+                currentStatus,
+                planStatus: planStatusValue
+            });
+            if (chatContext) {
+                await env.USER_METADATA_KV.put(getChatContextKey(userId), JSON.stringify(chatContext));
+            } else {
+                await env.USER_METADATA_KV.delete(getChatContextKey(userId));
+            }
+        } catch (ctxErr) {
+            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): неуспешно обновяване на чат контекст - ${ctxErr.message}`);
         }
     } catch (error) {
         console.error(`PROCESS_USER_PLAN (${userId}): >>> FATAL Processing Error <<< :`, error.name, error.message, error.stack);
@@ -3551,6 +3654,373 @@ const safeGet = (obj, path, defaultValue = null) => { try { const keys = Array.i
 // ------------- START FUNCTION: safeParseFloat -------------
 const safeParseFloat = (val, defaultVal = null) => { if (val === null || val === undefined || String(val).trim() === '') return defaultVal; const num = parseFloat(String(val).replace(',', '.')); return isNaN(num) ? defaultVal : num; };
 // ------------- END FUNCTION: safeParseFloat -------------
+
+// ------------- START BLOCK: ChatContextHelpers -------------
+const CHAT_CONTEXT_MENU_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+function getChatContextKey(userId) {
+    return `${userId}_chat_context`;
+}
+
+function buildMenuSummaryByDay(week1Menu = {}) {
+    const summary = {};
+    if (week1Menu && typeof week1Menu === 'object') {
+        for (const [day, meals] of Object.entries(week1Menu)) {
+            if (!day) continue;
+            const normalizedDay = day.toLowerCase();
+            if (!Array.isArray(meals)) {
+                summary[normalizedDay] = 'няма планирани за днес';
+                continue;
+            }
+            const names = meals.map(m => (m && typeof m === 'object' ? m.meal_name || '?' : '?')).join(', ');
+            summary[normalizedDay] = names || 'няма планирани за днес';
+        }
+    }
+    return summary;
+}
+
+function sanitizeLogEntryForContext(date, rawRecord) {
+    if (!date) return null;
+    const base = rawRecord && typeof rawRecord === 'object' ? rawRecord : {};
+    const log = base.log || base.data || base;
+    if (!log || typeof log !== 'object' || Object.keys(log).length === 0) {
+        return null;
+    }
+    return { date, log };
+}
+
+function computeLogMetrics(entries, todayStr = getLocalDate()) {
+    const validEntries = Array.isArray(entries)
+        ? entries.map(e => sanitizeLogEntryForContext(e?.date, e?.log ? { log: e.log } : e)).filter(Boolean)
+        : [];
+    if (validEntries.length === 0) {
+        return {
+            entries: [],
+            summaryText: 'Няма скорошни логове.',
+            averages: { mood: 'N/A', energy: 'N/A', calmness: 'N/A', sleep: 'N/A' },
+            adherenceText: 'N/A',
+            todaysCompletedMealsKeys: 'Няма данни за днес',
+            updatedAt: new Date().toISOString()
+        };
+    }
+
+    const sortedEntries = [...validEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 3);
+    const lines = [];
+    let moodSum = 0; let moodCount = 0;
+    let energySum = 0; let energyCount = 0;
+    let calmSum = 0; let calmCount = 0;
+    let sleepSum = 0; let sleepCount = 0;
+    let adherenceCount = 0;
+    let todaysCompletedMealsKeys = 'Няма данни за днес';
+
+    for (const entry of sortedEntries) {
+        const data = entry.log || {};
+        const formattedDate = new Date(entry.date).toLocaleDateString('bg-BG', { day: '2-digit', month: 'short' });
+        const mood = safeParseFloat(data.mood, null);
+        const energy = safeParseFloat(data.energy, null);
+        const calmness = safeParseFloat(data.calmness, null);
+        const sleep = safeParseFloat(data.sleep, null);
+        const completedStatus = data.completedMealsStatus && typeof data.completedMealsStatus === 'object'
+            ? Object.values(data.completedMealsStatus).filter(v => v === true).length
+            : 0;
+        adherenceCount += completedStatus;
+
+        if (mood !== null && mood >= 1 && mood <= 5) { moodSum += mood; moodCount++; }
+        if (energy !== null && energy >= 1 && energy <= 5) { energySum += energy; energyCount++; }
+        if (calmness !== null && calmness >= 1 && calmness <= 5) { calmSum += calmness; calmCount++; }
+        if (sleep !== null && sleep >= 1 && sleep <= 5) { sleepSum += sleep; sleepCount++; }
+
+        const summaryParts = [];
+        if (mood !== null) summaryParts.push(`Настр:${data.mood}/5`);
+        if (energy !== null) summaryParts.push(`Енерг:${data.energy}/5`);
+        if (sleep !== null) summaryParts.push(`Сън:${data.sleep}/5`);
+        if (completedStatus > 0) summaryParts.push(`${completedStatus} изп. хран.`);
+        if (data.note) {
+            const trimmed = String(data.note).slice(0, 20);
+            summaryParts.push(`Бел:"${trimmed}..."`);
+        }
+
+        lines.push(`${formattedDate}: ${summaryParts.filter(Boolean).join('; ')}`.trim());
+
+        if (entry.date === todayStr) {
+            const statusObj = data.completedMealsStatus && typeof data.completedMealsStatus === 'object'
+                ? data.completedMealsStatus
+                : null;
+            todaysCompletedMealsKeys = statusObj
+                ? JSON.stringify(Object.keys(statusObj).filter(k => statusObj[k] === true))
+                : 'Няма данни за днес';
+        }
+    }
+
+    const avg = (sum, count) => (count > 0 ? `${(sum / count).toFixed(1)}/5` : 'N/A');
+    return {
+        entries: sortedEntries,
+        summaryText: lines.join('\n') || 'Няма скорошни логове.',
+        averages: {
+            mood: avg(moodSum, moodCount),
+            energy: avg(energySum, energyCount),
+            calmness: avg(calmSum, calmCount),
+            sleep: avg(sleepSum, sleepCount)
+        },
+        adherenceText: sortedEntries.length > 0 ? `${adherenceCount} изп. хран. за последните ${sortedEntries.length} дни` : 'N/A',
+        todaysCompletedMealsKeys,
+        updatedAt: new Date().toISOString()
+    };
+}
+
+async function fetchRecentLogEntries(userId, env, limit = 3) {
+    const entries = [];
+    if (!env?.USER_METADATA_KV || typeof env.USER_METADATA_KV.get !== 'function') {
+        return entries;
+    }
+    for (let i = 0; i < limit; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateKey = getLocalDate(date);
+        try {
+            const logStr = await env.USER_METADATA_KV.get(`${userId}_log_${dateKey}`);
+            if (!logStr) continue;
+            const parsed = safeParseJson(logStr, {});
+            const sanitized = sanitizeLogEntryForContext(dateKey, parsed);
+            if (sanitized) entries.push(sanitized);
+        } catch (err) {
+            console.warn(`CHAT_CONTEXT_WARN (${userId}): неуспешно зареждане на лог за ${dateKey} - ${err.message}`);
+        }
+    }
+    return entries;
+}
+
+function createPromptDataFromContext(context) {
+    if (!context) {
+        return null;
+    }
+    const todayKey = CHAT_CONTEXT_MENU_KEYS[new Date().getDay()];
+    const menuSummary = safeGet(context, ['plan', 'menuSummaryByDay'], {});
+    return {
+        userName: safeGet(context, ['user', 'name'], 'Потребител'),
+        userGoal: safeGet(context, ['user', 'goal'], 'N/A'),
+        userConditions: safeGet(context, ['user', 'conditions'], 'Няма специфични'),
+        userPreferences: safeGet(context, ['user', 'preferences'], 'N/A'),
+        initCalMac: safeGet(context, ['plan', 'macrosString'], 'N/A'),
+        planSum: safeGet(context, ['plan', 'summary'], 'Персонализиран хранителен подход'),
+        allowedF: safeGet(context, ['plan', 'allowedFoodsSummary'], ''),
+        forbiddenF: safeGet(context, ['plan', 'forbiddenFoodsSummary'], ''),
+        hydrTarget: safeGet(context, ['plan', 'hydrationTarget'], 'N/A'),
+        cookMethods: safeGet(context, ['plan', 'cookingMethodsSummary'], 'N/A'),
+        suppSuggest: safeGet(context, ['plan', 'supplementSuggestionsSummary'], 'няма препоръки'),
+        currentPrinciples: safeGet(context, ['plan', 'principlesText'], 'Общи принципи.'),
+        todayMeals: menuSummary?.[todayKey] || 'няма планирани за днес',
+        currW: safeGet(context, ['metrics', 'currentWeightFormatted'], 'N/A'),
+        recentLogsSummary: safeGet(context, ['logs', 'summaryText'], 'Няма скорошни логове.'),
+        avgMood: safeGet(context, ['logs', 'averages', 'mood'], 'N/A'),
+        avgEnergy: safeGet(context, ['logs', 'averages', 'energy'], 'N/A'),
+        avgCalmness: safeGet(context, ['logs', 'averages', 'calmness'], 'N/A'),
+        avgSleep: safeGet(context, ['logs', 'averages', 'sleep'], 'N/A'),
+        adherence: safeGet(context, ['logs', 'adherenceText'], 'N/A'),
+        todaysCompletedMealsKeys: safeGet(context, ['logs', 'todaysCompletedMealsKeys'], 'Няма данни за днес')
+    };
+}
+
+function buildPromptDataFromRaw(initialAnswers, finalPlan, currentStatus, logEntries) {
+    const userName = safeGet(initialAnswers, 'name', 'Потребител');
+    const userGoal = safeGet(initialAnswers, 'goal', 'N/A');
+    const conditionsList = safeGet(initialAnswers, 'medicalConditions', []);
+    const userConditions = Array.isArray(conditionsList)
+        ? conditionsList.filter(c => c && c.toLowerCase() !== 'нямам').join(', ') || 'Няма специфични'
+        : 'Няма специфични';
+    const dislikes = safeGet(initialAnswers, 'q1745806494081', '') || safeGet(initialAnswers, 'q1745806409218', 'Няма');
+    const userPreferences = `${safeGet(initialAnswers, 'foodPreference', 'N/A')}. Не харесва: ${dislikes}`;
+    const calMac = safeGet(finalPlan, 'caloriesMacros', null);
+    const initCalMac = calMac
+        ? `Кал: ${calMac.calories || '?'} P:${calMac.protein_grams || '?'}g C:${calMac.carbs_grams || '?'}g F:${calMac.fat_grams || '?'}g`
+        : 'N/A';
+    const planSum = safeGet(finalPlan, 'profileSummary', 'Персонализиран хранителен подход');
+    const allowedFoods = safeGet(finalPlan, 'allowedForbiddenFoods.main_allowed_foods', []);
+    const allowedF = Array.isArray(allowedFoods)
+        ? allowedFoods.slice(0, 7).join(', ') + (allowedFoods.length > 7 ? '...' : '')
+        : '';
+    const forbiddenFoods = safeGet(finalPlan, 'allowedForbiddenFoods.main_forbidden_foods', []);
+    const forbiddenF = Array.isArray(forbiddenFoods)
+        ? forbiddenFoods.slice(0, 5).join(', ') + (forbiddenFoods.length > 5 ? '...' : '')
+        : '';
+    const hydrTarget = safeGet(finalPlan, 'hydrationCookingSupplements.hydration_recommendations.daily_liters', 'N/A');
+    const cookMethodsArr = safeGet(finalPlan, 'hydrationCookingSupplements.cooking_methods.recommended', []);
+    const cookMethods = Array.isArray(cookMethodsArr) && cookMethodsArr.length > 0 ? cookMethodsArr.join(', ') : 'N/A';
+    const supplements = safeGet(finalPlan, 'hydrationCookingSupplements.supplement_suggestions', []);
+    const suppSuggest = Array.isArray(supplements) && supplements.length > 0
+        ? supplements.map(s => s?.supplement_name).filter(Boolean).join(', ') || 'няма препоръки'
+        : 'няма препоръки';
+    const principles = safeGet(finalPlan, 'principlesWeek2_4', 'Общи принципи.');
+    const principlesText = Array.isArray(principles) ? principles.join('\n') : principles || 'Общи принципи.';
+    const menuSummary = buildMenuSummaryByDay(safeGet(finalPlan, 'week1Menu', {}));
+    const todayKey = CHAT_CONTEXT_MENU_KEYS[new Date().getDay()];
+    const todayMeals = menuSummary?.[todayKey] || 'няма планирани за днес';
+    const currWeight = safeParseFloat(safeGet(currentStatus, 'weight', null), null);
+    const currW = currWeight !== null ? `${currWeight.toFixed(1)} кг` : 'N/A';
+    const logMetrics = computeLogMetrics(logEntries, getLocalDate());
+
+    return {
+        userName,
+        userGoal,
+        userConditions,
+        userPreferences,
+        initCalMac,
+        planSum,
+        allowedF,
+        forbiddenF,
+        hydrTarget,
+        cookMethods,
+        suppSuggest,
+        currentPrinciples: principlesText,
+        todayMeals,
+        currW,
+        recentLogsSummary: logMetrics.summaryText,
+        avgMood: logMetrics.averages.mood,
+        avgEnergy: logMetrics.averages.energy,
+        avgCalmness: logMetrics.averages.calmness,
+        avgSleep: logMetrics.averages.sleep,
+        adherence: logMetrics.adherenceText,
+        todaysCompletedMealsKeys: logMetrics.todaysCompletedMealsKeys,
+        logEntries: logMetrics.entries,
+        menuSummary,
+        logMetrics
+    };
+}
+
+function isChatContextFresh(context) {
+    if (!context || context.version !== CHAT_CONTEXT_VERSION) {
+        return false;
+    }
+    const ttl = typeof context.ttlMs === 'number' ? context.ttlMs : CHAT_CONTEXT_TTL_MS;
+    const updatedAt = Date.parse(context.updatedAt || '');
+    if (!updatedAt || Number.isNaN(updatedAt)) {
+        return false;
+    }
+    return Date.now() - updatedAt < ttl;
+}
+
+async function assembleChatContext(userId, env, { initialAnswers, finalPlan, currentStatus, logEntries, planStatus } = {}) {
+    const answers = initialAnswers || safeParseJson(await env.USER_METADATA_KV.get(`${userId}_initial_answers`), {});
+    const plan = finalPlan || safeParseJson(await env.USER_METADATA_KV.get(`${userId}_final_plan`), {});
+    if (!answers || Object.keys(answers).length === 0 || !plan || Object.keys(plan).length === 0) {
+        return null;
+    }
+    const status = currentStatus || safeParseJson(await env.USER_METADATA_KV.get(`${userId}_current_status`), {});
+    let logs = Array.isArray(logEntries) ? logEntries : await fetchRecentLogEntries(userId, env, 3);
+    logs = logs.map(entry => sanitizeLogEntryForContext(entry?.date, entry?.log ? { log: entry.log } : entry)).filter(Boolean);
+    const logMetrics = computeLogMetrics(logs, getLocalDate());
+    const menuSummary = buildMenuSummaryByDay(safeGet(plan, 'week1Menu', {}));
+    const calMac = safeGet(plan, 'caloriesMacros', null);
+    const initCalMac = calMac
+        ? `Кал: ${calMac.calories || '?'} P:${calMac.protein_grams || '?'}g C:${calMac.carbs_grams || '?'}g F:${calMac.fat_grams || '?'}g`
+        : 'N/A';
+    const allowedFoods = safeGet(plan, 'allowedForbiddenFoods.main_allowed_foods', []);
+    const allowedF = Array.isArray(allowedFoods)
+        ? allowedFoods.slice(0, 7).join(', ') + (allowedFoods.length > 7 ? '...' : '')
+        : '';
+    const forbiddenFoods = safeGet(plan, 'allowedForbiddenFoods.main_forbidden_foods', []);
+    const forbiddenF = Array.isArray(forbiddenFoods)
+        ? forbiddenFoods.slice(0, 5).join(', ') + (forbiddenFoods.length > 5 ? '...' : '')
+        : '';
+    const cookMethodsArr = safeGet(plan, 'hydrationCookingSupplements.cooking_methods.recommended', []);
+    const cookMethods = Array.isArray(cookMethodsArr) && cookMethodsArr.length > 0 ? cookMethodsArr.join(', ') : 'N/A';
+    const supplements = safeGet(plan, 'hydrationCookingSupplements.supplement_suggestions', []);
+    const suppSuggest = Array.isArray(supplements) && supplements.length > 0
+        ? supplements.map(s => s?.supplement_name).filter(Boolean).join(', ') || 'няма препоръки'
+        : 'няма препоръки';
+    const principles = safeGet(plan, 'principlesWeek2_4', 'Общи принципи.');
+    const principlesText = Array.isArray(principles) ? principles.join('\n') : principles || 'Общи принципи.';
+    const conditionsList = safeGet(answers, 'medicalConditions', []);
+    const userConditions = Array.isArray(conditionsList)
+        ? conditionsList.filter(c => c && c.toLowerCase() !== 'нямам').join(', ') || 'Няма специфични'
+        : 'Няма специфични';
+    const dislikes = safeGet(answers, 'q1745806494081', '') || safeGet(answers, 'q1745806409218', 'Няма');
+    const userPreferences = `${safeGet(answers, 'foodPreference', 'N/A')}. Не харесва: ${dislikes}`;
+    const currWeight = safeParseFloat(safeGet(status, 'weight', null), null);
+    const currW = currWeight !== null ? `${currWeight.toFixed(1)} кг` : 'N/A';
+
+    return {
+        version: CHAT_CONTEXT_VERSION,
+        ttlMs: CHAT_CONTEXT_TTL_MS,
+        updatedAt: new Date().toISOString(),
+        planStatus: planStatus || 'ready',
+        planTimestamp: safeGet(plan, 'generationMetadata.timestamp', new Date().toISOString()),
+        user: {
+            name: safeGet(answers, 'name', 'Потребител'),
+            goal: safeGet(answers, 'goal', 'N/A'),
+            conditions: userConditions,
+            preferences: userPreferences
+        },
+        plan: {
+            summary: safeGet(plan, 'profileSummary', 'Персонализиран хранителен подход'),
+            macrosString: initCalMac,
+            allowedFoodsSummary: allowedF,
+            forbiddenFoodsSummary: forbiddenF,
+            hydrationTarget: safeGet(plan, 'hydrationCookingSupplements.hydration_recommendations.daily_liters', 'N/A'),
+            cookingMethodsSummary: cookMethods,
+            supplementSuggestionsSummary: suppSuggest,
+            principlesText,
+            menuSummaryByDay: menuSummary
+        },
+        metrics: {
+            currentWeightFormatted: currW
+        },
+        logs: {
+            ...logMetrics,
+            entries: logMetrics.entries
+        }
+    };
+}
+
+async function persistChatContext(userId, env, context) {
+    if (!context) {
+        return;
+    }
+    try {
+        await env.USER_METADATA_KV.put(getChatContextKey(userId), JSON.stringify(context));
+    } catch (err) {
+        console.warn(`CHAT_CONTEXT_WARN (${userId}): неуспешно записване на контекст - ${err.message}`);
+    }
+}
+
+async function refreshChatContextAfterLog(userId, env, dateStr, record, { weight } = {}) {
+    if (!env?.USER_METADATA_KV || typeof env.USER_METADATA_KV.get !== 'function') {
+        return;
+    }
+    try {
+        const contextStr = await env.USER_METADATA_KV.get(getChatContextKey(userId));
+        if (!contextStr) {
+            return;
+        }
+        const context = safeParseJson(contextStr, null);
+        if (!context || context.version !== CHAT_CONTEXT_VERSION) {
+            return;
+        }
+        const sanitized = sanitizeLogEntryForContext(dateStr, record);
+        const entries = Array.isArray(context.logs?.entries) ? context.logs.entries.slice(0, 3) : [];
+        const updatedMap = new Map(entries.map(e => [e.date, e]));
+        if (sanitized) {
+            updatedMap.set(dateStr, sanitized);
+        } else {
+            updatedMap.delete(dateStr);
+        }
+        const mergedEntries = Array.from(updatedMap.values()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 3);
+        const metrics = computeLogMetrics(mergedEntries, getLocalDate());
+        context.logs = { ...metrics, entries: metrics.entries };
+        context.updatedAt = new Date().toISOString();
+        if (weight !== undefined && weight !== null && String(weight).trim() !== '') {
+            const parsedWeight = safeParseFloat(weight, null);
+            if (parsedWeight !== null) {
+                context.metrics = context.metrics || {};
+                context.metrics.currentWeightFormatted = `${parsedWeight.toFixed(1)} кг`;
+            }
+        }
+        await env.USER_METADATA_KV.put(getChatContextKey(userId), JSON.stringify(context));
+    } catch (err) {
+        console.warn(`CHAT_CONTEXT_WARN (${userId}): неуспешно обновяване след лог - ${err.message}`);
+    }
+}
+// ------------- END BLOCK: ChatContextHelpers -------------
 
 // ------------- START FUNCTION: recordUsage -------------
 async function recordUsage(env, type, identifier = '') {
