@@ -4347,6 +4347,15 @@ async function createUserEvent(eventType, userId, payload, env) {
 
     if (eventType === 'planMod') {
         try {
+            const pendingFlag = await env.USER_METADATA_KV.get(`pending_plan_mod_${userId}`);
+            if (pendingFlag) {
+                return { success: false, message: 'Вече има чакаща заявка за промяна на плана.' };
+            }
+        } catch (err) {
+            console.error(`EVENT_PENDING_FLAG_CHECK_ERROR (${userId}):`, err);
+        }
+
+        try {
             const existing = await env.USER_METADATA_KV.list({ prefix: `event_planMod_${userId}` });
             for (const { name } of existing.keys) {
                 const val = await env.USER_METADATA_KV.get(name);
