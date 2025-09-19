@@ -79,6 +79,31 @@ test('рендерира метриките и реагира на highlightMacr
   expect(proteinDiv.classList.contains('active')).toBe(false);
 });
 
+test('използва процентите в етикетите на диаграмата', async () => {
+  const card = document.createElement('macro-analytics-card');
+  document.body.appendChild(card);
+  const plan = {
+    calories: 2000,
+    protein_grams: 150,
+    protein_percent: 35,
+    carbs_grams: 220,
+    carbs_percent: 45,
+    fat_grams: 60,
+    fat_percent: 20,
+    fiber_grams: 30,
+    fiber_percent: 10
+  };
+  card.setData({ plan, current: null });
+  await waitFor(() => card.lastChartLabels.length === 4);
+  expect(card.lastChartLabels.every(label => !label.includes('undefined%'))).toBe(true);
+  expect(card.lastChartLabels).toEqual([
+    expect.stringContaining('(35%)'),
+    expect.stringContaining('(45%)'),
+    expect.stringContaining('(20%)'),
+    expect.stringContaining('(10%)')
+  ]);
+});
+
 test('закръгля стойностите до цяло число', async () => {
   const card = document.createElement('macro-analytics-card');
   document.body.appendChild(card);

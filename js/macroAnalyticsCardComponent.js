@@ -1,6 +1,6 @@
 import { loadLocale } from './macroCardLocales.js';
 import { ensureChart, registerSubtleGlow } from './chartLoader.js';
-import { scaleMacros, formatPercent } from './macroUtils.js';
+import { scaleMacros, formatPercent, calculateMacroPercents } from './macroUtils.js';
 import { macroColorVars } from './themeConfig.js';
 
 let Chart;
@@ -11,6 +11,40 @@ function ensureGramsFields(obj) {
   if (obj.carbs_grams === undefined && typeof obj.carbs === 'number') obj.carbs_grams = obj.carbs;
   if (obj.fat_grams === undefined && typeof obj.fat === 'number') obj.fat_grams = obj.fat;
   if (obj.fiber_grams === undefined && typeof obj.fiber === 'number') obj.fiber_grams = obj.fiber;
+  return obj;
+}
+
+function toFiniteNumber(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+}
+
+function ensurePercentFields(obj) {
+  if (!obj) return obj;
+  const macros = {
+    calories: toFiniteNumber(obj.calories) ?? 0,
+    protein: toFiniteNumber(obj.protein_grams) ?? toFiniteNumber(obj.protein) ?? 0,
+    carbs: toFiniteNumber(obj.carbs_grams) ?? toFiniteNumber(obj.carbs) ?? 0,
+    fat: toFiniteNumber(obj.fat_grams) ?? toFiniteNumber(obj.fat) ?? 0,
+    fiber: toFiniteNumber(obj.fiber_grams) ?? toFiniteNumber(obj.fiber) ?? 0
+  };
+  const fallback = calculateMacroPercents(macros);
+  const assign = (key) => {
+    const parsed = toFiniteNumber(obj[key]);
+    if (parsed !== undefined) {
+      obj[key] = parsed;
+      return;
+    }
+    if (fallback[key] !== undefined) obj[key] = fallback[key];
+  };
+  assign('protein_percent');
+  assign('carbs_percent');
+  assign('fat_percent');
+  assign('fiber_percent');
   return obj;
 }
 
@@ -203,6 +237,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     this.activeMacroIndex = null;
     this.planData = null;
     this.currentData = null;
+    this.lastChartLabels = [];
     this.observer = null;
     this.refreshTimer = null;
     this.locale = this.getAttribute('locale') || document.documentElement.lang || 'bg';
@@ -272,7 +307,7 @@ export class MacroAnalyticsCard extends HTMLElement {
           };
         }
       }
-      if (name === 'plan-data') this.planData = ensureGramsFields(parsed);
+      if (name === 'plan-data') this.planData = ensurePercentFields(ensureGramsFields(parsed));
       if (name === 'current-data') this.currentData = ensureGramsFields(parsed);
       this.renderMetrics();
       this.renderChart();
@@ -542,18 +577,21 @@ export class MacroAnalyticsCard extends HTMLElement {
   renderChart() {
     const plan = this.planData;
     const current = this.currentData;
-    if (!plan || !this.canvas || typeof Chart === 'undefined') return;
+    if (!plan || !this.canvas) return;
+    const formatPercentLabel = (value) => toFiniteNumber(value) ?? 0;
+    const labels = [
+      `${this.labels.macros.protein} (${formatPercentLabel(plan.protein_percent)}%)`,
+      `${this.labels.macros.carbs} (${formatPercentLabel(plan.carbs_percent)}%)`,
+      `${this.labels.macros.fat} (${formatPercentLabel(plan.fat_percent)}%)`,
+      `${this.labels.macros.fiber} (${formatPercentLabel(plan.fiber_percent)}%)`
+    ];
+    this.lastChartLabels = labels;
+    if (typeof Chart === 'undefined') return;
     this.hideLoading();
     const skeleton = this.shadowRoot.querySelector('.chart-skeleton');
     if (skeleton) skeleton.remove();
     if (this.canvas.hasAttribute('hidden')) this.canvas.removeAttribute('hidden');
     const macroColors = macroColorVars.map(v => this.getCssVar(`--${v}`));
-    const labels = [
-      `${this.labels.macros.protein} (${plan.protein_percent}%)`,
-      `${this.labels.macros.carbs} (${plan.carbs_percent}%)`,
-      `${this.labels.macros.fat} (${plan.fat_percent}%)`,
-      `${this.labels.macros.fiber} (${plan.fiber_percent}%)`
-    ];
     const planData = [plan.protein_grams, plan.carbs_grams, plan.fat_grams, plan.fiber_grams];
     const currentData = current
       ? [current.protein_grams, current.carbs_grams, current.fat_grams, current.fiber_grams]

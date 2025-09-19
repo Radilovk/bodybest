@@ -29,7 +29,7 @@ beforeEach(async () => {
     registerNutrientOverrides: jest.fn(),
     getNutrientOverride: jest.fn(() => null),
     loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
-    calculateMacroPercents: jest.fn(() => ({ protein_percent: 0, carbs_percent: 0, fat_percent: 0 }))
+    calculateMacroPercents: jest.fn(() => ({ protein_percent: 0, carbs_percent: 0, fat_percent: 0, fiber_percent: 0 }))
   }));
   addExtraMealWithOverrideMock = jest.fn();
   appendExtraMealCardMock = jest.fn();
@@ -145,8 +145,8 @@ test('извлича макроси от AI при празни полета', a
   expect(mockAi).toHaveBeenCalledWith('банан', 100);
   const body = JSON.parse(fetch.mock.calls[0][1].body);
   expect(body.calories).toBe(50);
-  expect(form.querySelector('#extraMealSummary [data-summary="protein"]').textContent).toBe('1');
-  expect(form.querySelector('#extraMealSummary [data-summary="fiber"]').textContent).toBe('2');
+  expect(form.querySelector('#extraMealSummary [data-summary="protein"]').textContent).toBe('1.00');
+  expect(form.querySelector('#extraMealSummary [data-summary="fiber"]').textContent).toBe('2.00');
 });
 
 test('добавя DOM елемент при успешно изпращане', async () => {

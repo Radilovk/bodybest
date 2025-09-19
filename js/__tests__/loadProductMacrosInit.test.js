@@ -4,7 +4,12 @@ import { jest } from '@jest/globals';
 test('initializeApp продължава при грешка в loadProductMacros', async () => {
   const loadProductMacros = jest.fn().mockRejectedValue(new Error('missing'));
 
-  jest.unstable_mockModule('../macroUtils.js', () => ({ loadProductMacros, calculateCurrentMacros: jest.fn(), calculatePlanMacros: jest.fn(), calculateMacroPercents: jest.fn(() => ({ protein_percent: 0, carbs_percent: 0, fat_percent: 0 })) }));
+  jest.unstable_mockModule('../macroUtils.js', () => ({
+    loadProductMacros,
+    calculateCurrentMacros: jest.fn(),
+    calculatePlanMacros: jest.fn(),
+    calculateMacroPercents: jest.fn(() => ({ protein_percent: 0, carbs_percent: 0, fat_percent: 0, fiber_percent: 0 }))
+  }));
   jest.unstable_mockModule('../config.js', () => ({ isLocalDevelopment: false, apiEndpoints: {} }));
   jest.unstable_mockModule('../logger.js', () => ({ debugLog: jest.fn(), enableDebug: jest.fn() }));
   jest.unstable_mockModule('../utils.js', () => ({

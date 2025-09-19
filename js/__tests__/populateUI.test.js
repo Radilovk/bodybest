@@ -85,7 +85,17 @@ beforeEach(async () => {
     },
     todaysMealCompletionStatus: {},
     todaysExtraMeals: [],
-    todaysPlanMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+    todaysPlanMacros: {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      fiber: 0,
+      protein_percent: 0,
+      carbs_percent: 0,
+      fat_percent: 0,
+      fiber_percent: 0
+    },
     currentIntakeMacros: {},
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),

@@ -97,7 +97,11 @@ test('recalculates macros automatically and shows spinner while loading', async 
       protein_grams: macros.protein_grams,
       carbs_grams: macros.carbs_grams,
       fat_grams: macros.fat_grams,
-      fiber_grams: macros.fiber_grams
+      fiber_grams: macros.fiber_grams,
+      protein_percent: macros.protein_percent,
+      carbs_percent: macros.carbs_percent,
+      fat_percent: macros.fat_percent,
+      fiber_percent: macros.fiber_percent
     }),
     current: expectedCurrent
   });
@@ -108,15 +112,45 @@ test('валидира и отхвърля некоректни макро да�
   const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const currentDayKey = dayNames[new Date().getDay()];
   appState.fullDashboardData.planData = { week1Menu: { [currentDayKey]: [] } };
-  Object.assign(appState.todaysPlanMacros, { calories: 2000, protein: 'bad', carbs: 200, fat: 60, fiber: 30 });
+  Object.assign(appState.todaysPlanMacros, {
+    calories: 2000,
+    protein: 'bad',
+    carbs: 200,
+    fat: 60,
+    fiber: 30,
+    protein_percent: 0,
+    carbs_percent: 0,
+    fat_percent: 0,
+    fiber_percent: 0
+  });
   await populateDashboardMacros({});
   expect(document.querySelector('macro-analytics-card')).toBeNull();
 });
 
 test('calculatePlanMacros се извиква само веднъж при кеширани стойности', async () => {
   jest.resetModules();
-  const calcMock = jest.fn().mockReturnValue({ calories: 100, protein: 10, carbs: 20, fat: 5, fiber: 3 });
-  jest.unstable_mockModule('../macroUtils.js', () => ({ loadProductMacros: jest.fn(), calculateCurrentMacros: jest.fn(), calculatePlanMacros: calcMock, getNutrientOverride: jest.fn(), addMealMacros: jest.fn(), removeMealMacros: jest.fn(), scaleMacros: jest.fn(), registerNutrientOverrides: jest.fn(), calculateMacroPercents: jest.fn(() => ({ protein_percent: 0, carbs_percent: 0, fat_percent: 0 })) }));
+  const calcMock = jest.fn().mockReturnValue({
+    calories: 100,
+    protein: 10,
+    carbs: 20,
+    fat: 5,
+    fiber: 3,
+    protein_percent: 0,
+    carbs_percent: 0,
+    fat_percent: 0,
+    fiber_percent: 0
+  });
+  jest.unstable_mockModule('../macroUtils.js', () => ({
+    loadProductMacros: jest.fn(),
+    calculateCurrentMacros: jest.fn(),
+    calculatePlanMacros: calcMock,
+    getNutrientOverride: jest.fn(),
+    addMealMacros: jest.fn(),
+    removeMealMacros: jest.fn(),
+    scaleMacros: jest.fn(),
+    registerNutrientOverrides: jest.fn(),
+    calculateMacroPercents: jest.fn(() => ({ protein_percent: 0, carbs_percent: 0, fat_percent: 0, fiber_percent: 0 }))
+  }));
   const app = await import('../app.js');
   Object.assign(app.currentIntakeMacros, { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
   const populate = await import('../populateUI.js');
@@ -159,7 +193,11 @@ test('използва подадените планови макроси', asyn
     protein_grams: macros.protein_grams,
     carbs_grams: macros.carbs_grams,
     fat_grams: macros.fat_grams,
-    fiber_grams: macros.fiber_grams
+    fiber_grams: macros.fiber_grams,
+    protein_percent: summed.protein_percent,
+    carbs_percent: summed.carbs_percent,
+    fat_percent: summed.fat_percent,
+    fiber_percent: summed.fiber_percent
   });
   expect(selectors.macroMetricsPreview.textContent).toContain('150');
 });
