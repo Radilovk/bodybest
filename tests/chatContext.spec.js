@@ -209,4 +209,81 @@ describe('chat context caching', () => {
     expect(updatedContext.metrics.currentWeightFormatted).toBe('79.5 кг');
     expect(updatedContext.logs.todaysCompletedMealsKeys).toBe(JSON.stringify(['breakfast', 'lunch']));
   });
+
+  test('изтриването на дневник почиства кеширания chat_context', async () => {
+    const env = createEnv();
+    const userId = 'user-3';
+    const dateToDelete = '2024-06-09';
+    const remainingDate = '2024-06-08';
+
+    const deletedLogRecord = {
+      log: {
+        mood: '5',
+        energy: '4',
+        sleep: '4',
+        completedMealsStatus: { breakfast: true, lunch: true },
+        note: 'Дневник за изтриване'
+      }
+    };
+    const remainingLogRecord = {
+      log: {
+        mood: '3',
+        energy: '3',
+        sleep: '3',
+        completedMealsStatus: { dinner: true },
+        note: 'Остава в историята'
+      }
+    };
+
+    const existingContext = {
+      version: 1,
+      updatedAt: new Date('2024-06-09T18:00:00Z').toISOString(),
+      planStatus: 'ready',
+      metrics: {
+        currentWeightFormatted: '80.0 кг'
+      },
+      logs: {
+        entries: [
+          { date: dateToDelete, log: deletedLogRecord.log },
+          { date: remainingDate, log: remainingLogRecord.log }
+        ],
+        summaryText: '9 юни: тестов запис',
+        averages: { mood: '4.0/5', energy: '3.5/5', calmness: 'N/A', sleep: '3.5/5' },
+        adherenceText: '2 изп. хран. за последните 2 дни',
+        todaysCompletedMealsKeys: JSON.stringify(['breakfast', 'lunch'])
+      }
+    };
+
+    env.__store.set(`${userId}_log_${dateToDelete}`, JSON.stringify(deletedLogRecord));
+    env.__store.set(`${userId}_log_${remainingDate}`, JSON.stringify(remainingLogRecord));
+    env.__store.set(`${userId}_logs_index`, JSON.stringify([remainingDate, dateToDelete]));
+    env.__store.set(`${userId}_chat_context`, JSON.stringify(existingContext));
+
+    const response = await handleLogRequest(
+      createRequest({
+        userId,
+        date: dateToDelete,
+        delete: true
+      }),
+      env
+    );
+
+    expect(response.success).toBe(true);
+    expect(response.deletedDate).toBe(dateToDelete);
+    expect(env.USER_METADATA_KV.delete).toHaveBeenCalledWith(`${userId}_log_${dateToDelete}`);
+    expect(env.__store.has(`${userId}_log_${dateToDelete}`)).toBe(false);
+
+    const updatedIndex = JSON.parse(env.__store.get(`${userId}_logs_index`));
+    expect(updatedIndex).not.toContain(dateToDelete);
+
+    const updatedContextStr = env.__store.get(`${userId}_chat_context`);
+    expect(updatedContextStr).toBeTruthy();
+    const updatedContext = JSON.parse(updatedContextStr);
+
+    expect(updatedContext.logs.entries).toHaveLength(1);
+    expect(updatedContext.logs.entries[0].date).toBe(remainingDate);
+    expect(updatedContext.logs.summaryText).not.toMatch(/9 юни/);
+    expect(updatedContext.logs.summaryText).toMatch(/8 юни/);
+    expect(updatedContext.logs.todaysCompletedMealsKeys).toBe('Няма данни за днес');
+  });
 });

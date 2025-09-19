@@ -1307,6 +1307,7 @@ async function handleLogRequest(request, env) {
                 idxArr = idxArr.filter(d => d !== dateToLog);
                 await env.USER_METADATA_KV.put(indexKey, JSON.stringify(idxArr));
             }
+            await refreshChatContextAfterLog(userId, env, dateToLog, null);
             console.log(`LOG_REQUEST (${userId}): Daily log deleted for date ${dateToLog}.`);
             return { success: true, message: 'Дневникът е изтрит успешно.', deletedDate: dateToLog };
         }
@@ -4000,7 +4001,7 @@ async function persistChatContext(userId, env, context) {
     }
 }
 
-async function refreshChatContextAfterLog(userId, env, dateStr, record, { weight } = {}) {
+async function refreshChatContextAfterLog(userId, env, dateStr, record = null, { weight } = {}) {
     if (!env?.USER_METADATA_KV || typeof env.USER_METADATA_KV.get !== 'function') {
         return;
     }
@@ -4013,7 +4014,7 @@ async function refreshChatContextAfterLog(userId, env, dateStr, record, { weight
         if (!context || context.version !== CHAT_CONTEXT_VERSION) {
             return;
         }
-        const sanitized = sanitizeLogEntryForContext(dateStr, record);
+        const sanitized = record ? sanitizeLogEntryForContext(dateStr, record) : null;
         const entries = Array.isArray(context.logs?.entries) ? context.logs.entries.slice(0, 3) : [];
         const updatedMap = new Map(entries.map(e => [e.date, e]));
         if (sanitized) {
