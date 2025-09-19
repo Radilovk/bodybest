@@ -3179,6 +3179,7 @@ async function processSingleUserPlan(userId, env) {
         const serializedLog = JSON.stringify(logBuffer);
         try {
             await env.USER_METADATA_KV.put(logKey, serializedLog);
+            await env.USER_METADATA_KV.delete(logErrorKey);
         } catch (err) {
             const timestamp = new Date().toISOString();
             console.error(`PROCESS_USER_PLAN_LOG_ERROR (${userId}):`, err.message);
