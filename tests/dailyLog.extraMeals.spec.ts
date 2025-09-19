@@ -54,4 +54,24 @@ describe('dailyLog extra meals flow', () => {
     expect(dates).toContain('2024-06-02');
     expect(env.USER_METADATA_KV.list).not.toHaveBeenCalled();
   });
+
+  test('запазва локалната дата при mealTimeSpecific с часови пояс', async () => {
+    const env = createEnv();
+    const userId = 'user-offset';
+    const payload = {
+      userId,
+      foodDescription: 'кисело мляко',
+      quantityEstimate: 'средна порция',
+      mealTimeSpecific: '2024-06-02T00:30:00.000+03:00'
+    };
+
+    const response = await handleLogExtraMealRequest(createRequest(payload), env);
+    expect(response.success).toBe(true);
+    expect(response.savedDate).toBe('2024-06-02');
+
+    const logKey = `${userId}_log_2024-06-02`;
+    const stored = JSON.parse(env.__store.get(logKey));
+    expect(stored.extraMeals).toHaveLength(1);
+    expect(stored.extraMeals[0].consumedTimestamp).toBe(payload.mealTimeSpecific);
+  });
 });

@@ -24,6 +24,30 @@ function getLocalDate(date = new Date()) {
   return date.toLocaleDateString('en-CA');
 }
 
+/**
+ * Връща датовата част (YYYY-MM-DD) от подадена стойност без да променя локалния ден.
+ * Ако стойността е ISO низ с часови пояс, директно се извлича датата от него,
+ * вместо да се преобразува към UTC, което би изместило деня.
+ * @param {string|Date|number|null|undefined} value - Стойност за парсване.
+ * @returns {string|null} Датата във формат YYYY-MM-DD или null при неуспех.
+ */
+function extractDatePortion(value) {
+  if (value == null) return null;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const match = trimmed.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (match) {
+      return match[1];
+    }
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return date.toISOString().split('T')[0];
+}
+
 // Рендериране на шаблони {{key}}
 function renderTemplate(str, data = {}) {
   return String(str).replace(/{{\s*(\w+)\s*}}/g, (_, key) =>
@@ -1679,17 +1703,11 @@ async function handleLogExtraMealRequest(request, env) {
             return { success: false, message: 'Липсват данни за описание на храната или количество.', statusHint: 400 };
         }
 
-        let logDateStr;
-        if (inputData.mealTimeSpecific) {
-            try {
-                const mealDate = new Date(inputData.mealTimeSpecific);
-                if (isNaN(mealDate.getTime())) throw new Error("Invalid date");
-                logDateStr = mealDate.toISOString().split('T')[0];
-            } catch (e) {
+        let logDateStr = extractDatePortion(inputData.mealTimeSpecific);
+        if (!logDateStr) {
+            if (inputData.mealTimeSpecific) {
                 console.warn(`LOG_EXTRA_MEAL_WARN (${userId}): Invalid mealTimeSpecific format: ${inputData.mealTimeSpecific}. Defaulting to today.`);
-                logDateStr = getLocalDate();
             }
-        } else {
             logDateStr = getLocalDate();
         }
 
