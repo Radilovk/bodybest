@@ -19,6 +19,18 @@ beforeEach(async () => {
     observe() { this.cb([{ isIntersecting: true }]); }
     disconnect() {}
   };
+  const matchMediaMock = () => ({
+    matches: false,
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    dispatchEvent: jest.fn()
+  });
+  if (typeof window !== 'undefined') {
+    window.matchMedia = matchMediaMock;
+  }
+  global.matchMedia = matchMediaMock;
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
     json: async () => ({
@@ -32,7 +44,10 @@ beforeEach(async () => {
       intakeVsPlanLabel: 'Прием vs План'
     })
   });
-  jest.unstable_mockModule('../chartLoader.js', () => ({ ensureChart: async () => ChartMock }));
+  jest.unstable_mockModule('../chartLoader.js', () => ({
+    ensureChart: async () => ChartMock,
+    registerSubtleGlow: jest.fn()
+  }));
   await import('../macroAnalyticsCardComponent.js');
 });
 
