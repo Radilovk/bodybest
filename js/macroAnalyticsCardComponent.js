@@ -559,6 +559,8 @@ export class MacroAnalyticsCard extends HTMLElement {
       ? [current.protein_grams, current.carbs_grams, current.fat_grams, current.fiber_grams]
       : null;
 
+    const currentDatasetCutout = '65%';
+
     if (this.chart) {
       const ds0 = this.chart.data.datasets[0];
       ds0.data = planData;
@@ -569,7 +571,7 @@ export class MacroAnalyticsCard extends HTMLElement {
           const ds1 = this.chart.data.datasets[1];
           ds1.data = currentData;
           ds1.backgroundColor = macroColors;
-          ds1.cutout = '75%';
+          ds1.cutout = currentDatasetCutout;
         } else {
           this.chart.data.datasets.push({
             label: this.locale === 'en' ? 'Intake (g)' : 'Прием (гр)',
@@ -577,7 +579,7 @@ export class MacroAnalyticsCard extends HTMLElement {
             backgroundColor: macroColors,
             borderWidth: 0,
             borderRadius: 8,
-            cutout: '75%',
+            cutout: currentDatasetCutout,
             hoverOffset: 8
           });
         }
@@ -607,7 +609,7 @@ export class MacroAnalyticsCard extends HTMLElement {
         backgroundColor: macroColors,
         borderWidth: 0,
         borderRadius: 8,
-        cutout: '75%',
+        cutout: currentDatasetCutout,
         hoverOffset: 8
       });
     }
