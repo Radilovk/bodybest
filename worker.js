@@ -1259,6 +1259,30 @@ async function handleDashboardDataRequest(request, env) {
 }
 // ------------- END FUNCTION: handleDashboardDataRequest -------------
 
+async function ensureLogIndexEntry(userId, date, env) {
+    if (!userId || !date || !env?.USER_METADATA_KV) {
+        return false;
+    }
+
+    const indexKey = `${userId}_logs_index`;
+    try {
+        const idxStr = await env.USER_METADATA_KV.get(indexKey);
+        let idxArr = idxStr ? safeParseJson(idxStr, []) : [];
+        if (!Array.isArray(idxArr)) idxArr = [];
+
+        if (!idxArr.includes(date)) {
+            idxArr.push(date);
+            idxArr.sort();
+            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(idxArr));
+            return true;
+        }
+    } catch (err) {
+        console.warn(`LOG_INDEX_WARN (${userId}): Failed to ensure log index for ${date} - ${err.message}`);
+    }
+
+    return false;
+}
+
 // ------------- START FUNCTION: handleLogRequest -------------
 async function handleLogRequest(request, env) {
     let inputData;
@@ -1363,15 +1387,7 @@ async function handleLogRequest(request, env) {
         }
 
         if (payloadChanged) {
-            const indexKey = `${userId}_logs_index`;
-            const idxStr = await env.USER_METADATA_KV.get(indexKey);
-            let idxArr = idxStr ? safeParseJson(idxStr, []) : [];
-            if (!Array.isArray(idxArr)) idxArr = [];
-            if (!idxArr.includes(dateToLog)) {
-                idxArr.push(dateToLog);
-                idxArr.sort();
-                await env.USER_METADATA_KV.put(indexKey, JSON.stringify(idxArr));
-            }
+            await ensureLogIndexEntry(userId, dateToLog, env);
         }
 
         if (payloadChanged) {
@@ -1708,6 +1724,7 @@ async function handleLogExtraMealRequest(request, env) {
         currentLogData.lastUpdated = new Date().toISOString();
 
         await env.USER_METADATA_KV.put(logKey, JSON.stringify(currentLogData));
+        await ensureLogIndexEntry(userId, logDateStr, env);
         await refreshChatContextAfterLog(userId, env, logDateStr, currentLogData);
         console.log(`LOG_EXTRA_MEAL_SUCCESS (${userId}): Extra meal logged for date ${logDateStr}. Entries now: ${currentLogData.extraMeals.length}`);
         return { success: true, message: 'Извънредното хранене е записано успешно.', savedDate: logDateStr };
