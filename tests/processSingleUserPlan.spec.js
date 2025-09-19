@@ -202,9 +202,9 @@ describe('processSingleUserPlan - буфериран лог', () => {
     );
   });
 
-  test('запазва критична грешка, когато flush на лога се провали', async () => {
+  test('запазва критична грешка при първи неуспешен flush и я почиства след повторен успех', async () => {
     const userId = 'flush-failure-user';
-    const { env, kvStore, logKey, logErrorKey } = buildTestEnvironment(
+    const { env, kvStore, logKey, logErrorKey, userMetadataKv } = buildTestEnvironment(
       userId,
       { failFirstFlush: true }
     );
@@ -212,10 +212,13 @@ describe('processSingleUserPlan - буфериран лог', () => {
 
     await workerModule.processSingleUserPlan(userId, env);
 
-    const flushErrorStored = kvStore.get(logErrorKey);
-    expect(flushErrorStored).toBeTruthy();
-    const flushErrorPayload = JSON.parse(flushErrorStored);
+    const flushErrorPutCall = userMetadataKv.put.mock.calls.find(([key]) => key === logErrorKey);
+    expect(flushErrorPutCall).toBeTruthy();
+    const flushErrorPayload = JSON.parse(flushErrorPutCall[1]);
     expect(flushErrorPayload.message).toBe('Simulated flush failure');
+
+    expect(userMetadataKv.delete).toHaveBeenCalledWith(logErrorKey);
+    expect(kvStore.has(logErrorKey)).toBe(false);
 
     const finalLogEntries = JSON.parse(kvStore.get(logKey));
     const finalMessages = finalLogEntries.map((entry) => entry.replace(/^\[[^\]]+\]\s*/, ''));
