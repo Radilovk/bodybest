@@ -471,9 +471,14 @@ export function validateMacroPayload({ plan, current }) {
     const check = (obj, keys) => isObj(obj) && keys.every(k => typeof obj[k] === 'number' && !isNaN(obj[k]));
     const planValid = check(plan, ['calories', 'protein_grams', 'carbs_grams', 'fat_grams']) &&
         (plan?.fiber_grams === undefined || typeof plan.fiber_grams === 'number');
+    const planPercentsValid = ['protein_percent', 'carbs_percent', 'fat_percent']
+        .every(k => typeof plan?.[k] === 'number' && !isNaN(plan[k]));
+    const fiberPercentValid = plan?.fiber_percent === undefined
+        ? true
+        : typeof plan.fiber_percent === 'number' && !isNaN(plan.fiber_percent);
     const currentValid = check(current, ['calories', 'protein_grams', 'carbs_grams', 'fat_grams']) &&
         (current?.fiber_grams === undefined || typeof current.fiber_grams === 'number');
-    return planValid && currentValid;
+    return planValid && currentValid && planPercentsValid && fiberPercentValid;
 }
 
 export async function populateDashboardMacros(macros) {
@@ -528,6 +533,42 @@ export async function populateDashboardMacros(macros) {
     todaysPlanMacros.fat = macros.fat_grams ?? macros.fat ?? todaysPlanMacros.fat;
     todaysPlanMacros.fiber = macros.fiber_grams ?? macros.fiber ?? todaysPlanMacros.fiber;
 
+    const percentFallback = calculateMacroPercents({
+        calories: todaysPlanMacros.calories,
+        protein: todaysPlanMacros.protein,
+        carbs: todaysPlanMacros.carbs,
+        fat: todaysPlanMacros.fat,
+        fiber: todaysPlanMacros.fiber
+    });
+
+    const parsePercent = (value) => {
+        if (typeof value === 'number' && Number.isFinite(value)) return value;
+        if (typeof value === 'string' && value.trim() !== '') {
+            const parsed = Number(value);
+            if (Number.isFinite(parsed)) return parsed;
+        }
+        return undefined;
+    };
+
+    const ensurePlanPercent = (key) => {
+        const fromMacros = parsePercent(macros?.[key]);
+        if (fromMacros !== undefined) {
+            todaysPlanMacros[key] = fromMacros;
+            return fromMacros;
+        }
+        const stored = parsePercent(todaysPlanMacros[key]);
+        if (stored !== undefined) {
+            todaysPlanMacros[key] = stored;
+            return stored;
+        }
+        const fallback = parsePercent(percentFallback[key]);
+        const value = fallback !== undefined ? fallback : 0;
+        todaysPlanMacros[key] = value;
+        return value;
+    };
+
+    ['protein_percent', 'carbs_percent', 'fat_percent', 'fiber_percent'].forEach(ensurePlanPercent);
+
     renderMacroPreviewGrid(currentIntakeMacros);
     const existingSpinner = macroContainer.querySelector('.spinner-border');
     if (existingSpinner) existingSpinner.remove();
@@ -536,7 +577,11 @@ export async function populateDashboardMacros(macros) {
         protein_grams: todaysPlanMacros.protein,
         carbs_grams: todaysPlanMacros.carbs,
         fat_grams: todaysPlanMacros.fat,
-        fiber_grams: todaysPlanMacros.fiber
+        fiber_grams: todaysPlanMacros.fiber,
+        protein_percent: todaysPlanMacros.protein_percent,
+        carbs_percent: todaysPlanMacros.carbs_percent,
+        fat_percent: todaysPlanMacros.fat_percent,
+        fiber_percent: todaysPlanMacros.fiber_percent
     };
     const current = {
         calories: currentIntakeMacros.calories,

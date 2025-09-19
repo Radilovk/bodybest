@@ -29,7 +29,17 @@ beforeEach(async () => {
     fullDashboardData: {},
     todaysMealCompletionStatus: {},
     todaysExtraMeals: [],
-    todaysPlanMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+    todaysPlanMacros: {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      fiber: 0,
+      protein_percent: 0,
+      carbs_percent: 0,
+      fat_percent: 0,
+      fiber_percent: 0
+    },
     currentIntakeMacros: {},
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),
@@ -38,7 +48,13 @@ beforeEach(async () => {
     resetAppState: jest.fn()
   }));
   jest.unstable_mockModule('../chartLoader.js', () => ({ ensureChart: jest.fn() }));
-  jest.unstable_mockModule('../macroUtils.js', () => ({ calculatePlanMacros: jest.fn(), getNutrientOverride: jest.fn(), addMealMacros: jest.fn(), scaleMacros: jest.fn(), calculateMacroPercents: jest.fn(() => ({ protein_percent: 0, carbs_percent: 0, fat_percent: 0 })) }));
+  jest.unstable_mockModule('../macroUtils.js', () => ({
+    calculatePlanMacros: jest.fn(),
+    getNutrientOverride: jest.fn(),
+    addMealMacros: jest.fn(),
+    scaleMacros: jest.fn(),
+    calculateMacroPercents: jest.fn(() => ({ protein_percent: 0, carbs_percent: 0, fat_percent: 0, fiber_percent: 0 }))
+  }));
   const mod = await import('../populateUI.js');
   handleAccordionToggle = mod.handleAccordionToggle;
 });

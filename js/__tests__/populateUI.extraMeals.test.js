@@ -16,7 +16,17 @@ test('adds cards for todaysExtraMeals', async () => {
     fullDashboardData: { userName: 'Иван', analytics: {}, planData: {}, dailyLogs: [], currentStatus: {}, initialData: {}, initialAnswers: {} },
     todaysMealCompletionStatus: {},
     todaysExtraMeals: [{ foodDescription: 'Смути', quantityEstimate: '250 мл' }],
-    todaysPlanMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+    todaysPlanMacros: {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      fiber: 0,
+      protein_percent: 0,
+      carbs_percent: 0,
+      fat_percent: 0,
+      fiber_percent: 0
+    },
     currentIntakeMacros: {},
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),

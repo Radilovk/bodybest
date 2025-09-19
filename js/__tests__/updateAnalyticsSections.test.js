@@ -54,7 +54,17 @@ test('updateAnalyticsSections обновява прогрес баровете',
     loadCurrentIntake: jest.fn(),
     recalculateCurrentIntakeMacros: jest.fn(),
     currentUserId: 'u1',
-    todaysPlanMacros: { calories:0, protein:0, carbs:0, fat:0, fiber:0 },
+    todaysPlanMacros: {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      fiber: 0,
+      protein_percent: 0,
+      carbs_percent: 0,
+      fat_percent: 0,
+      fiber_percent: 0
+    },
     refreshAnalytics: jest.fn()
   }));
 

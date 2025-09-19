@@ -72,7 +72,17 @@ describe('updateMacrosAndAnalytics', () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
     appState = await import('../app.js');
     ({ updateMacrosAndAnalytics } = appState);
-    Object.assign(appState.todaysPlanMacros, { calories: 2000, protein: 150, carbs: 250, fat: 70, fiber: 30 });
+    Object.assign(appState.todaysPlanMacros, {
+      calories: 2000,
+      protein: 150,
+      carbs: 250,
+      fat: 70,
+      fiber: 30,
+      protein_percent: 30,
+      carbs_percent: 50,
+      fat_percent: 20,
+      fiber_percent: 0
+    });
     Object.assign(appState.currentIntakeMacros, { calories: 1000, protein: 80, carbs: 120, fat: 40, fiber: 15 });
   });
 

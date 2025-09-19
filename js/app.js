@@ -125,7 +125,17 @@ export let fullDashboardData = {};
 export let chatHistory = [];
 export let todaysMealCompletionStatus = {}; // Updated by populateUI and eventListeners
 export let todaysExtraMeals = []; // Extra meals logged for today
-export let todaysPlanMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }; // Cached plan macros for today
+export let todaysPlanMacros = {
+  calories: 0,
+  protein: 0,
+  carbs: 0,
+  fat: 0,
+  fiber: 0,
+  protein_percent: 0,
+  carbs_percent: 0,
+  fat_percent: 0,
+  fiber_percent: 0
+}; // Cached plan macros for today
 export let currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }; // Calculated current macro intake
 export let chatModelOverride = null; // Optional model override for next chat message
 export let chatPromptOverride = null; // Optional prompt override for next chat message
@@ -165,7 +175,17 @@ export function resetAppState() {
     fullDashboardData = {};
     chatHistory = [];
     todaysMealCompletionStatus = {};
-    todaysPlanMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+    todaysPlanMacros = {
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+        fiber: 0,
+        protein_percent: 0,
+        carbs_percent: 0,
+        fat_percent: 0,
+        fiber_percent: 0
+    };
     setActiveTooltip(null);
     chatPromptOverride = null;
     lastSavedDailyLogSerialized = null;

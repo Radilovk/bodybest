@@ -70,7 +70,17 @@ test('calculatePlanMacros sums macros for day menu', () => {
     { id: 'o-01', meal_name: 'Печено пилешко с ориз/картофи и салата' }
   ];
   const result = calculatePlanMacros(dayMenu);
-  expect(result).toEqual({ calories: 820, protein: 72, carbs: 70, fat: 28, fiber: 0 });
+  expect(result).toMatchObject({
+    calories: 820,
+    protein: 72,
+    carbs: 70,
+    fat: 28,
+    fiber: 0,
+    protein_percent: 35,
+    carbs_percent: 34,
+    fat_percent: 31,
+    fiber_percent: 0
+  });
   warnSpy.mockRestore();
 });
 
@@ -80,7 +90,17 @@ test('calculatePlanMacros използва наличното поле macros', 
     { macros: { calories: 280, protein_grams: 20, carbs_grams: 30, fat_grams: 10, fiber_grams: 5 } }
   ];
   const result = calculatePlanMacros(dayMenu);
-  expect(result).toEqual({ calories: 439, protein: 30, carbs: 50, fat: 15, fiber: 8 });
+  expect(result).toMatchObject({
+    calories: 439,
+    protein: 30,
+    carbs: 50,
+    fat: 15,
+    fiber: 8,
+    protein_percent: 27,
+    carbs_percent: 46,
+    fat_percent: 31,
+    fiber_percent: 4
+  });
 });
 
 test('addMealMacros и removeMealMacros актуализират и clamp-ват акумулатора', () => {
@@ -196,7 +216,9 @@ test('normalizeMacros приема _grams полета', () => {
 
 test('calculateMacroPercents изчислява проценти спрямо калориите', () => {
   const result = calculateMacroPercents({ calories: 200, protein: 10, carbs: 20, fat: 5 });
-  expect(result).toEqual({ protein_percent: 20, carbs_percent: 40, fat_percent: 23 });
+  expect(result).toEqual({ protein_percent: 20, carbs_percent: 40, fat_percent: 23, fiber_percent: 0 });
+  const withFiber = calculateMacroPercents({ calories: 100, protein: 0, carbs: 0, fat: 0, fiber: 10 });
+  expect(withFiber).toEqual({ protein_percent: 0, carbs_percent: 0, fat_percent: 0, fiber_percent: 20 });
   const zero = calculateMacroPercents({ calories: 0, protein: 10, carbs: 10, fat: 5 });
-  expect(zero).toEqual({ protein_percent: 0, carbs_percent: 0, fat_percent: 0 });
+  expect(zero).toEqual({ protein_percent: 0, carbs_percent: 0, fat_percent: 0, fiber_percent: 0 });
 });

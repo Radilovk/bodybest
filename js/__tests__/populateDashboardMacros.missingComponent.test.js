@@ -15,7 +15,8 @@ function setupMocks(selectors) {
     escapeHtml: () => {},
     applyProgressFill: () => {},
     getCssVar: () => '',
-    formatDateBgShort: () => ''
+    formatDateBgShort: () => '',
+    getLocalDate: () => '2024-01-01'
   }));
   jest.unstable_mockModule('../config.js', () => ({
     generateId: () => 'id',
@@ -26,7 +27,17 @@ function setupMocks(selectors) {
     fullDashboardData: {},
     todaysMealCompletionStatus: {},
     todaysExtraMeals: [],
-    todaysPlanMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+    todaysPlanMacros: {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      fiber: 0,
+      protein_percent: 0,
+      carbs_percent: 0,
+      fat_percent: 0,
+      fiber_percent: 0
+    },
     currentIntakeMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
     planHasRecContent: false,
     loadCurrentIntake: jest.fn(),
@@ -47,7 +58,8 @@ function setupMocks(selectors) {
     resetDailyIntake: jest.fn(),
     updateMacrosAndAnalytics: jest.fn(),
     stopPlanStatusPolling: jest.fn(),
-    stopAdminQueriesPolling: jest.fn()
+    stopAdminQueriesPolling: jest.fn(),
+    ensureFreshDailyIntake: jest.fn()
   }));
   jest.unstable_mockModule('../uiHandlers.js', () => ({
     toggleMenu: jest.fn(),

@@ -51,7 +51,17 @@ test('макро картата остава видима след обновя�
     planHasRecContent: false,
     currentIntakeMacros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
     currentUserId: 'u1',
-    todaysPlanMacros: { calories: 2000, protein: 150, carbs: 250, fat: 70, fiber: 30 },
+    todaysPlanMacros: {
+      calories: 2000,
+      protein: 150,
+      carbs: 250,
+      fat: 70,
+      fiber: 30,
+      protein_percent: 30,
+      carbs_percent: 50,
+      fat_percent: 20,
+      fiber_percent: 0
+    },
     updateMacrosAndAnalytics: jest.fn(),
     resetDailyIntake: jest.fn()
   }));
@@ -59,7 +69,7 @@ test('макро картата остава видима след обновя�
     getNutrientOverride: jest.fn(),
     scaleMacros: jest.fn(),
     calculatePlanMacros: jest.fn(),
-    calculateMacroPercents: jest.fn(() => ({ protein_percent: 0, carbs_percent: 0, fat_percent: 0 }))
+    calculateMacroPercents: jest.fn(() => ({ protein_percent: 0, carbs_percent: 0, fat_percent: 0, fiber_percent: 0 }))
   }));
   jest.unstable_mockModule('../../utils/debug.js', () => ({ logMacroPayload: jest.fn() }));
 
