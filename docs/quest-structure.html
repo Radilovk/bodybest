@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Дървовидна карта на въпросника MyBody.Best</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    :root {
+      --primary-color: #5BC0BE;
+      --secondary-color: #3A506B;
+      --accent-color: #7D9D9C;
+      --bg-color: #F0F4F8;
+      --bg-gradient: linear-gradient(135deg, #e9eff5 0%, #f0f4f8 100%);
+      --text-color-primary: #1B263B;
+      --text-color-secondary: #415A77;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --border-color: rgba(58, 80, 107, 0.2);
+      --shadow-sm: 0 8px 20px rgba(58, 80, 107, 0.12);
+      --shadow-lg: 0 16px 32px rgba(58, 80, 107, 0.18);
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --transition: all 0.3s ease;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', 'Open Sans', sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-color-secondary);
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      width: min(1100px, calc(100% - 3rem));
+      margin: 0 auto;
+    }
+
+    .page-header {
+      background: linear-gradient(135deg, rgba(91, 192, 190, 0.15), rgba(58, 80, 107, 0.15));
+      padding: 4rem 0 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page-header::after {
+      content: '';
+      position: absolute;
+      right: -5%;
+      top: -40%;
+      width: 50%;
+      height: 150%;
+      background: radial-gradient(circle at top, rgba(91, 192, 190, 0.2), rgba(91, 192, 190, 0));
+    }
+
+    .header-content {
+      position: relative;
+      z-index: 1;
+      text-align: left;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: rgba(91, 192, 190, 0.18);
+      color: var(--secondary-color);
+    }
+
+    .badge .bi {
+      font-size: 0.9rem;
+    }
+
+    .badge-light {
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--secondary-color);
+      border-color: rgba(58, 80, 107, 0.1);
+    }
+
+    .page-header h1 {
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+      font-family: 'Montserrat', sans-serif;
+      font-size: clamp(2.2rem, 5vw, 2.8rem);
+      color: var(--text-color-primary);
+    }
+
+    .page-header p {
+      max-width: 720px;
+      font-size: 1.05rem;
+      color: var(--text-color-secondary);
+    }
+
+    .main-content {
+      margin-top: -2.5rem;
+      padding-bottom: 4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 1.8rem;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .stats-card h2,
+    .info-card h2,
+    .tree-section h2 {
+      font-family: 'Montserrat', sans-serif;
+      color: var(--secondary-color);
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+    }
+
+    .stats-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .stats-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(58, 80, 107, 0.08);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .stats-list span {
+      font-size: 0.85rem;
+      color: var(--text-color-secondary);
+    }
+
+    .stats-list strong {
+      font-size: 1.2rem;
+      color: var(--text-color-primary);
+    }
+
+    .info-card ol {
+      margin: 0;
+      padding-left: 1.2rem;
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .toolbar-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .toolbar label {
+      font-weight: 600;
+      color: var(--secondary-color);
+    }
+
+    .toolbar input[type="search"] {
+      flex: 1 1 240px;
+      padding: 0.65rem 0.9rem;
+      border-radius: 12px;
+      border: 1px solid rgba(58, 80, 107, 0.2);
+      font-size: 0.95rem;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: inset 0 1px 2px rgba(58, 80, 107, 0.08);
+      transition: var(--transition);
+    }
+
+    .toolbar input[type="search"]:focus {
+      outline: none;
+      border-color: rgba(91, 192, 190, 0.8);
+      box-shadow: 0 0 0 3px rgba(91, 192, 190, 0.2);
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 0.55rem 1.2rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition);
+      color: #fff;
+      background: var(--primary-color);
+      box-shadow: 0 8px 16px rgba(91, 192, 190, 0.25);
+    }
+
+    button.secondary {
+      background: var(--secondary-color);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(91, 192, 190, 0.35);
+    }
+
+    button.secondary:hover {
+      box-shadow: 0 12px 24px rgba(58, 80, 107, 0.25);
+    }
+
+    .tree-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+    }
+
+    .tree-section h2 {
+      margin: 0;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      font-size: 0.82rem;
+      color: var(--text-color-secondary);
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      background: rgba(58, 80, 107, 0.1);
+    }
+
+    .tree-root {
+      list-style: none;
+      margin: 0;
+      padding-left: 0;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .tree-children {
+      list-style: none;
+      margin: 0;
+      padding-left: 1.5rem;
+      border-left: 1px solid rgba(58, 80, 107, 0.2);
+      display: grid;
+      gap: 1rem;
+    }
+
+    .tree-children > .tree-node {
+      position: relative;
+    }
+
+    .tree-children > .tree-node::before {
+      content: '';
+      position: absolute;
+      top: 1.2rem;
+      left: -1.5rem;
+      width: 1.35rem;
+      border-top: 1px solid rgba(58, 80, 107, 0.2);
+    }
+
+    .tree-node details {
+      background: rgba(255, 255, 255, 0.88);
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(58, 80, 107, 0.12);
+      padding: 1rem 1.2rem;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+
+    .tree-node details:hover {
+      border-color: rgba(91, 192, 190, 0.4);
+      box-shadow: 0 12px 24px rgba(58, 80, 107, 0.15);
+    }
+
+    summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      font-weight: 600;
+      color: var(--text-color-primary);
+      font-size: 1rem;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .summary-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      flex: 1;
+    }
+
+    .summary-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 12px;
+      background: rgba(91, 192, 190, 0.18);
+      color: var(--primary-color);
+      display: grid;
+      place-items: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .summary-meta {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .badge-type {
+      background: rgba(91, 192, 190, 0.18);
+      color: var(--secondary-color);
+    }
+
+    .badge-id {
+      background: rgba(58, 80, 107, 0.12);
+      color: var(--secondary-color);
+    }
+
+    .badge-branch {
+      background: rgba(125, 157, 156, 0.2);
+      color: var(--secondary-color);
+    }
+
+    .badge-section {
+      background: rgba(91, 192, 190, 0.2);
+      color: var(--secondary-color);
+    }
+
+    .question-body,
+    .branch-body {
+      margin-top: 0.9rem;
+      display: grid;
+      gap: 0.9rem;
+      color: var(--text-color-secondary);
+      font-size: 0.95rem;
+    }
+
+    .options-wrapper {
+      display: grid;
+      gap: 0.4rem;
+    }
+
+    .options-label {
+      font-weight: 600;
+      color: var(--secondary-color);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(91, 192, 190, 0.15);
+      color: var(--secondary-color);
+      font-size: 0.85rem;
+      border: 1px solid rgba(91, 192, 190, 0.25);
+    }
+
+    .question-dependency {
+      margin: 0;
+      padding: 0.7rem 0.9rem;
+      border-left: 3px solid var(--primary-color);
+      background: rgba(91, 192, 190, 0.08);
+      border-radius: 12px;
+      font-size: 0.9rem;
+    }
+
+    .branch-wrapper h4 {
+      margin: 0;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--secondary-color);
+    }
+
+    .branch-summary .summary-icon {
+      background: rgba(125, 157, 156, 0.2);
+      color: var(--secondary-color);
+    }
+
+    .empty-branch {
+      margin: 0.6rem 0 0;
+      font-style: italic;
+      color: var(--accent-color);
+    }
+
+    .tree-node.match > details {
+      border-color: rgba(91, 192, 190, 0.7);
+      box-shadow: 0 12px 28px rgba(91, 192, 190, 0.25);
+    }
+
+    .tree-node.match summary,
+    .tree-node.match-ancestor summary {
+      color: var(--secondary-color);
+    }
+
+    .tree-node.match .summary-icon,
+    .tree-node.match-ancestor .summary-icon {
+      background: rgba(91, 192, 190, 0.35);
+      color: #fff;
+    }
+
+    .tree-node.dimmed {
+      opacity: 0.45;
+    }
+
+    .note {
+      font-size: 0.85rem;
+      color: var(--accent-color);
+    }
+
+    .error-state {
+      padding: 1.2rem;
+      border-radius: var(--radius-md);
+      background: rgba(231, 76, 60, 0.1);
+      border: 1px solid rgba(231, 76, 60, 0.2);
+      color: #c0392b;
+      font-weight: 600;
+    }
+
+    .page-footer {
+      padding: 1.5rem 0 2.5rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--accent-color);
+    }
+
+    @media (max-width: 720px) {
+      .page-header {
+        padding: 3rem 0 2.5rem;
+      }
+
+      .main-content {
+        margin-top: -2rem;
+      }
+
+      .toolbar-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .tree-children {
+        padding-left: 1.1rem;
+      }
+
+      .tree-children > .tree-node::before {
+        left: -1.1rem;
+        width: 1.1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <div class="container header-content">
+      <span class="badge badge-light"><i class="bi bi-diagram-3"></i> Карта на въпросника</span>
+      <h1>Дървовидна структура на въпросника MyBody.Best</h1>
+      <p>
+        Тази карта визуализира всички въпроси, разклонения и зависимости от
+        <a href="../quest.html">quest.html</a>, базирани на конфигурацията в
+        <a href="../questions.json">questions.json</a>. Използвайте я като референтен инструмент
+        при планиране на UX промени, добавяне на въпроси или ревизии на данните.
+      </p>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <section class="overview-grid">
+      <article class="card stats-card">
+        <h2>Обобщение</h2>
+        <ul class="stats-list">
+          <li><span>Секции</span><strong data-stat="sections">0</strong></li>
+          <li><span>Въпроси</span><strong data-stat="questions">0</strong></li>
+          <li><span>Въпроси с разклонения</span><strong data-stat="branching">0</strong></li>
+          <li><span>Листови въпроси</span><strong data-stat="leaves">0</strong></li>
+        </ul>
+      </article>
+      <article class="card info-card">
+        <h2>Как да използвате картата</h2>
+        <ol>
+          <li>Разгърнете всяко ниво, за да проследите пътя на потребителя през въпросника.</li>
+          <li>Използвайте търсачката, за да откриете конкретен въпрос, ID или опция.</li>
+          <li>Следете зависимостите ("Показва се когато"), за да избегнете конфликтни правила.</li>
+          <li>Проверявайте броя на разклоненията, когато добавяте нови сценарии.</li>
+        </ol>
+      </article>
+    </section>
+
+    <section class="card toolbar">
+      <div class="toolbar-row">
+        <label for="treeSearch">Търсене:</label>
+        <input type="search" id="treeSearch" placeholder="Търсене по текст, ID или опция...">
+        <div class="toolbar-actions">
+          <button type="button" id="expandAll" title="Разгъни всички">Разгъни</button>
+          <button type="button" id="collapseAll" class="secondary" title="Свий всички">Свий</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card tree-section">
+      <h2>Дървовидна структура</h2>
+      <div class="legend">
+        <span><span class="summary-icon"><i class="bi bi-diagram-3"></i></span> Секция</span>
+        <span><span class="summary-icon"><i class="bi bi-ui-radios"></i></span> Въпрос</span>
+        <span><span class="summary-icon"><i class="bi bi-node-plus"></i></span> Клон по опция</span>
+        <span><span class="chip">Опция за отговор</span></span>
+      </div>
+      <ul id="questionTree" class="tree-root"></ul>
+      <p class="note">* Данните се зареждат динамично от последната версия на questions.json.</p>
+    </section>
+  </main>
+
+  <footer class="page-footer">
+    <div class="container">
+      Създадено за бърза ориентация в логиката на въпросника и планиране на подобрения.
+    </div>
+  </footer>
+
+  <script type="module">
+    const QUESTIONS_URL = '../questions.json';
+
+    const TYPE_LABELS = {
+      text: 'Свободен текст',
+      textarea: 'Много редове',
+      number: 'Числово поле',
+      radio: 'Еднократен избор',
+      checkbox: 'Множествен избор',
+      select: 'Падащо меню',
+      email: 'Имейл поле'
+    };
+
+    const TYPE_ICONS = {
+      text: 'bi-textarea',
+      textarea: 'bi-card-text',
+      number: 'bi-123',
+      radio: 'bi-ui-radios',
+      checkbox: 'bi-ui-checks',
+      select: 'bi-caret-down-square',
+      email: 'bi-envelope-at'
+    };
+
+    const stats = {
+      sections: 0,
+      questions: 0,
+      branching: 0,
+      leaves: 0
+    };
+
+    const treeRoot = document.getElementById('questionTree');
+    const searchInput = document.getElementById('treeSearch');
+    const expandAllBtn = document.getElementById('expandAll');
+    const collapseAllBtn = document.getElementById('collapseAll');
+    const statTargets = {
+      sections: document.querySelector('[data-stat="sections"]'),
+      questions: document.querySelector('[data-stat="questions"]'),
+      branching: document.querySelector('[data-stat="branching"]'),
+      leaves: document.querySelector('[data-stat="leaves"]')
+    };
+
+    const formatType = (type) => TYPE_LABELS[type] ?? type ?? 'Тип не е зададен';
+    const hasChildren = (question) => {
+      if (!question || !question.children) {
+        return false;
+      }
+      if (Array.isArray(question.children)) {
+        return question.children.length > 0;
+      }
+      return Object.values(question.children).some((value) => Array.isArray(value) && value.length > 0);
+    };
+
+    const buildSearchIndex = (question) => {
+      const fields = [question.id, question.text, question.type];
+      if (Array.isArray(question.options)) {
+        fields.push(...question.options);
+      }
+      if (question.dependsOn && typeof question.dependsOn === 'object') {
+        fields.push(question.dependsOn.question, question.dependsOn.value);
+      }
+      return fields.filter(Boolean).join(' ').toLowerCase();
+    };
+
+    const formatDependency = (dependsOn) => {
+      if (!dependsOn) {
+        return '';
+      }
+      if (typeof dependsOn === 'string') {
+        return dependsOn;
+      }
+      const questionId = dependsOn.question ? `#${dependsOn.question}` : 'друг въпрос';
+      const value = dependsOn.value ? ` = "${dependsOn.value}"` : '';
+      return `${questionId}${value}`;
+    };
+
+    const createSummaryIcon = (iconName, fallback = 'bi-question-circle') => {
+      const span = document.createElement('span');
+      span.className = 'summary-icon';
+      const icon = document.createElement('i');
+      icon.className = `bi ${iconName ?? fallback}`;
+      span.append(icon);
+      return span;
+    };
+
+    const appendQuestionNode = (question, container) => {
+      stats.questions += 1;
+      const questionHasChildren = hasChildren(question);
+      if (questionHasChildren) {
+        stats.branching += 1;
+      } else {
+        stats.leaves += 1;
+      }
+
+      const li = document.createElement('li');
+      li.classList.add('tree-node', 'question-node');
+      li.dataset.nodeType = 'question';
+      li.dataset.search = buildSearchIndex(question);
+
+      const details = document.createElement('details');
+      details.open = true;
+      details.dataset.nodeType = 'question';
+
+      const summary = document.createElement('summary');
+      summary.classList.add('question-summary');
+
+      const summaryMain = document.createElement('span');
+      summaryMain.className = 'summary-main';
+      summaryMain.append(createSummaryIcon(TYPE_ICONS[question.type]));
+      const summaryTitle = document.createElement('span');
+      summaryTitle.className = 'summary-title';
+      summaryTitle.textContent = question.text || 'Неозаглавен въпрос';
+      summaryMain.append(summaryTitle);
+
+      const summaryMeta = document.createElement('span');
+      summaryMeta.className = 'summary-meta';
+      const typeBadge = document.createElement('span');
+      typeBadge.className = 'badge badge-type';
+      typeBadge.textContent = formatType(question.type);
+      const idBadge = document.createElement('span');
+      idBadge.className = 'badge badge-id';
+      idBadge.textContent = question.id ? `ID: ${question.id}` : 'Без ID';
+      summaryMeta.append(typeBadge, idBadge);
+
+      summary.append(summaryMain, summaryMeta);
+      details.append(summary);
+
+      const body = document.createElement('div');
+      body.className = 'question-body';
+
+      if (question.dependsOn && formatDependency(question.dependsOn)) {
+        const dependency = document.createElement('p');
+        dependency.className = 'question-dependency';
+        dependency.innerHTML = `<strong>Показва се когато:</strong> ${formatDependency(question.dependsOn)}`;
+        body.append(dependency);
+      }
+
+      if (Array.isArray(question.options) && question.options.length > 0) {
+        const optionsWrapper = document.createElement('div');
+        optionsWrapper.className = 'options-wrapper';
+        const optionsLabel = document.createElement('span');
+        optionsLabel.className = 'options-label';
+        optionsLabel.textContent = 'Възможни отговори:';
+        const chipGroup = document.createElement('div');
+        chipGroup.className = 'chip-group';
+        question.options.forEach((option) => {
+          const chip = document.createElement('span');
+          chip.className = 'chip';
+          chip.textContent = option;
+          chipGroup.append(chip);
+        });
+        optionsWrapper.append(optionsLabel, chipGroup);
+        body.append(optionsWrapper);
+      }
+
+      const childEntries = (!question.children || Array.isArray(question.children))
+        ? []
+        : Object.entries(question.children).filter(([, list]) => Array.isArray(list) && list.length > 0);
+
+      if (childEntries.length > 0) {
+        const branchWrapper = document.createElement('div');
+        branchWrapper.className = 'branch-wrapper';
+        const branchTitle = document.createElement('h4');
+        branchTitle.textContent = 'Допълнителни клонове:';
+        branchWrapper.append(branchTitle);
+
+        const branchList = document.createElement('ul');
+        branchList.className = 'tree-children';
+
+        childEntries.forEach(([optionValue, childQuestions]) => {
+          const branchLi = document.createElement('li');
+          branchLi.classList.add('tree-node', 'branch-node');
+          branchLi.dataset.nodeType = 'branch';
+          branchLi.dataset.search = optionValue.toLowerCase();
+
+          const branchDetails = document.createElement('details');
+          branchDetails.open = true;
+          branchDetails.dataset.nodeType = 'branch';
+
+          const branchSummary = document.createElement('summary');
+          branchSummary.className = 'branch-summary';
+
+          const branchMain = document.createElement('span');
+          branchMain.className = 'summary-main';
+          branchMain.append(createSummaryIcon('bi-node-plus'));
+          const branchLabel = document.createElement('span');
+          branchLabel.className = 'branch-label';
+          branchLabel.innerHTML = `Отговор: <strong>${optionValue}</strong>`;
+          branchMain.append(branchLabel);
+
+          const branchMeta = document.createElement('span');
+          branchMeta.className = 'summary-meta';
+          const branchBadge = document.createElement('span');
+          branchBadge.className = 'badge badge-branch';
+          branchBadge.textContent = 'Клон';
+          branchMeta.append(branchBadge);
+
+          branchSummary.append(branchMain, branchMeta);
+          branchDetails.append(branchSummary);
+
+          if (Array.isArray(childQuestions) && childQuestions.length > 0) {
+            const branchBody = document.createElement('div');
+            branchBody.className = 'branch-body';
+            const nestedList = document.createElement('ul');
+            nestedList.className = 'tree-children';
+            childQuestions.forEach((childQuestion) => {
+              appendQuestionNode(childQuestion, nestedList);
+            });
+            branchBody.append(nestedList);
+            branchDetails.append(branchBody);
+          } else {
+            const emptyMessage = document.createElement('p');
+            emptyMessage.className = 'empty-branch';
+            emptyMessage.textContent = 'Няма допълнителни въпроси.';
+            branchDetails.append(emptyMessage);
+          }
+
+          branchLi.append(branchDetails);
+          branchList.append(branchLi);
+        });
+
+        branchWrapper.append(branchList);
+        body.append(branchWrapper);
+      }
+
+      if (body.children.length > 0) {
+        details.append(body);
+      }
+
+      li.append(details);
+      container.append(li);
+    };
+
+    const createSectionNode = (section) => {
+      stats.sections += 1;
+      const li = document.createElement('li');
+      li.classList.add('tree-node', 'section-node');
+      li.dataset.nodeType = 'section';
+      li.dataset.search = [section.id, section.sectionTitle].filter(Boolean).join(' ').toLowerCase();
+
+      const details = document.createElement('details');
+      details.open = true;
+      details.dataset.nodeType = 'section';
+
+      const summary = document.createElement('summary');
+      summary.classList.add('section-summary');
+
+      const summaryMain = document.createElement('span');
+      summaryMain.className = 'summary-main';
+      summaryMain.append(createSummaryIcon('bi-diagram-3'));
+      const title = document.createElement('span');
+      title.className = 'summary-title';
+      title.textContent = section.sectionTitle || 'Неозаглавена секция';
+      summaryMain.append(title);
+
+      const summaryMeta = document.createElement('span');
+      summaryMeta.className = 'summary-meta';
+      const typeBadge = document.createElement('span');
+      typeBadge.className = 'badge badge-section';
+      typeBadge.textContent = 'Секция';
+      const idBadge = document.createElement('span');
+      idBadge.className = 'badge badge-id';
+      idBadge.textContent = section.id ? `ID: ${section.id}` : 'Без ID';
+      summaryMeta.append(typeBadge, idBadge);
+
+      summary.append(summaryMain, summaryMeta);
+      details.append(summary);
+
+      const hint = document.createElement('p');
+      hint.className = 'question-dependency';
+      hint.innerHTML = '<strong>Съдържание:</strong> въпроси, групирани по тема.';
+      details.append(hint);
+
+      const childList = document.createElement('ul');
+      childList.className = 'tree-children';
+      details.append(childList);
+
+      li.append(details);
+      return { node: li, list: childList };
+    };
+
+    const updateStats = () => {
+      statTargets.sections.textContent = stats.sections.toString();
+      statTargets.questions.textContent = stats.questions.toString();
+      statTargets.branching.textContent = stats.branching.toString();
+      statTargets.leaves.textContent = stats.leaves.toString();
+    };
+
+    const applySearch = (term) => {
+      const normalized = term.trim().toLowerCase();
+      const nodes = treeRoot.querySelectorAll('.tree-node');
+      if (!normalized) {
+        nodes.forEach((node) => {
+          node.classList.remove('match', 'match-ancestor', 'dimmed');
+        });
+        return;
+      }
+
+      nodes.forEach((node) => {
+        node.classList.remove('match', 'match-ancestor', 'dimmed');
+      });
+
+      const matches = Array.from(nodes).filter((node) => {
+        const searchField = node.dataset.search || '';
+        return searchField.includes(normalized);
+      });
+
+      matches.forEach((node) => {
+        node.classList.add('match');
+        let ancestor = node.parentElement?.closest('.tree-node');
+        while (ancestor) {
+          ancestor.classList.add('match-ancestor');
+          ancestor = ancestor.parentElement?.closest('.tree-node') || null;
+        }
+      });
+
+      nodes.forEach((node) => {
+        if (!node.classList.contains('match') && !node.classList.contains('match-ancestor')) {
+          node.classList.add('dimmed');
+        }
+      });
+
+      treeRoot.querySelectorAll('details').forEach((details) => {
+        details.open = true;
+      });
+    };
+
+    const setAllDetails = (shouldOpen) => {
+      const details = treeRoot.querySelectorAll('details');
+      details.forEach((item) => {
+        if (!shouldOpen && item.dataset.nodeType === 'section') {
+          item.open = true;
+        } else {
+          item.open = shouldOpen;
+        }
+      });
+    };
+
+    const renderQuestions = (items) => {
+      treeRoot.innerHTML = '';
+      stats.sections = 0;
+      stats.questions = 0;
+      stats.branching = 0;
+      stats.leaves = 0;
+
+      let currentContainer = treeRoot;
+
+      items.forEach((item) => {
+        if (item.type === 'section') {
+          const sectionNode = createSectionNode(item);
+          treeRoot.append(sectionNode.node);
+          currentContainer = sectionNode.list;
+        } else {
+          appendQuestionNode(item, currentContainer);
+        }
+      });
+
+      updateStats();
+    };
+
+    const renderError = (message) => {
+      treeRoot.innerHTML = '';
+      const error = document.createElement('div');
+      error.className = 'error-state';
+      error.textContent = message;
+      treeRoot.append(error);
+    };
+
+    const loadData = async () => {
+      try {
+        const response = await fetch(QUESTIONS_URL);
+        if (!response.ok) {
+          throw new Error('Неуспешно зареждане на questions.json');
+        }
+        const data = await response.json();
+        renderQuestions(data);
+      } catch (error) {
+        console.error(error);
+        renderError('Възникна проблем при зареждане на въпросите. Проверете дали файлът questions.json е наличен.');
+      }
+    };
+
+    searchInput.addEventListener('input', (event) => {
+      applySearch(event.target.value);
+    });
+
+    expandAllBtn.addEventListener('click', () => {
+      setAllDetails(true);
+    });
+
+    collapseAllBtn.addEventListener('click', () => {
+      setAllDetails(false);
+    });
+
+    loadData();
+  </script>
+</body>
+</html>
