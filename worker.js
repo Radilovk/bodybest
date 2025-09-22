@@ -3296,6 +3296,7 @@ async function processSingleUserPlan(userId, env) {
         // --- Опционални данни: текущ статус и дневници ---
         let currentStatus = {};
         let logEntries = [];
+        let logsForContext = [];
         try {
             const currentStatusStr = await env.USER_METADATA_KV.get(`${userId}_current_status`);
             currentStatus = safeParseJson(currentStatusStr, {});
@@ -3305,16 +3306,28 @@ async function processSingleUserPlan(userId, env) {
         try {
             const logDates = await getUserLogDates(env, userId);
             if (logDates.length > 0) {
-                const logKeys = logDates.sort().map(d => `${userId}_log_${d}`);
+                const sortedLogDates = [...logDates].sort((a, b) => a.localeCompare(b));
+                const logKeys = sortedLogDates.map(d => `${userId}_log_${d}`);
                 const logStrings = await Promise.all(logKeys.map(k => env.USER_METADATA_KV.get(k)));
                 logEntries = logStrings.map(s => {
                     const obj = safeParseJson(s, {});
                     return obj.log || obj.data || obj;
                 });
+                logsForContext = sortedLogDates
+                    .map((date, idx) => sanitizeLogEntryForContext(date, safeParseJson(logStrings[idx], {})))
+                    .filter(Boolean);
             } else {
                 const aggregatedStr = await env.USER_METADATA_KV.get(`${userId}_logs`);
                 const aggregated = safeParseJson(aggregatedStr, []);
-                logEntries = Array.isArray(aggregated) ? aggregated.map(l => l.log || l.data || l) : [];
+                if (Array.isArray(aggregated)) {
+                    logEntries = aggregated.map(l => l.log || l.data || l);
+                    logsForContext = aggregated
+                        .map(entry => sanitizeLogEntryForContext(entry?.date, entry?.log || entry?.data || entry))
+                        .filter(Boolean);
+                } else {
+                    logEntries = [];
+                    logsForContext = [];
+                }
             }
         } catch (err) {
             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): неуспешно зареждане на дневници - ${err.message}`);
@@ -3458,7 +3471,8 @@ async function processSingleUserPlan(userId, env) {
                 initialAnswers,
                 finalPlan: planBuilder,
                 currentStatus,
-                planStatus: planStatusValue
+                planStatus: planStatusValue,
+                logEntries: logsForContext
             });
             if (chatContext) {
                 await env.USER_METADATA_KV.put(getChatContextKey(userId), JSON.stringify(chatContext));
