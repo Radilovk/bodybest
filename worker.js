@@ -94,7 +94,14 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
 
 const resourceCache = new Map();
 
-async function getCachedResource(key, kv, ttlMs = 300000) {
+const MAINTENANCE_MODE_KV_KEY = 'maintenance_mode';
+const MAINTENANCE_PAGE_KV_KEY = 'maintenance_page';
+const MAINTENANCE_MODE_CACHE_KEY = 'maintenance_mode_flag';
+const MAINTENANCE_PAGE_CACHE_KEY = 'maintenance_page_html';
+const MAINTENANCE_MODE_TTL_MS = 30000;
+const MAINTENANCE_PAGE_TTL_MS = 60000;
+
+async function getCachedResource(key, kv, ttlMs = 300000, kvKey = key) {
   const now = Date.now();
   const cached = resourceCache.get(key);
   if (cached) {
@@ -111,7 +118,7 @@ async function getCachedResource(key, kv, ttlMs = 300000) {
   }
   const fetchPromise = (async () => {
     try {
-      const value = await kv.get(key);
+      const value = await kv.get(kvKey);
       resourceCache.set(key, { value, expiresAt: Date.now() + ttlMs });
       return value;
     } catch (error) {
@@ -545,7 +552,14 @@ export default {
             return new Response(null, { status: 204, headers: corsHeaders });
         }
 
-        const kvFlag = env.RESOURCES_KV ? await env.RESOURCES_KV.get('maintenance_mode') : null;
+        const kvFlag = env.RESOURCES_KV
+            ? await getCachedResource(
+                MAINTENANCE_MODE_CACHE_KEY,
+                env.RESOURCES_KV,
+                MAINTENANCE_MODE_TTL_MS,
+                MAINTENANCE_MODE_KV_KEY
+            )
+            : null;
         const skipPaths = new Set([
             '/admin.html',
             '/js/admin.js',
@@ -555,7 +569,14 @@ export default {
         ]);
         if (env.MAINTENANCE_MODE === '1' || kvFlag === '1') {
             if (!skipPaths.has(path)) {
-                const maint = env.RESOURCES_KV ? await env.RESOURCES_KV.get('maintenance_page') : null;
+                const maint = env.RESOURCES_KV
+                    ? await getCachedResource(
+                        MAINTENANCE_PAGE_CACHE_KEY,
+                        env.RESOURCES_KV,
+                        MAINTENANCE_PAGE_TTL_MS,
+                        MAINTENANCE_PAGE_KV_KEY
+                    )
+                    : null;
                 const html = maint || MAINTENANCE_FALLBACK_HTML;
                 return new Response(html, {
                     status: 503,
@@ -3148,7 +3169,14 @@ async function handleSendTestEmailRequest(request, env) {
 // ------------- START FUNCTION: handleGetMaintenanceMode -------------
 async function handleGetMaintenanceMode(request, env) {
     try {
-        const val = env.RESOURCES_KV ? await env.RESOURCES_KV.get('maintenance_mode') : null;
+        const val = env.RESOURCES_KV
+            ? await getCachedResource(
+                MAINTENANCE_MODE_CACHE_KEY,
+                env.RESOURCES_KV,
+                MAINTENANCE_MODE_TTL_MS,
+                MAINTENANCE_MODE_KV_KEY
+            )
+            : null;
         const enabled = (val === '1') || env.MAINTENANCE_MODE === '1';
         return { success: true, enabled };
     } catch (error) {
@@ -3169,7 +3197,8 @@ async function handleSetMaintenanceMode(request, env) {
         }
         const { enabled } = await request.json();
         const val = enabled ? '1' : '0';
-        if (env.RESOURCES_KV) await env.RESOURCES_KV.put('maintenance_mode', val);
+        if (env.RESOURCES_KV) await env.RESOURCES_KV.put(MAINTENANCE_MODE_KV_KEY, val);
+        clearResourceCache([MAINTENANCE_MODE_CACHE_KEY, MAINTENANCE_PAGE_CACHE_KEY]);
         return { success: true };
     } catch (error) {
         console.error('Error in handleSetMaintenanceMode:', error.message, error.stack);
