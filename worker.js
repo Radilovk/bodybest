@@ -3950,7 +3950,17 @@ function isChatContextFresh(context) {
     return Date.now() - updatedAt < ttl;
 }
 
-async function assembleChatContext(userId, env, { initialAnswers, finalPlan, currentStatus, logEntries, planStatus } = {}) {
+async function assembleChatContext(
+    userId,
+    env,
+    {
+        initialAnswers = undefined,
+        finalPlan = undefined,
+        currentStatus = undefined,
+        logEntries = undefined,
+        planStatus = undefined
+    } = {}
+) {
     const answers = initialAnswers || safeParseJson(await env.USER_METADATA_KV.get(`${userId}_initial_answers`), {});
     const plan = finalPlan || safeParseJson(await env.USER_METADATA_KV.get(`${userId}_final_plan`), {});
     if (!answers || Object.keys(answers).length === 0 || !plan || Object.keys(plan).length === 0) {
@@ -4034,7 +4044,7 @@ async function persistChatContext(userId, env, context) {
     }
 }
 
-async function refreshChatContextAfterLog(userId, env, dateStr, record = null, { weight } = {}) {
+async function refreshChatContextAfterLog(userId, env, dateStr, record = null, { weight = undefined } = {}) {
     if (!env?.USER_METADATA_KV || typeof env.USER_METADATA_KV.get !== 'function') {
         return;
     }
