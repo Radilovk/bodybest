@@ -3950,6 +3950,61 @@ function isChatContextFresh(context) {
     return Date.now() - updatedAt < ttl;
 }
 
+/**
+ * @typedef {Object} ChatContextSource
+ * @property {Record<string, any>} [initialAnswers]
+ * @property {Record<string, any>} [finalPlan]
+ * @property {Record<string, any>} [currentStatus]
+ * @property {Array<{date: string, log?: Record<string, any>, data?: Record<string, any>}>} [logEntries]
+ * @property {string} [planStatus]
+ */
+
+/**
+ * @typedef {Object} ChatContextLogEntry
+ * @property {string} date
+ * @property {Record<string, any>} log
+ */
+
+/**
+ * @typedef {Object} ChatContextLogMetrics
+ * @property {ChatContextLogEntry[]} entries
+ * @property {string} summaryText
+ * @property {{mood: string, energy: string, calmness: string, sleep: string}} averages
+ * @property {string} adherenceText
+ * @property {string} todaysCompletedMealsKeys
+ * @property {string} updatedAt
+ */
+
+/**
+ * @typedef {Object} ChatContextPayload
+ * @property {number} version
+ * @property {number} ttlMs
+ * @property {string} updatedAt
+ * @property {string} planStatus
+ * @property {string} planTimestamp
+ * @property {{name: string, goal: string, conditions: string, preferences: string}} user
+ * @property {{
+ *   summary: string,
+ *   macrosString: string,
+ *   allowedFoodsSummary: string,
+ *   forbiddenFoodsSummary: string,
+ *   hydrationTarget: string|number,
+ *   cookingMethodsSummary: string,
+ *   supplementSuggestionsSummary: string,
+ *   principlesText: string,
+ *   menuSummaryByDay: Record<string, string>
+ * }} plan
+ * @property {{currentWeightFormatted: string}} metrics
+ * @property {ChatContextLogMetrics} logs
+ */
+
+/**
+ * Сглобява контекста за чат бота на база съхранените в KV данни и опционален предварителен източник.
+ * @param {string} userId
+ * @param {Record<string, any>} env
+ * @param {ChatContextSource} [source={}]
+ * @returns {Promise<ChatContextPayload|null>}
+ */
 async function assembleChatContext(
     userId,
     env,
@@ -4044,6 +4099,16 @@ async function persistChatContext(userId, env, context) {
     }
 }
 
+/**
+ * Обновява вече записания чат контекст след подаване на нов дневен лог.
+ * Синхронизира се със sanitizeLogEntryForContext, като допуска записи с `log` или `data` поле.
+ * @param {string} userId
+ * @param {Record<string, any>} env
+ * @param {string} dateStr
+ * @param {{log?: Record<string, any>, data?: Record<string, any>}|Record<string, any>|null} [record=null]
+ * @param {{weight?: number|string|null}} [options={}]
+ * @returns {Promise<void>}
+ */
 async function refreshChatContextAfterLog(userId, env, dateStr, record = null, { weight = undefined } = {}) {
     if (!env?.USER_METADATA_KV || typeof env.USER_METADATA_KV.get !== 'function') {
         return;
