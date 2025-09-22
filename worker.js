@@ -3752,12 +3752,18 @@ function getChatContextKey(userId) {
     return `${userId}_chat_context`;
 }
 
+/**
+ * Строи резюме за менюто по дни на база генерирания план.
+ * @param {Record<string, Array<{meal_name?: string}> | undefined> | null} [week1Menu]
+ * @returns {Record<string, string>}
+ */
 function buildMenuSummaryByDay(week1Menu = {}) {
+    /** @type {Record<string, string>} */
     const summary = {};
     if (week1Menu && typeof week1Menu === 'object') {
         for (const [day, meals] of Object.entries(week1Menu)) {
             if (!day) continue;
-            const normalizedDay = day.toLowerCase();
+            const normalizedDay = String(day).toLowerCase();
             if (!Array.isArray(meals)) {
                 summary[normalizedDay] = 'няма планирани за днес';
                 continue;
