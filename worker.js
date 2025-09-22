@@ -442,6 +442,7 @@ const AI_CONFIG_KEYS = [
     'model_questionnaire_analysis',
     'prompt_questionnaire_analysis',
     'prompt_unified_plan_generation_v2',
+    'prompt_analytics_textual_summary',
     'plan_token_limit',
     'plan_temperature',
     'prompt_chat',
@@ -2849,7 +2850,10 @@ async function handleSetAiConfig(request, env) {
             }
         }
         if (touchedKeys.length) {
-            clearResourceCache(touchedKeys);
+            const cacheKeysToClear = new Set(touchedKeys);
+            cacheKeysToClear.add('analytics_prompt');
+            cacheKeysToClear.add('model_plan_generation');
+            clearResourceCache([...cacheKeysToClear]);
         }
         return { success: true };
     } catch (error) {
@@ -5389,10 +5393,15 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
 
     let textualAnalysisSummary = "Анализът на Вашия напредък се генерира...";
     try {
-        const promptTemplateTextual = await env.RESOURCES_KV.get('prompt_analytics_textual_summary');
+        const promptTemplateTextual = await getCachedResource(
+            'analytics_prompt',
+            env.RESOURCES_KV,
+            undefined,
+            'prompt_analytics_textual_summary'
+        );
         const geminiApiKeyForAnalysis = env[GEMINI_API_KEY_SECRET_NAME];
         const openaiApiKeyForAnalysis = env[OPENAI_API_KEY_SECRET_NAME];
-        const analysisModelForText = await getCachedResource('model_chat', env.RESOURCES_KV) || await env.RESOURCES_KV.get('model_plan_generation'); // Use a suitable model
+        const analysisModelForText = await getCachedResource('model_chat', env.RESOURCES_KV) || await getCachedResource('model_plan_generation', env.RESOURCES_KV); // Use a suitable model
 
         const providerForAnalysis = getModelProvider(analysisModelForText);
         if (promptTemplateTextual && analysisModelForText &&
