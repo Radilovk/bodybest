@@ -87,9 +87,15 @@ describe('daily log', () => {
     };
     const dateStr = '2020-01-02';
     await handleLogRequest(makeRequest({ userId: 'u1', date: dateStr, data: { note: 'x' } }), env);
-    expect(JSON.parse(store['u1_logs_index'])).toEqual([dateStr]);
+    const createdIndex = JSON.parse(store['u1_logs_index']);
+    expect(createdIndex.dates).toEqual([dateStr]);
+    expect(typeof createdIndex.ts).toBe('number');
+    expect(createdIndex.version).toBe(1);
     await handleLogRequest(makeRequest({ userId: 'u1', date: dateStr, delete: true }), env);
     expect(store[`u1_log_${dateStr}`]).toBeUndefined();
-    expect(JSON.parse(store['u1_logs_index'])).toEqual([]);
+    const cleanedIndex = JSON.parse(store['u1_logs_index']);
+    expect(cleanedIndex.dates).toEqual([]);
+    expect(typeof cleanedIndex.ts).toBe('number');
+    expect(cleanedIndex.version).toBe(1);
   });
 });

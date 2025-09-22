@@ -1291,15 +1291,22 @@ async function ensureLogIndexEntry(userId, date, env) {
     const indexKey = `${userId}_logs_index`;
     try {
         const idxStr = await env.USER_METADATA_KV.get(indexKey);
-        let idxArr = idxStr ? safeParseJson(idxStr, []) : [];
-        if (!Array.isArray(idxArr)) idxArr = [];
+        const parsedIndex = parseLogIndexRecord(idxStr);
+        const now = Date.now();
+        const idxArr = Array.isArray(parsedIndex.dates) ? [...parsedIndex.dates] : [];
+        let hasChanges = false;
 
         if (!idxArr.includes(date)) {
             idxArr.push(date);
-            idxArr.sort();
-            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(idxArr));
-            return true;
+            hasChanges = true;
         }
+
+        if (hasChanges || !parsedIndex.ts || now - parsedIndex.ts > LOG_INDEX_STALE_MS / 2) {
+            const updatedRecord = createLogIndexRecord(idxArr, parsedIndex, now);
+            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(updatedRecord));
+        }
+
+        return hasChanges;
     } catch (err) {
         console.warn(`LOG_INDEX_WARN (${userId}): Failed to ensure log index for ${date} - ${err.message}`);
     }
@@ -1326,11 +1333,10 @@ async function handleLogRequest(request, env) {
             await env.USER_METADATA_KV.delete(logKey);
             const indexKey = `${userId}_logs_index`;
             const idxStr = await env.USER_METADATA_KV.get(indexKey);
-            let idxArr = idxStr ? safeParseJson(idxStr, []) : [];
-            if (Array.isArray(idxArr)) {
-                idxArr = idxArr.filter(d => d !== dateToLog);
-                await env.USER_METADATA_KV.put(indexKey, JSON.stringify(idxArr));
-            }
+            const parsedIndex = parseLogIndexRecord(idxStr);
+            const updatedDates = (Array.isArray(parsedIndex.dates) ? parsedIndex.dates : []).filter(d => d !== dateToLog);
+            const updatedRecord = createLogIndexRecord(updatedDates, parsedIndex);
+            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(updatedRecord));
             await refreshChatContextAfterLog(userId, env, dateToLog, null);
             console.log(`LOG_REQUEST (${userId}): Daily log deleted for date ${dateToLog}.`);
             return { success: true, message: 'Дневникът е изтрит успешно.', deletedDate: dateToLog };
@@ -4208,33 +4214,112 @@ const safeParseJson = (jsonString, defaultValue = null) => {
 };
 // ------------- END FUNCTION: safeParseJson -------------
 
+const LOG_INDEX_VERSION = 1;
+const LOG_INDEX_STALE_MS = 12 * 60 * 60 * 1000;
+
+function parseLogIndexRecord(rawValue) {
+    const fallback = { dates: [], ts: 0, version: 0, extra: {} };
+    if (!rawValue) {
+        return fallback;
+    }
+
+    const parsed = safeParseJson(rawValue, null);
+    if (Array.isArray(parsed)) {
+        return { dates: parsed.filter(Boolean), ts: 0, version: 0, extra: {} };
+    }
+
+    if (parsed && typeof parsed === 'object') {
+        const { dates, ts, version, ...extra } = parsed;
+        const normalizedDates = Array.isArray(dates) ? dates.filter(Boolean) : [];
+        let numericTs = 0;
+        if (typeof ts === 'number' && Number.isFinite(ts)) {
+            numericTs = ts;
+        } else if (typeof ts === 'string') {
+            numericTs = Number.parseInt(ts, 10) || 0;
+        }
+
+        let numericVersion = 0;
+        if (typeof version === 'number' && Number.isFinite(version)) {
+            numericVersion = version;
+        } else if (typeof version === 'string') {
+            numericVersion = Number.parseInt(version, 10) || 0;
+        }
+
+        return { dates: normalizedDates, ts: numericTs, version: numericVersion, extra };
+    }
+
+    return fallback;
+}
+
+function createLogIndexRecord(dates, parsedIndex = {}, now = Date.now()) {
+    const extra = parsedIndex.extra ? { ...parsedIndex.extra } : {};
+    const seen = new Set();
+    const normalizedDates = [];
+    const source = Array.isArray(dates) ? dates : [];
+    for (const date of source) {
+        if (date && !seen.has(date)) {
+            seen.add(date);
+            normalizedDates.push(date);
+        }
+    }
+
+    normalizedDates.sort();
+
+    return {
+        ...extra,
+        dates: normalizedDates,
+        ts: now,
+        version: LOG_INDEX_VERSION
+    };
+}
+
 // ------------- START FUNCTION: getUserLogDates -------------
 async function getUserLogDates(env, userId) {
     const indexKey = `${userId}_logs_index`;
-    let dates = [];
+    const now = Date.now();
+    let parsedIndex = { dates: [], ts: 0, version: 0, extra: {} };
+
     try {
         const idxStr = await env.USER_METADATA_KV.get(indexKey);
-        dates = idxStr ? safeParseJson(idxStr, []) : [];
-        if (!Array.isArray(dates)) dates = [];
+        if (idxStr) {
+            parsedIndex = parseLogIndexRecord(idxStr);
+        }
     } catch (err) {
-        dates = [];
+        parsedIndex = { dates: [], ts: 0, version: 0, extra: {} };
     }
-    if (dates.length === 0) {
+
+    const isStale = !parsedIndex.ts || now - parsedIndex.ts > LOG_INDEX_STALE_MS;
+    if (!isStale) {
+        return parsedIndex.dates;
+    }
+
+    let dates = parsedIndex.dates;
+    try {
         const list = await env.USER_METADATA_KV.list({ prefix: `${userId}_log_` });
-        dates = list.keys.map(k => k.name.split('_log_')[1]).filter(Boolean);
-        if (dates.length > 0) {
-            await env.USER_METADATA_KV.put(indexKey, JSON.stringify(dates));
-        }
-        try {
-            const fallbackKey = 'log_index_fallbacks';
-            const fallbackStr = await env.USER_METADATA_KV.get(fallbackKey);
-            const fallbackCount = fallbackStr ? parseInt(fallbackStr, 10) || 0 : 0;
-            await env.USER_METADATA_KV.put(fallbackKey, String(fallbackCount + 1));
-        } catch (err) {
-            /* noop */
-        }
+        dates = list.keys
+            .map(k => k.name.split('_log_')[1])
+            .filter(Boolean);
+    } catch (err) {
+        return parsedIndex.dates;
     }
-    return dates;
+
+    const updatedRecord = createLogIndexRecord(dates, parsedIndex, now);
+    try {
+        await env.USER_METADATA_KV.put(indexKey, JSON.stringify(updatedRecord));
+    } catch (err) {
+        console.warn(`LOG_INDEX_WARN (${userId}): Failed to persist rebuilt index - ${err.message}`);
+    }
+
+    try {
+        const fallbackKey = 'log_index_fallbacks';
+        const fallbackStr = await env.USER_METADATA_KV.get(fallbackKey);
+        const fallbackCount = fallbackStr ? parseInt(fallbackStr, 10) || 0 : 0;
+        await env.USER_METADATA_KV.put(fallbackKey, String(fallbackCount + 1));
+    } catch (err) {
+        /* noop */
+    }
+
+    return updatedRecord.dates;
 }
 // ------------- END FUNCTION: getUserLogDates -------------
 
