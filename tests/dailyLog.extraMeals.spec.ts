@@ -44,9 +44,11 @@ describe('dailyLog extra meals flow', () => {
     const indexKey = `${userId}_logs_index`;
     expect(env.__store.has(indexKey)).toBe(true);
     const storedIndex = JSON.parse(env.__store.get(indexKey));
-    expect(Array.isArray(storedIndex)).toBe(true);
-    expect(storedIndex).toContain('2024-06-02');
-    expect(storedIndex.length).toBe(1);
+    expect(Array.isArray(storedIndex.dates)).toBe(true);
+    expect(storedIndex.dates).toContain('2024-06-02');
+    expect(storedIndex.dates.length).toBe(1);
+    expect(typeof storedIndex.ts).toBe('number');
+    expect(storedIndex.version).toBe(1);
 
     env.USER_METADATA_KV.list.mockClear();
 

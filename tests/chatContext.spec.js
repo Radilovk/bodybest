@@ -256,7 +256,10 @@ describe('chat context caching', () => {
 
     env.__store.set(`${userId}_log_${dateToDelete}`, JSON.stringify(deletedLogRecord));
     env.__store.set(`${userId}_log_${remainingDate}`, JSON.stringify(remainingLogRecord));
-    env.__store.set(`${userId}_logs_index`, JSON.stringify([remainingDate, dateToDelete]));
+    env.__store.set(
+      `${userId}_logs_index`,
+      JSON.stringify({ dates: [remainingDate, dateToDelete], ts: Date.now(), version: 1 })
+    );
     env.__store.set(`${userId}_chat_context`, JSON.stringify(existingContext));
 
     const response = await handleLogRequest(
@@ -274,7 +277,7 @@ describe('chat context caching', () => {
     expect(env.__store.has(`${userId}_log_${dateToDelete}`)).toBe(false);
 
     const updatedIndex = JSON.parse(env.__store.get(`${userId}_logs_index`));
-    expect(updatedIndex).not.toContain(dateToDelete);
+    expect(updatedIndex.dates).not.toContain(dateToDelete);
 
     const updatedContextStr = env.__store.get(`${userId}_chat_context`);
     expect(updatedContextStr).toBeTruthy();

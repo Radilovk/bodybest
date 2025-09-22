@@ -25,4 +25,35 @@ describe('getUserLogDates', () => {
     expect(env.USER_METADATA_KV.list).toHaveBeenCalledTimes(1);
     expect(store.log_index_fallbacks).toBe('3');
   });
+
+  test('кешира празен индекс и пропуска повторно KV.list', async () => {
+    const store = {};
+    const env = {
+      USER_METADATA_KV: {
+        get: jest.fn(key => Promise.resolve(Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null)),
+        put: jest.fn((key, val) => {
+          store[key] = val;
+          return Promise.resolve();
+        }),
+        list: jest.fn(() => Promise.resolve({ keys: [] }))
+      }
+    };
+
+    const userId = 'u2';
+    const firstCall = await getUserLogDates(env, userId);
+    expect(firstCall).toEqual([]);
+    expect(env.USER_METADATA_KV.list).toHaveBeenCalledTimes(1);
+
+    env.USER_METADATA_KV.list.mockClear();
+
+    const secondCall = await getUserLogDates(env, userId);
+    expect(secondCall).toEqual([]);
+    expect(env.USER_METADATA_KV.list).not.toHaveBeenCalled();
+
+    const storedIndex = JSON.parse(store[`${userId}_logs_index`]);
+    expect(Array.isArray(storedIndex.dates)).toBe(true);
+    expect(storedIndex.dates).toHaveLength(0);
+    expect(typeof storedIndex.ts).toBe('number');
+    expect(storedIndex.version).toBe(1);
+  });
 });
