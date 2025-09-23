@@ -960,24 +960,54 @@ async function handleRegisterDemoRequest(request, env, ctx) {
  * @returns {Promise<Object>} Резултат от проверката.
  */
 async function handleLoginRequest(request, env) {
-     try {
-         const { email, password } = await request.json(); const trimmedEmail = email ? String(email).trim().toLowerCase() : null; if (!trimmedEmail || !password) { return { success: false, message: 'Имейл и парола са задължителни.', statusHint: 400 }; }
+    try {
+        const { email, password } = await request.json();
+        const trimmedEmail = email ? String(email).trim().toLowerCase() : null;
+        if (!trimmedEmail || !password) {
+            return { success: false, message: 'Имейл и парола са задължителни.', statusHint: 400 };
+        }
+
         const userId = await env.USER_METADATA_KV.get(`email_to_uuid_${trimmedEmail}`);
-        if (!userId) { return { success: false, message: 'Грешен имейл или парола.', statusHint: 401 }; }
+        if (!userId) {
+            return { success: false, message: 'Грешен имейл или парола.', statusHint: 401 };
+        }
+
         const credStr = await env.USER_METADATA_KV.get(`credential_${userId}`);
-        if (!credStr) { return { success: false, message: 'Грешен имейл или парола.', statusHint: 401 }; }
-        const credentials = safeParseJson(credStr);
-        if (!credentials) { console.error(`LOGIN_ERROR (${userId}): Failed to parse credentials from KV.`); throw new Error('Failed to parse credentials'); }
-        const storedSaltAndHash = credentials.passwordHash;
-        if (!storedSaltAndHash || !storedSaltAndHash.includes(':')) { console.error(`LOGIN_ERROR (${userId}): Password hash missing or invalid format for ${userId}`); throw new Error('Password hash missing/invalid'); }
-         const inputPasswordMatches = await verifyPassword(password, storedSaltAndHash);
-         if (!inputPasswordMatches) return { success: false, message: 'Грешен имейл или парола.', statusHint: 401 };
-         const planStatus = await env.USER_METADATA_KV.get(`plan_status_${userId}`) || 'pending';
-         const hasInitialAnswers = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
-         const redirectTo = hasInitialAnswers ? (planStatus === 'ready' ? 'dashboard' : 'pending') : 'questionnaire';
-         console.log(`LOGIN_SUCCESS (${userId}): Login successful for ${trimmedEmail}. Plan status: ${planStatus}. Redirect hint: ${redirectTo}`);
-         return { success: true, userId: userId, planStatus: planStatus, redirectTo: redirectTo };
-     } catch (error) { console.error('Error in handleLoginRequest:', error.message, error.stack); let userMessage = 'Вътрешна грешка при вход.'; if (error instanceof SyntaxError || error.message.includes('Invalid content') || error.message.includes('parse')) userMessage = 'Проблем с данните.'; else if (error.message.includes('Password hash')) userMessage = 'Проблем с акаунта.'; else if (error.message.includes('fetch')) userMessage = 'Грешка със сървъра.'; else if (error.message.includes('PHP API URL or Token')) userMessage = 'Грешка в конфигурацията на сървъра.'; return { success: false, message: userMessage, statusHint: 500 }; }
+        if (!credStr) {
+            return { success: false, message: 'Грешен имейл или парола.', statusHint: 401 };
+        }
+
+        const parsedCredentials = safeParseJson(credStr);
+        let storedSaltAndHash = typeof parsedCredentials?.passwordHash === 'string'
+            ? parsedCredentials.passwordHash.trim()
+            : credStr.trim();
+
+        if (!storedSaltAndHash || !storedSaltAndHash.includes(':')) {
+            console.warn(`LOGIN_WARN (${userId}): Unsupported credential format.`);
+            return { success: false, message: 'Грешен имейл или парола.', statusHint: 401 };
+        }
+
+        const inputPasswordMatches = await verifyPassword(password, storedSaltAndHash);
+        if (!inputPasswordMatches) {
+            return { success: false, message: 'Грешен имейл или парола.', statusHint: 401 };
+        }
+
+        const planStatus = (await env.USER_METADATA_KV.get(`plan_status_${userId}`)) || 'pending';
+        const hasInitialAnswers = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
+        const redirectTo = hasInitialAnswers
+            ? (planStatus === 'ready' ? 'dashboard' : 'pending')
+            : 'questionnaire';
+        console.log(`LOGIN_SUCCESS (${userId}): Login successful for ${trimmedEmail}. Plan status: ${planStatus}. Redirect hint: ${redirectTo}`);
+        return { success: true, userId: userId, planStatus: planStatus, redirectTo: redirectTo };
+    } catch (error) {
+        console.error('Error in handleLoginRequest:', error.message, error.stack);
+        let userMessage = 'Вътрешна грешка при вход.';
+        if (error instanceof SyntaxError || error.message.includes('Invalid content') || error.message.includes('parse')) userMessage = 'Проблем с данните.';
+        else if (error.message.includes('Password hash')) userMessage = 'Проблем с акаунта.';
+        else if (error.message.includes('fetch')) userMessage = 'Грешка със сървъра.';
+        else if (error.message.includes('PHP API URL or Token')) userMessage = 'Грешка в конфигурацията на сървъра.';
+        return { success: false, message: userMessage, statusHint: 500 };
+    }
 }
 // ------------- END FUNCTION: handleLoginRequest -------------
 
@@ -5724,4 +5754,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache };
