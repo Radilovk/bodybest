@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <title>Наръчник: Заявки към бекенда и Cloudflare KV</title>
+    <link rel="stylesheet" href="../css/base_styles.css">
+    <link rel="stylesheet" href="../css/components_styles.css">
+    <style>
+        body {
+            font-family: var(--font-primary, 'Inter', sans-serif);
+            background: #f7f9fb;
+            color: #1f2a3d;
+            line-height: 1.6;
+            padding: 2.5rem clamp(1rem, 4vw, 4rem);
+        }
+        h1, h2, h3 {
+            color: #0f172a;
+            margin-top: 0;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        nav {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        nav ul {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.75rem;
+            padding: 0;
+            list-style: none;
+        }
+        nav a {
+            display: block;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            background: rgba(59, 130, 246, 0.08);
+            color: #1d4ed8;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        nav a:hover {
+            background: #2563eb;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        section {
+            margin-bottom: 2.5rem;
+        }
+        .card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 18px 44px rgba(15, 23, 42, 0.12);
+            padding: clamp(1rem, 3vw, 2rem);
+            margin-bottom: 2rem;
+            border-left: 6px solid rgba(37, 99, 235, 0.18);
+        }
+        details {
+            background: rgba(15, 23, 42, 0.02);
+            border-radius: 14px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            margin: 1rem 0;
+            padding: 0.75rem 1rem;
+        }
+        details[open] {
+            background: rgba(37, 99, 235, 0.08);
+            border-color: rgba(37, 99, 235, 0.25);
+        }
+        summary {
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+        }
+        summary::marker {
+            color: #1d4ed8;
+        }
+        .flow-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 1rem 0 0;
+            display: grid;
+            gap: 0.75rem;
+        }
+        .flow-list li {
+            background: #fff;
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+            box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.25);
+        }
+        .kv-keys {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.75rem;
+            padding: 0;
+            list-style: none;
+        }
+        .kv-keys li {
+            background: rgba(37, 99, 235, 0.08);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.1);
+        }
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: rgba(37, 99, 235, 0.12);
+            color: #1d4ed8;
+            border-radius: 999px;
+            padding: 0.25rem 0.9rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+        .note {
+            background: rgba(16, 185, 129, 0.12);
+            border-left: 4px solid rgba(16, 185, 129, 0.45);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        code {
+            background: rgba(15, 23, 42, 0.08);
+            border-radius: 6px;
+            padding: 0.1rem 0.35rem;
+            font-size: 0.95rem;
+        }
+        .example {
+            background: rgba(251, 191, 36, 0.16);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            margin-top: 0.75rem;
+            border: 1px solid rgba(251, 191, 36, 0.25);
+        }
+        .grid-two {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: clamp(1rem, 3vw, 2rem);
+        }
+        footer {
+            margin-top: 3rem;
+            text-align: center;
+            color: #475569;
+            font-size: 0.9rem;
+        }
+        @media (max-width: 720px) {
+            body { padding: 1.5rem 1rem; }
+            nav ul { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Наръчник за заявки към бекенда и Cloudflare KV</h1>
+    <p class="note">Наръчникът е насочен към непрограмисти. Натиснете всяко заглавие, за да разгънете конкретен поток. За всяка операция ще видите кой бутон в интерфейса я стартира, кой endpoint се извиква, кои KV ключове се записват и какво означава това за крайния потребител.</p>
+
+    <nav aria-label="Бърза навигация">
+        <ul>
+            <li><a href="#architecture">1. Архитектура</a></li>
+            <li><a href="#kv-map">2. Основни KV ключове</a></li>
+            <li><a href="#client-flows">3. Поток на клиентите</a></li>
+            <li><a href="#admin-flows">4. Поток на администратора</a></li>
+            <li><a href="#automation">5. Автоматизации (Cron)</a></li>
+            <li><a href="#php-sync">6. PHP синхронизация</a></li>
+            <li><a href="#ideas">7. Идеи за оптимизация</a></li>
+        </ul>
+    </nav>
+
+    <section id="architecture" class="card">
+        <h2>1. Архитектура накратко</h2>
+        <div class="grid-two">
+            <div>
+                <h3>Какво се случва при действие на потребителя?</h3>
+                <ul class="flow-list">
+                    <li><strong>Фронт-енд модул</strong> (React не се използва – логиката е разделена в JS файлове) изпраща <code>fetch</code> заявка към Cloudflare Worker.
+                        <br><span class="tag">пример: <code>loadDashboardData()</code></span></li>
+                    <li><strong>Cloudflare Worker</strong> обработва заявката, извиква нужните AI услуги и чете/записва в KV хранилищата <code>USER_METADATA_KV</code> и <code>RESOURCES_KV</code>.</li>
+                    <li><strong>Отговорът</strong> се връща като JSON и UI го визуализира (табло, чат, формуляри).</li>
+                </ul>
+            </div>
+            <div>
+                <h3>Ключови роли на компонентите</h3>
+                <ul class="flow-list">
+                    <li><strong>Клиентски страници:</strong> <code>app.js</code>, <code>questionnaireCore.js</code>, <code>assistantChat.js</code> – събират данни от формите и показват резултатите.</li>
+                    <li><strong>Административен панел:</strong> <code>admin.js</code>, <code>editClient.js</code>, <code>planGeneration.js</code> – преглед и корекции на клиентски планове.</li>
+                    <li><strong>Бекенд:</strong> <code>worker.js</code> – съдържа всички <code>handle*</code> функции, които работят с KV и AI моделите.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section id="kv-map" class="card">
+        <h2>2. Основни Cloudflare KV ключове</h2>
+        <p>Двата namespace-а се използват така:</p>
+        <ul class="kv-keys">
+            <li><strong>USER_METADATA_KV</strong> – всички индивидуални данни на клиентите (отговори, планове, логове, AI известия).
+                <br><span class="tag">пример: <code>u123_initial_answers</code></span></li>
+            <li><strong>RESOURCES_KV</strong> – глобални конфигурации и AI шаблони (промптове, модели, флагове за e-mail).</li>
+        </ul>
+        <details>
+            <summary>Чести ключове за клиенти</summary>
+            <ul class="flow-list">
+                <li><strong>Регистрация:</strong> <code>credential_{userId}</code>, <code>email_to_uuid_{email}</code>, <code>all_user_ids</code>【F:worker.js†L881-L905】</li>
+                <li><strong>Въпросник и план:</strong> <code>{userId}_initial_answers</code>, <code>plan_status_{userId}</code>, <code>{userId}_final_plan</code>, <code>{userId}_analysis_status</code>【F:worker.js†L985-L1035】【F:worker.js†L1161-L1280】</li>
+                <li><strong>Дневни записи:</strong> <code>{userId}_log_{дата}</code>, <code>{userId}_logs_index</code>, <code>{userId}_current_status</code>【F:worker.js†L1340-L1466】</li>
+                <li><strong>Чат и AI:</strong> <code>{userId}_chat_history</code>, <code>{userId}_ai_update_pending_ack</code>, <code>{userId}_last_feedback_chat_ts</code>【F:worker.js†L1506-L1520】【F:worker.js†L1167-L1183】</li>
+                <li><strong>Похвали и постижения:</strong> <code>{userId}_achievements</code>, <code>{userId}_last_praise_ts</code>, <code>{userId}_last_praise_analytics</code>【F:worker.js†L2087-L2228】</li>
+            </ul>
+        </details>
+        <details>
+            <summary>Чести ключове за администратори</summary>
+            <ul class="flow-list">
+                <li><strong>Комуникация:</strong> <code>{userId}_admin_queries</code>, <code>{userId}_client_replies</code>, <code>{userId}_feedback_messages</code>【F:worker.js†L2697-L2788】</li>
+                <li><strong>Аналитика и AI конфигурация:</strong> <code>prompt_plan_modification</code>, <code>model_plan_generation</code>, <code>aiPreset_{име}</code>【F:worker.js†L2795-L2980】</li>
+                <li><strong>Поддръжка:</strong> <code>maintenance_mode</code>, <code>maintenance_page</code>, <code>cron_metrics_{дата}</code>【F:worker.js†L3180-L3212】【F:worker.js†L735-L855】</li>
+            </ul>
+        </details>
+    </section>
+
+    <section id="client-flows" class="card">
+        <h2>3. Клиентски действия и бекенд заявки</h2>
+        <details open>
+            <summary>3.1 Регистрация и вход</summary>
+            <div class="flow-list">
+                <li><strong>Регистрация:</strong> <code>setupRegistration()</code> изпраща имейл и парола към <code>/api/register</code>. Worker-ът създава нов <code>userId</code> и записва креденциалите и индекса на потребителите в KV.【F:js/register.js†L4-L63】【F:worker.js†L881-L916】
+                    <div class="example">Пример: клиент попълва формата в <em>register.html</em> → в KV се появяват <code>credential_*</code> и статусът <code>plan_status_{userId}=pending</code>, което задейства процеса по план.</div>
+                </li>
+                <li><strong>Вход:</strong> Формата в модала (<code>authModal.js</code>) подава POST към <code>/api/login</code>. Worker-ът валидира паролата чрез записаната сол и връща насока къде да бъде пренасочен клиентът (табло, въпросник).【F:js/authModal.js†L120-L139】【F:worker.js†L962-L978】
+                </li>
+            </div>
+        </details>
+
+        <details>
+            <summary>3.2 Въпросник и старт на анализ</summary>
+            <div class="flow-list">
+                <li><strong>Изпращане на въпросника:</strong> <code>submitResponses()</code> изпраща отговорите към <code>/api/submitQuestionnaire</code>. Worker-ът ги записва като <code>{userId}_initial_answers</code>, добавя потребителя в опашката за план и стартира имейл с линк за анализ.【F:js/questionnaireCore.js†L472-L489】【F:worker.js†L985-L1035】
+                    <div class="example">Клиент попълва целите и медицинския профил → KV ключовете се обновяват, планът получава статус <code>pending</code>, а анализът се маркира като <code>analysis_status=pending</code>.</div>
+                </li>
+                <li><strong>Демо/повторен анализ:</strong> Същият поток се използва и в админ панела при ръчно подаване на JSON – удобен начин да се тества нови данни без намеса на разработчик.【F:js/admin.js†L1720-L1798】</li>
+            </div>
+        </details>
+
+        <details>
+            <summary>3.3 Зареждане на таблото и дневните логове</summary>
+            <div class="flow-list">
+                <li><strong>Зареждане на таблото:</strong> <code>loadDashboardData()</code> извлича <code>/api/dashboardData</code>. Worker-ът комбинира <code>initial_answers</code>, <code>final_plan</code>, логовете и AI известията, а ако планът не е готов, връща ясно съобщение за статуса.【F:js/app.js†L442-L520】【F:worker.js†L1161-L1280】</li>
+                <li><strong>Автозапис на дневник:</strong> <code>autoSaveDailyLog()</code> и <code>autoSaveCompletedMeals()</code> пишат в <code>/api/log</code>. Worker-ът съхранява записите по дата (<code>{userId}_log_YYYY-MM-DD</code>) и обновява <code>current_status</code> (последно тегло, бележки).【F:js/app.js†L711-L820】【F:worker.js†L1340-L1467】
+                    <div class="example">Клиент отбелязва, че е пропуснал обяд → след секунди в таблото се визуализира нов запис, а <code>lastActive</code> се обновява за нуждите на Cron.</div>
+                </li>
+                <li><strong>Извънредно хранене:</strong> Формулярът в <code>extraMealForm.js</code> изпраща POST към <code>/api/log-extra-meal</code>. Worker-ът добавя запис в същия KV дневник и го маркира като <code>extra_meal</code>, което се взима предвид при чат анализа.【F:js/extraMealForm.js†L128-L199】【F:worker.js†L1720-L1777】</li>
+            </div>
+        </details>
+
+        <details>
+            <summary>3.4 Чат и визуален анализ</summary>
+            <div class="flow-list">
+                <li><strong>Текстов чат:</strong> <code>handleChatSend()</code> изпраща съобщение и последните 10 реплики към <code>/api/chat</code>. Worker-ът зарежда плановия контекст от <code>{userId}_chat_context</code> и връща AI отговор. Историята се кешира, за да се спестят токени.【F:js/app.js†L935-L980】【F:worker.js†L1506-L1530】</li>
+                <li><strong>Анализ на изображение:</strong> <code>handleChatImageUpload()</code> използва <code>/api/analyzeImage</code>. Worker-ът избира модел от <code>RESOURCES_KV</code> (<code>model_image_analysis</code>, <code>prompt_image_analysis</code>) и връща текстова интерпретация.【F:js/app.js†L983-L1009】【F:worker.js†L2438-L2594】</li>
+                <li><strong>Обратна връзка:</strong> Формата за обратна връзка и бутонът „Похвала“ изпращат POST заявки към <code>/api/submitFeedback</code> и <code>/api/generatePraise</code>. Това попълва <code>{userId}_feedback_messages</code> и <code>{userId}_achievements</code>, което автоматично се визуализира на таблото.【F:js/app.js†L911-L1004】【F:worker.js†L2036-L2228】</li>
+            </div>
+        </details>
+
+        <details>
+            <summary>3.5 Профил и настройки</summary>
+            <div class="flow-list">
+                <li><strong>Редакция на профил:</strong> <code>profileEdit.js</code> чете <code>/api/getProfile</code> и записва чрез <code>/api/updateProfile</code>. Worker-ът нормализира данните и ги пази в <code>{userId}_profile</code>, включително прага за предупреждение за макроси.【F:js/profileEdit.js†L20-L80】【F:worker.js†L1786-L1820】</li>
+                <li><strong>Статус и бележки:</strong> Промените от клиента (например ежедневна мотивация) се записват чрез <code>/api/updateStatus</code>, което обновява <code>{userId}_current_status</code> и последния timestamp за активност.【F:js/app.js†L1291-L1309】【F:worker.js†L1475-L1502】</li>
+                <li><strong>Актуализация при AI промени:</strong> Когато Cron генерира нов план, <code>{userId}_ai_update_pending_ack</code> се попълва и таблото показва банер. Щом клиентът потвърди, бутонът изпраща POST към <code>/api/acknowledgeAiUpdate</code>, а Worker-ът изчиства ключа и маркира, че съобщението е прочетено.【F:js/eventListeners.js†L34-L55】【F:worker.js†L2003-L2028】</li>
+            </div>
+        </details>
+    </section>
+
+    <section id="admin-flows" class="card">
+        <h2>4. Административни действия</h2>
+        <details open>
+            <summary>4.1 Списък клиенти и преглед на профил</summary>
+            <div class="flow-list">
+                <li><strong>Зареждане на клиенти:</strong> <code>loadClients()</code> извиква <code>/api/listClients</code>, което използва индекса <code>all_user_ids</code> и попълва таблицата в панела. При липса на индекс Worker-ът го реконструира, сканирайки <code>_initial_answers</code>.【F:js/admin.js†L637-L665】【F:worker.js†L2608-L2634】</li>
+                <li><strong>Отваряне на профил:</strong> <code>showClient()</code> комбинира <code>/api/getProfile</code>, <code>/api/dashboardData</code> и <code>/api/listUserKv</code>, за да визуализира всичко на едно място. KV индексът <code>{userId}_kv_index</code> ускорява първото зареждане.【F:js/admin.js†L1033-L1175】【F:worker.js†L5592-L5635】</li>
+                <li><strong>Ръчна корекция на KV:</strong> Редакцията на конкретни ключове в панела използва <code>/api/updateKv</code>, което валидира префикса и автоматично регенерира индекса.【F:js/admin.js†L1083-L1105】【F:worker.js†L5639-L5669】</li>
+            </div>
+        </details>
+
+        <details>
+            <summary>4.2 Комуникация с клиента</summary>
+            <div class="flow-list">
+                <li><strong>Административни съобщения:</strong> <code>sendAdminQuery()</code> → <code>/api/addAdminQuery</code>. Worker-ът добавя запис в <code>{userId}_admin_queries</code>, а при преглед <code>/api/getAdminQueries</code> маркира непрочетените като прочетени, освен ако заявката е „peek“.【F:js/admin.js†L1198-L1218】【F:worker.js†L2697-L2734】</li>
+                <li><strong>Отговори от клиент:</strong> <code>loadClientReplies()</code> използва <code>/api/getClientReplies</code>. По аналогичен начин се пазят и обратните съобщения на клиента в <code>{userId}_client_replies</code>.【F:js/admin.js†L1129-L1145】【F:worker.js†L2735-L2769】</li>
+                <li><strong>Обратна връзка:</strong> Секцията „Feedback“ чете <code>/api/getFeedbackMessages</code>, което връща списъка <code>{userId}_feedback_messages</code> за преглед и анализ.【F:js/admin.js†L1137-L1140】【F:worker.js†L2773-L2788】</li>
+            </div>
+        </details>
+
+        <details>
+            <summary>4.3 Планове и AI операции</summary>
+            <div class="flow-list">
+                <li><strong>Регенериране на план:</strong> Бутоните „Нов план“ и „Regenerate“ извикват <code>startPlanGeneration()</code> → <code>/api/regeneratePlan</code>. Worker-ът обновява статуса на плана и стартира същите AI стъпки, както при първоначално генериране.【F:js/planGeneration.js†L9-L19】【F:worker.js†L1899-L1940】</li>
+                <li><strong>Повторен анализ на въпросник:</strong> Панелът позволява подаване на имейл или JSON, което извиква <code>/api/reAnalyzeQuestionnaire</code>. Това слага задачата в опашката и обновява <code>{userId}_analysis_status</code>.【F:js/admin.js†L1732-L1796】【F:worker.js†L2330-L2350】</li>
+                <li><strong>AI настройки:</strong> Разделът „AI Config“ ползва <code>/api/getAiConfig</code> и <code>/api/setAiConfig</code>. Когато администраторът промени модел или температура, Worker-ът записва стойностите в <code>RESOURCES_KV</code> и чисти локалния кеш за да се приложат веднага.【F:worker.js†L2812-L2865】</li>
+                <li><strong>AI пресети и тестове:</strong> Всички операции върху пресети (<code>listAiPresets</code>, <code>saveAiPreset</code>, <code>deleteAiPreset</code>) се поддържат чрез KV ключове <code>aiPreset_{име}</code> и индекс <code>ai_preset_index</code>. Бутонът „Test Model“ изпраща заявка към <code>/api/testAiModel</code>, която проверява дали избраният модел е валиден.【F:worker.js†L2867-L3020】</li>
+            </div>
+        </details>
+
+        <details>
+            <summary>4.4 Поддръжка и системни настройки</summary>
+            <div class="flow-list">
+                <li><strong>Изтриване на клиент:</strong> Бутонът „Delete“ изпраща POST към <code>/api/deleteClient</code>. Worker-ът премахва всички ключове на клиента и изчиства имейл индекса.<div class="example">Използвайте само след архивиране – операцията е необратима.</div>【F:js/admin.js†L1240-L1262】【F:worker.js†L2659-L2690】</li>
+                <li><strong>Режим за поддръжка:</strong> Панелът <code>maintenanceMode.js</code> използва <code>/api/getMaintenanceMode</code> и <code>/api/setMaintenanceMode</code>. Записите се пазят в <code>maintenance_mode</code>, а кешът се изчиства, за да се отразят промените веднага.【F:js/maintenanceMode.js†L7-L30】【F:worker.js†L3180-L3212】</li>
+                <li><strong>Имейл тестове и контакти:</strong> <code>/api/sendTestEmail</code> и <code>/api/listContactRequests</code> позволяват проверка на комуникациите, като заявките се логват в <code>USER_METADATA_KV</code> за последващ одит.【F:worker.js†L3021-L3176】</li>
+            </div>
+        </details>
+    </section>
+
+    <section id="automation" class="card">
+        <h2>5. Автоматизации (Cron задачи)</h2>
+        <details open>
+            <summary>Какво прави Cloudflare Cron процесът?</summary>
+            <div class="flow-list">
+                <li><strong>Генериране на планове:</strong> на всяко изпълнение Cron взима <code>pending_plan_users</code> и стартира <code>processSingleUserPlan</code> за ограничен брой клиенти, като обновява <code>plan_status</code> според напредъка.【F:worker.js†L733-L780】</li>
+                <li><strong>Актуализация на принципи:</strong> Клиенти в <code>ready_plan_users</code> се проверяват за неактивност и ако са активни, се извиква <code>handlePrincipleAdjustment</code>. Таймерът се определя чрез <code>{userId}_last_significant_update_ts</code>.【F:worker.js†L783-L812】</li>
+                <li><strong>Обработка на събития:</strong> Всеки ключ <code>event_{...}</code> съдържа тип събитие (<code>planMod</code>, <code>testResult</code>, <code>irisDiag</code>). Cron ги взима по ред и стартира съответния AI процес, след което изчиства ключа.【F:worker.js†L5542-L5588】</li>
+                <li><strong>Метрики за изпълнение:</strong> След всяко стартиране се записва <code>cron_metrics_{дата}</code> с броя обработени планове, принципи и събития. Това е основа за оперативни отчети.【F:worker.js†L822-L855】</li>
+            </div>
+        </details>
+        <details>
+            <summary>Автоматични известия към клиента</summary>
+            <div class="flow-list">
+                <li>Когато Cron приключи успешно, <code>{userId}_ai_update_pending_ack</code> се попълва и таблото показва резюме на промените. Клиентът го потвърждава чрез <code>/api/acknowledgeAiUpdate</code>.【F:worker.js†L3500-L3530】【F:worker.js†L2003-L2028】</li>
+                <li>Автоматични похвали (<code>generatePraise</code>) се задействат, когато в логовете има достатъчно данни и са минали определени дни. Резултатите се записват и показват на таблото при следващо влизане.【F:worker.js†L2097-L2228】</li>
+            </div>
+        </details>
+    </section>
+
+    <section id="php-sync" class="card">
+        <h2>6. PHP синхронизация на въпросника</h2>
+        <p>Скриптът <code>save-questions.php</code> позволява на екипа да актуализира базата с въпроси без да пипа Worker-а. При запис:</p>
+        <ul class="flow-list">
+            <li>JSON-ът се валидира и записва локално в <code>questions.json</code> (бекъп).</li>
+            <li>Създава се PUT заявка към Cloudflare API, която обновява ключа <code>question_definitions</code> в <code>RESOURCES_KV</code>. При грешка се връща ясно съобщение и локалното копие се запазва.【F:save-questions.php†L7-L119】</li>
+            <li class="example">Пример: нова версия на въпросника се качва чрез формата → системата незабавно зарежда обновените въпроси за всички клиенти.</li>
+        </ul>
+    </section>
+
+    <section id="ideas" class="card">
+        <h2>7. Идеи за оптимизация</h2>
+        <ul class="flow-list">
+            <li><strong>Автоматични уведомления за Cron метрики:</strong> Данните от <code>cron_metrics_{дата}</code> могат да се изпращат към Slack/Email чрез наличния мониторинг хук (<code>MONITORING_ENDPOINT</code>) за ранно откриване на задръствания.【F:worker.js†L822-L855】【F:worker.js†L5641-L5672】</li>
+            <li><strong>UI индикатор за KV кеш:</strong> Добавяне на цветен статус в админ панела, който показва кога е обновен <code>{userId}_kv_index</code>, за да се избегнат обърквания при бавни промени.</li>
+            <li><strong>Предефинирани сценарии за чат:</strong> Използване на <code>aiPreset_*</code> за създаване на „бързи отговори“ – примерни шаблони за мотивация или кризисни ситуации, достъпни директно от админ панела.【F:worker.js†L2867-L2980】</li>
+            <li><strong>Автоматичен архив при изтриване:</strong> Преди <code>/api/deleteClient</code> да премахне данните, да се генерира ZIP файл с плана и логовете и да се изпрати на администратора за одит.</li>
+        </ul>
+    </section>
+
+    <footer>
+        Обновено автоматично чрез преглед на актуалните модули. За въпроси – вижте <em>docs/PROJECT_OVERVIEW_BG.md</em>.
+    </footer>
+</body>
+</html>
