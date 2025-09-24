@@ -1,5 +1,7 @@
 // app.js - Основен Файл на Приложението
-import { isLocalDevelopment, apiEndpoints } from './config.js';
+import * as config from './config.js';
+const { isLocalDevelopment, apiEndpoints } = config;
+const ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT = 60 * 60000; // 1 час
 import { debugLog, enableDebug } from './logger.js';
 import { safeParseFloat, escapeHtml, fileToDataURL, normalizeDailyLogs, getLocalDate } from './utils.js';
 import { selectors, initializeSelectors, loadInfoTexts } from './uiElements.js';
@@ -60,7 +62,14 @@ function normalizeText(input) {
     return String(input);
 }
 
-async function checkAdminQueries(userId) {
+export async function checkAdminQueries(userId, options = {}) {
+    if (!userId) return;
+    const { force = false } = options;
+    const now = Date.now();
+    if (!force && lastAdminQueriesFetchTs && (now - lastAdminQueriesFetchTs) < adminQueriesIntervalMs) {
+        return;
+    }
+    lastAdminQueriesFetchTs = now;
     try {
         const resp = await fetch(`${apiEndpoints.getAdminQueries}?userId=${userId}`);
         const data = await resp.json();
@@ -147,6 +156,9 @@ export function setChatPromptOverride(val) { chatPromptOverride = val; }
 let planStatusInterval = null;
 let planStatusTimeout = null;
 let adminQueriesInterval = null; // Интервал за проверка на администраторски съобщения
+let adminQueriesIntervalMs = ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT;
+let adminQueriesVisibilityListenerAttached = false;
+let lastAdminQueriesFetchTs = 0;
 let lastSavedDailyLogSerialized = null; // Кеш на последно записания дневен лог
 
 export { activeTooltip, setActiveTooltip };
@@ -470,7 +482,7 @@ export async function loadDashboardData() {
             scheduleEndOfDaySave();
             initializeAchievements(currentUserId);
             setupDynamicEventListeners();
-            await checkAdminQueries(currentUserId);
+            await checkAdminQueries(currentUserId, { force: true });
             startAdminQueriesPolling();
 
             const activeTabId = sessionStorage.getItem('activeTabId') || selectors.tabButtons[0]?.id;
@@ -576,7 +588,7 @@ export async function loadDashboardData() {
 
         initializeAchievements(currentUserId);
         setupDynamicEventListeners();
-        await checkAdminQueries(currentUserId);
+        await checkAdminQueries(currentUserId, { force: true });
         startAdminQueriesPolling();
 
         const activeTabId = sessionStorage.getItem('activeTabId') || selectors.tabButtons[0]?.id;
@@ -594,7 +606,7 @@ export async function loadDashboardData() {
         showToast(`Грешка при зареждане: ${error.message}`, true, 7000);
         showPlanPendingState(`Възникна грешка: ${error.message}. Опитайте да презаредите страницата или <a href='index.html' style='color: var(--primary-color); text-decoration: underline;'>влезте отново</a>.`);
         if (currentUserId) {
-            await checkAdminQueries(currentUserId);
+            await checkAdminQueries(currentUserId, { force: true });
             startAdminQueriesPolling();
         }
     } finally {
@@ -633,19 +645,75 @@ export function stopPlanStatusPolling() {
     if (selectors.chatFab) selectors.chatFab.classList.remove('planmod-processing');
 }
 
-export function startAdminQueriesPolling(intervalMs = 60000) {
+function normalizeAdminQueriesIntervalMs(options) {
+    if (typeof options === 'number') {
+        const minutes = Number(options);
+        if (Number.isFinite(minutes) && minutes > 0) {
+            return minutes * 60000;
+        }
+    }
+    if (options && typeof options === 'object') {
+        if (options.intervalMs !== undefined) {
+            const ms = Number(options.intervalMs);
+            if (Number.isFinite(ms) && ms > 0) {
+                return ms;
+            }
+        }
+        if (options.intervalMinutes !== undefined) {
+            const minutes = Number(options.intervalMinutes);
+            if (Number.isFinite(minutes) && minutes > 0) {
+                return minutes * 60000;
+            }
+        }
+    }
+    return ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT;
+}
+
+function restartAdminQueriesInterval() {
     if (adminQueriesInterval) {
         clearInterval(adminQueriesInterval);
+        adminQueriesInterval = null;
+    }
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        return;
     }
     adminQueriesInterval = setInterval(() => {
-        if (currentUserId) checkAdminQueries(currentUserId);
-    }, intervalMs);
+        if (currentUserId) void checkAdminQueries(currentUserId);
+    }, adminQueriesIntervalMs);
+}
+
+function handleAdminQueriesVisibilityChange() {
+    if (typeof document === 'undefined') return;
+    if (document.visibilityState === 'hidden') {
+        if (adminQueriesInterval) {
+            clearInterval(adminQueriesInterval);
+            adminQueriesInterval = null;
+        }
+        return;
+    }
+    restartAdminQueriesInterval();
+    if (currentUserId) void checkAdminQueries(currentUserId, { force: true });
+}
+
+export function startAdminQueriesPolling(options) {
+    adminQueriesIntervalMs = normalizeAdminQueriesIntervalMs(options);
+    lastAdminQueriesFetchTs = 0;
+    if (typeof document !== 'undefined' && !adminQueriesVisibilityListenerAttached && document.addEventListener) {
+        document.addEventListener('visibilitychange', handleAdminQueriesVisibilityChange);
+        adminQueriesVisibilityListenerAttached = true;
+    }
+    restartAdminQueriesInterval();
 }
 
 export function stopAdminQueriesPolling() {
     if (adminQueriesInterval) {
         clearInterval(adminQueriesInterval);
         adminQueriesInterval = null;
+    }
+    lastAdminQueriesFetchTs = 0;
+    if (adminQueriesVisibilityListenerAttached && typeof document !== 'undefined' && document.removeEventListener) {
+        document.removeEventListener('visibilitychange', handleAdminQueriesVisibilityChange);
+        adminQueriesVisibilityListenerAttached = false;
     }
 }
 
