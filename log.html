@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KV натоварване и лог на заявки</title>
+  <link rel="stylesheet" href="css/base_styles.css">
+  <link rel="stylesheet" href="css/components_styles.css">
+  <link rel="stylesheet" href="css/layout_styles.css">
+  <style>
+    body {
+      background: var(--surface-background);
+      color: var(--text-color-primary);
+      min-height: 100vh;
+    }
+    .kv-page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--space-xl) var(--space-lg) var(--space-3xl);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xl);
+    }
+    .kv-page h1 {
+      margin-bottom: var(--space-sm);
+      font-size: clamp(1.6rem, 2vw, 2rem);
+    }
+    .kv-page p.lead {
+      color: var(--text-color-muted);
+      margin-bottom: var(--space-lg);
+      max-width: 720px;
+    }
+    .kv-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+      align-items: flex-end;
+    }
+    .kv-form label {
+      display: flex;
+      flex-direction: column;
+      font-weight: 500;
+      color: var(--text-color-secondary);
+    }
+    .kv-form input[type="date"] {
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color-soft);
+      background: var(--surface-background);
+      color: inherit;
+      min-width: 180px;
+    }
+    .kv-status {
+      margin-top: var(--space-md);
+      color: var(--text-color-secondary);
+      font-size: 0.95rem;
+    }
+    .kv-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--space-lg);
+      margin-bottom: var(--space-lg);
+    }
+    .kv-summary-card {
+      background: rgba(var(--surface-background-rgb), 0.7);
+      border: 1px solid var(--border-color-soft);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md);
+      box-shadow: var(--shadow-sm);
+    }
+    .kv-summary-card h3 {
+      margin: 0 0 var(--space-xs);
+      font-size: 0.95rem;
+      color: var(--text-color-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .kv-summary-value {
+      font-size: 1.6rem;
+      font-weight: 600;
+    }
+    .kv-summary-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: var(--space-lg);
+    }
+    .kv-summary-details h4 {
+      margin-bottom: var(--space-sm);
+      font-size: 1rem;
+    }
+    .kv-summary-details ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    .kv-summary-details li {
+      border-left: 3px solid var(--primary-color);
+      padding-left: var(--space-sm);
+      font-size: 0.95rem;
+    }
+    .table-wrapper {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(var(--surface-background-rgb), 0.65);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--border-color-soft);
+    }
+    thead {
+      background: color-mix(in srgb, var(--primary-color) 12%, var(--surface-background));
+    }
+    th, td {
+      padding: var(--space-sm) var(--space-md);
+      text-align: left;
+      border-bottom: 1px solid var(--border-color-soft);
+      vertical-align: top;
+    }
+    tbody tr:hover {
+      background: rgba(var(--primary-color-rgb, 28, 98, 209), 0.06);
+    }
+    .kv-suggestion-list {
+      list-style: disc;
+      padding-left: var(--space-xl);
+      color: var(--text-color-secondary);
+    }
+    .kv-tag {
+      display: inline-block;
+      background: color-mix(in srgb, var(--secondary-color) 25%, white);
+      color: var(--text-color-primary);
+      padding: 0.15rem 0.6rem;
+      border-radius: var(--radius-round);
+      font-size: 0.8rem;
+      margin-right: var(--space-xs);
+    }
+    @media (max-width: 768px) {
+      .kv-form {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .kv-form label, .kv-form button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="kv-page">
+    <section class="card">
+      <h1>Натоварване на KV заявките</h1>
+      <p class="lead">Проследявайте кои бекенд маршрути генерират най-много KV операции и сравнявайте натоварването им по периоди. Данните са подредени по общ брой KV заявки, а резюмето включва и консумацията на AI токени, за да се откроят най-скъпите функции.</p>
+      <form id="kvUsageForm" class="kv-form">
+        <label for="kvFromDate">Начална дата
+          <input type="date" id="kvFromDate" name="from" required>
+        </label>
+        <label for="kvToDate">Крайна дата
+          <input type="date" id="kvToDate" name="to" required>
+        </label>
+        <button type="submit" class="button button-primary">Анализирай периода</button>
+      </form>
+      <p id="kvStatus" class="kv-status">Подгответе периода и натиснете „Анализирай периода“.</p>
+    </section>
+
+    <section class="card">
+      <h2>Резюме на натоварването</h2>
+      <div id="kvSummaryTotals" class="kv-summary-grid"></div>
+      <div class="kv-summary-details">
+        <div>
+          <h4>Разбивка по KV namespace</h4>
+          <ul id="kvNamespaceList"></ul>
+        </div>
+        <div>
+          <h4>Разбивка по тип операция</h4>
+          <ul id="kvMethodList"></ul>
+        </div>
+        <div>
+          <h4>Допълнителни метрики</h4>
+          <ul id="kvExtraMetrics"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Най-натоварени маршрути</h2>
+      <div class="table-wrapper">
+        <table id="kvUsageTable" aria-live="polite">
+          <thead>
+            <tr>
+              <th scope="col">Маршрут / функция</th>
+              <th scope="col">Брой заявки</th>
+              <th scope="col">KV операции общо</th>
+              <th scope="col">Средно на заявка</th>
+              <th scope="col">Namespace разпределение</th>
+              <th scope="col">Типове операции</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="6">Няма данни за избрания период.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Идеи за допълнително наблюдение</h2>
+      <ul class="kv-suggestion-list">
+        <li>Добавете прагове и аларми за AI токени, за да се сигнализира автоматично при очаквани надвишения.</li>
+        <li>Събирайте време за отговор на критичните маршрути – комбинация от KV заявки и латентност показва къде оптимизациите биха имали най-голям ефект.</li>
+        <li>Сравнявайте данните с броя активни потребители или с брой планирани задачи, за да нормализирате натоварването и да следите токените на потребител.</li>
+      </ul>
+    </section>
+  </main>
+  <script type="module" src="js/kvUsage.js"></script>
+</body>
+</html>

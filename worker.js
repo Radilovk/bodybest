@@ -48,6 +48,47 @@ function extractDatePortion(value) {
   return date.toISOString().split('T')[0];
 }
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function toUtcDate(dateStr) {
+  if (typeof dateStr !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return null;
+  }
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+}
+
+function shiftDateString(dateStr, offsetDays) {
+  const base = toUtcDate(dateStr);
+  if (!base || typeof offsetDays !== 'number' || Number.isNaN(offsetDays)) {
+    return null;
+  }
+  const shifted = new Date(base.getTime());
+  shifted.setUTCDate(shifted.getUTCDate() + Math.trunc(offsetDays));
+  return shifted.toISOString().split('T')[0];
+}
+
+function enumerateDateRange(startDateStr, endDateStr, maxDays = 60) {
+  const start = toUtcDate(startDateStr);
+  const end = toUtcDate(endDateStr);
+  if (!start || !end || start.getTime() > end.getTime()) {
+    return [];
+  }
+  const inclusiveDays = Math.floor((end.getTime() - start.getTime()) / MS_PER_DAY) + 1;
+  if (inclusiveDays > Math.max(1, Math.trunc(maxDays))) {
+    return [];
+  }
+  const dates = [];
+  const cursor = new Date(start.getTime());
+  while (cursor.getTime() <= end.getTime()) {
+    dates.push(cursor.toISOString().split('T')[0]);
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return dates;
+}
+
 // Рендериране на шаблони {{key}}
 function renderTemplate(str, data = {}) {
   return String(str).replace(/{{\s*(\w+)\s*}}/g, (_, key) =>
@@ -553,6 +594,10 @@ export default {
             return new Response(null, { status: 204, headers: corsHeaders });
         }
 
+        const kvMonitor = createKvMonitor(env);
+        env = kvMonitor.env;
+        let handlerLabel = `${method} ${path}`;
+
         const kvFlag = env.RESOURCES_KV
             ? await getCachedResource(
                 MAINTENANCE_MODE_CACHE_KEY,
@@ -709,6 +754,8 @@ export default {
                 responseBody = await handleListUserKvRequest(request, env);
             } else if (method === 'POST' && path === '/api/updateKv') {
                 responseBody = await handleUpdateKvRequest(request, env);
+            } else if (method === 'GET' && path === '/api/kvUsage') {
+                responseBody = await handleKvUsageMetricsRequest(request, env);
             } else {
                 responseBody = { success: false, error: 'Not Found', message: 'Ресурсът не е намерен.' };
                 responseStatus = 404;
@@ -720,6 +767,15 @@ export default {
              responseBody = { success: false, error: 'Internal Server Error', message: 'Възникна неочаквана вътрешна грешка.' };
              responseStatus = 500;
              if (error.stack) { console.error("Error Stack:", error.stack); }
+        } finally {
+            try {
+                const snapshot = kvMonitor.getSnapshot();
+                await kvMonitor.runWithoutCounting(() =>
+                    persistKvUsageMetrics(env, handlerLabel, snapshot)
+                );
+            } catch (metricsErr) {
+                console.error(`KV_USAGE_METRICS_FAIL (${handlerLabel}):`, metricsErr);
+            }
         }
 
         const { status, body, headers } = makeJsonResponse(responseBody, responseStatus);
@@ -732,6 +788,9 @@ export default {
 
     // ------------- START FUNCTION: scheduled -------------
     async scheduled(event, env, ctx) {
+        const kvMonitor = createKvMonitor(env);
+        env = kvMonitor.env;
+        const handlerLabel = 'scheduled:cron';
         console.log(`[CRON] Trigger executing at: ${new Date(event.scheduledTime)}`);
         if (!env.USER_METADATA_KV) {
             console.error("[CRON] USER_METADATA_KV binding missing. Check configuration.");
@@ -859,6 +918,14 @@ export default {
             console.log('[CRON] No activity detected; metrics storage skipped.');
         }
         console.log(`[CRON] Trigger finished. PlanGen: ${processedUsersForPlan}, Principles: ${processedUsersForPrinciples}, UserEvents: ${processedUserEvents}`);
+        try {
+            const snapshot = kvMonitor.getSnapshot();
+            await kvMonitor.runWithoutCounting(() =>
+                persistKvUsageMetrics(env, handlerLabel, snapshot)
+            );
+        } catch (metricsErr) {
+            console.error(`KV_USAGE_METRICS_FAIL (${handlerLabel}):`, metricsErr);
+        }
     }
     // ------------- END FUNCTION: scheduled -------------
 };
@@ -2584,7 +2651,8 @@ async function handleAnalyzeImageRequest(request, env) {
                 key,
                 finalPrompt,
                 { temperature: 0.2, maxOutputTokens: 200 },
-                modelName
+                modelName,
+                env
             );
         } else {
             console.log('Received image:', String(image || imageData).substring(0, 100));
@@ -4801,7 +4869,7 @@ async function verifyPassword(password, storedSaltAndHash) {
 // ------------- END BLOCK: PasswordHashing -------------
 
 // ------------- START FUNCTION: callGeminiAPI -------------
-async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettings = [], model) {
+async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettings = [], model, env = null) {
     if (!model) {
         console.error("GEMINI_API_CALL_ERROR: Model name is missing!");
         throw new Error("Gemini model name is missing.");
@@ -4840,6 +4908,12 @@ async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettin
             }
 
             const cand = data?.candidates?.[0];
+            const usageMeta = data?.usageMetadata || {};
+            recordAiUsage(env, 'gemini', model, {
+                totalTokens: usageMeta.totalTokenCount,
+                promptTokens: usageMeta.promptTokenCount,
+                completionTokens: usageMeta.candidatesTokenCount
+            });
             if (!cand) {
                 const blockR = data?.promptFeedback?.blockReason;
                 if (blockR) {
@@ -4894,7 +4968,8 @@ async function callGeminiVisionAPI(
     apiKey,
     prompt = 'Опиши съдържанието на това изображение.',
     generationConfig = {},
-    model
+    model,
+    env = null
 ) {
     if (!model) {
         console.error('GEMINI_VISION_CALL_ERROR: Model name is missing!');
@@ -4938,6 +5013,12 @@ async function callGeminiVisionAPI(
             }
 
             const cand = data?.candidates?.[0];
+            const usageMeta = data?.usageMetadata || {};
+            recordAiUsage(env, 'gemini', model, {
+                totalTokens: usageMeta.totalTokenCount,
+                promptTokens: usageMeta.promptTokenCount,
+                completionTokens: usageMeta.candidatesTokenCount
+            });
             const txtContent = cand?.content?.parts?.[0]?.text;
             if (txtContent !== undefined && txtContent !== null) {
                 return txtContent;
@@ -4963,7 +5044,7 @@ async function callGeminiVisionAPI(
 // ------------- END FUNCTION: callGeminiVisionAPI -------------
 
 // ------------- START FUNCTION: callOpenAiAPI -------------
-async function callOpenAiAPI(prompt, apiKey, model, options = {}) {
+async function callOpenAiAPI(prompt, apiKey, model, options = {}, env = null) {
     if (!model) {
         throw new Error('OpenAI model name is missing.');
     }
@@ -4987,6 +5068,7 @@ async function callOpenAiAPI(prompt, apiKey, model, options = {}) {
         const msg = data?.error?.message || `HTTP ${resp.status}`;
         throw new Error(`OpenAI API Error (${model}): ${msg}`);
     }
+    recordAiUsage(env, 'openai', model, data?.usage || {});
     const text = data?.choices?.[0]?.message?.content;
     if (text === undefined || text === null) {
         throw new Error(`OpenAI API Error (${model}): No content in response.`);
@@ -4996,7 +5078,7 @@ async function callOpenAiAPI(prompt, apiKey, model, options = {}) {
 // ------------- END FUNCTION: callOpenAiAPI -------------
 
 // ------------- START FUNCTION: callCohereAI -------------
-async function callCohereAI(model, prompt, apiKey, options = {}) {
+async function callCohereAI(model, prompt, apiKey, options = {}, env = null) {
     if (!model) {
         throw new Error('Cohere model name is missing.');
     }
@@ -5020,6 +5102,13 @@ async function callCohereAI(model, prompt, apiKey, options = {}) {
         const msg = data?.message || data?.error || `HTTP ${resp.status}`;
         throw new Error(`Cohere API Error (${model}): ${msg}`);
     }
+    const tokensMeta = data?.meta?.tokens || {};
+    const billedUnits = data?.meta?.billed_units || {};
+    recordAiUsage(env, 'cohere', model, {
+        totalTokens: tokensMeta.total_tokens ?? billedUnits.total_tokens,
+        promptTokens: tokensMeta.input_tokens ?? billedUnits.input_tokens,
+        completionTokens: tokensMeta.output_tokens ?? billedUnits.output_tokens
+    });
     const text = data?.text;
     if (text === undefined || text === null) {
         throw new Error(`Cohere API Error (${model}): No text in response.`);
@@ -5053,16 +5142,16 @@ async function callModel(model, prompt, env, { temperature = 0.7, maxTokens = 80
     if (provider === 'cohere') {
         const key = env[COMMAND_R_PLUS_SECRET_NAME];
         if (!key) throw new Error('Missing command-r-plus API key.');
-        return callCohereAI(model, prompt, key, { temperature, maxTokens });
+        return callCohereAI(model, prompt, key, { temperature, maxTokens }, env);
     }
     if (provider === 'openai') {
         const key = env[OPENAI_API_KEY_SECRET_NAME];
         if (!key) throw new Error('Missing OpenAI API key.');
-        return callOpenAiAPI(prompt, key, model, { temperature, max_tokens: maxTokens });
+        return callOpenAiAPI(prompt, key, model, { temperature, max_tokens: maxTokens }, env);
     }
     const key = env[GEMINI_API_KEY_SECRET_NAME];
     if (!key) throw new Error('Missing Gemini API key.');
-    return callGeminiAPI(prompt, key, { temperature, maxOutputTokens: maxTokens }, [], model);
+    return callGeminiAPI(prompt, key, { temperature, maxOutputTokens: maxTokens }, [], model, env);
 }
 
 callModelRef.current = callModel;
@@ -5084,6 +5173,14 @@ function buildCfImagePayload(model, imageUrl, promptText) {
 async function callCfAi(model, payload, env) {
     if (env.AI && typeof env.AI.run === 'function') {
         const result = await env.AI.run(model, payload);
+        const usagePayload = extractUsageFromCandidates(
+            result?.usage,
+            result?.metrics,
+            result?.meta?.usage,
+            result?.meta?.tokens,
+            result?.meta?.billed_units
+        );
+        recordAiUsage(env, 'cloudflare', model, usagePayload);
         return result?.response || result;
     }
     const accountId = env[CF_ACCOUNT_ID_VAR_NAME] || env.accountId || env.ACCOUNT_ID;
@@ -5105,6 +5202,16 @@ async function callCfAi(model, payload, env) {
         const msg = data?.errors?.[0]?.message || `HTTP ${resp.status}`;
         throw new Error(`CF AI error: ${msg}`);
     }
+    const usagePayload = extractUsageFromCandidates(
+        data?.result?.usage,
+        data?.usage,
+        data?.result?.metrics,
+        data?.metrics,
+        data?.result?.meta?.usage,
+        data?.result?.meta?.tokens,
+        data?.result?.meta?.billed_units
+    );
+    recordAiUsage(env, 'cloudflare', model, usagePayload);
     return data.result?.response || data;
 }
 // ------------- END FUNCTION: callCfAi -------------
@@ -5704,6 +5811,453 @@ async function handleUpdateKvRequest(request, env) {
 }
 // ------------- END FUNCTION: handleUpdateKvRequest -------------
 
+const MAX_KV_USAGE_RANGE_DAYS = 60;
+
+// ------------- START FUNCTION: handleKvUsageMetricsRequest -------------
+async function handleKvUsageMetricsRequest(request, env) {
+    if (!env?.USER_METADATA_KV || typeof env.USER_METADATA_KV.get !== 'function') {
+        return {
+            success: false,
+            message: 'USER_METADATA_KV не е конфигуриран.',
+            statusHint: 500
+        };
+    }
+
+    try {
+        const url = new URL(request.url);
+        const fromParam = url.searchParams.get('from');
+        const toParam = url.searchParams.get('to');
+        const today = getLocalDate();
+        const resolvedTo = extractDatePortion(toParam) || today;
+        let resolvedFrom = extractDatePortion(fromParam);
+        if (!resolvedFrom) {
+            const fallback = shiftDateString(resolvedTo, -6);
+            resolvedFrom = fallback || resolvedTo;
+        }
+
+        const startDate = toUtcDate(resolvedFrom);
+        const endDate = toUtcDate(resolvedTo);
+        if (!startDate || !endDate) {
+            return { success: false, message: 'Невалиден период.', statusHint: 400 };
+        }
+        if (startDate.getTime() > endDate.getTime()) {
+            return {
+                success: false,
+                message: 'Началната дата трябва да е преди крайната.',
+                statusHint: 400
+            };
+        }
+        const inclusiveDays = Math.floor((endDate.getTime() - startDate.getTime()) / MS_PER_DAY) + 1;
+        if (inclusiveDays > MAX_KV_USAGE_RANGE_DAYS) {
+            return {
+                success: false,
+                message: `Периодът не може да надвишава ${MAX_KV_USAGE_RANGE_DAYS} дни.`,
+                statusHint: 400
+            };
+        }
+
+        const dateRange = enumerateDateRange(resolvedFrom, resolvedTo, MAX_KV_USAGE_RANGE_DAYS);
+        const kv = env.USER_METADATA_KV;
+        const daysWithData = [];
+        let lastUpdateIso = null;
+        for (const dateStr of dateRange) {
+            const key = `kv_usage_${dateStr}`;
+            let stored;
+            try {
+                stored = await kv.get(key);
+            } catch (err) {
+                console.error(`KV_USAGE_METRICS_READ_FAIL (${key}):`, err);
+                continue;
+            }
+            if (!stored) continue;
+            const parsed = safeParseJson(stored, null);
+            if (!parsed || typeof parsed !== 'object') continue;
+            daysWithData.push({ date: dateStr, data: parsed });
+            if (parsed.lastUpdated && (!lastUpdateIso || parsed.lastUpdated > lastUpdateIso)) {
+                lastUpdateIso = parsed.lastUpdated;
+            }
+        }
+
+        const namespaceTotals = {};
+        const methodTotals = { total: 0, get: 0, put: 0, delete: 0, list: 0 };
+        const extraTotals = {};
+        const handlerMap = new Map();
+        let totalOperations = 0;
+        let totalRequests = 0;
+
+        for (const { data } of daysWithData) {
+            const handlers = data.handlers && typeof data.handlers === 'object' ? data.handlers : {};
+            for (const [handlerName, metricsRaw] of Object.entries(handlers)) {
+                if (!metricsRaw || typeof metricsRaw !== 'object') continue;
+                const existing = handlerMap.get(handlerName) || {
+                    handler: handlerName,
+                    requests: 0,
+                    totalOperations: 0,
+                    byMethod: { total: 0, get: 0, put: 0, delete: 0, list: 0 },
+                    byNamespace: {},
+                    extraMetrics: {}
+                };
+                const requests = Number(metricsRaw.requests || 0);
+                const totalOps = Number(metricsRaw.totalOperations || 0);
+                existing.requests += requests;
+                existing.totalOperations += totalOps;
+                const methodsRaw = metricsRaw.byMethod || {};
+                existing.byMethod.get += Number(methodsRaw.get || 0);
+                existing.byMethod.put += Number(methodsRaw.put || 0);
+                existing.byMethod.delete += Number(methodsRaw.delete || 0);
+                existing.byMethod.list += Number(methodsRaw.list || 0);
+                existing.byMethod.total += Number(methodsRaw.total || totalOps);
+
+                const namespacesRaw = metricsRaw.byNamespace || {};
+                for (const [nsName, nsCountsRaw] of Object.entries(namespacesRaw)) {
+                    const target = existing.byNamespace[nsName] || { total: 0, get: 0, put: 0, delete: 0, list: 0 };
+                    target.total += Number(nsCountsRaw.total || 0);
+                    target.get += Number(nsCountsRaw.get || 0);
+                    target.put += Number(nsCountsRaw.put || 0);
+                    target.delete += Number(nsCountsRaw.delete || 0);
+                    target.list += Number(nsCountsRaw.list || 0);
+                    existing.byNamespace[nsName] = target;
+
+                    const summaryNs = namespaceTotals[nsName] || { total: 0, get: 0, put: 0, delete: 0, list: 0 };
+                    summaryNs.total += Number(nsCountsRaw.total || 0);
+                    summaryNs.get += Number(nsCountsRaw.get || 0);
+                    summaryNs.put += Number(nsCountsRaw.put || 0);
+                    summaryNs.delete += Number(nsCountsRaw.delete || 0);
+                    summaryNs.list += Number(nsCountsRaw.list || 0);
+                    namespaceTotals[nsName] = summaryNs;
+                }
+
+                const extraRaw = metricsRaw.extraMetrics || {};
+                for (const [key, val] of Object.entries(extraRaw)) {
+                    if (typeof val === 'number' && Number.isFinite(val)) {
+                        existing.extraMetrics[key] = (existing.extraMetrics[key] || 0) + val;
+                        extraTotals[key] = (extraTotals[key] || 0) + val;
+                    }
+                }
+
+                handlerMap.set(handlerName, existing);
+                totalOperations += totalOps;
+                totalRequests += requests;
+                methodTotals.get += Number(methodsRaw.get || 0);
+                methodTotals.put += Number(methodsRaw.put || 0);
+                methodTotals.delete += Number(methodsRaw.delete || 0);
+                methodTotals.list += Number(methodsRaw.list || 0);
+                methodTotals.total += Number(methodsRaw.total || totalOps);
+            }
+        }
+
+        const handlers = Array.from(handlerMap.values())
+            .map(entry => ({
+                ...entry,
+                averagePerRequest: entry.requests > 0 ? entry.totalOperations / entry.requests : 0
+            }))
+            .sort((a, b) => b.totalOperations - a.totalOperations);
+
+        return {
+            success: true,
+            range: { from: resolvedFrom, to: resolvedTo },
+            dates: dateRange,
+            datesWithData: daysWithData.map(d => d.date),
+            handlers,
+            summary: {
+                totalRequests,
+                totalOperations,
+                methodTotals,
+                namespaceTotals,
+                extraMetrics: extraTotals,
+                generatedAt: new Date().toISOString(),
+                lastDataUpdate: lastUpdateIso
+            }
+        };
+    } catch (error) {
+        console.error('Error in handleKvUsageMetricsRequest:', error.message, error.stack);
+        return { success: false, message: 'Неуспешно изчисляване на KV статистиката.' };
+    }
+}
+// ------------- END FUNCTION: handleKvUsageMetricsRequest -------------
+
+// ------------- START BLOCK: kv usage monitor -------------
+function cloneNamespaceCounts(source = {}) {
+    const result = {};
+    for (const [ns, metrics] of Object.entries(source || {})) {
+        result[ns] = {
+            total: Number(metrics?.total || 0),
+            get: Number(metrics?.get || 0),
+            put: Number(metrics?.put || 0),
+            delete: Number(metrics?.delete || 0),
+            list: Number(metrics?.list || 0)
+        };
+    }
+    return result;
+}
+
+function mergeMethodCounts(target = {}, addition = {}, fallbackTotal = 0) {
+    const merged = {
+        total: Number(target?.total || 0),
+        get: Number(target?.get || 0),
+        put: Number(target?.put || 0),
+        delete: Number(target?.delete || 0),
+        list: Number(target?.list || 0)
+    };
+    if (addition) {
+        merged.get += Number(addition?.get || 0);
+        merged.put += Number(addition?.put || 0);
+        merged.delete += Number(addition?.delete || 0);
+        merged.list += Number(addition?.list || 0);
+        const totalToAdd = addition.total !== undefined ? Number(addition.total || 0) : Number(fallbackTotal || 0);
+        merged.total += totalToAdd;
+    } else {
+        merged.total += Number(fallbackTotal || 0);
+    }
+    return merged;
+}
+
+function mergeNamespaceCounts(target = {}, addition = {}) {
+    const merged = { ...target };
+    for (const [ns, metrics] of Object.entries(addition || {})) {
+        const current = merged[ns] || { total: 0, get: 0, put: 0, delete: 0, list: 0 };
+        current.total += Number(metrics?.total || 0);
+        current.get += Number(metrics?.get || 0);
+        current.put += Number(metrics?.put || 0);
+        current.delete += Number(metrics?.delete || 0);
+        current.list += Number(metrics?.list || 0);
+        merged[ns] = current;
+    }
+    return merged;
+}
+
+function mergeExtraMetrics(target = {}, addition = {}) {
+    const merged = { ...target };
+    for (const [key, value] of Object.entries(addition || {})) {
+        if (typeof value === 'number' && Number.isFinite(value)) {
+            const current = Number(merged[key] || 0);
+            merged[key] = current + value;
+        }
+    }
+    return merged;
+}
+
+function getFiniteNumber(...values) {
+    for (const value of values) {
+        const num = Number(value);
+        if (Number.isFinite(num) && num > 0) {
+            return num;
+        }
+    }
+    return 0;
+}
+
+function recordAiUsage(env, provider, model, usage = {}) {
+    const bridge = env?.__kvMetrics;
+    const recorder = bridge && typeof bridge.recordExtraMetric === 'function'
+        ? bridge.recordExtraMetric
+        : null;
+    if (!recorder) return;
+
+    const promptTokens = getFiniteNumber(
+        usage.promptTokens,
+        usage.prompt_tokens,
+        usage.inputTokens,
+        usage.input_tokens
+    );
+    const completionTokens = getFiniteNumber(
+        usage.completionTokens,
+        usage.completion_tokens,
+        usage.outputTokens,
+        usage.output_tokens,
+        usage.candidatesTokens,
+        usage.candidates_token_count
+    );
+    const fallbackTotal = promptTokens + completionTokens;
+    const totalTokens = getFiniteNumber(
+        usage.totalTokens,
+        usage.total_tokens,
+        usage.totalTokenCount,
+        usage.total_token_count,
+        fallbackTotal
+    );
+
+    recorder('AI заявки', 1);
+    if (totalTokens > 0) {
+        recorder('AI токени - общо', totalTokens);
+    }
+    if (promptTokens > 0) {
+        recorder('AI токени - вход', promptTokens);
+    }
+    if (completionTokens > 0) {
+        recorder('AI токени - изход', completionTokens);
+    }
+    if (provider && totalTokens > 0) {
+        recorder(`AI токени - провайдър ${provider}`, totalTokens);
+    }
+    if (model && totalTokens > 0) {
+        recorder(`AI токени - модел ${model}`, totalTokens);
+    }
+}
+
+function extractUsageFromCandidates(...candidates) {
+    for (const candidate of candidates) {
+        if (!candidate || typeof candidate !== 'object') continue;
+        const totalTokens =
+            candidate.totalTokens ??
+            candidate.total_tokens ??
+            candidate.totalTokenCount ??
+            candidate.total_token_count ??
+            candidate.token_count ??
+            candidate.tokens;
+        const promptTokens =
+            candidate.promptTokens ??
+            candidate.prompt_tokens ??
+            candidate.inputTokens ??
+            candidate.input_tokens ??
+            candidate.promptTokenCount ??
+            candidate.prompt_count;
+        const completionTokens =
+            candidate.completionTokens ??
+            candidate.completion_tokens ??
+            candidate.outputTokens ??
+            candidate.output_tokens ??
+            candidate.candidatesTokenCount ??
+            candidate.completion_count;
+        if ([totalTokens, promptTokens, completionTokens].some(value => Number.isFinite(Number(value)) && Number(value) > 0)) {
+            return { totalTokens, promptTokens, completionTokens };
+        }
+    }
+    return {};
+}
+
+function createKvMonitor(env = {}) {
+    const counts = {
+        totalOperations: 0,
+        byMethod: { total: 0, get: 0, put: 0, delete: 0, list: 0 },
+        byNamespace: {},
+        extraMetrics: {}
+    };
+    let countingEnabled = true;
+    const wrappedEnv = { ...env };
+    for (const [name, namespace] of Object.entries(env || {})) {
+        if (!namespace || typeof namespace !== 'object') continue;
+        let hasKvMethod = false;
+        const wrappedNamespace = { ...namespace };
+        for (const method of ['get', 'put', 'delete', 'list']) {
+            if (typeof namespace[method] !== 'function') continue;
+            hasKvMethod = true;
+            const original = namespace[method].bind(namespace);
+            wrappedNamespace[method] = async (...args) => {
+                if (countingEnabled) {
+                    counts.totalOperations += 1;
+                    counts.byMethod[method] = (counts.byMethod[method] || 0) + 1;
+                    counts.byMethod.total = (counts.byMethod.total || 0) + 1;
+                    const nsMetrics = counts.byNamespace[name] || { total: 0, get: 0, put: 0, delete: 0, list: 0 };
+                    nsMetrics.total += 1;
+                    nsMetrics[method] = (nsMetrics[method] || 0) + 1;
+                    counts.byNamespace[name] = nsMetrics;
+                }
+                return original(...args);
+            };
+        }
+        if (hasKvMethod) {
+            wrappedEnv[name] = wrappedNamespace;
+        }
+    }
+
+    const recordExtraMetricInternal = (key, value) => {
+        if (typeof key === 'string' && typeof value === 'number' && Number.isFinite(value)) {
+            counts.extraMetrics[key] = (counts.extraMetrics[key] || 0) + value;
+        }
+    };
+
+    const metricsBridge = {
+        recordExtraMetric: recordExtraMetricInternal
+    };
+    try {
+        Object.defineProperty(wrappedEnv, '__kvMetrics', {
+            value: metricsBridge,
+            enumerable: false,
+            configurable: true,
+            writable: true
+        });
+    } catch (err) {
+        wrappedEnv.__kvMetrics = metricsBridge;
+    }
+
+    return {
+        env: wrappedEnv,
+        getSnapshot() {
+            return {
+                totalOperations: counts.totalOperations,
+                requests: 1,
+                byMethod: { ...counts.byMethod },
+                byNamespace: cloneNamespaceCounts(counts.byNamespace),
+                extraMetrics: { ...counts.extraMetrics }
+            };
+        },
+        async runWithoutCounting(fn) {
+            const previous = countingEnabled;
+            countingEnabled = false;
+            try {
+                return await fn();
+            } finally {
+                countingEnabled = previous;
+            }
+        },
+        recordExtraMetric: recordExtraMetricInternal
+    };
+}
+
+async function persistKvUsageMetrics(env, handlerLabel, counts, now = new Date(), options = {}) {
+    const { includeZero = false } = options || {};
+    if (!handlerLabel || typeof handlerLabel !== 'string') return;
+    if (!counts || typeof counts !== 'object') return;
+    const totalOps = Number(counts.totalOperations || 0);
+    if (!includeZero && totalOps === 0) return;
+    const kv = env?.USER_METADATA_KV;
+    if (!kv || typeof kv.get !== 'function' || typeof kv.put !== 'function') return;
+
+    const dateStr = getLocalDate(now);
+    const key = `kv_usage_${dateStr}`;
+    let storedStr = null;
+    try {
+        storedStr = await kv.get(key);
+    } catch (err) {
+        console.error(`KV_USAGE_METRICS_READ_FAIL (${handlerLabel}):`, err);
+    }
+    let payload = storedStr ? safeParseJson(storedStr, null) : null;
+    if (!payload || typeof payload !== 'object') {
+        payload = { date: dateStr, handlers: {} };
+    }
+    if (!payload.handlers || typeof payload.handlers !== 'object') {
+        payload.handlers = {};
+    }
+
+    const existing = payload.handlers[handlerLabel] && typeof payload.handlers[handlerLabel] === 'object'
+        ? payload.handlers[handlerLabel]
+        : {
+              handler: handlerLabel,
+              requests: 0,
+              totalOperations: 0,
+              byMethod: { total: 0, get: 0, put: 0, delete: 0, list: 0 },
+              byNamespace: {},
+              extraMetrics: {}
+          };
+
+    existing.requests += Number(counts.requests || 1);
+    existing.totalOperations += totalOps;
+    existing.byMethod = mergeMethodCounts(existing.byMethod, counts.byMethod, totalOps);
+    existing.byNamespace = mergeNamespaceCounts(existing.byNamespace, counts.byNamespace);
+    existing.extraMetrics = mergeExtraMetrics(existing.extraMetrics, counts.extraMetrics);
+    payload.handlers[handlerLabel] = existing;
+    payload.date = payload.date || dateStr;
+    payload.lastUpdated = new Date(now).toISOString();
+
+    try {
+        await kv.put(key, JSON.stringify(payload));
+    } catch (err) {
+        console.error(`KV_USAGE_METRICS_WRITE_FAIL (${handlerLabel}):`, err);
+    }
+}
+// ------------- END BLOCK: kv usage monitor -------------
+
 // ------------- START FUNCTION: resetAiPresetIndexCache -------------
 function resetAiPresetIndexCache() {
     aiPresetIndexCache = null;
@@ -5754,4 +6308,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleKvUsageMetricsRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, createKvMonitor, persistKvUsageMetrics, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache };
