@@ -1,7 +1,5 @@
 // app.js - Основен Файл на Приложението
-import * as config from './config.js';
-const { isLocalDevelopment, apiEndpoints } = config;
-const ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT = 60 * 60000; // 1 час
+import { isLocalDevelopment, apiEndpoints } from './config.js';
 import { debugLog, enableDebug } from './logger.js';
 import { safeParseFloat, escapeHtml, fileToDataURL, normalizeDailyLogs, getLocalDate } from './utils.js';
 import { selectors, initializeSelectors, loadInfoTexts } from './uiElements.js';
@@ -62,7 +60,7 @@ function normalizeText(input) {
     return String(input);
 }
 
-export async function checkAdminQueries(userId) {
+async function checkAdminQueries(userId) {
     try {
         const resp = await fetch(`${apiEndpoints.getAdminQueries}?userId=${userId}`);
         const data = await resp.json();
@@ -149,8 +147,6 @@ export function setChatPromptOverride(val) { chatPromptOverride = val; }
 let planStatusInterval = null;
 let planStatusTimeout = null;
 let adminQueriesInterval = null; // Интервал за проверка на администраторски съобщения
-let adminQueriesIntervalMs = ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT;
-let adminQueriesVisibilityListenerAttached = false;
 let lastSavedDailyLogSerialized = null; // Кеш на последно записания дневен лог
 
 export { activeTooltip, setActiveTooltip };
@@ -637,73 +633,19 @@ export function stopPlanStatusPolling() {
     if (selectors.chatFab) selectors.chatFab.classList.remove('planmod-processing');
 }
 
-function normalizeAdminQueriesIntervalMs(options) {
-    if (typeof options === 'number') {
-        const minutes = Number(options);
-        if (Number.isFinite(minutes) && minutes > 0) {
-            return minutes * 60000;
-        }
-    }
-    if (options && typeof options === 'object') {
-        if (options.intervalMs !== undefined) {
-            const ms = Number(options.intervalMs);
-            if (Number.isFinite(ms) && ms > 0) {
-                return ms;
-            }
-        }
-        if (options.intervalMinutes !== undefined) {
-            const minutes = Number(options.intervalMinutes);
-            if (Number.isFinite(minutes) && minutes > 0) {
-                return minutes * 60000;
-            }
-        }
-    }
-    return ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT;
-}
-
-function restartAdminQueriesInterval() {
+export function startAdminQueriesPolling(intervalMs = 60000) {
     if (adminQueriesInterval) {
         clearInterval(adminQueriesInterval);
-        adminQueriesInterval = null;
-    }
-    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
-        return;
     }
     adminQueriesInterval = setInterval(() => {
-        if (currentUserId) void checkAdminQueries(currentUserId);
-    }, adminQueriesIntervalMs);
-}
-
-function handleAdminQueriesVisibilityChange() {
-    if (typeof document === 'undefined') return;
-    if (document.visibilityState === 'hidden') {
-        if (adminQueriesInterval) {
-            clearInterval(adminQueriesInterval);
-            adminQueriesInterval = null;
-        }
-        return;
-    }
-    restartAdminQueriesInterval();
-    if (currentUserId) void checkAdminQueries(currentUserId);
-}
-
-export function startAdminQueriesPolling(options) {
-    adminQueriesIntervalMs = normalizeAdminQueriesIntervalMs(options);
-    if (typeof document !== 'undefined' && !adminQueriesVisibilityListenerAttached && document.addEventListener) {
-        document.addEventListener('visibilitychange', handleAdminQueriesVisibilityChange);
-        adminQueriesVisibilityListenerAttached = true;
-    }
-    restartAdminQueriesInterval();
+        if (currentUserId) checkAdminQueries(currentUserId);
+    }, intervalMs);
 }
 
 export function stopAdminQueriesPolling() {
     if (adminQueriesInterval) {
         clearInterval(adminQueriesInterval);
         adminQueriesInterval = null;
-    }
-    if (adminQueriesVisibilityListenerAttached && typeof document !== 'undefined' && document.removeEventListener) {
-        document.removeEventListener('visibilitychange', handleAdminQueriesVisibilityChange);
-        adminQueriesVisibilityListenerAttached = false;
     }
 }
 
