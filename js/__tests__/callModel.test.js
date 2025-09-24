@@ -48,6 +48,34 @@ describe('callModel with CF provider', () => {
 
     await expect(callModel(model, 'hi', env)).rejects.toThrow('CF AI error: bad');
   });
+
+  test('записва AI токени при успешен CF отговор', async () => {
+    const metricsEnv = {
+      CF_ACCOUNT_ID: 'acc',
+      CF_AI_TOKEN: 'token',
+      __kvMetrics: { recordExtraMetric: jest.fn() }
+    };
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        result: {
+          response: 'ok',
+          usage: { input_tokens: 10, output_tokens: 20 }
+        }
+      })
+    });
+
+    const res = await callModel(model, 'hi', metricsEnv);
+
+    expect(res).toBe('ok');
+    const recorder = metricsEnv.__kvMetrics.recordExtraMetric;
+    expect(recorder).toHaveBeenCalledWith('AI заявки', 1);
+    expect(recorder).toHaveBeenCalledWith('AI токени - вход', 10);
+    expect(recorder).toHaveBeenCalledWith('AI токени - изход', 20);
+    expect(recorder).toHaveBeenCalledWith('AI токени - общо', 30);
+    expect(recorder).toHaveBeenCalledWith('AI токени - провайдър cloudflare', 30);
+    expect(recorder).toHaveBeenCalledWith(`AI токени - модел ${model}`, 30);
+  });
 });
 
 describe('callModel with command-r-plus model', () => {
@@ -76,5 +104,38 @@ describe('callModel with command-r-plus model', () => {
 
   test('throws if API key missing', async () => {
     await expect(callModel(model, 'hi', {})).rejects.toThrow('Missing command-r-plus API key.');
+  });
+});
+
+describe('AI токен метрики за OpenAI', () => {
+  const env = {
+    OPENAI_API_KEY: 'key',
+    __kvMetrics: { recordExtraMetric: jest.fn() }
+  };
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    env.__kvMetrics.recordExtraMetric.mockReset();
+  });
+
+  test('callModel записва токените от usage полето', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: 'ok' } }],
+        usage: { total_tokens: 100, prompt_tokens: 40, completion_tokens: 60 }
+      })
+    });
+
+    const result = await callModel('gpt-3.5-turbo', 'hi', env);
+
+    expect(result).toBe('ok');
+    const recorder = env.__kvMetrics.recordExtraMetric;
+    expect(recorder).toHaveBeenCalledWith('AI заявки', 1);
+    expect(recorder).toHaveBeenCalledWith('AI токени - общо', 100);
+    expect(recorder).toHaveBeenCalledWith('AI токени - вход', 40);
+    expect(recorder).toHaveBeenCalledWith('AI токени - изход', 60);
+    expect(recorder).toHaveBeenCalledWith('AI токени - провайдър openai', 100);
+    expect(recorder).toHaveBeenCalledWith('AI токени - модел gpt-3.5-turbo', 100);
   });
 });
