@@ -37,18 +37,21 @@ beforeEach(() => {
 });
 
 function setupFetchWithNotifications(clients, now) {
+  const notificationsPayload = clients.map(client => ({
+    userId: client.userId,
+    name: client.name,
+    queries: [{ message: 'q1', ts: Date.now() }],
+    replies: [],
+    feedback: [{ message: 'f1', timestamp: now }],
+    latestFeedbackTs: now
+  }));
+
   global.fetch = jest.fn(url => {
     if (url.includes('listClients')) {
       return Promise.resolve({ ok: true, json: async () => ({ success: true, clients }) });
     }
-    if (url.includes('peekAdminQueries')) {
-      return Promise.resolve({ ok: true, json: async () => ({ success: true, queries: [{ message: 'q1' }] }) });
-    }
-    if (url.includes('peekClientReplies')) {
-      return Promise.resolve({ ok: true, json: async () => ({ success: true, replies: [] }) });
-    }
-    if (url.includes('getFeedbackMessages')) {
-      return Promise.resolve({ ok: true, json: async () => ({ success: true, feedback: [{ message: 'f1', timestamp: now }] }) });
+    if (url.includes('peekAdminNotifications')) {
+      return Promise.resolve({ ok: true, json: async () => ({ success: true, clients: notificationsPayload }) });
     }
     if (url.includes('profileTemplate.html')) {
       return Promise.resolve({
