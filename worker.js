@@ -2687,6 +2687,7 @@ async function handleListClientsRequest(request, env) {
 }
 // ------------- END FUNCTION: handleListClientsRequest -------------
 
+/** @typedef {{ message?: string; timestamp?: string|number; ts?: string|number; rating?: number|null; type?: string; author?: string; date?: string|number; read?: boolean; resolvedTs?: number|null }} NotificationEntry */
 // ------------- START FUNCTION: handlePeekAdminNotificationsRequest -------------
 async function handlePeekAdminNotificationsRequest(request, env) {
     try {
@@ -2708,38 +2709,51 @@ async function handlePeekAdminNotificationsRequest(request, env) {
                 env.USER_METADATA_KV.get(`${userId}_feedback_messages`)
             ]);
 
-            const unreadQueries = safeParseJson(queriesStr, []).filter(q => q && !q.read);
-            const unreadReplies = safeParseJson(repliesStr, []).filter(r => r && !r.read);
+            const parsedQueries = safeParseJson(queriesStr, []);
+            const unreadQueries = (Array.isArray(parsedQueries) ? parsedQueries : [])
+                .filter(item => item && typeof item === 'object' && !item.read)
+                .map(item => /** @type {NotificationEntry} */ (item));
+            const parsedReplies = safeParseJson(repliesStr, []);
+            const unreadReplies = (Array.isArray(parsedReplies) ? parsedReplies : [])
+                .filter(item => item && typeof item === 'object' && !item.read)
+                .map(item => /** @type {NotificationEntry} */ (item));
             const rawFeedback = safeParseJson(feedbackStr, []);
 
             let latestFeedbackTs = null;
 
-            const normalizeEntry = (entry = {}, timestampKey = 'ts') => {
-                if (!entry || typeof entry !== 'object') return null;
-                const normalized = {
-                    message: entry.message || '',
-                    ts: entry[timestampKey] ?? entry.timestamp ?? entry.ts ?? null,
-                    rating: entry.rating ?? null
-                };
-                return normalized;
+            const normalizeEntry = (input, tsKey = 'ts') => {
+                if (!input || typeof input !== 'object') return null;
+                const { message = '', rating = null, timestamp, ts, [tsKey]: keyedTs } = /** @type {NotificationEntry} */ (input);
+                return { message, rating, ts: keyedTs ?? timestamp ?? ts ?? null };
             };
+
+            /**
+             * @param {NotificationEntry | null} entry
+             * @returns {entry is NotificationEntry}
+             */
+            const toEntryWithMessage = (entry) => Boolean(entry?.message);
 
             const queries = unreadQueries
                 .map(q => normalizeEntry(q))
-                .filter(q => q && q.message);
+                .filter(toEntryWithMessage);
             const replies = unreadReplies
                 .map(r => normalizeEntry(r))
-                .filter(r => r && r.message);
+                .filter(toEntryWithMessage);
             const feedback = (Array.isArray(rawFeedback) ? rawFeedback : [])
-                .map(f => {
-                    const entry = normalizeEntry(f, 'timestamp');
+                .map(item => {
+                    const source = /** @type {NotificationEntry} */ (item ?? {});
+                    const entry = normalizeEntry(source, 'timestamp');
                     if (!entry) return null;
-                    if (f.timestamp) entry.timestamp = f.timestamp;
-                    if (f.type) entry.type = f.type;
-                    if (f.author) entry.author = f.author;
-                    const tsValue = f.timestamp || f.ts || f.date || null;
-                    const parsedTsRaw = tsValue ? Date.parse(tsValue) : Number(entry.ts) || null;
-                    const parsedTs = Number.isFinite(parsedTsRaw) ? parsedTsRaw : null;
+                    const { type, author, timestamp, ts, date } = source;
+                    if (timestamp) entry.timestamp = timestamp;
+                    if (type) entry.type = type;
+                    if (author) entry.author = author;
+                    const tsValue = timestamp ?? ts ?? date ?? null;
+                    const parsedTsRaw = typeof tsValue === 'number'
+                        ? tsValue
+                        : (tsValue ? Date.parse(String(tsValue)) : null);
+                    const fallbackTs = typeof entry.ts === 'number' ? entry.ts : Number(entry.ts) || null;
+                    const parsedTs = Number.isFinite(parsedTsRaw) ? parsedTsRaw : fallbackTs;
                     if (!entry.timestamp && tsValue) {
                         entry.timestamp = tsValue;
                     }
