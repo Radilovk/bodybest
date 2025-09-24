@@ -665,6 +665,8 @@ export default {
                 }
             } else if (method === 'GET' && path === '/api/listClients') {
                 responseBody = await handleListClientsRequest(request, env);
+            } else if (method === 'GET' && path === '/api/peekAdminNotifications') {
+                responseBody = await handlePeekAdminNotificationsRequest(request, env);
             } else if (method === 'POST' && path === '/api/deleteClient') {
                 responseBody = await handleDeleteClientRequest(request, env);
             } else if (method === 'POST' && path === '/api/addAdminQuery') {
@@ -2684,6 +2686,119 @@ async function handleListClientsRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleListClientsRequest -------------
+
+// ------------- START FUNCTION: handlePeekAdminNotificationsRequest -------------
+async function handlePeekAdminNotificationsRequest(request, env) {
+    try {
+        const listResponse = await handleListClientsRequest(request, env);
+        if (!listResponse.success) {
+            return listResponse;
+        }
+
+        const clients = Array.isArray(listResponse.clients) ? listResponse.clients : [];
+        const aggregated = [];
+
+        for (const client of clients) {
+            const userId = client?.userId;
+            if (!userId) continue;
+
+            const [queriesStr, repliesStr, feedbackStr] = await Promise.all([
+                env.USER_METADATA_KV.get(`${userId}_admin_queries`),
+                env.USER_METADATA_KV.get(`${userId}_client_replies`),
+                env.USER_METADATA_KV.get(`${userId}_feedback_messages`)
+            ]);
+
+            const unreadQueries = safeParseJson(queriesStr, []).filter(q => q && !q.read);
+            const unreadReplies = safeParseJson(repliesStr, []).filter(r => r && !r.read);
+            const rawFeedback = safeParseJson(feedbackStr, []);
+
+            let latestFeedbackTs = null;
+
+            const normalizeEntry = (entry = {}, timestampKey = 'ts') => {
+                if (!entry || typeof entry !== 'object') return null;
+                const normalized = {
+                    message: entry.message || '',
+                    ts: entry[timestampKey] ?? entry.timestamp ?? entry.ts ?? null,
+                    rating: entry.rating ?? null
+                };
+                return normalized;
+            };
+
+            const queries = unreadQueries
+                .map(q => normalizeEntry(q))
+                .filter(q => q && q.message);
+            const replies = unreadReplies
+                .map(r => normalizeEntry(r))
+                .filter(r => r && r.message);
+            const feedback = (Array.isArray(rawFeedback) ? rawFeedback : [])
+                .map(f => {
+                    const entry = normalizeEntry(f, 'timestamp');
+                    if (!entry) return null;
+                    if (f.timestamp) entry.timestamp = f.timestamp;
+                    if (f.type) entry.type = f.type;
+                    if (f.author) entry.author = f.author;
+                    const tsValue = f.timestamp || f.ts || f.date || null;
+                    const parsedTsRaw = tsValue ? Date.parse(tsValue) : Number(entry.ts) || null;
+                    const parsedTs = Number.isFinite(parsedTsRaw) ? parsedTsRaw : null;
+                    if (!entry.timestamp && tsValue) {
+                        entry.timestamp = tsValue;
+                    }
+                    if (parsedTs && (!latestFeedbackTs || parsedTs > latestFeedbackTs)) {
+                        latestFeedbackTs = parsedTs;
+                    }
+                    entry.resolvedTs = parsedTs;
+                    return entry;
+                })
+                .filter(Boolean);
+
+            if (queries.length === 0 && replies.length === 0 && feedback.length === 0) {
+                continue;
+            }
+
+            const messages = [
+                ...queries.map(q => ({ type: 'query', text: q.message, ts: q.ts ?? null })),
+                ...replies.map(r => ({ type: 'reply', text: r.message, ts: r.ts ?? null })),
+                ...feedback.map(f => {
+                    const primaryTs = typeof f.ts === 'number' && Number.isFinite(f.ts) ? f.ts : null;
+                    const fallbackTs = typeof f.resolvedTs === 'number' && Number.isFinite(f.resolvedTs)
+                        ? f.resolvedTs
+                        : (f.timestamp ? Date.parse(f.timestamp) : null);
+                    const tsValue = primaryTs !== null ? primaryTs : (Number.isFinite(fallbackTs) ? fallbackTs : null);
+                    return { type: 'feedback', text: f.message, ts: tsValue };
+                })
+            ].filter(msg => msg.text);
+
+            const normalizedFeedback = feedback.map(({ resolvedTs, ...rest }) => rest);
+
+            messages.sort((a, b) => {
+                const tsA = typeof a.ts === 'number' ? a.ts : Date.parse(a.ts || '') || 0;
+                const tsB = typeof b.ts === 'number' ? b.ts : Date.parse(b.ts || '') || 0;
+                return tsB - tsA;
+            });
+
+            aggregated.push({
+                userId,
+                name: client.name || userId,
+                flags: {
+                    queries: queries.length > 0,
+                    replies: replies.length > 0,
+                    feedback: feedback.length > 0
+                },
+                latestFeedbackTs: latestFeedbackTs ? new Date(latestFeedbackTs).toISOString() : null,
+                queries,
+                replies,
+                feedback: normalizedFeedback,
+                messages
+            });
+        }
+
+        return { success: true, clients: aggregated };
+    } catch (error) {
+        console.error('Error in handlePeekAdminNotificationsRequest:', error.message, error.stack);
+        return { success: false, message: 'Грешка при агрегиране на известията.', statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handlePeekAdminNotificationsRequest -------------
 
 // ------------- START FUNCTION: handleDeleteClientRequest -------------
 async function handleDeleteClientRequest(request, env) {
@@ -5754,4 +5869,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache };

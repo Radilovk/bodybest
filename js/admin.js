@@ -238,6 +238,20 @@ const notificationsSection = document.getElementById('notificationsSection');
 const notificationDot = document.getElementById('notificationIndicator');
 const queriesDot = document.getElementById('queriesDot');
 const repliesDot = document.getElementById('repliesDot');
+const notificationFetchState = {
+    snapshot: null,
+    inFlight: null,
+    skipNextTick: false
+};
+
+function parseTimestamp(value) {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return value;
+    }
+    if (value == null) return 0;
+    const parsed = Date.parse(typeof value === 'string' ? value : String(value));
+    return Number.isNaN(parsed) ? 0 : parsed;
+}
 const feedbackDot = document.getElementById('feedbackDot');
 const statusChartCanvas = document.getElementById('statusChart');
 const weightChartCanvas = document.getElementById('weightChart');
@@ -315,54 +329,94 @@ function updateSectionDots(userId) {
     toggleDot(feedbackDot, !!flags.feedback);
 }
 
+async function requestNotificationSnapshot(force = false) {
+    if (!force && notificationFetchState.skipNextTick) {
+        notificationFetchState.skipNextTick = false;
+        return null;
+    }
+    if (notificationFetchState.inFlight) {
+        return notificationFetchState.inFlight;
+    }
+    const fetchPromise = (async () => {
+        try {
+            const resp = await fetch(apiEndpoints.peekAdminNotifications);
+            const data = await resp.json();
+            if (!resp.ok || !data.success || !Array.isArray(data.clients)) {
+                throw new Error('Invalid admin notifications payload');
+            }
+            notificationFetchState.snapshot = data.clients;
+            notificationFetchState.skipNextTick = false;
+            return notificationFetchState.snapshot;
+        } catch (error) {
+            notificationFetchState.skipNextTick = true;
+            console.error('Error requesting admin notifications snapshot:', error);
+            return null;
+        } finally {
+            notificationFetchState.inFlight = null;
+        }
+    })();
+    notificationFetchState.inFlight = fetchPromise;
+    return fetchPromise;
+}
+
+async function ensureNotificationSnapshot(options = {}) {
+    const { force = false } = options;
+    if (!force && notificationFetchState.snapshot && !notificationFetchState.inFlight) {
+        return notificationFetchState.snapshot;
+    }
+    const result = await requestNotificationSnapshot(force);
+    if (result) {
+        return result;
+    }
+    return notificationFetchState.snapshot;
+}
+
 async function checkForNotifications() {
     if (!notificationDot) return;
     try {
-        const resp = await fetch(apiEndpoints.listClients);
-        const data = await resp.json();
-        if (!resp.ok || !data.success) return;
+        const snapshot = await requestNotificationSnapshot();
+        const clients = Array.isArray(snapshot)
+            ? snapshot
+            : (Array.isArray(notificationFetchState.snapshot) ? notificationFetchState.snapshot : null);
+        if (!Array.isArray(clients)) return;
 
-        const clients = Array.isArray(data.clients) ? data.clients : [];
+        unreadClients.clear();
+        unreadByClient.clear();
+
         let hasNew = false;
         const storedTs = Number(localStorage.getItem('lastFeedbackTs')) || 0;
         let latestTs = storedTs;
 
-    unreadClients.clear();
-    unreadByClient.clear();
+        for (const client of clients) {
+            if (!client || !client.userId) continue;
+            const queries = Array.isArray(client.queries) ? client.queries : [];
+            const replies = Array.isArray(client.replies) ? client.replies : [];
+            const feedback = Array.isArray(client.feedback) ? client.feedback : [];
+            const flags = { queries: queries.length > 0, replies: replies.length > 0, feedback: false };
+            let userHasNew = flags.queries || flags.replies;
 
-        for (const c of clients) {
-            let userHasNew = false;
-            const flags = { queries: false, replies: false, feedback: false };
-            const [qResp, rResp, fResp] = await Promise.all([
-                fetch(`${apiEndpoints.peekAdminQueries}?userId=${c.userId}`),
-                fetch(`${apiEndpoints.peekClientReplies}?userId=${c.userId}`),
-                fetch(`${apiEndpoints.getFeedbackMessages}?userId=${c.userId}`)
-            ]);
-            const qData = await qResp.json().catch(() => ({}));
-            const rData = await rResp.json().catch(() => ({}));
-            const fData = await fResp.json().catch(() => ({}));
-
-            if (qResp.ok && qData.success && Array.isArray(qData.queries) && qData.queries.length > 0) {
-                userHasNew = true;
-                flags.queries = true;
-            }
-            if (rResp.ok && rData.success && Array.isArray(rData.replies) && rData.replies.length > 0) {
-                userHasNew = true;
-                flags.replies = true;
-            }
-            if (fResp.ok && fData.success && Array.isArray(fData.feedback)) {
-                for (const f of fData.feedback) {
-                    const ts = Date.parse(f.timestamp);
-                    if (ts && ts > storedTs) {
-                        userHasNew = true;
-                        flags.feedback = true;
-                        if (ts > latestTs) latestTs = ts;
-                    }
+            for (const fb of feedback) {
+                if (!fb) continue;
+                const ts = parseTimestamp(fb.timestamp ?? fb.ts);
+                if (ts > storedTs) {
+                    flags.feedback = true;
+                    userHasNew = true;
+                    if (ts > latestTs) latestTs = ts;
                 }
             }
+
+            if (!flags.feedback && client.latestFeedbackTs) {
+                const ts = parseTimestamp(client.latestFeedbackTs);
+                if (ts > storedTs) {
+                    flags.feedback = true;
+                    userHasNew = true;
+                    if (ts > latestTs) latestTs = ts;
+                }
+            }
+
             if (userHasNew) {
-                unreadClients.add(c.userId);
-                unreadByClient.set(c.userId, flags);
+                unreadClients.add(client.userId);
+                unreadByClient.set(client.userId, flags);
                 hasNew = true;
             }
         }
@@ -931,58 +985,76 @@ function openDetailsSections() {
     });
 }
 
-async function loadNotifications() {
+async function loadNotifications(options = {}) {
     if (!notificationsList || !notificationsSection) return;
     notificationsList.innerHTML = '';
     try {
-        const resp = await fetch(apiEndpoints.listClients);
-        const data = await resp.json();
-        if (!resp.ok || !data.success) return;
         const storedTs = Number(localStorage.getItem('lastFeedbackTs')) || 0;
-        const items = [];
-        const clients = Array.isArray(data.clients) ? data.clients : [];
-        for (const c of clients) {
-            const [qResp, rResp, fResp] = await Promise.all([
-                fetch(`${apiEndpoints.peekAdminQueries}?userId=${c.userId}`),
-                fetch(`${apiEndpoints.peekClientReplies}?userId=${c.userId}`),
-                fetch(`${apiEndpoints.getFeedbackMessages}?userId=${c.userId}`)
-            ]);
-            const qData = await qResp.json().catch(() => ({}));
-            const rData = await rResp.json().catch(() => ({}));
-            const fData = await fResp.json().catch(() => ({}));
-            if (qResp.ok && qData.success) {
-                (qData.queries || []).forEach(q => {
-                    items.push({ userId: c.userId, name: c.name, text: q.message });
-                });
-            }
-            if (rResp.ok && rData.success) {
-                (rData.replies || []).forEach(r => {
-                    items.push({ userId: c.userId, name: c.name, text: r.message });
-                });
-            }
-            if (fResp.ok && fData.success) {
-                (fData.feedback || []).forEach(f => {
-                    const ts = Date.parse(f.timestamp);
-                    if (!ts || ts > storedTs) {
-                        items.push({ userId: c.userId, name: c.name, text: f.message });
-                    }
-                });
-            }
+        const snapshot = await ensureNotificationSnapshot(options);
+        const clients = Array.isArray(snapshot)
+            ? snapshot
+            : (Array.isArray(notificationFetchState.snapshot) ? notificationFetchState.snapshot : []);
+
+        if (!Array.isArray(clients)) {
+            const li = document.createElement('li');
+            li.textContent = 'Известията не могат да се заредят в момента.';
+            notificationsList.appendChild(li);
+            notificationsSection.classList.remove('hidden');
+            return;
         }
+
+        const items = [];
+        for (const client of clients) {
+            if (!client || !client.userId) continue;
+            const name = client.name || client.userId;
+            const queries = Array.isArray(client.queries) ? client.queries : [];
+            const replies = Array.isArray(client.replies) ? client.replies : [];
+            const feedback = Array.isArray(client.feedback) ? client.feedback : [];
+
+            queries.forEach(q => {
+                if (!q || !q.message) return;
+                const ts = parseTimestamp(q.ts ?? q.timestamp);
+                items.push({ userId: client.userId, name, text: q.message, ts });
+            });
+
+            replies.forEach(r => {
+                if (!r || !r.message) return;
+                const ts = parseTimestamp(r.ts ?? r.timestamp);
+                items.push({ userId: client.userId, name, text: r.message, ts });
+            });
+
+            feedback.forEach(fb => {
+                if (!fb || !fb.message) return;
+                const ts = parseTimestamp(fb.timestamp ?? fb.ts);
+                if (ts === 0 || ts > storedTs) {
+                    items.push({ userId: client.userId, name, text: fb.message, ts });
+                }
+            });
+        }
+
+        items.sort((a, b) => b.ts - a.ts);
+
+        if (items.length === 0) {
+            const li = document.createElement('li');
+            li.textContent = 'Няма нови известия.';
+            notificationsList.appendChild(li);
+            notificationsSection.classList.add('hidden');
+            return;
+        }
+
         items.forEach(it => {
             const li = document.createElement('li');
             li.textContent = `${it.name || it.userId}: ${it.text}`;
             li.addEventListener('click', () => showClient(it.userId));
             notificationsList.appendChild(li);
         });
-        if (items.length === 0) {
-            const li = document.createElement('li');
-            li.textContent = 'Няма нови известия.';
-            notificationsList.appendChild(li);
-        }
-        notificationsSection.classList.toggle('hidden', items.length === 0);
+        notificationsSection.classList.remove('hidden');
     } catch (err) {
         console.error('Error loading notifications:', err);
+        const li = document.createElement('li');
+        li.textContent = 'Известията не могат да се заредят в момента.';
+        notificationsList.appendChild(li);
+        notificationsSection.classList.remove('hidden');
     }
 }
 
@@ -1190,7 +1262,7 @@ async function showClient(userId) {
         console.error('Error loading profile:', err);
         alert('Грешка при зареждане на данните за клиента');
     }
-    await loadNotifications();
+    await loadNotifications({ force: true });
     updateSectionDots(userId);
 }
 
@@ -1401,7 +1473,6 @@ async function loadQueries(markRead = false) {
                 li.textContent = q.message;
                 queriesList?.appendChild(li);
             });
-            await checkForNotifications();
         }
     } catch (err) {
         console.error('Error loading queries:', err);
@@ -1427,7 +1498,6 @@ async function loadFeedback() {
                 if (ts && ts > latestTs) latestTs = ts;
             });
             localStorage.setItem('lastFeedbackTs', String(latestTs));
-            await checkForNotifications();
         }
     } catch (err) {
         console.error('Error loading feedback:', err);
@@ -1449,7 +1519,6 @@ async function loadClientReplies(markRead = false) {
                 li.textContent = `${date}: ${r.message}`;
                 clientRepliesList?.appendChild(li);
             });
-            await checkForNotifications();
         }
     } catch (err) {
         console.error('Error loading client replies:', err);
@@ -1987,8 +2056,9 @@ document.addEventListener('DOMContentLoaded', () => {
             emailSettingsForm ? loadEmailSettings() : Promise.resolve(),
             testEmailSection?.open ? loadTestEmailTemplate() : Promise.resolve()
         ]);
-        setInterval(checkForNotifications, 60000);
-        setInterval(loadNotifications, 60000);
+        const hourInMs = 60 * 60 * 1000;
+        setInterval(checkForNotifications, hourInMs);
+        setInterval(() => loadNotifications(), hourInMs);
     })();
 });
 
