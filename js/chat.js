@@ -1,7 +1,7 @@
 
 // chat.js - Логика за Чат
 import { selectors } from './uiElements.js';
-import { chatHistory, currentUserId, handleChatImageUpload } from './app.js'; // Access chatHistory and userId
+import { chatHistory, currentUserId, handleChatImageUpload, checkAdminQueries } from './app.js'; // Access chatHistory and userId
 import { apiEndpoints, initialBotMessage } from './config.js';
 import { escapeHtml } from './utils.js';
 
@@ -32,6 +32,9 @@ export function toggleChatWidget(skipInit = false) {
                  chatHistory.forEach(msg => displayMessage(msg.text, msg.sender, msg.isError));
             }
             scrollToChatBottom();
+        }
+        if (currentUserId) {
+            void checkAdminQueries(currentUserId);
         }
     }
 }
