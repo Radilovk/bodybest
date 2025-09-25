@@ -139,14 +139,16 @@ export async function checkAdminQueries(userId) {
     if (lastFetchTs && (now - lastFetchTs) < interval) {
         return;
     }
+    const endpoint = apiEndpoints.peekAdminQueries;
+    if (!endpoint) {
+        debugLog('Пропускам проверката за администраторски запитвания: липсва apiEndpoints.peekAdminQueries.');
+        return;
+    }
+
     lastAdminQueriesFetchTs = now;
     lastAdminQueriesFetchUserId = userId;
     persistAdminQueryFetchTs(userId, now);
     try {
-        const endpoint = apiEndpoints.peekAdminQueries || apiEndpoints.getAdminQueries;
-        if (!endpoint) {
-            return;
-        }
         const resp = await fetch(`${endpoint}?userId=${userId}`);
         const data = await resp.json();
         if (resp.ok && data.success && Array.isArray(data.queries) && data.queries.length > 0) {
