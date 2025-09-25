@@ -6,6 +6,7 @@ const MINUTES_IN_DAY = 24 * 60;
 const MILLISECONDS_IN_MINUTE = 60 * 1000;
 const ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT = MINUTES_IN_DAY * MILLISECONDS_IN_MINUTE; // 24 часа
 const ADMIN_QUERY_MINIMUM_INTERVAL_MS = ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT;
+const ADMIN_QUERIES_POLLING_ENABLED = false; // Временно спираме заявки към getAdminQueries
 const ADMIN_QUERY_LAST_FETCH_STORAGE_KEY = 'lastAdminQueriesFetchTs';
 const ADMIN_QUERY_LAST_FETCH_SESSION_KEY = 'lastAdminQueriesFetchTsSession';
 const lastAdminQueriesFetchMemory = new Map();
@@ -127,7 +128,7 @@ function persistAdminQueryFetchTs(userId, value) {
 }
 
 export async function checkAdminQueries(userId) {
-    if (!userId) return;
+    if (!userId || !ADMIN_QUERIES_POLLING_ENABLED) return;
     const now = Date.now();
     const interval = Math.max(adminQueriesIntervalMs, ADMIN_QUERY_MINIMUM_INTERVAL_MS);
     if (userId !== lastAdminQueriesFetchUserId) {
