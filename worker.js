@@ -2687,7 +2687,7 @@ async function handleListClientsRequest(request, env) {
 }
 // ------------- END FUNCTION: handleListClientsRequest -------------
 
-/** @typedef {{ message?: string; timestamp?: string|number; ts?: string|number; rating?: number|null; type?: string; author?: string; date?: string|number; read?: boolean; resolvedTs?: number|null; [key: string]: unknown }} NotificationEntry */
+/** @typedef {{ message?: string; timestamp?: string|number; ts?: string|number; rating?: number|null; type?: string; author?: string; date?: string|number; read?: boolean; resolvedTs?: number|null }} NotificationEntry */
 // ------------- START FUNCTION: handlePeekAdminNotificationsRequest -------------
 async function handlePeekAdminNotificationsRequest(request, env) {
     try {
