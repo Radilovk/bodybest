@@ -1459,10 +1459,11 @@ if (profileForm) {
     });
 }
 
-async function loadQueries(markRead = false) {
+async function loadQueries(_markRead = false) {
     if (!currentUserId) return;
     try {
-        const endpoint = markRead ? apiEndpoints.getAdminQueries : apiEndpoints.peekAdminQueries;
+        const endpoint = apiEndpoints.peekAdminQueries;
+        if (!endpoint) return;
         const resp = await fetch(`${endpoint}?userId=${currentUserId}`);
         const data = await resp.json();
         if (queriesList) queriesList.innerHTML = '';
