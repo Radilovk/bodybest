@@ -79,7 +79,7 @@ describe('admin query polling behaviour', () => {
     expect(intervalValue).toBe(24 * 60 * 60000);
   });
 
-  test('спира, когато разделът е скрит, и възобновява с незабавна проверка', async () => {
+  test('спира таймера, когато разделът е скрит, без да изпраща заявки', async () => {
     const timeoutSpy = jest.spyOn(global, 'setTimeout');
     const clearSpy = jest.spyOn(global, 'clearTimeout');
     startAdminQueriesPolling({ intervalMinutes: 60 });
@@ -93,29 +93,28 @@ describe('admin query polling behaviour', () => {
     setVisibility('visible');
     expect(timeoutSpy).toHaveBeenCalledTimes(1);
     await Promise.resolve();
-    expect(global.fetch).toHaveBeenCalled();
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  test('отварянето на чата прави незабавна проверка', async () => {
+  test('отварянето на чата не изпраща заявка, когато polling е изключен', async () => {
     global.fetch.mockClear();
     selectors.chatWidget.classList.remove('visible');
     toggleChatWidget();
     await Promise.resolve();
-    expect(global.fetch).toHaveBeenCalled();
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  test('не изпраща повторна заявка преди да изтече интервалът (24 часа)', async () => {
+  test('polling не изпраща заявки към бекенда', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2025-01-01T00:00:00Z'));
     await checkAdminQueries('test-user');
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).not.toHaveBeenCalled();
 
-    global.fetch.mockClear();
     await checkAdminQueries('test-user');
     expect(global.fetch).not.toHaveBeenCalled();
 
     jest.setSystemTime(new Date('2025-01-02T00:01:00Z'));
     await checkAdminQueries('test-user');
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).not.toHaveBeenCalled();
     jest.useRealTimers();
   });
 });

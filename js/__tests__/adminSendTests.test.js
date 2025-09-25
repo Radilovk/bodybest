@@ -21,7 +21,8 @@ describe('sendTestEmail and admin query', () => {
     jest.unstable_mockModule('../config.js', () => ({
       apiEndpoints: {
         sendTestEmail: '/api/sendTestEmail',
-        addAdminQuery: '/api/addAdminQuery'
+        addAdminQuery: '/api/addAdminQuery',
+        peekAdminQueries: '/api/peekAdminQueries'
       }
     }));
     mod = await import('../admin.js');
@@ -116,6 +117,7 @@ describe('sendTestEmail and admin query', () => {
       body: JSON.stringify({ userId: 'u123', message: 'Hi there' })
     }));
     expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(global.fetch).toHaveBeenNthCalledWith(2, '/api/peekAdminQueries?userId=u123');
     expect(document.getElementById('newQueryText').value).toBe('');
     expect(result).toBe(true);
   });
