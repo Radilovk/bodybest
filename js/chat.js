@@ -34,7 +34,7 @@ export function toggleChatWidget(skipInit = false) {
             scrollToChatBottom();
         }
         if (currentUserId) {
-            void checkAdminQueries(currentUserId, { force: true });
+            void checkAdminQueries(currentUserId);
         }
     }
 }
