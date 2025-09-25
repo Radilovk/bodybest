@@ -143,7 +143,11 @@ export async function checkAdminQueries(userId) {
     lastAdminQueriesFetchUserId = userId;
     persistAdminQueryFetchTs(userId, now);
     try {
-        const resp = await fetch(`${apiEndpoints.getAdminQueries}?userId=${userId}`);
+        const endpoint = apiEndpoints.peekAdminQueries || apiEndpoints.getAdminQueries;
+        if (!endpoint) {
+            return;
+        }
+        const resp = await fetch(`${endpoint}?userId=${userId}`);
         const data = await resp.json();
         if (resp.ok && data.success && Array.isArray(data.queries) && data.queries.length > 0) {
             data.queries.forEach(q => {
