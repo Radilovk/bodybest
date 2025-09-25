@@ -42,7 +42,6 @@ export const apiEndpoints = {
     addAdminQuery: `${workerBaseUrl}/api/addAdminQuery`,
     getAdminQueries: `${workerBaseUrl}/api/getAdminQueries`,
     peekAdminQueries: `${workerBaseUrl}/api/peekAdminQueries`,
-    markAdminQueriesRead: `${workerBaseUrl}/api/markAdminQueriesRead`,
     addClientReply: `${workerBaseUrl}/api/addClientReply`,
     getClientReplies: `${workerBaseUrl}/api/getClientReplies`,
     peekClientReplies: `${workerBaseUrl}/api/peekClientReplies`,
