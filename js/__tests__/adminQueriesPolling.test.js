@@ -60,12 +60,12 @@ describe('admin query polling behaviour', () => {
     global.fetch = originalFetch;
   });
 
-  test('по подразбиране проверява веднъж на час', () => {
+  test('по подразбиране проверява веднъж на 24 часа', () => {
     const intervalSpy = jest.spyOn(global, 'setInterval');
     startAdminQueriesPolling();
     expect(intervalSpy).toHaveBeenCalledTimes(1);
     const intervalValue = intervalSpy.mock.calls[0][1];
-    expect(intervalValue).toBe(60 * 60000);
+    expect(intervalValue).toBe(24 * 60 * 60000);
   });
 
   test('спира, когато разделът е скрит, и възобновява с незабавна проверка', async () => {
@@ -102,7 +102,7 @@ describe('admin query polling behaviour', () => {
     await checkAdminQueries('test-user');
     expect(global.fetch).not.toHaveBeenCalled();
 
-    jest.setSystemTime(new Date('2025-01-01T01:01:00Z'));
+    jest.setSystemTime(new Date('2025-01-02T00:01:00Z'));
     await checkAdminQueries('test-user');
     expect(global.fetch).toHaveBeenCalledTimes(1);
     jest.useRealTimers();

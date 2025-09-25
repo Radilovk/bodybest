@@ -1,7 +1,7 @@
 // app.js - Основен Файл на Приложението
 import * as config from './config.js';
 const { isLocalDevelopment, apiEndpoints } = config;
-const ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT = 60 * 60000; // 1 час
+const ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT = 24 * 60 * 60000; // 24 часа
 import { debugLog, enableDebug } from './logger.js';
 import { safeParseFloat, escapeHtml, fileToDataURL, normalizeDailyLogs, getLocalDate } from './utils.js';
 import { selectors, initializeSelectors, loadInfoTexts } from './uiElements.js';
