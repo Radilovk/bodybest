@@ -1474,6 +1474,21 @@ async function loadQueries(_markRead = false) {
                 li.textContent = q.message;
                 queriesList?.appendChild(li);
             });
+            if (_markRead && apiEndpoints.markAdminQueriesRead) {
+                try {
+                    const markResp = await fetch(apiEndpoints.markAdminQueriesRead, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: currentUserId })
+                    });
+                    const markData = await markResp.json().catch(() => ({}));
+                    if (!markResp.ok || !markData.success) {
+                        console.error('Error marking queries as read:', markData.message || markResp.statusText);
+                    }
+                } catch (markErr) {
+                    console.error('Error marking queries as read:', markErr);
+                }
+            }
         }
     } catch (err) {
         console.error('Error loading queries:', err);
