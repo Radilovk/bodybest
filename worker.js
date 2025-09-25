@@ -2845,7 +2845,8 @@ async function handleDeleteClientRequest(request, env) {
             env.USER_METADATA_KV.delete(`${userId}_profile`),
             env.USER_METADATA_KV.delete(`${userId}_initial_answers`),
             env.USER_METADATA_KV.delete(`plan_status_${userId}`),
-            env.USER_METADATA_KV.delete(`${userId}_current_status`)
+            env.USER_METADATA_KV.delete(`${userId}_current_status`),
+            env.USER_METADATA_KV.delete(`${userId}${ADMIN_QUERIES_LAST_FETCH_SUFFIX}`)
         ]);
 
         return { success: true };
@@ -2873,6 +2874,9 @@ async function handleAddAdminQueryRequest(request, env) {
 }
 // ------------- END FUNCTION: handleAddAdminQueryRequest -------------
 
+const ADMIN_QUERIES_MIN_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const ADMIN_QUERIES_LAST_FETCH_SUFFIX = '_admin_queries_last_fetch';
+
 // ------------- START FUNCTION: handleGetAdminQueriesRequest -------------
 async function handleGetAdminQueriesRequest(request, env, peek = false) {
     try {
@@ -2881,10 +2885,36 @@ async function handleGetAdminQueriesRequest(request, env, peek = false) {
         if (!userId) return { success: false, message: 'Липсва userId.', statusHint: 400 };
         const key = `${userId}_admin_queries`;
         const arr = safeParseJson(await env.USER_METADATA_KV.get(key), []);
+        const now = Date.now();
+        let lastFetchTs = 0;
+        if (!peek) {
+            const lastFetchRaw = await env.USER_METADATA_KV.get(`${userId}${ADMIN_QUERIES_LAST_FETCH_SUFFIX}`);
+            const parsed = Number(lastFetchRaw);
+            if (Number.isFinite(parsed) && parsed > 0) {
+                lastFetchTs = parsed;
+            }
+        }
         const unread = arr.filter(q => !q.read);
+        if (!peek && lastFetchTs > 0) {
+            const hasNewSinceLast = unread.some(entry => {
+                const ts = typeof entry?.ts === 'number' ? entry.ts : Number(entry?.ts) || 0;
+                return ts > lastFetchTs;
+            });
+            if (!hasNewSinceLast && (now - lastFetchTs) < ADMIN_QUERIES_MIN_INTERVAL_MS) {
+                return {
+                    success: true,
+                    queries: [],
+                    throttled: true,
+                    nextAllowedTs: lastFetchTs + ADMIN_QUERIES_MIN_INTERVAL_MS
+                };
+            }
+        }
         if (unread.length > 0 && !peek) {
             arr.forEach(q => { q.read = true; });
             await env.USER_METADATA_KV.put(key, JSON.stringify(arr));
+        }
+        if (!peek) {
+            await env.USER_METADATA_KV.put(`${userId}${ADMIN_QUERIES_LAST_FETCH_SUFFIX}`, String(now));
         }
         return { success: true, queries: unread };
     } catch (error) {

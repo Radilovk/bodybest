@@ -25,6 +25,9 @@ function setVisibility(state) {
 describe('admin query polling behaviour', () => {
   beforeEach(() => {
     localStorage.clear();
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.clear) {
+      sessionStorage.clear();
+    }
     visibilityState = 'visible';
     selectors.chatMessages = document.createElement('div');
     selectors.chatWidget = document.createElement('div');
@@ -60,35 +63,35 @@ describe('admin query polling behaviour', () => {
     global.fetch = originalFetch;
   });
 
-  test('по подразбиране проверява веднъж на 24 часа', () => {
-    const intervalSpy = jest.spyOn(global, 'setInterval');
+  test('по подразбиране планира проверка веднъж на 24 часа', () => {
+    const timeoutSpy = jest.spyOn(global, 'setTimeout');
     startAdminQueriesPolling();
-    expect(intervalSpy).toHaveBeenCalledTimes(1);
-    const intervalValue = intervalSpy.mock.calls[0][1];
+    expect(timeoutSpy).toHaveBeenCalledTimes(1);
+    const intervalValue = timeoutSpy.mock.calls[0][1];
     expect(intervalValue).toBe(24 * 60 * 60000);
   });
 
   test('не позволява интервал под 24 часа', () => {
-    const intervalSpy = jest.spyOn(global, 'setInterval');
+    const timeoutSpy = jest.spyOn(global, 'setTimeout');
     startAdminQueriesPolling({ intervalMinutes: 0.5 });
-    expect(intervalSpy).toHaveBeenCalledTimes(1);
-    const intervalValue = intervalSpy.mock.calls[0][1];
+    expect(timeoutSpy).toHaveBeenCalledTimes(1);
+    const intervalValue = timeoutSpy.mock.calls[0][1];
     expect(intervalValue).toBe(24 * 60 * 60000);
   });
 
   test('спира, когато разделът е скрит, и възобновява с незабавна проверка', async () => {
-    const intervalSpy = jest.spyOn(global, 'setInterval');
-    const clearSpy = jest.spyOn(global, 'clearInterval');
+    const timeoutSpy = jest.spyOn(global, 'setTimeout');
+    const clearSpy = jest.spyOn(global, 'clearTimeout');
     startAdminQueriesPolling({ intervalMinutes: 60 });
-    expect(intervalSpy).toHaveBeenCalledTimes(1);
+    expect(timeoutSpy).toHaveBeenCalledTimes(1);
 
     setVisibility('hidden');
     expect(clearSpy).toHaveBeenCalled();
 
-    intervalSpy.mockClear();
+    timeoutSpy.mockClear();
     global.fetch.mockClear();
     setVisibility('visible');
-    expect(intervalSpy).toHaveBeenCalledTimes(1);
+    expect(timeoutSpy).toHaveBeenCalledTimes(1);
     await Promise.resolve();
     expect(global.fetch).toHaveBeenCalled();
   });

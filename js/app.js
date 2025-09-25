@@ -7,6 +7,8 @@ const MILLISECONDS_IN_MINUTE = 60 * 1000;
 const ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT = MINUTES_IN_DAY * MILLISECONDS_IN_MINUTE; // 24 часа
 const ADMIN_QUERY_MINIMUM_INTERVAL_MS = ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT;
 const ADMIN_QUERY_LAST_FETCH_STORAGE_KEY = 'lastAdminQueriesFetchTs';
+const ADMIN_QUERY_LAST_FETCH_SESSION_KEY = 'lastAdminQueriesFetchTsSession';
+const lastAdminQueriesFetchMemory = new Map();
 
 import { debugLog, enableDebug } from './logger.js';
 import { safeParseFloat, escapeHtml, fileToDataURL, normalizeDailyLogs, getLocalDate } from './utils.js';
@@ -68,27 +70,60 @@ function normalizeText(input) {
     return String(input);
 }
 
+function tryGetStorageItem(storage, key) {
+    if (!storage) return null;
+    try {
+        return storage.getItem(key);
+    } catch {
+        return null;
+    }
+}
+
+function trySetStorageItem(storage, key, value) {
+    if (!storage) return false;
+    try {
+        storage.setItem(key, value);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 function getPersistedAdminQueryFetchTs(userId) {
     if (!userId) return 0;
-    try {
-        if (typeof localStorage === 'undefined') return 0;
-        const stored = localStorage.getItem(`${ADMIN_QUERY_LAST_FETCH_STORAGE_KEY}:${userId}`);
-        if (!stored) return 0;
-        const parsed = Number(stored);
-        return Number.isFinite(parsed) ? parsed : 0;
-    } catch {
-        return 0;
+    const storageKey = `${ADMIN_QUERY_LAST_FETCH_STORAGE_KEY}:${userId}`;
+    const sessionKey = `${ADMIN_QUERY_LAST_FETCH_SESSION_KEY}:${userId}`;
+    const candidates = [];
+    if (typeof localStorage !== 'undefined') {
+        candidates.push({ storage: localStorage, key: storageKey });
     }
+    if (typeof sessionStorage !== 'undefined') {
+        candidates.push({ storage: sessionStorage, key: sessionKey });
+    }
+    for (const { storage, key } of candidates) {
+        const stored = tryGetStorageItem(storage, key);
+        if (!stored) continue;
+        const parsed = Number(stored);
+        if (Number.isFinite(parsed) && parsed > 0) {
+            return parsed;
+        }
+    }
+    const memoryFallback = lastAdminQueriesFetchMemory.get(userId);
+    return Number.isFinite(memoryFallback) ? Number(memoryFallback) : 0;
 }
 
 function persistAdminQueryFetchTs(userId, value) {
     if (!userId) return;
-    try {
-        if (typeof localStorage === 'undefined') return;
-        localStorage.setItem(`${ADMIN_QUERY_LAST_FETCH_STORAGE_KEY}:${userId}`, String(value));
-    } catch {
-        // Игнорираме липсата на localStorage (напр. тестова среда без достъп)
+    const normalized = String(value);
+    const storageKey = `${ADMIN_QUERY_LAST_FETCH_STORAGE_KEY}:${userId}`;
+    const sessionKey = `${ADMIN_QUERY_LAST_FETCH_SESSION_KEY}:${userId}`;
+    if (typeof localStorage !== 'undefined') {
+        trySetStorageItem(localStorage, storageKey, normalized);
     }
+    if (typeof sessionStorage !== 'undefined') {
+        trySetStorageItem(sessionStorage, sessionKey, normalized);
+    }
+    lastAdminQueriesFetchMemory.set(userId, Number(value));
 }
 
 export async function checkAdminQueries(userId) {
@@ -191,7 +226,7 @@ export function setChatPromptOverride(val) { chatPromptOverride = val; }
 // Управление на интервал за проверка на статус на плана
 let planStatusInterval = null;
 let planStatusTimeout = null;
-let adminQueriesInterval = null; // Интервал за проверка на администраторски съобщения
+let adminQueriesTimerId = null; // Таймер за проверка на администраторски съобщения
 let adminQueriesIntervalMs = ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT;
 let adminQueriesVisibilityListenerAttached = false;
 let lastAdminQueriesFetchTs = 0;
@@ -711,29 +746,43 @@ function normalizeAdminQueriesIntervalMs(options) {
     return ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT;
 }
 
-function restartAdminQueriesInterval() {
-    if (adminQueriesInterval) {
-        clearInterval(adminQueriesInterval);
-        adminQueriesInterval = null;
+function clearAdminQueriesTimer() {
+    if (adminQueriesTimerId) {
+        clearTimeout(adminQueriesTimerId);
+        adminQueriesTimerId = null;
     }
+}
+
+function getNextAdminQueryDelay() {
+    const effectiveInterval = Math.max(adminQueriesIntervalMs, ADMIN_QUERY_MINIMUM_INTERVAL_MS);
+    const userId = lastAdminQueriesFetchUserId || currentUserId;
+    if (!userId) return effectiveInterval;
+    const lastPersisted = getPersistedAdminQueryFetchTs(userId);
+    if (lastPersisted <= 0) return effectiveInterval;
+    const elapsed = Date.now() - lastPersisted;
+    if (elapsed >= effectiveInterval) return 0;
+    return effectiveInterval - elapsed;
+}
+
+function scheduleAdminQueriesTimer(forceImmediate = false) {
+    clearAdminQueriesTimer();
     if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
         return;
     }
-    adminQueriesInterval = setInterval(() => {
-        if (currentUserId) void checkAdminQueries(currentUserId);
-    }, adminQueriesIntervalMs);
+    const delay = forceImmediate ? 0 : getNextAdminQueryDelay();
+    adminQueriesTimerId = setTimeout(async () => {
+        if (currentUserId) await checkAdminQueries(currentUserId);
+        scheduleAdminQueriesTimer(false);
+    }, delay);
 }
 
 function handleAdminQueriesVisibilityChange() {
     if (typeof document === 'undefined') return;
     if (document.visibilityState === 'hidden') {
-        if (adminQueriesInterval) {
-            clearInterval(adminQueriesInterval);
-            adminQueriesInterval = null;
-        }
+        clearAdminQueriesTimer();
         return;
     }
-    restartAdminQueriesInterval();
+    scheduleAdminQueriesTimer(false);
     if (currentUserId) void checkAdminQueries(currentUserId);
 }
 
@@ -748,15 +797,13 @@ export function startAdminQueriesPolling(options) {
         document.addEventListener('visibilitychange', handleAdminQueriesVisibilityChange);
         adminQueriesVisibilityListenerAttached = true;
     }
-    restartAdminQueriesInterval();
+    scheduleAdminQueriesTimer(false);
 }
 
 export function stopAdminQueriesPolling() {
-    if (adminQueriesInterval) {
-        clearInterval(adminQueriesInterval);
-        adminQueriesInterval = null;
-    }
+    clearAdminQueriesTimer();
     lastAdminQueriesFetchTs = 0;
+    lastAdminQueriesFetchMemory.clear();
     lastAdminQueriesFetchUserId = null;
     if (adminQueriesVisibilityListenerAttached && typeof document !== 'undefined' && document.removeEventListener) {
         document.removeEventListener('visibilitychange', handleAdminQueriesVisibilityChange);
