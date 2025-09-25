@@ -22,8 +22,7 @@ describe('sendTestEmail and admin query', () => {
       apiEndpoints: {
         sendTestEmail: '/api/sendTestEmail',
         addAdminQuery: '/api/addAdminQuery',
-        peekAdminQueries: '/api/peekAdminQueries',
-        markAdminQueriesRead: '/api/markAdminQueriesRead'
+        peekAdminQueries: '/api/peekAdminQueries'
       }
     }));
     mod = await import('../admin.js');
@@ -121,29 +120,6 @@ describe('sendTestEmail and admin query', () => {
     expect(global.fetch).toHaveBeenNthCalledWith(2, '/api/peekAdminQueries?userId=u123');
     expect(document.getElementById('newQueryText').value).toBe('');
     expect(result).toBe(true);
-  });
-
-  test('loadQueries marks entries as read when requested', async () => {
-    mod.setCurrentUserId('u123');
-    const queriesResponse = {
-      ok: true,
-      json: async () => ({ success: true, queries: [{ message: 'One', ts: Date.now() }] })
-    };
-    const markResponse = {
-      ok: true,
-      json: async () => ({ success: true, markedCount: 1 })
-    };
-    global.fetch = jest.fn()
-      .mockResolvedValueOnce(queriesResponse)
-      .mockResolvedValueOnce(markResponse);
-    await mod.loadQueries(true);
-    expect(global.fetch).toHaveBeenNthCalledWith(1, '/api/peekAdminQueries?userId=u123');
-    expect(global.fetch).toHaveBeenNthCalledWith(2, '/api/markAdminQueriesRead', expect.objectContaining({
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: 'u123' })
-    }));
-    expect(document.querySelectorAll('#queriesList li')).toHaveLength(1);
   });
 
   test('sendAdminQuery alerts on failure', async () => {

@@ -671,8 +671,6 @@ export default {
                 responseBody = await handleDeleteClientRequest(request, env);
             } else if (method === 'POST' && path === '/api/addAdminQuery') {
                 responseBody = await handleAddAdminQueryRequest(request, env);
-            } else if (method === 'POST' && path === '/api/markAdminQueriesRead') {
-                responseBody = await handleMarkAdminQueriesReadRequest(request, env);
             } else if (method === 'GET' && path === '/api/getAdminQueries') {
                 responseBody = await handleGetAdminQueriesRequest(request, env);
             } else if (method === 'GET' && path === '/api/peekAdminQueries') {
@@ -2879,22 +2877,6 @@ async function handleAddAdminQueryRequest(request, env) {
 const ADMIN_QUERIES_MIN_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const ADMIN_QUERIES_LAST_FETCH_SUFFIX = '_admin_queries_last_fetch';
 
-async function markAdminQueriesAsRead(env, userId, arr, now) {
-    const key = `${userId}_admin_queries`;
-    let markedCount = 0;
-    for (const entry of arr) {
-        if (!entry?.read) {
-            entry.read = true;
-            markedCount += 1;
-        }
-    }
-    if (markedCount > 0) {
-        await env.USER_METADATA_KV.put(key, JSON.stringify(arr));
-    }
-    await env.USER_METADATA_KV.put(`${userId}${ADMIN_QUERIES_LAST_FETCH_SUFFIX}`, String(now));
-    return markedCount;
-}
-
 // ------------- START FUNCTION: handleGetAdminQueriesRequest -------------
 async function handleGetAdminQueriesRequest(request, env, peek = false) {
     try {
@@ -2912,7 +2894,7 @@ async function handleGetAdminQueriesRequest(request, env, peek = false) {
                 lastFetchTs = parsed;
             }
         }
-        const unread = arr.filter(q => !q?.read).map(q => ({ ...q }));
+        const unread = arr.filter(q => !q.read);
         if (!peek && lastFetchTs > 0) {
             const hasNewSinceLast = unread.some(entry => {
                 const ts = typeof entry?.ts === 'number' ? entry.ts : Number(entry?.ts) || 0;
@@ -2927,8 +2909,12 @@ async function handleGetAdminQueriesRequest(request, env, peek = false) {
                 };
             }
         }
+        if (unread.length > 0 && !peek) {
+            arr.forEach(q => { q.read = true; });
+            await env.USER_METADATA_KV.put(key, JSON.stringify(arr));
+        }
         if (!peek) {
-            await markAdminQueriesAsRead(env, userId, arr, now);
+            await env.USER_METADATA_KV.put(`${userId}${ADMIN_QUERIES_LAST_FETCH_SUFFIX}`, String(now));
         }
         return { success: true, queries: unread };
     } catch (error) {
@@ -2937,28 +2923,6 @@ async function handleGetAdminQueriesRequest(request, env, peek = false) {
     }
 }
 // ------------- END FUNCTION: handleGetAdminQueriesRequest -------------
-
-// ------------- START FUNCTION: handleMarkAdminQueriesReadRequest -------------
-async function handleMarkAdminQueriesReadRequest(request, env) {
-    try {
-        let body;
-        try {
-            body = await request.json();
-        } catch {
-            return { success: false, message: 'Невалидни данни.', statusHint: 400 };
-        }
-        const { userId } = body || {};
-        if (!userId) return { success: false, message: 'Липсва userId.', statusHint: 400 };
-        const key = `${userId}_admin_queries`;
-        const arr = safeParseJson(await env.USER_METADATA_KV.get(key), []);
-        const markedCount = await markAdminQueriesAsRead(env, userId, arr, Date.now());
-        return { success: true, markedCount };
-    } catch (error) {
-        console.error('Error in handleMarkAdminQueriesReadRequest:', error.message, error.stack);
-        return { success: false, message: 'Грешка при маркиране на запитванията.', statusHint: 500 };
-    }
-}
-// ------------- END FUNCTION: handleMarkAdminQueriesReadRequest -------------
 
 // ------------- START FUNCTION: handleAddClientReplyRequest -------------
 async function handleAddClientReplyRequest(request, env) {
@@ -5953,4 +5917,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleMarkAdminQueriesReadRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache };
