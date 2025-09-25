@@ -2723,7 +2723,11 @@ async function handlePeekAdminNotificationsRequest(request, env) {
 
             const normalizeEntry = (input, tsKey = 'ts') => {
                 if (!input || typeof input !== 'object') return null;
-                const { message = '', rating = null, timestamp, ts, [tsKey]: keyedTs } = /** @type {NotificationEntry} */ (input);
+                const source = /** @type {NotificationEntry & Record<string, unknown>} */ (input);
+                const { message = '', rating = null, timestamp, ts } = source;
+                const keyedTs = typeof tsKey === 'string' && tsKey in source
+                    ? /** @type {string | number | null | undefined} */ (source[tsKey])
+                    : undefined;
                 return { message, rating, ts: keyedTs ?? timestamp ?? ts ?? null };
             };
 
