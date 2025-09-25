@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
 import { selectors } from '../uiElements.js';
+import { apiEndpoints } from '../config.js';
 import {
   startAdminQueriesPolling,
   stopAdminQueriesPolling,
@@ -11,6 +12,7 @@ import { toggleChatWidget } from '../chat.js';
 const originalFetch = global.fetch;
 const originalVisibilityDescriptor = Object.getOwnPropertyDescriptor(document, 'visibilityState');
 let visibilityState = 'visible';
+let originalPeekAdminQueries;
 
 Object.defineProperty(document, 'visibilityState', {
   configurable: true,
@@ -24,6 +26,7 @@ function setVisibility(state) {
 
 describe('admin query polling behaviour', () => {
   beforeEach(() => {
+    originalPeekAdminQueries = apiEndpoints.peekAdminQueries;
     localStorage.clear();
     if (typeof sessionStorage !== 'undefined' && sessionStorage.clear) {
       sessionStorage.clear();
@@ -43,6 +46,7 @@ describe('admin query polling behaviour', () => {
   });
 
   afterEach(() => {
+    apiEndpoints.peekAdminQueries = originalPeekAdminQueries;
     jest.useRealTimers();
     stopAdminQueriesPolling();
     setCurrentUserId(null);
@@ -116,5 +120,11 @@ describe('admin query polling behaviour', () => {
     await checkAdminQueries('test-user');
     expect(global.fetch).not.toHaveBeenCalled();
     jest.useRealTimers();
+  });
+
+  test('когато липсва peekAdminQueries не се прави заявка', async () => {
+    apiEndpoints.peekAdminQueries = undefined;
+    await checkAdminQueries('test-user');
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 });
