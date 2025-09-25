@@ -68,6 +68,14 @@ describe('admin query polling behaviour', () => {
     expect(intervalValue).toBe(24 * 60 * 60000);
   });
 
+  test('не позволява интервал под 24 часа', () => {
+    const intervalSpy = jest.spyOn(global, 'setInterval');
+    startAdminQueriesPolling({ intervalMinutes: 0.5 });
+    expect(intervalSpy).toHaveBeenCalledTimes(1);
+    const intervalValue = intervalSpy.mock.calls[0][1];
+    expect(intervalValue).toBe(24 * 60 * 60000);
+  });
+
   test('спира, когато разделът е скрит, и възобновява с незабавна проверка', async () => {
     const intervalSpy = jest.spyOn(global, 'setInterval');
     const clearSpy = jest.spyOn(global, 'clearInterval');
