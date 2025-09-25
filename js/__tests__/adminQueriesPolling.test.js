@@ -24,7 +24,7 @@ function setVisibility(state) {
 
 describe('admin query polling behaviour', () => {
   beforeEach(() => {
-    localStorage.removeItem('adminQueryPollMinutes');
+    localStorage.clear();
     visibilityState = 'visible';
     selectors.chatMessages = document.createElement('div');
     selectors.chatWidget = document.createElement('div');
@@ -101,9 +101,9 @@ describe('admin query polling behaviour', () => {
     expect(global.fetch).toHaveBeenCalled();
   });
 
-  test('не изпраща повторна заявка преди да изтече интервалът без force', async () => {
+  test('не изпраща повторна заявка преди да изтече интервалът (24 часа)', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2025-01-01T00:00:00Z'));
-    await checkAdminQueries('test-user', { force: true });
+    await checkAdminQueries('test-user');
     expect(global.fetch).toHaveBeenCalledTimes(1);
 
     global.fetch.mockClear();
