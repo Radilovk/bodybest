@@ -1,7 +1,12 @@
 // app.js - Основен Файл на Приложението
 import * as config from './config.js';
 const { isLocalDevelopment, apiEndpoints } = config;
-const ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT = 24 * 60 * 60000; // 24 часа
+
+const MINUTES_IN_DAY = 24 * 60;
+const MILLISECONDS_IN_MINUTE = 60 * 1000;
+const ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT = MINUTES_IN_DAY * MILLISECONDS_IN_MINUTE; // 24 часа
+const ADMIN_QUERY_MINIMUM_INTERVAL_MS = ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT;
+
 import { debugLog, enableDebug } from './logger.js';
 import { safeParseFloat, escapeHtml, fileToDataURL, normalizeDailyLogs, getLocalDate } from './utils.js';
 import { selectors, initializeSelectors, loadInfoTexts } from './uiElements.js';
@@ -646,24 +651,29 @@ export function stopPlanStatusPolling() {
 }
 
 function normalizeAdminQueriesIntervalMs(options) {
-    if (typeof options === 'number') {
-        const minutes = Number(options);
+    const clampToMinimum = (value) => Math.max(value, ADMIN_QUERY_MINIMUM_INTERVAL_MS);
+    const parseMinutes = (value) => {
+        const minutes = Number(value);
         if (Number.isFinite(minutes) && minutes > 0) {
-            return minutes * 60000;
+            return clampToMinimum(minutes * MILLISECONDS_IN_MINUTE);
         }
+        return null;
+    };
+
+    if (typeof options === 'number') {
+        const parsed = parseMinutes(options);
+        if (parsed !== null) return parsed;
     }
     if (options && typeof options === 'object') {
         if (options.intervalMs !== undefined) {
             const ms = Number(options.intervalMs);
             if (Number.isFinite(ms) && ms > 0) {
-                return ms;
+                return clampToMinimum(ms);
             }
         }
         if (options.intervalMinutes !== undefined) {
-            const minutes = Number(options.intervalMinutes);
-            if (Number.isFinite(minutes) && minutes > 0) {
-                return minutes * 60000;
-            }
+            const parsed = parseMinutes(options.intervalMinutes);
+            if (parsed !== null) return parsed;
         }
     }
     return ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT;
