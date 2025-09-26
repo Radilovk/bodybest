@@ -502,7 +502,9 @@ export function loadCurrentIntake(status = null, extraMeals = null) {
         currentIntakeMacros = calculateCurrentMacros(
             fullDashboardData.planData?.week1Menu || {},
             status,
-            extraMeals
+            extraMeals,
+            false,
+            fullDashboardData.planData?.mealMacrosIndex || null
         );
     } catch (err) {
         console.error('Error loading current intake:', err);
@@ -515,7 +517,9 @@ export function recalculateCurrentIntakeMacros() {
         currentIntakeMacros = calculateCurrentMacros(
             fullDashboardData.planData?.week1Menu || {},
             todaysMealCompletionStatus,
-            todaysExtraMeals
+            todaysExtraMeals,
+            false,
+            fullDashboardData.planData?.mealMacrosIndex || null
         );
     } catch (err) {
         console.error('Error recalculating current intake:', err);
@@ -554,7 +558,13 @@ export async function loadDashboardData() {
             const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
             const currentDayKey = dayNames[new Date().getDay()];
             const dayMenu = fullDashboardData.planData?.week1Menu?.[currentDayKey] || [];
-            todaysPlanMacros = calculatePlanMacros(dayMenu, true, true);
+            todaysPlanMacros = calculatePlanMacros(
+                dayMenu,
+                true,
+                true,
+                fullDashboardData.planData?.mealMacrosIndex || null,
+                currentDayKey
+            );
             loadCurrentIntake();
             chatHistory = []; // Reset chat history for test user on reload
 
@@ -622,7 +632,13 @@ export async function loadDashboardData() {
         const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
         const currentDayKey = dayNames[new Date().getDay()];
         const dayMenu = fullDashboardData.planData?.week1Menu?.[currentDayKey] || [];
-        todaysPlanMacros = calculatePlanMacros(dayMenu, true, true);
+        todaysPlanMacros = calculatePlanMacros(
+            dayMenu,
+            true,
+            true,
+            fullDashboardData.planData?.mealMacrosIndex || null,
+            currentDayKey
+        );
         loadCurrentIntake();
         await populateDashboardMacros(fullDashboardData.planData?.caloriesMacros);
 

@@ -253,10 +253,16 @@ export function removeMealMacros(meal, acc, skipValidation = false) {
  * @param {Array} dayMenu - Масив от хранения за текущия ден.
  * @returns {{ calories:number, protein:number, carbs:number, fat:number, fiber:number }}
  */
-export function calculatePlanMacros(dayMenu = [], carbsIncludeFiber = true, skipValidation = false) {
+export function calculatePlanMacros(
+  dayMenu = [],
+  carbsIncludeFiber = true,
+  skipValidation = false,
+  mealMacrosIndex = null,
+  dayKey = ''
+) {
   const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
   if (!Array.isArray(dayMenu)) return acc;
-  dayMenu.forEach((meal) => {
+  dayMenu.forEach((meal, idx) => {
     const macros = meal && typeof meal.macros === 'object' ? meal.macros : null;
     if (macros) {
       const mapped = mapGramFields(macros);
@@ -276,7 +282,28 @@ export function calculatePlanMacros(dayMenu = [], carbsIncludeFiber = true, skip
       acc.fat += normalized.fat;
       acc.fiber += normalized.fiber;
     } else {
-      addMealMacros(meal, acc, skipValidation);
+      const key = dayKey ? `${dayKey}_${idx}` : null;
+      const indexed = key && mealMacrosIndex ? mealMacrosIndex[key] : null;
+      if (indexed && typeof indexed === 'object') {
+        const mapped = mapGramFields(indexed);
+        const normalized = {
+          calories: Number(mapped.calories) || 0,
+          protein: Number(mapped.protein) || 0,
+          carbs: Number(mapped.carbs) || 0,
+          fat: Number(mapped.fat) || 0,
+          fiber: Number(mapped.fiber) || 0
+        };
+        if (!skipValidation) {
+          validateMacroCalories(normalized, 0.05, carbsIncludeFiber);
+        }
+        acc.calories += normalized.calories;
+        acc.protein += normalized.protein;
+        acc.carbs += normalized.carbs;
+        acc.fat += normalized.fat;
+        acc.fiber += normalized.fiber;
+      } else {
+        addMealMacros(meal, acc, skipValidation);
+      }
     }
   });
   const percents = calculateMacroPercents(acc);
@@ -290,18 +317,37 @@ export function calculatePlanMacros(dayMenu = [], carbsIncludeFiber = true, skip
  * @param {Array} extraMeals - Допълнителни хранения с макроси { calories, protein, carbs, fat, fiber }.
  * @returns {{ calories:number, protein:number, carbs:number, fat:number, fiber:number }}
  */
-export function calculateCurrentMacros(planMenu = {}, completionStatus = {}, extraMeals = [], skipValidation = false) {
+export function calculateCurrentMacros(
+  planMenu = {},
+  completionStatus = {},
+  extraMeals = [],
+  skipValidation = false,
+  mealMacrosIndex = null
+) {
   const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
-  const prepareMeal = (meal) =>
-    meal && typeof meal.macros === 'object'
-      ? { ...mapGramFields(meal.macros), grams: meal.grams }
-      : mapGramFields(meal);
+  const prepareMeal = (meal, key = null) => {
+    if (meal && typeof meal.macros === 'object') {
+      return { ...mapGramFields(meal.macros), grams: meal.grams };
+    }
+    if (key && mealMacrosIndex && typeof mealMacrosIndex === 'object') {
+      const indexed = mealMacrosIndex[key];
+      if (indexed && typeof indexed === 'object') {
+        const mapped = mapGramFields(indexed);
+        const grams =
+          (meal && typeof meal === 'object' ? meal.grams : undefined) ??
+          mapped.grams ??
+          indexed.grams;
+        return { ...mapped, ...(grams != null ? { grams } : {}) };
+      }
+    }
+    return mapGramFields(meal);
+  };
 
   Object.entries(planMenu).forEach(([day, meals]) => {
     (meals || []).forEach((meal, idx) => {
       const key = `${day}_${idx}`;
-      if (completionStatus[key]) addMealMacros(prepareMeal(meal), acc, skipValidation);
+      if (completionStatus[key]) addMealMacros(prepareMeal(meal, key), acc, skipValidation);
     });
   });
 

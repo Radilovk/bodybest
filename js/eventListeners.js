@@ -61,10 +61,13 @@ async function acknowledgeAiUpdate() {
 
 export function ensureMacroAnalyticsElement() {
     let el = selectors.macroAnalyticsCardContainer?.querySelector('macro-analytics-card');
+    const threshold = String(macroExceedThreshold);
     if (!el) {
         el = document.createElement('macro-analytics-card');
-        el.setAttribute('exceed-threshold', String(macroExceedThreshold));
+        el.setAttribute('exceed-threshold', threshold);
         selectors.macroAnalyticsCardContainer.appendChild(el);
+    } else if (el.getAttribute('exceed-threshold') !== threshold) {
+        el.setAttribute('exceed-threshold', threshold);
     }
     macroChartInstance?.resize();
     progressChartInstance?.resize();
