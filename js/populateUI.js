@@ -21,6 +21,10 @@ export function setMacroExceedThreshold(val) {
     } else {
         macroExceedThreshold = 1.15;
     }
+    const card = selectors.macroAnalyticsCardContainer?.querySelector('macro-analytics-card');
+    if (card) {
+        card.setAttribute('exceed-threshold', String(macroExceedThreshold));
+    }
 }
 
 export function buildMacroCardUrl() {
@@ -637,7 +641,16 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
     if (selectors.dailyPlanTitle) selectors.dailyPlanTitle.innerHTML = `<svg class="icon"><use href="#icon-calendar"></use></svg> Меню (${capitalizeFirstLetter(todayTitle)})`;
 
     const dailyPlanData = safeGet(week1Menu, currentDayKey, []);
-    Object.assign(todaysPlanMacros, calculatePlanMacros(dailyPlanData, true, true));
+    Object.assign(
+        todaysPlanMacros,
+        calculatePlanMacros(
+            dailyPlanData,
+            true,
+            true,
+            fullDashboardData?.planData?.mealMacrosIndex || null,
+            currentDayKey
+        )
+    );
 
     populateDashboardMacros();
 

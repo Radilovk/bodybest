@@ -63,6 +63,22 @@ test('calculateCurrentMacros скалира macros по grams', () => {
   expect(result).toEqual({ calories: 100, protein: 5, carbs: 10, fat: 5, fiber: 2.5 });
 });
 
+test('calculateCurrentMacros използва mealMacrosIndex като fallback', () => {
+  const planMenu = { monday: [{ meal_name: 'Домашно ястие' }] };
+  const completionStatus = { monday_0: true };
+  const mealMacrosIndex = {
+    monday_0: {
+      calories: 320,
+      protein_grams: 30,
+      carbs_grams: 25,
+      fat_grams: 12,
+      fiber_grams: 6
+    }
+  };
+  const result = calculateCurrentMacros(planMenu, completionStatus, [], false, mealMacrosIndex);
+  expect(result).toEqual({ calories: 320, protein: 30, carbs: 25, fat: 12, fiber: 6 });
+});
+
 test('calculatePlanMacros sums macros for day menu', () => {
   const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   const dayMenu = [
@@ -100,6 +116,31 @@ test('calculatePlanMacros използва наличното поле macros', 
     carbs_percent: 46,
     fat_percent: 31,
     fiber_percent: 4
+  });
+});
+
+test('calculatePlanMacros използва mealMacrosIndex при липсващи макроси', () => {
+  const dayMenu = [{ meal_name: 'Домашна супа' }];
+  const mealMacrosIndex = {
+    monday_0: {
+      calories: 280,
+      protein_grams: 18,
+      carbs_grams: 32,
+      fat_grams: 9,
+      fiber_grams: 4
+    }
+  };
+  const result = calculatePlanMacros(dayMenu, true, true, mealMacrosIndex, 'monday');
+  expect(result).toMatchObject({
+    calories: 280,
+    protein: 18,
+    carbs: 32,
+    fat: 9,
+    fiber: 4,
+    protein_percent: expect.any(Number),
+    carbs_percent: expect.any(Number),
+    fat_percent: expect.any(Number),
+    fiber_percent: expect.any(Number)
   });
 });
 

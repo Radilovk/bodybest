@@ -20,6 +20,38 @@ const dynamicNutrientOverrides = { ...nutrientOverrides };
 registerNutrientOverrides(dynamicNutrientOverrides);
 const nutrientLookupCache = {};
 
+function applyAutofillMacros(form, macros, autoFillMsg, formatToFixed = false) {
+    if (!form || !macros || typeof macros !== 'object') return false;
+    let applied = false;
+    MACRO_FIELDS.forEach((fieldName) => {
+        const field = form.querySelector(`input[name="${fieldName}"]`);
+        if (!field) return;
+        const value = macros[fieldName] ?? macros[`${fieldName}_grams`] ?? macros[`${fieldName}Grams`];
+        if (value !== undefined && value !== null && value !== '') {
+            const numeric = Number(value);
+            if (formatToFixed && Number.isFinite(numeric)) {
+                field.value = numeric.toFixed(2);
+            } else {
+                field.value = String(value);
+            }
+            field.dataset.autofilled = 'true';
+            applied = true;
+        }
+    });
+    if (applied) {
+        autoFillMsg?.classList.remove('hidden');
+    }
+    return applied;
+}
+
+function tryAutofillFromOverride(form, desc, quantityValue, autoFillMsg) {
+    const description = (desc || '').trim();
+    if (!description) return false;
+    const override = getNutrientOverride(buildCacheKey(description, quantityValue));
+    if (!override) return false;
+    return applyAutofillMacros(form, override, autoFillMsg);
+}
+
 // --- Синоними за продуктите (разширявай при нужда)
 const PRODUCT_SYNONYMS = {
     'ябълка': ['ябълки', 'apple', 'зелена ябълка', 'червена ябълка'],
@@ -388,10 +420,18 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     quantityVisualRadios.forEach(radio => {
         radio.addEventListener('change', () => {
             quantityVisualRadios.forEach(r => r.closest('.quantity-card-option')?.classList.toggle('selected', r.checked));
+            const desc = foodDescriptionInput?.value?.trim();
+            if (!measureOptionsContainer || measureOptionsContainer.classList.contains('hidden')) {
+                if (!tryAutofillFromOverride(form, desc, radio.value, autoFillMsg) && autoFillMsg) {
+                    autoFillMsg.classList.add('hidden');
+                }
+            }
         });
     });
     const measureOptionsContainer = form.querySelector('#measureOptions');
-    if (measureOptionsContainer) measureOptionsContainer.classList.add('hidden');
+    if (measureOptionsContainer && measureOptionsContainer.children.length === 0) {
+        measureOptionsContainer.classList.add('hidden');
+    }
     const measureInput = form.querySelector('#measureInput');
     const measureSuggestionList = form.querySelector('#measureSuggestionList');
     if (measureInput) measureInput.classList.add('hidden');
@@ -443,6 +483,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             radio.name = 'measureOption';
             radio.dataset.grams = m.grams;
             if (i === 0) radio.checked = true;
+            radio.addEventListener('change', computeQuantity);
             const content = document.createElement('span');
             content.className = 'card-content';
             content.innerHTML = `<span class="card-label">${m.label}</span><span class="card-desc">~${m.grams} g</span>`;
@@ -455,6 +496,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         otherRadio.type = 'radio';
         otherRadio.name = 'measureOption';
         otherRadio.value = 'other';
+        otherRadio.addEventListener('change', computeQuantity);
         const otherContent = document.createElement('span');
         otherContent.className = 'card-content';
         otherContent.innerHTML = '<span class="card-label">Друго</span>';
@@ -486,23 +528,31 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (!quantityHiddenInput) return;
         const selectedMeasure = measureOptionsContainer?.querySelector('input[name="measureOption"]:checked');
         const total = Number(selectedMeasure?.dataset.grams || 0);
-        quantityHiddenInput.value = total > 0 ? String(total) : '';
+        if (quantityHiddenInput) quantityHiddenInput.value = total > 0 ? String(total) : '';
         const description = foodDescriptionInput?.value?.trim().toLowerCase();
         if (autoFillMsg) autoFillMsg.classList.add('hidden');
         if (description && total > 0) {
-            const product = findClosestProduct(description);
-            if (product) {
-                const scaled = scaleMacros(product, total);
-                MACRO_FIELDS.forEach(f => {
-                    const field = form.querySelector(`input[name="${f}"]`);
-                    if (field) {
-                        field.value = scaled[f];
-                        field.dataset.autofilled = 'true';
-                    }
-                });
-                if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+            const measureValue = selectedMeasure?.value || selectedMeasure?.dataset.value || selectedMeasure?.dataset.grams || '';
+            let applied = tryAutofillFromOverride(form, description, measureValue, autoFillMsg);
+            if (!applied) {
+                const product = findClosestProduct(description);
+                if (product) {
+                    const scaled = scaleMacros(product, total);
+                    applied = applyAutofillMacros(form, scaled, autoFillMsg, true);
+                }
             }
+            if (!applied && autoFillMsg) autoFillMsg.classList.add('hidden');
         }
+    }
+
+    if (measureOptionsContainer && measureOptionsContainer.children.length > 0 && !measureOptionsContainer.classList.contains('hidden')) {
+        computeQuantity();
+    }
+
+    if (measureOptionsContainer) {
+        measureOptionsContainer.querySelectorAll('input[name="measureOption"]').forEach((radio) => {
+            radio.addEventListener('change', computeQuantity);
+        });
     }
 
     function computeQuantityFromManual() {
@@ -515,20 +565,17 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         const measure = key ? (productMeasures[key] || []).find(m => m.label.toLowerCase() === label) : null;
         if (!measure) return;
         const grams = measure.grams * count;
-        quantityHiddenInput.value = String(grams);
+        if (quantityHiddenInput) quantityHiddenInput.value = String(grams);
         quantityCustomInput.value = `${grams} гр`;
         if (autoFillMsg) autoFillMsg.classList.add('hidden');
+        let applied = false;
         const product = findClosestProduct(desc);
         if (product) {
             const scaled = scaleMacros(product, grams);
-            MACRO_FIELDS.forEach(f => {
-                const field = form.querySelector(`input[name="${f}"]`);
-                if (field) {
-                    field.value = scaled[f];
-                    field.dataset.autofilled = 'true';
-                }
-            });
-            if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+            applied = applyAutofillMacros(form, scaled, autoFillMsg, true);
+        }
+        if (!applied) {
+            applied = tryAutofillFromOverride(form, desc, grams, autoFillMsg);
         }
     }
 
@@ -540,6 +587,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         let lookupTimer;
         quantityCustomInput.addEventListener('input', () => {
             const val = quantityCustomInput.value.trim();
+            const quantityKey = val;
             let parsed = false;
 
             // 1) Чисто число или "<число> гр"
@@ -548,18 +596,18 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 const grams = parseFloat(gramsMatch[1].replace(',', '.'));
                 const desc = foodDescriptionInput?.value?.trim();
                 const product = desc ? findClosestProduct(desc) : null;
+                let applied = false;
                 if (product && grams > 0) {
-                    quantityHiddenInput.value = String(grams);
+                    if (quantityHiddenInput) quantityHiddenInput.value = String(grams);
                     const scaled = scaleMacros(product, grams);
-                    MACRO_FIELDS.forEach(f => {
-                        const field = form.querySelector(`input[name="${f}"]`);
-                        if (field) {
-                            field.value = scaled[f];
-                            field.dataset.autofilled = 'true';
-                        }
-                    });
-                    if (autoFillMsg) autoFillMsg.classList.remove('hidden');
-                    parsed = true;
+                    applied = applyAutofillMacros(form, scaled, autoFillMsg, true);
+                    parsed = applied;
+                }
+                if (!applied && desc && grams > 0) {
+                    if (tryAutofillFromOverride(form, desc, quantityKey, autoFillMsg)) {
+                        if (quantityHiddenInput) quantityHiddenInput.value = String(grams);
+                        parsed = true;
+                    }
                 }
             }
 
@@ -572,18 +620,17 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                     const key = fuzzyFindProductKey(prod);
                     if (key && productMeasures[key] && productMeasures[key][0]) {
                         const grams = count * productMeasures[key][0].grams;
-                        quantityHiddenInput.value = grams;
+                        if (quantityHiddenInput) quantityHiddenInput.value = grams;
                         const product = findClosestProduct(key);
+                        let applied = false;
                         if (product) {
                             const scaled = scaleMacros(product, grams);
-                            MACRO_FIELDS.forEach(f => {
-                                const field = form.querySelector(`input[name="${f}"]`);
-                                if (field) {
-                                    field.value = scaled[f];
-                                    field.dataset.autofilled = 'true';
-                                }
-                            });
-                            if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+                            applied = applyAutofillMacros(form, scaled, autoFillMsg, true);
+                        }
+                        if (!applied) {
+                            applied = tryAutofillFromOverride(form, key, quantityKey, autoFillMsg);
+                        }
+                        if (applied) {
                             parsed = true;
                         }
                     }
@@ -663,6 +710,12 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             updateMeasureOptions(this.value);
             updateMeasureSuggestions(this.value);
             showSuggestions(this.value);
+            if (!measureOptionsContainer || measureOptionsContainer.classList.contains('hidden')) {
+                const selectedVisual = form.querySelector('input[name="quantityEstimateVisual"]:checked');
+                if (!tryAutofillFromOverride(form, this.value, selectedVisual?.value, autoFillMsg) && autoFillMsg) {
+                    autoFillMsg.classList.add('hidden');
+                }
+            }
         });
         // Enter избира първото предложение
         foodDescriptionInput.addEventListener('keydown', (e) => {
