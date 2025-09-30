@@ -87,6 +87,32 @@ function mapGramFields(obj = {}) {
   return mapped;
 }
 
+const MACRO_PAYLOAD_FIELDS = [
+  'calories',
+  'protein',
+  'protein_grams',
+  'carbs',
+  'carbs_grams',
+  'fat',
+  'fat_grams',
+  'fiber',
+  'fiber_grams',
+  'alcohol',
+  'alcohol_grams'
+];
+
+function hasMealMacroPayload(meal = {}) {
+  if (!meal || typeof meal !== 'object') return false;
+  if (meal.macros && typeof meal.macros === 'object') {
+    return Object.values(meal.macros).some((val) => val !== null && val !== undefined);
+  }
+  if (MACRO_PAYLOAD_FIELDS.some((key) => meal[key] !== undefined && meal[key] !== null)) {
+    return true;
+  }
+  const override = getNutrientOverride(meal.meal_name || meal.name);
+  return Boolean(override);
+}
+
 export function normalizeMacros(macros = {}) {
   const m = mapGramFields(macros);
   const normalized = {
@@ -347,7 +373,19 @@ export function calculateCurrentMacros(
   Object.entries(planMenu).forEach(([day, meals]) => {
     (meals || []).forEach((meal, idx) => {
       const key = `${day}_${idx}`;
-      if (completionStatus[key]) addMealMacros(prepareMeal(meal, key), acc, skipValidation);
+      if (!completionStatus[key]) return;
+      const hasIndexEntry = Boolean(
+        key && mealMacrosIndex && typeof mealMacrosIndex === 'object' && mealMacrosIndex[key]
+      );
+      const hasDirectMacros = hasMealMacroPayload(meal);
+      if (!hasDirectMacros && !hasIndexEntry) {
+        const label = meal?.meal_name || meal?.name || meal?.id || key;
+        console.warn(
+          `[macroUtils] Missing macros for '${label}' (${key}); skipping from current intake.`
+        );
+        return;
+      }
+      addMealMacros(prepareMeal(meal, key), acc, skipValidation);
     });
   });
 

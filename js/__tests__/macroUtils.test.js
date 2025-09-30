@@ -5,11 +5,41 @@ import { calculateCurrentMacros, addMealMacros, removeMealMacros, registerNutrie
 test('calculateCurrentMacros sums macros from completed meals and extras', () => {
   const planMenu = {
     monday: [
-      { id: 'z-01', meal_name: 'Протеинов шейк' },
-      { id: 'o-01', meal_name: 'Печено пилешко с ориз/картофи и салата' }
+      {
+        id: 'z-01',
+        meal_name: 'Протеинов шейк',
+        macros: {
+          calories: 510,
+          protein_grams: 40,
+          carbs_grams: 20,
+          fat_grams: 30,
+          fiber_grams: 0
+        }
+      },
+      {
+        id: 'o-01',
+        meal_name: 'Печено пилешко с ориз/картофи и салата',
+        macros: {
+          calories: 420,
+          protein_grams: 28,
+          carbs_grams: 45,
+          fat_grams: 15,
+          fiber_grams: 5
+        }
+      }
     ],
     tuesday: [
-      { id: 'o-02', meal_name: 'Телешки кюфтета със салата' }
+      {
+        id: 'o-02',
+        meal_name: 'Телешки кюфтета със салата',
+        macros: {
+          calories: 250,
+          protein_grams: 22,
+          carbs_grams: 18,
+          fat_grams: 10,
+          fiber_grams: 0
+        }
+      }
     ]
   };
 
@@ -24,7 +54,7 @@ test('calculateCurrentMacros sums macros from completed meals and extras', () =>
   ];
 
   const result = calculateCurrentMacros(planMenu, completionStatus, extraMeals);
-  expect(result).toEqual({ calories: 848, protein: 67, carbs: 48, fat: 42, fiber: 5 });
+  expect(result).toEqual({ calories: 828, protein: 67, carbs: 48, fat: 42, fiber: 5 });
 });
 
   test('calculateCurrentMacros използва meal.macros и overrides', () => {
@@ -77,6 +107,18 @@ test('calculateCurrentMacros използва mealMacrosIndex като fallback'
   };
   const result = calculateCurrentMacros(planMenu, completionStatus, [], false, mealMacrosIndex);
   expect(result).toEqual({ calories: 320, protein: 30, carbs: 25, fat: 12, fiber: 6 });
+});
+
+test('calculateCurrentMacros пропуска хранения без макроси и индекс', () => {
+  const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  const planMenu = { monday: [{ meal_name: 'Без данни' }] };
+  const completionStatus = { monday_0: true };
+  const result = calculateCurrentMacros(planMenu, completionStatus, [], false, null);
+  expect(result).toEqual({ calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+  expect(warnSpy).toHaveBeenCalledWith(
+    expect.stringContaining("[macroUtils] Missing macros for 'Без данни'")
+  );
+  warnSpy.mockRestore();
 });
 
 test('calculatePlanMacros sums macros for day menu', () => {
