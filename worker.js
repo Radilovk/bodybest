@@ -141,6 +141,71 @@ function clearResourceCache(keys) {
   }
 }
 
+function parseMacroNumber(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === 'string') {
+    const cleaned = value.trim();
+    if (!cleaned) return null;
+    const normalized = cleaned.replace(/,/g, '.');
+    const match = normalized.match(/-?\d+(?:\.\d+)?/);
+    if (!match) return null;
+    const parsed = parseFloat(match[0]);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function pickMacroValue(source, candidates = []) {
+  if (!source || typeof source !== 'object') return null;
+  for (const key of candidates) {
+    if (!Object.prototype.hasOwnProperty.call(source, key)) continue;
+    const parsed = parseMacroNumber(source[key]);
+    if (parsed !== null) return parsed;
+  }
+  return null;
+}
+
+function extractMealMacroEntry(meal) {
+  if (!meal || typeof meal !== 'object') return null;
+  const macrosSource = meal.macros && typeof meal.macros === 'object' ? meal.macros : meal;
+  const normalized = {};
+  const calories = pickMacroValue(macrosSource, ['calories', 'calories_kcal', 'cal', 'kcal']);
+  if (calories !== null) normalized.calories = calories;
+  const protein = pickMacroValue(macrosSource, ['protein_grams', 'protein', 'protein_g']);
+  if (protein !== null) normalized.protein_grams = protein;
+  const carbs = pickMacroValue(macrosSource, ['carbs_grams', 'carbs', 'carbohydrates', 'carbs_g']);
+  if (carbs !== null) normalized.carbs_grams = carbs;
+  const fat = pickMacroValue(macrosSource, ['fat_grams', 'fat', 'fats', 'fat_g']);
+  if (fat !== null) normalized.fat_grams = fat;
+  const fiber = pickMacroValue(macrosSource, ['fiber_grams', 'fiber', 'fibers', 'fiber_g']);
+  if (fiber !== null) normalized.fiber_grams = fiber;
+  const alcohol = pickMacroValue(macrosSource, ['alcohol_grams', 'alcohol', 'alcohol_g']);
+  if (alcohol !== null) normalized.alcohol_grams = alcohol;
+  const grams = pickMacroValue(meal, ['grams', 'serving_grams', 'portion_grams']);
+  if (grams !== null) normalized.grams = grams;
+  return Object.keys(normalized).length > 0 ? normalized : null;
+}
+
+function buildMealMacrosIndexFromPlan(plan) {
+  const menu = plan?.week1Menu;
+  if (!menu || typeof menu !== 'object') return null;
+  const index = {};
+  let count = 0;
+  for (const [day, meals] of Object.entries(menu)) {
+    if (!Array.isArray(meals)) continue;
+    meals.forEach((meal, idx) => {
+      const entry = extractMealMacroEntry(meal);
+      if (!entry) return;
+      index[`${day}_${idx}`] = entry;
+      count += 1;
+    });
+  }
+  return count > 0 ? index : null;
+}
+
 const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
 const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
 <html lang="bg">
@@ -1963,6 +2028,12 @@ async function handleUpdatePlanRequest(request, env) {
         if (!planData || typeof planData !== 'object') {
             return { success: false, message: 'Невалидни данни за плана.', statusHint: 400 };
         }
+        const rebuiltIndex = buildMealMacrosIndexFromPlan(planData);
+        if (rebuiltIndex) {
+            planData.mealMacrosIndex = rebuiltIndex;
+        } else if (!planData.mealMacrosIndex || typeof planData.mealMacrosIndex !== 'object') {
+            planData.mealMacrosIndex = null;
+        }
         await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(planData));
         const macrosRecord = {
             status: 'final',
@@ -3479,7 +3550,7 @@ async function processSingleUserPlan(userId, env) {
         }
         console.log(`PROCESS_USER_PLAN (${userId}): Processing for email: ${initialAnswers.email || 'N/A'}`);
         await addLog('Подготовка на модела');
-        const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, principlesWeek2_4: [], additionalGuidelines: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
+        const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, mealMacrosIndex: null, principlesWeek2_4: [], additionalGuidelines: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
         const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, openaiApiKey, planModelName, unifiedPromptTemplate ] = await Promise.all([
             env.RESOURCES_KV.get('question_definitions'),
             env.RESOURCES_KV.get('base_diet_model'),
@@ -3662,6 +3733,13 @@ async function processSingleUserPlan(userId, env) {
             };
             if (planBuilder.caloriesMacros) {
                 ensureFiber(planBuilder.caloriesMacros);
+            }
+            if (!planBuilder.mealMacrosIndex || typeof planBuilder.mealMacrosIndex !== 'object') {
+                planBuilder.mealMacrosIndex = null;
+            }
+            const rebuiltIndex = buildMealMacrosIndexFromPlan(planBuilder);
+            if (rebuiltIndex) {
+                planBuilder.mealMacrosIndex = rebuiltIndex;
             }
             if (generationMetadata && Array.isArray(generationMetadata.errors)) planBuilder.generationMetadata.errors.push(...generationMetadata.errors);
             await addLog('Планът е генериран', { checkpoint: true, reason: 'plan-generated' });
