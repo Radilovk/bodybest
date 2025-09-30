@@ -1,4 +1,6 @@
-import { calculateAnalyticsIndexes, clearResourceCache } from '../../worker.js';
+import * as workerModule from '../../worker.js';
+
+const { calculateAnalyticsIndexes, clearResourceCache } = workerModule;
 
 const daysOrder = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 
@@ -14,37 +16,56 @@ describe('calculateAnalyticsIndexes engagement score', () => {
 
     const finalPlan = { week1Menu: { [dayKey]: ['meal1'] } };
     const logEntries = [{ date: dateStr, data: { mood: 3, energy: 4, completedMealsStatus: {} } }];
-    const env = { RESOURCES_KV: { get: async () => null } };
 
-    const result = await calculateAnalyticsIndexes('user', {}, finalPlan, logEntries, {}, env);
+    const result = await calculateAnalyticsIndexes('user', {}, finalPlan, logEntries, {}, {});
     const expected = Math.round(((0) * 0.4) + (((2 / 5) * 100) * 0.4) + (((1 / 7) * 100) * 0.2));
     expect(result.current.engagementScore).toBe(expected);
   });
 
-  test('reuses cached analytics prompt and model between calls', async () => {
-    const today = new Date();
-    const dayKey = daysOrder[today.getDay()];
-    const dateStr = today.toISOString().split('T')[0];
+  test('produces deterministic textual summary for mixed metrics', async () => {
+    const baseDate = new Date();
+    const finalPlan = { week1Menu: {} };
+    const logEntries = [];
 
-    const finalPlan = { week1Menu: { [dayKey]: ['meal1'] } };
-    const logEntries = [{ date: dateStr, data: { mood: 3, energy: 4, completedMealsStatus: {} } }];
+    for (let offset = 0; offset < 5; offset++) {
+      const entryDate = new Date(baseDate);
+      entryDate.setDate(baseDate.getDate() - offset);
+      const dayKey = daysOrder[entryDate.getDay()];
+      const dateStr = entryDate.toISOString().split('T')[0];
 
-    const getMock = jest.fn(async (key) => {
-      if (key === 'prompt_analytics_textual_summary') return 'Резюме: %%USER_GOAL%%';
-      if (key === 'model_plan_generation') return 'gpt-4o-mini';
-      return null;
-    });
+      finalPlan.week1Menu[dayKey] = ['meal1', 'meal2'];
+      logEntries.push({
+        date: dateStr,
+        data: {
+          mood: 5,
+          energy: 4.5,
+          calmness: 4.2,
+          sleep: 5,
+          hydration: 2,
+          completedMealsStatus: {
+            [`${dayKey}_0`]: true,
+            [`${dayKey}_1`]: true
+          }
+        }
+      });
+    }
 
-    const env = { RESOURCES_KV: { get: getMock } };
+    const initialAnswers = { goal: 'отслабване', weight: 82, height: 178, lossKg: 6 };
+    const currentStatus = { weight: 79 };
 
-    await calculateAnalyticsIndexes('user', {}, finalPlan, logEntries, {}, env);
-    await calculateAnalyticsIndexes('user', {}, finalPlan, logEntries, {}, env);
+    const result = await calculateAnalyticsIndexes('user', initialAnswers, finalPlan, logEntries, currentStatus, {});
+    const summary = result.textualAnalysis;
 
-    const promptCalls = getMock.mock.calls.filter(([key]) => key === 'prompt_analytics_textual_summary').length;
-    const modelCalls = getMock.mock.calls.filter(([key]) => key === 'model_plan_generation').length;
+    expect(summary).toContain('Целта Ви е отслабване');
+    expect(summary).toContain('Качество на Съня');
+    expect(summary).toContain('Хидратация');
+  });
 
-    expect(promptCalls).toBe(1);
-    expect(modelCalls).toBe(1);
+  test('falls back to default textual summary when helper has no data', () => {
+    const helperResult = workerModule.buildDeterministicAnalyticsSummary({}, [], 'unknown');
+    expect(helperResult).toBe('');
+    const fallbackText = helperResult || 'Няма достатъчно данни за текстов анализ.';
+    expect(fallbackText).toBe('Няма достатъчно данни за текстов анализ.');
   });
 });
 
