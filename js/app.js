@@ -71,87 +71,6 @@ function normalizeText(input) {
     return String(input);
 }
 
-const MACRO_FIELD_MAP = {
-    calories: ['calories', 'calories_kcal', 'cal', 'kcal'],
-    protein_grams: ['protein_grams', 'protein', 'protein_g'],
-    carbs_grams: ['carbs_grams', 'carbs', 'carbohydrates', 'carbs_g'],
-    fat_grams: ['fat_grams', 'fat', 'fats', 'fat_g'],
-    fiber_grams: ['fiber_grams', 'fiber', 'fibers', 'fiber_g'],
-    alcohol_grams: ['alcohol_grams', 'alcohol', 'alcohol_g']
-};
-
-const MACRO_GRAM_FIELDS = ['grams', 'serving_grams', 'portion_grams'];
-
-function parseMacroNumber(value) {
-    if (value === null || value === undefined) return null;
-    if (typeof value === 'number') {
-        return Number.isFinite(value) ? value : null;
-    }
-    if (typeof value === 'string') {
-        const trimmed = value.trim();
-        if (!trimmed) return null;
-        const normalized = trimmed.replace(/,/g, '.');
-        const match = normalized.match(/-?\d+(?:\.\d+)?/);
-        if (!match) return null;
-        const parsed = parseFloat(match[0]);
-        return Number.isFinite(parsed) ? parsed : null;
-    }
-    return null;
-}
-
-function pickMacroValue(source, fields = []) {
-    if (!source || typeof source !== 'object') return null;
-    for (const key of fields) {
-        if (!Object.prototype.hasOwnProperty.call(source, key)) continue;
-        const parsed = parseMacroNumber(source[key]);
-        if (parsed !== null) return parsed;
-    }
-    return null;
-}
-
-function extractMealMacroForIndex(meal) {
-    if (!meal || typeof meal !== 'object') return null;
-    const macrosSource = meal.macros && typeof meal.macros === 'object' ? meal.macros : meal;
-    const normalized = {};
-    for (const [targetKey, candidates] of Object.entries(MACRO_FIELD_MAP)) {
-        const value = pickMacroValue(macrosSource, candidates);
-        if (value !== null) {
-            normalized[targetKey] = value;
-        }
-    }
-    const grams = pickMacroValue(meal, MACRO_GRAM_FIELDS);
-    if (grams !== null) {
-        normalized.grams = grams;
-    }
-    return Object.keys(normalized).length > 0 ? normalized : null;
-}
-
-function buildMealMacrosIndex(planData = {}) {
-    const menu = planData?.week1Menu;
-    if (!menu || typeof menu !== 'object') return null;
-    const index = {};
-    let count = 0;
-    for (const [day, meals] of Object.entries(menu)) {
-        if (!Array.isArray(meals)) continue;
-        meals.forEach((meal, idx) => {
-            const entry = extractMealMacroForIndex(meal);
-            if (!entry) return;
-            index[`${day}_${idx}`] = entry;
-            count += 1;
-        });
-    }
-    return count > 0 ? index : null;
-}
-
-function ensurePlanHasMealMacrosIndex(planData) {
-    if (!planData || typeof planData !== 'object') return;
-    const existing = planData.mealMacrosIndex;
-    const needsBuild = !existing || typeof existing !== 'object' || Object.keys(existing).length === 0;
-    if (!needsBuild) return;
-    const rebuilt = buildMealMacrosIndex(planData);
-    planData.mealMacrosIndex = rebuilt || null;
-}
-
 function tryGetStorageItem(storage, key) {
     if (!storage) return null;
     try {
@@ -401,13 +320,6 @@ function createTestData() {
             week1Menu: {
                 monday: [{
                     meal_name: "Закуска",
-                    macros: {
-                        calories: 320,
-                        protein_grams: 20,
-                        carbs_grams: 35,
-                        fat_grams: 10,
-                        fiber_grams: 5
-                    },
                     items: [
                         { name: "Овесена каша", grams: "50г" },
                         { name: "Банан", grams: "1 бр." }
@@ -569,7 +481,6 @@ async function initializeApp() {
 export function loadCurrentIntake(status = null, extraMeals = null) {
     try {
         ensureFreshDailyIntake();
-        ensurePlanHasMealMacrosIndex(fullDashboardData?.planData);
         currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
         const todayStr = getLocalDate();
@@ -603,7 +514,6 @@ export function loadCurrentIntake(status = null, extraMeals = null) {
 export function recalculateCurrentIntakeMacros() {
     try {
         ensureFreshDailyIntake();
-        ensurePlanHasMealMacrosIndex(fullDashboardData?.planData);
         currentIntakeMacros = calculateCurrentMacros(
             fullDashboardData.planData?.week1Menu || {},
             todaysMealCompletionStatus,
@@ -643,7 +553,6 @@ export async function loadDashboardData() {
             const data = createTestData();
             debugLog("Using test data for development:", data);
             fullDashboardData = data;
-            ensurePlanHasMealMacrosIndex(fullDashboardData?.planData);
             setMacroExceedThreshold(data.macroExceedThreshold);
             fullDashboardData.dailyLogs = normalizeDailyLogs(fullDashboardData.dailyLogs);
             const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
@@ -709,7 +618,6 @@ export async function loadDashboardData() {
 
         debugLog("Data received from worker:", data);
         fullDashboardData = data;
-        ensurePlanHasMealMacrosIndex(fullDashboardData?.planData);
         setMacroExceedThreshold(data.macroExceedThreshold);
         // chatHistory = []; // Do not reset chat history on normal data load, only for test user or logout
 
