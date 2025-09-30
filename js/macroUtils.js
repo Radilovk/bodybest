@@ -18,6 +18,29 @@ let nutrientOverrides = {};
 const nutrientCache = new Map();
 const MAX_OVERRIDE_CACHE = 50;
 
+const CORE_MACRO_FIELDS = ['calories', 'protein', 'carbs', 'fat', 'fiber'];
+const MACRO_FIELD_ALIASES = {
+  calories: ['calories', 'calories_kcal', 'cal', 'kcal', 'energy_kcal', 'energy'],
+  protein: ['protein', 'protein_grams', 'protein_g', 'proteins', 'proteins_g'],
+  carbs: [
+    'carbs',
+    'carbs_grams',
+    'carbs_g',
+    'carbohydrates',
+    'carbohydrates_g',
+    'carbohydrates_total_g',
+    'net_carbs',
+    'net_carbs_g'
+  ],
+  fat: ['fat', 'fat_grams', 'fat_g', 'fat_total_g', 'fats'],
+  fiber: ['fiber', 'fiber_grams', 'fiber_g', 'fibre', 'fibre_grams', 'fibre_g'],
+  alcohol: ['alcohol', 'alcohol_grams', 'alcohol_g']
+};
+
+const hasValue = (value) => value !== undefined && value !== null && value !== '';
+const hasMissingCoreMacros = (normalized) =>
+  Array.isArray(normalized?.__missingMacroKeys) && normalized.__missingMacroKeys.length > 0;
+
 /**
  * Регистрира overrides за хранителни стойности.
  * @param {Record<string, {calories:number, protein:number, carbs:number, fat:number, fiber:number, alcohol?:number}>} overrides
@@ -78,17 +101,35 @@ export async function loadProductMacros() {
  * @returns {{calories:number, protein:number, carbs:number, fat:number, fiber:number, alcohol?:number}}
 */
 function mapGramFields(obj = {}) {
-  const mapped = { ...obj };
-  if (mapped.protein_grams != null) mapped.protein = mapped.protein_grams;
-  if (mapped.carbs_grams != null) mapped.carbs = mapped.carbs_grams;
-  if (mapped.fat_grams != null) mapped.fat = mapped.fat_grams;
-  if (mapped.fiber_grams != null) mapped.fiber = mapped.fiber_grams;
-  if (mapped.alcohol_grams != null) mapped.alcohol = mapped.alcohol_grams;
+  const base = obj && typeof obj === 'object' ? obj : {};
+  const mapped = { ...base };
+  const lowerCaseKeyMap = new Map();
+  Object.keys(mapped).forEach((key) => {
+    lowerCaseKeyMap.set(key.toLowerCase(), key);
+  });
+
+  const resolveKey = (candidate) => lowerCaseKeyMap.get(candidate.toLowerCase()) || candidate;
+  const ensureField = (target) => {
+    if (hasValue(mapped[target])) return;
+    const aliases = MACRO_FIELD_ALIASES[target] || [];
+    for (const alias of aliases) {
+      const sourceKey = resolveKey(alias);
+      if (!Object.prototype.hasOwnProperty.call(mapped, sourceKey)) continue;
+      const value = mapped[sourceKey];
+      if (!hasValue(value)) continue;
+      mapped[target] = value;
+      return;
+    }
+  };
+
+  [...CORE_MACRO_FIELDS, 'alcohol'].forEach(ensureField);
+
   return mapped;
 }
 
 export function normalizeMacros(macros = {}) {
   const m = mapGramFields(macros);
+  const missingKeys = CORE_MACRO_FIELDS.filter((key) => !hasValue(m[key]));
   const normalized = {
     calories: Number(m.calories) || 0,
     protein: Number(m.protein) || 0,
@@ -97,7 +138,16 @@ export function normalizeMacros(macros = {}) {
     fiber: Number(m.fiber) || 0
   };
   if (m.alcohol != null) normalized.alcohol = Number(m.alcohol) || 0;
+  Object.defineProperty(normalized, '__missingMacroKeys', {
+    value: missingKeys,
+    enumerable: false
+  });
   return normalized;
+}
+
+export function hasMealMacroPayload(macros = {}) {
+  const normalized = normalizeMacros(macros);
+  return !hasMissingCoreMacros(normalized);
 }
 
 /**
@@ -262,49 +312,42 @@ export function calculatePlanMacros(
 ) {
   const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
   if (!Array.isArray(dayMenu)) return acc;
+  const applyNormalized = (normalized) => {
+    if (!skipValidation) {
+      validateMacroCalories(normalized, 0.05, carbsIncludeFiber);
+    }
+    acc.calories += normalized.calories;
+    acc.protein += normalized.protein;
+    acc.carbs += normalized.carbs;
+    acc.fat += normalized.fat;
+    acc.fiber += normalized.fiber;
+  };
+
+  const tryIndexed = (key) => {
+    if (!key || !mealMacrosIndex || typeof mealMacrosIndex !== 'object') return false;
+    const indexed = mealMacrosIndex[key];
+    if (!indexed || typeof indexed !== 'object') return false;
+    const normalized = normalizeMacros(indexed);
+    if (hasMissingCoreMacros(normalized)) return false;
+    applyNormalized(normalized);
+    return true;
+  };
+
   dayMenu.forEach((meal, idx) => {
     const macros = meal && typeof meal.macros === 'object' ? meal.macros : null;
+    const key = dayKey ? `${dayKey}_${idx}` : null;
     if (macros) {
-      const mapped = mapGramFields(macros);
-      const normalized = {
-        calories: Number(mapped.calories) || 0,
-        protein: Number(mapped.protein) || 0,
-        carbs: Number(mapped.carbs) || 0,
-        fat: Number(mapped.fat) || 0,
-        fiber: Number(mapped.fiber) || 0
-      };
-      if (!skipValidation) {
-        validateMacroCalories(normalized, 0.05, carbsIncludeFiber);
+      const normalized = normalizeMacros(macros);
+      if (!hasMissingCoreMacros(normalized)) {
+        applyNormalized(normalized);
+        return;
       }
-      acc.calories += normalized.calories;
-      acc.protein += normalized.protein;
-      acc.carbs += normalized.carbs;
-      acc.fat += normalized.fat;
-      acc.fiber += normalized.fiber;
-    } else {
-      const key = dayKey ? `${dayKey}_${idx}` : null;
-      const indexed = key && mealMacrosIndex ? mealMacrosIndex[key] : null;
-      if (indexed && typeof indexed === 'object') {
-        const mapped = mapGramFields(indexed);
-        const normalized = {
-          calories: Number(mapped.calories) || 0,
-          protein: Number(mapped.protein) || 0,
-          carbs: Number(mapped.carbs) || 0,
-          fat: Number(mapped.fat) || 0,
-          fiber: Number(mapped.fiber) || 0
-        };
-        if (!skipValidation) {
-          validateMacroCalories(normalized, 0.05, carbsIncludeFiber);
-        }
-        acc.calories += normalized.calories;
-        acc.protein += normalized.protein;
-        acc.carbs += normalized.carbs;
-        acc.fat += normalized.fat;
-        acc.fiber += normalized.fiber;
-      } else {
-        addMealMacros(meal, acc, skipValidation);
-      }
+      if (tryIndexed(key)) return;
+      addMealMacros(meal, acc, skipValidation);
+      return;
     }
+    if (tryIndexed(key)) return;
+    addMealMacros(meal, acc, skipValidation);
   });
   const percents = calculateMacroPercents(acc);
   return { ...acc, ...percents };
@@ -326,22 +369,35 @@ export function calculateCurrentMacros(
 ) {
   const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
+  const getIndexedMacros = (key, grams) => {
+    if (!key || !mealMacrosIndex || typeof mealMacrosIndex !== 'object') return null;
+    const indexed = mealMacrosIndex[key];
+    if (!indexed || typeof indexed !== 'object') return null;
+    const normalized = normalizeMacros(indexed);
+    if (hasMissingCoreMacros(normalized)) return null;
+    const result = { ...normalized };
+    const resolvedGrams = grams ?? indexed.grams;
+    if (resolvedGrams != null) result.grams = resolvedGrams;
+    return result;
+  };
+
   const prepareMeal = (meal, key = null) => {
+    const grams = meal && typeof meal === 'object' ? meal.grams : undefined;
     if (meal && typeof meal.macros === 'object') {
-      return { ...mapGramFields(meal.macros), grams: meal.grams };
-    }
-    if (key && mealMacrosIndex && typeof mealMacrosIndex === 'object') {
-      const indexed = mealMacrosIndex[key];
-      if (indexed && typeof indexed === 'object') {
-        const mapped = mapGramFields(indexed);
-        const grams =
-          (meal && typeof meal === 'object' ? meal.grams : undefined) ??
-          mapped.grams ??
-          indexed.grams;
-        return { ...mapped, ...(grams != null ? { grams } : {}) };
+      const normalized = normalizeMacros(meal.macros);
+      if (!hasMissingCoreMacros(normalized)) {
+        const result = { ...normalized };
+        if (grams != null) result.grams = grams;
+        return result;
       }
     }
-    return mapGramFields(meal);
+    if (key) {
+      const indexed = getIndexedMacros(key, grams);
+      if (indexed) return indexed;
+    }
+    const mapped = mapGramFields(meal);
+    if (grams != null) mapped.grams = grams;
+    return mapped;
   };
 
   Object.entries(planMenu).forEach(([day, meals]) => {

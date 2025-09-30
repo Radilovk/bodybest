@@ -79,6 +79,25 @@ test('calculateCurrentMacros използва mealMacrosIndex като fallback'
   expect(result).toEqual({ calories: 320, protein: 30, carbs: 25, fat: 12, fiber: 6 });
 });
 
+test('calculateCurrentMacros нормализира макроси с *_g и *_kcal полета', () => {
+  const planMenu = {
+    monday: [
+      {
+        macros: {
+          calories_kcal: '320',
+          protein_g: '30',
+          carbs_g: '25',
+          fat_g: '12',
+          fiber_g: '6'
+        }
+      }
+    ]
+  };
+  const completionStatus = { monday_0: true };
+  const result = calculateCurrentMacros(planMenu, completionStatus, []);
+  expect(result).toEqual({ calories: 320, protein: 30, carbs: 25, fat: 12, fiber: 6 });
+});
+
 test('calculatePlanMacros sums macros for day menu', () => {
   const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   const dayMenu = [
