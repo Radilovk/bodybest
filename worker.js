@@ -442,7 +442,6 @@ const AI_CONFIG_KEYS = [
     'model_questionnaire_analysis',
     'prompt_questionnaire_analysis',
     'prompt_unified_plan_generation_v2',
-    'prompt_analytics_textual_summary',
     'plan_token_limit',
     'plan_temperature',
     'prompt_chat',
@@ -5273,6 +5272,86 @@ async function callCfAi(model, payload, env) {
 // ------------- END FUNCTION: callCfAi -------------
 
 // ------------- START FUNCTION: calculateAnalyticsIndexes -------------
+function buildDeterministicAnalyticsSummary(analytics = {}, metrics = [], userGoal) {
+    const numericMetrics = metrics
+        .filter(metric => metric && typeof metric.currentValueNumeric === 'number' && !Number.isNaN(metric.currentValueNumeric))
+        .map(metric => {
+            const value = Number(metric.currentValueNumeric);
+            let normalized = value;
+            if (!Number.isFinite(normalized)) normalized = 0;
+            if (metric.key === 'bmi_status') {
+                const idealBmi = 22;
+                const diff = Math.abs(value - idealBmi);
+                normalized = Math.max(0, Math.min(100, 100 - diff * 10));
+            } else if (value >= 0 && value <= 5) {
+                normalized = (value / 5) * 100;
+            } else {
+                normalized = Math.max(0, Math.min(100, value));
+            }
+            return { ...metric, normalizedScore: normalized, rawValue: value };
+        });
+
+    if (numericMetrics.length === 0) {
+        return '';
+    }
+
+    const sorted = [...numericMetrics].sort((a, b) => b.normalizedScore - a.normalizedScore);
+    const successes = sorted.filter(metric => metric.normalizedScore >= 70).slice(0, 2);
+    const risks = [...sorted].reverse().filter(metric => metric.normalizedScore <= 50).slice(0, 2);
+
+    const goalText = userGoal && userGoal !== 'unknown' ? userGoal : 'основната Ви цел';
+    const safeRound = (value) => {
+        const num = Number(value);
+        return Number.isFinite(num) ? Math.round(num) : 0;
+    };
+    const formatList = (items) => {
+        if (items.length === 0) return '';
+        if (items.length === 1) return items[0];
+        if (items.length === 2) return `${items[0]} и ${items[1]}`;
+        const head = items.slice(0, -1).join(', ');
+        const tail = items[items.length - 1];
+        return `${head} и ${tail}`;
+    };
+    const formatScoreValue = (metric) => {
+        const { rawValue, key } = metric;
+        if (!Number.isFinite(rawValue)) return 'N/A';
+        if (key === 'bmi_status') {
+            return `${rawValue.toFixed(1)}`;
+        }
+        if (rawValue >= 0 && rawValue <= 5) {
+            return `${rawValue.toFixed(1)}/5`;
+        }
+        return `${Math.round(rawValue)}%`;
+    };
+
+    const sentences = [];
+    sentences.push(`Целта Ви е ${goalText}. Общият напредък е ${safeRound(analytics.goalProgress)}%, а ангажираността е ${safeRound(analytics.engagementScore)}%.`);
+
+    if (successes.length > 0) {
+        const successText = formatList(successes.map(metric => `${metric.label} (${formatScoreValue(metric)})`));
+        sentences.push(`Силни страни се открояват при ${successText}.`);
+    }
+
+    if (risks.length > 0) {
+        const riskText = formatList(risks.map(metric => `${metric.label} (${formatScoreValue(metric)})`));
+        sentences.push(`Необходимо е внимание към ${riskText}.`);
+    }
+
+    if (sentences.length < 2 && sorted[0]) {
+        const best = sorted[0];
+        sentences.push(`Най-стабилен показател е ${best.label} (${formatScoreValue(best)}).`);
+    }
+
+    if (sentences.length < 2 && sorted.length > 1) {
+        const weakest = sorted[sorted.length - 1];
+        if (weakest && weakest !== sorted[0]) {
+            sentences.push(`Най-ниска стойност се наблюдава при ${weakest.label} (${formatScoreValue(weakest)}).`);
+        }
+    }
+
+    return sentences.slice(0, 3).join(' ');
+}
+
 async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries = [], currentStatus = {}, env) {
     const userLogId = initialAnswers?.email || userId || 'calcAnalyticsUser'; // Enhanced logging ID
     // console.log(`ANALYTICS_CALC (${userLogId}): Starting calculation.`);
@@ -5590,55 +5669,8 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
     });
 
-    let textualAnalysisSummary = "Анализът на Вашия напредък се генерира...";
-    try {
-        const promptTemplateTextual = await getCachedResource(
-            'analytics_prompt',
-            env.RESOURCES_KV,
-            undefined,
-            'prompt_analytics_textual_summary'
-        );
-        const geminiApiKeyForAnalysis = env[GEMINI_API_KEY_SECRET_NAME];
-        const openaiApiKeyForAnalysis = env[OPENAI_API_KEY_SECRET_NAME];
-        const analysisModelForText = await getCachedResource('model_chat', env.RESOURCES_KV) || await getCachedResource('model_plan_generation', env.RESOURCES_KV); // Use a suitable model
-
-        const providerForAnalysis = getModelProvider(analysisModelForText);
-        if (promptTemplateTextual && analysisModelForText &&
-            ((providerForAnalysis === 'gemini' && geminiApiKeyForAnalysis) || (providerForAnalysis === 'openai' && openaiApiKeyForAnalysis) || providerForAnalysis === 'cf')) {
-            const sleepMetric = detailedAnalyticsMetrics.find(m => m.key === 'sleep_quality');
-            const calmnessMetric = detailedAnalyticsMetrics.find(m => m.key === 'stress_level');
-            const energyMetric = detailedAnalyticsMetrics.find(m => m.key === 'energy_level');
-            const bmiMetric = detailedAnalyticsMetrics.find(m => m.key === 'bmi_status');
-            const adherenceMetric = detailedAnalyticsMetrics.find(m => m.key === 'meal_adherence');
-            const consistencyMetric = detailedAnalyticsMetrics.find(m => m.key === 'log_consistency');
-
-            const replacementsForTextual = {
-                '%%GOAL_PROGRESS_PERCENT%%': currentAnalytics.goalProgress,
-                '%%USER_GOAL%%': userGoal,
-                '%%ENGAGEMENT_SCORE_PERCENT%%': currentAnalytics.engagementScore,
-                '%%OVERALL_HEALTH_SCORE_PERCENT%%': currentAnalytics.overallHealthScore,
-                '%%CURRENT_SLEEP_NUMERIC%%': sleepMetric?.currentValueNumeric ?? 'N/A',
-                '%%CURRENT_SLEEP_TEXT%%': sleepMetric?.currentValueText ?? 'N/A',
-                '%%CURRENT_CALMNESS_NUMERIC%%': calmnessMetric?.currentValueNumeric ?? 'N/A',
-                '%%CURRENT_CALMNESS_TEXT%%': calmnessMetric?.currentValueText ?? 'N/A',
-                '%%CURRENT_ENERGY_NUMERIC%%': energyMetric?.currentValueNumeric ?? 'N/A',
-                '%%CURRENT_ENERGY_TEXT%%': energyMetric?.currentValueText ?? 'N/A',
-                '%%CURRENT_BMI_NUMERIC%%': bmiMetric?.currentValueNumeric ?? 'N/A',
-                '%%CURRENT_BMI_TEXT%%': bmiMetric?.currentValueText ?? 'N/A',
-                '%%CURRENT_MEAL_ADHERENCE_PERCENT%%': adherenceMetric?.currentValueText ?? 'N/A',
-                '%%CURRENT_LOG_CONSISTENCY_PERCENT%%': consistencyMetric?.currentValueText ?? 'N/A'
-            };
-            const populatedTextualPrompt = populatePrompt(promptTemplateTextual, replacementsForTextual);
-            textualAnalysisSummary = await callModelRef.current(analysisModelForText, populatedTextualPrompt, env, { temperature: 0.6, maxTokens: 400 });
-            textualAnalysisSummary = cleanGeminiJson(textualAnalysisSummary.replace(/```json\n?|\n?```/g, '').trim()); // Ensure it's clean text
-        } else {
-            console.warn(`ANALYTICS_CALC_WARN (${userLogId}): Cannot generate textual analysis due to missing KV resources (prompt, API key, or model).`);
-            textualAnalysisSummary = "Не може да се генерира текстов анализ на напредъка в момента.";
-        }
-    } catch (error) {
-        console.error(`ANALYTICS_CALC_ERROR (${userLogId}): Error generating textual analysis:`, error.message, error.stack);
-        textualAnalysisSummary = `Възникна грешка при генериране на текстов анализ на напредъка.`;
-    }
+    const textualAnalysisSummary = buildDeterministicAnalyticsSummary(currentAnalytics, detailedAnalyticsMetrics, userGoal)
+        || 'Няма достатъчно данни за текстов анализ.';
 
     // ----- Streak Calculation -----
     const streak = { currentCount: 0, dailyStatusArray: [] };
@@ -5917,4 +5949,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary };
