@@ -79,6 +79,47 @@ test('calculateCurrentMacros използва mealMacrosIndex като fallback'
   expect(result).toEqual({ calories: 320, protein: 30, carbs: 25, fat: 12, fiber: 6 });
 });
 
+test('normalizeMacros парсира стойности със съответните единици', () => {
+  const normalized = normalizeMacros({
+    calories: '320 kcal',
+    protein: '25 g',
+    carbs: '40 grams',
+    fat: '10 g',
+    fiber: '5 g',
+    alcohol: '7 g'
+  });
+  expect(normalized).toEqual({ calories: 320, protein: 25, carbs: 40, fat: 10, fiber: 5, alcohol: 7 });
+});
+
+test('calculateCurrentMacros обработва стойности със единици в macros и mealMacrosIndex', () => {
+  const planMenu = {
+    monday: [
+      {
+        macros: {
+          calories: '186 kcal',
+          protein_g: '15 g',
+          carbs_g: '20 g',
+          fat_g: '6 g',
+          fiber_g: '4 г'
+        }
+      },
+      { meal_name: 'Indexed meal' }
+    ]
+  };
+  const completionStatus = { monday_0: true, monday_1: true };
+  const mealMacrosIndex = {
+    monday_1: {
+      calories: '151 kcal',
+      protein_grams: '10 g',
+      carbs_grams: '18 g',
+      fat_grams: '5 г',
+      fiber_grams: '3 g'
+    }
+  };
+  const result = calculateCurrentMacros(planMenu, completionStatus, [], false, mealMacrosIndex);
+  expect(result).toEqual({ calories: 337, protein: 25, carbs: 38, fat: 11, fiber: 7 });
+});
+
 test('calculateCurrentMacros нормализира макроси с *_g и *_kcal полета', () => {
   const planMenu = {
     monday: [

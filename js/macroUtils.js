@@ -41,6 +41,27 @@ const hasValue = (value) => value !== undefined && value !== null && value !== '
 const hasMissingCoreMacros = (normalized) =>
   Array.isArray(normalized?.__missingMacroKeys) && normalized.__missingMacroKeys.length > 0;
 
+const NUMERIC_VALUE_REGEX = /-?\d+(?:[.,]\d+)?/;
+
+const parseNumericValue = (value) => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === 'string') {
+    const match = value.match(NUMERIC_VALUE_REGEX);
+    if (!match) return null;
+    const normalized = match[0].replace(',', '.');
+    const parsed = Number.parseFloat(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const coerceNumber = (value, fallback = 0) => {
+  const parsed = parseNumericValue(value);
+  return parsed != null ? parsed : fallback;
+};
+
 /**
  * Регистрира overrides за хранителни стойности.
  * @param {Record<string, {calories:number, protein:number, carbs:number, fat:number, fiber:number, alcohol?:number}>} overrides
@@ -83,12 +104,12 @@ export async function loadProductMacros() {
   (products || []).forEach((p) => {
     if (!p?.name) return;
     overrides[p.name.toLowerCase()] = {
-      calories: Number(p.calories) || 0,
-      protein: Number(p.protein) || 0,
-      carbs: Number(p.carbs) || 0,
-      fat: Number(p.fat) || 0,
-      fiber: Number(p.fiber) || 0,
-      ...(p.alcohol != null ? { alcohol: Number(p.alcohol) || 0 } : {})
+      calories: coerceNumber(p.calories),
+      protein: coerceNumber(p.protein),
+      carbs: coerceNumber(p.carbs),
+      fat: coerceNumber(p.fat),
+      fiber: coerceNumber(p.fiber),
+      ...(p.alcohol != null ? { alcohol: coerceNumber(p.alcohol) } : {})
     };
   });
   registerNutrientOverrides(overrides);
@@ -122,7 +143,19 @@ function mapGramFields(obj = {}) {
     }
   };
 
-  [...CORE_MACRO_FIELDS, 'alcohol'].forEach(ensureField);
+  const numericMacroFields = [...CORE_MACRO_FIELDS, 'alcohol'];
+  numericMacroFields.forEach(ensureField);
+
+  numericMacroFields.forEach((field) => {
+    if (!hasValue(mapped[field])) return;
+    const parsed = parseNumericValue(mapped[field]);
+    if (parsed != null) mapped[field] = parsed;
+  });
+
+  if (hasValue(mapped.grams)) {
+    const parsedGrams = parseNumericValue(mapped.grams);
+    if (parsedGrams != null) mapped.grams = parsedGrams;
+  }
 
   return mapped;
 }
@@ -131,13 +164,13 @@ export function normalizeMacros(macros = {}) {
   const m = mapGramFields(macros);
   const missingKeys = CORE_MACRO_FIELDS.filter((key) => !hasValue(m[key]));
   const normalized = {
-    calories: Number(m.calories) || 0,
-    protein: Number(m.protein) || 0,
-    carbs: Number(m.carbs) || 0,
-    fat: Number(m.fat) || 0,
-    fiber: Number(m.fiber) || 0
+    calories: coerceNumber(m.calories),
+    protein: coerceNumber(m.protein),
+    carbs: coerceNumber(m.carbs),
+    fat: coerceNumber(m.fat),
+    fiber: coerceNumber(m.fiber)
   };
-  if (m.alcohol != null) normalized.alcohol = Number(m.alcohol) || 0;
+  if (hasValue(m.alcohol)) normalized.alcohol = coerceNumber(m.alcohol);
   Object.defineProperty(normalized, '__missingMacroKeys', {
     value: missingKeys,
     enumerable: false
@@ -159,13 +192,13 @@ export function hasMealMacroPayload(macros = {}) {
 export function scaleMacros(macros = {}, grams = 100) {
   const factor = grams / 100;
   const scaled = {
-    calories: (Number(macros.calories) || 0) * factor,
-    protein: (Number(macros.protein) || 0) * factor,
-    carbs: (Number(macros.carbs) || 0) * factor,
-    fat: (Number(macros.fat) || 0) * factor,
-    fiber: (Number(macros.fiber) || 0) * factor
+    calories: coerceNumber(macros.calories) * factor,
+    protein: coerceNumber(macros.protein) * factor,
+    carbs: coerceNumber(macros.carbs) * factor,
+    fat: coerceNumber(macros.fat) * factor,
+    fiber: coerceNumber(macros.fiber) * factor
   };
-  if (macros.alcohol != null) scaled.alcohol = (Number(macros.alcohol) || 0) * factor;
+  if (macros.alcohol != null) scaled.alcohol = coerceNumber(macros.alcohol) * factor;
   return scaled;
 }
 
@@ -205,12 +238,12 @@ function resolveMacros(meal, grams) {
   let macros;
   if ('calories' in meal) {
     macros = {
-      calories: Number(meal.calories) || 0,
-      protein: Number(meal.protein) || 0,
-      carbs: Number(meal.carbs) || 0,
-      fat: Number(meal.fat) || 0,
-      fiber: Number(meal.fiber) || 0,
-      ...(meal.alcohol != null ? { alcohol: Number(meal.alcohol) || 0 } : {})
+      calories: coerceNumber(meal.calories),
+      protein: coerceNumber(meal.protein),
+      carbs: coerceNumber(meal.carbs),
+      fat: coerceNumber(meal.fat),
+      fiber: coerceNumber(meal.fiber),
+      ...(meal.alcohol != null ? { alcohol: coerceNumber(meal.alcohol) } : {})
     };
   } else {
     const override = getNutrientOverride(meal.meal_name || meal.name);
@@ -220,13 +253,13 @@ function resolveMacros(meal, grams) {
         macrosByIdOrName.get(meal.id) ||
         macrosByIdOrName.get((meal.meal_name || meal.name || '').toLowerCase());
       macros = {
-        calories: Number(baseMacros?.['калории']) || 0,
-        protein: Number(baseMacros?.['белтъчини']) || 0,
-        carbs: Number(baseMacros?.['въглехидрати']) || 0,
-        fat: Number(baseMacros?.['мазнини']) || 0,
-        fiber: Number(baseMacros?.['фибри']) || 0,
+        calories: coerceNumber(baseMacros?.['калории']),
+        protein: coerceNumber(baseMacros?.['белтъчини']),
+        carbs: coerceNumber(baseMacros?.['въглехидрати']),
+        fat: coerceNumber(baseMacros?.['мазнини']),
+        fiber: coerceNumber(baseMacros?.['фибри']),
         ...(baseMacros?.['алкохол'] != null
-          ? { alcohol: Number(baseMacros?.['алкохол']) || 0 }
+          ? { alcohol: coerceNumber(baseMacros?.['алкохол']) }
           : {})
       };
     }
