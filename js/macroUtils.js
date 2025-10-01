@@ -124,6 +124,22 @@ export async function loadProductMacros() {
 function mapGramFields(obj = {}) {
   const base = obj && typeof obj === 'object' ? obj : {};
   const mapped = { ...base };
+
+  if (Object.prototype.hasOwnProperty.call(base, '__preferGivenCalories')) {
+    Object.defineProperty(mapped, '__preferGivenCalories', {
+      value: base.__preferGivenCalories,
+      enumerable: false
+    });
+  }
+
+  if (base && typeof base.macros === 'object') {
+    Object.entries(base.macros).forEach(([key, value]) => {
+      if (Object.prototype.hasOwnProperty.call(mapped, key)) return;
+      const parsed = parseNumericValue(value);
+      mapped[key] = parsed != null ? parsed : value;
+    });
+  }
+
   const lowerCaseKeyMap = new Map();
   Object.keys(mapped).forEach((key) => {
     lowerCaseKeyMap.set(key.toLowerCase(), key);
@@ -171,6 +187,12 @@ export function normalizeMacros(macros = {}) {
     fiber: coerceNumber(m.fiber)
   };
   if (hasValue(m.alcohol)) normalized.alcohol = coerceNumber(m.alcohol);
+  if (m.__preferGivenCalories) {
+    Object.defineProperty(normalized, '__preferGivenCalories', {
+      value: true,
+      enumerable: false
+    });
+  }
   Object.defineProperty(normalized, '__missingMacroKeys', {
     value: missingKeys,
     enumerable: false
@@ -200,6 +222,39 @@ export function scaleMacros(macros = {}, grams = 100) {
   };
   if (macros.alcohol != null) scaled.alcohol = coerceNumber(macros.alcohol) * factor;
   return scaled;
+}
+
+function mergeNormalizedWithIndexed(normalized, indexed = null, grams = undefined) {
+  const result = { ...normalized };
+  if (normalized?.__preferGivenCalories) {
+    Object.defineProperty(result, '__preferGivenCalories', {
+      value: true,
+      enumerable: false
+    });
+  }
+  const missingKeys = Array.isArray(normalized?.__missingMacroKeys)
+    ? normalized.__missingMacroKeys
+    : [];
+
+  if (indexed) {
+    CORE_MACRO_FIELDS.forEach((field) => {
+      if (missingKeys.includes(field) && hasValue(indexed[field])) {
+        result[field] = indexed[field];
+      }
+    });
+    if ((normalized.alcohol == null || missingKeys.includes('alcohol')) && hasValue(indexed.alcohol)) {
+      result.alcohol = indexed.alcohol;
+    } else if (result.alcohol == null && hasValue(indexed.alcohol)) {
+      result.alcohol = indexed.alcohol;
+    }
+    if (result.grams == null && hasValue(indexed.grams)) {
+      result.grams = indexed.grams;
+    }
+  }
+
+  if (grams != null) result.grams = grams;
+
+  return result;
 }
 
 /**
@@ -245,6 +300,12 @@ function resolveMacros(meal, grams) {
       fiber: coerceNumber(meal.fiber),
       ...(meal.alcohol != null ? { alcohol: coerceNumber(meal.alcohol) } : {})
     };
+    if (meal.__preferGivenCalories) {
+      Object.defineProperty(macros, '__preferGivenCalories', {
+        value: true,
+        enumerable: false
+      });
+    }
   } else {
     const override = getNutrientOverride(meal.meal_name || meal.name);
     if (override) macros = override;
@@ -290,6 +351,7 @@ export function recalculateCalories(macros = {}, carbsIncludeFiber = true) {
  * @param {boolean} [carbsIncludeFiber=true] - Ако въглехидратите включват фибри, изважда ги за нетно съдържание.
  */
 function validateMacroCalories(macros = {}, threshold = 0.05, carbsIncludeFiber = true) {
+  if (macros?.__preferGivenCalories) return;
   const { calories = 0, protein = 0, carbs = 0, fat = 0, fiber = 0, alcohol = 0 } = macros;
   const netCarbs = carbsIncludeFiber ? carbs - fiber : carbs;
   const calc = protein * 4 + netCarbs * 4 + fat * 9 + fiber * 2 + alcohol * 7;
@@ -356,27 +418,55 @@ export function calculatePlanMacros(
     acc.fiber += normalized.fiber;
   };
 
-  const tryIndexed = (key) => {
-    if (!key || !mealMacrosIndex || typeof mealMacrosIndex !== 'object') return false;
+  const getIndexedForKey = (key) => {
+    if (!key || !mealMacrosIndex || typeof mealMacrosIndex !== 'object') return null;
     const indexed = mealMacrosIndex[key];
-    if (!indexed || typeof indexed !== 'object') return false;
+    if (!indexed || typeof indexed !== 'object') return null;
     const normalized = normalizeMacros(indexed);
-    if (hasMissingCoreMacros(normalized)) return false;
-    applyNormalized(normalized);
+    if (hasMissingCoreMacros(normalized)) return null;
+    const result = { ...normalized };
+    if (hasValue(indexed.grams)) {
+      const parsedGrams = parseNumericValue(indexed.grams);
+      if (parsedGrams != null) result.grams = parsedGrams;
+    }
+    return result;
+  };
+
+  const tryIndexed = (key) => {
+    const indexed = getIndexedForKey(key);
+    if (!indexed) return false;
+    applyNormalized(indexed);
     return true;
   };
 
   dayMenu.forEach((meal, idx) => {
     const macros = meal && typeof meal.macros === 'object' ? meal.macros : null;
+    const grams = meal && typeof meal === 'object' ? meal.grams : undefined;
     const key = dayKey ? `${dayKey}_${idx}` : null;
     if (macros) {
       const normalized = normalizeMacros(macros);
       if (!hasMissingCoreMacros(normalized)) {
+        Object.defineProperty(normalized, '__preferGivenCalories', {
+          value: true,
+          enumerable: false
+        });
         applyNormalized(normalized);
         return;
       }
-      if (tryIndexed(key)) return;
-      addMealMacros(meal, acc, skipValidation);
+      const indexed = getIndexedForKey(key);
+      const merged = mergeNormalizedWithIndexed(normalized, indexed, grams);
+      const { grams: mergedGrams, ...macroValues } = merged;
+      const prepared = {
+        ...meal,
+        ...macroValues,
+        ...(mergedGrams != null ? { grams: mergedGrams } : {})
+      };
+      prepared.macros = { ...(meal.macros || {}), ...macroValues };
+      Object.defineProperty(prepared, '__preferGivenCalories', {
+        value: true,
+        enumerable: false
+      });
+      addMealMacros(prepared, acc, skipValidation);
       return;
     }
     if (tryIndexed(key)) return;
@@ -421,8 +511,26 @@ export function calculateCurrentMacros(
       if (!hasMissingCoreMacros(normalized)) {
         const result = { ...normalized };
         if (grams != null) result.grams = grams;
+        Object.defineProperty(result, '__preferGivenCalories', {
+          value: true,
+          enumerable: false
+        });
         return result;
       }
+      const indexed = key ? getIndexedMacros(key, grams) : null;
+      const merged = mergeNormalizedWithIndexed(normalized, indexed, grams);
+      const { grams: mergedGrams, ...macroValues } = merged;
+      const prepared = {
+        ...meal,
+        ...macroValues,
+        ...(mergedGrams != null ? { grams: mergedGrams } : {})
+      };
+      prepared.macros = { ...(meal.macros || {}), ...macroValues };
+      Object.defineProperty(prepared, '__preferGivenCalories', {
+        value: true,
+        enumerable: false
+      });
+      return prepared;
     }
     if (key) {
       const indexed = getIndexedMacros(key, grams);
@@ -430,6 +538,12 @@ export function calculateCurrentMacros(
     }
     const mapped = mapGramFields(meal);
     if (grams != null) mapped.grams = grams;
+    if (hasValue(mapped.calories)) {
+      Object.defineProperty(mapped, '__preferGivenCalories', {
+        value: true,
+        enumerable: false
+      });
+    }
     return mapped;
   };
 
