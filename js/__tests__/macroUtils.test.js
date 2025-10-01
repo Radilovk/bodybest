@@ -79,6 +79,19 @@ test('calculateCurrentMacros използва mealMacrosIndex като fallback'
   expect(result).toEqual({ calories: 320, protein: 30, carbs: 25, fat: 12, fiber: 6 });
 });
 
+test('calculateCurrentMacros приема макроси без fiber без fallback към 0', () => {
+  const planMenu = {
+    monday: [
+      {
+        macros: { calories: 290, protein_grams: 20, carbs_grams: 30, fat_grams: 10 }
+      }
+    ]
+  };
+  const completionStatus = { monday_0: true };
+  const result = calculateCurrentMacros(planMenu, completionStatus, []);
+  expect(result).toEqual({ calories: 290, protein: 20, carbs: 30, fat: 10, fiber: 0 });
+});
+
 test('normalizeMacros парсира стойности със съответните единици', () => {
   const normalized = normalizeMacros({
     calories: '320 kcal',
