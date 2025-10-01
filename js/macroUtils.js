@@ -423,7 +423,6 @@ export function calculatePlanMacros(
     const indexed = mealMacrosIndex[key];
     if (!indexed || typeof indexed !== 'object') return null;
     const normalized = normalizeMacros(indexed);
-    if (hasMissingCoreMacros(normalized)) return null;
     const result = { ...normalized };
     if (hasValue(indexed.grams)) {
       const parsedGrams = parseNumericValue(indexed.grams);
@@ -497,7 +496,6 @@ export function calculateCurrentMacros(
     const indexed = mealMacrosIndex[key];
     if (!indexed || typeof indexed !== 'object') return null;
     const normalized = normalizeMacros(indexed);
-    if (hasMissingCoreMacros(normalized)) return null;
     const result = { ...normalized };
     const resolvedGrams = grams ?? indexed.grams;
     if (resolvedGrams != null) result.grams = resolvedGrams;
