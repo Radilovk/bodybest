@@ -27,11 +27,11 @@ test('calculateCurrentMacros sums macros from completed meals and extras', () =>
   expect(result).toEqual({ calories: 848, protein: 67, carbs: 48, fat: 42, fiber: 5 });
 });
 
-  test('calculateCurrentMacros използва meal.macros и overrides', () => {
-    registerNutrientOverrides({
-      'override meal': { calories: 56, protein: 5, carbs: 5, fat: 2, fiber: 1 }
-    });
-    const planMenu = {
+test('calculateCurrentMacros използва meal.macros и overrides', () => {
+  registerNutrientOverrides({
+    'override meal': { calories: 56, protein: 5, carbs: 5, fat: 2, fiber: 1 }
+  });
+  const planMenu = {
       monday: [
         { meal_name: 'Override Meal' },
         { macros: { calories: 159, protein_grams: 10, carbs_grams: 20, fat_grams: 5, fiber_grams: 3 } }
@@ -39,9 +39,27 @@ test('calculateCurrentMacros sums macros from completed meals and extras', () =>
     };
     const completionStatus = { monday_0: true, monday_1: true };
     const result = calculateCurrentMacros(planMenu, completionStatus, []);
-    expect(result).toEqual({ calories: 215, protein: 15, carbs: 25, fat: 7, fiber: 4 });
-    registerNutrientOverrides({});
-  });
+  expect(result).toEqual({ calories: 215, protein: 15, carbs: 25, fat: 7, fiber: 4 });
+  registerNutrientOverrides({});
+});
+
+test('calculateCurrentMacros комбинира частични макроси без индекс', () => {
+  const planMenu = {
+    monday: [
+      {
+        macros: {
+          calories: 420,
+          protein_grams: 32,
+          carbs_grams: 45,
+          fat_grams: 12
+        }
+      }
+    ]
+  };
+  const completionStatus = { monday_0: true };
+  const result = calculateCurrentMacros(planMenu, completionStatus, []);
+  expect(result).toEqual({ calories: 420, protein: 32, carbs: 45, fat: 12, fiber: 0 });
+});
 
 test('calculateCurrentMacros скалира macros по grams', () => {
   const planMenu = {
