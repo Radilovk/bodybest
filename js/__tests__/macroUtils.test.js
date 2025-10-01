@@ -222,6 +222,36 @@ test('calculatePlanMacros използва mealMacrosIndex при липсващ
   });
 });
 
+test('calculatePlanMacros комбинира частични потребителски и индекс макроси', () => {
+  const dayMenu = [
+    {
+      meal_name: 'Комбинирано ястие',
+      macros: {
+        calories: 200,
+        protein_grams: 20
+      }
+    }
+  ];
+  const mealMacrosIndex = {
+    monday_0: {
+      carbs_grams: 30,
+      fat_grams: 10
+    }
+  };
+  const result = calculatePlanMacros(dayMenu, true, false, mealMacrosIndex, 'monday');
+  expect(result).toMatchObject({
+    calories: 200,
+    protein: 20,
+    carbs: 30,
+    fat: 10,
+    fiber: 0,
+    protein_percent: 40,
+    carbs_percent: 60,
+    fat_percent: 45,
+    fiber_percent: 0
+  });
+});
+
 test('addMealMacros и removeMealMacros актуализират и clamp-ват акумулатора', () => {
   const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
   const meal = { calories: 280, protein_grams: 20, carbs_grams: 30, fat_grams: 10, fiber_grams: 5 };
