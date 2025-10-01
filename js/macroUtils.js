@@ -40,6 +40,12 @@ const MACRO_FIELD_ALIASES = {
 const hasValue = (value) => value !== undefined && value !== null && value !== '';
 const hasMissingCoreMacros = (normalized) =>
   Array.isArray(normalized?.__missingMacroKeys) && normalized.__missingMacroKeys.length > 0;
+const isFiberOnlyMissing = (normalized) => {
+  const missing = Array.isArray(normalized?.__missingMacroKeys)
+    ? normalized.__missingMacroKeys
+    : [];
+  return missing.length === 1 && missing[0] === 'fiber';
+};
 
 const NUMERIC_VALUE_REGEX = /-?\d+(?:[.,]\d+)?/;
 
@@ -123,7 +129,8 @@ export async function loadProductMacros() {
 */
 function mapGramFields(obj = {}) {
   const base = obj && typeof obj === 'object' ? obj : {};
-  const mapped = { ...base };
+  const macrosPayload = base?.macros && typeof base.macros === 'object' ? base.macros : null;
+  const mapped = macrosPayload ? { ...macrosPayload, ...base } : { ...base };
   const lowerCaseKeyMap = new Map();
   Object.keys(mapped).forEach((key) => {
     lowerCaseKeyMap.set(key.toLowerCase(), key);
@@ -361,7 +368,7 @@ export function calculatePlanMacros(
     const indexed = mealMacrosIndex[key];
     if (!indexed || typeof indexed !== 'object') return false;
     const normalized = normalizeMacros(indexed);
-    if (hasMissingCoreMacros(normalized)) return false;
+    if (hasMissingCoreMacros(normalized) && !isFiberOnlyMissing(normalized)) return false;
     applyNormalized(normalized);
     return true;
   };
@@ -371,7 +378,7 @@ export function calculatePlanMacros(
     const key = dayKey ? `${dayKey}_${idx}` : null;
     if (macros) {
       const normalized = normalizeMacros(macros);
-      if (!hasMissingCoreMacros(normalized)) {
+      if (!hasMissingCoreMacros(normalized) || isFiberOnlyMissing(normalized)) {
         applyNormalized(normalized);
         return;
       }
@@ -407,7 +414,7 @@ export function calculateCurrentMacros(
     const indexed = mealMacrosIndex[key];
     if (!indexed || typeof indexed !== 'object') return null;
     const normalized = normalizeMacros(indexed);
-    if (hasMissingCoreMacros(normalized)) return null;
+    if (hasMissingCoreMacros(normalized) && !isFiberOnlyMissing(normalized)) return null;
     const result = { ...normalized };
     const resolvedGrams = grams ?? indexed.grams;
     if (resolvedGrams != null) result.grams = resolvedGrams;
@@ -418,7 +425,7 @@ export function calculateCurrentMacros(
     const grams = meal && typeof meal === 'object' ? meal.grams : undefined;
     if (meal && typeof meal.macros === 'object') {
       const normalized = normalizeMacros(meal.macros);
-      if (!hasMissingCoreMacros(normalized)) {
+      if (!hasMissingCoreMacros(normalized) || isFiberOnlyMissing(normalized)) {
         const result = { ...normalized };
         if (grams != null) result.grams = grams;
         return result;
