@@ -54,6 +54,7 @@ Json
     // - "Restrictive": Включи ЕДНО ясно обозначено "гъвкаво" или "любимо" хранене (напр. в събота), за да покажеш, че крайните ограничения не са цел.
     // - "LowSelfControl": Избирай храни, които изискват повече дъвчене и осъзнатост.
     // КОЛИЧЕСТВА: Всички количества ТРЯБВА да са с мерна единица (напр. "150г", "100мл", "1 бр. (среден)", "2 с.л.").
+    // Пример: "Закуска": macros → всички стойности са числа, без празни низове (напр. {"calories": 420, "protein_grams": 25, ...}).
     // Ключове: "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday". Всеки ден е масив от обекти за хранене.
     // Всеки обект: { "meal_name": "string", "macros": { ... }, "items": [{ "name": "string", "grams": "string" }], "recipeKey": "string" }
   },
@@ -61,7 +62,8 @@ Json
   "mealMacrosIndex": {
     // BG: Попълни този индекс автоматично на базата на генерираното `week1Menu`.
     // Ключовете са във формат "day_index" (напр. "monday_0", "monday_1").
-    // Стойността е обект с макросите за съответното хранене.
+    // За всяко хранене в `week1Menu` трябва да има идентичен `day_index` ключ с абсолютно същите числови стойности за calories, protein_grams, carbs_grams, fat_grams, fiber_grams.
+    // Пример: Ако `week1Menu.monday[0].macros` е {"calories": 420, "protein_grams": 25, ...}, то `mealMacrosIndex.monday_0` е същият обект 1:1.
   },
 
   "principlesWeek2_4": [
@@ -116,7 +118,7 @@ Json
   "generationMetadata": {
     "timestamp": "%%GENERATION_TIMESTAMP%%",
     "modelUsed": "%%MODEL_NAME_USED%%",
-    "promptVersion": "v2.3",
+    "promptVersion": "v2.4",
     "errors": []
   }
 }
