@@ -59,6 +59,7 @@ Your primary goal is to analyze the provided user questionnaire answers and gene
     // Each meal object: {
     //   "meal_name": "string",
     //   "macros": { "calories": "number", "protein_grams": "number", "carbs_grams": "number", "fat_grams": "number", "fiber_grams": "number" },
+    //   "macros" задължително съдържа само числови стойности (без празни низове) и всяка стойност се дублира едно към едно в "mealMacrosIndex".
     //   "items": [{
     //     "name": "string",
     //     "grams": "string" // CRITICAL: Quantity WITH THE UNIT (e.g., "150g", "100ml", "1 бр.", "1/2 чаша (120ml)", "2 с.л.").
@@ -84,6 +85,7 @@ Your primary goal is to analyze the provided user questionnaire answers and gene
   "mealMacrosIndex": {
     // Бърза справка по ден и индекс на хранене.
     // Ключовете са във формат "day_index" (напр. "monday_0", "monday_1").
+    // За всяко хранене в "week1Menu" съществува съответният ключ "day_index" с числови стойности за "calories", "protein_grams", "carbs_grams", "fat_grams", "fiber_grams", идентични с данните в менюто.
     // Пример: "monday_0": { "calories": 400, "protein_grams": 25, "carbs_grams": 50, "fat_grams": 10, "fiber_grams": 8 }
   },
 
@@ -148,7 +150,7 @@ Your primary goal is to analyze the provided user questionnaire answers and gene
   "generationMetadata": {
       "timestamp": "%%GENERATION_TIMESTAMP%%",
       "modelUsed": "%%MODEL_NAME_USED%%",
-      "promptVersion": "v2.2",
+      "promptVersion": "v2.3",
       "errors": []
    }
 }
