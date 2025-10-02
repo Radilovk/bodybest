@@ -116,7 +116,7 @@ Json
   "generationMetadata": {
     "timestamp": "%%GENERATION_TIMESTAMP%%",
     "modelUsed": "%%MODEL_NAME_USED%%",
-    "promptVersion": "v3.0",
+    "promptVersion": "v2.3",
     "errors": []
   }
 }
