@@ -66,196 +66,6 @@ async function parseJsonSafe(resp, label = 'response') {
   }
 }
 
-const MACRO_VALUE_ALIASES = {
-  calories: ['calories', 'calories_kcal', 'kcal', 'cal', 'energy', 'energy_kcal'],
-  protein_grams: ['protein_grams', 'protein_g', 'protein', 'proteins', 'proteins_g'],
-  carbs_grams: [
-    'carbs_grams',
-    'carbs_g',
-    'carbs',
-    'carbohydrates',
-    'carbohydrates_g',
-    'carbohydrates_total_g',
-    'net_carbs',
-    'net_carbs_g'
-  ],
-  fat_grams: ['fat_grams', 'fat_g', 'fat', 'fat_total_g', 'fats'],
-  fiber_grams: ['fiber_grams', 'fiber_g', 'fiber', 'fibre', 'fibre_grams', 'fibre_g'],
-  alcohol_grams: ['alcohol_grams', 'alcohol_g', 'alcohol']
-};
-
-const MACRO_PERCENT_ALIASES = {
-  protein_percent: ['protein_percent', 'protein_pct', 'proteins_percent'],
-  carbs_percent: ['carbs_percent', 'carb_percent', 'carbohydrates_percent'],
-  fat_percent: ['fat_percent', 'fats_percent'],
-  fiber_percent: ['fiber_percent', 'fibre_percent'],
-  alcohol_percent: ['alcohol_percent']
-};
-
-const MACRO_DEFINITIONS = [
-  { gramsKey: 'protein_grams', percentKey: 'protein_percent', kcalPerGram: 4 },
-  { gramsKey: 'carbs_grams', percentKey: 'carbs_percent', kcalPerGram: 4 },
-  { gramsKey: 'fat_grams', percentKey: 'fat_percent', kcalPerGram: 9 },
-  { gramsKey: 'fiber_grams', percentKey: 'fiber_percent', kcalPerGram: 2 },
-  { gramsKey: 'alcohol_grams', percentKey: 'alcohol_percent', kcalPerGram: 7 }
-];
-
-function parseNumericMacroValue(value) {
-  if (value == null || value === '') return null;
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : null;
-  }
-  if (typeof value === 'string') {
-    const match = value.match(/-?\d+(?:[.,]\d+)?/);
-    if (!match) return null;
-    const normalized = match[0].replace(',', '.');
-    const parsed = Number.parseFloat(normalized);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-  return null;
-}
-
-function cloneMacrosObject(source) {
-  if (!source || typeof source !== 'object') return null;
-  return JSON.parse(JSON.stringify(source));
-}
-
-function finalizePlanMacroShape(rawMacros = {}, { roundValues = true } = {}) {
-  const macros = { ...rawMacros };
-  const parsedCalories = parseNumericMacroValue(macros.calories);
-  let calories = parsedCalories != null ? parsedCalories : null;
-  let caloriesFromGrams = 0;
-
-  for (const { gramsKey, percentKey, kcalPerGram } of MACRO_DEFINITIONS) {
-    const parsedGrams = parseNumericMacroValue(macros[gramsKey]);
-    const parsedPercent = parseNumericMacroValue(macros[percentKey]);
-    let grams = parsedGrams;
-    if ((grams == null || Number.isNaN(grams)) && calories != null && calories > 0 && parsedPercent != null) {
-      grams = (calories * parsedPercent) / 100 / kcalPerGram;
-    }
-    if (grams == null || Number.isNaN(grams)) grams = 0;
-    macros[gramsKey] = grams;
-    caloriesFromGrams += grams * kcalPerGram;
-  }
-
-  if (!(calories > 0)) {
-    calories = caloriesFromGrams;
-  } else if (caloriesFromGrams > 0) {
-    const diff = Math.abs(calories - caloriesFromGrams);
-    if (diff / caloriesFromGrams > 0.05) {
-      calories = caloriesFromGrams;
-    }
-  }
-
-  calories = Number.isFinite(calories) ? calories : 0;
-  macros.calories = roundValues ? Math.round(calories) : calories;
-
-  const effectiveCalories = macros.calories || 0;
-  for (const { gramsKey, percentKey, kcalPerGram } of MACRO_DEFINITIONS) {
-    const grams = macros[gramsKey] || 0;
-    macros[gramsKey] = roundValues ? Math.round(grams) : grams;
-    if (percentKey) {
-      const percent = effectiveCalories > 0 ? (grams * kcalPerGram * 100) / (roundValues ? macros.calories : effectiveCalories) : 0;
-      macros[percentKey] = roundValues ? Math.round(percent) : percent;
-    }
-  }
-
-  if (!macros.alcohol_grams) {
-    delete macros.alcohol_grams;
-    delete macros.alcohol_percent;
-  }
-
-  return macros;
-}
-
-function normalizePlanCaloriesMacros(source, { roundValues = true } = {}) {
-  if (!source || typeof source !== 'object') return null;
-  const raw = {};
-  let hasAnyValue = false;
-
-  for (const [targetKey, aliases] of Object.entries(MACRO_VALUE_ALIASES)) {
-    for (const alias of aliases) {
-      if (Object.prototype.hasOwnProperty.call(source, alias)) {
-        const parsed = parseNumericMacroValue(source[alias]);
-        if (parsed != null) {
-          raw[targetKey] = parsed;
-          hasAnyValue = true;
-          break;
-        }
-      }
-    }
-  }
-
-  if (!hasAnyValue) {
-    return null;
-  }
-
-  for (const [targetKey, aliases] of Object.entries(MACRO_PERCENT_ALIASES)) {
-    for (const alias of aliases) {
-      if (Object.prototype.hasOwnProperty.call(source, alias)) {
-        const parsed = parseNumericMacroValue(source[alias]);
-        if (parsed != null) {
-          raw[targetKey] = parsed;
-          break;
-        }
-      }
-    }
-  }
-
-  return finalizePlanMacroShape(raw, { roundValues });
-}
-
-function aggregatePlanMacrosFromMenu(plan = {}) {
-  const { week1Menu, mealMacrosIndex } = plan || {};
-  if (!week1Menu || typeof week1Menu !== 'object') return null;
-
-  const totals = { calories: 0, protein_grams: 0, carbs_grams: 0, fat_grams: 0, fiber_grams: 0, alcohol_grams: 0 };
-  let contributingMeals = 0;
-
-  for (const [dayKey, meals] of Object.entries(week1Menu)) {
-    if (!Array.isArray(meals)) continue;
-    meals.forEach((meal, mealIndex) => {
-      const candidate =
-        normalizePlanCaloriesMacros(meal?.macros, { roundValues: false }) ||
-        normalizePlanCaloriesMacros(mealMacrosIndex?.[`${dayKey}_${mealIndex}`], { roundValues: false }) ||
-        normalizePlanCaloriesMacros(meal, { roundValues: false });
-      if (!candidate) return;
-      contributingMeals++;
-      totals.protein_grams += candidate.protein_grams || 0;
-      totals.carbs_grams += candidate.carbs_grams || 0;
-      totals.fat_grams += candidate.fat_grams || 0;
-      totals.fiber_grams += candidate.fiber_grams || 0;
-      totals.alcohol_grams += candidate.alcohol_grams || 0;
-    });
-  }
-
-  const hasCoreMacros =
-    totals.protein_grams > 0 || totals.carbs_grams > 0 || totals.fat_grams > 0 || totals.fiber_grams > 0;
-
-  if (!contributingMeals || !hasCoreMacros) {
-    return null;
-  }
-
-  return finalizePlanMacroShape(totals, { roundValues: true });
-}
-
-function ensurePlanCaloriesMacros(plan, { allowAggregation = true } = {}) {
-  const original = cloneMacrosObject(plan?.caloriesMacros);
-  const normalized = normalizePlanCaloriesMacros(original || plan?.caloriesMacros);
-  if (normalized) {
-    plan.caloriesMacros = normalized;
-    return { status: 'normalized', macros: normalized };
-  }
-  if (allowAggregation) {
-    const aggregated = aggregatePlanMacrosFromMenu(plan);
-    if (aggregated) {
-      plan.caloriesMacros = aggregated;
-      return { status: 'recalculated', macros: aggregated };
-    }
-  }
-  return { status: 'missing', macros: null };
-}
-
 // Унифицирано изпращане на имейл
 async function sendEmailUniversal(to, subject, body, env = {}) {
   const endpoint = env.MAILER_ENDPOINT_URL || globalThis['process']?.env?.MAILER_ENDPOINT_URL;
@@ -1495,34 +1305,10 @@ async function handleDashboardDataRequest(request, env) {
             console.error(`DASHBOARD_DATA (${userId}) [${logTimestamp}]: Failed to parse final_plan JSON. Status: '${actualPlanStatus}'. Snippet: ${finalPlanStr.slice(0,200)}`);
             return { ...baseResponse, success: false, message: 'Грешка при зареждане на данните на Вашия план.', statusHint: 500, planData: null, analytics: null };
         }
-        const shouldRecalcMacros = url.searchParams.get('recalcMacros') === '1';
-        const originalMacrosSnapshot = finalPlan.caloriesMacros ? JSON.stringify(finalPlan.caloriesMacros) : null;
-        const macroResult = ensurePlanCaloriesMacros(finalPlan, { allowAggregation: shouldRecalcMacros });
-        let shouldPersistFinalPlan = false;
-        if (macroResult.status === 'missing') {
-            console.error(`DASHBOARD_DATA (${userId}): Missing caloriesMacros in final plan${shouldRecalcMacros ? ' и неуспешно fallback преизчисление.' : '.'}`);
-            return {
-                ...baseResponse,
-                success: false,
-                message: shouldRecalcMacros
-                    ? 'Планът няма макроси и автоматичното преизчисление се провали. Моля, регенерирайте плана.'
-                    : 'Планът няма макроси; изисква се повторно генериране',
-                statusHint: 500,
-                planData: null,
-                analytics: null
-            };
-        }
-        if (macroResult.status === 'recalculated') {
-            shouldPersistFinalPlan = true;
-            console.warn(`DASHBOARD_DATA (${userId}): caloriesMacros were recalculated from menu data on-demand.`);
-        } else if (macroResult.status === 'normalized') {
-            const normalizedSnapshot = finalPlan.caloriesMacros ? JSON.stringify(finalPlan.caloriesMacros) : null;
-            if (normalizedSnapshot !== originalMacrosSnapshot) {
-                shouldPersistFinalPlan = true;
-            }
-        }
-        if (shouldPersistFinalPlan) {
-            await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(finalPlan, null, 2));
+
+        if (!finalPlan.caloriesMacros || Object.keys(finalPlan.caloriesMacros).length === 0) {
+            console.error(`DASHBOARD_DATA (${userId}): Missing caloriesMacros in final plan.`);
+            return { ...baseResponse, success: false, message: 'Планът няма макроси; изисква се повторно генериране', statusHint: 500, planData: null, analytics: null };
         }
 
         const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries, currentStatus, env); // Добавен userId
@@ -3864,16 +3650,18 @@ async function processSingleUserPlan(userId, env) {
             }
             const { generationMetadata, ...restOfGeneratedPlan } = generatedPlanObject;
             Object.assign(planBuilder, restOfGeneratedPlan);
-            const macroIntegrity = ensurePlanCaloriesMacros(planBuilder);
-            if (macroIntegrity.status === 'recalculated') {
-                await addLog('Липсващи макроси в отговора – преизчислени от менюто.', {
-                    checkpoint: true,
-                    reason: 'macros-recalculated'
-                });
-            } else if (macroIntegrity.status === 'missing') {
-                const macroError = 'AI отговорът няма caloriesMacros и неуспешно автоматично преизчисление от менюто.';
-                planBuilder.generationMetadata.errors.push(macroError);
-                await addLog(macroError, { checkpoint: true, reason: 'macros-missing' });
+            const ensureFiber = (macros) => {
+                if (!macros) return;
+                const { calories, fiber_percent, fiber_grams } = macros;
+                if (fiber_percent == null && fiber_grams != null && calories) {
+                    macros.fiber_percent = Math.round((fiber_grams * 2 * 100) / calories);
+                }
+                if (fiber_grams == null && fiber_percent != null && calories) {
+                    macros.fiber_grams = Math.round((calories * fiber_percent) / 100 / 2);
+                }
+            };
+            if (planBuilder.caloriesMacros) {
+                ensureFiber(planBuilder.caloriesMacros);
             }
             if (generationMetadata && Array.isArray(generationMetadata.errors)) planBuilder.generationMetadata.errors.push(...generationMetadata.errors);
             await addLog('Планът е генериран', { checkpoint: true, reason: 'plan-generated' });
