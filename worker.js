@@ -66,35 +66,6 @@ async function parseJsonSafe(resp, label = 'response') {
   }
 }
 
-/**
- * @typedef {Object} PlanCaloriesMacros
- * @property {number} [calories]
- * @property {number} [protein_grams]
- * @property {number} [protein_percent]
- * @property {number} [carbs_grams]
- * @property {number} [carbs_percent]
- * @property {number} [fat_grams]
- * @property {number} [fat_percent]
- * @property {number} [fiber_grams]
- * @property {number} [fiber_percent]
- * @property {number} [alcohol_grams]
- * @property {number} [alcohol_percent]
- */
-
-/**
- * @typedef {Object} PlanMenuMeal
- * @property {PlanCaloriesMacros | null | undefined} [macros]
- * @property {Record<string, any>} [mealMacros]
- * @property {Record<string, any>} [macro]
- */
-
-/**
- * @typedef {Object} PlanLike
- * @property {PlanCaloriesMacros | null | undefined} [caloriesMacros]
- * @property {Record<string, PlanMenuMeal[] | null | undefined> | null | undefined} [week1Menu]
- * @property {Record<string, PlanCaloriesMacros | null | undefined> | null | undefined} [mealMacrosIndex]
- */
-
 const MACRO_VALUE_ALIASES = {
   calories: ['calories', 'calories_kcal', 'kcal', 'cal', 'energy', 'energy_kcal'],
   protein_grams: ['protein_grams', 'protein_g', 'protein', 'proteins', 'proteins_g'],
@@ -144,22 +115,13 @@ function parseNumericMacroValue(value) {
   return null;
 }
 
-/**
- * @param {PlanCaloriesMacros | null | undefined} source
- * @returns {PlanCaloriesMacros | null}
- */
 function cloneMacrosObject(source) {
   if (!source || typeof source !== 'object') return null;
-  return /** @type {PlanCaloriesMacros} */ (JSON.parse(JSON.stringify(source)));
+  return JSON.parse(JSON.stringify(source));
 }
 
-/**
- * @param {PlanCaloriesMacros | null | undefined} rawMacros
- * @param {{ roundValues?: boolean }} [options]
- * @returns {PlanCaloriesMacros}
- */
 function finalizePlanMacroShape(rawMacros = {}, { roundValues = true } = {}) {
-  const macros = /** @type {PlanCaloriesMacros} */ ({ ...rawMacros });
+  const macros = { ...rawMacros };
   const parsedCalories = parseNumericMacroValue(macros.calories);
   let calories = parsedCalories != null ? parsedCalories : null;
   let caloriesFromGrams = 0;
@@ -206,14 +168,9 @@ function finalizePlanMacroShape(rawMacros = {}, { roundValues = true } = {}) {
   return macros;
 }
 
-/**
- * @param {PlanCaloriesMacros | Record<string, any> | null | undefined} source
- * @param {{ roundValues?: boolean }} [options]
- * @returns {PlanCaloriesMacros | null}
- */
 function normalizePlanCaloriesMacros(source, { roundValues = true } = {}) {
   if (!source || typeof source !== 'object') return null;
-  const raw = /** @type {PlanCaloriesMacros} */ ({});
+  const raw = {};
   let hasAnyValue = false;
 
   for (const [targetKey, aliases] of Object.entries(MACRO_VALUE_ALIASES)) {
@@ -248,22 +205,11 @@ function normalizePlanCaloriesMacros(source, { roundValues = true } = {}) {
   return finalizePlanMacroShape(raw, { roundValues });
 }
 
-/**
- * @param {PlanLike | null | undefined} plan
- * @returns {PlanCaloriesMacros | null}
- */
 function aggregatePlanMacrosFromMenu(plan = {}) {
   const { week1Menu, mealMacrosIndex } = plan || {};
   if (!week1Menu || typeof week1Menu !== 'object') return null;
 
-  const totals = /** @type {PlanCaloriesMacros} */ ({
-    calories: 0,
-    protein_grams: 0,
-    carbs_grams: 0,
-    fat_grams: 0,
-    fiber_grams: 0,
-    alcohol_grams: 0
-  });
+  const totals = { calories: 0, protein_grams: 0, carbs_grams: 0, fat_grams: 0, fiber_grams: 0, alcohol_grams: 0 };
   let contributingMeals = 0;
 
   for (const [dayKey, meals] of Object.entries(week1Menu)) {
@@ -293,11 +239,6 @@ function aggregatePlanMacrosFromMenu(plan = {}) {
   return finalizePlanMacroShape(totals, { roundValues: true });
 }
 
-/**
- * @param {PlanLike} plan
- * @param {{ allowAggregation?: boolean }} [options]
- * @returns {{ status: 'normalized' | 'recalculated' | 'missing', macros: PlanCaloriesMacros | null }}
- */
 function ensurePlanCaloriesMacros(plan, { allowAggregation = true } = {}) {
   const original = cloneMacrosObject(plan?.caloriesMacros);
   const normalized = normalizePlanCaloriesMacros(original || plan?.caloriesMacros);
