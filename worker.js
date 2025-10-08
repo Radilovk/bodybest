@@ -1379,76 +1379,6 @@ async function handleAnalysisStatusRequest(request, env) {
 // ------------- END FUNCTION: handleAnalysisStatusRequest -------------
 
 // ------------- START FUNCTION: handleDashboardDataRequest -------------
-function recalculatePlanMacrosFromMenu(plan = {}) {
-    if (!plan || typeof plan !== 'object') {
-        return null;
-    }
-    const { week1Menu, mealMacrosIndex } = plan;
-    if (!week1Menu || typeof week1Menu !== 'object') {
-        return null;
-    }
-
-    const totals = { protein: 0, carbs: 0, fat: 0, fiber: 0, alcohol: 0 };
-    let hasContributingMeal = false;
-
-    for (const [dayKey, meals] of Object.entries(week1Menu)) {
-        if (!Array.isArray(meals)) continue;
-        meals.forEach((meal, mealIndex) => {
-            const source = meal?.macros ?? mealMacrosIndex?.[`${dayKey}_${mealIndex}`] ?? meal;
-            const normalized = normalizePlanCaloriesMacros(source, { roundValues: false });
-            if (!normalized) return;
-            totals.protein += normalized.protein_grams || 0;
-            totals.carbs += normalized.carbs_grams || 0;
-            totals.fat += normalized.fat_grams || 0;
-            totals.fiber += normalized.fiber_grams || 0;
-            totals.alcohol += normalized.alcohol_grams || 0;
-            hasContributingMeal = true;
-        });
-    }
-
-    if (!hasContributingMeal) {
-        return null;
-    }
-
-    const totalCalories =
-        totals.protein * 4 +
-        totals.carbs * 4 +
-        totals.fat * 9 +
-        totals.fiber * 2 +
-        totals.alcohol * 7;
-
-    if (!(totalCalories > 0)) {
-        return null;
-    }
-
-    const calories = Math.round(totalCalories);
-    const result = {
-        calories,
-        protein_grams: Math.round(totals.protein),
-        carbs_grams: Math.round(totals.carbs),
-        fat_grams: Math.round(totals.fat),
-        fiber_grams: Math.round(totals.fiber)
-    };
-
-    if (totals.alcohol > 0) {
-        result.alcohol_grams = Math.round(totals.alcohol);
-    }
-
-    const percentDenominator = totalCalories > 0 ? totalCalories : 0;
-    const toPercent = (grams, kcalPerGram) =>
-        percentDenominator > 0 ? Math.round((grams * kcalPerGram * 100) / percentDenominator) : 0;
-
-    result.protein_percent = toPercent(totals.protein, 4);
-    result.carbs_percent = toPercent(totals.carbs, 4);
-    result.fat_percent = toPercent(totals.fat, 9);
-    result.fiber_percent = toPercent(totals.fiber, 2);
-    if (totals.alcohol > 0) {
-        result.alcohol_percent = toPercent(totals.alcohol, 7);
-    }
-
-    return result;
-}
-
 async function handleDashboardDataRequest(request, env) {
     const url = new URL(request.url);
     const userId = url.searchParams.get('userId');
@@ -1567,43 +1497,25 @@ async function handleDashboardDataRequest(request, env) {
         }
         const shouldRecalcMacros = url.searchParams.get('recalcMacros') === '1';
         const originalMacrosSnapshot = finalPlan.caloriesMacros ? JSON.stringify(finalPlan.caloriesMacros) : null;
-        const macroNormalization = ensurePlanCaloriesMacros(finalPlan, { allowAggregation: false });
-        let macrosStatus = macroNormalization.status;
+        const macroResult = ensurePlanCaloriesMacros(finalPlan, { allowAggregation: shouldRecalcMacros });
         let shouldPersistFinalPlan = false;
-
-        if (macrosStatus === 'missing') {
-            if (shouldRecalcMacros) {
-                const recalculated = recalculatePlanMacrosFromMenu(finalPlan);
-                if (recalculated) {
-                    finalPlan.caloriesMacros = recalculated;
-                    macrosStatus = 'recalculated';
-                    shouldPersistFinalPlan = true;
-                    console.warn(`DASHBOARD_DATA (${userId}): caloriesMacros were recalculated from menu data on-demand.`);
-                } else {
-                    console.error(`DASHBOARD_DATA (${userId}): Неуспешно преизчисление на макросите от менюто.`);
-                    return {
-                        ...baseResponse,
-                        success: false,
-                        message: 'Планът няма макроси и автоматичното преизчисление се провали. Моля, регенерирайте плана.',
-                        statusHint: 500,
-                        planData: null,
-                        analytics: null
-                    };
-                }
-            } else {
-                console.error(`DASHBOARD_DATA (${userId}): Missing caloriesMacros in final plan.`);
-                return {
-                    ...baseResponse,
-                    success: false,
-                    message: 'Планът няма макроси; изисква се повторно генериране',
-                    statusHint: 500,
-                    planData: null,
-                    analytics: null
-                };
-            }
+        if (macroResult.status === 'missing') {
+            console.error(`DASHBOARD_DATA (${userId}): Missing caloriesMacros in final plan${shouldRecalcMacros ? ' и неуспешно fallback преизчисление.' : '.'}`);
+            return {
+                ...baseResponse,
+                success: false,
+                message: shouldRecalcMacros
+                    ? 'Планът няма макроси и автоматичното преизчисление се провали. Моля, регенерирайте плана.'
+                    : 'Планът няма макроси; изисква се повторно генериране',
+                statusHint: 500,
+                planData: null,
+                analytics: null
+            };
         }
-
-        if (macrosStatus === 'normalized') {
+        if (macroResult.status === 'recalculated') {
+            shouldPersistFinalPlan = true;
+            console.warn(`DASHBOARD_DATA (${userId}): caloriesMacros were recalculated from menu data on-demand.`);
+        } else if (macroResult.status === 'normalized') {
             const normalizedSnapshot = finalPlan.caloriesMacros ? JSON.stringify(finalPlan.caloriesMacros) : null;
             if (normalizedSnapshot !== originalMacrosSnapshot) {
                 shouldPersistFinalPlan = true;
