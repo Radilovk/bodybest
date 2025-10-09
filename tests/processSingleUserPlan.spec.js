@@ -6,7 +6,17 @@ const callModelMock = jest.fn();
 
 const minimalUnifiedPlanTemplate = JSON.stringify({
   profileSummary: 'Профил за %%USER_NAME%%',
-  caloriesMacros: { calories: 2100, fiber_percent: 10, fiber_grams: 30 },
+  caloriesMacros: {
+    calories: 'number (%%TARGET_CALORIES%%)',
+    protein_percent: 'number (%%TARGET_PROTEIN_P%%)',
+    carbs_percent: 'number (%%TARGET_CARBS_P%%)',
+    fat_percent: 'number (%%TARGET_FAT_P%%)',
+    fiber_percent: 'number (%%TARGET_FIBER_P%%)',
+    protein_grams: 'number (%%TARGET_PROTEIN_G%%)',
+    carbs_grams: 'number (%%TARGET_CARBS_G%%)',
+    fat_grams: 'number (%%TARGET_FAT_G%%)',
+    fiber_grams: 'number (%%TARGET_FIBER_G%%)'
+  },
   week1Menu: { monday: [] },
   principlesWeek2_4: ['- Баланс'],
   detailedTargets: { hydration: '2L вода' }
@@ -19,8 +29,11 @@ const successfulPlanResponse = JSON.stringify({
     protein_grams: 140,
     carbs_grams: 210,
     fat_grams: 70,
-    fiber_percent: 10,
-    fiber_grams: 30
+    fiber_grams: 30,
+    protein_percent: 27,
+    carbs_percent: 40,
+    fat_percent: 30,
+    fiber_percent: 6
   },
   week1Menu: {
     monday: [
@@ -31,6 +44,65 @@ const successfulPlanResponse = JSON.stringify({
     ]
   },
   principlesWeek2_4: ['- Поддържайте хидратация'],
+  detailedTargets: { hydration: '2L вода' },
+  generationMetadata: { errors: [] }
+});
+
+const alignedAnalysisMacrosRecord = {
+  status: 'final',
+  data: {
+    calories: 2100,
+    protein_grams: 140,
+    carbs_grams: 210,
+    fat_grams: 70,
+    fiber_grams: 30,
+    protein_percent: 27,
+    carbs_percent: 40,
+    fat_percent: 30,
+    fiber_percent: 6
+  }
+};
+
+const expectedTargetMacros = {
+  calories: 2430,
+  protein_grams: 182,
+  protein_percent: 30,
+  carbs_grams: 243,
+  carbs_percent: 40,
+  fat_grams: 81,
+  fat_percent: 30,
+  fiber_grams: 25,
+  fiber_percent: 2
+};
+
+const fallbackPlanResponse = JSON.stringify({
+  profileSummary: 'Обобщение',
+  week1Menu: {
+    monday: [
+      {
+        meal_name: 'Закуска',
+        macros: {
+          calories: 500,
+          protein_grams: 30,
+          carbs_grams: 50,
+          fat_grams: 15,
+          fiber_grams: 8
+        }
+      },
+      {
+        meal_name: 'Обяд',
+        macros: {
+          calories: 600,
+          protein_grams: 35,
+          carbs_grams: 60,
+          fat_grams: 20,
+          fiber_grams: 7
+        }
+      }
+    ]
+  },
+  mealMacrosIndex: {},
+  principlesWeek2_4: ['- Баланс'],
   detailedTargets: { hydration: '2L вода' },
   generationMetadata: { errors: [] }
 });
@@ -58,7 +130,19 @@ const baseInitialAnswers = {
   submissionDate: '2024-01-01T00:00:00.000Z'
 };
 
-function buildTestEnvironment(userId, { failFirstFlush = false } = {}) {
+function buildTestEnvironment(
+  userId,
+  {
+    failFirstFlush = false,
+    initialAnswers = baseInitialAnswers,
+    previousPlan = {
+      caloriesMacros: alignedAnalysisMacrosRecord.data,
+      principlesWeek2_4: ['- Стар принцип']
+    },
+    analysisMacrosRecord = alignedAnalysisMacrosRecord,
+    aggregatedLogs = []
+  } = {}
+) {
   const kvStore = new Map();
   const logKey = `${userId}_plan_log`;
   const logErrorKey = `${logKey}_flush_error`;
@@ -70,19 +154,22 @@ function buildTestEnvironment(userId, { failFirstFlush = false } = {}) {
         return kvStore.get(key);
       }
       if (key === `${userId}_initial_answers`) {
-        return JSON.stringify(baseInitialAnswers);
+        return JSON.stringify(initialAnswers);
       }
       if (key === `${userId}_final_plan`) {
-        return JSON.stringify({
-          caloriesMacros: { calories: 2000 },
-          principlesWeek2_4: ['- Стар принцип']
-        });
+        return previousPlan ? JSON.stringify(previousPlan) : null;
+      }
+      if (key === `${userId}_analysis_macros`) {
+        if (analysisMacrosRecord === undefined) {
+          return null;
+        }
+        return analysisMacrosRecord ? JSON.stringify(analysisMacrosRecord) : null;
       }
       if (key === `${userId}_current_status`) {
         return JSON.stringify({ weight: 80 });
       }
       if (key === `${userId}_logs` || key.startsWith(`${userId}_log_`)) {
-        return JSON.stringify([]);
+        return JSON.stringify(aggregatedLogs);
       }
       if (key === `${userId}_chat_history`) {
         return JSON.stringify([]);
@@ -171,8 +258,10 @@ describe('processSingleUserPlan - буфериран лог', () => {
 
     const storedLog = kvStore.get(logKey);
     expect(storedLog).toBeTruthy();
+    expect(storedLog).toContain('Старт');
     const finalLogEntries = JSON.parse(storedLog);
     expect(Array.isArray(finalLogEntries)).toBe(true);
+    expect(finalLogEntries[0]).toContain('Старт');
 
     const finalMessages = finalLogEntries.map((entry) => entry.replace(/^\[[^\]]+\]\s*/, ''));
 
@@ -250,7 +339,7 @@ describe('processSingleUserPlan - буфериран лог', () => {
   });
 });
 
-describe('processSingleUserPlan - caloriesMacros fallback', () => {
+describe('processSingleUserPlan - макро валидации', () => {
   let originalFetch;
 
   beforeEach(() => {
@@ -266,86 +355,123 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
     jest.restoreAllMocks();
   });
 
-  test('попълва caloriesMacros чрез преизчисление от менюто', async () => {
-    const userId = 'macros-fallback-user';
-    const { env, kvStore } = buildTestEnvironment(userId);
-    callModelMock.mockResolvedValue(
-      JSON.stringify({
-        profileSummary: 'Обобщение',
-        caloriesMacros: null,
-        week1Menu: {
-          monday: [
-            {
-              macros: {
-                calories: '480 kcal',
-                protein_grams: '30 г',
-                carbs_grams: '40 г',
-                fat_grams: '20 г',
-                fiber_grams: '10 г'
-              }
-            },
-            { meal_name: 'Обяд без макроси' }
-          ]
-        },
-        mealMacrosIndex: {
-          monday_1: {
-            calories: '360 kcal',
-            protein_grams: '25',
-            carbs_grams: '30',
-            fat_grams: '12',
-            fiber_grams: '8'
-          }
-        },
-        principlesWeek2_4: ['- Баланс'],
-        detailedTargets: { hydration: '2L вода' },
-        generationMetadata: { errors: [] }
-      })
-    );
+  test('инжектира таргетите в промпта и заменя несъответстващи макроси', async () => {
+    const userId = 'macros-target-align';
+    const { env, kvStore } = buildTestEnvironment(userId, {
+      analysisMacrosRecord: null,
+      previousPlan: null
+    });
+    callModelMock.mockResolvedValue(successfulPlanResponse);
 
     await workerModule.processSingleUserPlan(userId, env);
+
+    const prompt = callModelMock.mock.calls[0][1];
+    expect(prompt).not.toContain('%%TARGET_');
+    expect(prompt).toContain('"calories":"number (2430)"');
+    expect(prompt).toContain('"protein_grams":"number (182)"');
+    expect(prompt).toContain('"fiber_grams":"number (25)"');
+
+    const finalPlan = JSON.parse(kvStore.get(`${userId}_final_plan`));
+    expect(finalPlan.caloriesMacros).toEqual(expectedTargetMacros);
+    expect(finalPlan.generationMetadata.targetSource).toBe('estimate');
+    expect(finalPlan.generationMetadata.targetUsedDefaultFiber).toBe(true);
+    expect(finalPlan.generationMetadata.errors).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('AI върна различни caloriesMacros')
+      ])
+    );
+    expect(finalPlan.generationMetadata.aiReportedMacros).toEqual({
+      calories: 2100,
+      protein_grams: 140,
+      carbs_grams: 210,
+      fat_grams: 70,
+      fiber_grams: 30,
+      protein_percent: 27,
+      carbs_percent: 40,
+      fat_percent: 30,
+      fiber_percent: 6
+    });
+
+    const macrosRecord = JSON.parse(kvStore.get(`${userId}_analysis_macros`));
+    expect(macrosRecord).toEqual({ status: 'final', data: expectedTargetMacros });
+  });
+
+  test('пресмята макросите от менюто и дневниците при липса на таргети', async () => {
+    const userId = 'macros-fallback-user';
+    const fallbackInitialAnswers = {
+      ...baseInitialAnswers,
+      weight: null,
+      height: null,
+      age: null
+    };
+    const aggregatedLogs = [
+      {
+        date: '2024-01-01',
+        extraMeals: [
+          { calories: 250, protein: 12, carbs: 30, fat: 8, fiber: 4 }
+        ]
+      }
+    ];
+    const { env, kvStore } = buildTestEnvironment(userId, {
+      initialAnswers: fallbackInitialAnswers,
+      previousPlan: null,
+      analysisMacrosRecord: null,
+      aggregatedLogs
+    });
+    callModelMock.mockResolvedValue(fallbackPlanResponse);
+
+    await workerModule.processSingleUserPlan(userId, env);
+
+    const prompt = callModelMock.mock.calls[0][1];
+    expect(prompt).not.toContain('%%TARGET_');
+    expect(prompt).toMatch(/"calories":"number \(0\)"/);
 
     const finalPlan = JSON.parse(kvStore.get(`${userId}_final_plan`));
     expect(finalPlan.caloriesMacros).toEqual({
-      calories: 824,
-      protein_grams: 55,
-      protein_percent: 27,
-      carbs_grams: 70,
-      carbs_percent: 34,
-      fat_grams: 32,
-      fat_percent: 35,
-      fiber_grams: 18,
-      fiber_percent: 4
+      calories: 1350,
+      protein_grams: 77,
+      protein_percent: 23,
+      carbs_grams: 140,
+      carbs_percent: 41,
+      fat_grams: 43,
+      fat_percent: 29,
+      fiber_grams: 19,
+      fiber_percent: 3
     });
-    expect(kvStore.get(`plan_status_${userId}`)).toBe('ready');
-    expect(finalPlan.generationMetadata.errors).toEqual([]);
-  });
-
-  test('маркира грешка, когато макросите липсват и не могат да се преизчислят', async () => {
-    const userId = 'macros-missing-user';
-    const { env, kvStore, userMetadataKv } = buildTestEnvironment(userId);
-    callModelMock.mockResolvedValue(
-      JSON.stringify({
-        profileSummary: 'Обобщение',
-        week1Menu: {
-          monday: [
-            { meal_name: 'Без макроси' }
-          ]
-        },
-        principlesWeek2_4: ['- Баланс'],
-        detailedTargets: { hydration: '2L вода' },
-        generationMetadata: { errors: [] }
-      })
+    expect(finalPlan.generationMetadata.targetSource).toBeNull();
+    expect(finalPlan.generationMetadata.errors).toEqual(
+      expect.arrayContaining([
+        'Не успяхме да определим целеви макроси; placeholders за промпта са 0.',
+        'AI не върна caloriesMacros; попълнихме ги от менюто и дневниците.'
+      ])
     );
+    expect(finalPlan.generationMetadata.calculatedMacros).toEqual({
+      planAverage: {
+        calories: 1100,
+        protein_grams: 65,
+        protein_percent: 24,
+        carbs_grams: 110,
+        carbs_percent: 40,
+        fat_grams: 35,
+        fat_percent: 29,
+        fiber_grams: 15,
+        fiber_percent: 3
+      },
+      extraMealsAverage: {
+        calories: 250,
+        protein_grams: 12,
+        protein_percent: 19,
+        carbs_grams: 30,
+        carbs_percent: 48,
+        fat_grams: 8,
+        fat_percent: 29,
+        fiber_grams: 4,
+        fiber_percent: 3
+      }
+    });
+    expect(finalPlan.generationMetadata.aiReportedMacros).toBeUndefined();
 
-    await workerModule.processSingleUserPlan(userId, env);
-
-    const finalPlan = JSON.parse(kvStore.get(`${userId}_final_plan`));
-    expect(finalPlan.caloriesMacros).toBeNull();
-    expect(finalPlan.generationMetadata.errors).toContain(
-      'AI отговорът няма caloriesMacros и неуспешно автоматично преизчисление от менюто.'
-    );
-    expect(kvStore.get(`plan_status_${userId}`)).toBe('error');
-    const processingError = userMetadataKv.put.mock.calls.find(([key]) => key === `${userId}_processing_error`);
-    expect(processingError?.[1]).toContain('AI отговорът няма caloriesMacros');
+    const macrosRecord = JSON.parse(kvStore.get(`${userId}_analysis_macros`));
+    expect(macrosRecord).toEqual({ status: 'final', data: finalPlan.caloriesMacros });
   });
 });
