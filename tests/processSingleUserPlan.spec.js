@@ -268,7 +268,7 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
 
   test('попълва caloriesMacros чрез преизчисление от менюто', async () => {
     const userId = 'macros-fallback-user';
-    const { env, kvStore } = buildTestEnvironment(userId);
+    const { env, kvStore, logKey } = buildTestEnvironment(userId);
     callModelMock.mockResolvedValue(
       JSON.stringify({
         profileSummary: 'Обобщение',
@@ -318,11 +318,17 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
     });
     expect(kvStore.get(`plan_status_${userId}`)).toBe('ready');
     expect(finalPlan.generationMetadata.errors).toEqual([]);
+
+    const analysisMacros = JSON.parse(kvStore.get(`${userId}_analysis_macros`));
+    expect(analysisMacros).toEqual({ status: 'final', data: finalPlan.caloriesMacros });
+
+    const storedLog = JSON.parse(kvStore.get(logKey));
+    expect(storedLog.some((entry) => entry.includes('AI не върна пълни caloriesMacros'))).toBe(true);
   });
 
   test('маркира грешка, когато макросите липсват и не могат да се преизчислят', async () => {
     const userId = 'macros-missing-user';
-    const { env, kvStore, userMetadataKv } = buildTestEnvironment(userId);
+    const { env, kvStore, userMetadataKv, logKey } = buildTestEnvironment(userId);
     callModelMock.mockResolvedValue(
       JSON.stringify({
         profileSummary: 'Обобщение',
@@ -347,5 +353,11 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
     expect(kvStore.get(`plan_status_${userId}`)).toBe('error');
     const processingError = userMetadataKv.put.mock.calls.find(([key]) => key === `${userId}_processing_error`);
     expect(processingError?.[1]).toContain('AI отговорът няма caloriesMacros');
+
+    const analysisMacros = JSON.parse(kvStore.get(`${userId}_analysis_macros`));
+    expect(analysisMacros).toEqual({ status: 'final', data: null });
+
+    const storedLog = JSON.parse(kvStore.get(logKey));
+    expect(storedLog.some((entry) => entry.includes('неуспешно автоматично преизчисление'))).toBe(true);
   });
 });

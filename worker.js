@@ -14,6 +14,7 @@
 // Вградените помощни функции позволяват worker.js да е самодостатъчен
 
 import { sendEmail, DEFAULT_MAIL_PHP_URL } from './sendEmailWorker.js';
+import { calculatePlanMacros, hasCompleteCaloriesMacros } from './utils/planMacros.js';
 
 /**
  * Връща датата във формат YYYY-MM-DD според локалната часова зона.
@@ -1304,6 +1305,28 @@ async function handleDashboardDataRequest(request, env) {
         if (Object.keys(finalPlan).length === 0 && finalPlanStr) { // finalPlanStr ensures it wasn't null initially
             console.error(`DASHBOARD_DATA (${userId}) [${logTimestamp}]: Failed to parse final_plan JSON. Status: '${actualPlanStatus}'. Snippet: ${finalPlanStr.slice(0,200)}`);
             return { ...baseResponse, success: false, message: 'Грешка при зареждане на данните на Вашия план.', statusHint: 500, planData: null, analytics: null };
+        }
+
+        const shouldForceRecalc = url.searchParams.get('recalcMacros') === '1';
+        if (!hasCompleteCaloriesMacros(finalPlan.caloriesMacros) || shouldForceRecalc) {
+            const recalculated = calculatePlanMacros(finalPlan.week1Menu || {}, finalPlan.mealMacrosIndex || null);
+            if (recalculated) {
+                finalPlan.caloriesMacros = recalculated;
+                console.warn(`DASHBOARD_DATA (${userId}): Използван fallback за caloriesMacros от менюто.`);
+                await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(finalPlan, null, 2));
+                const macrosRecord = { status: 'final', data: { ...recalculated } };
+                await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
+            } else if (!finalPlan.caloriesMacros || Object.keys(finalPlan.caloriesMacros).length === 0) {
+                console.error(`DASHBOARD_DATA (${userId}): Missing caloriesMacros in final plan and fallback failed.`);
+                return {
+                    ...baseResponse,
+                    success: false,
+                    message: 'Планът няма макроси и автоматичното преизчисление се провали. Моля, регенерирайте плана.',
+                    statusHint: 500,
+                    planData: null,
+                    analytics: null
+                };
+            }
         }
 
         if (!finalPlan.caloriesMacros || Object.keys(finalPlan.caloriesMacros).length === 0) {
@@ -3663,6 +3686,34 @@ async function processSingleUserPlan(userId, env) {
             if (planBuilder.caloriesMacros) {
                 ensureFiber(planBuilder.caloriesMacros);
             }
+
+            const fallbackWarningLog = 'Предупреждение: AI не върна пълни caloriesMacros, преизчисляваме от менюто.';
+            if (!hasCompleteCaloriesMacros(planBuilder.caloriesMacros)) {
+                try {
+                    const recalculated = calculatePlanMacros(
+                        planBuilder.week1Menu || {},
+                        planBuilder.mealMacrosIndex || null
+                    );
+                    if (recalculated) {
+                        planBuilder.caloriesMacros = recalculated;
+                        ensureFiber(planBuilder.caloriesMacros);
+                        console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${fallbackWarningLog}`);
+                        await addLog(fallbackWarningLog);
+                    } else {
+                        planBuilder.caloriesMacros = null;
+                        const failureMsg = 'AI отговорът няма caloriesMacros и неуспешно автоматично преизчисление от менюто.';
+                        console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${failureMsg}`);
+                        await addLog(`Предупреждение: ${failureMsg}`);
+                        planBuilder.generationMetadata.errors.push(failureMsg);
+                    }
+                } catch (fallbackErr) {
+                    const failureMsg = `AI отговорът няма caloriesMacros и преизчислението от менюто се провали: ${fallbackErr.message}`;
+                    console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${failureMsg}`);
+                    await addLog(`Грешка при преизчисляване на макроси: ${fallbackErr.message}`);
+                    planBuilder.caloriesMacros = null;
+                    planBuilder.generationMetadata.errors.push(failureMsg);
+                }
+            }
             if (generationMetadata && Array.isArray(generationMetadata.errors)) planBuilder.generationMetadata.errors.push(...generationMetadata.errors);
             await addLog('Планът е генериран', { checkpoint: true, reason: 'plan-generated' });
         } catch (e) {
@@ -3678,6 +3729,12 @@ async function processSingleUserPlan(userId, env) {
         planBuilder.generationMetadata.timestamp = planBuilder.generationMetadata.timestamp || new Date().toISOString();
         const finalPlanString = JSON.stringify(planBuilder, null, 2);
         await env.USER_METADATA_KV.put(`${userId}_final_plan`, finalPlanString);
+
+        const macrosRecord = {
+            status: 'final',
+            data: planBuilder.caloriesMacros ? { ...planBuilder.caloriesMacros } : null
+        };
+        await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
 
         const planStatusValue = planBuilder.generationMetadata.errors.length > 0 ? 'error' : 'ready';
         if (planStatusValue === 'error') {
