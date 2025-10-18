@@ -82,6 +82,10 @@ describe('handleDashboardDataRequest - макроси', () => {
     const savedPlan = JSON.parse(savedPlanRaw);
     expect(savedPlan.caloriesMacros).toEqual(response.planData.caloriesMacros);
 
+    const analysisMacrosRaw = kvData.get(`${userId}_analysis_macros`);
+    expect(analysisMacrosRaw).toBeTruthy();
+    expect(JSON.parse(analysisMacrosRaw)).toEqual({ status: 'final', data: response.planData.caloriesMacros });
+
     const saveCall = env.USER_METADATA_KV.put.mock.calls.find(([key]) => key === `${userId}_final_plan`);
     expect(saveCall).toBeDefined();
   });
@@ -93,7 +97,7 @@ describe('handleDashboardDataRequest - макроси', () => {
       week1Menu: {}
     };
 
-    const { env } = createTestEnv(userId, finalPlan);
+    const { env, kvData } = createTestEnv(userId, finalPlan);
     const request = { url: `https://example.com/api/dashboard-data?userId=${userId}&recalcMacros=1` };
 
     const response = await workerModule.handleDashboardDataRequest(request, env);
@@ -103,6 +107,7 @@ describe('handleDashboardDataRequest - макроси', () => {
       'Планът няма макроси и автоматичното преизчисление се провали. Моля, регенерирайте плана.'
     );
     expect(env.USER_METADATA_KV.put.mock.calls.find(([key]) => key === `${userId}_final_plan`)).toBeUndefined();
+    expect(kvData.has(`${userId}_analysis_macros`)).toBe(false);
   });
 });
 
