@@ -14,6 +14,11 @@
 // Вградените помощни функции позволяват worker.js да е самодостатъчен
 
 import { sendEmail, DEFAULT_MAIL_PHP_URL } from './sendEmailWorker.js';
+import {
+    calculatePlanMacros,
+    normalizeMacros,
+    calculateMacroPercents
+} from './utils/sharedMacroMath.js';
 
 /**
  * Връща датата във формат YYYY-MM-DD според локалната часова зона.
@@ -1296,6 +1301,7 @@ async function handleDashboardDataRequest(request, env) {
             return { ...baseResponse, success: false, message: `Възникна грешка при генерирането на Вашия план: ${errorMsg ? errorMsg.split('\n')[0] : 'Неизвестна грешка.'}`, planData: null, analytics: null, statusHint: 500 };
         }
         const logTimestamp = new Date().toISOString();
+        const shouldRecalcMacros = url.searchParams.get('recalcMacros') === '1';
         if (!finalPlanStr) {
             console.warn(`DASHBOARD_DATA (${userId}) [${logTimestamp}]: Plan status '${actualPlanStatus}' but final_plan is missing. Snippet: ${String(finalPlanStr).slice(0,200)}`);
             return { ...baseResponse, success: false, message: 'Планът Ви не е наличен в системата, въпреки че статусът показва готовност. Моля, свържете се с поддръжка.', statusHint: 404, planData: null, analytics: null };
@@ -1304,6 +1310,31 @@ async function handleDashboardDataRequest(request, env) {
         if (Object.keys(finalPlan).length === 0 && finalPlanStr) { // finalPlanStr ensures it wasn't null initially
             console.error(`DASHBOARD_DATA (${userId}) [${logTimestamp}]: Failed to parse final_plan JSON. Status: '${actualPlanStatus}'. Snippet: ${finalPlanStr.slice(0,200)}`);
             return { ...baseResponse, success: false, message: 'Грешка при зареждане на данните на Вашия план.', statusHint: 500, planData: null, analytics: null };
+        }
+
+        if (shouldRecalcMacros || !finalPlan.caloriesMacros || Object.keys(finalPlan.caloriesMacros).length === 0) {
+            const fallbackMacroInfo = calculateFallbackMacrosSummary(finalPlan.week1Menu, finalPlan.mealMacrosIndex, collectExtraMealsByDay(logEntries));
+            if (fallbackMacroInfo) {
+                const existingMetadata = finalPlan.generationMetadata && typeof finalPlan.generationMetadata === 'object'
+                    ? { ...finalPlan.generationMetadata }
+                    : { timestamp: new Date().toISOString(), modelUsed: 'unknown', errors: [] };
+                if (!Array.isArray(existingMetadata.errors)) existingMetadata.errors = [];
+                existingMetadata.errors.push(
+                    shouldRecalcMacros
+                        ? 'caloriesMacros преизчислени по заявка (recalcMacros=1).'
+                        : 'caloriesMacros липсваше в плана и беше изчислен автоматично.'
+                );
+                existingMetadata.calculatedMacros = {
+                    planAverage: fallbackMacroInfo.planAverage,
+                    extraMealsAverage: fallbackMacroInfo.extraMealsAverage
+                };
+                const normalizedFallback = normalizeMacroOutput(fallbackMacroInfo.summary) || createZeroMacroTargets();
+                const hydratedFallback = ensureFiberPair({ ...normalizedFallback });
+                finalPlan.caloriesMacros = hydratedFallback;
+                finalPlan.generationMetadata = existingMetadata;
+                await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(finalPlan));
+                await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify({ status: 'final', data: hydratedFallback }));
+            }
         }
 
         if (!finalPlan.caloriesMacros || Object.keys(finalPlan.caloriesMacros).length === 0) {
@@ -2299,6 +2330,356 @@ function estimateMacros(initial = {}) {
     return { calories, protein_percent, carbs_percent, fat_percent, protein_grams, carbs_grams, fat_grams };
 }
 // ------------- END FUNCTION: estimateMacros -------------
+
+const MACRO_GRAM_FIELDS = ['protein_grams', 'carbs_grams', 'fat_grams', 'fiber_grams'];
+const MACRO_PERCENT_FIELDS = ['protein_percent', 'carbs_percent', 'fat_percent', 'fiber_percent'];
+const MACRO_ALL_FIELDS = ['calories', ...MACRO_GRAM_FIELDS, ...MACRO_PERCENT_FIELDS];
+const MACRO_FIELD_INFO = [
+    { grams: 'protein_grams', percent: 'protein_percent', kcalPerGram: 4 },
+    { grams: 'carbs_grams', percent: 'carbs_percent', kcalPerGram: 4 },
+    { grams: 'fat_grams', percent: 'fat_percent', kcalPerGram: 9 },
+    { grams: 'fiber_grams', percent: 'fiber_percent', kcalPerGram: 2 }
+];
+
+function parseMacroNumber(value) {
+    if (value == null) return null;
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : null;
+}
+
+function normalizeMacroOutput(macros) {
+    if (!macros || typeof macros !== 'object') return null;
+    const normalized = {};
+    MACRO_ALL_FIELDS.forEach((field) => {
+        const value = parseMacroNumber(macros[field]);
+        normalized[field] = value == null ? null : Math.round(value);
+    });
+    return normalized;
+}
+
+function createZeroMacroTargets(defaultFiberGrams = 0) {
+    return {
+        calories: 0,
+        protein_grams: 0,
+        protein_percent: 0,
+        carbs_grams: 0,
+        carbs_percent: 0,
+        fat_grams: 0,
+        fat_percent: 0,
+        fiber_grams: Math.round(defaultFiberGrams) || 0,
+        fiber_percent: 0
+    };
+}
+
+function buildMacroTargetsFromCandidate(candidate, { defaultFiberGrams = 25 } = {}) {
+    if (!candidate || typeof candidate !== 'object') return null;
+
+    const normalized = normalizeMacros(candidate) || {};
+    const missing = new Set(Array.isArray(normalized.__missingMacroKeys) ? normalized.__missingMacroKeys : []);
+    const macros = {
+        calories: missing.has('calories') ? null : parseMacroNumber(normalized.calories),
+        protein_grams: missing.has('protein') ? null : parseMacroNumber(normalized.protein),
+        carbs_grams: missing.has('carbs') ? null : parseMacroNumber(normalized.carbs),
+        fat_grams: missing.has('fat') ? null : parseMacroNumber(normalized.fat),
+        fiber_grams: missing.has('fiber') ? null : parseMacroNumber(normalized.fiber)
+    };
+
+    const percentValues = {
+        protein_percent: parseMacroNumber(candidate.protein_percent ?? candidate.proteinPercent),
+        carbs_percent: parseMacroNumber(
+            candidate.carbs_percent ?? candidate.carbsPercent ?? candidate.carb_percent ?? candidate.carbPercent
+        ),
+        fat_percent: parseMacroNumber(candidate.fat_percent ?? candidate.fatPercent),
+        fiber_percent: parseMacroNumber(candidate.fiber_percent ?? candidate.fiberPercent)
+    };
+
+    let usedDefaultFiber = false;
+    if (macros.fiber_grams == null) {
+        macros.fiber_grams = defaultFiberGrams;
+        usedDefaultFiber = true;
+    }
+
+    const energyFromMacros = () => {
+        const protein = parseMacroNumber(macros.protein_grams) || 0;
+        const carbs = parseMacroNumber(macros.carbs_grams) || 0;
+        const fat = parseMacroNumber(macros.fat_grams) || 0;
+        const fiber = parseMacroNumber(macros.fiber_grams) || 0;
+        const calories = Math.round(protein * 4 + carbs * 4 + fat * 9 + fiber * 2);
+        return calories > 0 ? calories : null;
+    };
+
+    if (macros.calories == null) {
+        macros.calories = energyFromMacros();
+    }
+
+    MACRO_FIELD_INFO.forEach(({ grams, percent, kcalPerGram }) => {
+        const gramsValue = parseMacroNumber(macros[grams]);
+        const percentValue = parseMacroNumber(percentValues[percent]);
+        if ((gramsValue == null || gramsValue === 0) && macros.calories != null && percentValue != null) {
+            macros[grams] = calcMacroGrams(macros.calories, percentValue, kcalPerGram);
+        } else if ((percentValue == null || percentValue === 0) && macros.calories != null && gramsValue != null) {
+            percentValues[percent] = Math.round((gramsValue * kcalPerGram / macros.calories) * 100);
+        }
+    });
+
+    if (macros.calories == null) {
+        macros.calories = energyFromMacros();
+    }
+
+    const proteinPercent = percentValues.protein_percent != null
+        ? percentValues.protein_percent
+        : (macros.calories ? ((parseMacroNumber(macros.protein_grams) || 0) * 4 / macros.calories) * 100 : 0);
+    const carbsPercent = percentValues.carbs_percent != null
+        ? percentValues.carbs_percent
+        : (macros.calories ? ((parseMacroNumber(macros.carbs_grams) || 0) * 4 / macros.calories) * 100 : 0);
+    const fatPercent = percentValues.fat_percent != null
+        ? percentValues.fat_percent
+        : (macros.calories ? ((parseMacroNumber(macros.fat_grams) || 0) * 9 / macros.calories) * 100 : 0);
+    const fiberPercent = percentValues.fiber_percent != null
+        ? percentValues.fiber_percent
+        : (macros.calories ? ((parseMacroNumber(macros.fiber_grams) || 0) * 2 / macros.calories) * 100 : 0);
+
+    const result = {
+        calories: Math.round(parseMacroNumber(macros.calories) || 0),
+        protein_grams: Math.round(parseMacroNumber(macros.protein_grams) || 0),
+        carbs_grams: Math.round(parseMacroNumber(macros.carbs_grams) || 0),
+        fat_grams: Math.round(parseMacroNumber(macros.fat_grams) || 0),
+        fiber_grams: Math.round(parseMacroNumber(macros.fiber_grams) || 0),
+        protein_percent: Math.round(proteinPercent || 0),
+        carbs_percent: Math.round(carbsPercent || 0),
+        fat_percent: Math.round(fatPercent || 0),
+        fiber_percent: Math.round(fiberPercent || 0)
+    };
+
+    return { macros: result, usedDefaultFiber };
+}
+
+function resolveTargetMacrosFromSources({ analysisRecord, previousPlan, initialAnswers }) {
+    const candidates = [];
+    if (analysisRecord && typeof analysisRecord === 'object') {
+        const data = analysisRecord.data && typeof analysisRecord.data === 'object' ? analysisRecord.data : analysisRecord;
+        if (data && typeof data === 'object') {
+            const analysisCandidates = [data.recommendation, data.target, data.plan, data];
+            analysisCandidates.forEach(candidate => {
+                if (candidate && typeof candidate === 'object') {
+                    candidates.push({ source: 'analysis', data: candidate });
+                }
+            });
+        }
+    }
+    if (previousPlan && typeof previousPlan.caloriesMacros === 'object') {
+        candidates.push({ source: 'previous_plan', data: previousPlan.caloriesMacros });
+    }
+    const estimate = estimateMacros(initialAnswers);
+    if (estimate) {
+        candidates.push({ source: 'estimate', data: estimate });
+    }
+
+    for (const candidate of candidates) {
+        const built = buildMacroTargetsFromCandidate(candidate.data);
+        if (built) {
+            return { values: built.macros, source: candidate.source, usedDefaultFiber: built.usedDefaultFiber };
+        }
+    }
+    return null;
+}
+
+function mapTargetMacrosToReplacements(targetMacros, replacements) {
+    const mapping = {
+        '%%TARGET_CALORIES%%': targetMacros.calories,
+        '%%TARGET_PROTEIN_G%%': targetMacros.protein_grams,
+        '%%TARGET_CARBS_G%%': targetMacros.carbs_grams,
+        '%%TARGET_FAT_G%%': targetMacros.fat_grams,
+        '%%TARGET_FIBER_G%%': targetMacros.fiber_grams,
+        '%%TARGET_PROTEIN_P%%': targetMacros.protein_percent,
+        '%%TARGET_CARBS_P%%': targetMacros.carbs_percent,
+        '%%TARGET_FAT_P%%': targetMacros.fat_percent,
+        '%%TARGET_FIBER_P%%': targetMacros.fiber_percent
+    };
+    Object.entries(mapping).forEach(([key, value]) => {
+        replacements[key] = value != null ? String(Math.round(value)) : '0';
+    });
+}
+
+function collectExtraMealsByDay(logEntries = []) {
+    if (!Array.isArray(logEntries)) return [];
+    return logEntries
+        .map(entry => {
+            if (!entry || typeof entry !== 'object') return null;
+            if (Array.isArray(entry.extraMeals) && entry.extraMeals.length > 0) return entry.extraMeals;
+            if (entry.data && Array.isArray(entry.data.extraMeals) && entry.data.extraMeals.length > 0) return entry.data.extraMeals;
+            if (entry.log && Array.isArray(entry.log.extraMeals) && entry.log.extraMeals.length > 0) return entry.log.extraMeals;
+            return null;
+        })
+        .filter(Boolean);
+}
+
+function aggregateExtraMeals(extraMealsDaily = []) {
+    if (!Array.isArray(extraMealsDaily) || extraMealsDaily.length === 0) return null;
+    const totals = extraMealsDaily.reduce((acc, meals) => {
+        if (!Array.isArray(meals)) return acc;
+        meals.forEach(meal => {
+            const normalized = normalizeMacros(meal) || {};
+            acc.calories += parseMacroNumber(normalized.calories) || 0;
+            acc.protein += parseMacroNumber(normalized.protein) || 0;
+            acc.carbs += parseMacroNumber(normalized.carbs) || 0;
+            acc.fat += parseMacroNumber(normalized.fat) || 0;
+            acc.fiber += parseMacroNumber(normalized.fiber) || 0;
+        });
+        return acc;
+    }, { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+
+    const divisor = extraMealsDaily.length;
+    if (divisor === 0) return null;
+
+    const averageRaw = {
+        calories: totals.calories / divisor,
+        protein: totals.protein / divisor,
+        carbs: totals.carbs / divisor,
+        fat: totals.fat / divisor,
+        fiber: totals.fiber / divisor
+    };
+
+    const average = {
+        calories: Math.round(averageRaw.calories || 0),
+        protein_grams: Math.round(averageRaw.protein || 0),
+        carbs_grams: Math.round(averageRaw.carbs || 0),
+        fat_grams: Math.round(averageRaw.fat || 0),
+        fiber_grams: Math.round(averageRaw.fiber || 0)
+    };
+
+    const percents = calculateMacroPercents(averageRaw);
+    return { ...average, ...percents };
+}
+
+function calculateFallbackMacrosSummary(week1Menu, mealMacrosIndex = {}, extraMealsDaily = []) {
+    const dayEntries = Object.entries(week1Menu || {}).filter(([, meals]) => Array.isArray(meals) && meals.length > 0);
+    const dayTotals = dayEntries.map(([dayKey, meals]) => calculatePlanMacros(meals, true, true, mealMacrosIndex || {}, dayKey));
+
+    let planAverage = null;
+    if (dayTotals.length > 0) {
+        const sums = dayTotals.reduce((acc, day) => {
+            acc.calories += parseMacroNumber(day.calories) || 0;
+            acc.protein += parseMacroNumber(day.protein) || 0;
+            acc.carbs += parseMacroNumber(day.carbs) || 0;
+            acc.fat += parseMacroNumber(day.fat) || 0;
+            acc.fiber += parseMacroNumber(day.fiber) || 0;
+            return acc;
+        }, { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+
+        const divisor = dayTotals.length;
+        const averageRaw = {
+            calories: sums.calories / divisor,
+            protein: sums.protein / divisor,
+            carbs: sums.carbs / divisor,
+            fat: sums.fat / divisor,
+            fiber: sums.fiber / divisor
+        };
+
+        planAverage = {
+            calories: Math.round(averageRaw.calories || 0),
+            protein_grams: Math.round(averageRaw.protein || 0),
+            carbs_grams: Math.round(averageRaw.carbs || 0),
+            fat_grams: Math.round(averageRaw.fat || 0),
+            fiber_grams: Math.round(averageRaw.fiber || 0),
+            ...calculateMacroPercents(averageRaw)
+        };
+    }
+
+    const extraMealsAverage = aggregateExtraMeals(extraMealsDaily);
+    if (!planAverage && !extraMealsAverage) {
+        return null;
+    }
+
+    let summary;
+    if (planAverage) {
+        summary = { ...planAverage };
+        if (extraMealsAverage) {
+            summary = {
+                calories: planAverage.calories + extraMealsAverage.calories,
+                protein_grams: planAverage.protein_grams + extraMealsAverage.protein_grams,
+                carbs_grams: planAverage.carbs_grams + extraMealsAverage.carbs_grams,
+                fat_grams: planAverage.fat_grams + extraMealsAverage.fat_grams,
+                fiber_grams: planAverage.fiber_grams + extraMealsAverage.fiber_grams
+            };
+            const combinedPercents = calculateMacroPercents({
+                calories: summary.calories,
+                protein: summary.protein_grams,
+                carbs: summary.carbs_grams,
+                fat: summary.fat_grams,
+                fiber: summary.fiber_grams
+            });
+            summary = { ...summary, ...combinedPercents };
+        }
+    } else {
+        summary = { ...extraMealsAverage };
+    }
+
+    return { summary, planAverage, extraMealsAverage: extraMealsAverage || null };
+}
+
+function ensureFiberPair(macros) {
+    if (!macros || typeof macros !== 'object') return macros;
+    const calories = parseMacroNumber(macros.calories) || 0;
+    const fiberGrams = parseMacroNumber(macros.fiber_grams);
+    const fiberPercent = parseMacroNumber(macros.fiber_percent);
+    if (calories > 0) {
+        if ((fiberPercent == null || Number.isNaN(fiberPercent)) && fiberGrams != null) {
+            macros.fiber_percent = Math.round((fiberGrams * 2 * 100) / calories);
+        } else if ((fiberGrams == null || Number.isNaN(fiberGrams)) && fiberPercent != null) {
+            macros.fiber_grams = Math.round((calories * fiberPercent) / 100 / 2);
+        }
+    }
+    return macros;
+}
+
+function fillMissingMacrosFromFallback(currentMacros, fallbackSummary) {
+    const normalizedCurrent = normalizeMacroOutput(currentMacros) || {};
+    const normalizedFallback = normalizeMacroOutput(fallbackSummary) || {};
+    let changed = false;
+    MACRO_ALL_FIELDS.forEach(field => {
+        if ((normalizedCurrent[field] == null || Number.isNaN(normalizedCurrent[field])) && normalizedFallback[field] != null) {
+            normalizedCurrent[field] = normalizedFallback[field];
+            changed = true;
+        }
+    });
+    return { macros: normalizedCurrent, changed };
+}
+
+function alignMacrosWithTargets(currentMacros, targetMacros) {
+    const normalizedCurrent = normalizeMacroOutput(currentMacros) || {};
+    const normalizedTarget = normalizeMacroOutput(targetMacros) || createZeroMacroTargets();
+    const macros = { ...normalizedTarget };
+    const missing = [];
+    const mismatches = [];
+
+    MACRO_ALL_FIELDS.forEach(field => {
+        const targetVal = normalizedTarget[field];
+        const currentVal = normalizedCurrent[field];
+        if (currentVal == null) {
+            missing.push(field);
+            return;
+        }
+        if (targetVal == null) {
+            return;
+        }
+        const tolerance = field.endsWith('_percent') ? 1 : 2;
+        if (Math.abs(currentVal - targetVal) > tolerance) {
+            mismatches.push({ field, current: currentVal, expected: targetVal });
+        }
+    });
+
+    const messages = [];
+    if (missing.length > 0) {
+        messages.push(`Липсващи полета в caloriesMacros: ${missing.join(', ')} – попълнихме таргет стойностите.`);
+    }
+    if (mismatches.length > 0) {
+        const mismatchText = mismatches.map(({ field, current, expected }) => `${field}: ${current}→${expected}`).join('; ');
+        messages.push(`AI върна различни caloriesMacros (${mismatchText}). Заменихме ги с таргетите.`);
+    }
+
+    return { macros, messages, aiReported: normalizedCurrent };
+}
 
 // ------------- START FUNCTION: handleAnalyzeInitialAnswers -------------
 async function handleAnalyzeInitialAnswers(userId, env) {
@@ -3461,8 +3842,11 @@ async function processSingleUserPlan(userId, env) {
         }
         await addLog('Зареждане на изходни данни', { checkpoint: true, reason: 'load' });
         console.log(`PROCESS_USER_PLAN (${userId}): Step 0 - Loading prerequisites.`);
-        const initialAnswersString = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
-        const previousPlanStr = await env.USER_METADATA_KV.get(`${userId}_final_plan`);
+        const [initialAnswersString, previousPlanStr, analysisMacrosStr] = await Promise.all([
+            env.USER_METADATA_KV.get(`${userId}_initial_answers`),
+            env.USER_METADATA_KV.get(`${userId}_final_plan`),
+            env.USER_METADATA_KV.get(`${userId}_analysis_macros`)
+        ]);
         if (!initialAnswersString) {
             const msg = 'Initial answers not found. Cannot generate plan.';
             await addLog(`Грешка: ${msg}`, { checkpoint: true, reason: 'missing-initial-answers' });
@@ -3471,6 +3855,7 @@ async function processSingleUserPlan(userId, env) {
         }
         const initialAnswers = safeParseJson(initialAnswersString, {});
         const previousPlan = safeParseJson(previousPlanStr, {});
+        const analysisMacrosRecord = safeParseJson(analysisMacrosStr, null);
         if (Object.keys(initialAnswers).length === 0) {
             const msg = 'Parsed initial answers are empty.';
             await addLog(`Грешка: ${msg}`, { checkpoint: true, reason: 'empty-initial-answers' });
@@ -3480,6 +3865,15 @@ async function processSingleUserPlan(userId, env) {
         console.log(`PROCESS_USER_PLAN (${userId}): Processing for email: ${initialAnswers.email || 'N/A'}`);
         await addLog('Подготовка на модела');
         const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, principlesWeek2_4: [], additionalGuidelines: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
+        const targetMacroInfo = resolveTargetMacrosFromSources({ analysisRecord: analysisMacrosRecord, previousPlan, initialAnswers });
+        const macroTargets = targetMacroInfo?.values || null;
+        planBuilder.generationMetadata.targetSource = targetMacroInfo?.source || null;
+        planBuilder.generationMetadata.targetMacros = macroTargets || null;
+        planBuilder.generationMetadata.targetUsedDefaultFiber = targetMacroInfo?.usedDefaultFiber || false;
+        const promptTargetValues = macroTargets || createZeroMacroTargets();
+        if (!macroTargets) {
+            planBuilder.generationMetadata.errors.push('Не успяхме да определим целеви макроси; placeholders за промпта са 0.');
+        }
         const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, openaiApiKey, planModelName, unifiedPromptTemplate ] = await Promise.all([
             env.RESOURCES_KV.get('question_definitions'),
             env.RESOURCES_KV.get('base_diet_model'),
@@ -3605,6 +3999,7 @@ async function processSingleUserPlan(userId, env) {
             '%%AVG_MOOD_LAST_7_DAYS%%': avgMood !== 'N/A' ? `${avgMood}/5` : 'N/A',
             '%%AVG_ENERGY_LAST_7_DAYS%%': avgEnergy !== 'N/A' ? `${avgEnergy}/5` : 'N/A'
         };
+        mapTargetMacrosToReplacements(promptTargetValues, replacements);
         const populatedUnifiedPrompt = populatePrompt(unifiedPromptTemplate, replacements);
         let finalPrompt = populatedUnifiedPrompt;
         if (pendingPlanModText) {
@@ -3650,19 +4045,51 @@ async function processSingleUserPlan(userId, env) {
             }
             const { generationMetadata, ...restOfGeneratedPlan } = generatedPlanObject;
             Object.assign(planBuilder, restOfGeneratedPlan);
-            const ensureFiber = (macros) => {
-                if (!macros) return;
-                const { calories, fiber_percent, fiber_grams } = macros;
-                if (fiber_percent == null && fiber_grams != null && calories) {
-                    macros.fiber_percent = Math.round((fiber_grams * 2 * 100) / calories);
-                }
-                if (fiber_grams == null && fiber_percent != null && calories) {
-                    macros.fiber_grams = Math.round((calories * fiber_percent) / 100 / 2);
-                }
-            };
-            if (planBuilder.caloriesMacros) {
-                ensureFiber(planBuilder.caloriesMacros);
+
+            const extraMealsDaily = collectExtraMealsByDay(logEntries);
+            const fallbackMacroInfo = calculateFallbackMacrosSummary(planBuilder.week1Menu, planBuilder.mealMacrosIndex, extraMealsDaily);
+            if (fallbackMacroInfo) {
+                planBuilder.generationMetadata.calculatedMacros = {
+                    planAverage: fallbackMacroInfo.planAverage,
+                    extraMealsAverage: fallbackMacroInfo.extraMealsAverage
+                };
             }
+
+            const fallbackSummary = fallbackMacroInfo?.summary || null;
+            let macrosForPlan = planBuilder.caloriesMacros;
+            if (!macrosForPlan || typeof macrosForPlan !== 'object' || Object.keys(macrosForPlan).length === 0) {
+                if (fallbackSummary) {
+                    macrosForPlan = { ...fallbackSummary };
+                    planBuilder.generationMetadata.errors.push('AI не върна caloriesMacros; попълнихме ги от менюто и дневниците.');
+                } else if (macroTargets) {
+                    macrosForPlan = { ...macroTargets };
+                    planBuilder.generationMetadata.errors.push('AI не върна caloriesMacros; използваме целевите стойности.');
+                } else {
+                    macrosForPlan = createZeroMacroTargets();
+                    planBuilder.generationMetadata.errors.push('AI не върна caloriesMacros и липсват цели; попълнихме нулеви стойности.');
+                }
+            }
+
+            if (macroTargets) {
+                const { macros: alignedMacros, messages: targetMessages, aiReported } = alignMacrosWithTargets(macrosForPlan, macroTargets);
+                macrosForPlan = alignedMacros;
+                if (targetMessages.length > 0) {
+                    planBuilder.generationMetadata.errors.push(...targetMessages);
+                }
+                if (aiReported && (targetMessages.length > 0 || Object.values(aiReported).some(value => value == null))) {
+                    planBuilder.generationMetadata.aiReportedMacros = aiReported;
+                }
+            } else if (fallbackSummary) {
+                const { macros: filledMacros, changed } = fillMissingMacrosFromFallback(macrosForPlan, fallbackSummary);
+                if (changed) {
+                    planBuilder.generationMetadata.errors.push('Допълнихме липсващи стойности в caloriesMacros чрез автоматично изчисление.');
+                }
+                macrosForPlan = filledMacros;
+            }
+
+            macrosForPlan = ensureFiberPair(macrosForPlan);
+            planBuilder.caloriesMacros = normalizeMacroOutput(macrosForPlan) || createZeroMacroTargets();
+
             if (generationMetadata && Array.isArray(generationMetadata.errors)) planBuilder.generationMetadata.errors.push(...generationMetadata.errors);
             await addLog('Планът е генериран', { checkpoint: true, reason: 'plan-generated' });
         } catch (e) {
@@ -3678,6 +4105,11 @@ async function processSingleUserPlan(userId, env) {
         planBuilder.generationMetadata.timestamp = planBuilder.generationMetadata.timestamp || new Date().toISOString();
         const finalPlanString = JSON.stringify(planBuilder, null, 2);
         await env.USER_METADATA_KV.put(`${userId}_final_plan`, finalPlanString);
+        const macrosRecord = {
+            status: 'final',
+            data: planBuilder.caloriesMacros || null
+        };
+        await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
 
         const planStatusValue = planBuilder.generationMetadata.errors.length > 0 ? 'error' : 'ready';
         if (planStatusValue === 'error') {
