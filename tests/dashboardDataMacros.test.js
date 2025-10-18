@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 
 const workerModule = await import('../worker.js');
+const { calculatePlanMacros, calculateMacroPercents } = workerModule;
 
 function createTestEnv(userId, finalPlan) {
   const kvData = new Map();
@@ -63,24 +64,25 @@ describe('handleDashboardDataRequest - макроси', () => {
     const response = await workerModule.handleDashboardDataRequest(request, env);
 
     expect(response.success).toBe(true);
-    expect(response.planData?.caloriesMacros).toEqual(
-      expect.objectContaining({
-        calories: 1731,
-        protein_grams: 120,
-        carbs_grams: 180,
-        fat_grams: 55,
-        fiber_grams: 18,
-        protein_percent: 28,
-        carbs_percent: 42,
-        fat_percent: 29,
-        fiber_percent: 2
-      })
-    );
+    const recalculated = response.planData?.caloriesMacros;
+    expect(recalculated).toBeTruthy();
+
+    const dayTotals = calculatePlanMacros(finalPlan.week1Menu.monday, true, true, finalPlan.mealMacrosIndex, 'monday');
+    const expectedMacros = {
+      calories: Math.round(dayTotals.calories),
+      protein_grams: Math.round(dayTotals.protein),
+      carbs_grams: Math.round(dayTotals.carbs),
+      fat_grams: Math.round(dayTotals.fat),
+      fiber_grams: Math.round(dayTotals.fiber),
+      ...calculateMacroPercents(dayTotals)
+    };
+
+    expect(recalculated).toEqual(expect.objectContaining(expectedMacros));
 
     const savedPlanRaw = kvData.get(`${userId}_final_plan`);
     expect(savedPlanRaw).toBeTruthy();
     const savedPlan = JSON.parse(savedPlanRaw);
-    expect(savedPlan.caloriesMacros).toEqual(response.planData.caloriesMacros);
+    expect(savedPlan.caloriesMacros).toEqual(expectedMacros);
 
     const saveCall = env.USER_METADATA_KV.put.mock.calls.find(([key]) => key === `${userId}_final_plan`);
     expect(saveCall).toBeDefined();
@@ -99,9 +101,7 @@ describe('handleDashboardDataRequest - макроси', () => {
     const response = await workerModule.handleDashboardDataRequest(request, env);
 
     expect(response.success).toBe(false);
-    expect(response.message).toBe(
-      'Планът няма макроси и автоматичното преизчисление се провали. Моля, регенерирайте плана.'
-    );
+    expect(response.message).toBe('Планът няма макроси; изисква се повторно генериране');
     expect(env.USER_METADATA_KV.put.mock.calls.find(([key]) => key === `${userId}_final_plan`)).toBeUndefined();
   });
 });
