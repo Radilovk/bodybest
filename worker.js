@@ -141,6 +141,114 @@ function clearResourceCache(keys) {
   }
 }
 
+function isNumericLike(value) {
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'number') {
+    return Number.isFinite(value);
+  }
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed);
+  }
+  return false;
+}
+
+function validateAiMealMacros(plan) {
+  const issues = [];
+  const missingEntries = [];
+  if (!plan || typeof plan !== 'object') {
+    return { isValid: false, issues: ['Plan is not an object'], missingEntries };
+  }
+
+  const week1Menu = plan.week1Menu;
+  const mealMacrosIndex = plan.mealMacrosIndex;
+
+  if (!week1Menu || typeof week1Menu !== 'object') {
+    issues.push('week1Menu is missing or invalid');
+    return { isValid: false, issues, missingEntries };
+  }
+
+  if (!mealMacrosIndex || typeof mealMacrosIndex !== 'object') {
+    issues.push('mealMacrosIndex is missing or invalid');
+  }
+
+  for (const [dayKey, meals] of Object.entries(week1Menu)) {
+    if (!Array.isArray(meals)) {
+      issues.push(`Meals for ${dayKey} are not an array`);
+      continue;
+    }
+    meals.forEach((meal, idx) => {
+      const macros = meal?.macros;
+      const indexKey = `${dayKey}_${idx}`;
+      const indexedMacros = mealMacrosIndex?.[indexKey];
+
+      const missingMealKeys = REQUIRED_MEAL_MACRO_KEYS.filter((macroKey) => !isNumericLike(macros?.[macroKey]));
+      const missingIndexKeys = REQUIRED_MEAL_MACRO_KEYS.filter((macroKey) => !isNumericLike(indexedMacros?.[macroKey]));
+
+      if (missingMealKeys.length > 0 || missingIndexKeys.length > 0) {
+        missingEntries.push({
+          dayKey,
+          mealIndex: idx,
+          indexKey,
+          missingMealKeys,
+          missingIndexKeys
+        });
+      }
+    });
+  }
+
+  return { isValid: issues.length === 0 && missingEntries.length === 0, issues, missingEntries };
+}
+
+function mergeMealMacrosIntoPlan(targetPlan, macrosPatch) {
+  if (!targetPlan || typeof targetPlan !== 'object' || !macrosPatch || typeof macrosPatch !== 'object') {
+    return;
+  }
+
+  const patchMenu = macrosPatch.week1Menu;
+  if (patchMenu && typeof patchMenu === 'object' && targetPlan.week1Menu && typeof targetPlan.week1Menu === 'object') {
+    for (const [dayKey, meals] of Object.entries(targetPlan.week1Menu)) {
+      const patchMeals = Array.isArray(patchMenu[dayKey]) ? patchMenu[dayKey] : [];
+      meals.forEach((meal, idx) => {
+        const patchMeal = patchMeals[idx];
+        if (patchMeal && patchMeal.macros && typeof patchMeal.macros === 'object') {
+          const normalizedMacros = { ...(meal.macros || {}) };
+          for (const macroKey of REQUIRED_MEAL_MACRO_KEYS) {
+            const value = patchMeal.macros[macroKey];
+            if (isNumericLike(value)) {
+              normalizedMacros[macroKey] = Number(value);
+            }
+          }
+          meal.macros = { ...meal.macros, ...normalizedMacros };
+        }
+      });
+    }
+  }
+
+  if (macrosPatch.mealMacrosIndex && typeof macrosPatch.mealMacrosIndex === 'object') {
+    targetPlan.mealMacrosIndex = {
+      ...(targetPlan.mealMacrosIndex || {}),
+      ...Object.fromEntries(
+        Object.entries(macrosPatch.mealMacrosIndex).map(([key, value]) => {
+          if (!value || typeof value !== 'object') {
+            return [key, value];
+          }
+          const normalized = { ...value };
+          for (const macroKey of REQUIRED_MEAL_MACRO_KEYS) {
+            const val = value[macroKey];
+            if (isNumericLike(val)) {
+              normalized[macroKey] = Number(val);
+            }
+          }
+          return [key, normalized];
+        })
+      )
+    };
+  }
+}
+
+const REQUIRED_MEAL_MACRO_KEYS = ['calories', 'protein_grams', 'carbs_grams', 'fat_grams', 'fiber_grams'];
+
 const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
 const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
 <html lang="bg">
@@ -3479,7 +3587,7 @@ async function processSingleUserPlan(userId, env) {
         }
         console.log(`PROCESS_USER_PLAN (${userId}): Processing for email: ${initialAnswers.email || 'N/A'}`);
         await addLog('Подготовка на модела');
-        const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, principlesWeek2_4: [], additionalGuidelines: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
+        const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, mealMacrosIndex: {}, principlesWeek2_4: [], additionalGuidelines: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
         const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, openaiApiKey, planModelName, unifiedPromptTemplate ] = await Promise.all([
             env.RESOURCES_KV.get('question_definitions'),
             env.RESOURCES_KV.get('base_diet_model'),
@@ -3611,14 +3719,14 @@ async function processSingleUserPlan(userId, env) {
             finalPrompt += `\n\n[PLAN_MODIFICATION]\n${pendingPlanModText}`;
         }
         
-        let generatedPlanObject = null; let rawAiResponse = "";
+        let generatedPlanObject = null; let rawAiResponse = ""; let abortPlanSave = false;
         try {
             await addLog('Извикване на AI модела');
             console.log(`PROCESS_USER_PLAN (${userId}): Calling model ${planModelName} for unified plan. Prompt length: ${finalPrompt.length}`);
             rawAiResponse = await callModelRef.current(planModelName, finalPrompt, env, { temperature: 0.1, maxTokens: 20000 });
             const cleanedJson = cleanGeminiJson(rawAiResponse);
             generatedPlanObject = safeParseJson(cleanedJson, {});
-            const requiredSections = ["profileSummary", "week1Menu", "principlesWeek2_4", "detailedTargets"];
+            const requiredSections = ["profileSummary", "week1Menu", "principlesWeek2_4", "detailedTargets", "mealMacrosIndex"];
             let missingSections = requiredSections.filter(key => !generatedPlanObject[key]);
             const originallyMissing = [...missingSections];
             if (missingSections.length > 0) {
@@ -3648,6 +3756,41 @@ async function processSingleUserPlan(userId, env) {
             } else {
                 console.log(`PROCESS_USER_PLAN (${userId}): Unified plan JSON parsed successfully.`);
             }
+            const macrosValidation = validateAiMealMacros(generatedPlanObject);
+            if (!macrosValidation.isValid) {
+                const missingCount = macrosValidation.missingEntries.length;
+                await addLog(`Открити липсващи макроси (${missingCount} хранения). Опит за повторно допълване.`, { checkpoint: true, reason: 'macros-repair-attempt' });
+                try {
+                    const macrosContext = JSON.stringify({
+                        week1Menu: generatedPlanObject.week1Menu,
+                        mealMacrosIndex: generatedPlanObject.mealMacrosIndex
+                    });
+                    const macrosRepairPrompt = `Return JSON with a fully populated mealMacrosIndex and update each meal.macros with numeric calories, protein_grams, carbs_grams, fat_grams, fiber_grams. Preserve the existing Bulgarian structure and descriptions. Base plan: ${macrosContext}`;
+                    const macrosRepairResponse = await callModelRef.current(planModelName, macrosRepairPrompt, env, { temperature: 0.1, maxTokens: 2000 });
+                    const macrosPatch = safeParseJson(cleanGeminiJson(macrosRepairResponse), {});
+                    mergeMealMacrosIntoPlan(generatedPlanObject, macrosPatch);
+                } catch (macrosErr) {
+                    const repairErrorMsg = `Meal macros repair attempt failed: ${macrosErr.message}`;
+                    console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${repairErrorMsg}`);
+                    planBuilder.generationMetadata.errors.push(repairErrorMsg);
+                }
+
+                const macrosRevalidation = validateAiMealMacros(generatedPlanObject);
+                if (!macrosRevalidation.isValid) {
+                    abortPlanSave = true;
+                    const summaryDetails = macrosRevalidation.missingEntries.slice(0, 5).map((entry) => `${entry.indexKey}: missing meal -> ${entry.missingMealKeys.join('/') || 'ok'}, index -> ${entry.missingIndexKeys.join('/') || 'ok'}`).join('; ');
+                    const diag = `Meal macros validation failed after retry (${macrosRevalidation.missingEntries.length} meals missing).${summaryDetails ? ` Details: ${summaryDetails}` : ''}`;
+                    await addLog(`Грешка: ${diag}`, { checkpoint: true, reason: 'macros-validation-failed' });
+                    planBuilder.generationMetadata.errors.push(diag);
+                    await setPlanStatus(userId, 'error', env);
+                    await env.USER_METADATA_KV.put(`${userId}_processing_error`, diag);
+                    throw new Error(diag);
+                }
+
+                await addLog('Макросите са попълнени след повторно запитване', { checkpoint: true, reason: 'macros-repaired' });
+                console.log(`PROCESS_USER_PLAN (${userId}): Meal macros populated successfully after retry.`);
+            }
+
             const { generationMetadata, ...restOfGeneratedPlan } = generatedPlanObject;
             Object.assign(planBuilder, restOfGeneratedPlan);
             const ensureFiber = (macros) => {
@@ -3671,6 +3814,9 @@ async function processSingleUserPlan(userId, env) {
             await addLog(`Грешка при AI: ${e.message}`, { checkpoint: true, reason: 'ai-error' });
             await env.USER_METADATA_KV.put(`${userId}_last_plan_raw_error`, rawAiResponse.substring(0, 300));
             planBuilder.generationMetadata.errors.push(errorMsg);
+            if (abortPlanSave) {
+                throw e;
+            }
         }
 
         console.log(`PROCESS_USER_PLAN (${userId}): Assembling and saving final plan. Recorded errors during generation: ${planBuilder.generationMetadata.errors.length}`);
