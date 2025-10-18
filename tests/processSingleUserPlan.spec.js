@@ -1,7 +1,6 @@
 import { jest } from '@jest/globals';
 
 const workerModule = await import('../worker.js');
-const { calculatePlanMacros, normalizeMacros, calculateMacroPercents } = workerModule;
 
 const callModelMock = jest.fn();
 
@@ -428,57 +427,17 @@ describe('processSingleUserPlan - макро валидации', () => {
     expect(prompt).toMatch(/"calories":"number \(0\)"/);
 
     const finalPlan = JSON.parse(kvStore.get(`${userId}_final_plan`));
-
-    const fallbackPlan = JSON.parse(fallbackPlanResponse);
-    const mondayTotals = calculatePlanMacros(
-      fallbackPlan.week1Menu.monday,
-      true,
-      true,
-      fallbackPlan.mealMacrosIndex,
-      'monday'
-    );
-    const planAverage = {
-      calories: Math.round(mondayTotals.calories),
-      protein_grams: Math.round(mondayTotals.protein),
-      carbs_grams: Math.round(mondayTotals.carbs),
-      fat_grams: Math.round(mondayTotals.fat),
-      fiber_grams: Math.round(mondayTotals.fiber),
-      ...calculateMacroPercents({
-        calories: mondayTotals.calories,
-        protein: mondayTotals.protein,
-        carbs: mondayTotals.carbs,
-        fat: mondayTotals.fat,
-        fiber: mondayTotals.fiber
-      })
-    };
-
-    const normalizedExtra = normalizeMacros(aggregatedLogs[0].extraMeals[0]);
-    const extraMealsAverage = {
-      calories: Math.round(normalizedExtra.calories),
-      protein_grams: Math.round(normalizedExtra.protein),
-      carbs_grams: Math.round(normalizedExtra.carbs),
-      fat_grams: Math.round(normalizedExtra.fat),
-      fiber_grams: Math.round(normalizedExtra.fiber),
-      ...calculateMacroPercents(normalizedExtra)
-    };
-
-    const combinedSummary = {
-      calories: planAverage.calories + extraMealsAverage.calories,
-      protein_grams: planAverage.protein_grams + extraMealsAverage.protein_grams,
-      carbs_grams: planAverage.carbs_grams + extraMealsAverage.carbs_grams,
-      fat_grams: planAverage.fat_grams + extraMealsAverage.fat_grams,
-      fiber_grams: planAverage.fiber_grams + extraMealsAverage.fiber_grams
-    };
-    const combinedPercents = calculateMacroPercents({
-      calories: combinedSummary.calories,
-      protein: combinedSummary.protein_grams,
-      carbs: combinedSummary.carbs_grams,
-      fat: combinedSummary.fat_grams,
-      fiber: combinedSummary.fiber_grams
+    expect(finalPlan.caloriesMacros).toEqual({
+      calories: 1350,
+      protein_grams: 77,
+      protein_percent: 23,
+      carbs_grams: 140,
+      carbs_percent: 41,
+      fat_grams: 43,
+      fat_percent: 29,
+      fiber_grams: 19,
+      fiber_percent: 3
     });
-    const expectedFallbackMacros = { ...combinedSummary, ...combinedPercents };
-
-    expect(finalPlan.caloriesMacros).toEqual(expectedFallbackMacros);
     expect(finalPlan.generationMetadata.targetSource).toBeNull();
     expect(finalPlan.generationMetadata.errors).toEqual(
       expect.arrayContaining([
@@ -487,8 +446,28 @@ describe('processSingleUserPlan - макро валидации', () => {
       ])
     );
     expect(finalPlan.generationMetadata.calculatedMacros).toEqual({
-      planAverage,
-      extraMealsAverage
+      planAverage: {
+        calories: 1100,
+        protein_grams: 65,
+        protein_percent: 24,
+        carbs_grams: 110,
+        carbs_percent: 40,
+        fat_grams: 35,
+        fat_percent: 29,
+        fiber_grams: 15,
+        fiber_percent: 3
+      },
+      extraMealsAverage: {
+        calories: 250,
+        protein_grams: 12,
+        protein_percent: 19,
+        carbs_grams: 30,
+        carbs_percent: 48,
+        fat_grams: 8,
+        fat_percent: 29,
+        fiber_grams: 4,
+        fiber_percent: 3
+      }
     });
     expect(finalPlan.generationMetadata.aiReportedMacros).toBeUndefined();
 
