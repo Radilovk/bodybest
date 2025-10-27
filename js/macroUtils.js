@@ -139,6 +139,13 @@ function mapGramFields(obj = {}) {
     });
   }
 
+  if (Object.prototype.hasOwnProperty.call(base, '__providedMacroKeys')) {
+    Object.defineProperty(mapped, '__providedMacroKeys', {
+      value: base.__providedMacroKeys,
+      enumerable: false
+    });
+  }
+
   if (base && typeof base.macros === 'object') {
     Object.entries(base.macros).forEach(([key, value]) => {
       if (Object.prototype.hasOwnProperty.call(mapped, key)) return;
@@ -186,6 +193,8 @@ function mapGramFields(obj = {}) {
 export function normalizeMacros(macros = {}) {
   const m = mapGramFields(macros);
   const missingKeys = CORE_MACRO_FIELDS.filter((key) => !hasValue(m[key]));
+  const providedKeys = CORE_MACRO_FIELDS.filter((key) => hasValue(m[key]));
+  if (hasValue(m.alcohol)) providedKeys.push('alcohol');
   const normalized = {
     calories: coerceNumber(m.calories),
     protein: coerceNumber(m.protein),
@@ -203,6 +212,12 @@ export function normalizeMacros(macros = {}) {
   if (m.__macrosScaled) {
     Object.defineProperty(normalized, '__macrosScaled', {
       value: true,
+      enumerable: false
+    });
+  }
+  if (providedKeys.length > 0) {
+    Object.defineProperty(normalized, '__providedMacroKeys', {
+      value: providedKeys,
       enumerable: false
     });
   }
@@ -242,6 +257,12 @@ function mergeNormalizedWithIndexed(normalized, indexed = null, grams = undefine
   if (normalized?.__preferGivenCalories) {
     Object.defineProperty(result, '__preferGivenCalories', {
       value: true,
+      enumerable: false
+    });
+  }
+  if (Array.isArray(normalized?.__providedMacroKeys)) {
+    Object.defineProperty(result, '__providedMacroKeys', {
+      value: normalized.__providedMacroKeys,
       enumerable: false
     });
   }
@@ -301,47 +322,12 @@ export function calculateMacroPercents(macros = {}) {
   };
 }
 
-function resolveMacros(meal, grams) {
-  if (!meal) return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+const CORE_AND_OPTIONAL_FIELDS = [...CORE_MACRO_FIELDS, 'alcohol'];
 
-  const ensureDefault = (macros) =>
-    macros && typeof macros === 'object'
-      ? macros
-      : { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
-
-  const alreadyScaled = Boolean(meal?.__macrosScaled);
-  const shouldScale = typeof grams === 'number' && !alreadyScaled;
-  const propagateScaleFlag = (target) => {
-    if (!alreadyScaled || !target || typeof target !== 'object') return target;
-    Object.defineProperty(target, '__macrosScaled', {
-      value: true,
-      enumerable: false
-    });
-    return target;
-  };
-
-  if ('calories' in meal) {
-    const macros = {
-      calories: coerceNumber(meal.calories),
-      protein: coerceNumber(meal.protein),
-      carbs: coerceNumber(meal.carbs),
-      fat: coerceNumber(meal.fat),
-      fiber: coerceNumber(meal.fiber),
-      ...(meal.alcohol != null ? { alcohol: coerceNumber(meal.alcohol) } : {})
-    };
-    if (meal.__preferGivenCalories) {
-      Object.defineProperty(macros, '__preferGivenCalories', {
-        value: true,
-        enumerable: false
-      });
-    }
-    propagateScaleFlag(macros);
-    const result = shouldScale ? scaleMacros(macros, grams) : macros;
-    return propagateScaleFlag(result);
-  }
-
+function resolveFallbackMacrosFromMeal(meal) {
   const candidates = [];
   const seenCandidates = new Set();
+
   const addCandidate = (value, priority = false) => {
     if (value == null) return;
     const strValue = typeof value === 'string' ? value.trim() : String(value).trim();
@@ -373,38 +359,134 @@ function resolveMacros(meal, grams) {
   };
 
   collectCandidatesFromObject(meal, { prioritizeCamelCase: true });
-  if (Array.isArray(meal.items)) {
+  if (Array.isArray(meal?.items)) {
     meal.items.forEach((item) => collectCandidatesFromObject(item));
   }
 
-  let resolvedMacros = null;
   for (const candidate of candidates) {
-    if (!resolvedMacros) {
-      const override = getNutrientOverride(candidate.raw);
-      if (override) {
-        resolvedMacros = { ...override };
-        break;
-      }
+    const override = getNutrientOverride(candidate.raw);
+    if (override) {
+      const result = {
+        calories: coerceNumber(override.calories),
+        protein: coerceNumber(override.protein),
+        carbs: coerceNumber(override.carbs),
+        fat: coerceNumber(override.fat)
+      };
+      if (override.fiber != null) result.fiber = coerceNumber(override.fiber);
+      if (override.alcohol != null) result.alcohol = coerceNumber(override.alcohol);
+      return result;
     }
+
     const baseMacros =
       macrosByIdOrName.get(candidate.raw) ||
       macrosByIdOrName.get(candidate.lower);
     if (baseMacros) {
-      resolvedMacros = {
+      const result = {
         calories: coerceNumber(baseMacros?.['калории']),
         protein: coerceNumber(baseMacros?.['белтъчини']),
         carbs: coerceNumber(baseMacros?.['въглехидрати']),
-        fat: coerceNumber(baseMacros?.['мазнини']),
-        fiber: coerceNumber(baseMacros?.['фибри']),
-        ...(baseMacros?.['алкохол'] != null
-          ? { alcohol: coerceNumber(baseMacros?.['алкохол']) }
-          : {})
+        fat: coerceNumber(baseMacros?.['мазнини'])
       };
-      break;
+      if (baseMacros?.['фибри'] != null) result.fiber = coerceNumber(baseMacros?.['фибри']);
+      if (baseMacros?.['алкохол'] != null) result.alcohol = coerceNumber(baseMacros?.['алкохол']);
+      return result;
     }
   }
 
-  const macros = ensureDefault(resolvedMacros);
+  return null;
+}
+
+function resolveMacros(meal, grams) {
+  if (!meal) return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+
+  const alreadyScaled = Boolean(meal?.__macrosScaled);
+  const shouldScale = typeof grams === 'number' && !alreadyScaled;
+  const propagateScaleFlag = (target) => {
+    if (!alreadyScaled || !target || typeof target !== 'object') return target;
+    Object.defineProperty(target, '__macrosScaled', {
+      value: true,
+      enumerable: false
+    });
+    return target;
+  };
+
+  const parseFieldValue = (field) => {
+    if (!meal || typeof meal !== 'object') return null;
+    const direct = meal[field];
+    if (hasValue(direct)) {
+      const parsedDirect = parseNumericValue(direct);
+      if (parsedDirect != null) return parsedDirect;
+    }
+    if (meal.macros && hasValue(meal.macros[field])) {
+      const parsedMacro = parseNumericValue(meal.macros[field]);
+      if (parsedMacro != null) return parsedMacro;
+    }
+    return null;
+  };
+
+  const initialProvidedKeys = Array.isArray(meal?.__providedMacroKeys)
+    ? meal.__providedMacroKeys
+    : null;
+  const providedMacroKeys = new Set(initialProvidedKeys || []);
+  const shouldInferProvided = !initialProvidedKeys;
+
+  const macroValues = {};
+  const missingFields = [];
+
+  CORE_AND_OPTIONAL_FIELDS.forEach((field) => {
+    const parsed = parseFieldValue(field);
+    if (parsed != null) {
+      macroValues[field] = parsed;
+      if (shouldInferProvided) {
+        providedMacroKeys.add(field);
+      }
+    } else {
+      missingFields.push(field);
+    }
+  });
+
+  const fallbackMacros = missingFields.length > 0 ? resolveFallbackMacrosFromMeal(meal) : null;
+
+  if (fallbackMacros) {
+    missingFields.forEach((field) => {
+      const currentParsed = parseFieldValue(field);
+      if (currentParsed != null) return;
+      if (!hasValue(fallbackMacros[field])) return;
+      macroValues[field] = coerceNumber(fallbackMacros[field]);
+    });
+  }
+
+  const macros = {
+    calories: coerceNumber(macroValues.calories),
+    protein: coerceNumber(macroValues.protein),
+    carbs: coerceNumber(macroValues.carbs),
+    fat: coerceNumber(macroValues.fat),
+    fiber: coerceNumber(macroValues.fiber)
+  };
+
+  if (macroValues.alcohol != null) {
+    macros.alcohol = coerceNumber(macroValues.alcohol);
+  }
+
+  const hasOriginalCoreData = Array.isArray(initialProvidedKeys)
+    ? initialProvidedKeys.some((key) => CORE_MACRO_FIELDS.includes(key))
+    : false;
+  const shouldPreferGivenCalories = Boolean(meal.__preferGivenCalories) || hasOriginalCoreData;
+
+  if (shouldPreferGivenCalories) {
+    Object.defineProperty(macros, '__preferGivenCalories', {
+      value: true,
+      enumerable: false
+    });
+  }
+
+  if (providedMacroKeys.size > 0) {
+    Object.defineProperty(macros, '__providedMacroKeys', {
+      value: Array.from(providedMacroKeys),
+      enumerable: false
+    });
+  }
+
   propagateScaleFlag(macros);
   const result = shouldScale ? scaleMacros(macros, grams) : macros;
   return propagateScaleFlag(result);
@@ -546,6 +628,12 @@ export function calculatePlanMacros(
         ...macroValues,
         ...(mergedGrams != null ? { grams: mergedGrams } : {})
       };
+      if (Array.isArray(merged.__providedMacroKeys)) {
+        Object.defineProperty(prepared, '__providedMacroKeys', {
+          value: merged.__providedMacroKeys,
+          enumerable: false
+        });
+      }
       prepared.macros = { ...(meal.macros || {}), ...macroValues };
       Object.defineProperty(prepared, '__preferGivenCalories', {
         value: true,
@@ -609,6 +697,12 @@ export function calculateCurrentMacros(
         ...macroValues,
         ...(mergedGrams != null ? { grams: mergedGrams } : {})
       };
+      if (Array.isArray(merged.__providedMacroKeys)) {
+        Object.defineProperty(prepared, '__providedMacroKeys', {
+          value: merged.__providedMacroKeys,
+          enumerable: false
+        });
+      }
       prepared.macros = { ...(meal.macros || {}), ...macroValues };
       Object.defineProperty(prepared, '__preferGivenCalories', {
         value: true,
