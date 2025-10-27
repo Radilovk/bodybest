@@ -409,3 +409,27 @@ test('calculateMacroPercents изчислява проценти спрямо к
   const zero = calculateMacroPercents({ calories: 0, protein: 10, carbs: 10, fat: 5 });
   expect(zero).toEqual({ protein_percent: 0, carbs_percent: 0, fat_percent: 0, fiber_percent: 0 });
 });
+
+test('override extra meal stays at 78 kcal for 150g apple', () => {
+  registerNutrientOverrides({
+    'ябълка': {
+      calories: 52,
+      protein: 0.3,
+      carbs: 14,
+      fat: 0.2,
+      fiber: 2.4
+    }
+  });
+  const override = getNutrientOverride('ябълка');
+  const scaled = scaleMacros(override, 150);
+  const extraMeal = { ...scaled, grams: 150 };
+  Object.defineProperty(extraMeal, '__macrosScaled', {
+    value: true,
+    enumerable: false
+  });
+  const totals = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+  addMealMacros(extraMeal, totals);
+  expect(totals.calories).toBeCloseTo(78, 5);
+  expect(extraMeal.calories).toBeCloseTo(78, 5);
+  registerNutrientOverrides({});
+});

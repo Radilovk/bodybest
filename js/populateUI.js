@@ -398,7 +398,18 @@ export function addExtraMealWithOverride(name = '', macros = {}, grams) {
     const override = getNutrientOverride(name) || {};
     const base = hasMacros ? macros : override;
     const scaled = gramValue ? scaleMacros(base, gramValue) : base;
-    const entry = gramValue ? { ...scaled, grams: gramValue } : scaled;
+    const entry = gramValue ? { ...scaled, grams: gramValue } : { ...scaled };
+    if (gramValue) {
+        Object.defineProperty(entry, '__macrosScaled', {
+            value: true,
+            enumerable: false
+        });
+    } else if (hasMacros && macros.__macrosScaled) {
+        Object.defineProperty(entry, '__macrosScaled', {
+            value: true,
+            enumerable: false
+        });
+    }
     todaysExtraMeals.push(entry);
     // Обновяваме макросите и аналитиката след добавяне на хранене
     updateMacrosAndAnalytics();
