@@ -97,6 +97,28 @@ test('calculateCurrentMacros използва mealMacrosIndex като fallback'
   expect(result).toEqual({ calories: 320, protein: 30, carbs: 25, fat: 12, fiber: 6 });
 });
 
+test('calculateCurrentMacros намира макроси по recipeKey и имена на продукти', () => {
+  registerNutrientOverrides({});
+  const planMenu = {
+    monday: [
+      {
+        meal_name: 'Персонализирано ястие',
+        recipeKey: 'z-01',
+        items: [{ name: 'Протеинов шейк' }]
+      },
+      {
+        meal_name: 'Персонализирано ястие 2',
+        recipeKey: 'custom-missing',
+        items: [{ name: 'Протеинов шейк' }]
+      }
+    ]
+  };
+  const completionStatus = { monday_0: true, monday_1: true };
+  const result = calculateCurrentMacros(planMenu, completionStatus, []);
+  expect(result).toEqual({ calories: 600, protein: 54, carbs: 60, fat: 16, fiber: 0 });
+  registerNutrientOverrides({});
+});
+
 test('normalizeMacros парсира стойности със съответните единици', () => {
   const normalized = normalizeMacros({
     calories: '320 kcal',

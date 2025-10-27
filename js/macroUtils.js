@@ -290,9 +290,14 @@ export function calculateMacroPercents(macros = {}) {
 
 function resolveMacros(meal, grams) {
   if (!meal) return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
-  let macros;
+
+  const ensureDefault = (macros) =>
+    macros && typeof macros === 'object'
+      ? macros
+      : { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+
   if ('calories' in meal) {
-    macros = {
+    const macros = {
       calories: coerceNumber(meal.calories),
       protein: coerceNumber(meal.protein),
       carbs: coerceNumber(meal.carbs),
@@ -306,14 +311,50 @@ function resolveMacros(meal, grams) {
         enumerable: false
       });
     }
-  } else {
-    const override = getNutrientOverride(meal.meal_name || meal.name);
-    if (override) macros = override;
-    else {
-      const baseMacros =
-        macrosByIdOrName.get(meal.id) ||
-        macrosByIdOrName.get((meal.meal_name || meal.name || '').toLowerCase());
-      macros = {
+    return typeof grams === 'number' ? scaleMacros(macros, grams) : macros;
+  }
+
+  const candidates = [];
+  const seenCandidates = new Set();
+  const addCandidate = (value) => {
+    if (value == null) return;
+    const strValue = typeof value === 'string' ? value.trim() : String(value).trim();
+    if (!strValue) return;
+    const key = strValue.toLowerCase();
+    if (seenCandidates.has(key)) return;
+    seenCandidates.add(key);
+    candidates.push({ raw: strValue, lower: key });
+  };
+
+  const collectCandidatesFromObject = (obj) => {
+    if (!obj || typeof obj !== 'object') return;
+    Object.entries(obj).forEach(([prop, value]) => {
+      if (value == null) return;
+      if (typeof value === 'string' || typeof value === 'number') {
+        if (/(?:^|_)(?:id|name|key)$/i.test(prop)) addCandidate(value);
+      }
+    });
+  };
+
+  collectCandidatesFromObject(meal);
+  if (Array.isArray(meal.items)) {
+    meal.items.forEach((item) => collectCandidatesFromObject(item));
+  }
+
+  let resolvedMacros = null;
+  for (const candidate of candidates) {
+    if (!resolvedMacros) {
+      const override = getNutrientOverride(candidate.raw);
+      if (override) {
+        resolvedMacros = { ...override };
+        break;
+      }
+    }
+    const baseMacros =
+      macrosByIdOrName.get(candidate.raw) ||
+      macrosByIdOrName.get(candidate.lower);
+    if (baseMacros) {
+      resolvedMacros = {
         calories: coerceNumber(baseMacros?.['калории']),
         protein: coerceNumber(baseMacros?.['белтъчини']),
         carbs: coerceNumber(baseMacros?.['въглехидрати']),
@@ -323,8 +364,11 @@ function resolveMacros(meal, grams) {
           ? { alcohol: coerceNumber(baseMacros?.['алкохол']) }
           : {})
       };
+      break;
     }
   }
+
+  const macros = ensureDefault(resolvedMacros);
   return typeof grams === 'number' ? scaleMacros(macros, grams) : macros;
 }
 
