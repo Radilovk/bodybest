@@ -316,27 +316,37 @@ function resolveMacros(meal, grams) {
 
   const candidates = [];
   const seenCandidates = new Set();
-  const addCandidate = (value) => {
+  const addCandidate = (value, priority = false) => {
     if (value == null) return;
     const strValue = typeof value === 'string' ? value.trim() : String(value).trim();
     if (!strValue) return;
     const key = strValue.toLowerCase();
     if (seenCandidates.has(key)) return;
     seenCandidates.add(key);
-    candidates.push({ raw: strValue, lower: key });
+    const candidate = { raw: strValue, lower: key };
+    if (priority) {
+      candidates.unshift(candidate);
+    } else {
+      candidates.push(candidate);
+    }
   };
 
-  const collectCandidatesFromObject = (obj) => {
+  const collectCandidatesFromObject = (obj, { prioritizeCamelCase = false } = {}) => {
     if (!obj || typeof obj !== 'object') return;
     Object.entries(obj).forEach(([prop, value]) => {
       if (value == null) return;
       if (typeof value === 'string' || typeof value === 'number') {
-        if (/(?:^|_)(?:id|name|key)$/i.test(prop)) addCandidate(value);
+        const matchesSnakeCase = /(?:^|_)(?:id|name|key)$/i.test(prop);
+        const matchesCamelCase = /(Id|Name|Key)$/.test(prop);
+        if (matchesSnakeCase || matchesCamelCase) {
+          const prioritize = prioritizeCamelCase && matchesCamelCase;
+          addCandidate(value, prioritize);
+        }
       }
     });
   };
 
-  collectCandidatesFromObject(meal);
+  collectCandidatesFromObject(meal, { prioritizeCamelCase: true });
   if (Array.isArray(meal.items)) {
     meal.items.forEach((item) => collectCandidatesFromObject(item));
   }
