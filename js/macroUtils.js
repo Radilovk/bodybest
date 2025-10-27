@@ -132,6 +132,13 @@ function mapGramFields(obj = {}) {
     });
   }
 
+  if (Object.prototype.hasOwnProperty.call(base, '__macrosScaled')) {
+    Object.defineProperty(mapped, '__macrosScaled', {
+      value: Boolean(base.__macrosScaled),
+      enumerable: false
+    });
+  }
+
   if (base && typeof base.macros === 'object') {
     Object.entries(base.macros).forEach(([key, value]) => {
       if (Object.prototype.hasOwnProperty.call(mapped, key)) return;
@@ -189,6 +196,12 @@ export function normalizeMacros(macros = {}) {
   if (hasValue(m.alcohol)) normalized.alcohol = coerceNumber(m.alcohol);
   if (m.__preferGivenCalories) {
     Object.defineProperty(normalized, '__preferGivenCalories', {
+      value: true,
+      enumerable: false
+    });
+  }
+  if (m.__macrosScaled) {
+    Object.defineProperty(normalized, '__macrosScaled', {
       value: true,
       enumerable: false
     });
@@ -296,6 +309,17 @@ function resolveMacros(meal, grams) {
       ? macros
       : { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
+  const alreadyScaled = Boolean(meal?.__macrosScaled);
+  const shouldScale = typeof grams === 'number' && !alreadyScaled;
+  const propagateScaleFlag = (target) => {
+    if (!alreadyScaled || !target || typeof target !== 'object') return target;
+    Object.defineProperty(target, '__macrosScaled', {
+      value: true,
+      enumerable: false
+    });
+    return target;
+  };
+
   if ('calories' in meal) {
     const macros = {
       calories: coerceNumber(meal.calories),
@@ -311,7 +335,9 @@ function resolveMacros(meal, grams) {
         enumerable: false
       });
     }
-    return typeof grams === 'number' ? scaleMacros(macros, grams) : macros;
+    propagateScaleFlag(macros);
+    const result = shouldScale ? scaleMacros(macros, grams) : macros;
+    return propagateScaleFlag(result);
   }
 
   const candidates = [];
@@ -379,7 +405,9 @@ function resolveMacros(meal, grams) {
   }
 
   const macros = ensureDefault(resolvedMacros);
-  return typeof grams === 'number' ? scaleMacros(macros, grams) : macros;
+  propagateScaleFlag(macros);
+  const result = shouldScale ? scaleMacros(macros, grams) : macros;
+  return propagateScaleFlag(result);
 }
 
 /**
@@ -421,7 +449,9 @@ function validateMacroCalories(macros = {}, threshold = 0.05, carbsIncludeFiber 
 
 export function addMealMacros(meal, acc, skipValidation = false) {
   const mapped = mapGramFields(meal);
-  const m = normalizeMacros(resolveMacros(mapped, mapped?.grams));
+  const grams = mapped?.__macrosScaled ? undefined : mapped?.grams;
+  const resolved = resolveMacros(mapped, grams);
+  const m = normalizeMacros(resolved);
   if (!skipValidation) {
     validateMacroCalories(m);
   }
@@ -435,7 +465,9 @@ export function addMealMacros(meal, acc, skipValidation = false) {
 
 export function removeMealMacros(meal, acc, skipValidation = false) {
   const mapped = mapGramFields(meal);
-  const m = normalizeMacros(resolveMacros(mapped, mapped?.grams));
+  const grams = mapped?.__macrosScaled ? undefined : mapped?.grams;
+  const resolved = resolveMacros(mapped, grams);
+  const m = normalizeMacros(resolved);
   if (!skipValidation) {
     validateMacroCalories(m);
   }
