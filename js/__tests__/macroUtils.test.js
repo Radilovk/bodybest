@@ -161,6 +161,22 @@ test('calculateCurrentMacros използва camelCase recipeKey преди fal
   registerNutrientOverrides({});
 });
 
+test('calculateCurrentMacros премахва липсващи макроси, за да използва каталожен fallback', () => {
+  registerNutrientOverrides({});
+  const planMenu = {
+    monday: [
+      {
+        recipeKey: 'z-01',
+        macros: {}
+      }
+    ]
+  };
+  const completionStatus = { monday_0: true };
+  const result = calculateCurrentMacros(planMenu, completionStatus, [], false, {});
+  expect(result).toEqual({ calories: 300, protein: 27, carbs: 30, fat: 8, fiber: 0 });
+  registerNutrientOverrides({});
+});
+
 test('normalizeMacros парсира стойности със съответните единици', () => {
   const normalized = normalizeMacros({
     calories: '320 kcal',
