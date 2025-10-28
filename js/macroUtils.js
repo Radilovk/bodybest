@@ -713,13 +713,13 @@ export function calculateCurrentMacros(
       }
       const indexed = key ? getIndexedMacros(key, grams) : null;
       const merged = mergeNormalizedWithIndexed(normalized, indexed, grams);
+      const missingKeys = Array.isArray(merged.__missingMacroKeys) ? merged.__missingMacroKeys : [];
+      const shouldDropMissing = !indexed && missingKeys.length > 0;
       const { grams: mergedGrams, ...restValues } = merged;
       const macroValues = { ...restValues };
-      const missingKeys = Array.isArray(merged.__missingMacroKeys) ? merged.__missingMacroKeys : [];
-      const shouldDropMissing = missingKeys.length > 0;
       if (shouldDropMissing) {
-        missingKeys.forEach((key) => {
-          delete macroValues[key];
+        missingKeys.forEach((macroKey) => {
+          delete macroValues[macroKey];
         });
       }
       const prepared = {
@@ -727,6 +727,11 @@ export function calculateCurrentMacros(
         ...macroValues,
         ...(mergedGrams != null ? { grams: mergedGrams } : {})
       };
+      if (shouldDropMissing) {
+        missingKeys.forEach((macroKey) => {
+          delete prepared[macroKey];
+        });
+      }
       if (Array.isArray(merged.__providedMacroKeys)) {
         Object.defineProperty(prepared, '__providedMacroKeys', {
           value: merged.__providedMacroKeys,
@@ -735,11 +740,16 @@ export function calculateCurrentMacros(
       }
       const mergedMacros = { ...(meal.macros || {}) };
       if (shouldDropMissing) {
-        missingKeys.forEach((key) => {
-          delete mergedMacros[key];
+        missingKeys.forEach((macroKey) => {
+          delete mergedMacros[macroKey];
         });
       }
       prepared.macros = { ...mergedMacros, ...macroValues };
+      if (shouldDropMissing) {
+        missingKeys.forEach((macroKey) => {
+          delete prepared.macros[macroKey];
+        });
+      }
       Object.defineProperty(prepared, '__preferGivenCalories', {
         value: true,
         enumerable: false
