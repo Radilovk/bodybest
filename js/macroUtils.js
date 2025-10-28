@@ -13,6 +13,19 @@ const macrosByIdOrName = new Map(
     })
 );
 
+const normalizeLookupKey = (value) =>
+  typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+// Временно съпоставяне на липсващи recipeKey/meal_name стойности към реални каталожни записи.
+// Поддържаме таблицата кратка и документирaна, докато добавим липсващите ястия в базата.
+const RECIPE_MACRO_ALIASES = new Map(
+  [
+    // TODO: Добави отделен каталожен запис за "Вечеря: Салата и Риба на Скара".
+    ['dinner_salad_fish', 'v-01'],
+    ['вечеря: салата и риба на скара', 'v-01']
+  ].map(([alias, target]) => [normalizeLookupKey(alias), target])
+);
+
 // Кеш за хранителни стойности по име
 let nutrientOverrides = {};
 const nutrientCache = new Map();
@@ -332,7 +345,47 @@ export function calculateMacroPercents(macros = {}) {
 
 const CORE_AND_OPTIONAL_FIELDS = [...CORE_MACRO_FIELDS, 'alcohol'];
 
+const formatCatalogMacros = (baseMacros) => {
+  if (!baseMacros) return null;
+  const result = {
+    calories: coerceNumber(baseMacros?.['калории']),
+    protein: coerceNumber(baseMacros?.['белтъчини']),
+    carbs: coerceNumber(baseMacros?.['въглехидрати']),
+    fat: coerceNumber(baseMacros?.['мазнини'])
+  };
+  if (baseMacros?.['фибри'] != null) result.fiber = coerceNumber(baseMacros?.['фибри']);
+  if (baseMacros?.['алкохол'] != null) result.alcohol = coerceNumber(baseMacros?.['алкохол']);
+  return result;
+};
+
+const resolveCatalogMacros = (key) => {
+  if (!key) return null;
+  const directMatch = macrosByIdOrName.get(key);
+  if (directMatch) return formatCatalogMacros(directMatch);
+  const normalizedKey = normalizeLookupKey(key);
+  if (!normalizedKey) return null;
+  const normalizedMatch = macrosByIdOrName.get(normalizedKey);
+  return normalizedMatch ? formatCatalogMacros(normalizedMatch) : null;
+};
+
 function resolveFallbackMacrosFromMeal(meal) {
+  const aliasSources = [
+    meal?.recipeKey,
+    meal?.recipe_key,
+    meal?.id,
+    meal?.meal_name,
+    meal?.name
+  ];
+
+  for (const source of aliasSources) {
+    const aliasKey = normalizeLookupKey(source);
+    if (!aliasKey) continue;
+    const targetKey = RECIPE_MACRO_ALIASES.get(aliasKey);
+    if (!targetKey) continue;
+    const aliasMacros = resolveCatalogMacros(targetKey);
+    if (aliasMacros) return aliasMacros;
+  }
+
   const candidates = [];
   const seenCandidates = new Set();
 
@@ -385,20 +438,8 @@ function resolveFallbackMacrosFromMeal(meal) {
       return result;
     }
 
-    const baseMacros =
-      macrosByIdOrName.get(candidate.raw) ||
-      macrosByIdOrName.get(candidate.lower);
-    if (baseMacros) {
-      const result = {
-        calories: coerceNumber(baseMacros?.['калории']),
-        protein: coerceNumber(baseMacros?.['белтъчини']),
-        carbs: coerceNumber(baseMacros?.['въглехидрати']),
-        fat: coerceNumber(baseMacros?.['мазнини'])
-      };
-      if (baseMacros?.['фибри'] != null) result.fiber = coerceNumber(baseMacros?.['фибри']);
-      if (baseMacros?.['алкохол'] != null) result.alcohol = coerceNumber(baseMacros?.['алкохол']);
-      return result;
-    }
+    const baseMacros = resolveCatalogMacros(candidate.raw);
+    if (baseMacros) return baseMacros;
   }
 
   return null;

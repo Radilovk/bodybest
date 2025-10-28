@@ -97,6 +97,21 @@ test('calculateCurrentMacros използва mealMacrosIndex като fallback'
   expect(result).toEqual({ calories: 320, protein: 30, carbs: 25, fat: 12, fiber: 6 });
 });
 
+test('calculateCurrentMacros използва alias за липсващо каталожно ястие', () => {
+  registerNutrientOverrides({});
+  const planMenu = {
+    monday: [
+      {
+        recipeKey: 'dinner_salad_fish'
+      }
+    ]
+  };
+  const completionStatus = { monday_0: true };
+  const result = calculateCurrentMacros(planMenu, completionStatus, []);
+  expect(result).toEqual({ calories: 400, protein: 35, carbs: 10, fat: 24, fiber: 0 });
+  registerNutrientOverrides({});
+});
+
 test('calculateCurrentMacros запазва индекс макроси при съвпадение с каталога', () => {
   const planMenu = {
     monday: [
