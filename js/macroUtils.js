@@ -713,12 +713,14 @@ export function calculateCurrentMacros(
       }
       const indexed = key ? getIndexedMacros(key, grams) : null;
       const merged = mergeNormalizedWithIndexed(normalized, indexed, grams);
-      const missingKeys = Array.isArray(merged.__missingMacroKeys) ? merged.__missingMacroKeys : [];
-      const shouldDropMissing = !indexed && missingKeys.length > 0;
+      const normalizedMissingKeys = Array.isArray(normalized.__missingMacroKeys)
+        ? normalized.__missingMacroKeys
+        : [];
+      const shouldDropMissing = !indexed && normalizedMissingKeys.length > 0;
       const { grams: mergedGrams, ...restValues } = merged;
       const macroValues = { ...restValues };
       if (shouldDropMissing) {
-        missingKeys.forEach((macroKey) => {
+        normalizedMissingKeys.forEach((macroKey) => {
           delete macroValues[macroKey];
         });
       }
@@ -728,7 +730,7 @@ export function calculateCurrentMacros(
         ...(mergedGrams != null ? { grams: mergedGrams } : {})
       };
       if (shouldDropMissing) {
-        missingKeys.forEach((macroKey) => {
+        normalizedMissingKeys.forEach((macroKey) => {
           delete prepared[macroKey];
         });
       }
@@ -740,13 +742,13 @@ export function calculateCurrentMacros(
       }
       const mergedMacros = { ...(meal.macros || {}) };
       if (shouldDropMissing) {
-        missingKeys.forEach((macroKey) => {
+        normalizedMissingKeys.forEach((macroKey) => {
           delete mergedMacros[macroKey];
         });
       }
       prepared.macros = { ...mergedMacros, ...macroValues };
       if (shouldDropMissing) {
-        missingKeys.forEach((macroKey) => {
+        normalizedMissingKeys.forEach((macroKey) => {
           delete prepared.macros[macroKey];
         });
       }
