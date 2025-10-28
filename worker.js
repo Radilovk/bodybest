@@ -17,7 +17,16 @@ import { sendEmail, DEFAULT_MAIL_PHP_URL } from './sendEmailWorker.js';
 
 const MACRO_FIELD_ALIASES = {
   calories: ['calories', 'calories_kcal', 'cal', 'kcal', 'energy', 'energy_kcal'],
-  protein: ['protein', 'protein_grams', 'protein_g', 'proteins', 'proteins_g'],
+  protein: [
+    'protein',
+    'protein_grams',
+    'protein_g',
+    'proteins',
+    'proteins_g',
+    'proteinGrams',
+    'proteinTarget',
+    'protein_target_grams'
+  ],
   carbs: [
     'carbs',
     'carbs_grams',
@@ -26,10 +35,61 @@ const MACRO_FIELD_ALIASES = {
     'carbohydrates_g',
     'carbohydrates_total_g',
     'net_carbs',
-    'net_carbs_g'
+    'net_carbs_g',
+    'carbsGrams',
+    'carbGrams',
+    'carbsTarget'
   ],
-  fat: ['fat', 'fat_grams', 'fat_g', 'fat_total_g', 'fats'],
-  fiber: ['fiber', 'fiber_grams', 'fiber_g', 'fibre', 'fibre_grams', 'fibre_g']
+  fat: ['fat', 'fat_grams', 'fat_g', 'fat_total_g', 'fats', 'fatGrams', 'fatTarget'],
+  fiber: ['fiber', 'fiber_grams', 'fiber_g', 'fibre', 'fibre_grams', 'fibre_g', 'fiberGrams', 'fibreGrams']
+};
+
+const MACRO_PERCENT_FIELD_ALIASES = {
+  protein_percent: [
+    'protein_percent',
+    'protein_pct',
+    'protein_percentage',
+    'protein_ratio',
+    'proteinPercent',
+    'proteinPercentage'
+  ],
+  carbs_percent: [
+    'carbs_percent',
+    'carb_percent',
+    'carbs_pct',
+    'carbohydrates_percent',
+    'carb_pct',
+    'carbsPercent',
+    'carbsPercentage'
+  ],
+  fat_percent: [
+    'fat_percent',
+    'fat_pct',
+    'fat_percentage',
+    'fats_percent',
+    'fatPercent',
+    'fatPercentage'
+  ],
+  fiber_percent: [
+    'fiber_percent',
+    'fibre_percent',
+    'fiber_pct',
+    'fibre_pct',
+    'fiberPercent',
+    'fiberPercentage'
+  ]
+};
+
+const TARGET_MACRO_PLACEHOLDERS = {
+  calories: '%%TARGET_CALORIES%%',
+  protein_grams: '%%TARGET_PROTEIN_GRAMS%%',
+  protein_percent: '%%TARGET_PROTEIN_PERCENT%%',
+  carbs_grams: '%%TARGET_CARBS_GRAMS%%',
+  carbs_percent: '%%TARGET_CARBS_PERCENT%%',
+  fat_grams: '%%TARGET_FAT_GRAMS%%',
+  fat_percent: '%%TARGET_FAT_PERCENT%%',
+  fiber_grams: '%%TARGET_FIBER_GRAMS%%',
+  fiber_percent: '%%TARGET_FIBER_PERCENT%%'
 };
 
 const CALORIES_PER_GRAM = {
@@ -93,6 +153,296 @@ const mergeMacroSources = (primary, secondary) => ({
   fat_grams: primary?.fat_grams ?? secondary?.fat_grams ?? null,
   fiber_grams: primary?.fiber_grams ?? secondary?.fiber_grams ?? null
 });
+
+const MACRO_GRAM_PERCENT_MAPPING = [
+  { gramsKey: 'protein_grams', percentKey: 'protein_percent', alias: 'protein' },
+  { gramsKey: 'carbs_grams', percentKey: 'carbs_percent', alias: 'carbs' },
+  { gramsKey: 'fat_grams', percentKey: 'fat_percent', alias: 'fat' },
+  { gramsKey: 'fiber_grams', percentKey: 'fiber_percent', alias: 'fiber' }
+];
+
+const pickNumericValue = (source, aliases = []) => {
+  if (!source || typeof source !== 'object') return null;
+  for (const alias of aliases) {
+    if (Object.prototype.hasOwnProperty.call(source, alias)) {
+      const parsed = parseNumber(source[alias]);
+      if (parsed != null) {
+        return parsed;
+      }
+    }
+  }
+  return null;
+};
+
+const convertDirectTargetMacros = (source) => {
+  if (!source || typeof source !== 'object') return null;
+  const macros = {
+    calories: pickNumericValue(source, [...MACRO_FIELD_ALIASES.calories, 'calorieTarget', 'targetCalories']),
+    protein_grams: pickNumericValue(source, MACRO_FIELD_ALIASES.protein),
+    carbs_grams: pickNumericValue(source, MACRO_FIELD_ALIASES.carbs),
+    fat_grams: pickNumericValue(source, MACRO_FIELD_ALIASES.fat),
+    fiber_grams: pickNumericValue(source, MACRO_FIELD_ALIASES.fiber),
+    protein_percent: pickNumericValue(source, MACRO_PERCENT_FIELD_ALIASES.protein_percent),
+    carbs_percent: pickNumericValue(source, MACRO_PERCENT_FIELD_ALIASES.carbs_percent),
+    fat_percent: pickNumericValue(source, MACRO_PERCENT_FIELD_ALIASES.fat_percent),
+    fiber_percent: pickNumericValue(source, MACRO_PERCENT_FIELD_ALIASES.fiber_percent)
+  };
+  const hasValue = Object.values(macros).some((value) => value != null);
+  return hasValue ? macros : null;
+};
+
+const extractTargetMacrosFromAny = (source, visited = new Set()) => {
+  if (!source) return null;
+  if (typeof source === 'string') {
+    const parsed = safeParseJson(source, null);
+    return parsed ? extractTargetMacrosFromAny(parsed, visited) : null;
+  }
+  if (typeof source !== 'object') {
+    return null;
+  }
+  if (visited.has(source)) {
+    return null;
+  }
+  visited.add(source);
+  if (Array.isArray(source)) {
+    for (const item of source) {
+      const found = extractTargetMacrosFromAny(item, visited);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (source.data) {
+    const fromData = extractTargetMacrosFromAny(source.data, visited);
+    if (fromData) return fromData;
+  }
+  if (source.plan || source.recommendation) {
+    const planMacros = extractTargetMacrosFromAny(source.plan, visited);
+    if (planMacros) return planMacros;
+    const recommendationMacros = extractTargetMacrosFromAny(source.recommendation, visited);
+    if (recommendationMacros) return recommendationMacros;
+  }
+  if (source.caloriesMacros) {
+    const nested = extractTargetMacrosFromAny(source.caloriesMacros, visited);
+    if (nested) return nested;
+  }
+  const direct = convertDirectTargetMacros(source);
+  if (direct) return direct;
+  for (const value of Object.values(source)) {
+    if (typeof value === 'object' || typeof value === 'string') {
+      const nested = extractTargetMacrosFromAny(value, visited);
+      if (nested) return nested;
+    }
+  }
+  return null;
+};
+
+const finalizeTargetMacros = (macros) => {
+  if (!macros || typeof macros !== 'object') return null;
+  const normalized = {
+    calories: parseNumber(macros.calories),
+    protein_grams: parseNumber(macros.protein_grams),
+    carbs_grams: parseNumber(macros.carbs_grams),
+    fat_grams: parseNumber(macros.fat_grams),
+    fiber_grams: parseNumber(macros.fiber_grams),
+    protein_percent: parseNumber(macros.protein_percent),
+    carbs_percent: parseNumber(macros.carbs_percent),
+    fat_percent: parseNumber(macros.fat_percent),
+    fiber_percent: parseNumber(macros.fiber_percent)
+  };
+
+  if (normalized.calories != null) {
+    normalized.calories = roundValue(normalized.calories);
+  }
+
+  for (const { gramsKey, percentKey, alias } of MACRO_GRAM_PERCENT_MAPPING) {
+    const gramsValue = normalized[gramsKey];
+    const percentValue = normalized[percentKey];
+    if (gramsValue != null) {
+      normalized[gramsKey] = roundValue(gramsValue);
+    }
+    if (percentValue != null) {
+      normalized[percentKey] = roundValue(percentValue);
+    }
+    if (normalized.calories && normalized.calories > 0) {
+      if (normalized[gramsKey] == null && percentValue != null) {
+        const grams = (normalized.calories * percentValue) / 100 / CALORIES_PER_GRAM[alias];
+        normalized[gramsKey] = roundValue(grams);
+      } else if (normalized[percentKey] == null && gramsValue != null) {
+        const percent = (gramsValue * CALORIES_PER_GRAM[alias] * 100) / normalized.calories;
+        normalized[percentKey] = roundValue(percent);
+      }
+    }
+  }
+
+  const hasAny = Object.values(normalized).some((value) => typeof value === 'number' && Number.isFinite(value) && value > 0);
+  return hasAny ? normalized : null;
+};
+
+const buildTargetReplacements = (macros) => {
+  const replacements = {};
+  for (const [key, placeholder] of Object.entries(TARGET_MACRO_PLACEHOLDERS)) {
+    const value = macros?.[key];
+    replacements[placeholder] = value != null && Number.isFinite(value) ? String(value) : 'N/A';
+  }
+  return replacements;
+};
+
+const parsePossiblyStringifiedJson = (value) => {
+  let current = value;
+  let depth = 0;
+  while (typeof current === 'string' && depth < 3) {
+    const trimmed = current.trim();
+    if (!trimmed) {
+      return '';
+    }
+    if (!/^[\[{\"]/.test(trimmed)) {
+      return current;
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(trimmed);
+    } catch {
+      return current;
+    }
+    current = parsed;
+    depth += 1;
+  }
+  return current;
+};
+
+const extractFirstString = (value) => {
+  if (!value) return null;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed || null;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const result = extractFirstString(item);
+      if (result) return result;
+    }
+    return null;
+  }
+  if (typeof value === 'object') {
+    const preferredKeys = ['name', 'label', 'title', 'id', 'type', 'profile'];
+    for (const key of preferredKeys) {
+      if (value[key]) {
+        const result = extractFirstString(value[key]);
+        if (result) return result;
+      }
+    }
+    for (const nested of Object.values(value)) {
+      const result = extractFirstString(nested);
+      if (result) return result;
+    }
+  }
+  return null;
+};
+
+const coerceConceptList = (value) => {
+  const normalized = parsePossiblyStringifiedJson(value);
+  if (!normalized) return [];
+  if (typeof normalized === 'string') {
+    const trimmed = normalized.trim();
+    return trimmed ? [trimmed] : [];
+  }
+  if (Array.isArray(normalized)) {
+    return normalized
+      .map((item) => extractFirstString(parsePossiblyStringifiedJson(item)))
+      .filter((item) => typeof item === 'string' && item.trim())
+      .map((item) => item.trim());
+  }
+  if (typeof normalized === 'object') {
+    const candidateKeys = ['concepts', 'items', 'list', 'values'];
+    for (const key of candidateKeys) {
+      if (normalized[key]) {
+        const list = coerceConceptList(normalized[key]);
+        if (list.length > 0) return list;
+      }
+    }
+    const fallback = extractFirstString(normalized);
+    return fallback ? [fallback] : [];
+  }
+  return [];
+};
+
+const PSYCHO_PROFILE_DOMINANT_KEYS = [
+  'dominantPsychoProfile',
+  'dominant_psycho_profile',
+  'dominantProfile',
+  'dominant_profile',
+  'dominant',
+  'primaryProfile',
+  'primary_profile'
+];
+
+const PSYCHO_PROFILE_CONCEPT_KEYS = [
+  'psychoProfileConcepts',
+  'psycho_profile_concepts',
+  'profileConcepts',
+  'psychoConcepts',
+  'concepts'
+];
+
+const extractPsychoProfileTexts = (rawValue) => {
+  const parsed = parsePossiblyStringifiedJson(rawValue);
+  if (!parsed) {
+    return { dominant: null, concepts: [] };
+  }
+  if (typeof parsed === 'string') {
+    const dominant = parsed.trim();
+    return { dominant: dominant || null, concepts: [] };
+  }
+  if (typeof parsed !== 'object') {
+    return { dominant: null, concepts: [] };
+  }
+
+  let dominant = null;
+  for (const key of PSYCHO_PROFILE_DOMINANT_KEYS) {
+    if (parsed[key]) {
+      dominant = extractFirstString(parsed[key]);
+      if (dominant) break;
+    }
+  }
+  if (!dominant && parsed.profiles) {
+    const profiles = parsed.profiles;
+    if (profiles.dominant) {
+      dominant = extractFirstString(profiles.dominant);
+    }
+    if (!dominant && profiles.primary) {
+      dominant = extractFirstString(profiles.primary);
+    }
+    if (!dominant && Array.isArray(profiles)) {
+      dominant = extractFirstString(profiles[0]);
+    }
+    if (!dominant && typeof profiles === 'object') {
+      for (const value of Object.values(profiles)) {
+        dominant = extractFirstString(value);
+        if (dominant) break;
+      }
+    }
+  }
+
+  let concepts = [];
+  for (const key of PSYCHO_PROFILE_CONCEPT_KEYS) {
+    if (parsed[key]) {
+      const list = coerceConceptList(parsed[key]);
+      if (list.length > 0) {
+        concepts = list;
+        break;
+      }
+    }
+  }
+  if (concepts.length === 0 && parsed.profiles) {
+    const profiles = parsed.profiles;
+    const nestedConcepts = profiles?.dominant?.concepts || profiles?.primary?.concepts || profiles?.concepts;
+    if (nestedConcepts) {
+      concepts = coerceConceptList(nestedConcepts);
+    }
+  }
+
+  return { dominant: dominant || null, concepts };
+};
 
 const roundValue = (value) => Math.round(Number.isFinite(value) ? value : 0);
 
@@ -3681,6 +4031,54 @@ async function processSingleUserPlan(userId, env) {
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${msg}`);
             throw new Error(`Parsed initial answers are empty for ${userId}.`);
         }
+        let targetMacros = null;
+        try {
+            const storedMacrosRaw = await env.USER_METADATA_KV.get(`${userId}_analysis_macros`);
+            targetMacros = finalizeTargetMacros(extractTargetMacrosFromAny(storedMacrosRaw));
+            if (!targetMacros && storedMacrosRaw) {
+                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Записът ${userId}_analysis_macros няма валидни стойности.`);
+            }
+        } catch (macrosErr) {
+            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Грешка при зареждане на анализ на макроси - ${macrosErr.message}`);
+        }
+        if (!targetMacros) {
+            const fallbackFromPlan = finalizeTargetMacros(
+                extractTargetMacrosFromAny(previousPlan?.caloriesMacros || previousPlan)
+            );
+            if (fallbackFromPlan) {
+                targetMacros = fallbackFromPlan;
+                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Използваме макроси от предишния план.`);
+            }
+        }
+        if (!targetMacros) {
+            const estimated = estimateMacros(initialAnswers);
+            const normalizedEstimate = finalizeTargetMacros(extractTargetMacrosFromAny(estimated));
+            if (normalizedEstimate) {
+                targetMacros = normalizedEstimate;
+                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Използваме estimateMacros като fallback.`);
+            }
+        }
+        if (!targetMacros) {
+            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Неуспешно извличане на таргет макроси, ще използваме N/A в промпта.`);
+        }
+        const defaultPsychoProfileText = 'Няма наличен психопрофил';
+        const defaultPsychoConceptsText = 'Няма налични насоки за психопрофил';
+        let psychoProfileText = defaultPsychoProfileText;
+        let psychoConceptsText = defaultPsychoConceptsText;
+        try {
+            const psychoAnalysisRaw = await env.USER_METADATA_KV.get(`${userId}_analysis`);
+            if (psychoAnalysisRaw) {
+                const psychoData = extractPsychoProfileTexts(psychoAnalysisRaw);
+                if (psychoData.dominant) {
+                    psychoProfileText = psychoData.dominant;
+                }
+                if (psychoData.concepts && psychoData.concepts.length > 0) {
+                    psychoConceptsText = psychoData.concepts.join(', ');
+                }
+            }
+        } catch (psychoErr) {
+            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Грешка при зареждане на психопрофил - ${psychoErr.message}`);
+        }
         console.log(`PROCESS_USER_PLAN (${userId}): Processing for email: ${initialAnswers.email || 'N/A'}`);
         await addLog('Подготовка на модела');
         const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, principlesWeek2_4: [], additionalGuidelines: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
@@ -3787,7 +4185,8 @@ async function processSingleUserPlan(userId, env) {
         const avgEnergy = avgOf('energy');
 
         const formattedAnswersForPrompt = Object.entries(initialAnswers).filter(([qId]) => qId !== 'submissionDate' && qId !== 'email' && qId !== 'name').map(([qId, aVal]) => { const qText = questionTextMap.get(qId) || qId.replace(/_/g, ' '); let aText = ''; if (aVal === null || aVal === undefined || String(aVal).trim() === '') aText = '(няма отговор)'; else if (Array.isArray(aVal)) aText = aVal.length > 0 ? aVal.join(', ') : '(няма избран отговор)'; else aText = String(aVal); return `В: ${qText}\nО: ${aText}`; }).join('\n\n').trim();
-        
+        const userAnswersJson = JSON.stringify(initialAnswers);
+
         console.log(`PROCESS_USER_PLAN (${userId}): Preparing for unified AI call.`);
 
         const replacements = {
@@ -3809,6 +4208,36 @@ async function processSingleUserPlan(userId, env) {
             '%%AVG_MOOD_LAST_7_DAYS%%': avgMood !== 'N/A' ? `${avgMood}/5` : 'N/A',
             '%%AVG_ENERGY_LAST_7_DAYS%%': avgEnergy !== 'N/A' ? `${avgEnergy}/5` : 'N/A'
         };
+        Object.assign(
+            replacements,
+            buildTargetReplacements(targetMacros),
+            {
+                '%%USER_ANSWERS_JSON%%': userAnswersJson,
+                '%%DOMINANT_PSYCHO_PROFILE%%': psychoProfileText,
+                '%%PSYCHO_PROFILE_CONCEPTS%%': psychoConceptsText
+            }
+        );
+        const criticalDefaults = {
+            '%%TARGET_CALORIES%%': 'N/A',
+            '%%TARGET_PROTEIN_GRAMS%%': 'N/A',
+            '%%TARGET_PROTEIN_PERCENT%%': 'N/A',
+            '%%TARGET_CARBS_GRAMS%%': 'N/A',
+            '%%TARGET_CARBS_PERCENT%%': 'N/A',
+            '%%TARGET_FAT_GRAMS%%': 'N/A',
+            '%%TARGET_FAT_PERCENT%%': 'N/A',
+            '%%TARGET_FIBER_GRAMS%%': 'N/A',
+            '%%TARGET_FIBER_PERCENT%%': 'N/A',
+            '%%USER_ANSWERS_JSON%%': '{}',
+            '%%DOMINANT_PSYCHO_PROFILE%%': defaultPsychoProfileText,
+            '%%PSYCHO_PROFILE_CONCEPTS%%': defaultPsychoConceptsText
+        };
+        for (const [marker, fallbackValue] of Object.entries(criticalDefaults)) {
+            const value = replacements[marker];
+            if (value === undefined || value === null || (typeof value === 'string' && value.includes('%%'))) {
+                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Липсва стойност за маркер ${marker}, използваме дефолт.`);
+                replacements[marker] = fallbackValue;
+            }
+        }
         const populatedUnifiedPrompt = populatePrompt(unifiedPromptTemplate, replacements);
         let finalPrompt = populatedUnifiedPrompt;
         if (pendingPlanModText) {

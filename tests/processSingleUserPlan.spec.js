@@ -4,13 +4,15 @@ const workerModule = await import('../worker.js');
 
 const callModelMock = jest.fn();
 
-const minimalUnifiedPlanTemplate = JSON.stringify({
-  profileSummary: 'Профил за %%USER_NAME%%',
-  caloriesMacros: { calories: 2100, fiber_percent: 10, fiber_grams: 30 },
-  week1Menu: { monday: [] },
-  principlesWeek2_4: ['- Баланс'],
-  detailedTargets: { hydration: '2L вода' }
-});
+const minimalUnifiedPlanTemplate = [
+  'План за %%USER_NAME%% (%%USER_ID%%)',
+  'Цели: калории %%TARGET_CALORIES%%, протеин %%TARGET_PROTEIN_GRAMS%% г (%%TARGET_PROTEIN_PERCENT%%%); ',
+  'въглехидрати %%TARGET_CARBS_GRAMS%% г (%%TARGET_CARBS_PERCENT%%%); ',
+  'мазнини %%TARGET_FAT_GRAMS%% г (%%TARGET_FAT_PERCENT%%%); ',
+  'фибри %%TARGET_FIBER_GRAMS%% г (%%TARGET_FIBER_PERCENT%%% ).',
+  'Психопрофил: %%DOMINANT_PSYCHO_PROFILE%% / %%PSYCHO_PROFILE_CONCEPTS%%.',
+  'JSON шаблон: %%USER_ANSWERS_JSON%%'
+].join('\n');
 
 const successfulPlanResponse = JSON.stringify({
   profileSummary: 'Обобщение',
@@ -58,11 +60,38 @@ const baseInitialAnswers = {
   submissionDate: '2024-01-01T00:00:00.000Z'
 };
 
-function buildTestEnvironment(userId, { failFirstFlush = false } = {}) {
+const mockAnalysisMacros = {
+  calories: 1900,
+  protein_grams: 145,
+  protein_percent: 30,
+  carbs_grams: 215,
+  carbs_percent: 45,
+  fat_grams: 60,
+  fat_percent: 25,
+  fiber_grams: 28,
+  fiber_percent: 6
+};
+
+const mockPsychoProfile = {
+  dominantPsychoProfile: 'Емоционален профил',
+  psychoProfileConcepts: ['Mindful Eating', 'Self-Awareness']
+};
+
+function buildTestEnvironment(userId, { failFirstFlush = false, analysisMacrosData = null, psychoProfileData = null } = {}) {
   const kvStore = new Map();
   const logKey = `${userId}_plan_log`;
   const logErrorKey = `${logKey}_flush_error`;
   let flushFailureTriggered = false;
+
+  if (analysisMacrosData) {
+    kvStore.set(
+      `${userId}_analysis_macros`,
+      JSON.stringify({ status: 'final', data: analysisMacrosData })
+    );
+  }
+  if (psychoProfileData) {
+    kvStore.set(`${userId}_analysis`, JSON.stringify(psychoProfileData));
+  }
 
   const userMetadataKv = {
     get: jest.fn(async (key) => {
@@ -164,7 +193,10 @@ describe('processSingleUserPlan - буфериран лог', () => {
 
   test('генерира план и записва ключовите стъпки в логовете', async () => {
     const userId = 'test-user';
-    const { env, kvStore, logKey } = buildTestEnvironment(userId);
+    const { env, kvStore, logKey } = buildTestEnvironment(userId, {
+      analysisMacrosData: mockAnalysisMacros,
+      psychoProfileData: mockPsychoProfile
+    });
     callModelMock.mockResolvedValue(successfulPlanResponse);
 
     await workerModule.processSingleUserPlan(userId, env);
@@ -200,13 +232,24 @@ describe('processSingleUserPlan - буфериран лог', () => {
       env,
       expect.any(Object)
     );
+
+    const promptArgument = callModelMock.mock.calls[0][1];
+    expect(promptArgument).toContain('1900');
+    expect(promptArgument).toContain('145');
+    expect(promptArgument).toContain('Емоционален профил');
+    expect(promptArgument).toContain('Mindful Eating');
+    expect(promptArgument).toContain('"goal":"Подобряване на формата"');
+    expect(promptArgument).not.toContain('%%TARGET_CALORIES%%');
+    expect(promptArgument).not.toMatch(/%%TARGET_[A-Z_]+%%/);
+    expect(promptArgument).not.toContain('%%DOMINANT_PSYCHO_PROFILE%%');
+    expect(promptArgument).not.toContain('%%USER_ANSWERS_JSON%%');
   });
 
   test('запазва критична грешка при първи неуспешен flush и я почиства след повторен успех', async () => {
     const userId = 'flush-failure-user';
     const { env, kvStore, logKey, logErrorKey, userMetadataKv } = buildTestEnvironment(
       userId,
-      { failFirstFlush: true }
+      { failFirstFlush: true, analysisMacrosData: mockAnalysisMacros, psychoProfileData: mockPsychoProfile }
     );
     callModelMock.mockResolvedValue(successfulPlanResponse);
 
