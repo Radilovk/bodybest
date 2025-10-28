@@ -77,7 +77,10 @@ const mockPsychoProfile = {
   psychoProfileConcepts: ['Mindful Eating', 'Self-Awareness']
 };
 
-function buildTestEnvironment(userId, { failFirstFlush = false, analysisMacrosData = null, psychoProfileData = null } = {}) {
+function buildTestEnvironment(
+  userId,
+  { failFirstFlush = false, analysisMacrosData = null, psychoProfileData = null, previousPlanData = null } = {}
+) {
   const kvStore = new Map();
   const logKey = `${userId}_plan_log`;
   const logErrorKey = `${logKey}_flush_error`;
@@ -102,10 +105,12 @@ function buildTestEnvironment(userId, { failFirstFlush = false, analysisMacrosDa
         return JSON.stringify(baseInitialAnswers);
       }
       if (key === `${userId}_final_plan`) {
-        return JSON.stringify({
+        const defaultPlan = {
           caloriesMacros: { calories: 2000 },
           principlesWeek2_4: ['- Стар принцип']
-        });
+        };
+        const planPayload = previousPlanData ? { ...defaultPlan, ...previousPlanData } : defaultPlan;
+        return JSON.stringify(planPayload);
       }
       if (key === `${userId}_current_status`) {
         return JSON.stringify({ weight: 80 });
@@ -248,6 +253,39 @@ describe('processSingleUserPlan - буфериран лог', () => {
     expect(promptArgument).not.toContain('%%TARGET_PROTEIN_G%%');
     expect(promptArgument).not.toContain('%%TARGET_PROTEIN_P%%');
     expect(promptArgument).not.toContain('%%DOMINANT_PSYCHO_PROFILE%%');
+    expect(promptArgument).not.toContain('%%USER_ANSWERS_JSON%%');
+  });
+
+  test('използва макро целите от предишния план, когато анализ липсва', async () => {
+    const userId = 'plan-fallback-user';
+    const previousPlanMacros = {
+      calories: 2050,
+      protein_grams: 150,
+      protein_percent: 29,
+      carbs_grams: 230,
+      carbs_percent: 45,
+      fat_grams: 65,
+      fat_percent: 26,
+      fiber_grams: 30,
+      fiber_percent: 6
+    };
+    const { env } = buildTestEnvironment(userId, {
+      psychoProfileData: mockPsychoProfile,
+      previousPlanData: { caloriesMacros: previousPlanMacros }
+    });
+    callModelMock.mockResolvedValue(successfulPlanResponse);
+
+    await workerModule.processSingleUserPlan(userId, env);
+
+    const promptArgument = callModelMock.mock.calls[0][1];
+    expect(promptArgument).toContain('2050');
+    expect(promptArgument).toContain('150');
+    expect(promptArgument).toContain('29%');
+    expect(promptArgument).toContain('45%');
+    expect(promptArgument).toContain('26%');
+    expect(promptArgument).toContain('30 г');
+    expect(promptArgument).toContain('"goal":"Подобряване на формата"');
+    expect(promptArgument).not.toMatch(/%%TARGET_[A-Z_]+%%/);
     expect(promptArgument).not.toContain('%%USER_ANSWERS_JSON%%');
   });
 

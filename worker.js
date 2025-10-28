@@ -4010,6 +4010,7 @@ async function processSingleUserPlan(userId, env) {
     const logBuffer = [];
     const kvRawCache = new Map();
     const kvJsonCache = new Map();
+    const kvParsedCache = new Map();
     const getKvValue = async (key) => {
         if (kvRawCache.has(key)) {
             return kvRawCache.get(key);
@@ -4030,6 +4031,26 @@ async function processSingleUserPlan(userId, env) {
         const parsed = safeParseJson(raw, defaultValue);
         kvJsonCache.set(key, parsed);
         return parsed;
+    };
+    const getKvParsed = async (key, parser = (value) => safeParseJson(value, null), defaultValue = null) => {
+        if (kvParsedCache.has(key)) {
+            return kvParsedCache.get(key);
+        }
+        const raw = await getKvValue(key);
+        if (raw === undefined || raw === null) {
+            const result = { raw: null, parsed: defaultValue };
+            kvParsedCache.set(key, result);
+            return result;
+        }
+        let parsed = defaultValue;
+        try {
+            parsed = parser(raw);
+        } catch (err) {
+            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): неуспешен парс за ${key} - ${err.message}`);
+        }
+        const result = { raw, parsed };
+        kvParsedCache.set(key, result);
+        return result;
     };
     const flushLog = async (reason = 'manual') => {
         if (logBuffer.length === 0) {
@@ -4090,12 +4111,19 @@ async function processSingleUserPlan(userId, env) {
         let targetMacros = null;
         let analysisTargetMacros = null;
         try {
-            const storedMacrosRaw = await getKvValue(`${userId}_analysis_macros`);
-            if (storedMacrosRaw) {
-                analysisTargetMacros = finalizeTargetMacros(extractTargetMacrosFromAny(storedMacrosRaw));
-                if (!analysisTargetMacros) {
-                    console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Записът ${userId}_analysis_macros няма валидни стойности.`);
-                }
+            const { raw: analysisMacrosRaw, parsed: analysisMacrosParsed } = await getKvParsed(
+                `${userId}_analysis_macros`,
+                (value) => safeParseJson(value, null),
+                null
+            );
+            const analysisSource = analysisMacrosParsed?.data ?? analysisMacrosParsed ?? analysisMacrosRaw;
+            if (analysisSource) {
+                analysisTargetMacros = finalizeTargetMacros(extractTargetMacrosFromAny(analysisSource));
+            }
+            if (analysisMacrosRaw && !analysisTargetMacros) {
+                console.warn(
+                    `PROCESS_USER_PLAN_WARN (${userId}): Записът ${userId}_analysis_macros няма валидни стойности.`
+                );
             }
         } catch (macrosErr) {
             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Грешка при зареждане на анализ на макроси - ${macrosErr.message}`);
@@ -4123,7 +4151,6 @@ async function processSingleUserPlan(userId, env) {
         } catch (estimateErr) {
             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Грешка при estimateMacros - ${estimateErr.message}`);
         }
-
         const mergedTargetMacros = mergeTargetMacroCandidates(
             analysisTargetMacros,
             planTargetMacros,
@@ -4133,16 +4160,23 @@ async function processSingleUserPlan(userId, env) {
             targetMacros = finalizeTargetMacros(mergedTargetMacros);
         }
         if (!targetMacros) {
-            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Неуспешно извличане на таргет макроси, ще използваме N/A в промпта.`);
+            console.warn(
+                `PROCESS_USER_PLAN_WARN (${userId}): Неуспешно извличане на таргет макроси, ще използваме N/A в промпта.`
+            );
         }
         const defaultPsychoProfileText = 'Няма наличен психопрофил';
         const defaultPsychoConceptsText = 'Няма налични насоки за психопрофил';
         let psychoProfileText = defaultPsychoProfileText;
         let psychoConceptsText = defaultPsychoConceptsText;
         try {
-            const psychoAnalysisRaw = await getKvValue(`${userId}_analysis`);
-            if (psychoAnalysisRaw) {
-                const psychoData = extractPsychoProfileTexts(psychoAnalysisRaw);
+            const { raw: psychoAnalysisRaw, parsed: psychoAnalysisParsed } = await getKvParsed(
+                `${userId}_analysis`,
+                (value) => parsePossiblyStringifiedJson(value),
+                null
+            );
+            const psychoSource = psychoAnalysisParsed ?? psychoAnalysisRaw;
+            if (psychoSource) {
+                const psychoData = extractPsychoProfileTexts(psychoSource);
                 if (psychoData.dominant) {
                     psychoProfileText = psychoData.dominant;
                 }
@@ -4263,6 +4297,7 @@ async function processSingleUserPlan(userId, env) {
 
         console.log(`PROCESS_USER_PLAN (${userId}): Preparing for unified AI call.`);
 
+        const targetReplacements = buildTargetReplacements(targetMacros);
         const replacements = {
             '%%FORMATTED_ANSWERS%%': formattedAnswersForPrompt, '%%USER_ID%%': userId, '%%USER_NAME%%': safeGet(initialAnswers, 'name', 'Потребител'),
             '%%USER_EMAIL%%': safeGet(initialAnswers, 'email', 'N/A'), '%%USER_GOAL%%': safeGet(initialAnswers, 'goal', 'Общо здраве'),
@@ -4282,15 +4317,11 @@ async function processSingleUserPlan(userId, env) {
             '%%AVG_MOOD_LAST_7_DAYS%%': avgMood !== 'N/A' ? `${avgMood}/5` : 'N/A',
             '%%AVG_ENERGY_LAST_7_DAYS%%': avgEnergy !== 'N/A' ? `${avgEnergy}/5` : 'N/A'
         };
-        Object.assign(
-            replacements,
-            buildTargetReplacements(targetMacros),
-            {
-                '%%USER_ANSWERS_JSON%%': userAnswersJson,
-                '%%DOMINANT_PSYCHO_PROFILE%%': psychoProfileText,
-                '%%PSYCHO_PROFILE_CONCEPTS%%': psychoConceptsText
-            }
-        );
+        Object.assign(replacements, targetReplacements, {
+            '%%USER_ANSWERS_JSON%%': userAnswersJson,
+            '%%DOMINANT_PSYCHO_PROFILE%%': psychoProfileText,
+            '%%PSYCHO_PROFILE_CONCEPTS%%': psychoConceptsText
+        });
         const targetPlaceholderDefaults = {};
         for (const placeholders of Object.values(TARGET_MACRO_PLACEHOLDERS)) {
             const normalizedPlaceholders = Array.isArray(placeholders) ? placeholders : [placeholders];
@@ -4304,10 +4335,31 @@ async function processSingleUserPlan(userId, env) {
             '%%DOMINANT_PSYCHO_PROFILE%%': defaultPsychoProfileText,
             '%%PSYCHO_PROFILE_CONCEPTS%%': defaultPsychoConceptsText
         };
+        const criticalMarkers = new Set([
+            ...Object.values(TARGET_MACRO_PLACEHOLDERS).flatMap((placeholders) =>
+                (Array.isArray(placeholders) ? placeholders : [placeholders])
+            ),
+            '%%USER_ANSWERS_JSON%%',
+            '%%DOMINANT_PSYCHO_PROFILE%%',
+            '%%PSYCHO_PROFILE_CONCEPTS%%'
+        ]);
         for (const [marker, fallbackValue] of Object.entries(criticalDefaults)) {
             const value = replacements[marker];
             if (value === undefined || value === null || (typeof value === 'string' && value.includes('%%'))) {
                 console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Липсва стойност за маркер ${marker}, използваме дефолт.`);
+                replacements[marker] = fallbackValue;
+            }
+        }
+        const templateCriticalMarkers = Array.from(criticalMarkers).filter((marker) =>
+            typeof unifiedPromptTemplate === 'string' && unifiedPromptTemplate.includes(marker)
+        );
+        for (const marker of templateCriticalMarkers) {
+            const value = replacements[marker];
+            if (value === undefined || value === null || (typeof value === 'string' && value.includes('%%'))) {
+                const fallbackValue = criticalDefaults[marker] ?? 'N/A';
+                console.warn(
+                    `PROCESS_USER_PLAN_WARN (${userId}): Маркер ${marker} присъства в шаблона без стойност, задаваме дефолт.`
+                );
                 replacements[marker] = fallbackValue;
             }
         }
