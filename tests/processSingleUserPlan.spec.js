@@ -28,13 +28,81 @@ const successfulPlanResponse = JSON.stringify({
     monday: [
       {
         meal_name: 'Закуска',
-        items: [{ name: 'Овесена каша', portion: '1 купа' }]
+        items: [{ name: 'Овесена каша', portion: '1 купа' }],
+        macros: {
+          calories: 420,
+          protein_grams: 25,
+          carbs_grams: 55,
+          fat_grams: 12,
+          fiber_grams: 8
+        }
       }
     ]
   },
   principlesWeek2_4: ['- Поддържайте хидратация'],
   detailedTargets: { hydration: '2L вода' },
-  generationMetadata: { errors: [] }
+  generationMetadata: { errors: [] },
+  mealMacrosIndex: {
+    monday_0: {
+      calories: 420,
+      protein_grams: 25,
+      carbs_grams: 55,
+      fat_grams: 12,
+      fiber_grams: 8
+    }
+  }
+});
+
+const missingMacrosPlanResponse = JSON.stringify({
+  profileSummary: 'Обобщение',
+  caloriesMacros: {
+    calories: 2100,
+    protein_grams: 140,
+    carbs_grams: 210,
+    fat_grams: 70,
+    fiber_percent: 10,
+    fiber_grams: 30
+  },
+  week1Menu: {
+    monday: [
+      {
+        meal_name: 'Закуска',
+        items: [{ name: 'Овесена каша', portion: '1 купа' }],
+        macros: {}
+      }
+    ]
+  },
+  principlesWeek2_4: ['- Поддържайте хидратация'],
+  detailedTargets: { hydration: '2L вода' },
+  generationMetadata: { errors: [] },
+  mealMacrosIndex: {
+    monday_0: {}
+  }
+});
+
+const repairedMacrosResponse = JSON.stringify({
+  week1Menu: {
+    monday: [
+      {
+        macros: {
+          calories: 430,
+          protein_grams: 28,
+          carbs_grams: 52,
+          fat_grams: 14,
+          fiber_grams: 9
+        }
+      }
+    ]
+  },
+  mealMacrosIndex: {
+    monday_0: {
+      calories: 430,
+      protein_grams: 28,
+      carbs_grams: 52,
+      fat_grams: 14,
+      fiber_grams: 9
+    }
+  }
 });
 
 const baseInitialAnswers = {
@@ -296,6 +364,41 @@ describe('processSingleUserPlan - буфериран лог', () => {
       env,
       expect.any(Object)
     );
+  });
+
+  test('повторно извикване при празни макроси попълва стойностите преди запис', async () => {
+    const userId = 'missing-macros-user';
+    const { env, kvStore } = buildTestEnvironment(userId);
+
+    callModelMock
+      .mockResolvedValueOnce(missingMacrosPlanResponse)
+      .mockResolvedValueOnce(repairedMacrosResponse);
+
+    await workerModule.processSingleUserPlan(userId, env);
+
+    expect(callModelMock).toHaveBeenCalledTimes(2);
+    const secondPrompt = callModelMock.mock.calls[1][1];
+    expect(secondPrompt).toContain('fully populated mealMacrosIndex');
+
+    const storedPlanRaw = kvStore.get(`${userId}_final_plan`);
+    expect(storedPlanRaw).toBeTruthy();
+    const storedPlan = JSON.parse(storedPlanRaw);
+
+    const mealMacros = storedPlan.week1Menu.monday[0].macros;
+    expect(mealMacros).toMatchObject({
+      calories: 430,
+      protein_grams: 28,
+      carbs_grams: 52,
+      fat_grams: 14,
+      fiber_grams: 9
+    });
+    expect(storedPlan.mealMacrosIndex.monday_0).toMatchObject({
+      calories: 430,
+      protein_grams: 28,
+      carbs_grams: 52,
+      fat_grams: 14,
+      fiber_grams: 9
+    });
   });
 });
 
