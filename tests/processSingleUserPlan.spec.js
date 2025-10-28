@@ -236,11 +236,17 @@ describe('processSingleUserPlan - буфериран лог', () => {
     const promptArgument = callModelMock.mock.calls[0][1];
     expect(promptArgument).toContain('1900');
     expect(promptArgument).toContain('145');
+    expect(promptArgument).toContain('30%');
+    expect(promptArgument).toContain('45%');
+    expect(promptArgument).toContain('25%');
+    expect(promptArgument).toContain('28 г');
     expect(promptArgument).toContain('Емоционален профил');
     expect(promptArgument).toContain('Mindful Eating');
     expect(promptArgument).toContain('"goal":"Подобряване на формата"');
     expect(promptArgument).not.toContain('%%TARGET_CALORIES%%');
     expect(promptArgument).not.toMatch(/%%TARGET_[A-Z_]+%%/);
+    expect(promptArgument).not.toContain('%%TARGET_PROTEIN_G%%');
+    expect(promptArgument).not.toContain('%%TARGET_PROTEIN_P%%');
     expect(promptArgument).not.toContain('%%DOMINANT_PSYCHO_PROFILE%%');
     expect(promptArgument).not.toContain('%%USER_ANSWERS_JSON%%');
   });

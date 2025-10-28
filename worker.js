@@ -81,15 +81,15 @@ const MACRO_PERCENT_FIELD_ALIASES = {
 };
 
 const TARGET_MACRO_PLACEHOLDERS = {
-  calories: '%%TARGET_CALORIES%%',
-  protein_grams: '%%TARGET_PROTEIN_GRAMS%%',
-  protein_percent: '%%TARGET_PROTEIN_PERCENT%%',
-  carbs_grams: '%%TARGET_CARBS_GRAMS%%',
-  carbs_percent: '%%TARGET_CARBS_PERCENT%%',
-  fat_grams: '%%TARGET_FAT_GRAMS%%',
-  fat_percent: '%%TARGET_FAT_PERCENT%%',
-  fiber_grams: '%%TARGET_FIBER_GRAMS%%',
-  fiber_percent: '%%TARGET_FIBER_PERCENT%%'
+  calories: ['%%TARGET_CALORIES%%'],
+  protein_grams: ['%%TARGET_PROTEIN_GRAMS%%', '%%TARGET_PROTEIN_G%%'],
+  protein_percent: ['%%TARGET_PROTEIN_PERCENT%%', '%%TARGET_PROTEIN_P%%'],
+  carbs_grams: ['%%TARGET_CARBS_GRAMS%%', '%%TARGET_CARBS_G%%'],
+  carbs_percent: ['%%TARGET_CARBS_PERCENT%%', '%%TARGET_CARBS_P%%'],
+  fat_grams: ['%%TARGET_FAT_GRAMS%%', '%%TARGET_FAT_G%%'],
+  fat_percent: ['%%TARGET_FAT_PERCENT%%', '%%TARGET_FAT_P%%'],
+  fiber_grams: ['%%TARGET_FIBER_GRAMS%%', '%%TARGET_FIBER_G%%'],
+  fiber_percent: ['%%TARGET_FIBER_PERCENT%%', '%%TARGET_FIBER_P%%']
 };
 
 const CALORIES_PER_GRAM = {
@@ -280,11 +280,43 @@ const finalizeTargetMacros = (macros) => {
 
 const buildTargetReplacements = (macros) => {
   const replacements = {};
-  for (const [key, placeholder] of Object.entries(TARGET_MACRO_PLACEHOLDERS)) {
+  for (const [key, placeholders] of Object.entries(TARGET_MACRO_PLACEHOLDERS)) {
     const value = macros?.[key];
-    replacements[placeholder] = value != null && Number.isFinite(value) ? String(value) : 'N/A';
+    const stringified = value != null && Number.isFinite(value) ? String(value) : 'N/A';
+    const normalizedPlaceholders = Array.isArray(placeholders) ? placeholders : [placeholders];
+    for (const placeholder of normalizedPlaceholders) {
+      replacements[placeholder] = stringified;
+    }
   }
   return replacements;
+};
+
+const mergeTargetMacroCandidates = (...candidates) => {
+  const macroKeys = [
+    'calories',
+    'protein_grams',
+    'carbs_grams',
+    'fat_grams',
+    'fiber_grams',
+    'protein_percent',
+    'carbs_percent',
+    'fat_percent',
+    'fiber_percent'
+  ];
+  const merged = Object.fromEntries(macroKeys.map((key) => [key, null]));
+  let hasAny = false;
+
+  for (const candidate of candidates) {
+    if (!candidate || typeof candidate !== 'object') continue;
+    for (const key of macroKeys) {
+      if (merged[key] == null && candidate[key] != null) {
+        merged[key] = candidate[key];
+        hasAny = true;
+      }
+    }
+  }
+
+  return hasAny ? merged : null;
 };
 
 const parsePossiblyStringifiedJson = (value) => {
@@ -3976,6 +4008,29 @@ async function processSingleUserPlan(userId, env) {
     const logKey = `${userId}_plan_log`;
     const logErrorKey = `${logKey}_flush_error`;
     const logBuffer = [];
+    const kvRawCache = new Map();
+    const kvJsonCache = new Map();
+    const getKvValue = async (key) => {
+        if (kvRawCache.has(key)) {
+            return kvRawCache.get(key);
+        }
+        const value = await env.USER_METADATA_KV.get(key);
+        kvRawCache.set(key, value);
+        return value;
+    };
+    const getKvJson = async (key, defaultValue = null) => {
+        if (kvJsonCache.has(key)) {
+            return kvJsonCache.get(key);
+        }
+        const raw = await getKvValue(key);
+        if (raw === undefined || raw === null) {
+            kvJsonCache.set(key, defaultValue);
+            return defaultValue;
+        }
+        const parsed = safeParseJson(raw, defaultValue);
+        kvJsonCache.set(key, parsed);
+        return parsed;
+    };
     const flushLog = async (reason = 'manual') => {
         if (logBuffer.length === 0) {
             return;
@@ -4015,16 +4070,17 @@ async function processSingleUserPlan(userId, env) {
         }
         await addLog('Зареждане на изходни данни', { checkpoint: true, reason: 'load' });
         console.log(`PROCESS_USER_PLAN (${userId}): Step 0 - Loading prerequisites.`);
-        const initialAnswersString = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
-        const previousPlanStr = await env.USER_METADATA_KV.get(`${userId}_final_plan`);
+        const initialAnswersKey = `${userId}_initial_answers`;
+        const finalPlanKey = `${userId}_final_plan`;
+        const initialAnswersString = await getKvValue(initialAnswersKey);
+        const previousPlan = await getKvJson(finalPlanKey, {});
         if (!initialAnswersString) {
             const msg = 'Initial answers not found. Cannot generate plan.';
             await addLog(`Грешка: ${msg}`, { checkpoint: true, reason: 'missing-initial-answers' });
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${msg}`);
             throw new Error(`Initial answers not found for ${userId}. Cannot generate plan.`);
         }
-        const initialAnswers = safeParseJson(initialAnswersString, {});
-        const previousPlan = safeParseJson(previousPlanStr, {});
+        const initialAnswers = await getKvJson(initialAnswersKey, {});
         if (Object.keys(initialAnswers).length === 0) {
             const msg = 'Parsed initial answers are empty.';
             await addLog(`Грешка: ${msg}`, { checkpoint: true, reason: 'empty-initial-answers' });
@@ -4032,31 +4088,49 @@ async function processSingleUserPlan(userId, env) {
             throw new Error(`Parsed initial answers are empty for ${userId}.`);
         }
         let targetMacros = null;
+        let analysisTargetMacros = null;
         try {
-            const storedMacrosRaw = await env.USER_METADATA_KV.get(`${userId}_analysis_macros`);
-            targetMacros = finalizeTargetMacros(extractTargetMacrosFromAny(storedMacrosRaw));
-            if (!targetMacros && storedMacrosRaw) {
-                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Записът ${userId}_analysis_macros няма валидни стойности.`);
+            const storedMacrosRaw = await getKvValue(`${userId}_analysis_macros`);
+            if (storedMacrosRaw) {
+                analysisTargetMacros = finalizeTargetMacros(extractTargetMacrosFromAny(storedMacrosRaw));
+                if (!analysisTargetMacros) {
+                    console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Записът ${userId}_analysis_macros няма валидни стойности.`);
+                }
             }
         } catch (macrosErr) {
             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Грешка при зареждане на анализ на макроси - ${macrosErr.message}`);
         }
-        if (!targetMacros) {
-            const fallbackFromPlan = finalizeTargetMacros(
+
+        let planTargetMacros = null;
+        try {
+            planTargetMacros = finalizeTargetMacros(
                 extractTargetMacrosFromAny(previousPlan?.caloriesMacros || previousPlan)
             );
-            if (fallbackFromPlan) {
-                targetMacros = fallbackFromPlan;
+            if (!analysisTargetMacros && planTargetMacros) {
                 console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Използваме макроси от предишния план.`);
             }
+        } catch (planMacroErr) {
+            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Грешка при извличане на макроси от предишния план - ${planMacroErr.message}`);
         }
-        if (!targetMacros) {
+
+        let estimateTargetMacros = null;
+        try {
             const estimated = estimateMacros(initialAnswers);
-            const normalizedEstimate = finalizeTargetMacros(extractTargetMacrosFromAny(estimated));
-            if (normalizedEstimate) {
-                targetMacros = normalizedEstimate;
+            estimateTargetMacros = finalizeTargetMacros(extractTargetMacrosFromAny(estimated));
+            if (!analysisTargetMacros && !planTargetMacros && estimateTargetMacros) {
                 console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Използваме estimateMacros като fallback.`);
             }
+        } catch (estimateErr) {
+            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Грешка при estimateMacros - ${estimateErr.message}`);
+        }
+
+        const mergedTargetMacros = mergeTargetMacroCandidates(
+            analysisTargetMacros,
+            planTargetMacros,
+            estimateTargetMacros
+        );
+        if (mergedTargetMacros) {
+            targetMacros = finalizeTargetMacros(mergedTargetMacros);
         }
         if (!targetMacros) {
             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Неуспешно извличане на таргет макроси, ще използваме N/A в промпта.`);
@@ -4066,7 +4140,7 @@ async function processSingleUserPlan(userId, env) {
         let psychoProfileText = defaultPsychoProfileText;
         let psychoConceptsText = defaultPsychoConceptsText;
         try {
-            const psychoAnalysisRaw = await env.USER_METADATA_KV.get(`${userId}_analysis`);
+            const psychoAnalysisRaw = await getKvValue(`${userId}_analysis`);
             if (psychoAnalysisRaw) {
                 const psychoData = extractPsychoProfileTexts(psychoAnalysisRaw);
                 if (psychoData.dominant) {
@@ -4096,7 +4170,7 @@ async function processSingleUserPlan(userId, env) {
         // Опционално: чакаща модификация на плана
         let pendingPlanModText = '';
         try {
-            const pendingPlanModStr = await env.USER_METADATA_KV.get(`pending_plan_mod_${userId}`);
+            const pendingPlanModStr = await getKvValue(`pending_plan_mod_${userId}`);
             const pendingPlanModData = safeParseJson(pendingPlanModStr, pendingPlanModStr);
             if (pendingPlanModData) {
                 pendingPlanModText = typeof pendingPlanModData === 'string' ? pendingPlanModData : JSON.stringify(pendingPlanModData);
@@ -4131,7 +4205,7 @@ async function processSingleUserPlan(userId, env) {
         let logEntries = [];
         let logsForContext = [];
         try {
-            const currentStatusStr = await env.USER_METADATA_KV.get(`${userId}_current_status`);
+            const currentStatusStr = await getKvValue(`${userId}_current_status`);
             currentStatus = safeParseJson(currentStatusStr, {});
         } catch (err) {
             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): неуспешно зареждане на current_status - ${err.message}`);
@@ -4141,7 +4215,7 @@ async function processSingleUserPlan(userId, env) {
             if (logDates.length > 0) {
                 const sortedLogDates = [...logDates].sort((a, b) => a.localeCompare(b));
                 const logKeys = sortedLogDates.map(d => `${userId}_log_${d}`);
-                const logStrings = await Promise.all(logKeys.map(k => env.USER_METADATA_KV.get(k)));
+                const logStrings = await Promise.all(logKeys.map((k) => getKvValue(k)));
                 logEntries = logStrings.map(s => {
                     const obj = safeParseJson(s, {});
                     return obj.log || obj.data || obj;
@@ -4150,7 +4224,7 @@ async function processSingleUserPlan(userId, env) {
                     .map((date, idx) => sanitizeLogEntryForContext(date, safeParseJson(logStrings[idx], {})))
                     .filter(Boolean);
             } else {
-                const aggregatedStr = await env.USER_METADATA_KV.get(`${userId}_logs`);
+                const aggregatedStr = await getKvValue(`${userId}_logs`);
                 const aggregated = safeParseJson(aggregatedStr, []);
                 if (Array.isArray(aggregated)) {
                     logEntries = aggregated.map(l => l.log || l.data || l);
@@ -4217,16 +4291,15 @@ async function processSingleUserPlan(userId, env) {
                 '%%PSYCHO_PROFILE_CONCEPTS%%': psychoConceptsText
             }
         );
+        const targetPlaceholderDefaults = {};
+        for (const placeholders of Object.values(TARGET_MACRO_PLACEHOLDERS)) {
+            const normalizedPlaceholders = Array.isArray(placeholders) ? placeholders : [placeholders];
+            for (const placeholder of normalizedPlaceholders) {
+                targetPlaceholderDefaults[placeholder] = 'N/A';
+            }
+        }
         const criticalDefaults = {
-            '%%TARGET_CALORIES%%': 'N/A',
-            '%%TARGET_PROTEIN_GRAMS%%': 'N/A',
-            '%%TARGET_PROTEIN_PERCENT%%': 'N/A',
-            '%%TARGET_CARBS_GRAMS%%': 'N/A',
-            '%%TARGET_CARBS_PERCENT%%': 'N/A',
-            '%%TARGET_FAT_GRAMS%%': 'N/A',
-            '%%TARGET_FAT_PERCENT%%': 'N/A',
-            '%%TARGET_FIBER_GRAMS%%': 'N/A',
-            '%%TARGET_FIBER_PERCENT%%': 'N/A',
+            ...targetPlaceholderDefaults,
             '%%USER_ANSWERS_JSON%%': '{}',
             '%%DOMINANT_PSYCHO_PROFILE%%': defaultPsychoProfileText,
             '%%PSYCHO_PROFILE_CONCEPTS%%': defaultPsychoConceptsText
@@ -4236,6 +4309,16 @@ async function processSingleUserPlan(userId, env) {
             if (value === undefined || value === null || (typeof value === 'string' && value.includes('%%'))) {
                 console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Липсва стойност за маркер ${marker}, използваме дефолт.`);
                 replacements[marker] = fallbackValue;
+            }
+        }
+        const placeholderPattern = /%%[^%]+%%/;
+        for (const [key, value] of Object.entries(replacements)) {
+            if (typeof value === 'string' && placeholderPattern.test(value)) {
+                const fallbackValue = criticalDefaults[key] ?? 'N/A';
+                console.warn(
+                    `PROCESS_USER_PLAN_WARN (${userId}): Маркер ${key} съдържа непопълнен плейсхолдър (${value}), използваме дефолтна стойност.`
+                );
+                replacements[key] = fallbackValue;
             }
         }
         const populatedUnifiedPrompt = populatePrompt(unifiedPromptTemplate, replacements);
