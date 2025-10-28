@@ -193,6 +193,14 @@ test('calculateCurrentMacros използва каталожен fallback при
   registerNutrientOverrides({});
 });
 
+test('addMealMacros използва каталожен fallback при празни макроси и липсващ индекс', () => {
+  registerNutrientOverrides({});
+  const acc = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+  addMealMacros({ recipeKey: 'z-01', macros: {} }, acc);
+  expect(acc).toEqual({ calories: 300, protein: 27, carbs: 30, fat: 8, fiber: 0 });
+  registerNutrientOverrides({});
+});
+
 test('normalizeMacros парсира стойности със съответните единици', () => {
   const normalized = normalizeMacros({
     calories: '320 kcal',
