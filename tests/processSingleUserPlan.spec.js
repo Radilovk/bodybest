@@ -28,7 +28,14 @@ const successfulPlanResponse = JSON.stringify({
     monday: [
       {
         meal_name: 'Закуска',
-        items: [{ name: 'Овесена каша', portion: '1 купа' }]
+        items: [{ name: 'Овесена каша', portion: '1 купа' }],
+        macros: {
+          calories: 520,
+          protein_grams: 32,
+          carbs_grams: 55,
+          fat_grams: 18,
+          fiber_grams: 8
+        }
       }
     ]
   },
@@ -446,5 +453,59 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
 
     const storedLog = JSON.parse(kvStore.get(logKey));
     expect(storedLog.some((entry) => entry.includes('неуспешно автоматично преизчисление'))).toBe(true);
+  });
+});
+
+describe('processSingleUserPlan - валидация на макроси по хранения', () => {
+  let originalFetch;
+
+  beforeEach(() => {
+    originalFetch = global.fetch;
+    global.fetch = jest.fn();
+    callModelMock.mockReset();
+    workerModule.setCallModelImplementation(callModelMock);
+  });
+
+  afterEach(() => {
+    workerModule.setCallModelImplementation();
+    global.fetch = originalFetch;
+    jest.restoreAllMocks();
+  });
+
+  test('маркира плана като грешен при хранене без макроси и индекс', async () => {
+    const userId = 'meal-macros-validation-user';
+    const { env, kvStore, logKey } = buildTestEnvironment(userId, {
+      analysisMacrosData: mockAnalysisMacros,
+      psychoProfileData: mockPsychoProfile
+    });
+    callModelMock.mockResolvedValue(
+      JSON.stringify({
+        profileSummary: 'Обобщение',
+        caloriesMacros: {
+          calories: 2000,
+          protein_grams: 130,
+          carbs_grams: 210,
+          fat_grams: 70,
+          fiber_grams: 28
+        },
+        week1Menu: {
+          monday: [
+            { meal_name: 'Закуска без макроси', items: [{ name: 'Тест', portion: '1' }] }
+          ]
+        },
+        mealMacrosIndex: {},
+        principlesWeek2_4: ['- Баланс'],
+        detailedTargets: { hydration: '2L вода' },
+        generationMetadata: { errors: [] }
+      })
+    );
+
+    await workerModule.processSingleUserPlan(userId, env);
+
+    const finalPlan = JSON.parse(kvStore.get(`${userId}_final_plan`));
+    expect(finalPlan.generationMetadata.errors.some((msg) => msg.includes('Липсват макроси'))).toBe(true);
+    expect(kvStore.get(`plan_status_${userId}`)).toBe('error');
+    const logEntries = JSON.parse(kvStore.get(logKey));
+    expect(logEntries.some((entry) => entry.includes('Липсват макроси'))).toBe(true);
   });
 });
