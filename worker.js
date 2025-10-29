@@ -4459,6 +4459,36 @@ async function processSingleUserPlan(userId, env) {
                     planBuilder.generationMetadata.errors.push(failureMsg);
                 }
             }
+            const missingMealMacros = [];
+            if (planBuilder.week1Menu && typeof planBuilder.week1Menu === 'object') {
+                const entries = Object.entries(planBuilder.week1Menu);
+                for (const [dayKey, meals] of entries) {
+                    if (!Array.isArray(meals)) {
+                        continue;
+                    }
+                    meals.forEach((meal, mealIdx) => {
+                        const directMacros = extractMacros(meal?.macros ?? meal);
+                        const indexKey = `${dayKey}_${mealIdx}`;
+                        const indexedMacros =
+                            planBuilder.mealMacrosIndex && typeof planBuilder.mealMacrosIndex === 'object'
+                                ? extractMacros(planBuilder.mealMacrosIndex[indexKey])
+                                : null;
+                        const merged = mergeMacroSources(directMacros, indexedMacros);
+                        if (!isCompleteMacroSet(merged)) {
+                            const label = meal?.meal_name || meal?.title || `meal_${mealIdx + 1}`;
+                            missingMealMacros.push(`${dayKey} / ${label}`);
+                        }
+                    });
+                }
+            }
+            if (missingMealMacros.length > 0) {
+                const validationMessage =
+                    'Липсват макроси за следните хранения: ' + missingMealMacros.join(', ') +
+                    '. Планът е маркиран със статус "error".';
+                planBuilder.generationMetadata.errors.push(validationMessage);
+                await addLog(`Грешка: ${validationMessage}`, { checkpoint: true, reason: 'missing-meal-macros' });
+                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${validationMessage}`);
+            }
             if (generationMetadata && Array.isArray(generationMetadata.errors)) planBuilder.generationMetadata.errors.push(...generationMetadata.errors);
             await addLog('Планът е генериран', { checkpoint: true, reason: 'plan-generated' });
         } catch (e) {
