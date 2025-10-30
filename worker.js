@@ -4251,6 +4251,14 @@ function createEmptyPlanBuilder() {
     };
 }
 
+class PlanCaloriesMacrosMissingError extends Error {
+    constructor(message, planBuilder) {
+        super(message);
+        this.name = 'PlanCaloriesMacrosMissingError';
+        this.planBuilder = planBuilder;
+    }
+}
+
 function collectPlanMacroGaps(plan) {
     const requiredKeys = ['calories', 'protein_grams', 'carbs_grams', 'fat_grams'];
     const result = {
@@ -4361,32 +4369,12 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
         ensureFiber(planBuilder.caloriesMacros);
     }
 
-    const fallbackWarningLog = 'Предупреждение: AI не върна пълни caloriesMacros, преизчисляваме от менюто.';
     if (!hasCompleteCaloriesMacros(planBuilder.caloriesMacros)) {
-        try {
-            const recalculated = calculatePlanMacros(
-                planBuilder.week1Menu || {},
-                planBuilder.mealMacrosIndex || null
-            );
-            if (recalculated) {
-                planBuilder.caloriesMacros = recalculated;
-                ensureFiber(planBuilder.caloriesMacros);
-                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${fallbackWarningLog}`);
-                await addLog(fallbackWarningLog);
-            } else {
-                planBuilder.caloriesMacros = null;
-                const failureMsg = 'AI отговорът няма caloriesMacros и неуспешно автоматично преизчисление от менюто.';
-                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${failureMsg}`);
-                await addLog(`Предупреждение: ${failureMsg}`);
-                planBuilder.generationMetadata.errors.push(failureMsg);
-            }
-        } catch (fallbackErr) {
-            const failureMsg = `AI отговорът няма caloriesMacros и преизчислението от менюто се провали: ${fallbackErr.message}`;
-            console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${failureMsg}`);
-            await addLog(`Грешка при преизчисляване на макроси: ${fallbackErr.message}`);
-            planBuilder.caloriesMacros = null;
-            planBuilder.generationMetadata.errors.push(failureMsg);
-        }
+        const failureMsg = 'AI отговорът няма валидни caloriesMacros и изисква нов опит от модела.';
+        console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${failureMsg}`);
+        planBuilder.generationMetadata.errors.push(failureMsg);
+        await addLog(`Предупреждение: ${failureMsg}`);
+        throw new PlanCaloriesMacrosMissingError(failureMsg, planBuilder);
     }
 
     if (generationMetadata && Array.isArray(generationMetadata.errors)) {
@@ -4473,6 +4461,9 @@ async function retryPlanGeneration({
             const retryMsg = `Macro retry attempt ${attempts} failed: ${retryErr.message}`;
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${retryMsg}`);
             await addLog(`Грешка при повторен опит за макроси: ${retryErr.message}`);
+            if (retryErr instanceof PlanCaloriesMacrosMissingError && retryErr.planBuilder) {
+                workingPlan = retryErr.planBuilder;
+            }
         }
     }
 
@@ -5056,12 +5047,20 @@ async function processSingleUserPlan(userId, env) {
             await addLog('Извикване на AI модела');
             console.log(`PROCESS_USER_PLAN (${userId}): Calling model ${planModelName} for unified plan. Prompt length: ${finalPrompt.length}`);
             rawAiResponse = await callModelRef.current(planModelName, finalPrompt, env, { temperature: 0.1, maxTokens: 20000 });
-            planBuilder = await buildPlanFromRawResponse(rawAiResponse, {
-                planModelName,
-                env,
-                userId,
-                addLog
-            });
+            try {
+                planBuilder = await buildPlanFromRawResponse(rawAiResponse, {
+                    planModelName,
+                    env,
+                    userId,
+                    addLog
+                });
+            } catch (buildErr) {
+                if (buildErr instanceof PlanCaloriesMacrosMissingError && buildErr.planBuilder) {
+                    planBuilder = buildErr.planBuilder;
+                } else {
+                    throw buildErr;
+                }
+            }
             const enforcementResult = await enforceCompletePlanBeforePersist({
                 plan: planBuilder,
                 userId,
