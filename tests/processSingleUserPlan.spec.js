@@ -205,7 +205,7 @@ describe('processSingleUserPlan - буфериран лог', () => {
 
   test('генерира план и записва ключовите стъпки в логовете', async () => {
     const userId = 'test-user';
-    const { env, kvStore, logKey } = buildTestEnvironment(userId, {
+    const { env, kvStore, logKey, userMetadataKv } = buildTestEnvironment(userId, {
       analysisMacrosData: mockAnalysisMacros,
       psychoProfileData: mockPsychoProfile
     });
@@ -439,20 +439,25 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
 
     await workerModule.processSingleUserPlan(userId, env);
 
-    const finalPlan = JSON.parse(kvStore.get(`${userId}_final_plan`));
-    expect(finalPlan.caloriesMacros).toBeNull();
-    expect(finalPlan.generationMetadata.errors).toContain(
-      'AI отговорът няма caloriesMacros и неуспешно автоматично преизчисление от менюто.'
-    );
-    expect(kvStore.get(`plan_status_${userId}`)).toBe('error');
-    const processingError = userMetadataKv.put.mock.calls.find(([key]) => key === `${userId}_processing_error`);
-    expect(processingError?.[1]).toContain('AI отговорът няма caloriesMacros');
+    const finalPlanCall = userMetadataKv.put.mock.calls.find(([key]) => key === `${userId}_final_plan`);
+    expect(finalPlanCall).toBeUndefined();
+    expect(kvStore.get(`${userId}_final_plan`)).toBeUndefined();
 
-    const analysisMacros = JSON.parse(kvStore.get(`${userId}_analysis_macros`));
-    expect(analysisMacros).toEqual({ status: 'final', data: null });
+    const analysisMacrosCall = userMetadataKv.put.mock.calls.find(
+      ([key]) => key === `${userId}_analysis_macros`
+    );
+    expect(analysisMacrosCall).toBeUndefined();
+
+    expect(kvStore.get(`plan_status_${userId}`)).toBeUndefined();
+
+    const retryRecord = userMetadataKv.put.mock.calls.find(
+      ([key]) => key === `${userId}_last_plan_macro_retry`
+    );
+    expect(retryRecord?.[1]).toContain('Без макроси');
 
     const storedLog = JSON.parse(kvStore.get(logKey));
     expect(storedLog.some((entry) => entry.includes('неуспешно автоматично преизчисление'))).toBe(true);
+    expect(storedLog.some((entry) => entry.includes('Планът няма да бъде записан'))).toBe(true);
   });
 });
 
@@ -474,7 +479,7 @@ describe('processSingleUserPlan - валидация на макроси по х
 
   test('маркира плана като грешен при хранене без макроси и индекс', async () => {
     const userId = 'meal-macros-validation-user';
-    const { env, kvStore, logKey } = buildTestEnvironment(userId, {
+    const { env, kvStore, logKey, userMetadataKv } = buildTestEnvironment(userId, {
       analysisMacrosData: mockAnalysisMacros,
       psychoProfileData: mockPsychoProfile
     });
@@ -502,10 +507,19 @@ describe('processSingleUserPlan - валидация на макроси по х
 
     await workerModule.processSingleUserPlan(userId, env);
 
-    const finalPlan = JSON.parse(kvStore.get(`${userId}_final_plan`));
-    expect(finalPlan.generationMetadata.errors.some((msg) => msg.includes('Липсват макроси'))).toBe(true);
-    expect(kvStore.get(`plan_status_${userId}`)).toBe('error');
+    const finalPlanCall = userMetadataKv.put.mock.calls.find(([key]) => key === `${userId}_final_plan`);
+    expect(finalPlanCall).toBeUndefined();
+    expect(kvStore.get(`${userId}_final_plan`)).toBeUndefined();
+
+    expect(kvStore.get(`plan_status_${userId}`)).toBeUndefined();
+
+    const retryRecord = userMetadataKv.put.mock.calls.find(
+      ([key]) => key === `${userId}_last_plan_macro_retry`
+    );
+    expect(retryRecord?.[1]).toContain('Закуска без макроси');
+
     const logEntries = JSON.parse(kvStore.get(logKey));
     expect(logEntries.some((entry) => entry.includes('Липсват макроси'))).toBe(true);
+    expect(logEntries.some((entry) => entry.includes('Планът няма да бъде записан'))).toBe(true);
   });
 });
