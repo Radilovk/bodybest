@@ -4002,6 +4002,264 @@ async function handleSetMaintenanceMode(request, env) {
 // ===============================================
 // ------------- END BLOCK: PlanGenerationHeaderComment -------------
 
+const PLAN_MACRO_RETRY_LIMIT = 2;
+const REQUIRED_PLAN_SECTIONS = [
+    'profileSummary',
+    'week1Menu',
+    'principlesWeek2_4',
+    'detailedTargets'
+];
+
+function createEmptyPlanBuilder() {
+    return {
+        profileSummary: null,
+        caloriesMacros: null,
+        week1Menu: null,
+        principlesWeek2_4: [],
+        additionalGuidelines: [],
+        hydrationCookingSupplements: null,
+        allowedForbiddenFoods: {},
+        psychologicalGuidance: null,
+        detailedTargets: null,
+        mealMacrosIndex: null,
+        generationMetadata: { timestamp: '', modelUsed: null, errors: [] }
+    };
+}
+
+function collectPlanMacroGaps(plan) {
+    const requiredKeys = ['calories', 'protein_grams', 'carbs_grams', 'fat_grams'];
+    const result = {
+        missingCaloriesMacroFields: [],
+        missingMealMacros: [],
+        hasGaps: false
+    };
+
+    const caloriesExtracted = extractMacros(plan?.caloriesMacros || {});
+    const caloriesMerged = mergeMacroSources(caloriesExtracted, null);
+    for (const key of requiredKeys) {
+        const value = caloriesMerged ? caloriesMerged[key] : null;
+        if (!(typeof value === 'number' && Number.isFinite(value) && value > 0)) {
+            result.missingCaloriesMacroFields.push(key);
+        }
+    }
+
+    if (plan?.week1Menu && typeof plan.week1Menu === 'object') {
+        const entries = Object.entries(plan.week1Menu);
+        for (const [dayKey, meals] of entries) {
+            if (!Array.isArray(meals)) continue;
+            meals.forEach((meal, mealIdx) => {
+                const directMacros = extractMacros(meal?.macros ?? meal ?? {});
+                const indexKey = `${dayKey}_${mealIdx}`;
+                const indexedMacros = plan?.mealMacrosIndex && typeof plan.mealMacrosIndex === 'object'
+                    ? extractMacros(plan.mealMacrosIndex[indexKey])
+                    : null;
+                const merged = mergeMacroSources(directMacros, indexedMacros);
+                if (!isCompleteMacroSet(merged)) {
+                    const missingFields = [];
+                    for (const key of requiredKeys) {
+                        const value = merged ? merged[key] : null;
+                        if (!(typeof value === 'number' && Number.isFinite(value) && value > 0)) {
+                            missingFields.push(key);
+                        }
+                    }
+                    const label = meal?.meal_name || meal?.title || `meal_${mealIdx + 1}`;
+                    result.missingMealMacros.push({ dayKey, mealIndex: mealIdx, label, missingFields });
+                }
+            });
+        }
+    }
+
+    result.hasGaps =
+        result.missingCaloriesMacroFields.length > 0 || result.missingMealMacros.length > 0;
+    return result;
+}
+
+async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, userId, addLog }) {
+    const planBuilder = createEmptyPlanBuilder();
+    planBuilder.generationMetadata.modelUsed = planModelName;
+
+    const cleanedJson = cleanGeminiJson(rawAiResponse);
+    let generatedPlanObject = safeParseJson(cleanedJson, {});
+
+    let missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !generatedPlanObject[key]);
+    const originallyMissing = [...missingSections];
+    if (missingSections.length > 0) {
+        const missMsg = `Missing sections: ${missingSections.join(', ')}`;
+        console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${missMsg}. Original response (start): ${rawAiResponse.substring(0, 300)}`);
+        planBuilder.generationMetadata.errors.push(missMsg);
+        try {
+            const repairPrompt = `Return JSON with keys ${missingSections.join(', ')} based on this plan: ${cleanedJson}`;
+            const repairResponse = await callModelRef.current(planModelName, repairPrompt, env, {
+                temperature: 0.1,
+                maxTokens: 1000
+            });
+            const repairCleaned = cleanGeminiJson(repairResponse);
+            const repairedObject = safeParseJson(repairCleaned, {});
+            if (repairedObject && typeof repairedObject === 'object') {
+                for (const key of missingSections) {
+                    if (repairedObject[key]) {
+                        generatedPlanObject[key] = repairedObject[key];
+                    }
+                }
+            }
+            missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !generatedPlanObject[key]);
+            if (missingSections.length > 0) {
+                const stillMsg = `Still missing sections after repair: ${missingSections.join(', ')}`;
+                console.warn(`PROCESS_USER_PLAN_WARNING (${userId}): ${stillMsg}`);
+                planBuilder.generationMetadata.errors.push(stillMsg);
+            } else {
+                console.log(`PROCESS_USER_PLAN (${userId}): Missing sections filled: ${originallyMissing.join(', ')}`);
+            }
+        } catch (repairErr) {
+            const repairErrorMsg = `Repair attempt failed: ${repairErr.message}`;
+            console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${repairErrorMsg}`);
+            planBuilder.generationMetadata.errors.push(repairErrorMsg);
+        }
+    } else {
+        console.log(`PROCESS_USER_PLAN (${userId}): Unified plan JSON parsed successfully.`);
+    }
+
+    const { generationMetadata, ...restOfGeneratedPlan } = generatedPlanObject;
+    Object.assign(planBuilder, restOfGeneratedPlan);
+
+    const ensureFiber = (macros) => {
+        if (!macros) return;
+        const { calories, fiber_percent, fiber_grams } = macros;
+        if (fiber_percent == null && fiber_grams != null && calories) {
+            macros.fiber_percent = Math.round((fiber_grams * 2 * 100) / calories);
+        }
+        if (fiber_grams == null && fiber_percent != null && calories) {
+            macros.fiber_grams = Math.round((calories * fiber_percent) / 100 / 2);
+        }
+    };
+    if (planBuilder.caloriesMacros) {
+        ensureFiber(planBuilder.caloriesMacros);
+    }
+
+    const fallbackWarningLog = 'Предупреждение: AI не върна пълни caloriesMacros, преизчисляваме от менюто.';
+    if (!hasCompleteCaloriesMacros(planBuilder.caloriesMacros)) {
+        try {
+            const recalculated = calculatePlanMacros(
+                planBuilder.week1Menu || {},
+                planBuilder.mealMacrosIndex || null
+            );
+            if (recalculated) {
+                planBuilder.caloriesMacros = recalculated;
+                ensureFiber(planBuilder.caloriesMacros);
+                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${fallbackWarningLog}`);
+                await addLog(fallbackWarningLog);
+            } else {
+                planBuilder.caloriesMacros = null;
+                const failureMsg = 'AI отговорът няма caloriesMacros и неуспешно автоматично преизчисление от менюто.';
+                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${failureMsg}`);
+                await addLog(`Предупреждение: ${failureMsg}`);
+                planBuilder.generationMetadata.errors.push(failureMsg);
+            }
+        } catch (fallbackErr) {
+            const failureMsg = `AI отговорът няма caloriesMacros и преизчислението от менюто се провали: ${fallbackErr.message}`;
+            console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${failureMsg}`);
+            await addLog(`Грешка при преизчисляване на макроси: ${fallbackErr.message}`);
+            planBuilder.caloriesMacros = null;
+            planBuilder.generationMetadata.errors.push(failureMsg);
+        }
+    }
+
+    if (generationMetadata && Array.isArray(generationMetadata.errors)) {
+        planBuilder.generationMetadata.errors.push(...generationMetadata.errors);
+    }
+
+    return planBuilder;
+}
+
+async function retryPlanGeneration({
+    userId,
+    env,
+    planModelName,
+    basePrompt,
+    addLog,
+    initialPlan,
+    maxAttempts = PLAN_MACRO_RETRY_LIMIT
+}) {
+    let workingPlan = initialPlan;
+    let attempts = 0;
+    let lastRawResponse = '';
+
+    while (attempts < maxAttempts) {
+        const gaps = collectPlanMacroGaps(workingPlan);
+        if (!gaps.hasGaps) {
+            return { success: true, plan: workingPlan, attempts, finalGaps: gaps };
+        }
+
+        attempts += 1;
+        const missingParts = [];
+        if (gaps.missingCaloriesMacroFields.length > 0) {
+            missingParts.push(
+                `- Обнови caloriesMacros (липсват: ${gaps.missingCaloriesMacroFields.join(', ')})`
+            );
+        }
+        for (const mealGap of gaps.missingMealMacros) {
+            missingParts.push(
+                `- Ден ${mealGap.dayKey}, храна "${mealGap.label}" (липсват: ${mealGap.missingFields.join(', ')})`
+            );
+        }
+
+        const logMessage = `Повторен опит ${attempts} за попълване на макроси.`;
+        await addLog(`${logMessage} ${missingParts.join(' ')}`);
+        console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${logMessage} ${missingParts.join(' ')}`);
+
+        const planContext = JSON.stringify({
+            caloriesMacros: workingPlan.caloriesMacros,
+            week1Menu: workingPlan.week1Menu,
+            mealMacrosIndex: workingPlan.mealMacrosIndex || null,
+            detailedTargets: workingPlan.detailedTargets || null
+        });
+        let trimmedContext = planContext;
+        if (trimmedContext.length > 8000) {
+            trimmedContext = `${trimmedContext.slice(0, 8000)}...`;
+        }
+
+        let basePromptExcerpt = '';
+        if (basePrompt) {
+            let trimmedBasePrompt = basePrompt;
+            if (trimmedBasePrompt.length > 4000) {
+                trimmedBasePrompt = `${trimmedBasePrompt.slice(0, 4000)}...`;
+            }
+            basePromptExcerpt = `Original instructions excerpt:\n${trimmedBasePrompt}\n`;
+        }
+
+        const correctionPrompt = `${basePromptExcerpt}You previously generated a nutrition plan JSON. Some macronutrient values are missing. Keep the structure and meals identical, but fill in every missing macro.\n` +
+            `Missing items:\n${missingParts.join('\n')}\n` +
+            `Current plan snapshot:\n${trimmedContext}\n` +
+            `Respond ONLY with the complete updated JSON plan.`;
+
+        try {
+            lastRawResponse = await callModelRef.current(planModelName, correctionPrompt, env, {
+                temperature: 0.05,
+                maxTokens: 20000
+            });
+            const rebuiltPlan = await buildPlanFromRawResponse(lastRawResponse, {
+                planModelName,
+                env,
+                userId,
+                addLog
+            });
+            workingPlan = rebuiltPlan;
+        } catch (retryErr) {
+            const retryMsg = `Macro retry attempt ${attempts} failed: ${retryErr.message}`;
+            console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${retryMsg}`);
+            await addLog(`Грешка при повторен опит за макроси: ${retryErr.message}`);
+        }
+    }
+
+    return {
+        success: false,
+        plan: workingPlan,
+        attempts,
+        finalGaps: collectPlanMacroGaps(workingPlan),
+        lastRawResponse
+    };
+}
+
 // ------------- START FUNCTION: processSingleUserPlan -------------
 async function processSingleUserPlan(userId, env) {
     console.log(`PROCESS_USER_PLAN (${userId}): Starting plan generation.`);
@@ -4189,7 +4447,7 @@ async function processSingleUserPlan(userId, env) {
         }
         console.log(`PROCESS_USER_PLAN (${userId}): Processing for email: ${initialAnswers.email || 'N/A'}`);
         await addLog('Подготовка на модела');
-        const planBuilder = { profileSummary: null, caloriesMacros: null, week1Menu: null, principlesWeek2_4: [], additionalGuidelines: [], hydrationCookingSupplements: null, allowedForbiddenFoods: {}, psychologicalGuidance: null, detailedTargets: null, generationMetadata: { timestamp: '', modelUsed: null, errors: [] } };
+        let planBuilder = createEmptyPlanBuilder();
         const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, openaiApiKey, planModelName, unifiedPromptTemplate ] = await Promise.all([
             env.RESOURCES_KV.get('question_definitions'),
             env.RESOURCES_KV.get('base_diet_model'),
@@ -4379,118 +4637,66 @@ async function processSingleUserPlan(userId, env) {
             finalPrompt += `\n\n[PLAN_MODIFICATION]\n${pendingPlanModText}`;
         }
         
-        let generatedPlanObject = null; let rawAiResponse = "";
+        let rawAiResponse = "";
+        let macroValidationPassed = false;
+        let finalMacroGaps = collectPlanMacroGaps(planBuilder);
+        let macroRetryInfo = null;
+        let planStatusValue = 'processing';
         try {
             await addLog('Извикване на AI модела');
             console.log(`PROCESS_USER_PLAN (${userId}): Calling model ${planModelName} for unified plan. Prompt length: ${finalPrompt.length}`);
             rawAiResponse = await callModelRef.current(planModelName, finalPrompt, env, { temperature: 0.1, maxTokens: 20000 });
-            const cleanedJson = cleanGeminiJson(rawAiResponse);
-            generatedPlanObject = safeParseJson(cleanedJson, {});
-            const requiredSections = ["profileSummary", "week1Menu", "principlesWeek2_4", "detailedTargets"];
-            let missingSections = requiredSections.filter(key => !generatedPlanObject[key]);
-            const originallyMissing = [...missingSections];
-            if (missingSections.length > 0) {
-                const missMsg = `Missing sections: ${missingSections.join(', ')}`;
-                console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${missMsg}. Original response (start): ${rawAiResponse.substring(0,300)}`);
-                planBuilder.generationMetadata.errors.push(missMsg);
-                try {
-                    const repairPrompt = `Return JSON with keys ${missingSections.join(', ')} based on this plan: ${cleanedJson}`;
-                    const repairResponse = await callModelRef.current(planModelName, repairPrompt, env, { temperature: 0.1, maxTokens: 1000 });
-                    const repairedObject = safeParseJson(cleanGeminiJson(repairResponse), {});
-                    missingSections.forEach(key => {
-                        if (repairedObject[key]) generatedPlanObject[key] = repairedObject[key];
-                    });
-                    missingSections = requiredSections.filter(key => !generatedPlanObject[key]);
-                    if (missingSections.length > 0) {
-                        const stillMsg = `Still missing sections after repair: ${missingSections.join(', ')}`;
-                        console.warn(`PROCESS_USER_PLAN_WARNING (${userId}): ${stillMsg}`);
-                        planBuilder.generationMetadata.errors.push(stillMsg);
-                    } else {
-                        console.log(`PROCESS_USER_PLAN (${userId}): Missing sections filled: ${originallyMissing.join(', ')}`);
-                    }
-                } catch (repairErr) {
-                    const repairErrorMsg = `Repair attempt failed: ${repairErr.message}`;
-                    console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${repairErrorMsg}`);
-                    planBuilder.generationMetadata.errors.push(repairErrorMsg);
+            planBuilder = await buildPlanFromRawResponse(rawAiResponse, {
+                planModelName,
+                env,
+                userId,
+                addLog
+            });
+
+            finalMacroGaps = collectPlanMacroGaps(planBuilder);
+            if (finalMacroGaps.hasGaps) {
+                macroRetryInfo = await retryPlanGeneration({
+                    userId,
+                    env,
+                    planModelName,
+                    basePrompt: finalPrompt,
+                    addLog,
+                    initialPlan: planBuilder
+                });
+                planBuilder = macroRetryInfo.plan;
+                finalMacroGaps = collectPlanMacroGaps(planBuilder);
+                if (macroRetryInfo.success && macroRetryInfo.attempts > 0) {
+                    await addLog(`Макросите бяха допълнени след ${macroRetryInfo.attempts} повторен(и) опит(и).`);
                 }
-            } else {
-                console.log(`PROCESS_USER_PLAN (${userId}): Unified plan JSON parsed successfully.`);
-            }
-            const { generationMetadata, ...restOfGeneratedPlan } = generatedPlanObject;
-            Object.assign(planBuilder, restOfGeneratedPlan);
-            const ensureFiber = (macros) => {
-                if (!macros) return;
-                const { calories, fiber_percent, fiber_grams } = macros;
-                if (fiber_percent == null && fiber_grams != null && calories) {
-                    macros.fiber_percent = Math.round((fiber_grams * 2 * 100) / calories);
-                }
-                if (fiber_grams == null && fiber_percent != null && calories) {
-                    macros.fiber_grams = Math.round((calories * fiber_percent) / 100 / 2);
-                }
-            };
-            if (planBuilder.caloriesMacros) {
-                ensureFiber(planBuilder.caloriesMacros);
             }
 
-            const fallbackWarningLog = 'Предупреждение: AI не върна пълни caloriesMacros, преизчисляваме от менюто.';
-            if (!hasCompleteCaloriesMacros(planBuilder.caloriesMacros)) {
-                try {
-                    const recalculated = calculatePlanMacros(
-                        planBuilder.week1Menu || {},
-                        planBuilder.mealMacrosIndex || null
+            macroValidationPassed = !finalMacroGaps.hasGaps;
+            if (macroValidationPassed) {
+                await addLog('Планът е генериран', { checkpoint: true, reason: 'plan-generated' });
+            } else {
+                const missingParts = [];
+                if (finalMacroGaps.missingCaloriesMacroFields.length > 0) {
+                    missingParts.push(
+                        `caloriesMacros (${finalMacroGaps.missingCaloriesMacroFields.join(', ')})`
                     );
-                    if (recalculated) {
-                        planBuilder.caloriesMacros = recalculated;
-                        ensureFiber(planBuilder.caloriesMacros);
-                        console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${fallbackWarningLog}`);
-                        await addLog(fallbackWarningLog);
-                    } else {
-                        planBuilder.caloriesMacros = null;
-                        const failureMsg = 'AI отговорът няма caloriesMacros и неуспешно автоматично преизчисление от менюто.';
-                        console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${failureMsg}`);
-                        await addLog(`Предупреждение: ${failureMsg}`);
-                        planBuilder.generationMetadata.errors.push(failureMsg);
-                    }
-                } catch (fallbackErr) {
-                    const failureMsg = `AI отговорът няма caloriesMacros и преизчислението от менюто се провали: ${fallbackErr.message}`;
-                    console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${failureMsg}`);
-                    await addLog(`Грешка при преизчисляване на макроси: ${fallbackErr.message}`);
-                    planBuilder.caloriesMacros = null;
-                    planBuilder.generationMetadata.errors.push(failureMsg);
                 }
-            }
-            const missingMealMacros = [];
-            if (planBuilder.week1Menu && typeof planBuilder.week1Menu === 'object') {
-                const entries = Object.entries(planBuilder.week1Menu);
-                for (const [dayKey, meals] of entries) {
-                    if (!Array.isArray(meals)) {
-                        continue;
-                    }
-                    meals.forEach((meal, mealIdx) => {
-                        const directMacros = extractMacros(meal?.macros ?? meal);
-                        const indexKey = `${dayKey}_${mealIdx}`;
-                        const indexedMacros =
-                            planBuilder.mealMacrosIndex && typeof planBuilder.mealMacrosIndex === 'object'
-                                ? extractMacros(planBuilder.mealMacrosIndex[indexKey])
-                                : null;
-                        const merged = mergeMacroSources(directMacros, indexedMacros);
-                        if (!isCompleteMacroSet(merged)) {
-                            const label = meal?.meal_name || meal?.title || `meal_${mealIdx + 1}`;
-                            missingMealMacros.push(`${dayKey} / ${label}`);
-                        }
-                    });
+                for (const gap of finalMacroGaps.missingMealMacros) {
+                    missingParts.push(`${gap.dayKey} / ${gap.label} (${gap.missingFields.join(', ')})`);
                 }
-            }
-            if (missingMealMacros.length > 0) {
+                const attemptNote = macroRetryInfo ? ` (повторни опити: ${macroRetryInfo.attempts})` : '';
                 const validationMessage =
-                    'Липсват макроси за следните хранения: ' + missingMealMacros.join(', ') +
-                    '. Планът е маркиран със статус "error".';
+                    'Липсват макроси за следните елементи: ' + (missingParts.join('; ') || 'неопределени елементи') +
+                    `. Планът няма да бъде записан${attemptNote}.`;
                 planBuilder.generationMetadata.errors.push(validationMessage);
-                await addLog(`Грешка: ${validationMessage}`, { checkpoint: true, reason: 'missing-meal-macros' });
+                await addLog(`Грешка: ${validationMessage}`, { checkpoint: true, reason: 'macro-validation-failed' });
                 console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${validationMessage}`);
+                if (macroRetryInfo && macroRetryInfo.lastRawResponse) {
+                    await env.USER_METADATA_KV.put(
+                        `${userId}_last_plan_macro_retry`,
+                        macroRetryInfo.lastRawResponse.substring(0, 600)
+                    );
+                }
             }
-            if (generationMetadata && Array.isArray(generationMetadata.errors)) planBuilder.generationMetadata.errors.push(...generationMetadata.errors);
-            await addLog('Планът е генериран', { checkpoint: true, reason: 'plan-generated' });
         } catch (e) {
             const errorMsg = `Unified Plan Generation Error for ${userId}: ${e.message}. Raw response (start): ${rawAiResponse.substring(0, 500)}...`;
             console.error(errorMsg);
@@ -4499,51 +4705,59 @@ async function processSingleUserPlan(userId, env) {
             planBuilder.generationMetadata.errors.push(errorMsg);
         }
 
-        console.log(`PROCESS_USER_PLAN (${userId}): Assembling and saving final plan. Recorded errors during generation: ${planBuilder.generationMetadata.errors.length}`);
-        await addLog('Запис на генерирания план', { checkpoint: true, reason: 'save' });
-        planBuilder.generationMetadata.timestamp = planBuilder.generationMetadata.timestamp || new Date().toISOString();
-        const finalPlanString = JSON.stringify(planBuilder, null, 2);
-        await env.USER_METADATA_KV.put(`${userId}_final_plan`, finalPlanString);
+        if (macroValidationPassed) {
+            console.log(`PROCESS_USER_PLAN (${userId}): Assembling and saving final plan. Recorded errors during generation: ${planBuilder.generationMetadata.errors.length}`);
+            await addLog('Запис на генерирания план', { checkpoint: true, reason: 'save' });
+            planBuilder.generationMetadata.timestamp = planBuilder.generationMetadata.timestamp || new Date().toISOString();
+            const finalPlanString = JSON.stringify(planBuilder, null, 2);
+            await env.USER_METADATA_KV.put(`${userId}_final_plan`, finalPlanString);
 
-        const macrosRecord = {
-            status: 'final',
-            data: planBuilder.caloriesMacros ? { ...planBuilder.caloriesMacros } : null
-        };
-        await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
+            const macrosRecord = {
+                status: 'final',
+                data: planBuilder.caloriesMacros ? { ...planBuilder.caloriesMacros } : null
+            };
+            await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
+            await env.USER_METADATA_KV.delete(`${userId}_last_plan_macro_retry`);
 
-        const planStatusValue = planBuilder.generationMetadata.errors.length > 0 ? 'error' : 'ready';
-        if (planStatusValue === 'error') {
-            await setPlanStatus(userId, 'error', env);
-            await env.USER_METADATA_KV.put(`${userId}_processing_error`, planBuilder.generationMetadata.errors.join('\n---\n'));
-            await addLog('Процесът завърши с грешка', { checkpoint: true, reason: 'status-error' });
-            console.log(`PROCESS_USER_PLAN (${userId}): Finished with errors. Status set to 'error'.`);
+            planStatusValue = planBuilder.generationMetadata.errors.length > 0 ? 'error' : 'ready';
+            if (planStatusValue === 'error') {
+                await setPlanStatus(userId, 'error', env);
+                await env.USER_METADATA_KV.put(`${userId}_processing_error`, planBuilder.generationMetadata.errors.join('\n---\n'));
+                await addLog('Процесът завърши с грешка', { checkpoint: true, reason: 'status-error' });
+                console.log(`PROCESS_USER_PLAN (${userId}): Finished with errors. Status set to 'error'.`);
+            } else {
+                await setPlanStatus(userId, 'ready', env);
+                await env.USER_METADATA_KV.delete(`${userId}_processing_error`); // Изтриваме евентуална стара грешка
+                await env.USER_METADATA_KV.delete(`pending_plan_mod_${userId}`);
+                await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
+                const summary = createPlanUpdateSummary(planBuilder, previousPlan);
+                await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summary));
+
+                await addLog('Планът е готов', { checkpoint: true, reason: 'status-ready' });
+                console.log(`PROCESS_USER_PLAN (${userId}): Successfully generated and saved UNIFIED plan. Status set to 'ready'.`);
+            }
         } else {
-            await setPlanStatus(userId, 'ready', env);
-            await env.USER_METADATA_KV.delete(`${userId}_processing_error`); // Изтриваме евентуална стара грешка
-            await env.USER_METADATA_KV.delete(`pending_plan_mod_${userId}`);
-            await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
-            const summary = createPlanUpdateSummary(planBuilder, previousPlan);
-            await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summary));
-
-            await addLog('Планът е готов', { checkpoint: true, reason: 'status-ready' });
-            console.log(`PROCESS_USER_PLAN (${userId}): Successfully generated and saved UNIFIED plan. Status set to 'ready'.`);
+            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Макро-валидацията не бе успешна, планът остава в статус 'processing'.`);
+            planStatusValue = 'processing';
         }
 
-        try {
-            const chatContext = await assembleChatContext(userId, env, {
-                initialAnswers,
-                finalPlan: planBuilder,
-                currentStatus,
-                planStatus: planStatusValue,
-                logEntries: logsForContext
-            });
-            if (chatContext) {
-                await env.USER_METADATA_KV.put(getChatContextKey(userId), JSON.stringify(chatContext));
-            } else {
-                await env.USER_METADATA_KV.delete(getChatContextKey(userId));
+        if (macroValidationPassed) {
+            try {
+                const chatContext = await assembleChatContext(userId, env, {
+                    initialAnswers,
+                    finalPlan: planBuilder,
+                    currentStatus,
+                    planStatus: planStatusValue,
+                    logEntries: logsForContext
+                });
+                if (chatContext) {
+                    await env.USER_METADATA_KV.put(getChatContextKey(userId), JSON.stringify(chatContext));
+                } else {
+                    await env.USER_METADATA_KV.delete(getChatContextKey(userId));
+                }
+            } catch (ctxErr) {
+                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): неуспешно обновяване на чат контекст - ${ctxErr.message}`);
             }
-        } catch (ctxErr) {
-            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): неуспешно обновяване на чат контекст - ${ctxErr.message}`);
         }
     } catch (error) {
         console.error(`PROCESS_USER_PLAN (${userId}): >>> FATAL Processing Error <<< :`, error.name, error.message, error.stack);
