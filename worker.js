@@ -101,6 +101,8 @@ const CALORIES_PER_GRAM = {
 
 const NUMERIC_VALUE_REGEX = /-?\d+(?:[.,]\d+)?/;
 
+const TARGET_MACRO_REQUIREMENTS_KEY_SUFFIX = '_target_macro_requirements';
+
 const parseNumber = (value) => {
   if (typeof value === 'number') {
     return Number.isFinite(value) ? value : null;
@@ -113,6 +115,52 @@ const parseNumber = (value) => {
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
+};
+
+const getTargetMacroRequirementsKey = (userId) => `${userId}${TARGET_MACRO_REQUIREMENTS_KEY_SUFFIX}`;
+
+const pickFirstNumeric = (...values) => {
+  for (const value of values) {
+    const parsed = parseNumber(value);
+    if (parsed != null && Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  return null;
+};
+
+const ensureTargetMacrosAvailable = (initialAnswers = {}, profile = {}) => {
+  const metrics = {
+    weight: pickFirstNumeric(initialAnswers?.weight, profile?.weight),
+    height: pickFirstNumeric(initialAnswers?.height, profile?.height),
+    age: pickFirstNumeric(initialAnswers?.age, profile?.age)
+  };
+
+  const labels = {
+    weight: 'тегло (кг)',
+    height: 'ръст (см)',
+    age: 'възраст (години)'
+  };
+
+  const missingFields = Object.entries(metrics)
+    .filter(([, value]) => !(typeof value === 'number' && Number.isFinite(value) && value > 0))
+    .map(([key]) => key);
+
+  if (missingFields.length > 0) {
+    const instructions = missingFields.map((field) => `Попълнете ${labels[field]} във въпросника или профила.`);
+    const message = `Липсват задължителни данни за макро таргети: ${missingFields
+      .map((field) => labels[field])
+      .join(', ')}.`;
+    return {
+      ok: false,
+      missingFields,
+      instructions,
+      message,
+      metrics
+    };
+  }
+
+  return { ok: true, metrics };
 };
 
 const extractMacros = (source = {}) => {
@@ -280,13 +328,26 @@ const finalizeTargetMacros = (macros) => {
 
 const buildTargetReplacements = (macros) => {
   const replacements = {};
+  if (!macros || typeof macros !== 'object') {
+    throw new Error('Липсват таргет макроси за попълване на промпта.');
+  }
+  const missingFields = [];
   for (const [key, placeholders] of Object.entries(TARGET_MACRO_PLACEHOLDERS)) {
     const value = macros?.[key];
-    const stringified = value != null && Number.isFinite(value) ? String(value) : 'N/A';
+    if (!(typeof value === 'number' && Number.isFinite(value))) {
+      missingFields.push(key);
+      continue;
+    }
+    const stringified = String(value);
     const normalizedPlaceholders = Array.isArray(placeholders) ? placeholders : [placeholders];
     for (const placeholder of normalizedPlaceholders) {
       replacements[placeholder] = stringified;
     }
+  }
+  if (missingFields.length > 0) {
+    const error = new Error(`Не са налични всички таргет макроси: ${missingFields.join(', ')}`);
+    error.missingFields = missingFields;
+    throw error;
   }
   return replacements;
 };
@@ -317,6 +378,67 @@ const mergeTargetMacroCandidates = (...candidates) => {
   }
 
   return hasAny ? merged : null;
+};
+
+const MAX_TARGET_MACRO_FIX_ATTEMPTS = 5;
+
+const buildTargetMacroFixPrompt = (template, initialAnswers, profile, previousResponse = null) => {
+  const basePrompt = populatePrompt(template, {
+    '%%QUESTIONNAIRE_JSON%%': JSON.stringify(initialAnswers, null, 2),
+    '%%PROFILE_JSON%%': JSON.stringify(profile || {}, null, 2)
+  });
+  if (!previousResponse) {
+    return basePrompt;
+  }
+  return (
+    `${basePrompt}\n\nПредходният отговор беше невалиден. Ето какво получихме:\n${previousResponse}\n\n` +
+    'Моля, отговори САМО с JSON, който съдържа числови дневни цели за калории, протеин (g и %), ' +
+    'въглехидрати (g и %), мазнини (g и %) и фибри (g и %).'
+  );
+};
+
+const resolveTargetMacrosWithPrompt = async ({
+  env,
+  userId,
+  planModelName,
+  initialAnswers,
+  profile,
+  addLog
+}) => {
+  if (!env?.RESOURCES_KV) {
+    throw new Error('RESOURCES_KV binding is недостъпен.');
+  }
+  const template = await getCachedResource('prompt_target_macros_fix', env.RESOURCES_KV);
+  if (!template) {
+    throw new Error("Липсва ресурс 'prompt_target_macros_fix' в RESOURCES_KV.");
+  }
+  if (!planModelName) {
+    throw new Error('Не е зададен модел за корекция на макроси.');
+  }
+
+  let prompt = buildTargetMacroFixPrompt(template, initialAnswers, profile);
+  let lastRawResponse = '';
+  for (let attempt = 1; attempt <= MAX_TARGET_MACRO_FIX_ATTEMPTS; attempt += 1) {
+    await addLog(
+      `Корекционен prompt за макро таргети - опит ${attempt}`,
+      { checkpoint: attempt === 1, reason: 'target-macros-fix' }
+    );
+    lastRawResponse = await callModelRef.current(planModelName, prompt, env, {
+      temperature: 0.05,
+      maxTokens: 1200
+    });
+
+    const candidateMacros = finalizeTargetMacros(extractTargetMacrosFromAny(lastRawResponse));
+    if (candidateMacros) {
+      return { macros: candidateMacros, attempts: attempt, raw: lastRawResponse };
+    }
+
+    prompt = buildTargetMacroFixPrompt(template, initialAnswers, profile, lastRawResponse);
+  }
+
+  const error = new Error('Неуспешно извличане на таргет макроси чрез корекционния prompt.');
+  error.lastRawResponse = lastRawResponse;
+  throw error;
 };
 
 const parsePossiblyStringifiedJson = (value) => {
@@ -4366,6 +4488,28 @@ async function processSingleUserPlan(userId, env) {
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${msg}`);
             throw new Error(`Parsed initial answers are empty for ${userId}.`);
         }
+        const profile = await getKvJson(`${userId}_profile`, {});
+        const requirementKey = getTargetMacroRequirementsKey(userId);
+        const targetMacroInputCheck = ensureTargetMacrosAvailable(initialAnswers, profile);
+        if (!targetMacroInputCheck.ok) {
+            const guidancePayload = {
+                ...targetMacroInputCheck,
+                timestamp: new Date().toISOString()
+            };
+            await env.USER_METADATA_KV.put(requirementKey, JSON.stringify(guidancePayload));
+            const combinedMessage = `${targetMacroInputCheck.message} ${targetMacroInputCheck.instructions.join(' ')}`.trim();
+            await env.USER_METADATA_KV.put(`${userId}_processing_error`, combinedMessage);
+            await setPlanStatus(userId, 'awaiting-data', env);
+            await addLog(`Прекъснато: ${targetMacroInputCheck.message}`, {
+                checkpoint: true,
+                reason: 'missing-macro-inputs'
+            });
+            console.warn(
+                `PROCESS_USER_PLAN_WARN (${userId}): ${targetMacroInputCheck.message} - изисква се допълване на данни.`
+            );
+            return targetMacroInputCheck;
+        }
+        await env.USER_METADATA_KV.delete(requirementKey).catch(() => {});
         let targetMacros = null;
         let analysisTargetMacros = null;
         try {
@@ -4419,7 +4563,7 @@ async function processSingleUserPlan(userId, env) {
         }
         if (!targetMacros) {
             console.warn(
-                `PROCESS_USER_PLAN_WARN (${userId}): Неуспешно извличане на таргет макроси, ще използваме N/A в промпта.`
+                `PROCESS_USER_PLAN_WARN (${userId}): Неуспешно извличане на таргет макроси от наличните източници.`
             );
         }
         const defaultPsychoProfileText = 'Няма наличен психопрофил';
@@ -4486,6 +4630,60 @@ async function processSingleUserPlan(userId, env) {
         if (!unifiedPromptTemplate) {
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): CRITICAL: Unified prompt template ('prompt_unified_plan_generation_v2') is missing from RESOURCES_KV.`);
             throw new Error("CRITICAL: Unified prompt template ('prompt_unified_plan_generation_v2') is missing from RESOURCES_KV.");
+        }
+        let targetReplacements;
+        let targetMacroFixAttempted = false;
+        const handleTargetMacroFailure = async (error, reason = 'target-macros-invalid') => {
+            const errMsg = error?.missingFields
+                ? `Липсват числови стойности за таргет макроси: ${error.missingFields.join(', ')}`
+                : error.message;
+            await env.USER_METADATA_KV.put(`${userId}_processing_error`, errMsg);
+            await setPlanStatus(userId, 'error', env);
+            await addLog(`Грешка: ${errMsg}`, { checkpoint: true, reason });
+            console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${errMsg}`);
+            throw error;
+        };
+        const runTargetMacroFix = async () => {
+            try {
+                const fixResult = await resolveTargetMacrosWithPrompt({
+                    env,
+                    userId,
+                    planModelName,
+                    initialAnswers,
+                    profile,
+                    addLog
+                });
+                targetMacros = fixResult.macros;
+                targetMacroFixAttempted = true;
+                await addLog(
+                    `Таргет макросите са възстановени чрез корекционен prompt (опит ${fixResult.attempts}).`
+                );
+                if (fixResult.raw) {
+                    await env.USER_METADATA_KV.put(
+                        `${userId}_last_target_macros_fix`,
+                        fixResult.raw.substring(0, 600)
+                    );
+                }
+            } catch (macroFixErr) {
+                await handleTargetMacroFailure(macroFixErr, 'target-macros-missing');
+            }
+        };
+        if (!targetMacros) {
+            await runTargetMacroFix();
+        }
+        try {
+            targetReplacements = buildTargetReplacements(targetMacros);
+        } catch (macroErr) {
+            if (macroErr?.missingFields && !targetMacroFixAttempted) {
+                await runTargetMacroFix();
+                try {
+                    targetReplacements = buildTargetReplacements(targetMacros);
+                } catch (retryError) {
+                    await handleTargetMacroFailure(retryError, 'target-macros-invalid');
+                }
+            } else {
+                await handleTargetMacroFailure(macroErr, 'target-macros-invalid');
+            }
         }
         planBuilder.generationMetadata.modelUsed = planModelName;
         let questionTextMap = new Map();
@@ -4554,8 +4752,6 @@ async function processSingleUserPlan(userId, env) {
         const userAnswersJson = JSON.stringify(initialAnswers);
 
         console.log(`PROCESS_USER_PLAN (${userId}): Preparing for unified AI call.`);
-
-        const targetReplacements = buildTargetReplacements(targetMacros);
         const replacements = {
             '%%FORMATTED_ANSWERS%%': formattedAnswersForPrompt, '%%USER_ID%%': userId, '%%USER_NAME%%': safeGet(initialAnswers, 'name', 'Потребител'),
             '%%USER_EMAIL%%': safeGet(initialAnswers, 'email', 'N/A'), '%%USER_GOAL%%': safeGet(initialAnswers, 'goal', 'Общо здраве'),
@@ -4729,6 +4925,8 @@ async function processSingleUserPlan(userId, env) {
                 await setPlanStatus(userId, 'ready', env);
                 await env.USER_METADATA_KV.delete(`${userId}_processing_error`); // Изтриваме евентуална стара грешка
                 await env.USER_METADATA_KV.delete(`pending_plan_mod_${userId}`);
+                await env.USER_METADATA_KV.delete(getTargetMacroRequirementsKey(userId));
+                await env.USER_METADATA_KV.delete(`${userId}_last_target_macros_fix`);
                 await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
                 const summary = createPlanUpdateSummary(planBuilder, previousPlan);
                 await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summary));

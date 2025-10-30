@@ -172,6 +172,14 @@ function buildTestEnvironment(
           return 'gpt-plan';
         case 'prompt_unified_plan_generation_v2':
           return minimalUnifiedPlanTemplate;
+        case 'prompt_target_macros_fix':
+          return [
+            'На база следните данни:\n',
+            'Въпросник:\n%%QUESTIONNAIRE_JSON%%\n',
+            'Профил:\n%%PROFILE_JSON%%\n',
+            'Отговори САМО с JSON с ключове ',
+            'calories, protein_grams, carbs_grams, fat_grams, fiber_grams'
+          ].join('');
         default:
           return null;
       }
@@ -363,38 +371,48 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
   test('попълва caloriesMacros чрез преизчисление от менюто', async () => {
     const userId = 'macros-fallback-user';
     const { env, kvStore, logKey } = buildTestEnvironment(userId);
-    callModelMock.mockResolvedValue(
-      JSON.stringify({
-        profileSummary: 'Обобщение',
-        caloriesMacros: null,
-        week1Menu: {
-          monday: [
-            {
-              macros: {
-                calories: '480 kcal',
-                protein_grams: '30 г',
-                carbs_grams: '40 г',
-                fat_grams: '20 г',
-                fiber_grams: '10 г'
-              }
-            },
-            { meal_name: 'Обяд без макроси' }
-          ]
-        },
-        mealMacrosIndex: {
-          monday_1: {
-            calories: '360 kcal',
-            protein_grams: '25',
-            carbs_grams: '30',
-            fat_grams: '12',
-            fiber_grams: '8'
-          }
-        },
-        principlesWeek2_4: ['- Баланс'],
-        detailedTargets: { hydration: '2L вода' },
-        generationMetadata: { errors: [] }
-      })
-    );
+    callModelMock
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          calories: 1950,
+          protein_grams: 140,
+          carbs_grams: 210,
+          fat_grams: 65,
+          fiber_grams: 28
+        })
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          profileSummary: 'Обобщение',
+          caloriesMacros: null,
+          week1Menu: {
+            monday: [
+              {
+                macros: {
+                  calories: '480 kcal',
+                  protein_grams: '30 г',
+                  carbs_grams: '40 г',
+                  fat_grams: '20 г',
+                  fiber_grams: '10 г'
+                }
+              },
+              { meal_name: 'Обяд без макроси' }
+            ]
+          },
+          mealMacrosIndex: {
+            monday_1: {
+              calories: '360 kcal',
+              protein_grams: '25',
+              carbs_grams: '30',
+              fat_grams: '12',
+              fiber_grams: '8'
+            }
+          },
+          principlesWeek2_4: ['- Баланс'],
+          detailedTargets: { hydration: '2L вода' },
+          generationMetadata: { errors: [] }
+        })
+      );
 
     await workerModule.processSingleUserPlan(userId, env);
 
@@ -423,19 +441,29 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
   test('маркира грешка, когато макросите липсват и не могат да се преизчислят', async () => {
     const userId = 'macros-missing-user';
     const { env, kvStore, userMetadataKv, logKey } = buildTestEnvironment(userId);
-    callModelMock.mockResolvedValue(
-      JSON.stringify({
-        profileSummary: 'Обобщение',
-        week1Menu: {
-          monday: [
-            { meal_name: 'Без макроси' }
-          ]
-        },
-        principlesWeek2_4: ['- Баланс'],
-        detailedTargets: { hydration: '2L вода' },
-        generationMetadata: { errors: [] }
-      })
-    );
+    callModelMock
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          calories: 2000,
+          protein_grams: 150,
+          carbs_grams: 220,
+          fat_grams: 60,
+          fiber_grams: 30
+        })
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          profileSummary: 'Обобщение',
+          week1Menu: {
+            monday: [
+              { meal_name: 'Без макроси' }
+            ]
+          },
+          principlesWeek2_4: ['- Баланс'],
+          detailedTargets: { hydration: '2L вода' },
+          generationMetadata: { errors: [] }
+        })
+      );
 
     await workerModule.processSingleUserPlan(userId, env);
 
@@ -449,11 +477,6 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
     expect(analysisMacrosCall).toBeUndefined();
 
     expect(kvStore.get(`plan_status_${userId}`)).toBeUndefined();
-
-    const retryRecord = userMetadataKv.put.mock.calls.find(
-      ([key]) => key === `${userId}_last_plan_macro_retry`
-    );
-    expect(retryRecord?.[1]).toContain('Без макроси');
 
     const storedLog = JSON.parse(kvStore.get(logKey));
     expect(storedLog.some((entry) => entry.includes('неуспешно автоматично преизчисление'))).toBe(true);
