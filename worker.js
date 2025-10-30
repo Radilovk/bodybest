@@ -2671,12 +2671,115 @@ async function handleUpdatePlanRequest(request, env) {
         if (!planData || typeof planData !== 'object') {
             return { success: false, message: 'Невалидни данни за плана.', statusHint: 400 };
         }
-        await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(planData));
+        const safePlan = typeof structuredClone === 'function'
+            ? structuredClone(planData)
+            : JSON.parse(JSON.stringify(planData));
+        if (!safePlan.generationMetadata || typeof safePlan.generationMetadata !== 'object') {
+            safePlan.generationMetadata = { timestamp: '', modelUsed: null, errors: [] };
+        } else if (!Array.isArray(safePlan.generationMetadata.errors)) {
+            safePlan.generationMetadata.errors = [];
+        }
+
+        const recordIncident = async (reason, details) => {
+            try {
+                await env.USER_METADATA_KV.put(
+                    `${userId}_plan_update_incident`,
+                    JSON.stringify({
+                        timestamp: new Date().toISOString(),
+                        reason,
+                        details
+                    })
+                );
+            } catch (incidentErr) {
+                console.error(
+                    `MANUAL_PLAN_UPDATE_ERROR (${userId}): Неуспешно записване на инцидент - ${incidentErr.message}`
+                );
+            }
+        };
+
+        const initialGaps = collectPlanMacroGaps(safePlan);
+        let planModelName = null;
+        if (initialGaps.hasGaps) {
+            if (!env.RESOURCES_KV || typeof env.RESOURCES_KV.get !== 'function') {
+                const msg = 'Липсва достъп до AI ресурсите за корекции на плана.';
+                console.error(`MANUAL_PLAN_UPDATE_ERROR (${userId}): ${msg}`);
+                await recordIncident('missing-ai-config', { message: msg });
+                return { success: false, message: msg, statusHint: 500 };
+            }
+            planModelName = await env.RESOURCES_KV.get('model_plan_generation');
+            if (!planModelName) {
+                const msg = 'AI моделът за планове не е конфигуриран.';
+                console.error(`MANUAL_PLAN_UPDATE_ERROR (${userId}): ${msg}`);
+                await recordIncident('missing-ai-model', { message: msg });
+                return { success: false, message: msg, statusHint: 500 };
+            }
+            const providerForPlan = getModelProvider(planModelName);
+            if (providerForPlan === 'gemini' && !env[GEMINI_API_KEY_SECRET_NAME]) {
+                const msg = 'Липсва Gemini API ключ за корекции на плана.';
+                console.error(`MANUAL_PLAN_UPDATE_ERROR (${userId}): ${msg}`);
+                await recordIncident('missing-gemini-key', { message: msg });
+                return { success: false, message: msg, statusHint: 500 };
+            }
+            if (providerForPlan === 'openai' && !env[OPENAI_API_KEY_SECRET_NAME]) {
+                const msg = 'Липсва OpenAI API ключ за корекции на плана.';
+                console.error(`MANUAL_PLAN_UPDATE_ERROR (${userId}): ${msg}`);
+                await recordIncident('missing-openai-key', { message: msg });
+                return { success: false, message: msg, statusHint: 500 };
+            }
+            if (providerForPlan === 'cohere' && !env[COMMAND_R_PLUS_SECRET_NAME]) {
+                const msg = 'Липсва Command R+ API ключ за корекции на плана.';
+                console.error(`MANUAL_PLAN_UPDATE_ERROR (${userId}): ${msg}`);
+                await recordIncident('missing-cohere-key', { message: msg });
+                return { success: false, message: msg, statusHint: 500 };
+            }
+        }
+
+        const manualCorrectionPrompt = [
+            'Действай като нутриционист, който преглежда готов хранителен план.',
+            'Запази всички хранения, ред и описания, но попълни липсващите макроси (калории, протеин, въглехидрати, мазнини).',
+            'Отговори само с валиден JSON, без обяснения.'
+        ].join(' ');
+        const manualLog = async (msg) => {
+            console.log(`MANUAL_PLAN_UPDATE (${userId}): ${msg}`);
+        };
+        const enforcementResult = await enforceCompletePlanBeforePersist({
+            plan: safePlan,
+            userId,
+            env,
+            planModelName,
+            basePrompt: manualCorrectionPrompt,
+            addLog: manualLog,
+            retryArtifactKey: initialGaps.hasGaps ? `${userId}_manual_plan_macro_retry` : null
+        });
+
+        if (!enforcementResult.success) {
+            const failureMessage = 'Планът съдържа непопълнени макроси и автоматичната корекция не успя.';
+            console.error(`MANUAL_PLAN_UPDATE_ERROR (${userId}): ${failureMessage}`);
+            await recordIncident('macro-validation-failed', enforcementResult.finalMacroGaps);
+            return { success: false, message: failureMessage, statusHint: 422 };
+        }
+
+        const validatedPlan = enforcementResult.plan;
+        if (!validatedPlan.generationMetadata || typeof validatedPlan.generationMetadata !== 'object') {
+            validatedPlan.generationMetadata = { timestamp: '', modelUsed: planModelName || null, errors: [] };
+        }
+        if (!Array.isArray(validatedPlan.generationMetadata.errors)) {
+            validatedPlan.generationMetadata.errors = [];
+        }
+        if (!validatedPlan.generationMetadata.timestamp) {
+            validatedPlan.generationMetadata.timestamp = new Date().toISOString();
+        }
+        if (!validatedPlan.generationMetadata.modelUsed && planModelName) {
+            validatedPlan.generationMetadata.modelUsed = planModelName;
+        }
+
+        await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(validatedPlan));
         const macrosRecord = {
             status: 'final',
-            data: planData.caloriesMacros || null
+            data: validatedPlan.caloriesMacros ? { ...validatedPlan.caloriesMacros } : null
         };
         await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
+        await env.USER_METADATA_KV.delete(`${userId}_manual_plan_macro_retry`);
         await setPlanStatus(userId, 'ready', env);
         return { success: true, message: 'Планът е обновен успешно' };
     } catch (error) {
@@ -4382,6 +4485,119 @@ async function retryPlanGeneration({
     };
 }
 
+async function enforceCompletePlanBeforePersist({
+    plan,
+    userId,
+    env,
+    planModelName,
+    basePrompt,
+    addLog = async () => {},
+    maxAttempts = PLAN_MACRO_RETRY_LIMIT,
+    retryArtifactKey = null
+}) {
+    let workingPlan = plan;
+    if (!workingPlan || typeof workingPlan !== 'object') {
+        throw new Error('Invalid plan supplied for validation.');
+    }
+
+    if (!workingPlan.generationMetadata || typeof workingPlan.generationMetadata !== 'object') {
+        workingPlan.generationMetadata = {
+            timestamp: workingPlan?.generationMetadata?.timestamp || '',
+            modelUsed: workingPlan?.generationMetadata?.modelUsed || planModelName || null,
+            errors: []
+        };
+    } else if (!Array.isArray(workingPlan.generationMetadata.errors)) {
+        workingPlan.generationMetadata.errors = [];
+    }
+
+    let finalMacroGaps = collectPlanMacroGaps(workingPlan);
+    if (!finalMacroGaps.hasGaps) {
+        return {
+            success: true,
+            plan: workingPlan,
+            finalMacroGaps,
+            macroRetryInfo: null,
+            attempts: 0
+        };
+    }
+
+    if (!planModelName) {
+        const validationMessage = 'Липсва конфигуриран AI модел за автоматично попълване на макроси.';
+        workingPlan.generationMetadata.errors.push(validationMessage);
+        await addLog(`Грешка: ${validationMessage}`, { checkpoint: true, reason: 'macro-validation-failed' });
+        console.error(`PLAN_VALIDATION_ERROR (${userId}): ${validationMessage}`);
+        return {
+            success: false,
+            plan: workingPlan,
+            finalMacroGaps,
+            macroRetryInfo: null,
+            attempts: 0
+        };
+    }
+
+    const macroRetryInfo = await retryPlanGeneration({
+        userId,
+        env,
+        planModelName,
+        basePrompt,
+        addLog,
+        initialPlan: workingPlan,
+        maxAttempts
+    });
+    workingPlan = macroRetryInfo.plan;
+    finalMacroGaps = collectPlanMacroGaps(workingPlan);
+
+    if (macroRetryInfo.success && macroRetryInfo.attempts > 0) {
+        await addLog(`Макросите бяха допълнени след ${macroRetryInfo.attempts} повторен(и) опит(и).`);
+    }
+
+    if (!finalMacroGaps.hasGaps) {
+        return {
+            success: true,
+            plan: workingPlan,
+            finalMacroGaps,
+            macroRetryInfo,
+            attempts: macroRetryInfo.attempts
+        };
+    }
+
+    const missingParts = [];
+    if (finalMacroGaps.missingCaloriesMacroFields.length > 0) {
+        missingParts.push(
+            `caloriesMacros (${finalMacroGaps.missingCaloriesMacroFields.join(', ')})`
+        );
+    }
+    for (const gap of finalMacroGaps.missingMealMacros) {
+        missingParts.push(`${gap.dayKey} / ${gap.label} (${gap.missingFields.join(', ')})`);
+    }
+    const attemptNote = macroRetryInfo ? ` (повторни опити: ${macroRetryInfo.attempts})` : '';
+    const validationMessage =
+        'Липсват макроси за следните елементи: ' + (missingParts.join('; ') || 'неопределени елементи') +
+        `. Планът няма да бъде записан${attemptNote}.`;
+    workingPlan.generationMetadata.errors.push(validationMessage);
+    await addLog(`Грешка: ${validationMessage}`, { checkpoint: true, reason: 'macro-validation-failed' });
+    console.warn(`PLAN_VALIDATION_WARN (${userId}): ${validationMessage}`);
+
+    if (retryArtifactKey && macroRetryInfo && macroRetryInfo.lastRawResponse) {
+        try {
+            await env.USER_METADATA_KV.put(
+                retryArtifactKey,
+                macroRetryInfo.lastRawResponse.substring(0, 600)
+            );
+        } catch (storeErr) {
+            console.warn(`PLAN_VALIDATION_WARN (${userId}): Неуспешно записване на суров AI отговор - ${storeErr.message}`);
+        }
+    }
+
+    return {
+        success: false,
+        plan: workingPlan,
+        finalMacroGaps,
+        macroRetryInfo,
+        attempts: macroRetryInfo.attempts
+    };
+}
+
 // ------------- START FUNCTION: processSingleUserPlan -------------
 async function processSingleUserPlan(userId, env) {
     console.log(`PROCESS_USER_PLAN (${userId}): Starting plan generation.`);
@@ -4835,8 +5051,6 @@ async function processSingleUserPlan(userId, env) {
         
         let rawAiResponse = "";
         let macroValidationPassed = false;
-        let finalMacroGaps = collectPlanMacroGaps(planBuilder);
-        let macroRetryInfo = null;
         let planStatusValue = 'processing';
         try {
             await addLog('Извикване на AI модела');
@@ -4848,50 +5062,19 @@ async function processSingleUserPlan(userId, env) {
                 userId,
                 addLog
             });
-
-            finalMacroGaps = collectPlanMacroGaps(planBuilder);
-            if (finalMacroGaps.hasGaps) {
-                macroRetryInfo = await retryPlanGeneration({
-                    userId,
-                    env,
-                    planModelName,
-                    basePrompt: finalPrompt,
-                    addLog,
-                    initialPlan: planBuilder
-                });
-                planBuilder = macroRetryInfo.plan;
-                finalMacroGaps = collectPlanMacroGaps(planBuilder);
-                if (macroRetryInfo.success && macroRetryInfo.attempts > 0) {
-                    await addLog(`Макросите бяха допълнени след ${macroRetryInfo.attempts} повторен(и) опит(и).`);
-                }
-            }
-
-            macroValidationPassed = !finalMacroGaps.hasGaps;
+            const enforcementResult = await enforceCompletePlanBeforePersist({
+                plan: planBuilder,
+                userId,
+                env,
+                planModelName,
+                basePrompt: finalPrompt,
+                addLog,
+                retryArtifactKey: `${userId}_last_plan_macro_retry`
+            });
+            planBuilder = enforcementResult.plan;
+            macroValidationPassed = enforcementResult.success;
             if (macroValidationPassed) {
                 await addLog('Планът е генериран', { checkpoint: true, reason: 'plan-generated' });
-            } else {
-                const missingParts = [];
-                if (finalMacroGaps.missingCaloriesMacroFields.length > 0) {
-                    missingParts.push(
-                        `caloriesMacros (${finalMacroGaps.missingCaloriesMacroFields.join(', ')})`
-                    );
-                }
-                for (const gap of finalMacroGaps.missingMealMacros) {
-                    missingParts.push(`${gap.dayKey} / ${gap.label} (${gap.missingFields.join(', ')})`);
-                }
-                const attemptNote = macroRetryInfo ? ` (повторни опити: ${macroRetryInfo.attempts})` : '';
-                const validationMessage =
-                    'Липсват макроси за следните елементи: ' + (missingParts.join('; ') || 'неопределени елементи') +
-                    `. Планът няма да бъде записан${attemptNote}.`;
-                planBuilder.generationMetadata.errors.push(validationMessage);
-                await addLog(`Грешка: ${validationMessage}`, { checkpoint: true, reason: 'macro-validation-failed' });
-                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${validationMessage}`);
-                if (macroRetryInfo && macroRetryInfo.lastRawResponse) {
-                    await env.USER_METADATA_KV.put(
-                        `${userId}_last_plan_macro_retry`,
-                        macroRetryInfo.lastRawResponse.substring(0, 600)
-                    );
-                }
             }
         } catch (e) {
             const errorMsg = `Unified Plan Generation Error for ${userId}: ${e.message}. Raw response (start): ${rawAiResponse.substring(0, 500)}...`;
