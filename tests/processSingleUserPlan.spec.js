@@ -352,7 +352,7 @@ describe('processSingleUserPlan - буфериран лог', () => {
   });
 });
 
-describe('processSingleUserPlan - caloriesMacros fallback', () => {
+describe('processSingleUserPlan - липсващи caloriesMacros', () => {
   let originalFetch;
 
   beforeEach(() => {
@@ -368,9 +368,23 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
     jest.restoreAllMocks();
   });
 
-  test('попълва caloriesMacros чрез преизчисление от менюто', async () => {
-    const userId = 'macros-fallback-user';
+  test('повторно извиква AI и използва коригиран отговор за макросите', async () => {
+    const userId = 'macros-retry-user';
     const { env, kvStore, logKey } = buildTestEnvironment(userId);
+    const initialMenu = {
+      monday: [
+        {
+          macros: {
+            calories: '480 kcal',
+            protein_grams: '30 г',
+            carbs_grams: '40 г',
+            fat_grams: '20 г',
+            fiber_grams: '10 г'
+          }
+        },
+        { meal_name: 'Обяд без макроси' }
+      ]
+    };
     callModelMock
       .mockResolvedValueOnce(
         JSON.stringify({
@@ -385,20 +399,7 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
         JSON.stringify({
           profileSummary: 'Обобщение',
           caloriesMacros: null,
-          week1Menu: {
-            monday: [
-              {
-                macros: {
-                  calories: '480 kcal',
-                  protein_grams: '30 г',
-                  carbs_grams: '40 г',
-                  fat_grams: '20 г',
-                  fiber_grams: '10 г'
-                }
-              },
-              { meal_name: 'Обяд без макроси' }
-            ]
-          },
+          week1Menu: initialMenu,
           mealMacrosIndex: {
             monday_1: {
               calories: '360 kcal',
@@ -412,21 +413,50 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
           detailedTargets: { hydration: '2L вода' },
           generationMetadata: { errors: [] }
         })
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          profileSummary: 'Обобщение',
+          caloriesMacros: {
+            calories: 1900,
+            protein_grams: 135,
+            protein_percent: 29,
+            carbs_grams: 205,
+            carbs_percent: 43,
+            fat_grams: 65,
+            fat_percent: 28,
+            fiber_grams: 30,
+            fiber_percent: 6
+          },
+          week1Menu: initialMenu,
+          mealMacrosIndex: {
+            monday_1: {
+              calories: 360,
+              protein_grams: 25,
+              carbs_grams: 30,
+              fat_grams: 12,
+              fiber_grams: 8
+            }
+          },
+          principlesWeek2_4: ['- Баланс'],
+          detailedTargets: { hydration: '2L вода' },
+          generationMetadata: { errors: [] }
+        })
       );
 
     await workerModule.processSingleUserPlan(userId, env);
 
     const finalPlan = JSON.parse(kvStore.get(`${userId}_final_plan`));
     expect(finalPlan.caloriesMacros).toEqual({
-      calories: 824,
-      protein_grams: 55,
-      protein_percent: 27,
-      carbs_grams: 70,
-      carbs_percent: 34,
-      fat_grams: 32,
-      fat_percent: 35,
-      fiber_grams: 18,
-      fiber_percent: 4
+      calories: 1900,
+      protein_grams: 135,
+      protein_percent: 29,
+      carbs_grams: 205,
+      carbs_percent: 43,
+      fat_grams: 65,
+      fat_percent: 28,
+      fiber_grams: 30,
+      fiber_percent: 6
     });
     expect(kvStore.get(`plan_status_${userId}`)).toBe('ready');
     expect(finalPlan.generationMetadata.errors).toEqual([]);
@@ -434,11 +464,17 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
     const analysisMacros = JSON.parse(kvStore.get(`${userId}_analysis_macros`));
     expect(analysisMacros).toEqual({ status: 'final', data: finalPlan.caloriesMacros });
 
+    expect(callModelMock).toHaveBeenCalledTimes(3);
+    const retryCall = callModelMock.mock.calls[2];
+    expect(retryCall[1]).toContain('Missing items');
+
     const storedLog = JSON.parse(kvStore.get(logKey));
-    expect(storedLog.some((entry) => entry.includes('AI не върна пълни caloriesMacros'))).toBe(true);
+    expect(storedLog.some((entry) => entry.includes('AI отговорът няма валидни caloriesMacros'))).toBe(true);
+    expect(storedLog.some((entry) => entry.includes('Повторен опит 1 за попълване на макроси.'))).toBe(true);
+    expect(storedLog.some((entry) => entry.includes('Макросите бяха допълнени след 1 повторен(и) опит(и).'))).toBe(true);
   });
 
-  test('маркира грешка, когато макросите липсват и не могат да се преизчислят', async () => {
+  test('маркира грешка и не записва план, когато повторните опити не успеят', async () => {
     const userId = 'macros-missing-user';
     const { env, kvStore, userMetadataKv, logKey } = buildTestEnvironment(userId);
     callModelMock
@@ -454,6 +490,35 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
       .mockResolvedValueOnce(
         JSON.stringify({
           profileSummary: 'Обобщение',
+          caloriesMacros: null,
+          week1Menu: {
+            monday: [
+              { meal_name: 'Без макроси' }
+            ]
+          },
+          principlesWeek2_4: ['- Баланс'],
+          detailedTargets: { hydration: '2L вода' },
+          generationMetadata: { errors: [] }
+        })
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          profileSummary: 'Обобщение',
+          caloriesMacros: null,
+          week1Menu: {
+            monday: [
+              { meal_name: 'Без макроси' }
+            ]
+          },
+          principlesWeek2_4: ['- Баланс'],
+          detailedTargets: { hydration: '2L вода' },
+          generationMetadata: { errors: [] }
+        })
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          profileSummary: 'Обобщение',
+          caloriesMacros: null,
           week1Menu: {
             monday: [
               { meal_name: 'Без макроси' }
@@ -478,8 +543,12 @@ describe('processSingleUserPlan - caloriesMacros fallback', () => {
 
     expect(kvStore.get(`plan_status_${userId}`)).toBeUndefined();
 
+    expect(callModelMock).toHaveBeenCalledTimes(4);
+
     const storedLog = JSON.parse(kvStore.get(logKey));
-    expect(storedLog.some((entry) => entry.includes('неуспешно автоматично преизчисление'))).toBe(true);
+    expect(storedLog.some((entry) => entry.includes('AI отговорът няма валидни caloriesMacros'))).toBe(true);
+    expect(storedLog.some((entry) => entry.includes('Повторен опит 1 за попълване на макроси.'))).toBe(true);
+    expect(storedLog.some((entry) => entry.includes('Повторен опит 2 за попълване на макроси.'))).toBe(true);
     expect(storedLog.some((entry) => entry.includes('Планът няма да бъде записан'))).toBe(true);
   });
 });
