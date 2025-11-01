@@ -4228,6 +4228,36 @@ async function handleSetMaintenanceMode(request, env) {
 // ------------- END BLOCK: PlanGenerationHeaderComment -------------
 
 const PLAN_MACRO_RETRY_LIMIT = 2;
+const AI_CALL_TIMEOUT_MS = 25_000;
+
+async function callModelWithTimeout({
+    model,
+    prompt,
+    env,
+    options = {},
+    timeoutMs = AI_CALL_TIMEOUT_MS
+}) {
+    const controller = new AbortController();
+    let timeoutId;
+    const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => {
+            const timeoutError = new Error(`AI call timed out after ${timeoutMs}ms`);
+            timeoutError.name = 'AbortError';
+            controller.abort(timeoutError);
+            reject(timeoutError);
+        }, timeoutMs);
+    });
+
+    try {
+        const result = await Promise.race([
+            callModelRef.current(model, prompt, env, { ...options, signal: controller.signal }),
+            timeoutPromise
+        ]);
+        return result;
+    } finally {
+        clearTimeout(timeoutId);
+    }
+}
 const REQUIRED_PLAN_SECTIONS = [
     'profileSummary',
     'week1Menu',
@@ -4446,9 +4476,11 @@ async function retryPlanGeneration({
             `Respond ONLY with the complete updated JSON plan.`;
 
         try {
-            lastRawResponse = await callModelRef.current(planModelName, correctionPrompt, env, {
-                temperature: 0.05,
-                maxTokens: 20000
+            lastRawResponse = await callModelWithTimeout({
+                model: planModelName,
+                prompt: correctionPrompt,
+                env,
+                options: { temperature: 0.05, maxTokens: 12000 }
             });
             const rebuiltPlan = await buildPlanFromRawResponse(lastRawResponse, {
                 planModelName,
@@ -4458,9 +4490,21 @@ async function retryPlanGeneration({
             });
             workingPlan = rebuiltPlan;
         } catch (retryErr) {
-            const retryMsg = `Macro retry attempt ${attempts} failed: ${retryErr.message}`;
-            console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${retryMsg}`);
-            await addLog(`Грешка при повторен опит за макроси: ${retryErr.message}`);
+            const isTimeout = retryErr?.name === 'AbortError' || /timed out/i.test(retryErr?.message || '');
+            const retryMsg = isTimeout
+                ? `AI заявката за макроси прекъсна след ${AI_CALL_TIMEOUT_MS}ms (опит ${attempts}).`
+                : `Macro retry attempt ${attempts} failed: ${retryErr.message}`;
+            if (isTimeout) {
+                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${retryMsg}`);
+            } else {
+                console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${retryMsg}`);
+            }
+            await addLog(
+                `Грешка при повторен опит за макроси: ${isTimeout ? 'Изтече времето за отговор' : retryErr.message}`
+            );
+            if (isTimeout) {
+                await env.USER_METADATA_KV.put(`${userId}_processing_error`, retryMsg);
+            }
             if (retryErr instanceof PlanCaloriesMacrosMissingError && retryErr.planBuilder) {
                 workingPlan = retryErr.planBuilder;
             }
@@ -5046,7 +5090,12 @@ async function processSingleUserPlan(userId, env) {
         try {
             await addLog('Извикване на AI модела');
             console.log(`PROCESS_USER_PLAN (${userId}): Calling model ${planModelName} for unified plan. Prompt length: ${finalPrompt.length}`);
-            rawAiResponse = await callModelRef.current(planModelName, finalPrompt, env, { temperature: 0.1, maxTokens: 20000 });
+            rawAiResponse = await callModelWithTimeout({
+                model: planModelName,
+                prompt: finalPrompt,
+                env,
+                options: { temperature: 0.1, maxTokens: 12000 }
+            });
             try {
                 planBuilder = await buildPlanFromRawResponse(rawAiResponse, {
                     planModelName,
@@ -5076,10 +5125,23 @@ async function processSingleUserPlan(userId, env) {
                 await addLog('Планът е генериран', { checkpoint: true, reason: 'plan-generated' });
             }
         } catch (e) {
-            const errorMsg = `Unified Plan Generation Error for ${userId}: ${e.message}. Raw response (start): ${rawAiResponse.substring(0, 500)}...`;
-            console.error(errorMsg);
-            await addLog(`Грешка при AI: ${e.message}`, { checkpoint: true, reason: 'ai-error' });
-            await env.USER_METADATA_KV.put(`${userId}_last_plan_raw_error`, rawAiResponse.substring(0, 300));
+            const isTimeout = e?.name === 'AbortError' || /timed out/i.test(e?.message || '');
+            const timeoutMsg = `AI заявката за плана прекъсна след ${AI_CALL_TIMEOUT_MS}ms.`;
+            const detailedErrorMsg = `Unified Plan Generation Error for ${userId}: ${e.message}. Raw response (start): ${rawAiResponse.substring(0, 500)}...`;
+            const errorMsg = isTimeout ? timeoutMsg : detailedErrorMsg;
+            if (isTimeout) {
+                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${timeoutMsg}`);
+            } else {
+                console.error(detailedErrorMsg);
+            }
+            await addLog(`Грешка при AI: ${isTimeout ? 'Изтече времето за отговор' : e.message}`, {
+                checkpoint: true,
+                reason: 'ai-error'
+            });
+            if (!isTimeout) {
+                await env.USER_METADATA_KV.put(`${userId}_last_plan_raw_error`, rawAiResponse.substring(0, 300));
+            }
+            await env.USER_METADATA_KV.put(`${userId}_processing_error`, errorMsg);
             planBuilder.generationMetadata.errors.push(errorMsg);
         }
 
@@ -6389,7 +6451,7 @@ async function verifyPassword(password, storedSaltAndHash) {
 // ------------- END BLOCK: PasswordHashing -------------
 
 // ------------- START FUNCTION: callGeminiAPI -------------
-async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettings = [], model) {
+async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettings = [], model, { signal } = {}) {
     if (!model) {
         console.error("GEMINI_API_CALL_ERROR: Model name is missing!");
         throw new Error("Gemini model name is missing.");
@@ -6405,10 +6467,20 @@ async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettin
     let lastErr;
     for (let attempt = 0; attempt < delays.length; attempt++) {
         try {
+            if (signal?.aborted) {
+                const abortError = signal.reason instanceof Error
+                    ? signal.reason
+                    : new Error('Aborted');
+                if (!abortError.name) {
+                    abortError.name = 'AbortError';
+                }
+                throw abortError;
+            }
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify(requestBody),
+                signal
             });
             const data = await parseJsonSafe(response);
 
@@ -6482,7 +6554,8 @@ async function callGeminiVisionAPI(
     apiKey,
     prompt = 'Опиши съдържанието на това изображение.',
     generationConfig = {},
-    model
+    model,
+    { signal } = {}
 ) {
     if (!model) {
         console.error('GEMINI_VISION_CALL_ERROR: Model name is missing!');
@@ -6503,10 +6576,20 @@ async function callGeminiVisionAPI(
     let lastErr;
     for (let attempt = 0; attempt < delays.length; attempt++) {
         try {
+            if (signal?.aborted) {
+                const abortError = signal.reason instanceof Error
+                    ? signal.reason
+                    : new Error('Aborted');
+                if (!abortError.name) {
+                    abortError.name = 'AbortError';
+                }
+                throw abortError;
+            }
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify(requestBody),
+                signal
             });
             const data = await parseJsonSafe(response);
 
@@ -6568,7 +6651,8 @@ async function callOpenAiAPI(prompt, apiKey, model, options = {}) {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        signal: options.signal
     });
     const data = await resp.json();
     if (!resp.ok) {
@@ -6601,7 +6685,8 @@ async function callCohereAI(model, prompt, apiKey, options = {}) {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        signal: options.signal
     });
     const data = await resp.json();
     if (!resp.ok) {
@@ -6624,7 +6709,7 @@ function getModelProvider(model) {
     return 'gemini';
 }
 
-async function callModel(model, prompt, env, { temperature = 0.7, maxTokens = 800 } = {}) {
+async function callModel(model, prompt, env, { temperature = 0.7, maxTokens = 800, signal } = {}) {
     const provider = getModelProvider(model);
     if (provider === 'cf') {
         return callCfAi(
@@ -6635,22 +6720,23 @@ async function callModel(model, prompt, env, { temperature = 0.7, maxTokens = 80
                 temperature,
                 max_tokens: maxTokens
             },
-            env
+            env,
+            { signal }
         );
     }
     if (provider === 'cohere') {
         const key = env[COMMAND_R_PLUS_SECRET_NAME];
         if (!key) throw new Error('Missing command-r-plus API key.');
-        return callCohereAI(model, prompt, key, { temperature, maxTokens });
+        return callCohereAI(model, prompt, key, { temperature, maxTokens, signal });
     }
     if (provider === 'openai') {
         const key = env[OPENAI_API_KEY_SECRET_NAME];
         if (!key) throw new Error('Missing OpenAI API key.');
-        return callOpenAiAPI(prompt, key, model, { temperature, max_tokens: maxTokens });
+        return callOpenAiAPI(prompt, key, model, { temperature, max_tokens: maxTokens, signal });
     }
     const key = env[GEMINI_API_KEY_SECRET_NAME];
     if (!key) throw new Error('Missing Gemini API key.');
-    return callGeminiAPI(prompt, key, { temperature, maxOutputTokens: maxTokens }, [], model);
+    return callGeminiAPI(prompt, key, { temperature, maxOutputTokens: maxTokens }, [], model, { signal });
 }
 
 callModelRef.current = callModel;
@@ -6669,8 +6755,17 @@ function buildCfImagePayload(model, imageUrl, promptText) {
 // ------------- END FUNCTION: buildCfImagePayload -------------
 
 // ------------- START FUNCTION: callCfAi -------------
-async function callCfAi(model, payload, env) {
+async function callCfAi(model, payload, env, { signal } = {}) {
     if (env.AI && typeof env.AI.run === 'function') {
+        if (signal?.aborted) {
+            const abortError = signal.reason instanceof Error
+                ? signal.reason
+                : new Error('Aborted');
+            if (!abortError.name) {
+                abortError.name = 'AbortError';
+            }
+            throw abortError;
+        }
         const result = await env.AI.run(model, payload);
         return result?.response || result;
     }
@@ -6686,7 +6781,8 @@ async function callCfAi(model, payload, env) {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal
     });
     const data = await resp.json();
     if (!resp.ok) {
@@ -7375,4 +7471,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callModelWithTimeout, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary, AI_CALL_TIMEOUT_MS };
