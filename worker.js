@@ -446,9 +446,11 @@ const resolveTargetMacrosWithPrompt = async ({
     prompt = buildTargetMacroFixPrompt(template, initialAnswers, profile, lastRawResponse);
   }
 
-  const error = new Error('Неуспешно извличане на таргет макроси чрез корекционния prompt.');
-  error.lastRawResponse = lastRawResponse;
-  throw error;
+  await addLog('Неуспешен суров отговор за таргет макроси. Записвам последния резултат.', {
+    reason: 'target-macros-fix',
+    rawResponse: lastRawResponse ? lastRawResponse.substring(0, 600) : ''
+  });
+  throw new Error('Неуспешно извличане на таргет макроси чрез корекционния prompt.');
 };
 
 const parsePossiblyStringifiedJson = (value) => {
@@ -4895,9 +4897,7 @@ async function processSingleUserPlan(userId, env) {
         let targetReplacements;
         let targetMacroFixAttempted = false;
         const handleTargetMacroFailure = async (error, reason = 'target-macros-invalid') => {
-            const errMsg = error instanceof MissingTargetMacrosError
-                ? `Липсват числови стойности за таргет макроси: ${error.missingFields.join(', ')}`
-                : error.message;
+            const errMsg = error.message;
             await env.USER_METADATA_KV.put(`${userId}_processing_error`, errMsg);
             await setPlanStatus(userId, 'error', env);
             await addLog(`Грешка: ${errMsg}`, { checkpoint: true, reason });
