@@ -4538,7 +4538,11 @@ async function enforceCompletePlanBeforePersist({
     env,
     planModelName,
     basePrompt,
-    addLog = async () => {},
+    addLog = async (...args) => {
+        if (args.length) {
+            return;
+        }
+    },
     maxAttempts = PLAN_MACRO_RETRY_LIMIT,
     retryArtifactKey = null
 }) {
