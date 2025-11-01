@@ -6465,7 +6465,8 @@ async function verifyPassword(password, storedSaltAndHash) {
 // ------------- END BLOCK: PasswordHashing -------------
 
 // ------------- START FUNCTION: callGeminiAPI -------------
-async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettings = [], model, { signal } = {}) {
+async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettings = [], model, options = {}) {
+    const { signal } = options;
     if (!model) {
         console.error("GEMINI_API_CALL_ERROR: Model name is missing!");
         throw new Error("Gemini model name is missing.");
@@ -6490,12 +6491,15 @@ async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettin
                 }
                 throw abortError;
             }
-            const response = await fetch(apiUrl, {
+            const fetchOptions = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody),
-                signal
-            });
+                body: JSON.stringify(requestBody)
+            };
+            if (signal !== undefined) {
+                fetchOptions.signal = signal;
+            }
+            const response = await fetch(apiUrl, fetchOptions);
             const data = await parseJsonSafe(response);
 
             const errDet = data?.error;
@@ -6569,8 +6573,9 @@ async function callGeminiVisionAPI(
     prompt = 'Опиши съдържанието на това изображение.',
     generationConfig = {},
     model,
-    { signal } = {}
+    options = {}
 ) {
+    const { signal } = options;
     if (!model) {
         console.error('GEMINI_VISION_CALL_ERROR: Model name is missing!');
         throw new Error('Gemini model name is missing.');
@@ -6599,12 +6604,15 @@ async function callGeminiVisionAPI(
                 }
                 throw abortError;
             }
-            const response = await fetch(apiUrl, {
+            const fetchOptions = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody),
-                signal
-            });
+                body: JSON.stringify(requestBody)
+            };
+            if (signal !== undefined) {
+                fetchOptions.signal = signal;
+            }
+            const response = await fetch(apiUrl, fetchOptions);
             const data = await parseJsonSafe(response);
 
             const errDet = data?.error;
@@ -6723,7 +6731,9 @@ function getModelProvider(model) {
     return 'gemini';
 }
 
-async function callModel(model, prompt, env, { temperature = 0.7, maxTokens = 800, signal } = {}) {
+async function callModel(model, prompt, env, options = {}) {
+    const temperature = options.temperature ?? 0.7;
+    const maxTokens = options.maxTokens ?? 800;
     const provider = getModelProvider(model);
     if (provider === 'cf') {
         return callCfAi(
@@ -6735,22 +6745,22 @@ async function callModel(model, prompt, env, { temperature = 0.7, maxTokens = 80
                 max_tokens: maxTokens
             },
             env,
-            { signal }
+            options
         );
     }
     if (provider === 'cohere') {
         const key = env[COMMAND_R_PLUS_SECRET_NAME];
         if (!key) throw new Error('Missing command-r-plus API key.');
-        return callCohereAI(model, prompt, key, { temperature, maxTokens, signal });
+        return callCohereAI(model, prompt, key, { ...options, temperature, maxTokens });
     }
     if (provider === 'openai') {
         const key = env[OPENAI_API_KEY_SECRET_NAME];
         if (!key) throw new Error('Missing OpenAI API key.');
-        return callOpenAiAPI(prompt, key, model, { temperature, max_tokens: maxTokens, signal });
+        return callOpenAiAPI(prompt, key, model, { ...options, temperature, max_tokens: maxTokens });
     }
     const key = env[GEMINI_API_KEY_SECRET_NAME];
     if (!key) throw new Error('Missing Gemini API key.');
-    return callGeminiAPI(prompt, key, { temperature, maxOutputTokens: maxTokens }, [], model, { signal });
+    return callGeminiAPI(prompt, key, { temperature, maxOutputTokens: maxTokens }, [], model, options);
 }
 
 callModelRef.current = callModel;
@@ -6769,7 +6779,8 @@ function buildCfImagePayload(model, imageUrl, promptText) {
 // ------------- END FUNCTION: buildCfImagePayload -------------
 
 // ------------- START FUNCTION: callCfAi -------------
-async function callCfAi(model, payload, env, { signal } = {}) {
+async function callCfAi(model, payload, env, options = {}) {
+    const { signal } = options;
     if (env.AI && typeof env.AI.run === 'function') {
         if (signal?.aborted) {
             const abortError = signal.reason instanceof Error
@@ -6789,15 +6800,18 @@ async function callCfAi(model, payload, env, { signal } = {}) {
         throw new Error('Missing Cloudflare AI credentials.');
     }
     const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`;
-    const resp = await fetch(url, {
+    const fetchOptions = {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload),
-        signal
-    });
+        body: JSON.stringify(payload)
+    };
+    if (signal !== undefined) {
+        fetchOptions.signal = signal;
+    }
+    const resp = await fetch(url, fetchOptions);
     const data = await resp.json();
     if (!resp.ok) {
         const msg = data?.errors?.[0]?.message || `HTTP ${resp.status}`;
