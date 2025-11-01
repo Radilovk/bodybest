@@ -129,6 +129,18 @@ const pickFirstNumeric = (...values) => {
   return null;
 };
 
+/**
+ * Грешка за липсващи таргет макро стойности.
+ * @property {string[]} missingFields - Списък с ключовете на липсващите таргет полета.
+ */
+class MissingTargetMacrosError extends Error {
+  constructor(message, missingFields) {
+    super(message);
+    this.name = 'MissingTargetMacrosError';
+    this.missingFields = missingFields;
+  }
+}
+
 const ensureTargetMacrosAvailable = (initialAnswers = {}, profile = {}) => {
   const metrics = {
     weight: pickFirstNumeric(initialAnswers?.weight, profile?.weight),
@@ -345,9 +357,7 @@ const buildTargetReplacements = (macros) => {
     }
   }
   if (missingFields.length > 0) {
-    const error = new Error(`Не са налични всички таргет макроси: ${missingFields.join(', ')}`);
-    error.missingFields = missingFields;
-    throw error;
+    throw new MissingTargetMacrosError(`Не са налични всички таргет макроси: ${missingFields.join(', ')}`, missingFields);
   }
   return replacements;
 };
@@ -4885,7 +4895,7 @@ async function processSingleUserPlan(userId, env) {
         let targetReplacements;
         let targetMacroFixAttempted = false;
         const handleTargetMacroFailure = async (error, reason = 'target-macros-invalid') => {
-            const errMsg = error?.missingFields
+            const errMsg = error instanceof MissingTargetMacrosError
                 ? `Липсват числови стойности за таргет макроси: ${error.missingFields.join(', ')}`
                 : error.message;
             await env.USER_METADATA_KV.put(`${userId}_processing_error`, errMsg);
@@ -4925,7 +4935,7 @@ async function processSingleUserPlan(userId, env) {
         try {
             targetReplacements = buildTargetReplacements(targetMacros);
         } catch (macroErr) {
-            if (macroErr?.missingFields && !targetMacroFixAttempted) {
+            if (macroErr instanceof MissingTargetMacrosError && !targetMacroFixAttempted) {
                 await runTargetMacroFix();
                 try {
                     targetReplacements = buildTargetReplacements(targetMacros);
