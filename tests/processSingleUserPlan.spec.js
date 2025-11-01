@@ -250,7 +250,11 @@ describe('processSingleUserPlan - буфериран лог', () => {
       'gpt-plan',
       expect.any(String),
       env,
-      expect.any(Object)
+      expect.objectContaining({
+        temperature: 0.1,
+        maxTokens: 12000,
+        signal: expect.any(Object)
+      })
     );
 
     const promptArgument = callModelMock.mock.calls[0][1];
@@ -347,7 +351,11 @@ describe('processSingleUserPlan - буфериран лог', () => {
       'gpt-plan',
       expect.any(String),
       env,
-      expect.any(Object)
+      expect.objectContaining({
+        temperature: 0.1,
+        maxTokens: 12000,
+        signal: expect.any(Object)
+      })
     );
   });
 });
@@ -550,6 +558,41 @@ describe('processSingleUserPlan - липсващи caloriesMacros', () => {
     expect(storedLog.some((entry) => entry.includes('Повторен опит 1 за попълване на макроси.'))).toBe(true);
     expect(storedLog.some((entry) => entry.includes('Повторен опит 2 за попълване на макроси.'))).toBe(true);
     expect(storedLog.some((entry) => entry.includes('Планът няма да бъде записан'))).toBe(true);
+  });
+});
+
+describe('callModelWithTimeout helper', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    callModelMock.mockReset();
+    workerModule.setCallModelImplementation(callModelMock);
+  });
+
+  afterEach(() => {
+    workerModule.setCallModelImplementation();
+    jest.useRealTimers();
+  });
+
+  test('прекъсва AI извикването при изтичане на AI_CALL_TIMEOUT_MS', async () => {
+    callModelMock.mockReturnValue(new Promise(() => {}));
+
+    const callPromise = workerModule
+      .callModelWithTimeout({
+        model: 'gpt-plan',
+        prompt: 'test',
+        env: {},
+        options: { temperature: 0.3, maxTokens: 500 }
+      })
+      .catch((err) => err);
+
+    await jest.advanceTimersByTimeAsync(workerModule.AI_CALL_TIMEOUT_MS);
+
+    const timeoutError = await callPromise;
+    expect(timeoutError).toMatchObject({ name: 'AbortError' });
+    expect(callModelMock).toHaveBeenCalledTimes(1);
+    const optionsArg = callModelMock.mock.calls[0][3];
+    expect(optionsArg.signal).toBeDefined();
+    expect(optionsArg.signal.aborted).toBe(true);
   });
 });
 
