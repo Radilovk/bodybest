@@ -388,6 +388,67 @@ describe('processSingleUserPlan - буфериран лог', () => {
       })
     );
   });
+
+  test('прекъсва бавната Cloudflare AI заявка при генериране на план', async () => {
+    jest.useFakeTimers();
+    const abortReasons = [];
+    const userId = 'slow-cf-plan-user';
+    const { env, kvStore, logKey, userMetadataKv } = buildTestEnvironment(userId, {
+      analysisMacrosData: mockAnalysisMacros,
+      psychoProfileData: mockPsychoProfile
+    });
+    env.CF_ACCOUNT_ID = 'acc';
+    env.CF_AI_TOKEN = 'token';
+    env.AI_PLAN_TIMEOUT_MS = '150';
+
+    const baseResourcesGet = env.RESOURCES_KV.get.getMockImplementation();
+    env.RESOURCES_KV.get.mockImplementation(async (key) => {
+      if (key === 'model_plan_generation') {
+        return '@cf/meta/llama-3-8b-instruct';
+      }
+      return baseResourcesGet ? baseResourcesGet(key) : null;
+    });
+
+    const fetchMock = jest.fn((url, options = {}) => {
+      expect(url).toBe(
+        'https://api.cloudflare.com/client/v4/accounts/acc/ai/run/@cf/meta/llama-3-8b-instruct'
+      );
+      expect(options.signal).toBeInstanceOf(AbortSignal);
+      return new Promise((_, reject) => {
+        options.signal.addEventListener('abort', () => {
+          abortReasons.push(options.signal.reason);
+          reject(options.signal.reason);
+        });
+      });
+    });
+
+    global.fetch = fetchMock;
+    workerModule.setCallModelImplementation();
+
+    try {
+      const planPromise = workerModule.processSingleUserPlan(userId, env);
+      await jest.advanceTimersByTimeAsync(150);
+      await planPromise;
+    } finally {
+      jest.useRealTimers();
+    }
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(abortReasons).toHaveLength(1);
+    expect(abortReasons[0]).toMatchObject({
+      name: 'AbortError',
+      message: 'AI call timed out after 150ms'
+    });
+
+    const processingErrorCall = userMetadataKv.put.mock.calls.find(
+      ([key]) => key === `${userId}_processing_error`
+    );
+    expect(processingErrorCall).toBeDefined();
+    expect(processingErrorCall[1]).toContain('AI заявката за плана прекъсна след 150ms.');
+
+    const storedLog = JSON.parse(kvStore.get(logKey));
+    expect(storedLog.some((entry) => entry.includes('Изтече времето за отговор'))).toBe(true);
+  });
 });
 
 describe('processSingleUserPlan - липсващи caloriesMacros', () => {

@@ -6836,11 +6836,9 @@ async function callCfAi(model, payload, env, options = {}) {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: options.signal
     };
-    if (signal !== undefined) {
-        fetchOptions.signal = signal;
-    }
     let resp;
     try {
         resp = await fetch(url, fetchOptions);
