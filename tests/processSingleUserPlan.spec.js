@@ -308,6 +308,36 @@ describe('processSingleUserPlan - буфериран лог', () => {
     expect(promptArgument).not.toContain('%%USER_ANSWERS_JSON%%');
   });
 
+  test('resolvePlanCallTimeoutMs връща 60 секунди по подразбиране', () => {
+    expect(workerModule.resolvePlanCallTimeoutMs({})).toBe(
+      workerModule.DEFAULT_PLAN_CALL_TIMEOUT_MS
+    );
+  });
+
+  test('resolvePlanCallTimeoutMs използва конфигурацията от env', () => {
+    expect(workerModule.resolvePlanCallTimeoutMs({ AI_PLAN_TIMEOUT_MS: '45000' })).toBe(45_000);
+  });
+
+  test('логва таймаут със стойността от env.AI_PLAN_TIMEOUT_MS', async () => {
+    const userId = 'plan-timeout-config-user';
+    const { env, userMetadataKv } = buildTestEnvironment(userId, {
+      analysisMacrosData: mockAnalysisMacros,
+      psychoProfileData: mockPsychoProfile
+    });
+    env.AI_PLAN_TIMEOUT_MS = '25';
+    callModelMock.mockImplementation(() => new Promise(() => {}));
+
+    const planPromise = workerModule.processSingleUserPlan(userId, env);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    await planPromise;
+
+    const processingErrorCall = userMetadataKv.put.mock.calls.find(
+      ([key]) => key === `${userId}_processing_error`
+    );
+    expect(processingErrorCall).toBeDefined();
+    expect(processingErrorCall[1]).toContain('25ms');
+  });
+
   test('запазва критична грешка при първи неуспешен flush и я почиства след повторен успех', async () => {
     const userId = 'flush-failure-user';
     const { env, kvStore, logKey, logErrorKey, userMetadataKv } = buildTestEnvironment(
