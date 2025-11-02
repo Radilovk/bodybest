@@ -652,6 +652,82 @@ describe('processSingleUserPlan - липсващи caloriesMacros', () => {
   });
 });
 
+describe('processSingleUserPlan - таргет макроси timeout', () => {
+  let originalFetch;
+
+  beforeEach(() => {
+    originalFetch = global.fetch;
+    jest.useFakeTimers();
+    workerModule.setCallModelImplementation();
+  });
+
+  afterEach(() => {
+    workerModule.setCallModelImplementation();
+    global.fetch = originalFetch;
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  test('прекъсва Cloudflare AI заявката и записва грешка при таймаут на таргет макросите', async () => {
+    const userId = 'target-macro-timeout-user';
+    const { env, kvStore, userMetadataKv, resourcesKv, logKey } = buildTestEnvironment(userId);
+
+    env.CF_ACCOUNT_ID = 'cf-account';
+    env.CF_AI_TOKEN = 'cf-token';
+    env.AI_PLAN_TIMEOUT_MS = 200;
+
+    const baseResourcesGet = resourcesKv.get.getMockImplementation();
+    resourcesKv.get.mockImplementation(async (key) => {
+      if (key === 'model_plan_generation') {
+        return '@cf/meta/llama-3-8b-instruct';
+      }
+      return baseResourcesGet ? baseResourcesGet(key) : null;
+    });
+
+    const abortReasons = [];
+    global.fetch = jest.fn((url, options = {}) => {
+      expect(url).toBe(
+        'https://api.cloudflare.com/client/v4/accounts/cf-account/ai/run/@cf/meta/llama-3-8b-instruct'
+      );
+      expect(options.signal).toBeInstanceOf(AbortSignal);
+      return new Promise((_, reject) => {
+        options.signal.addEventListener('abort', () => {
+          abortReasons.push(options.signal.reason);
+          reject(options.signal.reason);
+        });
+      });
+    });
+
+    const processPromise = workerModule.processSingleUserPlan(userId, env);
+
+    await Promise.resolve();
+    await jest.advanceTimersByTimeAsync(200);
+    await processPromise;
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    expect(abortReasons).toHaveLength(1);
+    expect(abortReasons[0]).toMatchObject({
+      name: 'AbortError',
+      message: 'AI call timed out after 200ms'
+    });
+
+    const processingErrorCalls = userMetadataKv.put.mock.calls.filter(
+      ([key]) => key === `${userId}_processing_error`
+    );
+    expect(
+      processingErrorCalls.some(([, value]) => value && value.includes('AI call timed out after 200ms'))
+    ).toBe(true);
+
+    const storedLogRaw = kvStore.get(logKey);
+    expect(storedLogRaw).toBeTruthy();
+    const logEntries = JSON.parse(storedLogRaw);
+    expect(
+      logEntries.some((entry) => entry.includes('Грешка: AI call timed out after 200ms'))
+    ).toBe(true);
+  });
+});
+
 describe('callModelWithTimeout helper', () => {
   let originalFetch;
 

@@ -433,9 +433,15 @@ const resolveTargetMacrosWithPrompt = async ({
       `Корекционен prompt за макро таргети - опит ${attempt}`,
       { checkpoint: attempt === 1, reason: 'target-macros-fix' }
     );
-    lastRawResponse = await callModelRef.current(planModelName, prompt, env, {
-      temperature: 0.05,
-      maxTokens: 1200
+    lastRawResponse = await callModelWithTimeout({
+      model: planModelName,
+      prompt,
+      env,
+      options: {
+        temperature: 0.05,
+        maxTokens: 1200
+      },
+      timeoutMs: resolvePlanCallTimeoutMs(env)
     });
 
     const candidateMacros = finalizeTargetMacros(extractTargetMacrosFromAny(lastRawResponse));
