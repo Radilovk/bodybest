@@ -592,14 +592,18 @@ describe('processSingleUserPlan - липсващи caloriesMacros', () => {
 });
 
 describe('callModelWithTimeout helper', () => {
+  let originalFetch;
+
   beforeEach(() => {
     jest.useFakeTimers();
+    originalFetch = global.fetch;
     callModelMock.mockReset();
     workerModule.setCallModelImplementation(callModelMock);
   });
 
   afterEach(() => {
     workerModule.setCallModelImplementation();
+    global.fetch = originalFetch;
     jest.useRealTimers();
   });
 
@@ -623,6 +627,58 @@ describe('callModelWithTimeout helper', () => {
     const optionsArg = callModelMock.mock.calls[0][3];
     expect(optionsArg.signal).toBeDefined();
     expect(optionsArg.signal.aborted).toBe(true);
+  });
+
+  test('прекъсва fetch заявка към Cloudflare AI с AbortSignal', async () => {
+    workerModule.setCallModelImplementation();
+    const abortReasons = [];
+    const fetchMock = jest.fn((url, options = {}) => {
+      expect(options.signal).toBeInstanceOf(AbortSignal);
+      return new Promise((_, reject) => {
+        options.signal.addEventListener('abort', () => {
+          abortReasons.push(options.signal.reason);
+          reject(options.signal.reason);
+        });
+      });
+    });
+    global.fetch = fetchMock;
+
+    const env = { CF_ACCOUNT_ID: 'acc', CF_AI_TOKEN: 'token' };
+    const callPromise = workerModule
+      .callModelWithTimeout({
+        model: '@cf/meta/llama-3-8b-instruct',
+        prompt: 'test prompt',
+        env,
+        options: { temperature: 0.2, maxTokens: 512 },
+        timeoutMs: 150
+      })
+      .catch((err) => err);
+
+    await jest.advanceTimersByTimeAsync(150);
+    const timeoutError = await callPromise;
+
+    expect(timeoutError).toBeInstanceOf(Error);
+    expect(timeoutError.name).toBe('AbortError');
+    expect(timeoutError.message).toContain('AI call timed out after 150ms');
+    expect(timeoutError.message).not.toContain('IoContext timed out');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.cloudflare.com/client/v4/accounts/acc/ai/run/@cf/meta/llama-3-8b-instruct',
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer token',
+          'Content-Type': 'application/json'
+        },
+        signal: expect.any(AbortSignal)
+      })
+    );
+
+    expect(abortReasons).toHaveLength(1);
+    expect(abortReasons[0]).toMatchObject({
+      name: 'AbortError',
+      message: 'AI call timed out after 150ms'
+    });
   });
 });
 

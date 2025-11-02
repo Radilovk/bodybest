@@ -4463,7 +4463,8 @@ async function retryPlanGeneration({
     basePrompt,
     addLog,
     initialPlan,
-    maxAttempts = PLAN_MACRO_RETRY_LIMIT
+    maxAttempts = PLAN_MACRO_RETRY_LIMIT,
+    timeoutMs = AI_CALL_TIMEOUT_MS
 }) {
     let workingPlan = initialPlan;
     let attempts = 0;
@@ -4522,7 +4523,8 @@ async function retryPlanGeneration({
                 model: planModelName,
                 prompt: correctionPrompt,
                 env,
-                options: { temperature: 0.05, maxTokens: 12000 }
+                options: { temperature: 0.05, maxTokens: 12000 },
+                timeoutMs
             });
             const rebuiltPlan = await buildPlanFromRawResponse(lastRawResponse, {
                 planModelName,
@@ -4534,7 +4536,7 @@ async function retryPlanGeneration({
         } catch (retryErr) {
             const isTimeout = retryErr?.name === 'AbortError' || /timed out/i.test(retryErr?.message || '');
             const retryMsg = isTimeout
-                ? `AI заявката за макроси прекъсна след ${AI_CALL_TIMEOUT_MS}ms (опит ${attempts}).`
+                ? `AI заявката за макроси прекъсна след ${timeoutMs}ms (опит ${attempts}).`
                 : `Macro retry attempt ${attempts} failed: ${retryErr.message}`;
             if (isTimeout) {
                 console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${retryMsg}`);
@@ -4616,6 +4618,7 @@ async function enforceCompletePlanBeforePersist({
         };
     }
 
+    const planCallTimeoutMs = resolvePlanCallTimeoutMs(env);
     const macroRetryInfo = await retryPlanGeneration({
         userId,
         env,
@@ -4623,7 +4626,8 @@ async function enforceCompletePlanBeforePersist({
         basePrompt,
         addLog,
         initialPlan: workingPlan,
-        maxAttempts
+        maxAttempts,
+        timeoutMs: planCallTimeoutMs
     });
     workingPlan = macroRetryInfo.plan;
     finalMacroGaps = collectPlanMacroGaps(workingPlan);
@@ -6813,18 +6817,12 @@ function buildCfImagePayload(model, imageUrl, promptText) {
 // ------------- START FUNCTION: callCfAi -------------
 async function callCfAi(model, payload, env, options = {}) {
     const { signal } = options;
-    if (env.AI && typeof env.AI.run === 'function') {
-        if (signal?.aborted) {
-            const abortError = signal.reason instanceof Error
-                ? signal.reason
-                : new Error('Aborted');
-            if (!abortError.name) {
-                abortError.name = 'AbortError';
-            }
-            throw abortError;
+    if (signal?.aborted) {
+        const abortError = signal.reason instanceof Error ? signal.reason : new Error('Aborted');
+        if (!abortError.name) {
+            abortError.name = 'AbortError';
         }
-        const result = await env.AI.run(model, payload);
-        return result?.response || result;
+        throw abortError;
     }
     const accountId = env[CF_ACCOUNT_ID_VAR_NAME] || env.accountId || env.ACCOUNT_ID;
     const token = env[CF_AI_TOKEN_SECRET_NAME];
@@ -6843,7 +6841,19 @@ async function callCfAi(model, payload, env, options = {}) {
     if (signal !== undefined) {
         fetchOptions.signal = signal;
     }
-    const resp = await fetch(url, fetchOptions);
+    let resp;
+    try {
+        resp = await fetch(url, fetchOptions);
+    } catch (error) {
+        if (signal?.aborted) {
+            const abortError = signal.reason instanceof Error ? signal.reason : error;
+            if (!abortError.name) {
+                abortError.name = 'AbortError';
+            }
+            throw abortError;
+        }
+        throw error;
+    }
     const data = await resp.json();
     if (!resp.ok) {
         const msg = data?.errors?.[0]?.message || `HTTP ${resp.status}`;
