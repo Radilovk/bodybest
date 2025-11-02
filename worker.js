@@ -4241,6 +4241,36 @@ async function handleSetMaintenanceMode(request, env) {
 
 const PLAN_MACRO_RETRY_LIMIT = 2;
 const AI_CALL_TIMEOUT_MS = 25_000;
+const DEFAULT_PLAN_CALL_TIMEOUT_MS = 60_000;
+
+const parsePositiveInteger = (value) => {
+    if (typeof value === 'number') {
+        return Number.isFinite(value) && value > 0 ? Math.floor(value) : null;
+    }
+    if (typeof value === 'string' && value.trim() !== '') {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    }
+    return null;
+};
+
+function resolvePlanCallTimeoutMs(env) {
+    const candidates = [
+        env?.AI_PLAN_TIMEOUT_MS,
+        env?.AI_PLAN_TIMEOUT,
+        env?.AI_CALL_TIMEOUT_MS,
+        env?.AI_TIMEOUT_MS
+    ];
+
+    for (const candidate of candidates) {
+        const parsed = parsePositiveInteger(candidate);
+        if (parsed != null) {
+            return parsed;
+        }
+    }
+
+    return DEFAULT_PLAN_CALL_TIMEOUT_MS;
+}
 
 async function callModelWithTimeout({
     model,
@@ -5098,6 +5128,7 @@ async function processSingleUserPlan(userId, env) {
             finalPrompt += `\n\n[PLAN_MODIFICATION]\n${pendingPlanModText}`;
         }
         
+        const planCallTimeoutMs = resolvePlanCallTimeoutMs(env);
         let rawAiResponse = "";
         let macroValidationPassed = false;
         let planStatusValue = 'processing';
@@ -5108,7 +5139,8 @@ async function processSingleUserPlan(userId, env) {
                 model: planModelName,
                 prompt: finalPrompt,
                 env,
-                options: { temperature: 0.1, maxTokens: 12000 }
+                options: { temperature: 0.1, maxTokens: 12000 },
+                timeoutMs: planCallTimeoutMs
             });
             try {
                 planBuilder = await buildPlanFromRawResponse(rawAiResponse, {
@@ -5140,7 +5172,7 @@ async function processSingleUserPlan(userId, env) {
             }
         } catch (e) {
             const isTimeout = e?.name === 'AbortError' || /timed out/i.test(e?.message || '');
-            const timeoutMsg = `AI заявката за плана прекъсна след ${AI_CALL_TIMEOUT_MS}ms.`;
+            const timeoutMsg = `AI заявката за плана прекъсна след ${planCallTimeoutMs}ms.`;
             const detailedErrorMsg = `Unified Plan Generation Error for ${userId}: ${e.message}. Raw response (start): ${rawAiResponse.substring(0, 500)}...`;
             const errorMsg = isTimeout ? timeoutMsg : detailedErrorMsg;
             if (isTimeout) {
@@ -7499,4 +7531,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callModelWithTimeout, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary, AI_CALL_TIMEOUT_MS };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callModelWithTimeout, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary, AI_CALL_TIMEOUT_MS, DEFAULT_PLAN_CALL_TIMEOUT_MS, resolvePlanCallTimeoutMs };
