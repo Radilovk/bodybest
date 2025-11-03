@@ -4309,7 +4309,6 @@ async function callModelWithTimeout({
     const controller = new AbortController();
     let timeoutId;
     let heartbeatIntervalId;
-    
     const timeoutPromise = new Promise((_, reject) => {
         timeoutId = setTimeout(() => {
             const timeoutError = new Error(`AI call timed out after ${timeoutMs}ms`);
@@ -4320,7 +4319,7 @@ async function callModelWithTimeout({
     });
 
     // Start heartbeat to prevent Cloudflare Worker inactivity timeout
-    if (heartbeatFn && typeof heartbeatFn === 'function') {
+    if (typeof heartbeatFn === 'function') {
         heartbeatIntervalId = setInterval(() => {
             heartbeatFn().catch(err => {
                 console.warn('Heartbeat failed:', err.message);
