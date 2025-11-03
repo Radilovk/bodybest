@@ -2666,12 +2666,9 @@ async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = pr
             return { success: false, message: precheck.message, statusHint: 400 };
         }
         await setPlanStatus(userId, 'processing', env);
-        if (ctx) {
-            ctx.waitUntil(planProcessor(userId, env));
-        } else {
-            await planProcessor(userId, env);
-        }
-        return { success: true, message: 'Генерирането на нов план стартира.' };
+        // Execute synchronously instead of using waitUntil to avoid timeout issues
+        await planProcessor(userId, env);
+        return { success: true, message: 'Генерирането на нов план завърши.' };
     } catch (error) {
         console.error('Error in handleRegeneratePlanRequest:', error.message, error.stack);
         return { success: false, message: 'Грешка при генериране на плана.', statusHint: 500, userId: body?.userId || 'unknown_user' };

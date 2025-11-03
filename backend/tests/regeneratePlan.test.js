@@ -18,10 +18,12 @@ describe('POST /api/regeneratePlan', () => {
     expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith('plan_status_u1', 'processing', { metadata: { status: 'processing' } });
     expect(env.USER_METADATA_KV.put).not.toHaveBeenCalledWith('pending_plan_mod_u1', expect.anything());
     expect(env.USER_METADATA_KV.put).not.toHaveBeenCalledWith('regen_reason_u1', expect.anything());
-    expect(ctx.waitUntil).toHaveBeenCalled();
+    // Execution is now synchronous to avoid waitUntil timeout issues
+    expect(ctx.waitUntil).not.toHaveBeenCalled();
     expect(mockProcessor).toHaveBeenCalledWith('u1', env);
     expect(mockProcessor.mock.calls[0].length).toBe(2);
     expect(res.success).toBe(true);
+    expect(res.message).toBe('Генерирането на нов план завърши.');
   });
 
   test('връща грешка при липсващ userId', async () => {
