@@ -392,22 +392,6 @@ const mergeTargetMacroCandidates = (...candidates) => {
 
 const MAX_TARGET_MACRO_FIX_ATTEMPTS = 5;
 
-/**
- * Creates a heartbeat function to prevent Cloudflare Worker inactivity timeout
- * @param {string} userId - User ID for the heartbeat key
- * @param {Object} env - Environment with USER_METADATA_KV binding
- * @returns {Function} Async heartbeat function
- */
-const createHeartbeatFunction = (userId, env) => {
-  return async () => {
-    if (!env?.USER_METADATA_KV) return;
-    const heartbeatKey = `${userId}_plan_heartbeat`;
-    const timestamp = new Date().toISOString();
-    await env.USER_METADATA_KV.put(heartbeatKey, timestamp, { expirationTtl: 300 });
-    console.log(`HEARTBEAT (${userId}): ${timestamp}`);
-  };
-};
-
 const buildTargetMacroFixPrompt = (template, initialAnswers, profile, previousResponse = null) => {
   const basePrompt = populatePrompt(template, {
     '%%QUESTIONNAIRE_JSON%%': JSON.stringify(initialAnswers, null, 2),
@@ -442,7 +426,6 @@ const resolveTargetMacrosWithPrompt = async ({
     throw new Error('Не е зададен модел за корекция на макроси.');
   }
 
-  const heartbeat = createHeartbeatFunction(userId, env);
   let prompt = buildTargetMacroFixPrompt(template, initialAnswers, profile);
   let lastRawResponse = '';
   for (let attempt = 1; attempt <= MAX_TARGET_MACRO_FIX_ATTEMPTS; attempt += 1) {
@@ -458,9 +441,7 @@ const resolveTargetMacrosWithPrompt = async ({
         temperature: 0.05,
         maxTokens: 1200
       },
-      timeoutMs: resolvePlanCallTimeoutMs(env),
-      heartbeatFn: heartbeat,
-      heartbeatIntervalMs: 10000
+      timeoutMs: resolvePlanCallTimeoutMs(env)
     });
 
     const candidateMacros = finalizeTargetMacros(extractTargetMacrosFromAny(lastRawResponse));
@@ -4302,13 +4283,10 @@ async function callModelWithTimeout({
     prompt,
     env,
     options = {},
-    timeoutMs = AI_CALL_TIMEOUT_MS,
-    heartbeatFn = null,
-    heartbeatIntervalMs = 10000
+    timeoutMs = AI_CALL_TIMEOUT_MS
 }) {
     const controller = new AbortController();
     let timeoutId;
-    let heartbeatIntervalId;
     const timeoutPromise = new Promise((_, reject) => {
         timeoutId = setTimeout(() => {
             const timeoutError = new Error(`AI call timed out after ${timeoutMs}ms`);
@@ -4318,15 +4296,6 @@ async function callModelWithTimeout({
         }, timeoutMs);
     });
 
-    // Start heartbeat to prevent Cloudflare Worker inactivity timeout
-    if (typeof heartbeatFn === 'function') {
-        heartbeatIntervalId = setInterval(() => {
-            heartbeatFn().catch(err => {
-                console.warn('Heartbeat failed:', err.message);
-            });
-        }, heartbeatIntervalMs);
-    }
-
     try {
         const result = await Promise.race([
             callModelRef.current(model, prompt, env, { ...options, signal: controller.signal }),
@@ -4335,9 +4304,6 @@ async function callModelWithTimeout({
         return result;
     } finally {
         clearTimeout(timeoutId);
-        if (heartbeatIntervalId) {
-            clearInterval(heartbeatIntervalId);
-        }
     }
 }
 const REQUIRED_PLAN_SECTIONS = [
@@ -4509,7 +4475,6 @@ async function retryPlanGeneration({
     let workingPlan = initialPlan;
     let attempts = 0;
     let lastRawResponse = '';
-    const heartbeat = createHeartbeatFunction(userId, env);
 
     while (attempts < maxAttempts) {
         const gaps = collectPlanMacroGaps(workingPlan);
@@ -4565,9 +4530,7 @@ async function retryPlanGeneration({
                 prompt: correctionPrompt,
                 env,
                 options: { temperature: 0.05, maxTokens: 12000 },
-                timeoutMs,
-                heartbeatFn: heartbeat,
-                heartbeatIntervalMs: 10000
+                timeoutMs
             });
             const rebuiltPlan = await buildPlanFromRawResponse(lastRawResponse, {
                 planModelName,
@@ -5182,18 +5145,12 @@ async function processSingleUserPlan(userId, env) {
         try {
             await addLog('Извикване на AI модела');
             console.log(`PROCESS_USER_PLAN (${userId}): Calling model ${planModelName} for unified plan. Prompt length: ${finalPrompt.length}`);
-            
-            // Heartbeat function to prevent Cloudflare Worker inactivity timeout
-            const heartbeat = createHeartbeatFunction(userId, env);
-            
             rawAiResponse = await callModelWithTimeout({
                 model: planModelName,
                 prompt: finalPrompt,
                 env,
                 options: { temperature: 0.1, maxTokens: 12000 },
-                timeoutMs: planCallTimeoutMs,
-                heartbeatFn: heartbeat,
-                heartbeatIntervalMs: 10000
+                timeoutMs: planCallTimeoutMs
             });
             try {
                 planBuilder = await buildPlanFromRawResponse(rawAiResponse, {
