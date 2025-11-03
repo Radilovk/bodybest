@@ -2653,6 +2653,15 @@ async function handleCheckPlanPrerequisitesRequest(request, env) {
 // ------------- END FUNCTION: handleCheckPlanPrerequisitesRequest -------------
 
 // ------------- START FUNCTION: handleRegeneratePlanRequest -------------
+/**
+ * Handles plan regeneration requests.
+ * 
+ * NOTE: This function executes processSingleUserPlan SYNCHRONOUSLY (with await) instead of 
+ * using ctx.waitUntil(). This is intentional to avoid Cloudflare Workers "IoContext timed out 
+ * due to inactivity" errors that occur when waitUntil tasks take too long (30-60+ seconds for 
+ * AI plan generation). The tradeoff is that the client will wait longer for a response, but 
+ * the process will complete reliably. Priority is correctness over speed.
+ */
 async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = processSingleUserPlan) {
     let body;
     try {
