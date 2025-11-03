@@ -4,5 +4,3 @@ dist/
 .env
 coverage/
 docs/api/
-*Debug.json
-*debug.json
