@@ -1,10 +1,34 @@
 # Instructions for Codex agents
 
+## Обща комуникация / General Communication
+
+**ВАЖНО:** Винаги обяснявай разбираемо на **български** в обобщението на процесите и задачите. Използвай прости и ясни термини, избягвай прекалено технически жаргон където е възможно.
+
+**IMPORTANT:** Always explain processes and tasks in understandable **Bulgarian** in summaries. Use simple and clear terms, avoid overly technical jargon where possible.
+
 ## Scope
 These guidelines apply to the entire repository. You are expected to operate with full awareness of the overall architecture, logical relationships, and design conventions. When creating or modifying code, always act in a way that preserves consistency, intent, and practical usability.
 
 ## Reasoning and Improvisation
 You may improvise **only when sufficient project context exists**. Never act blindly or in isolation. All decisions must align with the broader logic, established styles, and expected usage patterns. Think as a cohesive architect, not as a patch-worker.
+
+## Development Philosophy / Философия на разработката
+
+**Цел:** Създаваме проект по **възможно най-простият, лесният и работещ начин**, като постигаме:
+- **Максимална ефективност** в кода и процесите
+- **Изключително добра визия** на потребителския интерфейс
+- **Отлична интеракция** и потребителско изживяване (UX)
+
+**Goal:** We create the project in the **simplest, easiest, and most working way possible**, achieving:
+- **Maximum efficiency** in code and processes
+- **Excellent visual design** of the user interface
+- **Outstanding interaction** and user experience (UX)
+
+### Core Principles
+- **Simplicity first:** Choose the simplest solution that works
+- **User-centric design:** Every change should improve or maintain excellent UI/UX
+- **Practical efficiency:** Optimize for both developer productivity and application performance
+- **Working code:** Prioritize working solutions over complex abstractions
 
 ## Required checks
 - Run `npm run lint` and `npm test` before committing.
@@ -19,6 +43,8 @@ You may improvise **only when sufficient project context exists**. Never act bli
 - Consider how each addition will be used by real users or developers.
 - Respect and replicate the project’s established **UI/UX patterns**, **component structure**, and **file organization**.
 - Propose improvements only if they harmonize with the current system.
+- **Активно предлагай допълнителни предложения за подобрение и оптимизация**, когато това е възможно.
+- **Actively propose additional suggestions for improvement and optimization** whenever possible.
 - Auto-generate concise documentation or inline comments when logic is non-obvious.
 - Include lightweight tests when adding core logic.
 
@@ -33,5 +59,8 @@ You may improvise **only when sufficient project context exists**. Never act bli
 
 ## Optional enhancements
 If resources allow:
-- Suggest improvements to documentation, developer experience, or modularization.
+- **Предлагай подобрения** в документацията, developer experience или модуларизацията.
+- **Suggest improvements** to documentation, developer experience, or modularization.
 - Generate/update `README.md`, `TODO.md`, or internal `DEV_NOTES.md` when appropriate.
+- **Идентифицирай възможности за оптимизация** на производителността, четимостта на кода или потребителското изживяване.
+- **Identify opportunities for optimization** of performance, code readability, or user experience.
