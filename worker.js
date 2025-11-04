@@ -4398,7 +4398,7 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
     let missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !isPlanSectionValid(key, generatedPlanObject[key]));
     const originallyMissing = [...missingSections];
     if (missingSections.length > 0) {
-        console.error(`PROCESS_USER_PLAN_ERROR (${userId}): Initial missing sections: ${missingSections.join(', ')}. Original response (start): ${rawAiResponse.substring(0, 300)}`);
+        console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Initial missing sections: ${missingSections.join(', ')}. Original response (start): ${rawAiResponse.substring(0, 300)}`);
         
         // Create default values for missing sections BEFORE adding errors
         for (const key of missingSections) {
