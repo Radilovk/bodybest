@@ -390,74 +390,9 @@ const mergeTargetMacroCandidates = (...candidates) => {
   return hasAny ? merged : null;
 };
 
-const MAX_TARGET_MACRO_FIX_ATTEMPTS = 5;
-
-const buildTargetMacroFixPrompt = (template, initialAnswers, profile, previousResponse = null) => {
-  const basePrompt = populatePrompt(template, {
-    '%%QUESTIONNAIRE_JSON%%': JSON.stringify(initialAnswers, null, 2),
-    '%%PROFILE_JSON%%': JSON.stringify(profile || {}, null, 2)
-  });
-  if (!previousResponse) {
-    return basePrompt;
-  }
-  return (
-    `${basePrompt}\n\nПредходният отговор беше невалиден. Ето какво получихме:\n${previousResponse}\n\n` +
-    'Моля, отговори САМО с JSON, който съдържа числови дневни цели за калории, протеин (g и %), ' +
-    'въглехидрати (g и %), мазнини (g и %) и фибри (g и %).'
-  );
-};
-
-const resolveTargetMacrosWithPrompt = async ({
-  env,
-  userId,
-  planModelName,
-  initialAnswers,
-  profile,
-  addLog
-}) => {
-  if (!env?.RESOURCES_KV) {
-    throw new Error('RESOURCES_KV binding is недостъпен.');
-  }
-  const template = await getCachedResource('prompt_target_macros_fix', env.RESOURCES_KV);
-  if (!template) {
-    throw new Error("Липсва ресурс 'prompt_target_macros_fix' в RESOURCES_KV.");
-  }
-  if (!planModelName) {
-    throw new Error('Не е зададен модел за корекция на макроси.');
-  }
-
-  let prompt = buildTargetMacroFixPrompt(template, initialAnswers, profile);
-  let lastRawResponse = '';
-  for (let attempt = 1; attempt <= MAX_TARGET_MACRO_FIX_ATTEMPTS; attempt += 1) {
-    await addLog(
-      `Корекционен prompt за макро таргети - опит ${attempt}`,
-      { checkpoint: attempt === 1, reason: 'target-macros-fix' }
-    );
-    lastRawResponse = await callModelWithTimeout({
-      model: planModelName,
-      prompt,
-      env,
-      options: {
-        temperature: 0.05,
-        maxTokens: 1200
-      },
-      timeoutMs: resolvePlanCallTimeoutMs(env)
-    });
-
-    const candidateMacros = finalizeTargetMacros(extractTargetMacrosFromAny(lastRawResponse));
-    if (candidateMacros) {
-      return { macros: candidateMacros, attempts: attempt, raw: lastRawResponse };
-    }
-
-    prompt = buildTargetMacroFixPrompt(template, initialAnswers, profile, lastRawResponse);
-  }
-
-  await addLog('Неуспешен суров отговор за таргет макроси. Записвам последния резултат.', {
-    reason: 'target-macros-fix',
-    rawResponse: lastRawResponse ? lastRawResponse.substring(0, 600) : ''
-  });
-  throw new Error('Неуспешно извличане на таргет макроси чрез корекционния prompt.');
-};
+// Removed MAX_TARGET_MACRO_FIX_ATTEMPTS, buildTargetMacroFixPrompt, and resolveTargetMacrosWithPrompt
+// These functions relied on the missing 'prompt_target_macros_fix' resource.
+// Now using estimateMacros as the final fallback instead.
 
 const parsePossiblyStringifiedJson = (value) => {
   let current = value;
@@ -4956,24 +4891,17 @@ async function processSingleUserPlan(userId, env) {
         };
         const runTargetMacroFix = async () => {
             try {
-                const fixResult = await resolveTargetMacrosWithPrompt({
-                    env,
-                    userId,
-                    planModelName,
-                    initialAnswers,
-                    profile,
-                    addLog
-                });
-                targetMacros = fixResult.macros;
-                targetMacroFixAttempted = true;
-                await addLog(
-                    `Таргет макросите са възстановени чрез корекционен prompt (опит ${fixResult.attempts}).`
-                );
-                if (fixResult.raw) {
-                    await env.USER_METADATA_KV.put(
-                        `${userId}_last_target_macros_fix`,
-                        fixResult.raw.substring(0, 600)
+                // Използваме estimateMacros като окончателен fallback вместо AI prompt
+                const estimated = estimateMacros(initialAnswers);
+                if (estimated) {
+                    targetMacros = finalizeTargetMacros(extractTargetMacrosFromAny(estimated));
+                    targetMacroFixAttempted = true;
+                    await addLog(
+                        `Таргет макросите са възстановени чрез estimateMacros fallback.`
                     );
+                    console.log(`PROCESS_USER_PLAN (${userId}): Target macros recovered using estimateMacros fallback.`);
+                } else {
+                    throw new Error('Не може да се калкулират таргет макроси от наличните данни.');
                 }
             } catch (macroFixErr) {
                 await handleTargetMacroFailure(macroFixErr, 'target-macros-missing');
