@@ -4269,6 +4269,50 @@ const REQUIRED_PLAN_SECTIONS = [
     'detailedTargets'
 ];
 
+/**
+ * Validates if a plan section has meaningful content
+ * @param {string} sectionKey - The key of the section to validate
+ * @param {any} sectionValue - The value of the section
+ * @returns {boolean} - True if the section has valid content
+ */
+function isPlanSectionValid(sectionKey, sectionValue) {
+    // Null or undefined check
+    if (sectionValue === null || sectionValue === undefined) {
+        return false;
+    }
+    
+    // String check - must be non-empty
+    if (typeof sectionValue === 'string') {
+        return sectionValue.trim().length > 0;
+    }
+    
+    // Array check - must be non-empty for principlesWeek2_4
+    if (Array.isArray(sectionValue)) {
+        if (sectionKey === 'principlesWeek2_4') {
+            // Must have at least one element
+            // Elements can be either strings or objects with title/content/icon
+            return sectionValue.length > 0 && sectionValue.every(item => {
+                if (typeof item === 'string') {
+                    return item.trim().length > 0;
+                }
+                if (item && typeof item === 'object') {
+                    return 'title' in item || 'content' in item;
+                }
+                return false;
+            });
+        }
+        return sectionValue.length > 0;
+    }
+    
+    // Object check - must have at least one key
+    if (typeof sectionValue === 'object') {
+        return Object.keys(sectionValue).length > 0;
+    }
+    
+    // For other types, just check if it exists
+    return true;
+}
+
 function createEmptyPlanBuilder() {
     return {
         profileSummary: null,
@@ -4348,12 +4392,28 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
     const cleanedJson = cleanGeminiJson(rawAiResponse);
     let generatedPlanObject = safeParseJson(cleanedJson, {});
 
-    let missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !generatedPlanObject[key]);
+    let missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !isPlanSectionValid(key, generatedPlanObject[key]));
     const originallyMissing = [...missingSections];
     if (missingSections.length > 0) {
         const missMsg = `Missing sections: ${missingSections.join(', ')}`;
         console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${missMsg}. Original response (start): ${rawAiResponse.substring(0, 300)}`);
         planBuilder.generationMetadata.errors.push(missMsg);
+        
+        // Create default values for missing sections before attempting repair
+        for (const key of missingSections) {
+            if (key === 'principlesWeek2_4' && (!generatedPlanObject[key] || !Array.isArray(generatedPlanObject[key]) || generatedPlanObject[key].length === 0)) {
+                // Provide a default principle if missing or empty
+                generatedPlanObject[key] = [
+                    {
+                        title: "Принцип 1: Постоянство и баланс",
+                        content: "Фокусирайте се върху редовно хранене на равни интервали и балансирани порции. Избягвайте дълги периоди без храна.",
+                        icon: "icon-balance"
+                    }
+                ];
+                console.log(`PROCESS_USER_PLAN (${userId}): Added default principlesWeek2_4 due to missing or empty array.`);
+            }
+        }
+        
         try {
             const repairPrompt = `Return JSON with keys ${missingSections.join(', ')} based on this plan: ${cleanedJson}`;
             const repairResponse = await callModelRef.current(planModelName, repairPrompt, env, {
@@ -4364,12 +4424,12 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
             const repairedObject = safeParseJson(repairCleaned, {});
             if (repairedObject && typeof repairedObject === 'object') {
                 for (const key of missingSections) {
-                    if (repairedObject[key]) {
+                    if (isPlanSectionValid(key, repairedObject[key])) {
                         generatedPlanObject[key] = repairedObject[key];
                     }
                 }
             }
-            missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !generatedPlanObject[key]);
+            missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !isPlanSectionValid(key, generatedPlanObject[key]));
             if (missingSections.length > 0) {
                 const stillMsg = `Still missing sections after repair: ${missingSections.join(', ')}`;
                 console.warn(`PROCESS_USER_PLAN_WARNING (${userId}): ${stillMsg}`);

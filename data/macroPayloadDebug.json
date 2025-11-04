@@ -1,0 +1,20 @@
+{
+  "plan": {
+    "calories": 1000,
+    "protein_grams": 0,
+    "carbs_grams": 0,
+    "fat_grams": 0,
+    "fiber_grams": 0,
+    "protein_percent": 30,
+    "carbs_percent": 40,
+    "fat_percent": 30,
+    "fiber_percent": 0
+  },
+  "current": {
+    "calories": 0,
+    "protein_grams": 0,
+    "carbs_grams": 0,
+    "fat_grams": 0,
+    "fiber_grams": 0
+  }
+}
