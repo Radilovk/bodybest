@@ -4264,8 +4264,13 @@ async function callModelWithTimeout({
 }
 const REQUIRED_PLAN_SECTIONS = [
     'profileSummary',
+    'caloriesMacros',
+    'allowedForbiddenFoods',
     'week1Menu',
+    'mealMacrosIndex',
     'principlesWeek2_4',
+    'hydrationCookingSupplements',
+    'psychologicalGuidance',
     'detailedTargets'
 ];
 
@@ -4307,9 +4312,53 @@ function isPlanSectionValid(sectionKey, sectionValue) {
         return sectionValue.length > 0;
     }
     
-    // Object check - must have at least one key
+    // Object check - must have at least one key with meaningful value
     if (typeof sectionValue === 'object') {
-        return Object.keys(sectionValue).length > 0;
+        const keys = Object.keys(sectionValue);
+        if (keys.length === 0) {
+            return false;
+        }
+        
+        // Special validation for specific sections
+        if (sectionKey === 'allowedForbiddenFoods') {
+            // Must have at least one of the main arrays populated
+            return (
+                (Array.isArray(sectionValue.main_allowed_foods) && sectionValue.main_allowed_foods.length > 0) ||
+                (Array.isArray(sectionValue.main_forbidden_foods) && sectionValue.main_forbidden_foods.length > 0) ||
+                (Array.isArray(sectionValue.detailed_allowed_suggestions) && sectionValue.detailed_allowed_suggestions.length > 0) ||
+                (Array.isArray(sectionValue.detailed_limit_suggestions) && sectionValue.detailed_limit_suggestions.length > 0)
+            );
+        }
+        
+        if (sectionKey === 'hydrationCookingSupplements') {
+            // Must have hydration_recommendations or cooking_methods
+            return (
+                (sectionValue.hydration_recommendations && typeof sectionValue.hydration_recommendations === 'object') ||
+                (sectionValue.cooking_methods && typeof sectionValue.cooking_methods === 'object')
+            );
+        }
+        
+        if (sectionKey === 'psychologicalGuidance') {
+            // Must have at least one meaningful field
+            return (
+                (Array.isArray(sectionValue.coping_strategies) && sectionValue.coping_strategies.length > 0) ||
+                (Array.isArray(sectionValue.motivational_messages) && sectionValue.motivational_messages.length > 0) ||
+                (typeof sectionValue.habit_building_tip === 'string' && sectionValue.habit_building_tip.trim().length > 0) ||
+                (typeof sectionValue.self_compassion_reminder === 'string' && sectionValue.self_compassion_reminder.trim().length > 0)
+            );
+        }
+        
+        if (sectionKey === 'detailedTargets') {
+            // Must have at least some target fields
+            const hasTargets = Object.values(sectionValue).some(val => {
+                if (typeof val === 'string' && val.trim().length > 0) return true;
+                if (typeof val === 'number' && Number.isFinite(val)) return true;
+                return false;
+            });
+            return hasTargets;
+        }
+        
+        return true;
     }
     
     // For other types, just check if it exists
@@ -4412,6 +4461,83 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
                     }
                 ];
                 console.log(`PROCESS_USER_PLAN (${userId}): Added default principlesWeek2_4 due to missing or invalid data.`);
+            } else if (key === 'allowedForbiddenFoods') {
+                generatedPlanObject[key] = {
+                    main_allowed_foods: ["Пресни зеленчуци", "Постно месо (пилешко, пуешко)", "Риба", "Яйца", "Пълнозърнести храни"],
+                    main_forbidden_foods: ["Преработени храни с добавена захар", "Високомаслени пържени храни"],
+                    detailed_allowed_suggestions: ["Варени или печени зеленчуци", "Гръцко кисело мляко без добавки"],
+                    detailed_limit_suggestions: ["Сладкиши и бонбони", "Бързи храни"],
+                    dressing_flavoring_ideas: ["Зехтин и лимонов сок", "Подправки без сол"]
+                };
+                console.log(`PROCESS_USER_PLAN (${userId}): Added default allowedForbiddenFoods due to missing or invalid data.`);
+            } else if (key === 'hydrationCookingSupplements') {
+                generatedPlanObject[key] = {
+                    hydration_recommendations: {
+                        daily_liters: "2-2.5 литра",
+                        tips: ["Пийте вода редовно през целия ден", "Започнете деня с чаша вода"],
+                        suitable_drinks: ["Вода", "Минерална вода", "Билкови чайове без захар"],
+                        unsuitable_drinks: ["Газирани напитки със захар", "Енергийни напитки"]
+                    },
+                    cooking_methods: {
+                        recommended: ["Печене", "Варене", "На пара", "Задушаване", "Air fryer", "Скара"],
+                        limit_or_avoid: ["Пържене в много мазнина", "Паниране"],
+                        fat_usage_tip: "Използвайте мазнина в умерени количества, като я добавяте в края на готвенето или измервате със спрей или лъжица."
+                    },
+                    supplement_suggestions: []
+                };
+                console.log(`PROCESS_USER_PLAN (${userId}): Added default hydrationCookingSupplements due to missing or invalid data.`);
+            } else if (key === 'psychologicalGuidance') {
+                generatedPlanObject[key] = {
+                    coping_strategies: [
+                        "При стрес направете пауза и дълбоко дишайте за 2-3 минути",
+                        "Водете дневник на емоциите си свързани с храненето"
+                    ],
+                    motivational_messages: [
+                        "Всяка малка стъпка напред е успех",
+                        "Прогресът не е линеен - бъдете търпеливи със себе си"
+                    ],
+                    habit_building_tip: "Започнете с една малка промяна, която можете да поддържате постоянно.",
+                    self_compassion_reminder: "Бъдете добри към себе си. Един лош избор не разваля целия ви напредък."
+                };
+                console.log(`PROCESS_USER_PLAN (${userId}): Added default psychologicalGuidance due to missing or invalid data.`);
+            } else if (key === 'detailedTargets') {
+                generatedPlanObject[key] = {
+                    sleep_quality_target_text: "Цел: 7-8 часа качествен, непрекъснат сън на нощ за оптимално възстановяване и хормонален баланс.",
+                    stress_level_target_text: "Цел: Намаляване на усещането за стрес чрез прилагане на една релаксираща техника дневно.",
+                    energy_level_target_text: "Цел: Постигане на стабилни и високи енергийни нива през целия ден (оценка 4/5).",
+                    hydration_target_text: "Цел: Редовен прием на вода, достигайки препоръчителните дневни литри.",
+                    bmi_target_numeric: 22.0,
+                    bmi_target_category_text: "Нормално тегло",
+                    meal_adherence_target_percent: 85,
+                    log_consistency_target_percent: 80
+                };
+                console.log(`PROCESS_USER_PLAN (${userId}): Added default detailedTargets due to missing or invalid data.`);
+            } else if (key === 'mealMacrosIndex') {
+                // Auto-generate mealMacrosIndex from week1Menu if it exists
+                if (generatedPlanObject.week1Menu && typeof generatedPlanObject.week1Menu === 'object') {
+                    const mealMacrosIndex = {};
+                    for (const [dayKey, meals] of Object.entries(generatedPlanObject.week1Menu)) {
+                        if (Array.isArray(meals)) {
+                            meals.forEach((meal, mealIdx) => {
+                                const indexKey = `${dayKey}_${mealIdx}`;
+                                if (meal.macros && typeof meal.macros === 'object') {
+                                    mealMacrosIndex[indexKey] = { ...meal.macros };
+                                }
+                            });
+                        }
+                    }
+                    if (Object.keys(mealMacrosIndex).length > 0) {
+                        generatedPlanObject[key] = mealMacrosIndex;
+                        console.log(`PROCESS_USER_PLAN (${userId}): Auto-generated mealMacrosIndex from week1Menu with ${Object.keys(mealMacrosIndex).length} entries.`);
+                    } else {
+                        // If no macros found in meals, create empty index
+                        generatedPlanObject[key] = {};
+                        console.log(`PROCESS_USER_PLAN (${userId}): Created empty mealMacrosIndex (no macros found in week1Menu).`);
+                    }
+                } else {
+                    generatedPlanObject[key] = {};
+                    console.log(`PROCESS_USER_PLAN (${userId}): Created empty mealMacrosIndex (week1Menu not available).`);
+                }
             }
         }
         
