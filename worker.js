@@ -393,6 +393,10 @@ const mergeTargetMacroCandidates = (...candidates) => {
 // Removed MAX_TARGET_MACRO_FIX_ATTEMPTS, buildTargetMacroFixPrompt, and resolveTargetMacrosWithPrompt
 // These functions relied on the missing 'prompt_target_macros_fix' resource.
 // Now using estimateMacros as the final fallback instead.
+// estimateMacros calculates target macros based on user's weight, height, age, gender, and activity level
+// using the Mifflin-St Jeor equation for BMR (Basal Metabolic Rate) and activity multipliers.
+// This provides a reliable, instant, deterministic fallback when macros cannot be obtained from
+// analysis results or previous plans.
 
 const parsePossiblyStringifiedJson = (value) => {
   let current = value;
@@ -4899,7 +4903,10 @@ async function processSingleUserPlan(userId, env) {
                     await addLog(
                         `Таргет макросите са възстановени чрез estimateMacros fallback.`
                     );
-                    console.log(`PROCESS_USER_PLAN (${userId}): Target macros recovered using estimateMacros fallback.`);
+                    await addLog(
+                        `PROCESS_USER_PLAN (${userId}): Target macros recovered using estimateMacros fallback.`,
+                        { checkpoint: false }
+                    );
                 } else {
                     throw new Error('Не може да се калкулират таргет макроси от наличните данни.');
                 }
