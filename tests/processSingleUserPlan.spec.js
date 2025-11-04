@@ -802,4 +802,46 @@ describe('processSingleUserPlan - валидация на макроси по х
     expect(logEntries.some((entry) => entry.includes('Липсват макроси'))).toBe(true);
     expect(logEntries.some((entry) => entry.includes('Планът няма да бъде записан'))).toBe(true);
   });
+
+  it('successfully generates plan when analysis lacks fiber values', async () => {
+    const userId = 'missing-fiber-user';
+    const analysisWithoutFiber = {
+      calories: 2000,
+      protein_grams: 150,
+      protein_percent: 30,
+      carbs_grams: 200,
+      carbs_percent: 40,
+      fat_grams: 67,
+      fat_percent: 30
+      // fiber_grams and fiber_percent are intentionally missing
+    };
+
+    const { env, userMetadataKv } = buildTestEnvironment(userId, {
+      analysisMacrosData: analysisWithoutFiber,
+      psychoProfileData: mockPsychoProfile
+    });
+
+    callModelMock.mockResolvedValueOnce(successfulPlanResponse);
+
+    await workerModule.processSingleUserPlan(userId, env);
+
+    const finalPlanCall = userMetadataKv.put.mock.calls.find(
+      ([key]) => key === `${userId}_final_plan`
+    );
+
+    expect(finalPlanCall).toBeDefined();
+    const savedPlan = JSON.parse(finalPlanCall[1]);
+    
+    // Verify that fiber values were calculated and included in the plan
+    expect(savedPlan.caloriesMacros).toBeDefined();
+    expect(savedPlan.caloriesMacros.fiber_grams).toBeDefined();
+    expect(savedPlan.caloriesMacros.fiber_percent).toBeDefined();
+    expect(typeof savedPlan.caloriesMacros.fiber_grams).toBe('number');
+    expect(typeof savedPlan.caloriesMacros.fiber_percent).toBe('number');
+    
+    // Verify reasonable fiber values based on 14g per 1000 calories recommendation
+    // For 2000 calories, we expect approximately 28g of fiber
+    expect(savedPlan.caloriesMacros.fiber_grams).toBeGreaterThan(20);
+    expect(savedPlan.caloriesMacros.fiber_grams).toBeLessThan(35);
+  });
 });
