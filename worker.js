@@ -1957,31 +1957,18 @@ async function handleDashboardDataRequest(request, env) {
             return { ...baseResponse, success: false, message: 'Грешка при зареждане на данните на Вашия план.', statusHint: 500, planData: null, analytics: null };
         }
 
-        const shouldForceRecalc = url.searchParams.get('recalcMacros') === '1';
-        if (!hasCompleteCaloriesMacros(finalPlan.caloriesMacros) || shouldForceRecalc) {
-            const recalculated = calculatePlanMacros(finalPlan.week1Menu || {}, finalPlan.mealMacrosIndex || null);
-            if (recalculated) {
-                finalPlan.caloriesMacros = recalculated;
-                console.warn(`DASHBOARD_DATA (${userId}): Използван fallback за caloriesMacros от менюто.`);
-                await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(finalPlan, null, 2));
-                const macrosRecord = { status: 'final', data: { ...recalculated } };
-                await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
-            } else if (!finalPlan.caloriesMacros || Object.keys(finalPlan.caloriesMacros).length === 0) {
-                console.error(`DASHBOARD_DATA (${userId}): Missing caloriesMacros in final plan and fallback failed.`);
-                return {
-                    ...baseResponse,
-                    success: false,
-                    message: 'Планът няма макроси и автоматичното преизчисление се провали. Моля, регенерирайте плана.',
-                    statusHint: 500,
-                    planData: null,
-                    analytics: null
-                };
-            }
-        }
-
-        if (!finalPlan.caloriesMacros || Object.keys(finalPlan.caloriesMacros).length === 0) {
-            console.error(`DASHBOARD_DATA (${userId}): Missing caloriesMacros in final plan.`);
-            return { ...baseResponse, success: false, message: 'Планът няма макроси; изисква се повторно генериране', statusHint: 500, planData: null, analytics: null };
+        // Проверка дали caloriesMacros са налични и пълни от AI отговора
+        // ВАЖНО: Не използваме резервни изчисления - всички данни трябва да идват от AI
+        if (!hasCompleteCaloriesMacros(finalPlan.caloriesMacros)) {
+            console.error(`DASHBOARD_DATA (${userId}): Missing or incomplete caloriesMacros in final plan. All data must come from AI response.`);
+            return {
+                ...baseResponse,
+                success: false,
+                message: 'Планът няма пълни данни за макроси от AI анализа. Моля, регенерирайте плана.',
+                statusHint: 500,
+                planData: null,
+                analytics: null
+            };
         }
 
         const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries, currentStatus, env); // Добавен userId
