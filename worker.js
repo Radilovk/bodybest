@@ -1135,9 +1135,21 @@ function makeJsonResponse(body, defaultStatus = 200) {
     } else if (body && body.success === false) {
         status = 400;
     }
+    let jsonBody;
+    try {
+        jsonBody = JSON.stringify(body);
+    } catch (stringifyError) {
+        console.error('Error stringifying response body:', stringifyError.message);
+        jsonBody = JSON.stringify({
+            success: false,
+            error: 'Internal Server Error',
+            message: 'Грешка при сериализация на отговора.'
+        });
+        status = 500;
+    }
     return {
         status,
-        body: JSON.stringify(body),
+        body: jsonBody,
         headers: { 'Content-Type': 'application/json' }
     };
 }
