@@ -4331,11 +4331,16 @@ function isPlanSectionValid(sectionKey, sectionValue) {
         }
         
         if (sectionKey === 'hydrationCookingSupplements') {
-            // Must have hydration_recommendations or cooking_methods
-            return (
-                (sectionValue.hydration_recommendations && typeof sectionValue.hydration_recommendations === 'object') ||
-                (sectionValue.cooking_methods && typeof sectionValue.cooking_methods === 'object')
-            );
+            // Must have hydration_recommendations or cooking_methods with meaningful content
+            const hasHydration = 
+                sectionValue.hydration_recommendations && 
+                typeof sectionValue.hydration_recommendations === 'object' &&
+                Object.keys(sectionValue.hydration_recommendations).length > 0;
+            const hasCooking = 
+                sectionValue.cooking_methods && 
+                typeof sectionValue.cooking_methods === 'object' &&
+                Object.keys(sectionValue.cooking_methods).length > 0;
+            return hasHydration || hasCooking;
         }
         
         if (sectionKey === 'psychologicalGuidance') {
@@ -4437,6 +4442,31 @@ function collectPlanMacroGaps(plan) {
     return result;
 }
 
+/**
+ * Auto-generates mealMacrosIndex from week1Menu
+ * @param {Object} week1Menu - The weekly menu object
+ * @returns {Object} The generated mealMacrosIndex
+ */
+function generateMealMacrosIndexFromMenu(week1Menu) {
+    const mealMacrosIndex = {};
+    if (!week1Menu || typeof week1Menu !== 'object') {
+        return mealMacrosIndex;
+    }
+    
+    for (const [dayKey, meals] of Object.entries(week1Menu)) {
+        if (Array.isArray(meals)) {
+            meals.forEach((meal, mealIdx) => {
+                const indexKey = `${dayKey}_${mealIdx}`;
+                if (meal.macros && typeof meal.macros === 'object') {
+                    mealMacrosIndex[indexKey] = { ...meal.macros };
+                }
+            });
+        }
+    }
+    
+    return mealMacrosIndex;
+}
+
 async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, userId, addLog }) {
     const planBuilder = createEmptyPlanBuilder();
     planBuilder.generationMetadata.modelUsed = planModelName;
@@ -4513,30 +4543,14 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
                 };
                 console.log(`PROCESS_USER_PLAN (${userId}): Added default detailedTargets due to missing or invalid data.`);
             } else if (key === 'mealMacrosIndex') {
-                // Auto-generate mealMacrosIndex from week1Menu if it exists
-                if (generatedPlanObject.week1Menu && typeof generatedPlanObject.week1Menu === 'object') {
-                    const mealMacrosIndex = {};
-                    for (const [dayKey, meals] of Object.entries(generatedPlanObject.week1Menu)) {
-                        if (Array.isArray(meals)) {
-                            meals.forEach((meal, mealIdx) => {
-                                const indexKey = `${dayKey}_${mealIdx}`;
-                                if (meal.macros && typeof meal.macros === 'object') {
-                                    mealMacrosIndex[indexKey] = { ...meal.macros };
-                                }
-                            });
-                        }
-                    }
-                    if (Object.keys(mealMacrosIndex).length > 0) {
-                        generatedPlanObject[key] = mealMacrosIndex;
-                        console.log(`PROCESS_USER_PLAN (${userId}): Auto-generated mealMacrosIndex from week1Menu with ${Object.keys(mealMacrosIndex).length} entries.`);
-                    } else {
-                        // If no macros found in meals, create empty index
-                        generatedPlanObject[key] = {};
-                        console.log(`PROCESS_USER_PLAN (${userId}): Created empty mealMacrosIndex (no macros found in week1Menu).`);
-                    }
+                // Auto-generate mealMacrosIndex from week1Menu using helper function
+                const mealMacrosIndex = generateMealMacrosIndexFromMenu(generatedPlanObject.week1Menu);
+                generatedPlanObject[key] = mealMacrosIndex;
+                const entryCount = Object.keys(mealMacrosIndex).length;
+                if (entryCount > 0) {
+                    console.log(`PROCESS_USER_PLAN (${userId}): Auto-generated mealMacrosIndex from week1Menu with ${entryCount} entries.`);
                 } else {
-                    generatedPlanObject[key] = {};
-                    console.log(`PROCESS_USER_PLAN (${userId}): Created empty mealMacrosIndex (week1Menu not available).`);
+                    console.log(`PROCESS_USER_PLAN (${userId}): Created empty mealMacrosIndex (no valid week1Menu data).`);
                 }
             }
         }
