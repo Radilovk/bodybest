@@ -1135,9 +1135,21 @@ function makeJsonResponse(body, defaultStatus = 200) {
     } else if (body && body.success === false) {
         status = 400;
     }
+    let jsonBody;
+    try {
+        jsonBody = JSON.stringify(body);
+    } catch (stringifyError) {
+        console.error('Error stringifying response body:', stringifyError.message);
+        jsonBody = JSON.stringify({
+            success: false,
+            error: 'Internal Server Error',
+            message: 'Грешка при сериализация на отговора.'
+        });
+        status = 500;
+    }
     return {
         status,
-        body: JSON.stringify(body),
+        body: jsonBody,
         headers: { 'Content-Type': 'application/json' }
     };
 }
@@ -2605,6 +2617,16 @@ async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = pr
     let body;
     try {
         body = await request.json();
+    } catch (parseError) {
+        console.error('Error parsing JSON in handleRegeneratePlanRequest:', parseError.message);
+        return { success: false, message: 'Невалиден JSON формат на заявката.', statusHint: 400 };
+    }
+    
+    if (!body || typeof body !== 'object') {
+        return { success: false, message: 'Невалидни данни в заявката.', statusHint: 400 };
+    }
+    
+    try {
         const { userId } = body;
         if (!userId) {
             return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
@@ -2619,7 +2641,7 @@ async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = pr
         return { success: true, message: 'Генерирането на нов план завърши.' };
     } catch (error) {
         console.error('Error in handleRegeneratePlanRequest:', error.message, error.stack);
-        return { success: false, message: 'Грешка при генериране на плана.', statusHint: 500, userId: body?.userId || 'unknown_user' };
+        return { success: false, message: 'Грешка при генериране на плана.', statusHint: 500 };
     }
 }
 // ------------- END FUNCTION: handleRegeneratePlanRequest -------------
