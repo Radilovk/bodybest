@@ -2622,6 +2622,10 @@ async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = pr
         return { success: false, message: 'Невалиден JSON формат на заявката.', statusHint: 400 };
     }
     
+    if (!body || typeof body !== 'object') {
+        return { success: false, message: 'Невалидни данни в заявката.', statusHint: 400 };
+    }
+    
     try {
         const { userId } = body;
         if (!userId) {
