@@ -4456,8 +4456,9 @@ function generateMealMacrosIndexFromMenu(week1Menu) {
     for (const [dayKey, meals] of Object.entries(week1Menu)) {
         if (Array.isArray(meals)) {
             meals.forEach((meal, mealIdx) => {
-                const indexKey = `${dayKey}_${mealIdx}`;
-                if (meal.macros && typeof meal.macros === 'object') {
+                // Validate meal exists and has macros before accessing
+                if (meal && typeof meal === 'object' && meal.macros && typeof meal.macros === 'object') {
+                    const indexKey = `${dayKey}_${mealIdx}`;
                     mealMacrosIndex[indexKey] = { ...meal.macros };
                 }
             });
