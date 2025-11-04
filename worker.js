@@ -334,6 +334,14 @@ const finalizeTargetMacros = (macros) => {
     }
   }
 
+  // Calculate default fiber values if both are missing (recommended 14g per 1000 calories)
+  if (normalized.calories && normalized.calories > 0) {
+    if (normalized.fiber_grams == null && normalized.fiber_percent == null) {
+      normalized.fiber_grams = roundValue((normalized.calories / 1000) * 14);
+      normalized.fiber_percent = roundValue((normalized.fiber_grams * CALORIES_PER_GRAM.fiber * 100) / normalized.calories);
+    }
+  }
+
   const hasAny = Object.values(normalized).some((value) => typeof value === 'number' && Number.isFinite(value) && value > 0);
   return hasAny ? normalized : null;
 };
