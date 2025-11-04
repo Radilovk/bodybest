@@ -4398,11 +4398,9 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
     let missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !isPlanSectionValid(key, generatedPlanObject[key]));
     const originallyMissing = [...missingSections];
     if (missingSections.length > 0) {
-        const missMsg = `Missing sections: ${missingSections.join(', ')}`;
-        console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${missMsg}. Original response (start): ${rawAiResponse.substring(0, 300)}`);
-        planBuilder.generationMetadata.errors.push(missMsg);
+        console.error(`PROCESS_USER_PLAN_ERROR (${userId}): Initial missing sections: ${missingSections.join(', ')}. Original response (start): ${rawAiResponse.substring(0, 300)}`);
         
-        // Create default values for missing sections before attempting repair
+        // Create default values for missing sections BEFORE adding errors
         for (const key of missingSections) {
             if (key === 'principlesWeek2_4') {
                 // Provide a default principle if missing or empty
@@ -4417,33 +4415,41 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
             }
         }
         
-        try {
-            const repairPrompt = `Return JSON with keys ${missingSections.join(', ')} based on this plan: ${cleanedJson}`;
-            const repairResponse = await callModelRef.current(planModelName, repairPrompt, env, {
-                temperature: 0.1,
-                maxTokens: 1000
-            });
-            const repairCleaned = cleanGeminiJson(repairResponse);
-            const repairedObject = safeParseJson(repairCleaned, {});
-            if (repairedObject && typeof repairedObject === 'object') {
-                for (const key of missingSections) {
-                    if (isPlanSectionValid(key, repairedObject[key])) {
-                        generatedPlanObject[key] = repairedObject[key];
+        // Re-validate after adding defaults to see what's still missing
+        missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !isPlanSectionValid(key, generatedPlanObject[key]));
+        
+        // Attempt AI repair only if there are still missing sections after defaults
+        if (missingSections.length > 0) {
+            try {
+                const repairPrompt = `Return JSON with keys ${missingSections.join(', ')} based on this plan: ${cleanedJson}`;
+                const repairResponse = await callModelRef.current(planModelName, repairPrompt, env, {
+                    temperature: 0.1,
+                    maxTokens: 1000
+                });
+                const repairCleaned = cleanGeminiJson(repairResponse);
+                const repairedObject = safeParseJson(repairCleaned, {});
+                if (repairedObject && typeof repairedObject === 'object') {
+                    for (const key of missingSections) {
+                        if (isPlanSectionValid(key, repairedObject[key])) {
+                            generatedPlanObject[key] = repairedObject[key];
+                        }
                     }
                 }
+                missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !isPlanSectionValid(key, generatedPlanObject[key]));
+                if (missingSections.length > 0) {
+                    const stillMsg = `Still missing sections after repair: ${missingSections.join(', ')}`;
+                    console.warn(`PROCESS_USER_PLAN_WARNING (${userId}): ${stillMsg}`);
+                    planBuilder.generationMetadata.errors.push(stillMsg);
+                } else {
+                    console.log(`PROCESS_USER_PLAN (${userId}): All missing sections filled after repair: ${originallyMissing.join(', ')}`);
+                }
+            } catch (repairErr) {
+                const repairErrorMsg = `Repair attempt failed: ${repairErr.message}`;
+                console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${repairErrorMsg}`);
+                planBuilder.generationMetadata.errors.push(repairErrorMsg);
             }
-            missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !isPlanSectionValid(key, generatedPlanObject[key]));
-            if (missingSections.length > 0) {
-                const stillMsg = `Still missing sections after repair: ${missingSections.join(', ')}`;
-                console.warn(`PROCESS_USER_PLAN_WARNING (${userId}): ${stillMsg}`);
-                planBuilder.generationMetadata.errors.push(stillMsg);
-            } else {
-                console.log(`PROCESS_USER_PLAN (${userId}): Missing sections filled: ${originallyMissing.join(', ')}`);
-            }
-        } catch (repairErr) {
-            const repairErrorMsg = `Repair attempt failed: ${repairErr.message}`;
-            console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${repairErrorMsg}`);
-            planBuilder.generationMetadata.errors.push(repairErrorMsg);
+        } else {
+            console.log(`PROCESS_USER_PLAN (${userId}): All missing sections filled with defaults: ${originallyMissing.join(', ')}`);
         }
     } else {
         console.log(`PROCESS_USER_PLAN (${userId}): Unified plan JSON parsed successfully.`);
