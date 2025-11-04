@@ -4290,13 +4290,16 @@ function isPlanSectionValid(sectionKey, sectionValue) {
     if (Array.isArray(sectionValue)) {
         if (sectionKey === 'principlesWeek2_4') {
             // Must have at least one element
-            // Elements can be either strings or objects with title/content/icon
+            // Elements can be either strings or objects with title and/or content
             return sectionValue.length > 0 && sectionValue.every(item => {
                 if (typeof item === 'string') {
                     return item.trim().length > 0;
                 }
                 if (item && typeof item === 'object') {
-                    return 'title' in item || 'content' in item;
+                    // Accept objects with either title or content (or both), but at least one must be non-empty
+                    const hasTitle = typeof item.title === 'string' && item.title.trim().length > 0;
+                    const hasContent = typeof item.content === 'string' && item.content.trim().length > 0;
+                    return hasTitle || hasContent;
                 }
                 return false;
             });
@@ -4401,7 +4404,7 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
         
         // Create default values for missing sections before attempting repair
         for (const key of missingSections) {
-            if (key === 'principlesWeek2_4' && (!generatedPlanObject[key] || !Array.isArray(generatedPlanObject[key]) || generatedPlanObject[key].length === 0)) {
+            if (key === 'principlesWeek2_4') {
                 // Provide a default principle if missing or empty
                 generatedPlanObject[key] = [
                     {
@@ -4410,7 +4413,7 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
                         icon: "icon-balance"
                     }
                 ];
-                console.log(`PROCESS_USER_PLAN (${userId}): Added default principlesWeek2_4 due to missing or empty array.`);
+                console.log(`PROCESS_USER_PLAN (${userId}): Added default principlesWeek2_4 due to missing or invalid data.`);
             }
         }
         
