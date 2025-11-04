@@ -2605,6 +2605,12 @@ async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = pr
     let body;
     try {
         body = await request.json();
+    } catch (parseError) {
+        console.error('Error parsing JSON in handleRegeneratePlanRequest:', parseError.message);
+        return { success: false, message: 'Невалиден JSON формат на заявката.', statusHint: 400 };
+    }
+    
+    try {
         const { userId } = body;
         if (!userId) {
             return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
@@ -2619,7 +2625,7 @@ async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = pr
         return { success: true, message: 'Генерирането на нов план завърши.' };
     } catch (error) {
         console.error('Error in handleRegeneratePlanRequest:', error.message, error.stack);
-        return { success: false, message: 'Грешка при генериране на плана.', statusHint: 500, userId: body?.userId || 'unknown_user' };
+        return { success: false, message: 'Грешка при генериране на плана.', statusHint: 500 };
     }
 }
 // ------------- END FUNCTION: handleRegeneratePlanRequest -------------
