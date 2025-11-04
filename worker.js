@@ -3070,7 +3070,10 @@ function estimateMacros(initial = {}) {
     const protein_grams = calcMacroGrams(calories, protein_percent, 4);
     const carbs_grams = calcMacroGrams(calories, carbs_percent, 4);
     const fat_grams = calcMacroGrams(calories, fat_percent, 9);
-    return { calories, protein_percent, carbs_percent, fat_percent, protein_grams, carbs_grams, fat_grams };
+    // Calculate fiber based on recommended 14g per 1000 calories
+    const fiber_grams = Math.round((calories / 1000) * 14);
+    const fiber_percent = Math.round((fiber_grams * 2 * 100) / calories);
+    return { calories, protein_percent, carbs_percent, fat_percent, protein_grams, carbs_grams, fat_grams, fiber_grams, fiber_percent };
 }
 // ------------- END FUNCTION: estimateMacros -------------
 
