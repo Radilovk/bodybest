@@ -4259,7 +4259,8 @@ const REQUIRED_PLAN_SECTIONS = [
     'principlesWeek2_4',
     'hydrationCookingSupplements',
     'psychologicalGuidance',
-    'detailedTargets'
+    'detailedTargets',
+    'additionalGuidelines'
 ];
 
 /**
@@ -4481,13 +4482,14 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
                 const sectionDescriptions = {
                     'profileSummary': 'персонализирано резюме на потребителския профил и хранителен подход',
                     'caloriesMacros': 'обект с calories, protein_percent, carbs_percent, fat_percent, protein_grams, carbs_grams, fat_grams, fiber_grams, fiber_percent',
-                    'allowedForbiddenFoods': 'обект с main_allowed_foods (масив), main_forbidden_foods (масив), detailed_allowed_suggestions, detailed_limit_suggestions, dressing_flavoring_ideas',
-                    'week1Menu': 'седмично меню с дни (monday, tuesday, и т.н.), всеки съдържащ масив от храни с meal_name, items, recipeKey',
-                    'mealMacrosIndex': 'индекс на макроси за всяка храна от менюто по формат {dayKey}_index: {calories, protein_grams, carbs_grams, fat_grams, fiber_grams}',
+                    'allowedForbiddenFoods': 'обект с main_allowed_foods (масив от разрешени храни), main_forbidden_foods (масив от забранени храни), detailed_allowed_suggestions (масив), detailed_limit_suggestions (масив), dressing_flavoring_ideas (масив)',
+                    'week1Menu': 'седмично меню с дни (monday, tuesday, wednesday, thursday, friday, saturday, sunday), всеки съдържащ масив от храни с meal_name, items (масив с name и grams), recipeKey',
+                    'mealMacrosIndex': 'индекс на макроси за всяка храна от менюто по формат {dayKey}_{index}: {calories, protein_grams, carbs_grams, fat_grams, fiber_grams}',
                     'principlesWeek2_4': 'масив от хранителни принципи за седмици 2-4, всеки с title, content, и icon',
-                    'hydrationCookingSupplements': 'обект с hydration_recommendations (daily_liters, tips, suitable_drinks, unsuitable_drinks), cooking_methods (recommended, limit_or_avoid, fat_usage_tip), supplement_suggestions',
-                    'psychologicalGuidance': 'обект с coping_strategies, motivational_messages, habit_building_tip, self_compassion_reminder',
-                    'detailedTargets': 'обект с sleep_quality_target_text, stress_level_target_text, energy_level_target_text, hydration_target_text, bmi_target_numeric, bmi_target_category_text, meal_adherence_target_percent, log_consistency_target_percent'
+                    'hydrationCookingSupplements': 'обект с hydration_recommendations (daily_liters, tips като масив, suitable_drinks като масив, unsuitable_drinks като масив), cooking_methods (recommended като масив, limit_or_avoid като масив, fat_usage_tip), supplement_suggestions като масив с обекти (supplement_name, reasoning, caution)',
+                    'psychologicalGuidance': 'обект с coping_strategies (масив от стратегии), motivational_messages (масив от съобщения), habit_building_tip (текст), self_compassion_reminder (текст)',
+                    'detailedTargets': 'обект с sleep_quality_target_text, stress_level_target_text, energy_level_target_text, hydration_target_text, bmi_target_numeric (число), bmi_target_category_text, meal_adherence_target_percent (число), log_consistency_target_percent (число)',
+                    'additionalGuidelines': 'масив от допълнителни насоки, всяка с title и content, или масив от текстови низове'
                 };
                 
                 const missingDescriptions = missingSections.map(key => `- ${key}: ${sectionDescriptions[key] || 'необходима секция'}`).join('\n');
