@@ -1,18 +1,18 @@
 // extraMealForm.js - Логика за Формата за Извънредно Хранене (оптимизирана)
 import { selectors } from './uiElements.js';
-import { showLoading, showToast, openModal as genericOpenModal, closeModal as genericCloseModal } from './uiHandlers.js';
+import { showToast, openModal as genericOpenModal } from './uiHandlers.js';
 import { apiEndpoints } from './config.js';
-import { currentUserId, todaysExtraMeals, currentIntakeMacros, loadCurrentIntake, updateMacrosAndAnalytics, fullDashboardData } from './app.js';
+import { currentUserId } from './app.js';
 import nutrientOverrides from '../kv/DIET_RESOURCES/nutrient_overrides.json' with { type: 'json' };
 import * as macroUtils from './macroUtils.js';
-const { removeMealMacros, registerNutrientOverrides, getNutrientOverride, loadProductMacros } = macroUtils;
-const scaleMacros = macroUtils.scaleMacros || ((m, g) => m);
+const { registerNutrientOverrides, getNutrientOverride, loadProductMacros } = macroUtils;
+const scaleMacros = macroUtils.scaleMacros || ((m, _g) => m);
 import {
     addExtraMealWithOverride,
     appendExtraMealCard
 } from './populateUI.js';
-import { sanitizeHTML } from './htmlSanitizer.js';
 import { getLocalDate } from './utils.js';
+import { debounce } from './debounce.js';
 
 const MACRO_FIELDS = ['calories','protein','carbs','fat','fiber'];
 
@@ -136,8 +136,11 @@ export async function handleExtraMealFormSubmit(event) {
                     field.dataset.autofilled = 'true';
                 }
             });
-        } catch (err) {
-            return; // showToast already called in fetchMacrosFromAi
+        } catch (error) {
+            // Грешката вече е обработена в fetchMacrosFromAi чрез showToast
+            // Тук просто прекратяваме изпълнението
+            console.debug('Nutrient lookup cancelled or failed:', error.message);
+            return;
         }
     }
 
@@ -582,9 +585,34 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     if (quantityCountInput) quantityCountInput.addEventListener('input', computeQuantityFromManual);
     if (measureInput) measureInput.addEventListener('input', computeQuantityFromManual);
 
+    // ОПТИМИЗАЦИЯ: Използваме debounce за nutrient lookup, за да намалим API заявките
+    // Създаваме debounced версия на lookup функцията
+    const performNutrientLookup = debounce(async () => {
+        const desc = foodDescriptionInput?.value?.trim();
+        const qty = quantityCustomInput?.value?.trim();
+        if (!desc || !qty || quantityLookupLoading) return;
+        quantityLookupLoading = true;
+        quantityLookupSpinner?.classList.remove('hidden');
+        try {
+            const data = await nutrientLookup(desc, qty);
+            MACRO_FIELDS.forEach(f => {
+                const field = form.querySelector(`input[name="${f}"]`);
+                if (field && data[f] !== undefined) {
+                    field.value = data[f];
+                    field.dataset.autofilled = 'true';
+                }
+            });
+            if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+        } catch (err) {
+            console.error('Невъзможно изчисление на макроси', err);
+        } finally {
+            quantityLookupSpinner?.classList.add('hidden');
+            quantityLookupLoading = false;
+        }
+    }, 500); // Увеличен delay от 300 на 500ms за по-добра оптимизация
+
     // динамична калкулация при промяна на quantityCustom
     if (quantityCustomInput) {
-        let lookupTimer;
         quantityCustomInput.addEventListener('input', () => {
             const val = quantityCustomInput.value.trim();
             const quantityKey = val;
@@ -640,7 +668,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             if (parsed) {
                 quantityCustomInput.classList.remove('invalid-format');
                 quantityCustomInput.removeAttribute('title');
-                clearTimeout(lookupTimer);
+                performNutrientLookup.cancel(); // Отменяме pending lookup ако има
                 return;
             }
 
@@ -654,30 +682,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             quantityCustomInput.classList.add('invalid-format');
             quantityCustomInput.title = 'Формат: "150" или "150 гр"';
 
-            clearTimeout(lookupTimer);
-            lookupTimer = setTimeout(async () => {
-                const desc = foodDescriptionInput?.value?.trim();
-                const qty = quantityCustomInput.value.trim();
-                if (!desc || !qty || quantityLookupLoading) return;
-                quantityLookupLoading = true;
-                quantityLookupSpinner?.classList.remove('hidden');
-                try {
-                    const data = await nutrientLookup(desc, qty);
-                    MACRO_FIELDS.forEach(f => {
-                        const field = form.querySelector(`input[name="${f}"]`);
-                        if (field && data[f] !== undefined) {
-                            field.value = data[f];
-                            field.dataset.autofilled = 'true';
-                        }
-                    });
-                    if (autoFillMsg) autoFillMsg.classList.remove('hidden');
-                } catch (err) {
-                    console.error('Невъзможно изчисление на макроси', err);
-                } finally {
-                    quantityLookupSpinner?.classList.add('hidden');
-                    quantityLookupLoading = false;
-                }
-            }, 300);
+            // Извикваме debounced lookup вместо setTimeout
+            performNutrientLookup();
         });
     }
 
