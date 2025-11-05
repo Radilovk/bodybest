@@ -394,7 +394,7 @@ export class MacroAnalyticsCard extends HTMLElement {
     const hasData = this.hasAttribute('plan-data') && this.hasAttribute('current-data');
     
     if (endpoint && !hasData && this.isConnected) {
-      // ОПТИМИЗАЦИЯ: Зареждаме данните веднъж при инициализация с кеширане
+      // ОПТИМИЗАЦИЯ: зареждаме данните веднъж при инициализация с кеширане
       (async () => {
         try {
           const data = await cachedFetch(endpoint, {

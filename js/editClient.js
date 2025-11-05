@@ -53,7 +53,7 @@ export async function initEditClient(userId) {
 
   async function loadData() {
     try {
-      // ОПТИМИЗАЦИЯ: Използваме cachedFetch за да избегнем многократни заявки
+      // ОПТИМИЗАЦИЯ: използваме cachedFetch за да избегнем многократни заявки
       const [profileData, dashData] = await Promise.all([
         cachedFetch(`${apiEndpoints.getProfile}?userId=${userId}`, { ttl: 60000 }), // 1 минута
         cachedFetch(`${apiEndpoints.dashboard}?userId=${userId}`, { ttl: 30000 })   // 30 секунди

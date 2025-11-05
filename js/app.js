@@ -595,7 +595,7 @@ export async function loadDashboardData() {
             return;
         }
 
-        // ОПТИМИЗАЦИЯ: Използваме cachedFetch за да избегнем многократни заявки
+        // ОПТИМИЗАЦИЯ: използваме cachedFetch за да избегнем многократни заявки
         // при tab switching или page reload в кратък период от време
         const data = await cachedFetch(`${apiEndpoints.dashboard}?userId=${currentUserId}`, {
             ttl: 30000 // 30 секунди кеш - балансира актуалност и производителност

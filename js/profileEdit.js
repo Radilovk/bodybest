@@ -18,7 +18,7 @@ const form = document.getElementById('profileEditForm');
 if (form) {
   const prefillProfileData = async () => {
     try {
-      // ОПТИМИЗАЦИЯ: Използваме cachedFetch за да избегнем многократни заявки
+      // ОПТИМИЗАЦИЯ: използваме cachedFetch за да избегнем многократни заявки
       const data = await cachedFetch(`${apiEndpoints.getProfile}?userId=${currentUserId}`, {
         ttl: 60000 // 1 минута кеш - profile данните рядко се променят
       });
