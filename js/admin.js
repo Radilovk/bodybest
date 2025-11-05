@@ -2057,9 +2057,10 @@ document.addEventListener('DOMContentLoaded', () => {
             emailSettingsForm ? loadEmailSettings() : Promise.resolve(),
             testEmailSection?.open ? loadTestEmailTemplate() : Promise.resolve()
         ]);
-        const hourInMs = 60 * 60 * 1000;
-        setInterval(checkForNotifications, hourInMs);
-        setInterval(() => loadNotifications(), hourInMs);
+        // ОПТИМИЗАЦИЯ: Премахнато автоматично polling на всеки час
+        // Нотификациите се зареждат само при първоначално отваряне на страницата
+        // При необходимост потребителят може да обнови страницата ръчно
+        // Това спестява 24 заявки на ден при отворен админ панел
     })();
 });
 

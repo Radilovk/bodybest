@@ -380,26 +380,32 @@ export class MacroAnalyticsCard extends HTMLElement {
   }
 
   setupAutoRefresh() {
+    // ОПТИМИЗАЦИЯ: Премахнато автоматично refresh, което създаваше ненужни заявки на всеки 60 секунди
+    // Данните се зареждат само при промяна на атрибутите или ръчно извикване на setData
+    // Това намалява натоварването на backend значително, особено при множество отворени табове
     if (this.refreshTimer) {
       clearInterval(this.refreshTimer);
       this.refreshTimer = null;
     }
+    
+    // Изпълняваме еднократно зареждане само ако има endpoint и не са зададени данни
     const endpoint = this.getAttribute('data-endpoint');
-    if (!endpoint || !this.isConnected) return;
-    const interval = parseInt(this.getAttribute('refresh-interval') || '60000', 10);
-    const fetchData = async () => {
-      try {
-        const res = await fetch(endpoint);
-        const data = await res.json();
-        if (data.plan && data.current) {
-          this.setData(data);
+    const hasData = this.hasAttribute('plan-data') && this.hasAttribute('current-data');
+    
+    if (endpoint && !hasData && this.isConnected) {
+      // Зареждаме данните веднъж при инициализация
+      (async () => {
+        try {
+          const res = await fetch(endpoint);
+          const data = await res.json();
+          if (data.plan && data.current) {
+            this.setData(data);
+          }
+        } catch (e) {
+          console.error('Failed to fetch macro data', e);
         }
-      } catch (e) {
-        console.error('Failed to fetch macro data', e);
-      }
-    };
-    fetchData();
-    this.refreshTimer = setInterval(fetchData, interval);
+      })();
+    }
   }
 
   setData({ plan, current }) {
