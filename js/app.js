@@ -15,6 +15,7 @@ import { debugLog, enableDebug } from './logger.js';
 import { safeParseFloat, escapeHtml, fileToDataURL, normalizeDailyLogs, getLocalDate } from './utils.js';
 import { selectors, initializeSelectors, loadInfoTexts } from './uiElements.js';
 import { getMetricDescription } from './metricUtils.js';
+import { cachedFetch, clearCache } from './requestCache.js';
 import {
     initializeTheme,
     loadAndApplyColors,
@@ -269,6 +270,8 @@ export function resetAppState() {
     currentUserId = null;
     fullDashboardData = {};
     chatHistory = [];
+    // ОПТИМИЗАЦИЯ: Изчистваме request кеша при reset на приложението
+    clearCache();
     todaysMealCompletionStatus = {};
     todaysPlanMacros = {
         calories: 0,
@@ -884,9 +887,13 @@ export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
 export async function refreshAnalytics(skipUiUpdate = false) {
     if (!currentUserId) return;
     try {
-        const resp = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}`);
-        const data = await resp.json().catch(() => ({}));
-        if (resp.ok && data.analytics) {
+        // ОПТИМИЗАЦИЯ: Използваме cachedFetch с TTL от 30 секунди
+        // Избягваме многократни заявки ако потребителят често сменя табовете
+        const data = await cachedFetch(`${apiEndpoints.dashboard}?userId=${currentUserId}`, {
+            ttl: 30000 // 30 секунди
+        });
+        
+        if (data && data.analytics) {
             fullDashboardData.analytics = data.analytics;
             if (!skipUiUpdate) {
                 updateAnalyticsSections(data.analytics);
