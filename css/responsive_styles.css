@@ -124,16 +124,37 @@
 
   .tracker .metric-rating {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     margin-bottom: var(--space-xl);
-    gap: var(--space-xs);
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
   }
   .tracker .metric-rating:last-child {
     margin-bottom: 0;
   }
   .tracker .metric-rating label {
-    flex-basis: auto; 
-    margin-bottom: var(--space-xs); 
+    flex-basis: auto;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0;
+  }
+  .tracker .metric-rating label > span:first-child {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    flex: 1;
+  }
+  .tracker .metric-rating .rating-value {
+    margin: 0 var(--space-sm);
+  }
+  .tracker .metric-rating .metric-info-btn {
+    margin-left: auto;
+    flex-shrink: 0;
   }
   .tracker .daily-log-weight-metric .daily-log-weight-input-field,
   .tracker .rating-squares {
@@ -141,7 +162,10 @@
     max-width: none; 
     justify-content: space-around; 
   }
-  .rating-square { flex-grow: 1; } 
+  .rating-square { 
+    flex-grow: 1;
+    height: 20px;
+  } 
 
   /* Responsive changes for meal list */
   .meal-list li {

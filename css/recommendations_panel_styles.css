@@ -1,50 +1,172 @@
 /* --- 6.4. Таб "Препоръки" - Стилизиране на картите като кутийки --- */
-.recommendation-section { margin-bottom: var(--space-xl); }
+.recommendation-section { 
+  margin-bottom: var(--space-xl); 
+}
 .recommendation-section > h3 {
-  font-size: clamp(1.35rem, 3.2vw, 1.75rem); border-bottom: 2px solid var(--border-color);
-  padding-bottom: var(--space-sm); margin-bottom: var(--space-lg);
+  font-size: clamp(1.35rem, 3.2vw, 1.75rem); 
+  border-bottom: 3px solid var(--primary-color);
+  padding-bottom: var(--space-md); 
+  margin-bottom: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--primary-color);
+  font-weight: 700;
 }
 .recommendation-section .card {
   margin-bottom: var(--space-lg);
-  background-color: var(--metric-value-group-bg-initial);
-  border: 1px solid var(--border-color);
+  background: linear-gradient(135deg, var(--card-bg) 0%, color-mix(in srgb, var(--card-bg) 95%, var(--primary-color)) 100%);
+  border: 2px solid var(--border-color);
   padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.recommendation-section .card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 100%;
+  background: var(--primary-color);
+  opacity: 0.7;
+  transition: width 0.3s ease;
+}
+.recommendation-section .card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-color);
+}
+.recommendation-section .card:hover::before {
+  width: 8px;
 }
 
 /* Уеднаквяване размера на картите в таб "Съвети" при сгънато състояние */
 #recs-panel .collapsible-card {
-  min-height: var(--tips-collapsed-height, 4.5rem);
-  transition: background-color 0.3s ease;
+  min-height: var(--tips-collapsed-height, 5rem);
+  transition: all 0.3s ease;
 }
 
-/* Цветови нюанси според контекста */
-#recs-panel .tip-card-success { background-color: var(--note-success-bg); }
-#recs-panel .tip-card-critical { background-color: var(--note-critical-bg); }
-#recs-panel .tip-card-info { background-color: var(--note-info-bg); }
-#recs-panel .tip-card-warning { background-color: var(--note-important-bg); }
-.tip-card-supplement { background-color: var(--supplement-card-bg); }
-body.dark-theme .recommendation-section .card {
-  background-color: var(--metric-value-group-bg-initial);
+/* Цветови нюанси според контекста с подобрени градиенти */
+#recs-panel .tip-card-success { 
+  background: linear-gradient(135deg, var(--note-success-bg) 0%, color-mix(in srgb, var(--note-success-bg) 90%, white) 100%);
+  border-color: color-mix(in srgb, var(--note-success-bg) 70%, var(--color-success));
 }
-.recommendation-section .card h4 { /* Заглавията в картите на препоръките */
-    color: var(--primary-color);
-    margin-bottom: var(--space-md);
-    padding-bottom: var(--space-sm);
-    border-bottom: 1px solid var(--border-color-soft);
+#recs-panel .tip-card-success::before { background: var(--color-success); }
+
+#recs-panel .tip-card-critical { 
+  background: linear-gradient(135deg, var(--note-critical-bg) 0%, color-mix(in srgb, var(--note-critical-bg) 90%, white) 100%);
+  border-color: color-mix(in srgb, var(--note-critical-bg) 70%, var(--color-error));
+}
+#recs-panel .tip-card-critical::before { background: var(--color-error); }
+
+#recs-panel .tip-card-info { 
+  background: linear-gradient(135deg, var(--note-info-bg) 0%, color-mix(in srgb, var(--note-info-bg) 90%, white) 100%);
+  border-color: color-mix(in srgb, var(--note-info-bg) 70%, var(--color-info));
+}
+#recs-panel .tip-card-info::before { background: var(--color-info); }
+
+#recs-panel .tip-card-warning { 
+  background: linear-gradient(135deg, var(--note-important-bg) 0%, color-mix(in srgb, var(--note-important-bg) 90%, white) 100%);
+  border-color: color-mix(in srgb, var(--note-important-bg) 70%, var(--color-warning));
+}
+#recs-panel .tip-card-warning::before { background: var(--color-warning); }
+
+.tip-card-supplement { 
+  background: linear-gradient(135deg, var(--supplement-card-bg) 0%, color-mix(in srgb, var(--supplement-card-bg) 90%, var(--primary-color)) 100%);
+  border-color: color-mix(in srgb, var(--supplement-card-bg) 70%, var(--primary-color));
+}
+.tip-card-supplement::before { background: var(--primary-color); }
+
+/* Стилове за секцията "Поведенчески стратегии" */
+#recStrategiesContent .card {
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--card-bg) 95%, var(--secondary-color)) 0%, 
+    var(--card-bg) 100%);
+  border-left: 4px solid var(--secondary-color);
+  margin-bottom: var(--space-md);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+#recStrategiesContent .card::before {
+  background: var(--secondary-color);
+}
+
+body.dark-theme .recommendation-section .card {
+  background: linear-gradient(135deg, var(--metric-value-group-bg-initial) 0%, color-mix(in srgb, var(--metric-value-group-bg-initial) 95%, var(--primary-color)) 100%);
+}
+.recommendation-section .card h4 { 
+  color: var(--primary-color);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 2px solid var(--border-color-soft);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+.recommendation-section .card h4 .icon {
+  width: 1.3em;
+  height: 1.3em;
+  flex-shrink: 0;
 }
 
 #recFoodAllowedContent ul, #recFoodLimitContent ul, #recSupplementsContent ul {
-  padding-left: var(--space-md); columns: 2; column-gap: var(--space-lg);
+  padding-left: var(--space-lg); 
+  columns: 2; 
+  column-gap: var(--space-lg);
+  list-style: none;
 }
-@media (max-width: 768px) { #recFoodAllowedContent ul, #recFoodLimitContent ul, #recSupplementsContent ul { columns: 1; } }
+@media (max-width: 768px) { 
+  #recFoodAllowedContent ul, #recFoodLimitContent ul, #recSupplementsContent ul { 
+    columns: 1; 
+  } 
+}
 #recFoodAllowedContent li, #recFoodLimitContent li, #recSupplementsContent li {
-  list-style: disc; margin-bottom: var(--space-xs); padding-left: var(--space-xs);
+  margin-bottom: var(--space-sm); 
+  padding-left: var(--space-md);
+  position: relative;
+}
+#recFoodAllowedContent li::before, 
+#recFoodLimitContent li::before, 
+#recSupplementsContent li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--color-success);
+  font-weight: 700;
+}
+#recFoodLimitContent li::before {
+  content: '✗';
+  color: var(--color-error);
+}
+#recSupplementsContent li::before {
+  content: '●';
+  color: var(--primary-color);
 }
 #recFoodAllowedContent strong {
-  font-weight: 700; color: var(--primary-color); display: block;
-  margin-top: var(--space-md); margin-bottom: var(--space-xs); font-size: 1.05em;
+  font-weight: 700; 
+  color: var(--primary-color); 
+  display: block;
+  margin-top: var(--space-md); 
+  margin-bottom: var(--space-sm); 
+  font-size: 1.05em;
+  padding-left: 0;
 }
 #recFoodAllowedContent ul:first-of-type strong { margin-top: 0; }
+
+/* Подобрени стилове за плейсхолдърите */
+.recommendation-section .placeholder {
+  color: var(--text-color-secondary);
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-lg);
+}
 
 /* --- 6.5. Нови секции: История на прогреса --- */
 #progressHistoryCard .chart-container {
