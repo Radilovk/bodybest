@@ -4539,6 +4539,11 @@ ${cleanedJson.substring(0, 2000)}
                     break;
                 } else if (missingSections.length === previousMissingCount) {
                     console.warn(`PROCESS_USER_PLAN_WARN (${userId}): No progress in attempt ${repairAttempt}, still missing: ${missingSections.join(', ')}`);
+                    // Ако няма напредък в последователни опити, прекъсваме цикъла рано
+                    if (repairAttempt >= 2) {
+                        console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Breaking retry loop due to no progress after ${repairAttempt} attempts`);
+                        break;
+                    }
                 }
                 
             } catch (repairErr) {
@@ -4550,7 +4555,7 @@ ${cleanedJson.substring(0, 2000)}
         
         // След всички опити, ако все още има липсващи секции, добавяме грешка
         if (missingSections.length > 0) {
-            const finalMissingMsg = `AI не успя да попълни секциите след ${maxRepairAttempts} опита: ${missingSections.join(', ')}`;
+            const finalMissingMsg = `AI не успя да попълни секциите след ${maxRepairAttempts} опити: ${missingSections.join(', ')}`;
             console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${finalMissingMsg}`);
             planBuilder.generationMetadata.errors.push(finalMissingMsg);
         }
