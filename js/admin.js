@@ -1128,15 +1128,15 @@ async function showClient(userId) {
         let initialAnswers = dashData?.initialAnswers || {};
         let userKv = {};
 
-        const profileStatus = data?.status;
-        const profileMessage = data?.message;
+        const profileStatus = data?.status ?? 'unknown';
+        const profileMessage = data?.message ?? 'Няма съобщение';
         if (!data || !data.success) {
             alert(`Профилът върна ${profileStatus}: ${profileMessage}`);
         }
 
-        const dashStatus = dashData.status ?? dashResp.status;
-        const dashMessage = dashData.message ?? dashResp.statusText;
-        if (!dashResp.ok || !dashData.success) {
+        const dashStatus = dashData?.status ?? 'unknown';
+        const dashMessage = dashData?.message ?? 'Няма съобщение';
+        if (!dashData || !dashData.success) {
             alert(`Таблото върна ${dashStatus}: ${dashMessage}`);
         }
 
@@ -1181,7 +1181,7 @@ async function showClient(userId) {
         }
 
         let hasError = false;
-        if (profileResp.ok && data.success) {
+        if (data?.success) {
             setCurrentUserId(userId);
             detailsSection.classList.remove('hidden');
             resetTabs();
@@ -1220,7 +1220,7 @@ async function showClient(userId) {
         } else {
             hasError = true;
         }
-        if (dashResp.ok && dashData.success) {
+        if (dashData?.success) {
             displayInitialAnswers(dashData.initialAnswers || {}, false);
             const menu = dashData.planData?.week1Menu || {};
             displayPlanMenu(menu, false);
