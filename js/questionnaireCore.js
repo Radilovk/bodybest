@@ -20,20 +20,20 @@ const numericRanges = {
   height: { min: 100, max: 250 },
   weight: { min: 30, max: 300 },
   lossKg: { min: 1, max: 100 },
-  q1745847247058: { min: 1, max: 300 },
-  q1745847190198: { min: 1, max: 300 },
-  q1745847315231: { min: 1, max: 300 }
+  activityDurationDaily: { min: 1, max: 300 },
+  activityDurationWeekly: { min: 1, max: 300 },
+  activityDurationRare: { min: 1, max: 300 }
 };
 
 const requiredFields = [
   'name','gender','age','height','weight','goal','lossKg','motivation','weightChange','weightChangeDetails',
-  'dietHistory','dietType','dietResult','sleepHours','sleepInterrupt','chronotype','q1745878295708','stressLevel',
-  'physicalActivity','activityTypeDaily','q1745847247058','activityTypeWeekly','q1745847190198','activityTypeRare',
-  'q1745847315231','q1745877358368','q1745878063775','q1745890775342','waterIntake','waterReplaceFreq','q1745891342178',
-  'q1745891468155','q1745891537884','overeatingFrequency','foodCravings','foodCravingsDetails','foodTriggers',
-  'q1745891178105','nighteat','q1745891865984','compensationmethod','q1745806296700','comparisson','q1745805447648',
-  'q1745805721482','alcoholFrequency','foodPreference','q1745806409218','q1745806494081','mainChallenge','q1745892518511',
-  'medicalConditions','q1745804366749','medications','medicationsList','supplementsList'
+  'dietHistory','dietType','dietResult','sleepHours','sleepInterrupt','chronotype','dailyActivityLevel','stressLevel',
+  'physicalActivity','activityTypeDaily','activityDurationDaily','activityTypeWeekly','activityDurationWeekly','activityTypeRare',
+  'activityDurationRare','regularActivityTypes','weeklyActivityFrequency','activityDuration','waterIntake','waterReplaceFreq','waterReplacementRare',
+  'waterReplacementSometimes','waterReplacementOften','overeatingFrequency','foodCravings','foodCravingsDetails','foodTriggers',
+  'foodTriggersOther','nighteat','eatingHabitsOther','compensationmethod','compensationMethodOther','comparisson','eatingOutFrequency',
+  'eatingOutType','alcoholFrequency','foodPreference','foodPreferenceOther','foodPreferenceDisliked','mainChallenge','additionalComments',
+  'medicalConditions','medicalConditionsOther','medications','medicationsList','supplementsList'
 ];
 
 function flattenQuestions(questions) {
@@ -147,9 +147,21 @@ function createQuestionPage(question, pageIndex) {
   } else if (['text','number','email'].includes(question.type)) {
     const range = numericRanges[question.id];
     const rangeAttrs = (question.type === 'number' && range) ? `min="${range.min}" max="${range.max}"` : '';
-    html += `<input id="${question.id}" type="${question.type}" placeholder="" ${rangeAttrs} ${isRequired ? 'required' : ''} ${question.type === 'email' ? 'autocomplete="email"' : ''}>`;
+    
+    // Add helpful placeholders based on question ID
+    let placeholder = '';
+    if (question.id === 'name') placeholder = 'напр. Иван Петров';
+    else if (question.id === 'age') placeholder = 'напр. 35';
+    else if (question.id === 'height') placeholder = 'напр. 175';
+    else if (question.id === 'weight') placeholder = 'напр. 70';
+    else if (question.id === 'lossKg') placeholder = 'напр. 5';
+    else if (question.id === 'email') placeholder = 'вашият@email.com';
+    else if (question.type === 'number' && range) placeholder = `${range.min}-${range.max}`;
+    
+    html += `<input id="${question.id}" type="${question.type}" placeholder="${placeholder}" ${rangeAttrs} ${isRequired ? 'required' : ''} ${question.type === 'email' ? 'autocomplete="email"' : ''}>`;
   } else if (question.type === 'textarea') {
-    html += `<textarea id="${question.id}" rows="4" ${isRequired ? 'required' : ''}></textarea>`;
+    const placeholder = question.id === 'mainChallenge' ? 'Опишете вашето най-голямо предизвикателство...' : 'Въведете вашия отговор...';
+    html += `<textarea id="${question.id}" rows="4" placeholder="${placeholder}" ${isRequired ? 'required' : ''}></textarea>`;
   } else if (question.type === 'select') {
     html += `<select id="${question.id}" ${isRequired ? 'required' : ''}><option value="">Изберете</option>`;
     (question.options || []).forEach(opt => {
