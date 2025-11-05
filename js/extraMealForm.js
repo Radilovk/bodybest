@@ -6,7 +6,7 @@ import { currentUserId } from './app.js';
 import nutrientOverrides from '../kv/DIET_RESOURCES/nutrient_overrides.json' with { type: 'json' };
 import * as macroUtils from './macroUtils.js';
 const { registerNutrientOverrides, getNutrientOverride, loadProductMacros } = macroUtils;
-const scaleMacros = macroUtils.scaleMacros || ((m) => m);
+const scaleMacros = macroUtils.scaleMacros || ((m, _g) => m);
 import {
     addExtraMealWithOverride,
     appendExtraMealCard
@@ -136,8 +136,11 @@ export async function handleExtraMealFormSubmit(event) {
                     field.dataset.autofilled = 'true';
                 }
             });
-        } catch {
-            return; // showToast already called in fetchMacrosFromAi
+        } catch (error) {
+            // Грешката вече е обработена в fetchMacrosFromAi чрез showToast
+            // Тук просто прекратяваме изпълнението
+            console.debug('Nutrient lookup cancelled or failed:', error.message);
+            return;
         }
     }
 

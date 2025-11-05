@@ -30,7 +30,9 @@ const DEFAULT_CONFIG = {
 function getCacheKey(url, options = {}) {
   const method = options.method || 'GET';
   const body = options.body ? JSON.stringify(options.body) : '';
-  return `${method}:${url}:${body}`;
+  // Включваме Authorization header в ключа, за да избегнем cache collision между потребители
+  const authHeader = options.headers?.Authorization || options.headers?.authorization || '';
+  return `${method}:${url}:${authHeader}:${body}`;
 }
 
 /**
@@ -47,7 +49,11 @@ function isValid(entry, ttl) {
 
 /**
  * Почиства остарели записи от кеша
+ * Извиква се автоматично при достигане на определен размер
  */
+let cleanupCounter = 0;
+const CLEANUP_INTERVAL = 10; // Почистване на всеки 10 заявки
+
 function cleanup() {
   const now = Date.now();
   for (const [key, entry] of cache.entries()) {
@@ -97,7 +103,12 @@ export async function cachedFetch(url, options = {}) {
   // Проверяваме дали има pending заявка за същия ресурс (deduplication)
   const pending = pendingRequests.get(cacheKey);
   if (pending) {
-    return pending;
+    // Връщаме копие на pending promise за да не споделяме същата инстанция
+    return pending.catch(err => {
+      // Ако pending заявката е неуспешна, я преизвикваме за този caller
+      pendingRequests.delete(cacheKey);
+      throw err;
+    });
   }
   
   // Правим нова заявка
@@ -115,13 +126,20 @@ export async function cachedFetch(url, options = {}) {
         timestamp: Date.now(),
       });
       
-      // Периодично почистване
-      if (Math.random() < 0.1) {
+      // Детерминирано почистване на всеки N заявки
+      cleanupCounter++;
+      if (cleanupCounter >= CLEANUP_INTERVAL) {
+        cleanupCounter = 0;
         cleanup();
       }
       
       return data;
+    } catch (error) {
+      // При грешка премахваме pending заявката, за да може следваща да опита отново
+      pendingRequests.delete(cacheKey);
+      throw error;
     } finally {
+      // Винаги почистваме pending заявката след приключване
       pendingRequests.delete(cacheKey);
     }
   })();
