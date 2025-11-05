@@ -882,8 +882,8 @@ function populateProfileTab(userName, initialData, currentStatus, initialAnswers
         const foodPreferenceTrimmed = typeof foodPreference === 'string' ? foodPreference.trim().toLowerCase() : '';
         if (foodPreference && foodPreferenceTrimmed !== '' && foodPreferenceTrimmed !== 'нямам') {
             let preferenceText = foodPreference;
-            const dislikedFoodsKey = "q1745806494081"; const dislikedFoodsDetails = safeGet(initialAnswers, dislikedFoodsKey);
-            const otherPrefKey = "q1745806409218"; const otherPrefDetails = safeGet(initialAnswers, otherPrefKey);
+            const dislikedFoodsDetails = safeGet(initialAnswers, 'foodPreferenceDisliked') || safeGet(initialAnswers, 'q1745806494081');
+            const otherPrefDetails = safeGet(initialAnswers, 'foodPreferenceOther') || safeGet(initialAnswers, 'q1745806409218');
             if (foodPreference === "Друго / Не обичам следните:" && dislikedFoodsDetails && dislikedFoodsDetails.trim() !== '') preferenceText = `Посочени като "Друго / Не обичам следните": ${dislikedFoodsDetails}`;
             else if (foodPreferenceTrimmed.startsWith("друго") && otherPrefDetails && otherPrefDetails.trim() !== '') preferenceText = `Посочени като "Друго": ${otherPrefDetails}`;
             const note = document.createElement('div'); note.className = 'info-note note-base';
@@ -1034,11 +1034,13 @@ function populateRecsTab(planData, initialAnswers, additionalGuidelines) {
     if (psychologicalGuidance?.self_compassion_reminder) strategiesData.push({ title: '<i class="bi bi-heart-fill"></i> Разбиране към себе си', content: psychologicalGuidance.self_compassion_reminder });
     const activityContent = [];
     if (initialAnswers?.physicalActivity === 'Да') {
-        const types = initialAnswers.q1745877358368; if (Array.isArray(types) && types.length > 0) activityContent.push(`<strong>Видове:</strong> ${types.join(', ')}`);
-        if (initialAnswers.q1745878063775) activityContent.push(`<strong>Честота (пъти/седм.):</strong> ${initialAnswers.q1745878063775}`);
-        if (initialAnswers.q1745890775342) activityContent.push(`<strong>Продължителност:</strong> ${initialAnswers.q1745890775342}`);
+        const types = initialAnswers.regularActivityTypes || initialAnswers.q1745877358368; if (Array.isArray(types) && types.length > 0) activityContent.push(`<strong>Видове:</strong> ${types.join(', ')}`);
+        const frequency = initialAnswers.weeklyActivityFrequency || initialAnswers.q1745878063775;
+        if (frequency) activityContent.push(`<strong>Честота (пъти/седм.):</strong> ${frequency}`);
+        const duration = initialAnswers.activityDuration || initialAnswers.q1745890775342;
+        if (duration) activityContent.push(`<strong>Продължителност:</strong> ${duration}`);
     } else if (initialAnswers?.physicalActivity === 'Не') activityContent.push('Не са посочени планирани спортни занимания.');
-    const dailyActivityLevel = initialAnswers?.q1745878295708; if (dailyActivityLevel) activityContent.push(`<strong>Ежедневна активност (общо ниво):</strong> ${dailyActivityLevel}`);
+    const dailyActivityLevel = initialAnswers?.dailyActivityLevel || initialAnswers?.q1745878295708; if (dailyActivityLevel) activityContent.push(`<strong>Ежедневна активност (общо ниво):</strong> ${dailyActivityLevel}`);
     if (activityContent.length > 0) strategiesData.push({ title: '<i class="bi bi-activity" aria-hidden="true"></i> Физическа активност (от въпросник)', content: activityContent.map(item => `<span>${item}</span>`).join('<br>') });
     renderAccordionGroup(selectors.recStrategiesContent, strategiesData, '<div class="card placeholder"><p>Няма налични стратегии.</p></div>', true);
     if (selectors.recSupplementsContent) {
