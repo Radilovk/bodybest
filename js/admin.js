@@ -8,6 +8,7 @@ import { loadMaintenanceFlag, setMaintenanceFlag } from './maintenanceMode.js';
 import { renderTemplate } from '../utils/templateRenderer.js';
 import { ensureChart } from './chartLoader.js';
 import { setupPlanRegeneration } from './planRegenerator.js';
+import { cachedFetch } from './requestCache.js';
 
 let activeUserId = null;
 let activeClientName = null;
@@ -1118,21 +1119,18 @@ async function showClient(userId) {
         setupProfileCardNav();
     }
     try {
-        const [profileResp, dashResp] = await Promise.all([
-            fetch(`${apiEndpoints.getProfile}?userId=${userId}`),
-            fetch(`${apiEndpoints.dashboard}?userId=${userId}`)
-        ]);
+        // ОПТИМИЗАЦИЯ: Използваме cachedFetch за да избегнем многократни заявки
         const [data, dashData] = await Promise.all([
-            profileResp.json().catch(() => ({})),
-            dashResp.json().catch(() => ({}))
+            cachedFetch(`${apiEndpoints.getProfile}?userId=${userId}`, { ttl: 60000 }), // 1 минута
+            cachedFetch(`${apiEndpoints.dashboard}?userId=${userId}`, { ttl: 30000 })   // 30 секунди
         ]);
 
-        let initialAnswers = dashData.initialAnswers || {};
+        let initialAnswers = dashData?.initialAnswers || {};
         let userKv = {};
 
-        const profileStatus = data.status ?? profileResp.status;
-        const profileMessage = data.message ?? profileResp.statusText;
-        if (!profileResp.ok || !data.success) {
+        const profileStatus = data?.status;
+        const profileMessage = data?.message;
+        if (!data || !data.success) {
             alert(`Профилът върна ${profileStatus}: ${profileMessage}`);
         }
 

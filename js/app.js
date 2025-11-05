@@ -595,27 +595,12 @@ export async function loadDashboardData() {
             return;
         }
 
-        const response = await fetch(`${apiEndpoints.dashboard}?userId=${currentUserId}`);
-        const jsonClone = response.clone();
-        let data = {};
-        let rawText = '';
-        try {
-            data = await jsonClone.json();
-        } catch (err) {
-            console.error('Error parsing dashboard response JSON:', err);
-            rawText = await response.text().catch(() => '');
-            if (rawText) {
-                try {
-                    data = JSON.parse(rawText);
-                } catch {
-                    data.message = rawText;
-                }
-            }
-        }
-        if (!response.ok) {
-            const serverMsg = data.message || rawText || `${response.status} ${response.statusText}`;
-            throw new Error(`Грешка от сървъра: ${serverMsg}`);
-        }
+        // ОПТИМИЗАЦИЯ: Използваме cachedFetch за да избегнем многократни заявки
+        // при tab switching или page reload в кратък период от време
+        const data = await cachedFetch(`${apiEndpoints.dashboard}?userId=${currentUserId}`, {
+            ttl: 30000 // 30 секунди кеш - балансира актуалност и производителност
+        });
+        
         debugLog('Received planData', data.planData);
         if (!data.success) throw new Error(data.message || 'Неуспешно зареждане на данни от сървъра.');
 

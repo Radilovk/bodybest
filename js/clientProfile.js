@@ -2,6 +2,7 @@ import { apiEndpoints } from './config.js';
 import { labelMap, statusMap } from './labelMap.js';
 import { initPlanEditor, gatherPlanFormData } from './planEditor.js';
 import { ensureChart } from './chartLoader.js';
+import { cachedFetch } from './requestCache.js';
 
 let macroChartPlan;
 let macroChartAnalytics;
@@ -47,22 +48,21 @@ async function loadData() {
   const userId = getUserId();
   if (!userId) return;
   try {
-    const [profileRes, dashRes] = await Promise.all([
-      fetch(`${apiEndpoints.getProfile}?userId=${userId}`),
-      fetch(`${apiEndpoints.dashboard}?userId=${userId}`)
+    // ОПТИМИЗАЦИЯ: Използваме cachedFetch за да избегнем многократни заявки
+    const [profileData, dashData] = await Promise.all([
+      cachedFetch(`${apiEndpoints.getProfile}?userId=${userId}`, { ttl: 60000 }), // 1 минута
+      cachedFetch(`${apiEndpoints.dashboard}?userId=${userId}`, { ttl: 30000 })   // 30 секунди
     ]);
-    const profileData = await profileRes.json();
-    const dashData = await dashRes.json();
-    if (profileRes.ok && profileData.success) {
-      fillProfile(profileData, dashData.initialAnswers);
-    } else if (!profileRes.ok) {
-      alert(profileData.message || 'Грешка при зареждане на профила.');
+    if (profileData && profileData.success) {
+      fillProfile(profileData, dashData?.initialAnswers);
+    } else {
+      alert(profileData?.message || 'Грешка при зареждане на профила.');
     }
-    if (dashRes.ok && dashData.success) {
+    if (dashData && dashData.success) {
       await fillDashboard(dashData);
       fillAdminNotes(dashData.currentStatus);
-    } else if (!dashRes.ok) {
-      alert(dashData.message || 'Грешка при зареждане на таблото.');
+    } else {
+      alert(dashData?.message || 'Грешка при зареждане на таблото.');
     }
   } catch (err) {
     console.error('Load error', err);

@@ -180,7 +180,7 @@ test('класифицира over и under макросите', async () => {
   expect(fatDiv.classList.contains('under')).toBe(true);
 });
 
-test('data-endpoint и refresh-interval извикват fetch периодично', async () => {
+test('data-endpoint зарежда данните еднократно (без polling)', async () => {
   jest.useFakeTimers();
   const endpoint = '/macros';
   global.fetch = jest.fn((url) => {
@@ -222,13 +222,15 @@ test('data-endpoint и refresh-interval извикват fetch периодич�
   });
   const card = document.createElement('macro-analytics-card');
   card.setAttribute('data-endpoint', endpoint);
-  card.setAttribute('refresh-interval', '5000');
   document.body.appendChild(card);
-  await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(endpoint));
+  // ОПТИМИЗАЦИЯ: cachedFetch зарежда данните само веднъж при инициализация (polling премахнат)
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(endpoint, expect.any(Object)));
+  
+  // След 5 секунди НЕ трябва да има повторна заявка (polling е премахнат)
   await jest.advanceTimersByTimeAsync(5000);
   await Promise.resolve();
   const endpointCalls = global.fetch.mock.calls.filter(c => c[0] === endpoint).length;
-  expect(endpointCalls).toBe(2);
+  expect(endpointCalls).toBe(1); // Само едно извикване, не 2 както преди
 });
 
 test('re-renders chart on theme change', async () => {

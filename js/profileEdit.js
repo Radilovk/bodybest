@@ -1,6 +1,7 @@
 import { safeParseFloat, safeGet } from './utils.js';
 import { currentUserId } from './app.js';
 import { apiEndpoints } from './config.js';
+import { cachedFetch } from './requestCache.js';
 
 // Apply saved theme so the page matches the dashboard
 (function applySavedTheme() {
@@ -17,9 +18,10 @@ const form = document.getElementById('profileEditForm');
 if (form) {
   const prefillProfileData = async () => {
     try {
-      const res = await fetch(`${apiEndpoints.getProfile}?userId=${currentUserId}`);
-      if (!res.ok) throw new Error('Server error');
-      const data = await res.json();
+      // ОПТИМИЗАЦИЯ: Използваме cachedFetch за да избегнем многократни заявки
+      const data = await cachedFetch(`${apiEndpoints.getProfile}?userId=${currentUserId}`, {
+        ttl: 60000 // 1 минута кеш - profile данните рядко се променят
+      });
 
       form.name.value = safeGet(data, 'name', '');
       form.fullname.value = safeGet(data, 'fullname', '');
