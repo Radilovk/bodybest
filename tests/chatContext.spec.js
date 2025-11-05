@@ -68,6 +68,7 @@ describe('chat context caching', () => {
       goal: 'Отслабване',
       foodPreference: 'Без ограничения',
       medicalConditions: ['нямам'],
+      foodPreferenceDisliked: 'Брюкселско зеле',
       q1745806494081: 'Брюкселско зеле'
     };
     const finalPlan = {

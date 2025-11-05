@@ -3049,7 +3049,7 @@ function estimateMacros(initial = {}) {
     const age = Number(initial.age);
     if (!weight || !height || !age) return null;
     const gender = (initial.gender || '').toLowerCase().startsWith('м') ? 'male' : 'female';
-    const activity = (initial.q1745878295708 || '').toLowerCase();
+    const activity = (initial.dailyActivityLevel || initial.q1745878295708 || '').toLowerCase();
     const activityFactors = {
         'ниско': 1.2, 'sedentary': 1.2, 'седящ': 1.2,
         'средно': 1.375, 'умерено': 1.375,
@@ -5193,9 +5193,9 @@ async function processSingleUserPlan(userId, env) {
             '%%USER_EMAIL%%': safeGet(initialAnswers, 'email', 'N/A'), '%%USER_GOAL%%': safeGet(initialAnswers, 'goal', 'Общо здраве'),
             '%%FOOD_PREFERENCE%%': safeGet(initialAnswers, 'foodPreference', 'Нямам специфични предпочитания'),
             '%%INTOLERANCES%%': (() => { const c = safeGet(initialAnswers, 'medicalConditions', []); let i = []; if (c.includes("Цьолиакия / глутенова непоносимост")) i.push("глутен"); if (c.includes("Лактозна непоносимост")) i.push("лактоза"); if (c.includes("Алергия към мляко")) i.push("мляко (алергия)"); if (c.includes("Алергия към яйца")) i.push("яйца (алергия)"); if (c.includes("Алергия към ядки")) i.push("ядки (алергия)"); if (c.includes("Алергия към соя")) i.push("соя (алергия)"); return i.length > 0 ? i.join(', ') : "Няма декларирани"; })(),
-            '%%DISLIKED_FOODS%%': safeGet(initialAnswers, 'q1745806494081', '') || safeGet(initialAnswers, 'q1745806409218', 'Няма посочени нехаресвани храни'),
+            '%%DISLIKED_FOODS%%': safeGet(initialAnswers, 'foodPreferenceDisliked', '') || safeGet(initialAnswers, 'q1745806494081', '') || safeGet(initialAnswers, 'foodPreferenceOther', '') || safeGet(initialAnswers, 'q1745806409218', 'Няма посочени нехаресвани храни'),
             '%%CONDITIONS%%': (safeGet(initialAnswers, 'medicalConditions', []).filter(c => c && c.toLowerCase() !== 'нямам' && c.toLowerCase() !== 'друго')).join(', ') || 'Няма декларирани специфични медицински състояния',
-            '%%ACTIVITY_LEVEL%%': (() => { const pa = safeGet(initialAnswers, 'physicalActivity', 'Не'); const da = safeGet(initialAnswers, 'q1745878295708', 'Не е посочено'); let sd = "Няма регулярни спортни занимания."; if (pa === 'Да') { const stArr = safeGet(initialAnswers, 'q1745877358368', []); const st = Array.isArray(stArr) ? stArr.join(', ') : 'Не е посочен тип спорт'; const sf = safeGet(initialAnswers, 'q1745878063775', 'Непосочена честота'); const sDur = safeGet(initialAnswers, 'q1745890775342', 'Непосочена продължителност'); sd = `Спорт: ${st || 'Не е посочен тип'}; Честота: ${sf}; Продължителност: ${sDur}`; } return `Ежедневна активност (общо ниво): ${da}. ${sd}`; })(),
+            '%%ACTIVITY_LEVEL%%': (() => { const pa = safeGet(initialAnswers, 'physicalActivity', 'Не'); const da = safeGet(initialAnswers, 'dailyActivityLevel', '') || safeGet(initialAnswers, 'q1745878295708', 'Не е посочено'); let sd = "Няма регулярни спортни занимания."; if (pa === 'Да') { const stArr = safeGet(initialAnswers, 'regularActivityTypes', []) || safeGet(initialAnswers, 'q1745877358368', []); const st = Array.isArray(stArr) ? stArr.join(', ') : 'Не е посочен тип спорт'; const sf = safeGet(initialAnswers, 'weeklyActivityFrequency', '') || safeGet(initialAnswers, 'q1745878063775', 'Непосочена честота'); const sDur = safeGet(initialAnswers, 'activityDuration', '') || safeGet(initialAnswers, 'q1745890775342', 'Непосочена продължителност'); sd = `Спорт: ${st || 'Не е посочен тип'}; Честота: ${sf}; Продължителност: ${sDur}`; } return `Ежедневна активност (общо ниво): ${da}. ${sd}`; })(),
             '%%STRESS_LEVEL%%': safeGet(initialAnswers, 'stressLevel', 'Не е посочено'), '%%SLEEP_INFO%%': `Часове сън: ${safeGet(initialAnswers, 'sleepHours', 'Непос.')}, Прекъсвания на съня: ${safeGet(initialAnswers, 'sleepInterrupt', 'Непос.')}`,
             '%%MAIN_CHALLENGES%%': safeGet(initialAnswers, 'mainChallenge', 'Няма посочени основни предизвикателства'), '%%USER_AGE%%': safeGet(initialAnswers, 'age', 'Няма данни'),
             '%%USER_GENDER%%': safeGet(initialAnswers, 'gender', 'Няма данни'), '%%USER_HEIGHT%%': safeGet(initialAnswers, 'height', 'Няма данни'),
@@ -5791,7 +5791,7 @@ function buildPromptDataFromRaw(initialAnswers, finalPlan, currentStatus, logEnt
     const userConditions = Array.isArray(conditionsList)
         ? conditionsList.filter(c => c && c.toLowerCase() !== 'нямам').join(', ') || 'Няма специфични'
         : 'Няма специфични';
-    const dislikes = safeGet(initialAnswers, 'q1745806494081', '') || safeGet(initialAnswers, 'q1745806409218', 'Няма');
+    const dislikes = safeGet(initialAnswers, 'foodPreferenceDisliked', '') || safeGet(initialAnswers, 'q1745806494081', '') || safeGet(initialAnswers, 'foodPreferenceOther', '') || safeGet(initialAnswers, 'q1745806409218', 'Няма');
     const userPreferences = `${safeGet(initialAnswers, 'foodPreference', 'N/A')}. Не харесва: ${dislikes}`;
     const calMac = safeGet(finalPlan, 'caloriesMacros', null);
     const initCalMac = calMac
@@ -5962,7 +5962,7 @@ async function assembleChatContext(
     const userConditions = Array.isArray(conditionsList)
         ? conditionsList.filter(c => c && c.toLowerCase() !== 'нямам').join(', ') || 'Няма специфични'
         : 'Няма специфични';
-    const dislikes = safeGet(answers, 'q1745806494081', '') || safeGet(answers, 'q1745806409218', 'Няма');
+    const dislikes = safeGet(answers, 'foodPreferenceDisliked', '') || safeGet(answers, 'q1745806494081', '') || safeGet(answers, 'foodPreferenceOther', '') || safeGet(answers, 'q1745806409218', 'Няма');
     const userPreferences = `${safeGet(answers, 'foodPreference', 'N/A')}. Не харесва: ${dislikes}`;
     const currWeight = safeParseFloat(safeGet(status, 'weight', null), null);
     const currW = currWeight !== null ? `${currWeight.toFixed(1)} кг` : 'N/A';

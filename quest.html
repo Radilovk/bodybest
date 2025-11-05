@@ -20,7 +20,10 @@
   Стилът му ще се управлява от quest_styles.css.
 -->
 <div class="step-indicator-container">
-  <span class="step-indicator-label">Стъпка <span id="questCurrentStep">0</span> от <span id="questTotalSteps">0</span></span>
+  <span class="step-indicator-label">
+    Стъпка <span id="questCurrentStep">0</span> от <span id="questTotalSteps">0</span>
+    <span id="questProgressPercent" style="margin-left: 10px; font-weight: bold; color: var(--accent-primary);">(0%)</span>
+  </span>
   <div class="progress-bar-steps"><div id="questProgressBar" class="step-progress-bar"></div></div>
 </div>
 

@@ -170,13 +170,13 @@
         ]
     },
     {
-        "id": "q1745878295708",
-        "text": "Ниво на активност в ежедневието ви:",
+        "id": "dailyActivityLevel",
+        "text": "Ниво на активност в ежедневието ви (работа, битови задължения):",
         "type": "radio",
         "options": [
-            "Ниско",
-            "Средно",
-            "Високо"
+            "Ниско (предимно седящ режим)",
+            "Средно (умерена активност)",
+            "Високо (много активен през деня)"
         ],
         "dependsOn": null,
         "children": []
@@ -220,7 +220,7 @@
                     "children": {
                         "Друго": [
                             {
-                                "id": "q1745877656660",
+                                "id": "otherActivityTypeDaily",
                                 "text": "Какъв вид спорт практикувате?",
                                 "type": "text",
                                 "options": [],
@@ -234,8 +234,8 @@
                     }
                 },
                 {
-                    "id": "q1745847247058",
-                    "text": "Продължителност на активността в минути.",
+                    "id": "activityDurationDaily",
+                    "text": "Продължителност на активността в минути (напр. 30, 45, 60):",
                     "type": "number",
                     "options": [],
                     "dependsOn": {
@@ -262,8 +262,8 @@
                     }
                 },
                 {
-                    "id": "q1745847190198",
-                    "text": "Продължителност на активността в минути.",
+                    "id": "activityDurationWeekly",
+                    "text": "Продължителност на активността в минути (напр. 30, 45, 60):",
                     "type": "number",
                     "options": [],
                     "dependsOn": {
@@ -290,8 +290,8 @@
                     }
                 },
                 {
-                    "id": "q1745847315231",
-                    "text": "Продължителност на активността в минути",
+                    "id": "activityDurationRare",
+                    "text": "Продължителност на активността в минути (напр. 30, 45, 60):",
                     "type": "number",
                     "options": [],
                     "dependsOn": {
@@ -303,7 +303,7 @@
             ],
             "Да": [
                 {
-                    "id": "q1745877358368",
+                    "id": "regularActivityTypes",
                     "text": "Изберете вашите регулярни видове активност:",
                     "type": "checkbox",
                     "options": [
@@ -320,12 +320,12 @@
                     "children": {
                         "Друго": [
                             {
-                                "id": "q1745877861010",
+                                "id": "otherRegularActivityType",
                                 "text": "Какъв вид спорт практикувате?",
                                 "type": "text",
                                 "options": [],
                                 "dependsOn": {
-                                    "question": "q1745877358368",
+                                    "question": "regularActivityTypes",
                                     "value": "Друго"
                                 },
                                 "children": []
@@ -334,8 +334,8 @@
                     }
                 },
                 {
-                    "id": "q1745878063775",
-                    "text": "Колко пъти седмично практикувате вашата активност?>",
+                    "id": "weeklyActivityFrequency",
+                    "text": "Колко пъти седмично практикувате вашата активност?",
                     "type": "select",
                     "options": [
                         "7",
@@ -354,7 +354,7 @@
                     "children": []
                 },
                 {
-                    "id": "q1745890775342",
+                    "id": "activityDuration",
                     "text": "Каква е продължителността на вашата активност?",
                     "type": "radio",
                     "options": [
@@ -398,7 +398,7 @@
         "children": {
             "Рядко": [
                 {
-                    "id": "q1745891342178",
+                    "id": "waterReplacementRare",
                     "text": "С какви напитки замествате приема на вода?",
                     "type": "checkbox",
                     "options": [
@@ -414,12 +414,12 @@
                     "children": {
                         "Друго": [
                             {
-                                "id": "q1745891416176",
-                                "text": "Уточнете",
+                                "id": "waterReplacementRareOther",
+                                "text": "Уточнете с какви напитки замествате водата:",
                                 "type": "text",
                                 "options": [],
                                 "dependsOn": {
-                                    "question": "q1745891342178",
+                                    "question": "waterReplacementRare",
                                     "value": "Друго"
                                 },
                                 "children": []
@@ -430,7 +430,7 @@
             ],
             "Понякога": [
                 {
-                    "id": "q1745891468155",
+                    "id": "waterReplacementSometimes",
                     "text": "С какви напитки замествате приема на вода?",
                     "type": "checkbox",
                     "options": [
@@ -446,12 +446,12 @@
                     "children": {
                         "Друго": [
                             {
-                                "id": "q1745891643967",
-                                "text": "Уточнете",
+                                "id": "waterReplacementSometimesOther",
+                                "text": "Уточнете с какви напитки замествате водата:",
                                 "type": "text",
                                 "options": [],
                                 "dependsOn": {
-                                    "question": "q1745891468155",
+                                    "question": "waterReplacementSometimes",
                                     "value": "Друго"
                                 },
                                 "children": []
@@ -462,7 +462,7 @@
             ],
             "Често": [
                 {
-                    "id": "q1745891537884",
+                    "id": "waterReplacementOften",
                     "text": "С какви напитки замествате приема на вода?",
                     "type": "checkbox",
                     "options": [
@@ -478,12 +478,12 @@
                     "children": {
                         "Друго": [
                             {
-                                "id": "q1745891620471",
-                                "text": "Уточнете",
+                                "id": "waterReplacementOftenOther",
+                                "text": "Уточнете с какви напитки замествате водата:",
                                 "type": "text",
                                 "options": [],
                                 "dependsOn": {
-                                    "question": "q1745891537884",
+                                    "question": "waterReplacementOften",
                                     "value": "Друго"
                                 },
                                 "children": []
@@ -533,8 +533,8 @@
                     "children": {
                         "Друго": [
                             {
-                                "id": "q1745891797364",
-                                "text": "Уточнете",
+                                "id": "foodCravingsOther",
+                                "text": "Уточнете кои други храни:",
                                 "type": "text",
                                 "options": [],
                                 "dependsOn": {
@@ -565,7 +565,7 @@
         "children": {
             "Друго": [
                 {
-                    "id": "q1745891178105",
+                    "id": "foodTriggersOther",
                     "text": "Уточнете какво създава желание за консумация на определени храни:",
                     "type": "text",
                     "options": [],
@@ -595,8 +595,8 @@
         "children": {
             "Друго": [
                 {
-                    "id": "q1745891865984",
-                    "text": "Уточнете",
+                    "id": "eatingHabitsOther",
+                    "text": "Уточнете вашите хранителни навици:",
                     "type": "textarea",
                     "options": [],
                     "dependsOn": {
@@ -623,7 +623,7 @@
         "children": {
             "Друго": [
                 {
-                    "id": "q1745806296700",
+                    "id": "compensationMethodOther",
                     "text": "Как компенсирате приема на храна?",
                     "type": "textarea",
                     "options": [],
@@ -650,7 +650,7 @@
         "children": []
     },
     {
-        "id": "q1745805447648",
+        "id": "eatingOutFrequency",
         "text": "Колко често се храните навън? (пъти седмично)",
         "type": "radio",
         "options": [
@@ -664,7 +664,7 @@
         "children": []
     },
     {
-        "id": "q1745805721482",
+        "id": "eatingOutType",
         "text": "Тип хранене навън:",
         "type": "checkbox",
         "options": [
@@ -703,8 +703,8 @@
         "children": {
             "Друго": [
                 {
-                    "id": "q1745806409218",
-                    "text": "Какви са вашите хранителни предпочитания (храни, които не обичате)",
+                    "id": "foodPreferenceOther",
+                    "text": "Какви са вашите хранителни предпочитания (храни, които не обичате):",
                     "type": "textarea",
                     "options": [],
                     "dependsOn": {
@@ -716,7 +716,7 @@
             ],
             "Друго / Не обичам следните:": [
                 {
-                    "id": "q1745806494081",
+                    "id": "foodPreferenceDisliked",
                     "text": "Какви са вашите хранителни предпочитания и кои храни не обичате?",
                     "type": "textarea",
                     "options": [],
@@ -738,7 +738,7 @@
         "dependsOn": null
     },
     {
-        "id": "q1745892518511",
+        "id": "additionalComments",
         "text": "Има ли нещо, което бихте искали да допълните?",
         "type": "textarea",
         "options": [],
@@ -782,7 +782,7 @@
         "children": {
             "Друго": [
                 {
-                    "id": "q1745804366749",
+                    "id": "medicalConditionsOther",
                     "text": "Попълнете медицинско състояние/диагноза:",
                     "type": "textarea",
                     "options": [],
@@ -820,7 +820,7 @@
             ],
             "Да": [
                 {
-                    "id": "q1745889856829",
+                    "id": "medicationsDetails",
                     "text": "Моля опишете какви лекарства и хранителни добавки приемате. Кога и в каква дозировка?",
                     "type": "textarea",
                     "options": [],

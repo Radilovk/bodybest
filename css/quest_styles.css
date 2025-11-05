@@ -192,13 +192,29 @@ select {
   background-color: var(--bg-surface);
   color: var(--text-primary);
   font-size: 16px;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+}
+
+/* Placeholder styling */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+  font-style: italic;
 }
 
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--border-color-hover);
   box-shadow: 0 0 8px var(--accent-focus-shadow);
+  background-color: var(--bg-secondary);
+}
+
+/* Valid input indicator */
+input:valid:not(:placeholder-shown),
+textarea:valid:not(:placeholder-shown),
+select:valid {
+  border-color: var(--accent-primary);
 }
 
 input[type="radio"],
@@ -569,6 +585,44 @@ button[id^="prevBtn"]:hover, button[id="regBackBtn"]:hover, button[id="restartBt
   }
   /* Увеличени статистически икони за мобилни екрани */
   .stats-bar .stat-icon {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* =================================================================== */
+/*                    VALIDATION ERROR STYLES                          */
+/* =================================================================== */
+.validation-error {
+  color: var(--error-color);
+  background-color: var(--error-bg);
+  padding: 10px 15px;
+  border-radius: 5px;
+  margin: 10px 0;
+  font-size: 0.9em;
+  border-left: 4px solid var(--error-color);
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Invalid input styling */
+input:invalid:not(:placeholder-shown):not(:focus),
+textarea:invalid:not(:placeholder-shown):not(:focus),
+select:invalid:not(:focus) {
+  border-color: var(--error-color);
+}
+
+/* Success message styling */
+.message.success {
+  color: var(--success-color);
+  background-color: var(--success-bg);
+  border-left: 4px solid var(--success-color);
+}
     width: 120px;
     height: 120px;
   }

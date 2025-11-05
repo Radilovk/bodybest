@@ -10,7 +10,7 @@ describe('handleDashboardDataRequest caloriesMacros', () => {
       USER_METADATA_KV: {
         get: jest.fn(key => {
           if (key === 'u1_initial_answers') return Promise.resolve(JSON.stringify({
-            name: 'U', weight: '70', height: '170', age: '30', gender: 'мъж', q1745878295708: 'умерено'
+            name: 'U', weight: '70', height: '170', age: '30', gender: 'мъж', dailyActivityLevel: 'умерено', q1745878295708: 'умерено'
           }));
           if (key === 'u1_final_plan') return Promise.resolve(JSON.stringify({
             profileSummary: 's', allowedForbiddenFoods: {}, hydrationCookingSupplements: {}, week1Menu: {}, principlesWeek2_4: []
@@ -75,6 +75,7 @@ describe('handleDashboardDataRequest caloriesMacros', () => {
               height: '170',
               age: '30',
               gender: 'мъж',
+              dailyActivityLevel: 'умерено',
               q1745878295708: 'умерено'
             });
           }
