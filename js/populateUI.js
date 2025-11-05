@@ -164,13 +164,15 @@ function populateDashboardMainIndexes(currentAnalytics) {
         const lossKgTarget = safeParseFloat(safeGet(fullDashboardData.initialAnswers, 'lossKg'));
         let goalName = 'Цел';
         let goalTitle = '';
-        if (goal === 'отслабване' && !isNaN(startWeight) && !isNaN(lossKgTarget) && lossKgTarget > 0) {
-            const targetWeight = startWeight - lossKgTarget;
-            goalName = `${targetWeight.toFixed(1)} кг`;
-            goalTitle = `Цел: ${goalName}`;
-        } else if (goal) {
+        // Показваме целта с дума (отслабване, антиейджинг и др)
+        if (goal) {
             goalName = capitalizeFirstLetter(goal);
             goalTitle = goalName;
+            // За отслабване добавяме и целевото тегло в tooltip
+            if (goal === 'отслабване' && !isNaN(startWeight) && !isNaN(lossKgTarget) && lossKgTarget > 0) {
+                const targetWeight = startWeight - lossKgTarget;
+                goalTitle = `${goalName} (Цел: ${targetWeight.toFixed(1)} кг)`;
+            }
         }
         if (selectors.goalName) selectors.goalName.textContent = goalName;
         if (selectors.goalCard && goalTitle) {

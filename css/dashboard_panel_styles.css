@@ -687,3 +687,90 @@ body.vivid-theme .tracker .metric-rating .rating-value {
     padding: var(--space-md);
   }
 }
+
+/* Подобрения за goalCard визуализация */
+#goalCard {
+  background: linear-gradient(135deg, var(--card-bg) 0%, color-mix(in srgb, var(--card-bg) 90%, var(--primary-color)) 100%);
+  border: 2px solid color-mix(in srgb, var(--primary-color) 30%, transparent);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+#goalCard::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--primary-color) 15%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+#goalCard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-color);
+}
+
+#goalCard h4 {
+  position: relative;
+  z-index: 1;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+#goalCard .index-value {
+  position: relative;
+  z-index: 1;
+  font-size: 1.4rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Подобрена анимация за tracker елементи */
+.tracker .metric-rating {
+  animation: fadeInUp 0.4s ease-out;
+  animation-fill-mode: both;
+}
+
+.tracker .metric-rating:nth-child(1) { animation-delay: 0.05s; }
+.tracker .metric-rating:nth-child(2) { animation-delay: 0.1s; }
+.tracker .metric-rating:nth-child(3) { animation-delay: 0.15s; }
+.tracker .metric-rating:nth-child(4) { animation-delay: 0.2s; }
+.tracker .metric-rating:nth-child(5) { animation-delay: 0.25s; }
+.tracker .metric-rating:nth-child(6) { animation-delay: 0.3s; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Подобрен визуален feedback при взаимодействие */
+.rating-square {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rating-square:active {
+  transform: scale(0.95);
+}
+
+.tracker .metric-rating .metric-info-btn {
+  transition: all 0.2s ease;
+}
+
+.tracker .metric-rating .metric-info-btn:hover {
+  transform: scale(1.15);
+  opacity: 0.8;
+}
+
+.tracker .metric-rating .metric-info-btn:active {
+  transform: scale(1.05);
+}
