@@ -1957,31 +1957,18 @@ async function handleDashboardDataRequest(request, env) {
             return { ...baseResponse, success: false, message: 'Грешка при зареждане на данните на Вашия план.', statusHint: 500, planData: null, analytics: null };
         }
 
-        const shouldForceRecalc = url.searchParams.get('recalcMacros') === '1';
-        if (!hasCompleteCaloriesMacros(finalPlan.caloriesMacros) || shouldForceRecalc) {
-            const recalculated = calculatePlanMacros(finalPlan.week1Menu || {}, finalPlan.mealMacrosIndex || null);
-            if (recalculated) {
-                finalPlan.caloriesMacros = recalculated;
-                console.warn(`DASHBOARD_DATA (${userId}): Използван fallback за caloriesMacros от менюто.`);
-                await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(finalPlan, null, 2));
-                const macrosRecord = { status: 'final', data: { ...recalculated } };
-                await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
-            } else if (!finalPlan.caloriesMacros || Object.keys(finalPlan.caloriesMacros).length === 0) {
-                console.error(`DASHBOARD_DATA (${userId}): Missing caloriesMacros in final plan and fallback failed.`);
-                return {
-                    ...baseResponse,
-                    success: false,
-                    message: 'Планът няма макроси и автоматичното преизчисление се провали. Моля, регенерирайте плана.',
-                    statusHint: 500,
-                    planData: null,
-                    analytics: null
-                };
-            }
-        }
-
-        if (!finalPlan.caloriesMacros || Object.keys(finalPlan.caloriesMacros).length === 0) {
-            console.error(`DASHBOARD_DATA (${userId}): Missing caloriesMacros in final plan.`);
-            return { ...baseResponse, success: false, message: 'Планът няма макроси; изисква се повторно генериране', statusHint: 500, planData: null, analytics: null };
+        // Проверка дали caloriesMacros са налични и пълни от AI отговора
+        // ВАЖНО: Не използваме резервни изчисления - всички данни трябва да идват от AI
+        if (!hasCompleteCaloriesMacros(finalPlan.caloriesMacros)) {
+            console.error(`DASHBOARD_DATA (${userId}): Missing or incomplete caloriesMacros in final plan. All data must come from AI response.`);
+            return {
+                ...baseResponse,
+                success: false,
+                message: 'Планът няма пълни данни за макроси от AI анализа. Моля, регенерирайте плана.',
+                statusHint: 500,
+                planData: null,
+                analytics: null
+            };
         }
 
         const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries, currentStatus, env); // Добавен userId
@@ -4202,6 +4189,7 @@ async function handleSetMaintenanceMode(request, env) {
 // ------------- END BLOCK: PlanGenerationHeaderComment -------------
 
 const PLAN_MACRO_RETRY_LIMIT = 2;
+const MAX_PLAN_SECTION_REPAIR_ATTEMPTS = 3; // Максимален брой опити за попълване на липсващи секции от AI
 const AI_CALL_TIMEOUT_MS = 25_000;
 const DEFAULT_PLAN_CALL_TIMEOUT_MS = 60_000;
 
@@ -4271,7 +4259,8 @@ const REQUIRED_PLAN_SECTIONS = [
     'principlesWeek2_4',
     'hydrationCookingSupplements',
     'psychologicalGuidance',
-    'detailedTargets'
+    'detailedTargets',
+    'additionalGuidelines'
 ];
 
 /**
@@ -4477,123 +4466,103 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
 
     let missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !isPlanSectionValid(key, generatedPlanObject[key]));
     const originallyMissing = [...missingSections];
+    
     if (missingSections.length > 0) {
         console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Initial missing sections: ${missingSections.join(', ')}. Original response (start): ${rawAiResponse.substring(0, 300)}`);
         
-        // Create default values for missing sections BEFORE adding errors
-        for (const key of missingSections) {
-            if (key === 'principlesWeek2_4') {
-                // Provide a default principle if missing or empty
-                generatedPlanObject[key] = [
-                    {
-                        title: "Принцип 1: Постоянство и баланс",
-                        content: "Фокусирайте се върху редовно хранене на равни интервали и балансирани порции. Избягвайте дълги периоди без храна.",
-                        icon: "icon-balance"
-                    }
-                ];
-                console.log(`PROCESS_USER_PLAN (${userId}): Added default principlesWeek2_4 due to missing or invalid data.`);
-            } else if (key === 'allowedForbiddenFoods') {
-                generatedPlanObject[key] = {
-                    main_allowed_foods: ["Пресни зеленчуци", "Постно месо (пилешко, пуешко)", "Риба", "Яйца", "Пълнозърнести храни"],
-                    main_forbidden_foods: ["Преработени храни с добавена захар", "Високомаслени пържени храни"],
-                    detailed_allowed_suggestions: ["Варени или печени зеленчуци", "Гръцко кисело мляко без добавки"],
-                    detailed_limit_suggestions: ["Сладкиши и бонбони", "Бързи храни"],
-                    dressing_flavoring_ideas: ["Зехтин и лимонов сок", "Подправки без сол"]
-                };
-                console.log(`PROCESS_USER_PLAN (${userId}): Added default allowedForbiddenFoods due to missing or invalid data.`);
-            } else if (key === 'hydrationCookingSupplements') {
-                generatedPlanObject[key] = {
-                    hydration_recommendations: {
-                        daily_liters: "2-2.5 литра",
-                        tips: ["Пийте вода редовно през целия ден", "Започнете деня с чаша вода"],
-                        suitable_drinks: ["Вода", "Минерална вода", "Билкови чайове без захар"],
-                        unsuitable_drinks: ["Газирани напитки със захар", "Енергийни напитки"]
-                    },
-                    cooking_methods: {
-                        recommended: ["Печене", "Варене", "На пара", "Задушаване", "Air fryer", "Скара"],
-                        limit_or_avoid: ["Пържене в много мазнина", "Паниране"],
-                        fat_usage_tip: "Използвайте мазнина в умерени количества, като я добавяте в края на готвенето или измервате със спрей или лъжица."
-                    },
-                    supplement_suggestions: []
-                };
-                console.log(`PROCESS_USER_PLAN (${userId}): Added default hydrationCookingSupplements due to missing or invalid data.`);
-            } else if (key === 'psychologicalGuidance') {
-                generatedPlanObject[key] = {
-                    coping_strategies: [
-                        "При стрес направете пауза и дълбоко дишайте за 2-3 минути",
-                        "Водете дневник на емоциите си свързани с храненето"
-                    ],
-                    motivational_messages: [
-                        "Всяка малка стъпка напред е успех",
-                        "Прогресът не е линеен - бъдете търпеливи със себе си"
-                    ],
-                    habit_building_tip: "Започнете с една малка промяна, която можете да поддържате постоянно.",
-                    self_compassion_reminder: "Бъдете добри към себе си. Един лош избор не разваля целия ви напредък."
-                };
-                console.log(`PROCESS_USER_PLAN (${userId}): Added default psychologicalGuidance due to missing or invalid data.`);
-            } else if (key === 'detailedTargets') {
-                generatedPlanObject[key] = {
-                    sleep_quality_target_text: "Цел: 7-8 часа качествен, непрекъснат сън на нощ за оптимално възстановяване и хормонален баланс.",
-                    stress_level_target_text: "Цел: Намаляване на усещането за стрес чрез прилагане на една релаксираща техника дневно.",
-                    energy_level_target_text: "Цел: Постигане на стабилни и високи енергийни нива през целия ден (оценка 4/5).",
-                    hydration_target_text: "Цел: Редовен прием на вода, достигайки препоръчителните дневни литри.",
-                    bmi_target_numeric: 22.0,
-                    bmi_target_category_text: "Нормално тегло",
-                    meal_adherence_target_percent: 85,
-                    log_consistency_target_percent: 80
-                };
-                console.log(`PROCESS_USER_PLAN (${userId}): Added default detailedTargets due to missing or invalid data.`);
-            } else if (key === 'mealMacrosIndex') {
-                // Auto-generate mealMacrosIndex from week1Menu using helper function
-                const mealMacrosIndex = generateMealMacrosIndexFromMenu(generatedPlanObject.week1Menu);
-                generatedPlanObject[key] = mealMacrosIndex;
-                const entryCount = Object.keys(mealMacrosIndex).length;
-                if (entryCount > 0) {
-                    console.log(`PROCESS_USER_PLAN (${userId}): Auto-generated mealMacrosIndex from week1Menu with ${entryCount} entries.`);
-                } else {
-                    console.log(`PROCESS_USER_PLAN (${userId}): Created empty mealMacrosIndex (no valid week1Menu data).`);
-                }
-            }
-        }
+        // ВАЖНО: Не използваме default стойности - всички данни трябва да идват от AI
+        // Опитваме се многократно да получим липсващите секции от AI
+        let repairAttempt = 0;
+        const maxRepairAttempts = MAX_PLAN_SECTION_REPAIR_ATTEMPTS;
         
-        // Re-validate after adding defaults to see what's still missing
-        missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !isPlanSectionValid(key, generatedPlanObject[key]));
-        
-        // Attempt AI repair only if there are still missing sections after defaults
-        if (missingSections.length > 0) {
+        while (missingSections.length > 0 && repairAttempt < maxRepairAttempts) {
+            repairAttempt++;
             try {
-                const repairPrompt = `Return JSON with keys ${missingSections.join(', ')} based on this plan: ${cleanedJson}`;
+                // Изграждаме детайлен prompt за липсващите секции
+                const sectionDescriptions = {
+                    'profileSummary': 'персонализирано резюме на потребителския профил и хранителен подход',
+                    'caloriesMacros': 'обект с calories, protein_percent, carbs_percent, fat_percent, protein_grams, carbs_grams, fat_grams, fiber_grams, fiber_percent',
+                    'allowedForbiddenFoods': 'обект с main_allowed_foods (масив от разрешени храни), main_forbidden_foods (масив от забранени храни), detailed_allowed_suggestions (масив), detailed_limit_suggestions (масив), dressing_flavoring_ideas (масив)',
+                    'week1Menu': 'седмично меню с дни (monday, tuesday, wednesday, thursday, friday, saturday, sunday), всеки съдържащ масив от храни с meal_name, items (масив с name и grams), recipeKey',
+                    'mealMacrosIndex': 'индекс на макроси за всяка храна от менюто по формат {dayKey}_{index}: {calories, protein_grams, carbs_grams, fat_grams, fiber_grams}',
+                    'principlesWeek2_4': 'масив от хранителни принципи за седмици 2-4, всеки с title, content, и icon',
+                    'hydrationCookingSupplements': 'обект с hydration_recommendations (daily_liters, tips като масив, suitable_drinks като масив, unsuitable_drinks като масив), cooking_methods (recommended като масив, limit_or_avoid като масив, fat_usage_tip), supplement_suggestions като масив с обекти (supplement_name, reasoning, caution)',
+                    'psychologicalGuidance': 'обект с coping_strategies (масив от стратегии), motivational_messages (масив от съобщения), habit_building_tip (текст), self_compassion_reminder (текст)',
+                    'detailedTargets': 'обект с sleep_quality_target_text, stress_level_target_text, energy_level_target_text, hydration_target_text, bmi_target_numeric (число), bmi_target_category_text, meal_adherence_target_percent (число), log_consistency_target_percent (число)',
+                    'additionalGuidelines': 'масив от допълнителни насоки, всяка с title и content, или масив от текстови низове'
+                };
+                
+                const missingDescriptions = missingSections.map(key => `- ${key}: ${sectionDescriptions[key] || 'необходима секция'}`).join('\n');
+                
+                const repairPrompt = `Върни САМО ВАЛИДЕН JSON обект с липсващите секции.
+
+ЛИПСВАЩИ СЕКЦИИ (${repairAttempt}/${maxRepairAttempts} опит):
+${missingDescriptions}
+
+КОНТЕКСТ от първоначалния план:
+${cleanedJson.substring(0, 2000)}
+
+ВАЖНО: 
+- Върни САМО JSON обект
+- Всички стойности трябва да са персонализирани според контекста
+- Използвай правилната структура за всяка секция
+- НЕ използвай placeholder стойности`;
+
+                console.log(`PROCESS_USER_PLAN (${userId}): Attempt ${repairAttempt}/${maxRepairAttempts} to get missing sections: ${missingSections.join(', ')}`);
+                
                 const repairResponse = await callModelRef.current(planModelName, repairPrompt, env, {
                     temperature: 0.1,
-                    maxTokens: 1000
+                    maxTokens: 3000
                 });
                 const repairCleaned = cleanGeminiJson(repairResponse);
                 const repairedObject = safeParseJson(repairCleaned, {});
+                
                 if (repairedObject && typeof repairedObject === 'object') {
+                    let filledCount = 0;
                     for (const key of missingSections) {
                         if (isPlanSectionValid(key, repairedObject[key])) {
                             generatedPlanObject[key] = repairedObject[key];
+                            filledCount++;
+                            console.log(`PROCESS_USER_PLAN (${userId}): Successfully filled section '${key}' from AI response`);
                         }
                     }
+                    
+                    if (filledCount > 0) {
+                        console.log(`PROCESS_USER_PLAN (${userId}): Filled ${filledCount} section(s) in attempt ${repairAttempt}`);
+                    }
                 }
+                
+                // Преизчисляваме липсващите секции след опита за попълване
+                const previousMissingCount = missingSections.length;
                 missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !isPlanSectionValid(key, generatedPlanObject[key]));
-                if (missingSections.length > 0) {
-                    const stillMsg = `Still missing sections after repair: ${missingSections.join(', ')}`;
-                    console.warn(`PROCESS_USER_PLAN_WARNING (${userId}): ${stillMsg}`);
-                    planBuilder.generationMetadata.errors.push(stillMsg);
-                } else {
-                    console.log(`PROCESS_USER_PLAN (${userId}): All missing sections filled after repair: ${originallyMissing.join(', ')}`);
+                
+                if (missingSections.length === 0) {
+                    console.log(`PROCESS_USER_PLAN (${userId}): All missing sections filled after ${repairAttempt} repair attempt(s): ${originallyMissing.join(', ')}`);
+                    break;
+                } else if (missingSections.length === previousMissingCount) {
+                    console.warn(`PROCESS_USER_PLAN_WARN (${userId}): No progress in attempt ${repairAttempt}, still missing: ${missingSections.join(', ')}`);
+                    // Ако няма напредък в последователни опити, прекъсваме цикъла рано
+                    if (repairAttempt >= 2) {
+                        console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Breaking retry loop due to no progress after ${repairAttempt} attempts`);
+                        break;
+                    }
                 }
+                
             } catch (repairErr) {
-                const repairErrorMsg = `Repair attempt failed: ${repairErr.message}`;
+                const repairErrorMsg = `Repair attempt ${repairAttempt} failed: ${repairErr.message}`;
                 console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${repairErrorMsg}`);
                 planBuilder.generationMetadata.errors.push(repairErrorMsg);
             }
-        } else {
-            console.log(`PROCESS_USER_PLAN (${userId}): All missing sections filled with defaults: ${originallyMissing.join(', ')}`);
+        }
+        
+        // След всички опити, ако все още има липсващи секции, добавяме грешка
+        if (missingSections.length > 0) {
+            const finalMissingMsg = `AI не успя да попълни секциите след ${maxRepairAttempts} опити: ${missingSections.join(', ')}`;
+            console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${finalMissingMsg}`);
+            planBuilder.generationMetadata.errors.push(finalMissingMsg);
         }
     } else {
-        console.log(`PROCESS_USER_PLAN (${userId}): Unified plan JSON parsed successfully.`);
+        console.log(`PROCESS_USER_PLAN (${userId}): Unified plan JSON parsed successfully with all required sections.`);
     }
 
     const { generationMetadata, ...restOfGeneratedPlan } = generatedPlanObject;
