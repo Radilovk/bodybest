@@ -1547,7 +1547,7 @@ async function handleRegisterRequest(request, env, ctx) {
         const credentialContent = JSON.stringify({ userId, email: trimmedEmail, passwordHash: hashedPasswordWithSalt });
         await env.USER_METADATA_KV.put(`credential_${userId}`, credentialContent);
         await env.USER_METADATA_KV.put(`email_to_uuid_${trimmedEmail}`, userId);
-        await setPlanStatus(userId, 'pending', env);
+        await setPlanStatus(userId, 'pending_inputs', env);
 
         const existingIdsStr = await env.USER_METADATA_KV.get('all_user_ids');
         let existingIds = safeParseJson(existingIdsStr, []);
