@@ -176,3 +176,102 @@ body.dark-theme .recommendation-section .card {
     padding: var(--space-sm);
 }
 /* #motivationalMessageCard - Премахнато */
+
+/* Допълнителни подобрения за впечатляващ дизайн */
+
+/* Анимация при зареждане на картите */
+.recommendation-section .card {
+  animation: slideInLeft 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.recommendation-section .card:nth-child(1) { animation-delay: 0.1s; }
+.recommendation-section .card:nth-child(2) { animation-delay: 0.2s; }
+.recommendation-section .card:nth-child(3) { animation-delay: 0.3s; }
+.recommendation-section .card:nth-child(4) { animation-delay: 0.4s; }
+.recommendation-section .card:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Подобрен стил за заглавията на секциите */
+.recommendation-section > h3::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), transparent);
+  margin-top: var(--space-sm);
+  border-radius: 2px;
+}
+
+/* Интерактивни ефекти за списъците */
+#recFoodAllowedContent li,
+#recFoodLimitContent li,
+#recSupplementsContent li {
+  transition: all 0.2s ease;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-sm);
+}
+
+#recFoodAllowedContent li:hover {
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+  padding-left: calc(var(--space-md) + 4px);
+}
+
+#recFoodLimitContent li:hover {
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+  padding-left: calc(var(--space-md) + 4px);
+}
+
+#recSupplementsContent li:hover {
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  padding-left: calc(var(--space-md) + 4px);
+}
+
+/* Подобрен стил за стратегиите */
+#recStrategiesContent .card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Визуална индикация за collapsible съдържание */
+.recommendation-section .collapsible-card h4 {
+  cursor: pointer;
+  user-select: none;
+}
+
+.recommendation-section .collapsible-card h4::after {
+  content: '▼';
+  margin-left: auto;
+  font-size: 0.8em;
+  opacity: 0.6;
+  transition: transform 0.3s ease;
+}
+
+.recommendation-section .collapsible-card.expanded h4::after {
+  transform: rotate(180deg);
+}
+
+/* Responsive подобрения */
+@media (max-width: 768px) {
+  .recommendation-section > h3 {
+    font-size: 1.4rem;
+  }
+  
+  .recommendation-section .card {
+    padding: var(--space-md);
+  }
+  
+  .recommendation-section .card h4 {
+    font-size: 1.1rem;
+  }
+}

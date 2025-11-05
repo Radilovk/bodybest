@@ -151,10 +151,12 @@
   }
   .tracker .metric-rating .rating-value {
     margin: 0 var(--space-sm);
+    font-size: 1.05rem;
   }
   .tracker .metric-rating .metric-info-btn {
     margin-left: auto;
     flex-shrink: 0;
+    padding: var(--space-xs);
   }
   .tracker .daily-log-weight-metric .daily-log-weight-input-field,
   .tracker .rating-squares {
@@ -165,6 +167,13 @@
   .rating-square { 
     flex-grow: 1;
     height: 20px;
+    min-width: 45px;
+  }
+  
+  /* Подобрена визуална йерархия за active състояние */
+  .tracker .metric-rating.active {
+    border-color: color-mix(in srgb, var(--primary-color) 50%, transparent);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--primary-color) 15%, transparent);
   } 
 
   /* Responsive changes for meal list */
