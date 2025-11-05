@@ -3049,7 +3049,7 @@ function estimateMacros(initial = {}) {
     const age = Number(initial.age);
     if (!weight || !height || !age) return null;
     const gender = (initial.gender || '').toLowerCase().startsWith('м') ? 'male' : 'female';
-    const activity = (initial.q1745878295708 || '').toLowerCase();
+    const activity = (initial.dailyActivityLevel || initial.q1745878295708 || '').toLowerCase();
     const activityFactors = {
         'ниско': 1.2, 'sedentary': 1.2, 'седящ': 1.2,
         'средно': 1.375, 'умерено': 1.375,
