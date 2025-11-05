@@ -2,6 +2,7 @@ import { loadLocale } from './macroCardLocales.js';
 import { ensureChart, registerSubtleGlow } from './chartLoader.js';
 import { scaleMacros, formatPercent, calculateMacroPercents } from './macroUtils.js';
 import { macroColorVars } from './themeConfig.js';
+import { cachedFetch } from './requestCache.js';
 
 let Chart;
 
@@ -393,11 +394,12 @@ export class MacroAnalyticsCard extends HTMLElement {
     const hasData = this.hasAttribute('plan-data') && this.hasAttribute('current-data');
     
     if (endpoint && !hasData && this.isConnected) {
-      // Зареждаме данните веднъж при инициализация
+      // ОПТИМИЗАЦИЯ: зареждаме данните веднъж при инициализация с кеширане
       (async () => {
         try {
-          const res = await fetch(endpoint);
-          const data = await res.json();
+          const data = await cachedFetch(endpoint, {
+            ttl: 30000 // 30 секунди кеш
+          });
           if (data.plan && data.current) {
             this.setData(data);
           }

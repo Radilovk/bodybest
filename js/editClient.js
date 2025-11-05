@@ -1,6 +1,7 @@
 import { apiEndpoints } from './config.js';
 import { ensureChart } from './chartLoader.js';
 import { setupPlanRegeneration } from './planRegenerator.js';
+import { cachedFetch } from './requestCache.js';
 
 let macroChart;
 let weightChart;
@@ -52,19 +53,16 @@ export async function initEditClient(userId) {
 
   async function loadData() {
     try {
-      const [profileResp, dashResp] = await Promise.all([
-        fetch(`${apiEndpoints.getProfile}?userId=${userId}`),
-        fetch(`${apiEndpoints.dashboard}?userId=${userId}`)
-      ]);
+      // ОПТИМИЗАЦИЯ: използваме cachedFetch за да избегнем многократни заявки
       const [profileData, dashData] = await Promise.all([
-        profileResp.json().catch(() => ({})),
-        dashResp.json().catch(() => ({}))
+        cachedFetch(`${apiEndpoints.getProfile}?userId=${userId}`, { ttl: 60000 }), // 1 минута
+        cachedFetch(`${apiEndpoints.dashboard}?userId=${userId}`, { ttl: 30000 })   // 30 секунди
       ]);
-      if (dashResp.ok && dashData.success) {
+      if (dashData && dashData.success) {
         planData = dashData.planData || {};
         dashboardData = dashData;
       }
-      if (profileResp.ok && profileData.success) {
+      if (profileData && profileData.success) {
         const name = profileData.name || 'Клиент';
         const header = document.getElementById('client-name');
         if (header) header.textContent = name;
