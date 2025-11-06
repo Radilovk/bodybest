@@ -601,7 +601,14 @@ export async function loadDashboardData() {
             ttl: 30000 // 30 секунди кеш - балансира актуалност и производителност
         });
         
-        debugLog('Received planData', data.planData);
+        debugLog('Dashboard response received:', { 
+            success: data.success, 
+            planStatus: data.planStatus, 
+            hasPlanData: !!data.planData,
+            hasCaloriesMacros: !!data.planData?.caloriesMacros,
+            message: data.message
+        });
+        
         if (!data.success) throw new Error(data.message || 'Неуспешно зареждане на данни от сървъра.');
 
         debugLog("Data received from worker:", data);
@@ -617,6 +624,20 @@ export async function loadDashboardData() {
         }
         if (data.planStatus === "error") {
             showPlanPendingState('error', `Възникна грешка при генерирането на вашия план: ${data.message || 'Свържете се с поддръжка.'}`); return;
+        }
+        
+        // Проверка дали има валидни данни за плана дори при статус "ready"
+        if (!data.planData || !data.planData.caloriesMacros) {
+            console.error('Missing plan data despite success response:', {
+                planStatus: data.planStatus,
+                hasPlanData: !!data.planData,
+                hasCaloriesMacros: !!data.planData?.caloriesMacros
+            });
+            const errorMsg = data.planStatus === 'ready' 
+                ? 'Планът Ви изглежда е готов, но липсват необходими данни. Моля, свържете се с поддръжка или използвайте бутона за регенериране на план в админ панела.'
+                : 'Липсват необходими данни за показване на плана. Моля, опитайте да <a href="#" onclick="location.reload();" style="color: var(--primary-color); text-decoration: underline;">презаредите страницата</a>.';
+            showPlanPendingState('error', errorMsg);
+            return;
         }
 
         fullDashboardData.dailyLogs = normalizeDailyLogs(fullDashboardData.dailyLogs);
