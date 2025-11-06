@@ -6,8 +6,6 @@ const MINUTES_IN_DAY = 24 * 60;
 const MILLISECONDS_IN_MINUTE = 60 * 1000;
 const ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT = MINUTES_IN_DAY * MILLISECONDS_IN_MINUTE; // 24 часа
 const ADMIN_QUERY_MINIMUM_INTERVAL_MS = ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT;
-const PLAN_POLLING_INTERVAL_MS = 10000; // 10 seconds - check plan status frequently
-const PLAN_POLLING_TIMEOUT_MS = 600000; // 10 minutes - max time to wait for plan generation
 let adminQueriesPollingEnabled = false; // Временно спираме заявки към getAdminQueries
 const ADMIN_QUERY_LAST_FETCH_STORAGE_KEY = 'lastAdminQueriesFetchTs';
 const ADMIN_QUERY_LAST_FETCH_SESSION_KEY = 'lastAdminQueriesFetchTsSession';
@@ -240,7 +238,6 @@ export function setChatPromptOverride(val) { chatPromptOverride = val; }
 // Управление на интервал за проверка на статус на плана
 let planStatusInterval = null;
 let planStatusTimeout = null;
-let isInitialPlanPolling = false; // Track if we're polling for initial plan generation
 let adminQueriesTimerId = null; // Таймер за проверка на администраторски съобщения
 let adminQueriesIntervalMs = ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT;
 let adminQueriesVisibilityListenerAttached = false;
@@ -623,13 +620,7 @@ export async function loadDashboardData() {
             showPlanPendingState('pending_inputs', `Моля, попълнете <a href="quest.html?userId=${currentUserId}" style="color: var(--primary-color); text-decoration: underline;">въпросника</a> за да започнете генериране на вашия персонализиран план.`); return;
         }
         if (data.planStatus === "pending" || data.planStatus === "processing") {
-            showPlanPendingState('generating');
-            // Start polling to check when plan becomes ready (only if not already polling for initial plan)
-            if (!isInitialPlanPolling) {
-                isInitialPlanPolling = true;
-                pollPlanStatus(PLAN_POLLING_INTERVAL_MS, PLAN_POLLING_TIMEOUT_MS);
-            }
-            return;
+            showPlanPendingState('generating'); return;
         }
         if (data.planStatus === "error") {
             showPlanPendingState('error', `Възникна грешка при генерирането на вашия план: ${data.message || 'Свържете се с поддръжка.'}`); return;
@@ -773,7 +764,7 @@ function showPlanPendingState(stateOrMessage, customMessage) {
         if (spinnerElement) spinnerElement.style.display = '';
         if (h2Element) h2Element.textContent = 'Вашият план се генерира...';
         if (pElements.length > 0) pElements[0].textContent = message || 'Благодарим ви за попълнения въпросник! Вашият персонализиран план MyBody.Best се генерира.';
-        if (pElements.length > 1) pElements[1].textContent = 'Страницата ще се обнови автоматично когато планът е готов. Моля, не затваряйте този прозорец.';
+        if (pElements.length > 1) pElements[1].textContent = 'Моля, проверете отново по-късно. Ще бъдете уведомени (ако сте позволили известия) или опитайте да презаредите страницата след известно време.';
     }
     
     showLoading(false);
@@ -788,7 +779,6 @@ export function stopPlanStatusPolling() {
         clearTimeout(planStatusTimeout);
         planStatusTimeout = null;
     }
-    isInitialPlanPolling = false; // Reset the flag
     window.removeEventListener('beforeunload', stopPlanStatusPolling);
     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.add('hidden');
     if (selectors.planModificationBtn) selectors.planModificationBtn.classList.remove('hidden');
