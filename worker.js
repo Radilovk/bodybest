@@ -1865,7 +1865,36 @@ async function handleDashboardDataRequest(request, env) {
         if (finalPlanStr) console.log(`final_plan snippet: ${finalPlanStr.slice(0,200)}`);
 
         const actualPlanStatus = planStatus || 'unknown';
-        if (!initialAnswersStr) return { success: false, message: 'Основните данни на потребителя не са намерени.', statusHint: 404, userId };
+        
+        // Обработка на случаи когато липсват initial_answers
+        if (!initialAnswersStr) {
+            // Ако потребителят е в статус 'pending_inputs', значи е регистриран но не е попълнил въпросника
+            if (actualPlanStatus === 'pending_inputs') {
+                console.log(`DASHBOARD_DATA (${userId}): User has not submitted questionnaire yet (status: pending_inputs).`);
+                const recipeData = safeParseJson(recipeDataStr, {});
+                return { 
+                    success: true, 
+                    userId, 
+                    planStatus: actualPlanStatus, 
+                    userName: 'Клиент',
+                    initialAnswers: {},
+                    initialData: {},
+                    recipeData,
+                    dailyLogs: [],
+                    currentStatus: {},
+                    isFirstLoginWithReadyPlan: false,
+                    aiUpdateSummary: null,
+                    triggerAutomatedFeedbackChat: false,
+                    message: 'Моля, попълнете въпросника за да започнете.',
+                    planData: null,
+                    analytics: null
+                };
+            }
+            // За всички други статуси initial_answers трябва да съществува
+            console.error(`DASHBOARD_DATA (${userId}): Missing initial_answers for status: ${actualPlanStatus}.`);
+            return { success: false, message: 'Основните данни на потребителя не са намерени.', statusHint: 404, userId };
+        }
+        
         const initialAnswers = safeParseJson(initialAnswersStr, {});
         if (Object.keys(initialAnswers).length === 0) return { success: false, message: 'Грешка при зареждане на основните данни на потребителя.', statusHint: 500, userId };
         
