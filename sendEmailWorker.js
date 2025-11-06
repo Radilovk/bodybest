@@ -8,6 +8,7 @@
 const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
 const MAIL_PHP_URL_VAR_NAME = 'MAIL_PHP_URL';
 export const DEFAULT_MAIL_PHP_URL = 'https://mybody.best/mailer/mail.php';
+const EMAIL_TIMEOUT_MS = 10000; // 10 seconds timeout for email sending
 
 async function recordUsage(env, identifier = '') {
   try {
@@ -56,14 +57,36 @@ async function checkRateLimit(env, identifier, limit = 3, windowMs = 60000) {
 async function sendViaPhp(to, subject, message, env = {}) {
   const url = env[MAIL_PHP_URL_VAR_NAME] || DEFAULT_MAIL_PHP_URL;
   const fromName = env.FROM_NAME || '';
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ to, subject, message, body: message, fromName })
-  });
-  if (!resp.ok) {
-    const text = await resp.text().catch(() => '');
-    throw new Error(`PHP mailer error ${resp.status}${text ? `: ${text}` : ''}`);
+  
+  // Use abort signal from parent if provided, otherwise create new one
+  const providedSignal = env._abortSignal;
+  let controller = null;
+  let timeoutId = null;
+  
+  if (!providedSignal) {
+    controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), EMAIL_TIMEOUT_MS);
+  }
+  
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, message, body: message, fromName }),
+      signal: providedSignal || controller.signal
+    });
+    
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '');
+      throw new Error(`PHP mailer error ${resp.status}${text ? `: ${text}` : ''}`);
+    }
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('PHP mailer timeout after 10 seconds');
+    }
+    throw error;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }
 

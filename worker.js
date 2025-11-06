@@ -15,6 +15,8 @@
 
 import { sendEmail, DEFAULT_MAIL_PHP_URL } from './sendEmailWorker.js';
 
+const EMAIL_TIMEOUT_MS = 10000; // 10 seconds timeout for email sending
+
 const MACRO_FIELD_ALIASES = {
   calories: ['calories', 'calories_kcal', 'cal', 'kcal', 'energy', 'energy_kcal'],
   protein: [
@@ -721,26 +723,49 @@ async function parseJsonSafe(resp, label = 'response') {
 async function sendEmailUniversal(to, subject, body, env = {}) {
   const endpoint = env.MAILER_ENDPOINT_URL || globalThis['process']?.env?.MAILER_ENDPOINT_URL;
   const fromName = env.FROM_NAME || env.from_email_name || globalThis['process']?.env?.FROM_NAME;
-  if (endpoint) {
-    const resp = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, subject, message: body, body, fromName })
-    });
-    if (!resp.ok) {
-      const text = await resp.text().catch(() => '');
-      throw new Error(`Mailer responded with ${resp.status}${text ? `: ${text}` : ''}`);
-    }
-    return;
+  
+  // Use provided signal or create new controller with timeout
+  const providedSignal = env._abortSignal;
+  let controller = null;
+  let timeoutId = null;
+  
+  if (!providedSignal) {
+    controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), EMAIL_TIMEOUT_MS);
   }
-  const phpUrl = env.MAIL_PHP_URL ||
-    globalThis['process']?.env?.MAIL_PHP_URL ||
-    DEFAULT_MAIL_PHP_URL;
-  const phpEnv = {
-    MAIL_PHP_URL: phpUrl,
-    FROM_NAME: fromName
-  };
-  await sendEmail(to, subject, body, phpEnv);
+  
+  try {
+    if (endpoint) {
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, subject, message: body, body, fromName }),
+        signal: providedSignal || controller.signal
+      });
+      
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        throw new Error(`Mailer responded with ${resp.status}${text ? `: ${text}` : ''}`);
+      }
+      return;
+    }
+    const phpUrl = env.MAIL_PHP_URL ||
+      globalThis['process']?.env?.MAIL_PHP_URL ||
+      DEFAULT_MAIL_PHP_URL;
+    const phpEnv = {
+      MAIL_PHP_URL: phpUrl,
+      FROM_NAME: fromName,
+      _abortSignal: providedSignal || controller.signal
+    };
+    await sendEmail(to, subject, body, phpEnv);
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('Email sending timeout after 10 seconds');
+    }
+    throw error;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
 }
 
 const resourceCache = new Map();
@@ -1700,12 +1725,21 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         const url = new URL(baseUrl);
         url.searchParams.set('userId', userId);
         const link = url.toString();
-        await sendAnalysisLinkEmail(
+        
+        // Send email asynchronously without blocking the response
+        const emailTask = sendAnalysisLinkEmail(
             questionnaireData.email,
             questionnaireData.name || 'Клиент',
             link,
             env
         );
+        if (ctx) {
+            ctx.waitUntil(emailTask);
+        } else {
+            // Fallback for environments without ExecutionContext (e.g., local testing)
+            // Email is sent in background; errors are logged but don't block the response
+            emailTask.catch(err => console.error('Failed to send analysis email:', err));
+        }
 
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         const analysisTask = handleAnalyzeInitialAnswers(userId, env);
@@ -1756,12 +1790,21 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
         const url = new URL(baseUrl);
         url.searchParams.set('userId', userId);
         const link = url.toString();
-        await sendAnalysisLinkEmail(
+        
+        // Send email asynchronously without blocking the response
+        const emailTask = sendAnalysisLinkEmail(
             questionnaireData.email,
             questionnaireData.name || 'Клиент',
             link,
             env
         );
+        if (ctx) {
+            ctx.waitUntil(emailTask);
+        } else {
+            // Fallback for environments without ExecutionContext (e.g., local testing)
+            // Email is sent in background; errors are logged but don't block the response
+            emailTask.catch(err => console.error('Failed to send analysis email:', err));
+        }
 
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         const analysisTask = handleAnalyzeInitialAnswers(userId, env);
