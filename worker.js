@@ -1441,8 +1441,20 @@ export default {
                     continue;
                 }
                 await setPlanStatus(userId, 'processing', env);
-                ctx.waitUntil(processSingleUserPlan(userId, env));
-                processedUsersForPlan++;
+                // Execute synchronously to avoid "IoContext timed out" errors
+                try {
+                    await processSingleUserPlan(userId, env);
+                    processedUsersForPlan++; // Count only successful generations
+                } catch (err) {
+                    console.error(`[CRON-PlanGen] Plan generation failed for ${userId}:`, err.message, err.stack);
+                    try {
+                        await setPlanStatus(userId, 'error', env);
+                        await env.USER_METADATA_KV.put(`${userId}_processing_error`, 
+                            `Грешка при генериране на план: ${err.message}`);
+                    } catch (statusErr) {
+                        console.error(`[CRON-PlanGen] Failed to set error status for ${userId}:`, statusErr);
+                    }
+                }
             }
             const pendingUsersJson = JSON.stringify(pendingUsers);
             const remainingPendingJson = JSON.stringify(remainingPending);
@@ -1718,8 +1730,12 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
 
-        // Start plan generation with proper error handling
-        const planTask = processSingleUserPlan(userId, env).catch(async (err) => {
+        // Execute plan generation synchronously to avoid Cloudflare Workers "IoContext timed out 
+        // due to inactivity" errors. The tradeoff is longer response time, but reliable completion.
+        // This matches the approach used in handleRegeneratePlanRequest.
+        try {
+            await processSingleUserPlan(userId, env);
+        } catch (err) {
             console.error(`SUBMIT_QUESTIONNAIRE (${userId}): Plan generation failed:`, err.message, err.stack);
             try {
                 await setPlanStatus(userId, 'error', env);
@@ -1728,12 +1744,6 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
             } catch (statusErr) {
                 console.error(`SUBMIT_QUESTIONNAIRE (${userId}): Failed to set error status:`, statusErr);
             }
-        });
-        
-        if (ctx) {
-            ctx.waitUntil(planTask);
-        } else {
-            await planTask;
         }
 
         const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] ||
