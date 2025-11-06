@@ -724,7 +724,7 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
   
   // Add timeout to prevent hanging indefinitely
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+  const timeoutId = setTimeout(() => controller.abort(), EMAIL_TIMEOUT_MS);
   
   try {
     if (endpoint) {
@@ -734,7 +734,6 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
         body: JSON.stringify({ to, subject, message: body, body, fromName }),
         signal: controller.signal
       });
-      clearTimeout(timeoutId);
       
       if (!resp.ok) {
         const text = await resp.text().catch(() => '');
@@ -747,16 +746,17 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
       DEFAULT_MAIL_PHP_URL;
     const phpEnv = {
       MAIL_PHP_URL: phpUrl,
-      FROM_NAME: fromName
+      FROM_NAME: fromName,
+      _abortSignal: controller.signal
     };
     await sendEmail(to, subject, body, phpEnv);
-    clearTimeout(timeoutId);
   } catch (error) {
-    clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
       throw new Error('Email sending timeout after 10 seconds');
     }
     throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -6638,6 +6638,7 @@ const PBKDF2_ITERATIONS_CONST = 100000;
 const PBKDF2_HASH_ALGORITHM_CONST = 'SHA-256';
 const SALT_LENGTH_CONST = 16; // bytes
 const DERIVED_KEY_LENGTH_CONST = 32; // bytes
+const EMAIL_TIMEOUT_MS = 10000; // 10 seconds timeout for email sending
 
 async function hashPassword(password) {
     const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH_CONST));
