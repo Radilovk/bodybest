@@ -1,5 +1,3 @@
-import { jest } from '@jest/globals';
-
 /**
  * Test suite to verify that email errors during registration and questionnaire submission
  * are properly caught and do not block the process.
