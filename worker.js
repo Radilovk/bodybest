@@ -724,9 +724,15 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
   const endpoint = env.MAILER_ENDPOINT_URL || globalThis['process']?.env?.MAILER_ENDPOINT_URL;
   const fromName = env.FROM_NAME || env.from_email_name || globalThis['process']?.env?.FROM_NAME;
   
-  // Add timeout to prevent hanging indefinitely
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), EMAIL_TIMEOUT_MS);
+  // Use provided signal or create new controller with timeout
+  const providedSignal = env._abortSignal;
+  let controller = null;
+  let timeoutId = null;
+  
+  if (!providedSignal) {
+    controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), EMAIL_TIMEOUT_MS);
+  }
   
   try {
     if (endpoint) {
@@ -734,7 +740,7 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to, subject, message: body, body, fromName }),
-        signal: controller.signal
+        signal: providedSignal || controller.signal
       });
       
       if (!resp.ok) {
@@ -749,7 +755,7 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
     const phpEnv = {
       MAIL_PHP_URL: phpUrl,
       FROM_NAME: fromName,
-      _abortSignal: controller.signal
+      _abortSignal: providedSignal || controller.signal
     };
     await sendEmail(to, subject, body, phpEnv);
   } catch (error) {
@@ -758,7 +764,10 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
     }
     throw error;
   } finally {
-    clearTimeout(timeoutId);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      controller = null;
+    }
   }
 }
 

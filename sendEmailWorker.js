@@ -86,7 +86,10 @@ async function sendViaPhp(to, subject, message, env = {}) {
     }
     throw error;
   } finally {
-    if (timeoutId) clearTimeout(timeoutId);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      controller = null;
+    }
   }
 }
 
