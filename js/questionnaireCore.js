@@ -338,24 +338,8 @@ export function showPage(index) {
             false
           );
         }
-        // Store userId and email for automatic login
-        if (result.userId) {
-          sessionStorage.setItem('userId', result.userId);
-          sessionStorage.setItem('userEmail', state.responses.email);
-          sessionStorage.setItem('planStatus', 'pending');
-          
-          // Show login guidance button
-          const loginGuidance = document.getElementById('login-guidance');
-          if (loginGuidance) {
-            loginGuidance.style.display = 'block';
-            const dashboardBtn = document.getElementById('goToDashboardBtn');
-            if (dashboardBtn) {
-              dashboardBtn.addEventListener('click', () => {
-                window.location.href = 'code.html';
-              });
-            }
-          }
-        }
+        // Handle successful submission with automatic login setup
+        handleSuccessfulSubmission(result);
       })
       .catch(error => {
         state.submitted = false;
@@ -368,6 +352,30 @@ export function showPage(index) {
           );
         }
       });
+  }
+}
+
+function handleSuccessfulSubmission(result) {
+  // Store userId and email for automatic login
+  if (result.userId) {
+    sessionStorage.setItem('userId', result.userId);
+    const userEmail = state.responses.email || '';
+    if (userEmail) {
+      sessionStorage.setItem('userEmail', userEmail);
+    }
+    sessionStorage.setItem('planStatus', 'pending');
+    
+    // Show login guidance button
+    const loginGuidance = document.getElementById('login-guidance');
+    if (loginGuidance) {
+      loginGuidance.style.display = 'block';
+      const dashboardBtn = document.getElementById('goToDashboardBtn');
+      if (dashboardBtn) {
+        dashboardBtn.addEventListener('click', () => {
+          window.location.href = 'code.html';
+        });
+      }
+    }
   }
 }
 
