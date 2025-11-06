@@ -620,7 +620,10 @@ export async function loadDashboardData() {
             showPlanPendingState('pending_inputs', `Моля, попълнете <a href="quest.html?userId=${currentUserId}" style="color: var(--primary-color); text-decoration: underline;">въпросника</a> за да започнете генериране на вашия персонализиран план.`); return;
         }
         if (data.planStatus === "pending" || data.planStatus === "processing") {
-            showPlanPendingState('generating'); return;
+            showPlanPendingState('generating');
+            // Start polling to check when plan becomes ready
+            pollPlanStatus(10000, 600000); // Check every 10 seconds for up to 10 minutes
+            return;
         }
         if (data.planStatus === "error") {
             showPlanPendingState('error', `Възникна грешка при генерирането на вашия план: ${data.message || 'Свържете се с поддръжка.'}`); return;
@@ -764,7 +767,7 @@ function showPlanPendingState(stateOrMessage, customMessage) {
         if (spinnerElement) spinnerElement.style.display = '';
         if (h2Element) h2Element.textContent = 'Вашият план се генерира...';
         if (pElements.length > 0) pElements[0].textContent = message || 'Благодарим ви за попълнения въпросник! Вашият персонализиран план MyBody.Best се генерира.';
-        if (pElements.length > 1) pElements[1].textContent = 'Моля, проверете отново по-късно. Ще бъдете уведомени (ако сте позволили известия) или опитайте да презаредите страницата след известно време.';
+        if (pElements.length > 1) pElements[1].textContent = 'Страницата ще се обнови автоматично когато планът е готов. Моля, не затваряйте този прозорец.';
     }
     
     showLoading(false);
