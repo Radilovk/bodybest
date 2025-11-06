@@ -247,7 +247,13 @@ function createFinalPage() {
     <div class="nav-buttons">
       <button type="button" id="finalBackBtn">◀ Назад</button>
     </div>
-    <div id="submit-message" class="message" role="alert"></div>`;
+    <div id="submit-message" class="message" role="alert"></div>
+    <div id="login-guidance" style="display: none; margin-top: 2rem; text-align: center;">
+      <p style="font-size: 1.1rem; margin-bottom: 1rem;">Вашият план се генерира в момента.</p>
+      <button type="button" id="goToDashboardBtn" style="padding: 15px 40px; font-size: 1.1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;">
+        Влез в системата →
+      </button>
+    </div>`;
   container.appendChild(pageDiv);
 }
 
@@ -331,6 +337,24 @@ export function showPage(index) {
             result.message || 'Отговорите са изпратени успешно за обработка!',
             false
           );
+        }
+        // Store userId and email for automatic login
+        if (result.userId) {
+          sessionStorage.setItem('userId', result.userId);
+          sessionStorage.setItem('userEmail', state.responses.email);
+          sessionStorage.setItem('planStatus', 'pending');
+          
+          // Show login guidance button
+          const loginGuidance = document.getElementById('login-guidance');
+          if (loginGuidance) {
+            loginGuidance.style.display = 'block';
+            const dashboardBtn = document.getElementById('goToDashboardBtn');
+            if (dashboardBtn) {
+              dashboardBtn.addEventListener('click', () => {
+                window.location.href = 'code.html';
+              });
+            }
+          }
         }
       })
       .catch(error => {

@@ -1753,7 +1753,11 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         } else {
             await analysisTask;
         }
-        return { success: true, message: 'Данните са приети. Вашият индивидуален план ще бъде генериран скоро.' };
+        return { 
+            success: true, 
+            message: 'Данните са приети. Вашият индивидуален план ще бъде генериран скоро.',
+            userId: userId
+        };
     } catch (error) {
         console.error(`Error in handleSubmitQuestionnaire:`, error.message, error.stack);
         return { success: false, message: 'Възникна грешка при обработка на данните от въпросника.', statusHint: 500 };
@@ -1818,7 +1822,11 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
         } else {
             await analysisTask;
         }
-        return { success: true, message: 'Данните са приети. Анализът ще бъде готов скоро.' };
+        return { 
+            success: true, 
+            message: 'Данните са приети. Анализът ще бъде готов скоро.',
+            userId: userId
+        };
     } catch (error) {
         console.error('Error in handleSubmitDemoQuestionnaire:', error.message, error.stack);
         return { success: false, message: 'Грешка при обработка на данните.', statusHint: 500 };
