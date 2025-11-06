@@ -544,7 +544,7 @@ export function updateMacrosAndAnalytics() {
 export async function loadDashboardData() {
     debugLog("loadDashboardData starting for user:", currentUserId);
     if (!currentUserId) {
-         showPlanPendingState("Грешка: Потребителска сесия не е намерена. Моля, <a href='index.html' style='color: var(--primary-color); text-decoration: underline;'>влезте отново</a>.");
+         showPlanPendingState('error', "Грешка: Потребителска сесия не е намерена. Моля, <a href='index.html' style='color: var(--primary-color); text-decoration: underline;'>влезте отново</a>.");
          showLoading(false);
          return;
     }
@@ -601,7 +601,14 @@ export async function loadDashboardData() {
             ttl: 30000 // 30 секунди кеш - балансира актуалност и производителност
         });
         
-        debugLog('Received planData', data.planData);
+        debugLog('Dashboard response received:', { 
+            success: data.success, 
+            planStatus: data.planStatus, 
+            hasPlanData: !!data.planData,
+            hasCaloriesMacros: !!data.planData?.caloriesMacros,
+            message: data.message
+        });
+        
         if (!data.success) throw new Error(data.message || 'Неуспешно зареждане на данни от сървъра.');
 
         debugLog("Data received from worker:", data);
@@ -610,13 +617,27 @@ export async function loadDashboardData() {
         // chatHistory = []; // Do not reset chat history on normal data load, only for test user or logout
 
         if (data.planStatus === "pending_inputs") {
-            showPlanPendingState(`Моля, попълнете <a href="quest.html?userId=${currentUserId}" style="color: var(--primary-color); text-decoration: underline;">въпросника</a> за да започнете генериране на вашия персонализиран план.`); return;
+            showPlanPendingState('pending_inputs', `Моля, попълнете <a href="quest.html?userId=${currentUserId}" style="color: var(--primary-color); text-decoration: underline;">въпросника</a> за да започнете генериране на вашия персонализиран план.`); return;
         }
         if (data.planStatus === "pending" || data.planStatus === "processing") {
-            showPlanPendingState(); return;
+            showPlanPendingState('generating'); return;
         }
         if (data.planStatus === "error") {
-            showPlanPendingState(`Възникна грешка при генерирането на вашия план: ${data.message || 'Свържете се с поддръжка.'}`); return;
+            showPlanPendingState('error', `Възникна грешка при генерирането на вашия план: ${data.message || 'Свържете се с поддръжка.'}`); return;
+        }
+        
+        // Проверка дали има валидни данни за плана дори при статус "ready"
+        if (!data.planData || !data.planData.caloriesMacros) {
+            console.error('Missing plan data despite success response:', {
+                planStatus: data.planStatus,
+                hasPlanData: !!data.planData,
+                hasCaloriesMacros: !!data.planData?.caloriesMacros
+            });
+            const errorMsg = data.planStatus === 'ready' 
+                ? 'Планът Ви изглежда е готов, но липсват необходими данни. Моля, свържете се с поддръжка или използвайте бутона за регенериране на план в админ панела.'
+                : 'Липсват необходими данни за показване на плана. Моля, опитайте да <a href="#" onclick="location.reload();" style="color: var(--primary-color); text-decoration: underline;">презаредите страницата</a>.';
+            showPlanPendingState('error', errorMsg);
+            return;
         }
 
         fullDashboardData.dailyLogs = normalizeDailyLogs(fullDashboardData.dailyLogs);
@@ -694,7 +715,7 @@ export async function loadDashboardData() {
     } catch (error) {
         console.error("Error loading/processing dashboard data:", error);
         showToast(`Грешка при зареждане: ${error.message}`, true, 7000);
-        showPlanPendingState(`Възникна грешка: ${error.message}. Опитайте да презаредите страницата или <a href='index.html' style='color: var(--primary-color); text-decoration: underline;'>влезте отново</a>.`);
+        showPlanPendingState('error', `Възникна грешка: ${error.message}. Опитайте да презаредите страницата или <a href='index.html' style='color: var(--primary-color); text-decoration: underline;'>влезте отново</a>.`);
         if (currentUserId) {
             await checkAdminQueries(currentUserId);
             startAdminQueriesPolling();
@@ -704,19 +725,48 @@ export async function loadDashboardData() {
     }
 }
 
-function showPlanPendingState(customMessage) {
+function showPlanPendingState(stateOrMessage, customMessage) {
     if (selectors.appWrapper) selectors.appWrapper.style.display = 'none';
-    if (selectors.planPendingState) {
-        selectors.planPendingState.classList.remove('hidden');
-        const pElements = selectors.planPendingState.querySelectorAll('p');
-        if (customMessage) {
-            if (pElements.length > 1) pElements[1].innerHTML = customMessage;
-            else if (pElements.length > 0) pElements[0].innerHTML = customMessage;
-        } else {
-             if (pElements.length > 0) pElements[0].textContent = "Вашият персонализиран план MyBody.Best се генерира.";
-             if (pElements.length > 1) pElements[1].textContent = "Моля, проверете отново по-късно. Ще бъдете уведомени (ако сте позволили известия) или опитайте да презаредите страницата след известно време.";
-        }
+    if (!selectors.planPendingState) {
+        showLoading(false);
+        return;
     }
+    
+    selectors.planPendingState.classList.remove('hidden');
+    const h2Element = selectors.planPendingState.querySelector('h2');
+    const spinnerElement = selectors.planPendingState.querySelector('.spinner');
+    const pElements = selectors.planPendingState.querySelectorAll('p');
+    
+    // Backward compatibility: if first param is a string and no second param, treat as old API
+    let state = stateOrMessage;
+    let message = customMessage;
+    if (typeof stateOrMessage === 'string' && customMessage === undefined) {
+        // Old API: showPlanPendingState(customMessage)
+        state = 'generating';
+        message = stateOrMessage;
+    }
+    
+    // Configure based on state
+    if (state === 'pending_inputs') {
+        // User needs to fill questionnaire - hide spinner, change title
+        if (spinnerElement) spinnerElement.style.display = 'none';
+        if (h2Element) h2Element.textContent = 'Добре дошли в MyBody.Best!';
+        if (pElements.length > 0) pElements[0].innerHTML = message || 'Моля, попълнете въпросника за да започнете.';
+        if (pElements.length > 1) pElements[1].innerHTML = '';
+    } else if (state === 'error') {
+        // Error state - hide spinner, show error title
+        if (spinnerElement) spinnerElement.style.display = 'none';
+        if (h2Element) h2Element.textContent = 'Възникна грешка';
+        if (pElements.length > 0) pElements[0].innerHTML = message || 'Моля, свържете се с поддръжка.';
+        if (pElements.length > 1) pElements[1].innerHTML = '';
+    } else {
+        // Default 'generating' state - show spinner, generating message
+        if (spinnerElement) spinnerElement.style.display = '';
+        if (h2Element) h2Element.textContent = 'Вашият план се генерира...';
+        if (pElements.length > 0) pElements[0].textContent = message || 'Благодарим ви за попълнения въпросник! Вашият персонализиран план MyBody.Best се генерира.';
+        if (pElements.length > 1) pElements[1].textContent = 'Моля, проверете отново по-късно. Ще бъдете уведомени (ако сте позволили известия) или опитайте да презаредите страницата след известно време.';
+    }
+    
     showLoading(false);
 }
 
@@ -835,7 +885,7 @@ export function pollPlanStatus(intervalMs = 30000, maxDurationMs = 300000) {
     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.remove('hidden');
     if (selectors.planModificationBtn) selectors.planModificationBtn.classList.add('hidden');
     if (selectors.chatFab) selectors.chatFab.classList.add('planmod-processing');
-    showPlanPendingState();
+    showPlanPendingState('generating');
     showToast('Обновявам плана...', false, 3000);
 
     async function checkStatus() {
