@@ -15,6 +15,8 @@
 
 import { sendEmail, DEFAULT_MAIL_PHP_URL } from './sendEmailWorker.js';
 
+const EMAIL_TIMEOUT_MS = 10000; // 10 seconds timeout for email sending
+
 const MACRO_FIELD_ALIASES = {
   calories: ['calories', 'calories_kcal', 'cal', 'kcal', 'energy', 'energy_kcal'],
   protein: [
@@ -6638,7 +6640,6 @@ const PBKDF2_ITERATIONS_CONST = 100000;
 const PBKDF2_HASH_ALGORITHM_CONST = 'SHA-256';
 const SALT_LENGTH_CONST = 16; // bytes
 const DERIVED_KEY_LENGTH_CONST = 32; // bytes
-const EMAIL_TIMEOUT_MS = 10000; // 10 seconds timeout for email sending
 
 async function hashPassword(password) {
     const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH_CONST));
