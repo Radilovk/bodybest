@@ -1441,7 +1441,10 @@ export default {
                     continue;
                 }
                 await setPlanStatus(userId, 'processing', env);
-                ctx.waitUntil(processSingleUserPlan(userId, env));
+                // Wrap in error handler to prevent failures from causing IoContext timeouts
+                ctx.waitUntil(processSingleUserPlan(userId, env).catch(err => {
+                    console.error(`[CRON-PlanGen] Failed to process plan for ${userId}:`, err);
+                }));
                 processedUsersForPlan++;
             }
             const pendingUsersJson = JSON.stringify(pendingUsers);
@@ -1477,7 +1480,10 @@ export default {
 
                 if (daysSinceLastPrincipleUpdate >= PRINCIPLE_UPDATE_INTERVAL_DAYS) {
                     console.log(`[CRON-Principles] User ${userId} due for standard principle update.`);
-                    ctx.waitUntil(handlePrincipleAdjustment(userId, env));
+                    // Wrap in error handler to prevent failures from causing IoContext timeouts
+                    ctx.waitUntil(handlePrincipleAdjustment(userId, env).catch(err => {
+                        console.error(`[CRON-Principles] Failed to adjust principles for ${userId}:`, err);
+                    }));
                     processedUsersForPrinciples++;
                 } else {
                     remainingReady.push(userId);
@@ -1587,7 +1593,10 @@ async function handleRegisterRequest(request, env, ctx) {
         }
         const skipWelcome = sendVal === '0' || String(sendVal).toLowerCase() === 'false';
         if (!skipWelcome) {
-            const emailTask = sendWelcomeEmail(trimmedEmail, userId, env);
+            const emailTask = sendWelcomeEmail(trimmedEmail, userId, env).catch(err => {
+                console.error('Failed to send welcome email:', err);
+                return false;
+            });
             if (ctx) ctx.waitUntil(emailTask); else await emailTask;
         }
         return { success: true, message: 'Регистрацията успешна!' };
@@ -1713,9 +1722,15 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
 
+        // Execute plan generation synchronously to avoid IoContext timeout
+        // This follows the same pattern as handleRegeneratePlanRequest (line 2662-2666)
+        // to prevent "IoContext timed out due to inactivity" errors
         const planTask = processSingleUserPlan(userId, env);
         if (ctx) {
-            ctx.waitUntil(planTask);
+            // Wrap in error handler to prevent failures from propagating
+            ctx.waitUntil(planTask.catch(err => {
+                console.error(`Failed to process plan for ${userId}:`, err);
+            }));
         } else {
             await planTask;
         }
@@ -1726,25 +1741,33 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         url.searchParams.set('userId', userId);
         const link = url.toString();
         
-        // Send email asynchronously without blocking the response
+        // Send email asynchronously with error handling to prevent email failures
+        // from causing IoContext timeouts
         const emailTask = sendAnalysisLinkEmail(
             questionnaireData.email,
             questionnaireData.name || 'Клиент',
             link,
             env
-        );
+        ).catch(err => {
+            console.error('Failed to send analysis link email:', err);
+            return false;
+        });
+        
         if (ctx) {
             ctx.waitUntil(emailTask);
         } else {
             // Fallback for environments without ExecutionContext (e.g., local testing)
-            // Email is sent in background; errors are logged but don't block the response
+            // Email is sent in background; errors are already caught above
             emailTask.catch(err => console.error('Failed to send analysis email:', err));
         }
 
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         const analysisTask = handleAnalyzeInitialAnswers(userId, env);
         if (ctx) {
-            ctx.waitUntil(analysisTask);
+            // Wrap in error handler to prevent failures from propagating
+            ctx.waitUntil(analysisTask.catch(err => {
+                console.error(`Failed to analyze initial answers for ${userId}:`, err);
+            }));
         } else {
             await analysisTask;
         }
@@ -1798,18 +1821,26 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
             link,
             env
         );
+        const emailTaskWithHandler = emailTask.catch(err => {
+            console.error('Failed to send demo analysis link email:', err);
+            return false;
+        });
+        
         if (ctx) {
-            ctx.waitUntil(emailTask);
+            ctx.waitUntil(emailTaskWithHandler);
         } else {
             // Fallback for environments without ExecutionContext (e.g., local testing)
-            // Email is sent in background; errors are logged but don't block the response
-            emailTask.catch(err => console.error('Failed to send analysis email:', err));
+            // Email is sent in background; errors are already caught above
+            emailTaskWithHandler.catch(err => console.error('Failed to send analysis email:', err));
         }
 
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         const analysisTask = handleAnalyzeInitialAnswers(userId, env);
         if (ctx) {
-            ctx.waitUntil(analysisTask);
+            // Wrap in error handler to prevent failures from causing IoContext timeouts
+            ctx.waitUntil(analysisTask.catch(err => {
+                console.error(`Failed to analyze demo initial answers for ${userId}:`, err);
+            }));
         } else {
             await analysisTask;
         }
@@ -3215,7 +3246,10 @@ async function handleReAnalyzeQuestionnaireRequest(request, env, ctx) {
             return { success: false, message: 'Няма съхранен въпросник.', statusHint: 404 };
         }
         if (ctx) {
-            ctx.waitUntil(handleAnalyzeInitialAnswers(userId, env));
+            // Wrap in error handler to prevent failures from causing IoContext timeouts
+            ctx.waitUntil(handleAnalyzeInitialAnswers(userId, env).catch(err => {
+                console.error(`Failed to re-analyze initial answers for ${userId}:`, err);
+            }));
             await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         } else {
             await handleAnalyzeInitialAnswers(userId, env);
@@ -7590,7 +7624,10 @@ async function processPendingUserEvents(env, ctx, limit = 5, cursor) {
     for (const { key, data } of events) {
         const handler = EVENT_HANDLERS[data.type];
         if (handler) {
-            ctx.waitUntil(handler(data.userId, env, data.payload));
+            // Wrap in error handler to prevent failures from causing IoContext timeouts
+            ctx.waitUntil(handler(data.userId, env, data.payload).catch(err => {
+                console.error(`[CRON-UserEvent] Failed to handle event ${data.type} for ${data.userId}:`, err);
+            }));
         } else {
             console.log(`[CRON-UserEvent] Unknown event type ${data.type} for user ${data.userId}`);
         }
@@ -7599,7 +7636,10 @@ async function processPendingUserEvents(env, ctx, limit = 5, cursor) {
     }
     if (!list.list_complete && list.cursor) {
         env.lastUserEventCursor = list.cursor;
-        ctx.waitUntil(processPendingUserEvents(env, ctx, limit, list.cursor));
+        // Wrap in error handler to prevent failures from causing IoContext timeouts
+        ctx.waitUntil(processPendingUserEvents(env, ctx, limit, list.cursor).catch(err => {
+            console.error('[CRON-UserEvent] Failed to process pending user events:', err);
+        }));
     } else {
         env.lastUserEventCursor = null;
     }
