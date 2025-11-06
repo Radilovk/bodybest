@@ -6,6 +6,8 @@ const MINUTES_IN_DAY = 24 * 60;
 const MILLISECONDS_IN_MINUTE = 60 * 1000;
 const ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT = MINUTES_IN_DAY * MILLISECONDS_IN_MINUTE; // 24 часа
 const ADMIN_QUERY_MINIMUM_INTERVAL_MS = ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT;
+const PLAN_POLLING_INTERVAL_MS = 10000; // 10 seconds - check plan status frequently
+const PLAN_POLLING_TIMEOUT_MS = 600000; // 10 minutes - max time to wait for plan generation
 let adminQueriesPollingEnabled = false; // Временно спираме заявки към getAdminQueries
 const ADMIN_QUERY_LAST_FETCH_STORAGE_KEY = 'lastAdminQueriesFetchTs';
 const ADMIN_QUERY_LAST_FETCH_SESSION_KEY = 'lastAdminQueriesFetchTsSession';
@@ -238,6 +240,7 @@ export function setChatPromptOverride(val) { chatPromptOverride = val; }
 // Управление на интервал за проверка на статус на плана
 let planStatusInterval = null;
 let planStatusTimeout = null;
+let isInitialPlanPolling = false; // Track if we're polling for initial plan generation
 let adminQueriesTimerId = null; // Таймер за проверка на администраторски съобщения
 let adminQueriesIntervalMs = ADMIN_QUERY_POLL_INTERVAL_MS_DEFAULT;
 let adminQueriesVisibilityListenerAttached = false;
@@ -621,8 +624,11 @@ export async function loadDashboardData() {
         }
         if (data.planStatus === "pending" || data.planStatus === "processing") {
             showPlanPendingState('generating');
-            // Start polling to check when plan becomes ready
-            pollPlanStatus(10000, 600000); // Check every 10 seconds for up to 10 minutes
+            // Start polling to check when plan becomes ready (only if not already polling for initial plan)
+            if (!isInitialPlanPolling) {
+                isInitialPlanPolling = true;
+                pollPlanStatus(PLAN_POLLING_INTERVAL_MS, PLAN_POLLING_TIMEOUT_MS);
+            }
             return;
         }
         if (data.planStatus === "error") {
@@ -782,6 +788,7 @@ export function stopPlanStatusPolling() {
         clearTimeout(planStatusTimeout);
         planStatusTimeout = null;
     }
+    isInitialPlanPolling = false; // Reset the flag
     window.removeEventListener('beforeunload', stopPlanStatusPolling);
     if (selectors.planModInProgressIcon) selectors.planModInProgressIcon.classList.add('hidden');
     if (selectors.planModificationBtn) selectors.planModificationBtn.classList.remove('hidden');
