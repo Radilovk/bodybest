@@ -3,7 +3,6 @@ import { apiEndpoints } from './config.js';
 import { setupRegistration } from './register.js';
 
 const dashboardUrl = 'code.html';
-const questionnaireUrl = 'quest.html';
 let initialized = false;
 
 export async function openAuthModal() {
@@ -130,15 +129,8 @@ function initModal(modalContainer) {
                 sessionStorage.setItem('userId', data.userId);
                 sessionStorage.setItem('userEmail', email);
                 sessionStorage.setItem('planStatus', data.planStatus || 'unknown');
-                
-                // Determine redirect target based on server response
-                let redirectTarget = dashboardUrl;
-                if (data.redirectTo === 'questionnaire') {
-                    redirectTarget = `${questionnaireUrl}?userId=${data.userId}`;
-                }
-                
                 showMessage(loginMessage, 'Успешен вход! Пренасочване...', false);
-                setTimeout(() => { window.location.href = redirectTarget; }, 1500);
+                setTimeout(() => { window.location.href = dashboardUrl; }, 1500);
             } catch (error) {
                 const msg = error instanceof TypeError ? 'Неуспешна връзка със сървъра. Проверете интернет връзката.' : error.message;
                 showMessage(loginMessage, msg, true);
