@@ -1588,7 +1588,12 @@ async function handleRegisterRequest(request, env, ctx) {
         const skipWelcome = sendVal === '0' || String(sendVal).toLowerCase() === 'false';
         if (!skipWelcome) {
             const emailTask = sendWelcomeEmail(trimmedEmail, userId, env);
-            if (ctx) ctx.waitUntil(emailTask); else await emailTask;
+            if (ctx) {
+                ctx.waitUntil(emailTask);
+            } else {
+                // Email is sent in background; errors are logged but don't block registration
+                emailTask.catch(err => console.error('Failed to send welcome email:', err));
+            }
         }
         return { success: true, message: 'Регистрацията успешна!' };
      } catch (error) {
@@ -1713,7 +1718,18 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
 
-        const planTask = processSingleUserPlan(userId, env);
+        // Start plan generation with proper error handling
+        const planTask = processSingleUserPlan(userId, env).catch(async (err) => {
+            console.error(`SUBMIT_QUESTIONNAIRE (${userId}): Plan generation failed:`, err.message, err.stack);
+            try {
+                await setPlanStatus(userId, 'error', env);
+                await env.USER_METADATA_KV.put(`${userId}_processing_error`, 
+                    `Грешка при генериране на план: ${err.message}`);
+            } catch (statusErr) {
+                console.error(`SUBMIT_QUESTIONNAIRE (${userId}): Failed to set error status:`, statusErr);
+            }
+        });
+        
         if (ctx) {
             ctx.waitUntil(planTask);
         } else {
@@ -1748,7 +1764,11 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         } else {
             await analysisTask;
         }
-        return { success: true, message: 'Данните са приети. Вашият индивидуален план ще бъде генериран скоро.' };
+        return { 
+            success: true, 
+            message: 'Данните са приети. Вашият индивидуален план ще бъде генериран скоро.',
+            userId: userId
+        };
     } catch (error) {
         console.error(`Error in handleSubmitQuestionnaire:`, error.message, error.stack);
         return { success: false, message: 'Възникна грешка при обработка на данните от въпросника.', statusHint: 500 };
@@ -1813,7 +1833,11 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
         } else {
             await analysisTask;
         }
-        return { success: true, message: 'Данните са приети. Анализът ще бъде готов скоро.' };
+        return { 
+            success: true, 
+            message: 'Данните са приети. Анализът ще бъде готов скоро.',
+            userId: userId
+        };
     } catch (error) {
         console.error('Error in handleSubmitDemoQuestionnaire:', error.message, error.stack);
         return { success: false, message: 'Грешка при обработка на данните.', statusHint: 500 };
@@ -2831,7 +2855,12 @@ async function handleRequestPasswordReset(request, env) {
         }
         const token = crypto.randomUUID();
         await env.USER_METADATA_KV.put(`pwreset_${token}`, userId, { expirationTtl: 3600 });
-        await sendPasswordResetEmail(clean, token, env);
+        try {
+            await sendPasswordResetEmail(clean, token, env);
+        } catch (err) {
+            console.error('Failed to send password reset email:', err);
+            // Don't fail the request - token is created and valid
+        }
         return { success: true, message: 'Изпратихме линк за смяна на паролата.' };
     } catch (error) {
         console.error('Error in handleRequestPasswordReset:', error.message, error.stack);
