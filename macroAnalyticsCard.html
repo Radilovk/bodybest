@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Standalone MacroAnalyticsCard</title>
+  <!--
+    Самостоятелен шаблон за визуализация на macroAnalyticsCard.
+    Свързани файлове:
+      - js/populateUI.js – оригинална логика и обновяване в таблото.
+      - css/dashboard_panel_styles.css – стилове и CSS променливи.
+      - js/__tests__/populateUI.test.js – примерни тестове за функционалността.
+    Тук можете безопасно да експериментирате с цветове, анимации и подредба
+    преди пренасяне в основния проект.
+  -->
+  <!-- CSS зависимости: базови стилове, компоненти и специфични макро стилове -->
+  <link rel="stylesheet" href="css/base_styles.css" />
+  <link rel="stylesheet" href="css/components_styles.css" />
+  <link rel="stylesheet" href="css/dashboard_panel_styles.css" />
+  <link rel="stylesheet" href="css/responsive_styles.css" />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+  />
+</head>
+<body>
+  <!-- Независим контейнер за картата -->
+  <div class="card" style="max-width:600px;margin:2rem auto;">
+    <div id="macroAnalyticsCard" class="analytics-card">
+      <h5>Калории и Макронутриенти</h5>
+      <div class="chart-container">
+        <canvas id="macroChart"></canvas>
+      </div>
+      <div id="macroMetricsGrid" class="macro-metrics-grid"></div>
+    </div>
+  </div>
+
+  <details>
+    <summary>Девелопер бележки и зависимости</summary>
+    <p>
+      Този пример демонстрира <code>macroAnalyticsCard</code> в изолирана среда.
+      Логиката е извлечена от <code>js/populateUI.js</code>, а стиловете - от
+      <code>css/dashboard_panel_styles.css</code>. При промени в дизайна или
+      анимациите синхронизирайте актуализациите в съответните файлове на
+      проекта.
+    </p>
+    <ul>
+      <li>
+        <strong>CSS променливи</strong>: използват се
+        <code>--macro-protein-color</code>, <code>--macro-carbs-color</code> и
+        <code>--macro-fat-color</code>.
+      </li>
+      <li>
+        <strong>JavaScript</strong>: функциите
+        <code>renderMacroAnalyticsCard</code>,
+        <code>highlightMacro</code> и <code>renderPendingMacroChart</code>
+        копират поведението от основния модул.
+      </li>
+      <li>
+        <strong>Chart.js</strong>: зарежда се от CDN. Ако се използва друга
+        версия, коригирайте конфигурацията.
+      </li>
+      <li>
+        <strong>Данни</strong>: очаква се обект <code>macros</code> със стойности
+        <code>calories</code>, <code>protein_grams</code>,
+        <code>carbs_grams</code>, <code>fat_grams</code> и опционални проценти.
+      </li>
+    </ul>
+  </details>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module">
+    // Демонстрационни данни
+    const demoData = {
+      calories: 2200,
+      protein_grams: 140,
+      protein_percent: 25,
+      carbs_grams: 230,
+      carbs_percent: 45,
+      fat_grams: 70,
+      fat_percent: 30,
+    };
+
+    // Локални променливи
+    let macroChartInstance = null;
+    let pendingMacroData = null;
+
+    // Помощна функция за извличане на CSS променливи
+    const getCssVar = (name, fallback = '') =>
+      getComputedStyle(document.documentElement).getPropertyValue(name) || fallback;
+
+    // Маркира активния елемент от мрежата
+    function highlightMacro(el) {
+      const grid = document.getElementById('macroMetricsGrid');
+      if (!grid || !el) return;
+      grid.querySelectorAll('.macro-metric').forEach((div) =>
+        div.classList.remove('active')
+      );
+      el.classList.add('active');
+    }
+
+    // Рендерира основната карта и попълва стойностите
+    function renderMacroAnalyticsCard(macros) {
+      const grid = document.getElementById('macroMetricsGrid');
+      grid.innerHTML = '';
+      const list = [
+        { l: 'Калории', v: macros.calories, s: 'kcal дневно', cls: 'calories' },
+        {
+          l: 'Белтъчини',
+          v: macros.protein_grams,
+          s: `${macros.protein_percent}%`,
+          c: '--macro-protein-color',
+        },
+        {
+          l: 'Въглехидрати',
+          v: macros.carbs_grams,
+          s: `${macros.carbs_percent}%`,
+          c: '--macro-carbs-color',
+        },
+        {
+          l: 'Мазнини',
+          v: macros.fat_grams,
+          s: `${macros.fat_percent}%`,
+          c: '--macro-fat-color',
+        },
+      ];
+      const iconMap = {
+        Калории: 'bi-fire',
+        Белтъчини: 'bi-egg-fried',
+        Въглехидрати: 'bi-basket',
+        Мазнини: 'bi-droplet',
+      };
+      list.forEach((item) => {
+        const div = document.createElement('div');
+        div.className = 'macro-metric' + (item.cls ? ` ${item.cls}` : '');
+        div.innerHTML = `
+          <span class="macro-icon"><i class="bi ${iconMap[item.l] || 'bi-circle'}"></i></span>
+          <div class="macro-label" style="color:${item.c ? getCssVar(item.c) : ''}">${item.l}</div>
+          <div class="macro-value">${item.v}</div>
+          <div class="macro-subtitle">${item.s}</div>`;
+        div.addEventListener('click', () => highlightMacro(div));
+        grid.appendChild(div);
+      });
+      pendingMacroData = macros;
+    }
+
+    // Инициализира и актуализира диаграмата
+    function renderPendingMacroChart() {
+      if (!pendingMacroData) return;
+      const canvas = document.getElementById('macroChart');
+      if (!canvas || typeof Chart === 'undefined') return;
+      if (macroChartInstance) {
+        macroChartInstance.destroy();
+        macroChartInstance = null;
+      }
+      const m = pendingMacroData;
+      const ctx = canvas.getContext('2d');
+      macroChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: [
+            `Белтъчини (${m.protein_percent}%)`,
+            `Въглехидрати (${m.carbs_percent}%)`,
+            `Мазнини (${m.fat_percent}%)`,
+          ],
+          datasets: [
+            {
+              label: 'Разпределение на макроси',
+              data: [m.protein_grams, m.carbs_grams, m.fat_grams],
+              backgroundColor: [
+                getCssVar('--macro-protein-color', 'rgb(54,162,235)'),
+                getCssVar('--macro-carbs-color', 'rgb(255,205,86)'),
+                getCssVar('--macro-fat-color', 'rgb(255,99,132)'),
+              ],
+              hoverOffset: 4,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: `Дневен прием (${m.calories} kcal)` },
+          },
+        },
+      });
+    }
+
+    // Старт на демото
+    renderMacroAnalyticsCard(demoData);
+    renderPendingMacroChart();
+  </script>
+</body>
+</html>
