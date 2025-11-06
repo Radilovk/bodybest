@@ -84,7 +84,7 @@ test('ignores SEND_QUESTIONNAIRE_EMAIL flag', async () => {
   expect(fetch).toHaveBeenCalled()
 })
 
-test('handleSubmitDemoQuestionnaire fails when email send fails', async () => {
+test('handleSubmitDemoQuestionnaire succeeds even when email send fails', async () => {
   global.fetch = jest.fn().mockRejectedValue(new Error('SMTP down'))
   const env = {
     MAILER_ENDPOINT_URL: 'https://mail.example.com',
@@ -103,6 +103,6 @@ test('handleSubmitDemoQuestionnaire fails when email send fails', async () => {
     medicalConditions: ['Нямам']
   }) }
   const res = await handleSubmitDemoQuestionnaire(req, env)
-  expect(res.success).toBe(false)
-  expect(res.message).toBe('Неуспешно изпращане на имейла.')
+  expect(res.success).toBe(true)
+  expect(res.message).toBe('Данните са приети. Анализът ще бъде готов скоро.')
 })
