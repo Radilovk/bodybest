@@ -1441,10 +1441,7 @@ export default {
                     continue;
                 }
                 await setPlanStatus(userId, 'processing', env);
-                // Wrap in error handler to prevent failures from causing IoContext timeouts
-                ctx.waitUntil(processSingleUserPlan(userId, env).catch(err => {
-                    console.error(`[CRON-PlanGen] Failed to process plan for ${userId}:`, err);
-                }));
+                ctx.waitUntil(processSingleUserPlan(userId, env));
                 processedUsersForPlan++;
             }
             const pendingUsersJson = JSON.stringify(pendingUsers);
@@ -1480,10 +1477,7 @@ export default {
 
                 if (daysSinceLastPrincipleUpdate >= PRINCIPLE_UPDATE_INTERVAL_DAYS) {
                     console.log(`[CRON-Principles] User ${userId} due for standard principle update.`);
-                    // Wrap in error handler to prevent failures from causing IoContext timeouts
-                    ctx.waitUntil(handlePrincipleAdjustment(userId, env).catch(err => {
-                        console.error(`[CRON-Principles] Failed to adjust principles for ${userId}:`, err);
-                    }));
+                    ctx.waitUntil(handlePrincipleAdjustment(userId, env));
                     processedUsersForPrinciples++;
                 } else {
                     remainingReady.push(userId);
@@ -1593,10 +1587,7 @@ async function handleRegisterRequest(request, env, ctx) {
         }
         const skipWelcome = sendVal === '0' || String(sendVal).toLowerCase() === 'false';
         if (!skipWelcome) {
-            const emailTask = sendWelcomeEmail(trimmedEmail, userId, env).catch(err => {
-                console.error('Failed to send welcome email:', err);
-                return false;
-            });
+            const emailTask = sendWelcomeEmail(trimmedEmail, userId, env);
             if (ctx) ctx.waitUntil(emailTask); else await emailTask;
         }
         return { success: true, message: 'Регистрацията успешна!' };
@@ -1722,15 +1713,9 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
 
-        // Execute plan generation asynchronously with proper error handling
-        // Error handling prevents failures from causing "IoContext timed out due to inactivity" errors
-        // (see comment at line 2662-2666 for context on IoContext timeout issues)
         const planTask = processSingleUserPlan(userId, env);
         if (ctx) {
-            // Wrap in error handler to prevent failures from propagating
-            ctx.waitUntil(planTask.catch(err => {
-                console.error(`Failed to process plan for ${userId}:`, err);
-            }));
+            ctx.waitUntil(planTask);
         } else {
             await planTask;
         }
@@ -1741,33 +1726,25 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         url.searchParams.set('userId', userId);
         const link = url.toString();
         
-        // Send email asynchronously with error handling to prevent email failures
-        // from causing IoContext timeouts
+        // Send email asynchronously without blocking the response
         const emailTask = sendAnalysisLinkEmail(
             questionnaireData.email,
             questionnaireData.name || 'Клиент',
             link,
             env
-        ).catch(err => {
-            console.error('Failed to send analysis link email:', err);
-            return false;
-        });
-        
+        );
         if (ctx) {
             ctx.waitUntil(emailTask);
         } else {
             // Fallback for environments without ExecutionContext (e.g., local testing)
-            // Error handling is already in place (see lines 1751-1754 above)
-            await emailTask;
+            // Email is sent in background; errors are logged but don't block the response
+            emailTask.catch(err => console.error('Failed to send analysis email:', err));
         }
 
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         const analysisTask = handleAnalyzeInitialAnswers(userId, env);
         if (ctx) {
-            // Wrap in error handler to prevent failures from propagating
-            ctx.waitUntil(analysisTask.catch(err => {
-                console.error(`Failed to analyze initial answers for ${userId}:`, err);
-            }));
+            ctx.waitUntil(analysisTask);
         } else {
             await analysisTask;
         }
@@ -1821,26 +1798,18 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
             link,
             env
         );
-        const emailTaskWithHandler = emailTask.catch(err => {
-            console.error('Failed to send demo analysis link email:', err);
-            return false;
-        });
-        
         if (ctx) {
-            ctx.waitUntil(emailTaskWithHandler);
+            ctx.waitUntil(emailTask);
         } else {
             // Fallback for environments without ExecutionContext (e.g., local testing)
-            // Error handling is already in place (see lines 1824-1827 above)
-            await emailTaskWithHandler;
+            // Email is sent in background; errors are logged but don't block the response
+            emailTask.catch(err => console.error('Failed to send analysis email:', err));
         }
 
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         const analysisTask = handleAnalyzeInitialAnswers(userId, env);
         if (ctx) {
-            // Wrap in error handler to prevent failures from causing IoContext timeouts
-            ctx.waitUntil(analysisTask.catch(err => {
-                console.error(`Failed to analyze demo initial answers for ${userId}:`, err);
-            }));
+            ctx.waitUntil(analysisTask);
         } else {
             await analysisTask;
         }
@@ -3198,23 +3167,6 @@ async function handleAnalyzeInitialAnswers(userId, env) {
         const raw = await callModelRef.current(modelName, populated, env, { temperature: 0.5, maxTokens: 2500 });
         const cleaned = cleanGeminiJson(raw);
         await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
-        
-        // Extract and store macros from the analysis for use in plan generation
-        try {
-            const parsedAnalysis = safeParseJson(cleaned, null);
-            if (parsedAnalysis) {
-                const macros = extractTargetMacrosFromAny(parsedAnalysis);
-                if (macros) {
-                    await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macros));
-                    console.log(`INITIAL_ANALYSIS (${userId}): Macros extracted and stored.`);
-                } else {
-                    console.warn(`INITIAL_ANALYSIS_WARN (${userId}): No macros found in analysis.`);
-                }
-            }
-        } catch (macroErr) {
-            console.warn(`INITIAL_ANALYSIS_WARN (${userId}): Failed to extract macros - ${macroErr.message}`);
-        }
-        
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'ready');
         console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
         // Имейлът с линк към анализа вече се изпраща при подаване на въпросника,
@@ -3263,10 +3215,7 @@ async function handleReAnalyzeQuestionnaireRequest(request, env, ctx) {
             return { success: false, message: 'Няма съхранен въпросник.', statusHint: 404 };
         }
         if (ctx) {
-            // Wrap in error handler to prevent failures from causing IoContext timeouts
-            ctx.waitUntil(handleAnalyzeInitialAnswers(userId, env).catch(err => {
-                console.error(`Failed to re-analyze initial answers for ${userId}:`, err);
-            }));
+            ctx.waitUntil(handleAnalyzeInitialAnswers(userId, env));
             await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         } else {
             await handleAnalyzeInitialAnswers(userId, env);
@@ -5197,11 +5146,11 @@ async function processSingleUserPlan(userId, env) {
         let targetMacroFixAttempted = false;
         const handleTargetMacroFailure = async (error, reason = 'target-macros-invalid') => {
             const errMsg = error.message;
-            await env.USER_METADATA_KV.put(`${userId}_processing_warning`, errMsg);
-            await addLog(`Предупреждение: ${errMsg}`, { checkpoint: false, reason });
-            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${errMsg}`);
-            // Don't throw - continue with default/empty macros instead
-            // This prevents the entire process from failing due to macro calculation issues
+            await env.USER_METADATA_KV.put(`${userId}_processing_error`, errMsg);
+            await setPlanStatus(userId, 'error', env);
+            await addLog(`Грешка: ${errMsg}`, { checkpoint: true, reason });
+            console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${errMsg}`);
+            throw error;
         };
         const runTargetMacroFix = async () => {
             try {
@@ -5218,8 +5167,7 @@ async function processSingleUserPlan(userId, env) {
                         { checkpoint: false }
                     );
                 } else {
-                    const fallbackError = new Error('Не може да се калкулират таргет макроси от наличните данни.');
-                    await handleTargetMacroFailure(fallbackError, 'target-macros-missing');
+                    throw new Error('Не може да се калкулират таргет макроси от наличните данни.');
                 }
             } catch (macroFixErr) {
                 await handleTargetMacroFailure(macroFixErr, 'target-macros-missing');
@@ -5237,18 +5185,10 @@ async function processSingleUserPlan(userId, env) {
                     targetReplacements = buildTargetReplacements(targetMacros);
                 } catch (retryError) {
                     await handleTargetMacroFailure(retryError, 'target-macros-invalid');
-                    // Set empty object as fallback to continue processing
-                    targetReplacements = {};
                 }
             } else {
                 await handleTargetMacroFailure(macroErr, 'target-macros-invalid');
-                // Set empty object as fallback to continue processing
-                targetReplacements = {};
             }
-        }
-        // Ensure targetReplacements is always defined
-        if (!targetReplacements) {
-            targetReplacements = {};
         }
         planBuilder.generationMetadata.modelUsed = planModelName;
         let questionTextMap = new Map();
@@ -7650,10 +7590,7 @@ async function processPendingUserEvents(env, ctx, limit = 5, cursor) {
     for (const { key, data } of events) {
         const handler = EVENT_HANDLERS[data.type];
         if (handler) {
-            // Wrap in error handler to prevent failures from causing IoContext timeouts
-            ctx.waitUntil(handler(data.userId, env, data.payload).catch(err => {
-                console.error(`[CRON-UserEvent] Failed to handle event ${data.type} for ${data.userId}:`, err);
-            }));
+            ctx.waitUntil(handler(data.userId, env, data.payload));
         } else {
             console.log(`[CRON-UserEvent] Unknown event type ${data.type} for user ${data.userId}`);
         }
@@ -7662,10 +7599,7 @@ async function processPendingUserEvents(env, ctx, limit = 5, cursor) {
     }
     if (!list.list_complete && list.cursor) {
         env.lastUserEventCursor = list.cursor;
-        // Wrap in error handler to prevent failures from causing IoContext timeouts
-        ctx.waitUntil(processPendingUserEvents(env, ctx, limit, list.cursor).catch(err => {
-            console.error('[CRON-UserEvent] Failed to process pending user events:', err);
-        }));
+        ctx.waitUntil(processPendingUserEvents(env, ctx, limit, list.cursor));
     } else {
         env.lastUserEventCursor = null;
     }
