@@ -3,13 +3,6 @@ import { showMessage, hideMessage } from './messageUtils.js';
 import { updateStepProgress } from './stepProgress.js';
 import { startPlanGeneration } from './planGeneration.js';
 
-// Constants
-const DASHBOARD_URL = 'code.html';
-const REDIRECT_DELAY_MS = 2000;
-const PAGE_COUNT_START = 1;
-const PAGE_COUNT_FINAL = 1;
-const PAGE_COUNT_REGISTRATION = 1;
-
 const state = {
   rawQuestions: [],
   flatPages: [],
@@ -77,32 +70,11 @@ export function buildDynamicPages() {
   createStartPage();
   state.flatPages = flattenQuestions(state.rawQuestions).filter(q => q.id !== 'email' && q.type !== 'section');
   state.flatPages.forEach((q, idx) => createQuestionPage(q, idx + 1));
-  
-  // Check if user is already logged in (via URL or sessionStorage)
-  const urlParams = new URLSearchParams(window.location.search);
-  const userIdFromUrl = urlParams.get('userId');
-  const userIdFromSession = sessionStorage.getItem('userId');
-  const userEmailFromSession = sessionStorage.getItem('userEmail');
-  const isLoggedIn = userIdFromUrl || userIdFromSession;
-  
-  // Pre-fill email if available from session
-  if (userEmailFromSession) {
-    state.responses.email = userEmailFromSession;
-  }
-  
-  // Only create registration page if user is not logged in
-  if (!isLoggedIn) {
-    createRegistrationPage();
-  }
-  
+  createRegistrationPage();
   createFinalPage();
   setupFinalPageListener();
   if (instr) container.appendChild(instr);
-  
-  // Calculate total pages: start page + question pages + final page + (registration page if not logged in)
-  const registrationPages = isLoggedIn ? 0 : PAGE_COUNT_REGISTRATION;
-  state.totalPages = PAGE_COUNT_START + state.flatPages.length + PAGE_COUNT_FINAL + registrationPages;
-  
+  state.totalPages = 1 + state.flatPages.length + 2;
   updateStepProgress(
     document.getElementById('questProgressBar'),
     0,
@@ -360,10 +332,6 @@ export function showPage(index) {
             false
           );
         }
-        // Redirect to dashboard after successful submission
-        setTimeout(() => {
-          window.location.href = DASHBOARD_URL;
-        }, REDIRECT_DELAY_MS);
       })
       .catch(error => {
         state.submitted = false;
