@@ -967,72 +967,68 @@ async function getEmailConfig(kind, env, defaults = {}) {
 }
 
 async function sendWelcomeEmail(to, name, env) {
+    const html = renderTemplate(WELCOME_BODY_TEMPLATE, {
+        name,
+        current_year: new Date().getFullYear()
+    });
     try {
-        const html = renderTemplate(WELCOME_BODY_TEMPLATE, {
-            name,
-            current_year: new Date().getFullYear()
-        });
         await sendEmailUniversal(to, WELCOME_SUBJECT, html, env);
     } catch (err) {
         console.error('Failed to send welcome email:', err);
-        // Email errors should not block the registration process
     }
 }
 
 async function sendAnalysisLinkEmail(to, name, link, env) {
+    const { send, subject, tpl } = await getEmailConfig('analysis', env, {
+        send: '1',
+        subject: ANALYSIS_READY_SUBJECT,
+        tpl: ANALYSIS_READY_BODY_TEMPLATE
+    });
+    if (send === '0' || send === 'false') return false;
+    if (!tpl.includes('{{name}}')) {
+        console.warn('ANALYSIS_EMAIL_BODY missing {{name}} placeholder');
+    }
+    if (!tpl.includes('{{link}}')) {
+        console.warn('ANALYSIS_EMAIL_BODY missing {{link}} placeholder');
+    }
+    const html = renderTemplate(tpl, { name, link });
     try {
-        const { send, subject, tpl } = await getEmailConfig('analysis', env, {
-            send: '1',
-            subject: ANALYSIS_READY_SUBJECT,
-            tpl: ANALYSIS_READY_BODY_TEMPLATE
-        });
-        if (send === '0' || send === 'false') return false;
-        if (!tpl.includes('{{name}}')) {
-            console.warn('ANALYSIS_EMAIL_BODY missing {{name}} placeholder');
-        }
-        if (!tpl.includes('{{link}}')) {
-            console.warn('ANALYSIS_EMAIL_BODY missing {{link}} placeholder');
-        }
-        const html = renderTemplate(tpl, { name, link });
         await sendEmailUniversal(to, subject, html, env);
         return true;
     } catch (err) {
         console.error('Failed to send analysis link email:', err);
-        // Email errors should not block the questionnaire submission process
         return false;
     }
 }
 
 async function sendContactEmail(to, name, env) {
+    const { send, subject, tpl, extras } = await getEmailConfig('contact', env, {
+        send: '1',
+        subject: 'Благодарим за връзката',
+        tpl: 'Получихме вашето съобщение от {{form_label}}.',
+        extras: { contact_form_label: 'форма за контакт' }
+    });
+    if (send === '0' || send === 'false') return;
+    const formLabel = extras.contact_form_label;
+    const html = renderTemplate(tpl, { name, form_label: formLabel });
     try {
-        const { send, subject, tpl, extras } = await getEmailConfig('contact', env, {
-            send: '1',
-            subject: 'Благодарим за връзката',
-            tpl: 'Получихме вашето съобщение от {{form_label}}.',
-            extras: { contact_form_label: 'форма за контакт' }
-        });
-        if (send === '0' || send === 'false') return;
-        const formLabel = extras.contact_form_label;
-        const html = renderTemplate(tpl, { name, form_label: formLabel });
         await sendEmailUniversal(to, subject, html, env);
     } catch (err) {
         console.error('Failed to send contact email:', err);
-        // Email errors should not block the contact form submission
     }
 }
 
 async function sendPasswordResetEmail(to, token, env) {
+    const subject = env?.[PASSWORD_RESET_EMAIL_SUBJECT_VAR_NAME] || PASSWORD_RESET_SUBJECT;
+    const tpl = env?.[PASSWORD_RESET_EMAIL_BODY_VAR_NAME] || PASSWORD_RESET_BODY_TEMPLATE;
+    const base = env?.[PASSWORD_RESET_PAGE_URL_VAR_NAME] || 'https://radilovk.github.io/bodybest/reset-password.html';
+    const url = new URL(base);
+    url.searchParams.set('token', token);
+    const html = renderTemplate(tpl, { link: url.toString() });
     try {
-        const subject = env?.[PASSWORD_RESET_EMAIL_SUBJECT_VAR_NAME] || PASSWORD_RESET_SUBJECT;
-        const tpl = env?.[PASSWORD_RESET_EMAIL_BODY_VAR_NAME] || PASSWORD_RESET_BODY_TEMPLATE;
-        const base = env?.[PASSWORD_RESET_PAGE_URL_VAR_NAME] || 'https://radilovk.github.io/bodybest/reset-password.html';
-        const url = new URL(base);
-        url.searchParams.set('token', token);
-        const html = renderTemplate(tpl, { link: url.toString() });
         await sendEmailUniversal(to, subject, html, env);
     } catch (err) {
         console.error('Failed to send password reset email:', err);
-        // Email errors should not block the password reset request
     }
 }
 
@@ -1592,12 +1588,7 @@ async function handleRegisterRequest(request, env, ctx) {
         const skipWelcome = sendVal === '0' || String(sendVal).toLowerCase() === 'false';
         if (!skipWelcome) {
             const emailTask = sendWelcomeEmail(trimmedEmail, userId, env);
-            if (ctx) {
-                ctx.waitUntil(emailTask);
-            } else {
-                // Run in background without blocking the response
-                emailTask.catch(err => console.error('Failed to send welcome email:', err));
-            }
+            if (ctx) ctx.waitUntil(emailTask); else await emailTask;
         }
         return { success: true, message: 'Регистрацията успешна!' };
      } catch (error) {
@@ -1680,33 +1671,11 @@ async function handleLoginRequest(request, env) {
 
         const planStatus = (await env.USER_METADATA_KV.get(`plan_status_${userId}`)) || 'pending';
         const hasInitialAnswers = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
-        
-        // Improved redirect logic with better handling of various plan statuses
-        let redirectTo = 'questionnaire';
-        if (hasInitialAnswers) {
-            // User has completed the questionnaire
-            if (planStatus === 'ready') {
-                redirectTo = 'dashboard';
-            } else if (planStatus === 'error') {
-                // Plan generation failed, but still redirect to dashboard to show error
-                redirectTo = 'dashboard';
-            } else if (planStatus === 'awaiting-data') {
-                // Missing data for plan generation, redirect to questionnaire to complete
-                redirectTo = 'questionnaire';
-            } else {
-                // pending, processing, or other transitional states
-                redirectTo = 'pending';
-            }
-        }
-        
+        const redirectTo = hasInitialAnswers
+            ? (planStatus === 'ready' ? 'dashboard' : 'pending')
+            : 'questionnaire';
         console.log(`LOGIN_SUCCESS (${userId}): Login successful for ${trimmedEmail}. Plan status: ${planStatus}. Redirect hint: ${redirectTo}`);
-        return { 
-            success: true, 
-            userId: userId, 
-            planStatus: planStatus, 
-            redirectTo: redirectTo,
-            hasInitialAnswers: hasInitialAnswers !== null 
-        };
+        return { success: true, userId: userId, planStatus: planStatus, redirectTo: redirectTo };
     } catch (error) {
         console.error('Error in handleLoginRequest:', error.message, error.stack);
         let userMessage = 'Вътрешна грешка при вход.';
@@ -1744,50 +1713,41 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
 
-        // Always run plan generation and analysis asynchronously to avoid blocking the response
         const planTask = processSingleUserPlan(userId, env);
-        const analysisTask = handleAnalyzeInitialAnswers(userId, env);
-        
         if (ctx) {
             ctx.waitUntil(planTask);
-            ctx.waitUntil(analysisTask);
         } else {
-            // Run in background without waiting
-            planTask.catch(err => console.error(`Background plan generation failed for ${userId}:`, err));
-            analysisTask.catch(err => console.error(`Background analysis failed for ${userId}:`, err));
+            await planTask;
         }
 
-        // Construct analysis link with error handling
-        let link = null;
-        try {
-            const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] ||
-                'https://radilovk.github.io/bodybest/reganalize/analyze.html';
-            const url = new URL(baseUrl);
-            url.searchParams.set('userId', userId);
-            link = url.toString();
-        } catch (urlError) {
-            console.error(`Failed to construct analysis URL for ${userId}:`, urlError);
-            // Continue without sending email if URL construction fails
-        }
+        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] ||
+            'https://radilovk.github.io/bodybest/reganalize/analyze.html';
+        const url = new URL(baseUrl);
+        url.searchParams.set('userId', userId);
+        const link = url.toString();
         
         // Send email asynchronously without blocking the response
-        if (link) {
-            const emailTask = sendAnalysisLinkEmail(
-                questionnaireData.email,
-                questionnaireData.name || 'Клиент',
-                link,
-                env
-            );
-            if (ctx) {
-                ctx.waitUntil(emailTask);
-            } else {
-                // Fallback for environments without ExecutionContext (e.g., local testing)
-                // Email is sent in background; errors are logged but don't block the response
-                emailTask.catch(err => console.error('Failed to send analysis email:', err));
-            }
+        const emailTask = sendAnalysisLinkEmail(
+            questionnaireData.email,
+            questionnaireData.name || 'Клиент',
+            link,
+            env
+        );
+        if (ctx) {
+            ctx.waitUntil(emailTask);
+        } else {
+            // Fallback for environments without ExecutionContext (e.g., local testing)
+            // Email is sent in background; errors are logged but don't block the response
+            emailTask.catch(err => console.error('Failed to send analysis email:', err));
         }
 
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
+        const analysisTask = handleAnalyzeInitialAnswers(userId, env);
+        if (ctx) {
+            ctx.waitUntil(analysisTask);
+        } else {
+            await analysisTask;
+        }
         return { success: true, message: 'Данните са приети. Вашият индивидуален план ще бъде генериран скоро.' };
     } catch (error) {
         console.error(`Error in handleSubmitQuestionnaire:`, error.message, error.stack);
@@ -1825,46 +1785,34 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
         await env.USER_METADATA_KV.put(`${userId}_initial_answers`, JSON.stringify(questionnaireData));
         console.log(`SUBMIT_DEMO_QUESTIONNAIRE (${userId}): Saved initial answers.`);
 
-        // Always run analysis asynchronously to avoid blocking the response
+        const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] ||
+            'https://radilovk.github.io/bodybest/reganalize/analyze.html';
+        const url = new URL(baseUrl);
+        url.searchParams.set('userId', userId);
+        const link = url.toString();
+        
+        // Send email asynchronously without blocking the response
+        const emailTask = sendAnalysisLinkEmail(
+            questionnaireData.email,
+            questionnaireData.name || 'Клиент',
+            link,
+            env
+        );
+        if (ctx) {
+            ctx.waitUntil(emailTask);
+        } else {
+            // Fallback for environments without ExecutionContext (e.g., local testing)
+            // Email is sent in background; errors are logged but don't block the response
+            emailTask.catch(err => console.error('Failed to send analysis email:', err));
+        }
+
+        await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         const analysisTask = handleAnalyzeInitialAnswers(userId, env);
         if (ctx) {
             ctx.waitUntil(analysisTask);
         } else {
-            // Run in background without waiting
-            analysisTask.catch(err => console.error(`Background analysis failed for ${userId}:`, err));
+            await analysisTask;
         }
-
-        // Construct analysis link with error handling
-        let link = null;
-        try {
-            const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] ||
-                'https://radilovk.github.io/bodybest/reganalize/analyze.html';
-            const url = new URL(baseUrl);
-            url.searchParams.set('userId', userId);
-            link = url.toString();
-        } catch (urlError) {
-            console.error(`Failed to construct analysis URL for ${userId}:`, urlError);
-            // Continue without sending email if URL construction fails
-        }
-        
-        // Send email asynchronously without blocking the response
-        if (link) {
-            const emailTask = sendAnalysisLinkEmail(
-                questionnaireData.email,
-                questionnaireData.name || 'Клиент',
-                link,
-                env
-            );
-            if (ctx) {
-                ctx.waitUntil(emailTask);
-            } else {
-                // Fallback for environments without ExecutionContext (e.g., local testing)
-                // Email is sent in background; errors are logged but don't block the response
-                emailTask.catch(err => console.error('Failed to send analysis email:', err));
-            }
-        }
-
-        await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         return { success: true, message: 'Данните са приети. Анализът ще бъде готов скоро.' };
     } catch (error) {
         console.error('Error in handleSubmitDemoQuestionnaire:', error.message, error.stack);
@@ -3195,7 +3143,6 @@ function estimateMacros(initial = {}) {
 
 // ------------- START FUNCTION: handleAnalyzeInitialAnswers -------------
 async function handleAnalyzeInitialAnswers(userId, env) {
-    const ANALYSIS_TIMEOUT_MS = 30_000; // 30 seconds timeout for initial analysis
     try {
         if (!userId) {
             console.warn('INITIAL_ANALYSIS_ERROR: Missing userId.');
@@ -3217,41 +3164,11 @@ async function handleAnalyzeInitialAnswers(userId, env) {
             return;
         }
         const populated = populatePrompt(promptTpl, { '%%ANSWERS_JSON%%': JSON.stringify(answers) });
-        
-        // Add timeout to AI call
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), ANALYSIS_TIMEOUT_MS);
-        
-        try {
-            // Pass signal only if the AI provider supports it
-            const callOptions = { temperature: 0.5, maxTokens: 2500 };
-            // AbortController is supported by modern AI providers through fetch API
-            if (controller && controller.signal) {
-                callOptions.signal = controller.signal;
-            }
-            
-            const raw = await callModelRef.current(modelName, populated, env, callOptions);
-            clearTimeout(timeoutId);
-            
-            const cleaned = cleanGeminiJson(raw);
-            await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
-            await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'ready');
-            console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
-        } catch (aiError) {
-            clearTimeout(timeoutId);
-            
-            // Check for AbortError more reliably across environments
-            const isAbortError = aiError.name === 'AbortError' || 
-                                aiError.code === 20 || // DOMException.ABORT_ERR
-                                /abort/i.test(aiError.message);
-            
-            if (isAbortError) {
-                console.warn(`INITIAL_ANALYSIS_TIMEOUT (${userId}): Analysis timed out after ${ANALYSIS_TIMEOUT_MS}ms.`);
-                await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'timeout');
-            } else {
-                throw aiError; // Re-throw non-timeout errors to be caught by outer catch
-            }
-        }
+        const raw = await callModelRef.current(modelName, populated, env, { temperature: 0.5, maxTokens: 2500 });
+        const cleaned = cleanGeminiJson(raw);
+        await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
+        await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'ready');
+        console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
         // Имейлът с линк към анализа вече се изпраща при подаване на въпросника,
         // затова тук не се изпраща повторно.
     } catch (error) {
