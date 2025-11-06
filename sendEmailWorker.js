@@ -56,14 +56,30 @@ async function checkRateLimit(env, identifier, limit = 3, windowMs = 60000) {
 async function sendViaPhp(to, subject, message, env = {}) {
   const url = env[MAIL_PHP_URL_VAR_NAME] || DEFAULT_MAIL_PHP_URL;
   const fromName = env.FROM_NAME || '';
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ to, subject, message, body: message, fromName })
-  });
-  if (!resp.ok) {
-    const text = await resp.text().catch(() => '');
-    throw new Error(`PHP mailer error ${resp.status}${text ? `: ${text}` : ''}`);
+  
+  // Add timeout to prevent hanging indefinitely
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+  
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, message, body: message, fromName }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '');
+      throw new Error(`PHP mailer error ${resp.status}${text ? `: ${text}` : ''}`);
+    }
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('PHP mailer timeout after 10 seconds');
+    }
+    throw error;
   }
 }
 

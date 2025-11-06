@@ -721,26 +721,43 @@ async function parseJsonSafe(resp, label = 'response') {
 async function sendEmailUniversal(to, subject, body, env = {}) {
   const endpoint = env.MAILER_ENDPOINT_URL || globalThis['process']?.env?.MAILER_ENDPOINT_URL;
   const fromName = env.FROM_NAME || env.from_email_name || globalThis['process']?.env?.FROM_NAME;
-  if (endpoint) {
-    const resp = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, subject, message: body, body, fromName })
-    });
-    if (!resp.ok) {
-      const text = await resp.text().catch(() => '');
-      throw new Error(`Mailer responded with ${resp.status}${text ? `: ${text}` : ''}`);
+  
+  // Add timeout to prevent hanging indefinitely
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+  
+  try {
+    if (endpoint) {
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, subject, message: body, body, fromName }),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        throw new Error(`Mailer responded with ${resp.status}${text ? `: ${text}` : ''}`);
+      }
+      return;
     }
-    return;
+    const phpUrl = env.MAIL_PHP_URL ||
+      globalThis['process']?.env?.MAIL_PHP_URL ||
+      DEFAULT_MAIL_PHP_URL;
+    const phpEnv = {
+      MAIL_PHP_URL: phpUrl,
+      FROM_NAME: fromName
+    };
+    await sendEmail(to, subject, body, phpEnv);
+    clearTimeout(timeoutId);
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Email sending timeout after 10 seconds');
+    }
+    throw error;
   }
-  const phpUrl = env.MAIL_PHP_URL ||
-    globalThis['process']?.env?.MAIL_PHP_URL ||
-    DEFAULT_MAIL_PHP_URL;
-  const phpEnv = {
-    MAIL_PHP_URL: phpUrl,
-    FROM_NAME: fromName
-  };
-  await sendEmail(to, subject, body, phpEnv);
 }
 
 const resourceCache = new Map();
@@ -1700,12 +1717,20 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         const url = new URL(baseUrl);
         url.searchParams.set('userId', userId);
         const link = url.toString();
-        await sendAnalysisLinkEmail(
+        
+        // Send email asynchronously without blocking the response
+        const emailTask = sendAnalysisLinkEmail(
             questionnaireData.email,
             questionnaireData.name || 'Клиент',
             link,
             env
         );
+        if (ctx) {
+            ctx.waitUntil(emailTask);
+        } else {
+            // If no context, send in background but don't wait
+            emailTask.catch(err => console.error('Failed to send analysis email:', err));
+        }
 
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         const analysisTask = handleAnalyzeInitialAnswers(userId, env);
@@ -1756,12 +1781,20 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
         const url = new URL(baseUrl);
         url.searchParams.set('userId', userId);
         const link = url.toString();
-        await sendAnalysisLinkEmail(
+        
+        // Send email asynchronously without blocking the response
+        const emailTask = sendAnalysisLinkEmail(
             questionnaireData.email,
             questionnaireData.name || 'Клиент',
             link,
             env
         );
+        if (ctx) {
+            ctx.waitUntil(emailTask);
+        } else {
+            // If no context, send in background but don't wait
+            emailTask.catch(err => console.error('Failed to send analysis email:', err));
+        }
 
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         const analysisTask = handleAnalyzeInitialAnswers(userId, env);
