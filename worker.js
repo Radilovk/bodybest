@@ -1757,8 +1757,8 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
             ctx.waitUntil(emailTask);
         } else {
             // Fallback for environments without ExecutionContext (e.g., local testing)
-            // Email is sent in background; errors are already caught above
-            emailTask.catch(err => console.error('Failed to send analysis email:', err));
+            // Email is sent in background; errors are already caught above at lines 1751-1754
+            await emailTask;
         }
 
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
@@ -1830,8 +1830,8 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
             ctx.waitUntil(emailTaskWithHandler);
         } else {
             // Fallback for environments without ExecutionContext (e.g., local testing)
-            // Email is sent in background; errors are already caught above
-            emailTaskWithHandler.catch(err => console.error('Failed to send analysis email:', err));
+            // Email is sent in background; errors are already caught above at lines 1824-1827
+            await emailTaskWithHandler;
         }
 
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
