@@ -1444,7 +1444,7 @@ export default {
                 // Execute synchronously to avoid "IoContext timed out" errors
                 try {
                     await processSingleUserPlan(userId, env);
-                    processedUsersForPlan++;
+                    processedUsersForPlan++; // Count only successful generations
                 } catch (err) {
                     console.error(`[CRON-PlanGen] Plan generation failed for ${userId}:`, err.message, err.stack);
                     try {
