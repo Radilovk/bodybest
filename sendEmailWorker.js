@@ -60,8 +60,13 @@ async function sendViaPhp(to, subject, message, env = {}) {
   
   // Use abort signal from parent if provided, otherwise create new one
   const providedSignal = env._abortSignal;
-  const controller = providedSignal ? null : new AbortController();
-  const timeoutId = providedSignal ? null : setTimeout(() => controller.abort(), EMAIL_TIMEOUT_MS);
+  let controller = null;
+  let timeoutId = null;
+  
+  if (!providedSignal) {
+    controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), EMAIL_TIMEOUT_MS);
+  }
   
   try {
     const resp = await fetch(url, {
