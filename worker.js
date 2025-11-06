@@ -1705,7 +1705,7 @@ async function handleLoginRequest(request, env) {
             userId: userId, 
             planStatus: planStatus, 
             redirectTo: redirectTo,
-            hasInitialAnswers: !!hasInitialAnswers 
+            hasInitialAnswers: hasInitialAnswers !== null 
         };
     } catch (error) {
         console.error('Error in handleLoginRequest:', error.message, error.stack);
@@ -3223,11 +3223,14 @@ async function handleAnalyzeInitialAnswers(userId, env) {
         const timeoutId = setTimeout(() => controller.abort(), ANALYSIS_TIMEOUT_MS);
         
         try {
-            const raw = await callModelRef.current(modelName, populated, env, { 
-                temperature: 0.5, 
-                maxTokens: 2500,
-                signal: controller.signal 
-            });
+            // Pass signal only if the AI provider supports it
+            const callOptions = { temperature: 0.5, maxTokens: 2500 };
+            // AbortController is supported by modern AI providers through fetch API
+            if (controller && controller.signal) {
+                callOptions.signal = controller.signal;
+            }
+            
+            const raw = await callModelRef.current(modelName, populated, env, callOptions);
             clearTimeout(timeoutId);
             
             const cleaned = cleanGeminiJson(raw);
@@ -3237,7 +3240,12 @@ async function handleAnalyzeInitialAnswers(userId, env) {
         } catch (aiError) {
             clearTimeout(timeoutId);
             
-            if (aiError.name === 'AbortError') {
+            // Check for AbortError more reliably across environments
+            const isAbortError = aiError.name === 'AbortError' || 
+                                aiError.code === 20 || // DOMException.ABORT_ERR
+                                /abort/i.test(aiError.message);
+            
+            if (isAbortError) {
                 console.warn(`INITIAL_ANALYSIS_TIMEOUT (${userId}): Analysis timed out after ${ANALYSIS_TIMEOUT_MS}ms.`);
                 await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'timeout');
             } else {
