@@ -967,68 +967,72 @@ async function getEmailConfig(kind, env, defaults = {}) {
 }
 
 async function sendWelcomeEmail(to, name, env) {
-    const html = renderTemplate(WELCOME_BODY_TEMPLATE, {
-        name,
-        current_year: new Date().getFullYear()
-    });
     try {
+        const html = renderTemplate(WELCOME_BODY_TEMPLATE, {
+            name,
+            current_year: new Date().getFullYear()
+        });
         await sendEmailUniversal(to, WELCOME_SUBJECT, html, env);
     } catch (err) {
         console.error('Failed to send welcome email:', err);
+        // Email errors should not block the registration process
     }
 }
 
 async function sendAnalysisLinkEmail(to, name, link, env) {
-    const { send, subject, tpl } = await getEmailConfig('analysis', env, {
-        send: '1',
-        subject: ANALYSIS_READY_SUBJECT,
-        tpl: ANALYSIS_READY_BODY_TEMPLATE
-    });
-    if (send === '0' || send === 'false') return false;
-    if (!tpl.includes('{{name}}')) {
-        console.warn('ANALYSIS_EMAIL_BODY missing {{name}} placeholder');
-    }
-    if (!tpl.includes('{{link}}')) {
-        console.warn('ANALYSIS_EMAIL_BODY missing {{link}} placeholder');
-    }
-    const html = renderTemplate(tpl, { name, link });
     try {
+        const { send, subject, tpl } = await getEmailConfig('analysis', env, {
+            send: '1',
+            subject: ANALYSIS_READY_SUBJECT,
+            tpl: ANALYSIS_READY_BODY_TEMPLATE
+        });
+        if (send === '0' || send === 'false') return false;
+        if (!tpl.includes('{{name}}')) {
+            console.warn('ANALYSIS_EMAIL_BODY missing {{name}} placeholder');
+        }
+        if (!tpl.includes('{{link}}')) {
+            console.warn('ANALYSIS_EMAIL_BODY missing {{link}} placeholder');
+        }
+        const html = renderTemplate(tpl, { name, link });
         await sendEmailUniversal(to, subject, html, env);
         return true;
     } catch (err) {
         console.error('Failed to send analysis link email:', err);
+        // Email errors should not block the questionnaire submission process
         return false;
     }
 }
 
 async function sendContactEmail(to, name, env) {
-    const { send, subject, tpl, extras } = await getEmailConfig('contact', env, {
-        send: '1',
-        subject: 'Благодарим за връзката',
-        tpl: 'Получихме вашето съобщение от {{form_label}}.',
-        extras: { contact_form_label: 'форма за контакт' }
-    });
-    if (send === '0' || send === 'false') return;
-    const formLabel = extras.contact_form_label;
-    const html = renderTemplate(tpl, { name, form_label: formLabel });
     try {
+        const { send, subject, tpl, extras } = await getEmailConfig('contact', env, {
+            send: '1',
+            subject: 'Благодарим за връзката',
+            tpl: 'Получихме вашето съобщение от {{form_label}}.',
+            extras: { contact_form_label: 'форма за контакт' }
+        });
+        if (send === '0' || send === 'false') return;
+        const formLabel = extras.contact_form_label;
+        const html = renderTemplate(tpl, { name, form_label: formLabel });
         await sendEmailUniversal(to, subject, html, env);
     } catch (err) {
         console.error('Failed to send contact email:', err);
+        // Email errors should not block the contact form submission
     }
 }
 
 async function sendPasswordResetEmail(to, token, env) {
-    const subject = env?.[PASSWORD_RESET_EMAIL_SUBJECT_VAR_NAME] || PASSWORD_RESET_SUBJECT;
-    const tpl = env?.[PASSWORD_RESET_EMAIL_BODY_VAR_NAME] || PASSWORD_RESET_BODY_TEMPLATE;
-    const base = env?.[PASSWORD_RESET_PAGE_URL_VAR_NAME] || 'https://radilovk.github.io/bodybest/reset-password.html';
-    const url = new URL(base);
-    url.searchParams.set('token', token);
-    const html = renderTemplate(tpl, { link: url.toString() });
     try {
+        const subject = env?.[PASSWORD_RESET_EMAIL_SUBJECT_VAR_NAME] || PASSWORD_RESET_SUBJECT;
+        const tpl = env?.[PASSWORD_RESET_EMAIL_BODY_VAR_NAME] || PASSWORD_RESET_BODY_TEMPLATE;
+        const base = env?.[PASSWORD_RESET_PAGE_URL_VAR_NAME] || 'https://radilovk.github.io/bodybest/reset-password.html';
+        const url = new URL(base);
+        url.searchParams.set('token', token);
+        const html = renderTemplate(tpl, { link: url.toString() });
         await sendEmailUniversal(to, subject, html, env);
     } catch (err) {
         console.error('Failed to send password reset email:', err);
+        // Email errors should not block the password reset request
     }
 }
 
