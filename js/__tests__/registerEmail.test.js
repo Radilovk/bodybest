@@ -52,7 +52,6 @@ test('works without PHP API configuration', async () => {
     json: async () => ({ email: 'u@e.bg', password: '12345678', confirm_password: '12345678' })
   }
   const res = await handleRegisterRequest(req, env)
-  console.log('Result:', JSON.stringify(res, null, 2))
   expect(res.success).toBe(true)
 })
 
