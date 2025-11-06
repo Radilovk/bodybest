@@ -1756,15 +1756,12 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
         const url = new URL(baseUrl);
         url.searchParams.set('userId', userId);
         const link = url.toString();
-        const mailOk = await sendAnalysisLinkEmail(
+        await sendAnalysisLinkEmail(
             questionnaireData.email,
             questionnaireData.name || 'Клиент',
             link,
             env
         );
-        if (!mailOk) {
-            return { success: false, message: 'Неуспешно изпращане на имейла.' };
-        }
 
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'pending');
         const analysisTask = handleAnalyzeInitialAnswers(userId, env);
