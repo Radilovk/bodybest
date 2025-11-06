@@ -1588,7 +1588,12 @@ async function handleRegisterRequest(request, env, ctx) {
         const skipWelcome = sendVal === '0' || String(sendVal).toLowerCase() === 'false';
         if (!skipWelcome) {
             const emailTask = sendWelcomeEmail(trimmedEmail, userId, env);
-            if (ctx) ctx.waitUntil(emailTask); else await emailTask;
+            if (ctx) {
+                ctx.waitUntil(emailTask);
+            } else {
+                // Email is sent in background; errors are logged but don't block registration
+                emailTask.catch(err => console.error('Failed to send welcome email:', err));
+            }
         }
         return { success: true, message: 'Регистрацията успешна!' };
      } catch (error) {
@@ -2831,7 +2836,12 @@ async function handleRequestPasswordReset(request, env) {
         }
         const token = crypto.randomUUID();
         await env.USER_METADATA_KV.put(`pwreset_${token}`, userId, { expirationTtl: 3600 });
-        await sendPasswordResetEmail(clean, token, env);
+        try {
+            await sendPasswordResetEmail(clean, token, env);
+        } catch (err) {
+            console.error('Failed to send password reset email:', err);
+            // Don't fail the request - token is created and valid
+        }
         return { success: true, message: 'Изпратихме линк за смяна на паролата.' };
     } catch (error) {
         console.error('Error in handleRequestPasswordReset:', error.message, error.stack);
