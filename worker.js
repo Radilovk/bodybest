@@ -764,10 +764,7 @@ async function sendEmailUniversal(to, subject, body, env = {}) {
     }
     throw error;
   } finally {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      controller = null;
-    }
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }
 
@@ -1739,7 +1736,8 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         if (ctx) {
             ctx.waitUntil(emailTask);
         } else {
-            // If no context, send in background but don't wait
+            // Fallback for environments without ExecutionContext (e.g., local testing)
+            // Email is sent in background; errors are logged but don't block the response
             emailTask.catch(err => console.error('Failed to send analysis email:', err));
         }
 
@@ -1803,7 +1801,8 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
         if (ctx) {
             ctx.waitUntil(emailTask);
         } else {
-            // If no context, send in background but don't wait
+            // Fallback for environments without ExecutionContext (e.g., local testing)
+            // Email is sent in background; errors are logged but don't block the response
             emailTask.catch(err => console.error('Failed to send analysis email:', err));
         }
 
