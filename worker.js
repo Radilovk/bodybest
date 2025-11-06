@@ -3198,6 +3198,23 @@ async function handleAnalyzeInitialAnswers(userId, env) {
         const raw = await callModelRef.current(modelName, populated, env, { temperature: 0.5, maxTokens: 2500 });
         const cleaned = cleanGeminiJson(raw);
         await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
+        
+        // Extract and store macros from the analysis for use in plan generation
+        try {
+            const parsedAnalysis = safeParseJson(cleaned, null);
+            if (parsedAnalysis) {
+                const macros = extractTargetMacrosFromAny(parsedAnalysis);
+                if (macros) {
+                    await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macros));
+                    console.log(`INITIAL_ANALYSIS (${userId}): Macros extracted and stored.`);
+                } else {
+                    console.warn(`INITIAL_ANALYSIS_WARN (${userId}): No macros found in analysis.`);
+                }
+            }
+        } catch (macroErr) {
+            console.warn(`INITIAL_ANALYSIS_WARN (${userId}): Failed to extract macros - ${macroErr.message}`);
+        }
+        
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'ready');
         console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
         // Имейлът с линк към анализа вече се изпраща при подаване на въпросника,
