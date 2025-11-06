@@ -5180,11 +5180,11 @@ async function processSingleUserPlan(userId, env) {
         let targetMacroFixAttempted = false;
         const handleTargetMacroFailure = async (error, reason = 'target-macros-invalid') => {
             const errMsg = error.message;
-            await env.USER_METADATA_KV.put(`${userId}_processing_error`, errMsg);
-            await setPlanStatus(userId, 'error', env);
-            await addLog(`Грешка: ${errMsg}`, { checkpoint: true, reason });
-            console.error(`PROCESS_USER_PLAN_ERROR (${userId}): ${errMsg}`);
-            throw error;
+            await env.USER_METADATA_KV.put(`${userId}_processing_warning`, errMsg);
+            await addLog(`Предупреждение: ${errMsg}`, { checkpoint: false, reason });
+            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${errMsg}`);
+            // Don't throw - continue with default/empty macros instead
+            // This prevents the entire process from failing due to macro calculation issues
         };
         const runTargetMacroFix = async () => {
             try {
@@ -5201,7 +5201,8 @@ async function processSingleUserPlan(userId, env) {
                         { checkpoint: false }
                     );
                 } else {
-                    throw new Error('Не може да се калкулират таргет макроси от наличните данни.');
+                    const fallbackError = new Error('Не може да се калкулират таргет макроси от наличните данни.');
+                    await handleTargetMacroFailure(fallbackError, 'target-macros-missing');
                 }
             } catch (macroFixErr) {
                 await handleTargetMacroFailure(macroFixErr, 'target-macros-missing');
@@ -5219,10 +5220,18 @@ async function processSingleUserPlan(userId, env) {
                     targetReplacements = buildTargetReplacements(targetMacros);
                 } catch (retryError) {
                     await handleTargetMacroFailure(retryError, 'target-macros-invalid');
+                    // Set empty object as fallback to continue processing
+                    targetReplacements = {};
                 }
             } else {
                 await handleTargetMacroFailure(macroErr, 'target-macros-invalid');
+                // Set empty object as fallback to continue processing
+                targetReplacements = {};
             }
+        }
+        // Ensure targetReplacements is always defined
+        if (!targetReplacements) {
+            targetReplacements = {};
         }
         planBuilder.generationMetadata.modelUsed = planModelName;
         let questionTextMap = new Map();
