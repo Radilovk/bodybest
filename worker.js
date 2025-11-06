@@ -1722,9 +1722,9 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
 
-        // Execute plan generation synchronously to avoid IoContext timeout
-        // This follows the same pattern as handleRegeneratePlanRequest (line 2662-2666)
-        // to prevent "IoContext timed out due to inactivity" errors
+        // Execute plan generation asynchronously with proper error handling
+        // Error handling prevents failures from causing "IoContext timed out due to inactivity" errors
+        // (see comment at line 2662-2666 for context on IoContext timeout issues)
         const planTask = processSingleUserPlan(userId, env);
         if (ctx) {
             // Wrap in error handler to prevent failures from propagating
@@ -1757,7 +1757,7 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
             ctx.waitUntil(emailTask);
         } else {
             // Fallback for environments without ExecutionContext (e.g., local testing)
-            // Email is sent in background; errors are already caught above at lines 1751-1754
+            // Error handling is already in place (see lines 1751-1754 above)
             await emailTask;
         }
 
@@ -1830,7 +1830,7 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
             ctx.waitUntil(emailTaskWithHandler);
         } else {
             // Fallback for environments without ExecutionContext (e.g., local testing)
-            // Email is sent in background; errors are already caught above at lines 1824-1827
+            // Error handling is already in place (see lines 1824-1827 above)
             await emailTaskWithHandler;
         }
 

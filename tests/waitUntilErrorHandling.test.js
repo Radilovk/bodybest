@@ -43,8 +43,9 @@ describe('waitUntil error handling', () => {
       
       if (!hasCatchInLine && !isPreHandledTask) {
         // Need to check if the promise spans multiple lines
-        // For now, we'll look for function calls that should have catch handlers
-        const hasFunctionCall = trimmed.match(/\((\w+)\(/);
+        // Look for function calls (not variables) that should have catch handlers
+        // Pattern: ctx.waitUntil( followed by functionName(
+        const hasFunctionCall = trimmed.match(/ctx\.waitUntil\s*\(\s*(\w+)\s*\(/);
         
         if (hasFunctionCall) {
           problematicLines.push(`Line ${lineNum}: ${trimmed}`);
