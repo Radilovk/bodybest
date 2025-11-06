@@ -70,11 +70,28 @@ export function buildDynamicPages() {
   createStartPage();
   state.flatPages = flattenQuestions(state.rawQuestions).filter(q => q.id !== 'email' && q.type !== 'section');
   state.flatPages.forEach((q, idx) => createQuestionPage(q, idx + 1));
-  createRegistrationPage();
+  
+  // Check if user is already logged in (via URL or sessionStorage)
+  const urlParams = new URLSearchParams(window.location.search);
+  const userIdFromUrl = urlParams.get('userId');
+  const userIdFromSession = sessionStorage.getItem('userId');
+  const userEmailFromSession = sessionStorage.getItem('userEmail');
+  const isLoggedIn = userIdFromUrl || userIdFromSession;
+  
+  // Pre-fill email if available from session
+  if (userEmailFromSession) {
+    state.responses.email = userEmailFromSession;
+  }
+  
+  // Only create registration page if user is not logged in
+  if (!isLoggedIn) {
+    createRegistrationPage();
+  }
+  
   createFinalPage();
   setupFinalPageListener();
   if (instr) container.appendChild(instr);
-  state.totalPages = 1 + state.flatPages.length + 2;
+  state.totalPages = 1 + state.flatPages.length + (isLoggedIn ? 1 : 2);
   updateStepProgress(
     document.getElementById('questProgressBar'),
     0,
