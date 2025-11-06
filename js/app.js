@@ -609,6 +609,9 @@ export async function loadDashboardData() {
         setMacroExceedThreshold(data.macroExceedThreshold);
         // chatHistory = []; // Do not reset chat history on normal data load, only for test user or logout
 
+        if (data.planStatus === "pending_inputs") {
+            showPlanPendingState(`Моля, попълнете <a href="quest.html?userId=${currentUserId}" style="color: var(--primary-color); text-decoration: underline;">въпросника</a> за да започнете генериране на вашия персонализиран план.`); return;
+        }
         if (data.planStatus === "pending" || data.planStatus === "processing") {
             showPlanPendingState(); return;
         }
