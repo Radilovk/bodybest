@@ -349,6 +349,10 @@ export function showPage(index) {
             false
           );
         }
+        // Redirect to dashboard after successful submission
+        setTimeout(() => {
+          window.location.href = 'code.html';
+        }, 2000);
       })
       .catch(error => {
         state.submitted = false;
