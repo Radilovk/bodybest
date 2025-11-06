@@ -1718,7 +1718,18 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
 
-        const planTask = processSingleUserPlan(userId, env);
+        // Start plan generation with proper error handling
+        const planTask = processSingleUserPlan(userId, env).catch(async (err) => {
+            console.error(`SUBMIT_QUESTIONNAIRE (${userId}): Plan generation failed:`, err.message, err.stack);
+            try {
+                await setPlanStatus(userId, 'error', env);
+                await env.USER_METADATA_KV.put(`${userId}_processing_error`, 
+                    `Грешка при генериране на план: ${err.message}`);
+            } catch (statusErr) {
+                console.error(`SUBMIT_QUESTIONNAIRE (${userId}): Failed to set error status:`, statusErr);
+            }
+        });
+        
         if (ctx) {
             ctx.waitUntil(planTask);
         } else {
