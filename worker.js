@@ -1705,6 +1705,47 @@ async function handleLoginRequest(request, env) {
 }
 // ------------- END FUNCTION: handleLoginRequest -------------
 
+// ------------- START FUNCTION: createInitialProfileFromQuestionnaire -------------
+/**
+ * Създава начален профил от данните на въпросника.
+ * Извлича основната информация като име, възраст, ръст, имейл от отговорите.
+ * @param {Object} questionnaireData - Отговори от въпросника
+ * @returns {Object} Профилен обект за запис
+ */
+function createInitialProfileFromQuestionnaire(questionnaireData) {
+    const profile = {};
+    
+    // Основна информация
+    if (questionnaireData.name) {
+        profile.name = String(questionnaireData.name).trim();
+    }
+    
+    if (questionnaireData.email) {
+        profile.email = String(questionnaireData.email).trim().toLowerCase();
+    }
+    
+    // Физически данни
+    const age = parseFloat(questionnaireData.age);
+    if (!isNaN(age) && age > 0) {
+        profile.age = age;
+    }
+    
+    const height = parseFloat(questionnaireData.height);
+    if (!isNaN(height) && height > 0) {
+        profile.height = height;
+    }
+    
+    // Телефон ако е попълнен
+    if (questionnaireData.phone) {
+        profile.phone = String(questionnaireData.phone).trim();
+    }
+    
+    // Не задаваме macroExceedThreshold - потребителят може да го промени по-късно
+    
+    return profile;
+}
+// ------------- END FUNCTION: createInitialProfileFromQuestionnaire -------------
+
 // ------------- START FUNCTION: handleSubmitQuestionnaire -------------
 async function handleSubmitQuestionnaire(request, env, ctx) {
     try {
@@ -1726,6 +1767,17 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         }
         questionnaireData.submissionDate = new Date().toISOString();
         await env.USER_METADATA_KV.put(`${userId}_initial_answers`, JSON.stringify(questionnaireData));
+        
+        // Create initial profile from questionnaire data if profile doesn't exist
+        const existingProfileStr = await env.USER_METADATA_KV.get(`${userId}_profile`);
+        if (!existingProfileStr) {
+            const initialProfile = createInitialProfileFromQuestionnaire(questionnaireData);
+            await env.USER_METADATA_KV.put(`${userId}_profile`, JSON.stringify(initialProfile));
+            console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Created initial profile from questionnaire data.`);
+        } else {
+            console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Profile already exists, skipping creation.`);
+        }
+        
         await setPlanStatus(userId, 'pending', env);
         await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
         console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
@@ -1813,6 +1865,15 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
         }
         questionnaireData.submissionDate = new Date().toISOString();
         await env.USER_METADATA_KV.put(`${userId}_initial_answers`, JSON.stringify(questionnaireData));
+        
+        // Create initial profile from questionnaire data if profile doesn't exist
+        const existingProfileStr = await env.USER_METADATA_KV.get(`${userId}_profile`);
+        if (!existingProfileStr) {
+            const initialProfile = createInitialProfileFromQuestionnaire(questionnaireData);
+            await env.USER_METADATA_KV.put(`${userId}_profile`, JSON.stringify(initialProfile));
+            console.log(`SUBMIT_DEMO_QUESTIONNAIRE (${userId}): Created initial profile from questionnaire data.`);
+        }
+        
         console.log(`SUBMIT_DEMO_QUESTIONNAIRE (${userId}): Saved initial answers.`);
 
         const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] ||
