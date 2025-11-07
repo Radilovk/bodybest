@@ -23,7 +23,8 @@ import {
     setChatModelOverride, setChatPromptOverride,
     autoSaveCompletedMeals,
     updateMacrosAndAnalytics,
-    fullDashboardData
+    fullDashboardData,
+    ensureFreshDailyIntake
 } from './app.js';
 import {
     openPlanModificationChat,
@@ -41,6 +42,20 @@ let staticListenersSet = false;
 
 let touchStartX = null;
 const SWIPE_THRESHOLD = 50;
+
+/**
+ * Проверява за смяна на деня при връщане към приложението
+ */
+function handleVisibilityChange() {
+    if (!document.hidden && typeof ensureFreshDailyIntake === 'function') {
+        // Потребителят се върна към страницата - проверяваме за смяна на деня
+        ensureFreshDailyIntake();
+        // Опреснете интерфейса ако е необходимо
+        if (typeof updateMacrosAndAnalytics === 'function' && fullDashboardData) {
+            updateMacrosAndAnalytics();
+        }
+    }
+}
 
 async function acknowledgeAiUpdate() {
     if (!currentUserId) return;
@@ -215,6 +230,8 @@ export function setupStaticEventListeners() {
         closeModal('extraMealEntryModal');
     });
 
+    // Слушател за проверка на деня при връщане към приложението
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     staticListenersSet = true;
 }

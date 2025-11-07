@@ -7376,13 +7376,34 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         const H_m = H_cm / 100;
         const bmi = W / (H_m * H_m);
 
-        if (bmi >= 18.5 && bmi < 25) return 100; // Ideal
-        if ((bmi >= 17 && bmi < 18.5) || (bmi >= 25 && bmi < 27)) return 80;
-        if ((bmi >= 16 && bmi < 17) || (bmi >= 27 && bmi < 30)) return 60;
-        if (bmi < 16 || (bmi >= 30 && bmi < 35)) return 40;
-        if (bmi >= 35 && bmi < 40) return 20;
-        if (bmi >= 40) return 5;
-        return 0; // Should not happen if checks above are fine
+        // Константи за BMI формулата
+        const BMI_UNDERWEIGHT_MILD_RANGE = 1.5; // BMI диапазон 17-18.5
+
+        // Подобрена формула с по-плавни прагове
+        // Оптимална зона: 18.5 - 25
+        if (bmi >= 18.5 && bmi < 25) {
+            // Максимален резултат в здравословната зона
+            return 100;
+        }
+        
+        // Под оптималното тегло (BMI < 18.5)
+        if (bmi < 18.5) {
+            // Плавна крива: 17->85, 16->65, 15->40, <14->10
+            if (bmi >= 17) return Math.round(85 + (bmi - 17) / BMI_UNDERWEIGHT_MILD_RANGE * 15); // 17-18.5 -> 85-100
+            if (bmi >= 16) return Math.round(65 + (bmi - 16) * 20); // 16-17 -> 65-85
+            if (bmi >= 15) return Math.round(40 + (bmi - 15) * 25); // 15-16 -> 40-65
+            if (bmi >= 14) return Math.round(20 + (bmi - 14) * 20); // 14-15 -> 20-40
+            return Math.max(5, Math.round(bmi / 14 * 20)); // <14 -> 5-20
+        }
+
+        // Над оптималното тегло (BMI >= 25)
+        // Плавна крива за наднормено тегло и затлъстяване
+        if (bmi < 27) return Math.round(100 - ((bmi - 25) / 2) * 20); // 25-27 -> 100-80
+        if (bmi < 30) return Math.round(80 - ((bmi - 27) / 3) * 20); // 27-30 -> 80-60
+        if (bmi < 35) return Math.round(60 - ((bmi - 30) / 5) * 20); // 30-35 -> 60-40
+        if (bmi < 40) return Math.round(40 - ((bmi - 35) / 5) * 20); // 35-40 -> 40-20
+        if (bmi < 45) return Math.round(20 - ((bmi - 40) / 5) * 15); // 40-45 -> 20-5
+        return 5; // BMI >= 45 -> минимален резултат
     };
     
     const capScore = (score) => Math.max(0, Math.min(100, Math.round(Number(score) || 0)));
@@ -7467,7 +7488,58 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
     averageMealAdherence = totalPlannedMealsInPeriod > 0 ? (totalCompletedMealsInPeriod / totalPlannedMealsInPeriod) * 100 : (daysWithAnyLogEntry > 0 ? 0 : 50); // if logs exist but no plan, 0%, else 50% default
     indexCompletionRate = indexFieldsExpected > 0 ? (indexFieldsLogged / indexFieldsExpected) * 100 : 0;
     logCompletionRate = (daysWithAnyLogEntry / USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS) * 100;
-    engagementScore = capScore((averageMealAdherence * 0.4) + (indexCompletionRate * 0.4) + (logCompletionRate * 0.2));
+    
+    // Изчисляване на streak бонус (последователност на логване)
+    let currentStreak = 0;
+    let maxStreak = 0;
+    let tempStreak = 0;
+    
+    // Обхождаме от днес назад във времето
+    for (let i = 0; i < USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS; i++) {
+        const loopDateObj = new Date(todayDate);
+        loopDateObj.setDate(todayDate.getDate() - i);
+        const dateString = loopDateObj.toISOString().split('T')[0];
+        const logEntryForDay = logsToConsider.find(l => l.date === dateString);
+        
+        const hasLog = logEntryForDay && logEntryForDay.data && 
+                       Object.keys(logEntryForDay.data).some(k => 
+                           k !== 'lastUpdated' && 
+                           logEntryForDay.data[k] !== null && 
+                           logEntryForDay.data[k] !== undefined && 
+                           String(logEntryForDay.data[k]).trim() !== ''
+                       );
+        
+        if (hasLog) {
+            tempStreak++;
+            maxStreak = Math.max(maxStreak, tempStreak);
+        } else {
+            // Ако е прекъснат streak-а, запазваме текущия само ако е от днес
+            if (tempStreak > 0 && currentStreak === 0) {
+                currentStreak = tempStreak;
+            }
+            tempStreak = 0;
+        }
+    }
+    
+    // Ако streak-ът продължава до края на периода, той е текущият
+    if (tempStreak > 0 && currentStreak === 0) {
+        currentStreak = tempStreak;
+    }
+    
+    // Streak бонус: до +10% за активен streak от 7+ дни
+    const streakBonus = currentStreak >= 7 ? 10 : currentStreak >= 3 ? 5 : 0;
+    
+    // Качествен бонус: ако средният брой попълнени индекси е висок
+    const avgIndexFieldsPerLog = daysWithAnyLogEntry > 0 ? indexFieldsLogged / daysWithAnyLogEntry : 0;
+    const qualityBonus = avgIndexFieldsPerLog >= 4 ? 5 : avgIndexFieldsPerLog >= 3 ? 2 : 0;
+    
+    engagementScore = capScore(
+        (averageMealAdherence * 0.4) + 
+        (indexCompletionRate * 0.4) + 
+        (logCompletionRate * 0.2) +
+        streakBonus +
+        qualityBonus
+    );
 
     const avgMood = getAvgLog('mood', 3, logsToConsider, USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS);
     const avgEnergy = getAvgLog('energy', 3, logsToConsider, USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS);
@@ -7491,26 +7563,55 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         const targetLossKg = safePFloat(initialAnswers?.lossKg);
         if (initialWeight && currentWeight && targetLossKg && targetLossKg > 0) {
             const actualLoss = initialWeight - currentWeight;
-            goalProgress = Math.max(0, Math.min(100, Math.round((actualLoss / targetLossKg) * 100))); // Cap at 100%
+            // Подобрена формула: нелинеен прогрес за по-реалистична оценка
+            // Ранният прогрес се оценява по-високо (по-лесно е в началото)
+            const EARLY_PROGRESS_MULTIPLIER = 120; // Първите 50% на загубата дават 60 точки (0.5 * 120 = 60)
+            const LATE_PROGRESS_MULTIPLIER = 80;   // Последните 50% на загубата дават 40 точки (0.5 * 80 = 40)
+            const rawProgress = (actualLoss / targetLossKg);
+            if (rawProgress <= 0) {
+                goalProgress = 0;
+            } else if (rawProgress < 0.5) {
+                // Първите 50% от целта - оценяват се като 60 точки
+                goalProgress = rawProgress * EARLY_PROGRESS_MULTIPLIER; // 0-0.5 -> 0-60
+            } else {
+                // Последните 50% от целта - оценяват се като 40 точки
+                goalProgress = 60 + ((rawProgress - 0.5) * LATE_PROGRESS_MULTIPLIER); // 0.5-1.0 -> 60-100
+            }
+            goalProgress = Math.max(0, Math.min(100, Math.round(goalProgress)));
         } else goalProgress = 0;
     } else if (userGoal === 'покачване на мускулна маса') {
         const targetGainKg = safePFloat(initialAnswers?.gainKg);
         if (initialWeight && currentWeight && targetGainKg && targetGainKg > 0) {
             const actualGain = currentWeight - initialWeight;
-            goalProgress = Math.max(0, Math.min(100, Math.round((actualGain / targetGainKg) * 100))); // Cap at 100%
+            // Подобрена формула: линеен прогрес за качване на маса (по-предвидимо)
+            const rawProgress = (actualGain / targetGainKg);
+            goalProgress = Math.max(0, Math.min(100, Math.round(rawProgress * 100)));
         } else goalProgress = overallHealthScore; // If target not set, progress reflects overall health
     } else if (userGoal === 'поддържане') {
         const targetMaintenanceWeight = safePFloat(initialAnswers?.maintenanceWeight, initialWeight);
         if (targetMaintenanceWeight && currentWeight) {
-            const allowedDeviationPercentage = 0.03; // 3% deviation allowed
-            const allowedDeviationKg = targetMaintenanceWeight * allowedDeviationPercentage;
+            // Подобрена формула с по-толерантни граници
+            // Основна допустима отклонение: 3%
+            const baseAllowedDeviationPercentage = 0.03;
+            const baseAllowedDeviationKg = targetMaintenanceWeight * baseAllowedDeviationPercentage;
+            
+            // Допълнителна буферна зона: още 2% (общо 5% преди значителна загуба на точки)
+            const bufferDeviationPercentage = 0.02;
+            const bufferDeviationKg = targetMaintenanceWeight * bufferDeviationPercentage;
+            
             const actualDeviationKg = Math.abs(currentWeight - targetMaintenanceWeight);
-
-            if (actualDeviationKg <= allowedDeviationKg) {
+            
+            if (actualDeviationKg <= baseAllowedDeviationKg) {
+                // Перфектно поддържане - 100%
                 goalProgress = 100;
+            } else if (actualDeviationKg <= baseAllowedDeviationKg + bufferDeviationKg) {
+                // В буферната зона (3-5%) - плавно намаление до 90%
+                const excessDeviation = actualDeviationKg - baseAllowedDeviationKg;
+                goalProgress = 100 - ((excessDeviation / bufferDeviationKg) * 10);
             } else {
-                // Progress decreases as deviation exceeds allowed range
-                goalProgress = Math.max(0, 100 - ((actualDeviationKg - allowedDeviationKg) / allowedDeviationKg) * 100);
+                // Над буферната зона - по-бързо намаление
+                const excessDeviation = actualDeviationKg - baseAllowedDeviationKg - bufferDeviationKg;
+                goalProgress = Math.max(0, 90 - ((excessDeviation / baseAllowedDeviationKg) * 60));
             }
             goalProgress = capScore(goalProgress);
         } else goalProgress = 50; // Default if target not clear
