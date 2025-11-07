@@ -16,7 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Only check rememberMe if JSON was successfully parsed
     if ($data && isset($data['rememberMe'])) {
-        $rememberMe = $data['rememberMe'] === true;
+        // Use filter_var to handle various truthy values (true, "true", 1, "1")
+        $rememberMe = filter_var($data['rememberMe'], FILTER_VALIDATE_BOOLEAN);
     }
     
     // Configure session settings before starting session
@@ -62,15 +63,18 @@ $envUser = getenv('ADMIN_USERNAME');
 $envHash = getenv('ADMIN_PASS_HASH');
 $expectedUser = ($envUser !== false && $envUser !== '') ? $envUser : 'admin';
 
+// Helper function to check if request is over HTTPS
+function isHttpsRequest() {
+    return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') 
+            || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+}
+
 // Helper function to set persistent cookie with security flags
 function setPersistentSessionCookie() {
     $sessionName = session_name();
     $sessionId = session_id();
     // Set cookie with secure and httponly flags for security
-    // secure=true requires HTTPS; for development with HTTP, this may need to be conditional
-    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') 
-                || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-    setcookie($sessionName, $sessionId, time() + REMEMBER_ME_DURATION, '/', '', $isHttps, true);
+    setcookie($sessionName, $sessionId, time() + REMEMBER_ME_DURATION, '/', '', isHttpsRequest(), true);
 }
 
 // Helper function for successful login
