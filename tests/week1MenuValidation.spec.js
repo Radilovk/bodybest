@@ -337,7 +337,7 @@ describe('week1Menu validation - strict 7-day requirement', () => {
     expect(callModelMock).toHaveBeenCalledTimes(1);
     
     // Log should NOT contain warning about missing days
-    const logData = JSON.parse(kvStore.get(logKey));
+    const logData = JSON.parse(kvStore.get(logKey) || '[]');
     const logMessages = logData.map(entry => entry.message).join(' ');
     expect(logMessages).not.toMatch(/Липсващи дни в week1Menu/);
   });
