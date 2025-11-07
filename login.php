@@ -4,10 +4,15 @@ define('REMEMBER_ME_DURATION', 30 * 24 * 60 * 60);
 
 // Check for "remember me" before starting session
 $rememberMe = false;
+$data = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $rawData = file_get_contents('php://input');
     $data = json_decode($rawData, true);
-    $rememberMe = isset($data['rememberMe']) && $data['rememberMe'] === true;
+    
+    // Only check rememberMe if JSON was successfully parsed
+    if ($data && isset($data['rememberMe'])) {
+        $rememberMe = $data['rememberMe'] === true;
+    }
     
     // Configure session settings before starting session
     if ($rememberMe) {
