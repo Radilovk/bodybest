@@ -73,8 +73,19 @@ function isHttpsRequest() {
 function setPersistentSessionCookie() {
     $sessionName = session_name();
     $sessionId = session_id();
-    // Set cookie with secure and httponly flags for security
-    setcookie($sessionName, $sessionId, time() + REMEMBER_ME_DURATION, '/', '', isHttpsRequest(), true);
+    // Set cookie with secure, httponly, and samesite flags for security
+    setcookie(
+        $sessionName, 
+        $sessionId, 
+        [
+            'expires' => time() + REMEMBER_ME_DURATION,
+            'path' => '/',
+            'domain' => '',
+            'secure' => isHttpsRequest(),
+            'httponly' => true,
+            'samesite' => 'Strict'
+        ]
+    );
 }
 
 // Helper function for successful login
