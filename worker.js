@@ -3208,6 +3208,43 @@ async function handleAnalyzeInitialAnswers(userId, env) {
         await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'ready');
         console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
+        
+        // Извличане и запазване на AI-препоръчаните макроси
+        try {
+            const analysisParsed = safeParseJson(cleaned, null);
+            if (analysisParsed && analysisParsed.macroRecommendation) {
+                const macroRec = analysisParsed.macroRecommendation;
+                // Валидация на макрос стойностите
+                if (macroRec.calories && macroRec.protein_grams && macroRec.carbs_grams && macroRec.fat_grams) {
+                    const macrosRecord = {
+                        status: 'initial',
+                        data: {
+                            recommendation: {
+                                calories: macroRec.calories,
+                                protein_grams: macroRec.protein_grams,
+                                carbs_grams: macroRec.carbs_grams,
+                                fat_grams: macroRec.fat_grams,
+                                fiber_grams: macroRec.fiber_grams || 0,
+                                protein_percent: macroRec.protein_percent || 0,
+                                carbs_percent: macroRec.carbs_percent || 0,
+                                fat_percent: macroRec.fat_percent || 0,
+                                fiber_percent: macroRec.fiber_percent || 0
+                            },
+                            reasoning: macroRec.reasoning || 'AI препоръка'
+                        }
+                    };
+                    await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
+                    console.log(`INITIAL_ANALYSIS (${userId}): AI macro recommendations stored.`);
+                } else {
+                    console.warn(`INITIAL_ANALYSIS (${userId}): Macro recommendation lacks required fields.`);
+                }
+            } else {
+                console.warn(`INITIAL_ANALYSIS (${userId}): No macroRecommendation found in analysis.`);
+            }
+        } catch (macroErr) {
+            console.error(`INITIAL_ANALYSIS (${userId}): Failed to extract macro recommendations - ${macroErr.message}`);
+        }
+        
         // Имейлът с линк към анализа вече се изпраща при подаване на въпросника,
         // затова тук не се изпраща повторно.
     } catch (error) {

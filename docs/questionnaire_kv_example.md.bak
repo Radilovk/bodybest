@@ -50,49 +50,22 @@
 
 ## Макроси и калории
 
-След обработка на въпросника от AI модела се създават KV записи:
+След обработка се създава KV запис:
 
-- `<userId>_analysis_macros` – резултат от AI анализ с препоръчани макроси със статус `initial` (при първоначален анализ) или `final` (след генериране на план).
+- `<userId>_analysis_macros` – резултат от AI оценка „План vs Препоръка“ с флаг `status` (`initial` или `final`).
 
 ```json
-// <userId>_analysis_macros (initial - след AI анализ на въпросника)
+// <userId>_analysis_macros
 {
   "status": "initial",
   "data": {
-    "recommendation": { 
-      "calories": 1800, 
-      "protein_grams": 130, 
-      "carbs_grams": 160, 
-      "fat_grams": 60,
-      "fiber_grams": 25,
-      "protein_percent": 30,
-      "carbs_percent": 40,
-      "fat_percent": 30,
-      "fiber_percent": 3
-    },
-    "reasoning": "Поради целта за отслабване от 5кг и средно ниво на активност..."
-  }
-}
-
-// <userId>_analysis_macros (final - след генериране на план)
-{
-  "status": "final",
-  "data": {
-    "calories": 1700, 
-    "protein_grams": 120, 
-    "carbs_grams": 150, 
-    "fat_grams": 55,
-    "fiber_grams": 24,
-    "protein_percent": 28,
-    "carbs_percent": 42,
-    "fat_percent": 30,
-    "fiber_percent": 3
+    "plan": { "calories": 1700, "protein_grams": 120, "carbs_grams": 150, "fat_grams": 55 },
+    "recommendation": { "calories": 1800, "protein_grams": 130, "carbs_grams": 160, "fat_grams": 60 }
   }
 }
 ```
 
 Всички стойности са в **kcal** и **грамове**. Базовият прием и макронутриентите се записват в `final_plan` при генериране на плана.
-
 
 В полетата, където изборът позволява повече от една стойност (тип `checkbox`), отговорът е масив от низове. Числовите въпроси (`number`) се съхраняват като числа, а текстовите като низове. Полето `submissionDate` се добавя при изпращане и отбелязва момента на попълване.
 
