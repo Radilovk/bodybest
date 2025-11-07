@@ -1724,14 +1724,14 @@ function createInitialProfileFromQuestionnaire(questionnaireData) {
         profile.email = String(questionnaireData.email).trim().toLowerCase();
     }
     
-    // Физически данни
+    // Физически данни с реалистична валидация
     const age = parseFloat(questionnaireData.age);
-    if (!isNaN(age) && age > 0) {
+    if (!isNaN(age) && age > 0 && age <= 150) {
         profile.age = age;
     }
     
     const height = parseFloat(questionnaireData.height);
-    if (!isNaN(height) && height > 0) {
+    if (!isNaN(height) && height >= 50 && height <= 250) {
         profile.height = height;
     }
     
@@ -1740,7 +1740,8 @@ function createInitialProfileFromQuestionnaire(questionnaireData) {
         profile.phone = String(questionnaireData.phone).trim();
     }
     
-    // Не задаваме macroExceedThreshold - потребителят може да го промени по-късно
+    // Не задаваме macroExceedThreshold - остава undefined, 
+    // системата използва default стойност от код (обикновено 1.2)
     
     return profile;
 }

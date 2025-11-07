@@ -195,4 +195,114 @@ describe('createInitialProfileFromQuestionnaire', () => {
     expect(savedProfile.name).toBeUndefined(); // Няма име
     expect(savedProfile.phone).toBeUndefined(); // Няма телефон
   });
+
+  test('валидира реалистични граници за възраст и ръст', async () => {
+    const kvStore = new Map();
+    const userId = 'test-user-validation';
+    kvStore.set('email_to_uuid_validation@example.com', userId);
+    
+    const USER_METADATA_KV = {
+      get: jest.fn(key => Promise.resolve(kvStore.get(key))),
+      put: jest.fn((key, val) => { kvStore.set(key, val); return Promise.resolve(); })
+    };
+    
+    const RESOURCES_KV = {
+      get: jest.fn(key => {
+        const data = {
+          prompt_questionnaire_analysis: 'tpl',
+          model_questionnaire_analysis: '@cf/mock'
+        };
+        return Promise.resolve(data[key]);
+      })
+    };
+    
+    const env = {
+      USER_METADATA_KV,
+      RESOURCES_KV,
+      send_analysis_email: '0',
+      AI: { run: jest.fn(async () => ({ response: '{}' })) }
+    };
+    
+    const ctx = { waitUntil: jest.fn() };
+
+    // Нереалистични стойности
+    const questionnaireData = {
+      email: 'validation@example.com',
+      age: 200, // Твърде висока възраст
+      height: 300, // Твърде висок ръст
+      weight: 70,
+      gender: 'мъж',
+      goal: 'загуба на тегло',
+      medicalConditions: ['нямам']
+    };
+
+    const request = {
+      json: async () => questionnaireData
+    };
+
+    await worker.handleSubmitQuestionnaire(request, env, ctx);
+
+    const profileKey = `${userId}_profile`;
+    const profileCall = USER_METADATA_KV.put.mock.calls.find(call => call[0] === profileKey);
+    const savedProfile = JSON.parse(profileCall[1]);
+    
+    // Нереалистичните стойности не трябва да бъдат записани
+    expect(savedProfile.age).toBeUndefined(); // 200 > 150
+    expect(savedProfile.height).toBeUndefined(); // 300 > 250
+  });
+
+  test('приема валидни гранични стойности за възраст и ръст', async () => {
+    const kvStore = new Map();
+    const userId = 'test-user-boundary';
+    kvStore.set('email_to_uuid_boundary@example.com', userId);
+    
+    const USER_METADATA_KV = {
+      get: jest.fn(key => Promise.resolve(kvStore.get(key))),
+      put: jest.fn((key, val) => { kvStore.set(key, val); return Promise.resolve(); })
+    };
+    
+    const RESOURCES_KV = {
+      get: jest.fn(key => {
+        const data = {
+          prompt_questionnaire_analysis: 'tpl',
+          model_questionnaire_analysis: '@cf/mock'
+        };
+        return Promise.resolve(data[key]);
+      })
+    };
+    
+    const env = {
+      USER_METADATA_KV,
+      RESOURCES_KV,
+      send_analysis_email: '0',
+      AI: { run: jest.fn(async () => ({ response: '{}' })) }
+    };
+    
+    const ctx = { waitUntil: jest.fn() };
+
+    // Гранични валидни стойности
+    const questionnaireData = {
+      email: 'boundary@example.com',
+      age: 150, // Максимална валидна възраст
+      height: 50, // Минимален валиден ръст
+      weight: 70,
+      gender: 'мъж',
+      goal: 'загуба на тегло',
+      medicalConditions: ['нямам']
+    };
+
+    const request = {
+      json: async () => questionnaireData
+    };
+
+    await worker.handleSubmitQuestionnaire(request, env, ctx);
+
+    const profileKey = `${userId}_profile`;
+    const profileCall = USER_METADATA_KV.put.mock.calls.find(call => call[0] === profileKey);
+    const savedProfile = JSON.parse(profileCall[1]);
+    
+    // Граничните валидни стойности трябва да бъдат приети
+    expect(savedProfile.age).toBe(150);
+    expect(savedProfile.height).toBe(50);
+  });
 });
