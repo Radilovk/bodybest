@@ -8,19 +8,19 @@
    0. ОСНОВНИ ПРОМЕНЛИВИ И ГЛОБАЛНИ СТИЛОВЕ
    ========================================================================== */
 :root {
-  /* === Модерна Светла Тема (Default) === */
-  --primary-color: #4A90E2;
-  --secondary-color: #50C9CE;
-  --accent-color: #7B68EE;
+  /* === Светла Тема (Default) === */
+  --primary-color: #3A506B;
+  --secondary-color: #5BC0BE;
+  --accent-color: #778DA9;
   --accent-opacity: 1;
-  --tertiary-color: #E89AC7;
+  --tertiary-color: #CBBADD;
 
-  --text-color-primary: #1A202C;
+  --text-color-primary: #1C1F2E;
   --text-color-secondary: #4A5568;
-  --text-color-muted: #718096;
+  --text-color-muted: #7f8c8d;
   --text-color-on-primary: #FFFFFF;
   --text-color-on-secondary: #FFFFFF;
-  --text-color-disabled: #A0AEC0;
+  --text-color-disabled: #6c757d;
   --font-color-primary: var(--text-color-primary);
   --font-color-secondary: var(--text-color-secondary);
   --font-color-muted: var(--text-color-muted);
@@ -29,42 +29,38 @@
   --header-bg-solid: #ffffff;
   --mobile-menu-bg: var(--header-bg-solid);
 
-  --bg-color: #F7FAFC;
-  --bg-gradient: linear-gradient(135deg, #EDF2F7 0%, #F7FAFC 100%);
+  --bg-color: #F0F4F8;
+  --bg-gradient: linear-gradient(135deg, #e6eff5 0%, #f0f4f8 100%);
   --surface-background: #FFFFFF;
   --surface-background-rgb: 255,255,255; /* За rgba overlay */
   --card-bg: #ffffff;
   --card-bg-rgb: 255,255,255;
-  --card-bg-opacity: 0.95;
-  --glass-blur: 12px;
+  --card-bg-opacity: 0.85;
+  --glass-blur: 8px;
 
-  --border-color: #E2E8F0;
-  --border-color-soft: #EDF2F7;
+  --border-color: #d0d8e0;
+  --border-color-soft: #e1e8f0;
 
   --input-bg: #FFFFFF;
-  --input-bg-disabled: #EDF2F7;
-  --input-border-color: #CBD5E0;
+  --input-bg-disabled: #e9ecef;
+  --input-border-color: #ced4da;
   --input-focus-border: var(--primary-color);
-  --input-focus-shadow: rgba(74, 144, 226, 0.25);
+  --input-focus-shadow: rgba(58, 80, 107, 0.25);
 
-  --transition-base: 
-    background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-    color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 
   /* Цветове за макро диаграмата */
-  --macro-protein-color: #50C9CE; /* Протеини */
-  --macro-fat-color: #FFB84D;     /* Мазнини */
-  --macro-carbs-color: #FF6B9D;   /* Въглехидрати */
-  --macro-fiber-color: #66D9A6;   /* Фибри */
+  --macro-protein-color: #5BC0BE; /* Протеини */
+  --macro-fat-color: #FFD166;     /* Мазнини */
+  --macro-carbs-color: #FF6B6B;   /* Въглехидрати */
+  --macro-fiber-color: #6FCF97;   /* Фибри */
   --macro-ring-highlight: #ffffff; /* Подчертаване на кръга */
-  --macro-stroke-color: #E2E8F0;   /* Рамка на диаграмата */
+  --macro-stroke-color: #e0e0e0;   /* Рамка на диаграмата */
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.03);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.10), 0 4px 6px rgba(0, 0, 0, 0.05);
-  --shadow-soft: 0px 8px 20px rgba(74, 144, 226, 0.1), 0px 2px 8px rgba(74, 144, 226, 0.08);
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.12);
+  --shadow-soft: 0px 6px 18px rgba(var(--surface-background-rgb), 0.5), 0px 2px 7px rgba(var(--surface-background-rgb), 0.3);
 
   --space-unit: 8px;
   --space-xs: calc(var(--space-unit) * 1);
@@ -86,41 +82,41 @@
   --fs-xxl: 2rem;
   --fs-3xl: 3rem;
 
-  --color-success: #10B981; --color-success-bg: rgba(16, 185, 129, 0.1);
-  --color-warning: #F59E0B; --color-warning-bg: rgba(245, 158, 11, 0.1);
-  --color-danger: #EF4444; --color-danger-bg: rgba(239, 68, 68, 0.1);
-  --color-info: #3B82F6; --color-info-bg: rgba(59, 130, 246, 0.1);
+  --color-success: #2ecc71; --color-success-bg: rgba(46, 204, 113, 0.1);
+  --color-warning: #f39c12; --color-warning-bg: rgba(243, 156, 18, 0.1);
+  --color-danger: #e74c3c; --color-danger-bg: rgba(231, 76, 60, 0.1);
+  --color-info: #3498db; --color-info-bg: rgba(52, 152, 219, 0.1);
 
   /* Цветови точки за прогрес баровете */
-  --progress-color-0: 239, 68, 68;
-  --progress-color-50: 245, 158, 11;
-  --progress-color-75: 251, 191, 36;
-  --progress-color-100: 16, 185, 129;
+  --progress-color-0: 231, 76, 60;
+  --progress-color-50: 243, 156, 18;
+  --progress-color-75: 255, 203, 0;
+  --progress-color-100: 46, 204, 113;
 
-  --progress-bar-bg-empty: #E5E7EB;
+  --progress-bar-bg-empty: #e9ecef;
   --progress-gradient: linear-gradient(to right, var(--color-danger), var(--color-warning), var(--color-success));
   --progress-color: var(--color-success);
-  --progress-bar-glow-color: color-mix(in srgb, var(--progress-color) 50%, transparent);
+  --progress-bar-glow-color: color-mix(in srgb, var(--progress-color) 60%, transparent);
   --progress-bar-height: 1rem;
   --progress-bar-radius: var(--radius-sm);
 
-  --toast-bg: rgba(30, 41, 59, 0.95); --toast-text: #fff; --toast-radius: var(--radius-md);
-  --modal-overlay-bg: rgba(0, 0, 0, 0.60);
+  --toast-bg: rgba(44, 62, 80, 0.95); --toast-text: #fff; --toast-radius: var(--radius-md);
+  --modal-overlay-bg: rgba(0, 0, 0, 0.65);
   --scrollbar-thumb: var(--accent-color); --scrollbar-track: var(--bg-color);
 
   --icon-color-default: var(--accent-color);
   --icon-color-muted: var(--text-color-muted);
 
-  --menu-bg: rgba(255, 255, 255, 0.98);
-  --menu-blur: 12px;
-  --menu-overlay-bg: rgba(0, 0, 0, 0.4);
-  --menu-hover-bg: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  --menu-bg: rgba(255, 255, 255, 0.95);
+  --menu-blur: 10px;
+  --menu-overlay-bg: rgba(0, 0, 0, 0.5);
+  --menu-hover-bg: color-mix(in srgb, var(--primary-color) 12%, transparent);
 
   --fab-bg: var(--primary-color); --fab-icon: #fff;
 
-  --rating-empty-bg: #E5E7EB; --rating-border: #D1D5DB;
-  --rating-1: #EF4444; --rating-2: #F59E0B; --rating-3: #FCD34D;
-  --rating-4: #84CC16; --rating-5: #10B981;
+  --rating-empty-bg: #e0e0e0; --rating-border: #ccc;
+  --rating-1: #e74c3c; --rating-2: #f39c12; --rating-3: #f1c40f;
+  --rating-4: #a6d96a; --rating-5: #2ecc71;
 
   --progress-level-1: var(--rating-1);
   --progress-level-2: var(--rating-2);
@@ -128,210 +124,210 @@
   --progress-level-4: var(--rating-4);
   --progress-level-5: var(--rating-5);
 
-  --chat-widget-bg: color-mix(in srgb, var(--surface-background) 97%, var(--accent-color) 3%);
+  --chat-widget-bg: color-mix(in srgb, var(--surface-background) 95%, var(--accent-color) 5%);
   --chat-header-bg: var(--primary-color);
   --chat-header-text: #fff;
-  --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 12%, var(--surface-background));
-  --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 10%, var(--surface-background));
+  --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 15%, var(--surface-background));
+  --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 12%, var(--surface-background));
   --chat-input-field-bg: var(--surface-background);
   --chat-font-size: 1.05rem; /* Увеличен шрифт за чата */
 
-  --note-critical-bg: #FEE2E2; --note-critical-text: #991B1B; --note-critical-border: #DC2626;
-  --note-important-bg: #FEF3C7; --note-important-text: #92400E; --note-important-border: #F59E0B;
-  --note-info-bg: #DBEAFE; --note-info-text: #1E40AF; --note-info-border: #3B82F6;
-  --note-success-bg: #D1FAE5; --note-success-text: #065F46; --note-success-border: #10B981;
-  --supplement-card-bg: #E0F2FE;
+  --note-critical-bg: #ffebee; --note-critical-text: #c62828; --note-critical-border: #b71c1c;
+  --note-important-bg: #fffde7; --note-important-text: #f57f17; --note-important-border: #ff8f00;
+  --note-info-bg: #e3f2fd; --note-info-text: #0d47a1; --note-info-border: #1976d2;
+  --note-success-bg: #e8f5e9; --note-success-text: #1b5e20; --note-success-border: #2e7d32;
+  --supplement-card-bg: #e7f7ce;
 
-  --primary-rgb: 74, 144, 226;
+  --primary-rgb: 58, 80, 107;
   --header-height: 60px;
   --tabs-height: 65px;
   --tips-collapsed-height: 4.5rem;
 
   --metric-value-group-bg-initial: color-mix(in srgb, var(--surface-background) 95%, var(--border-color-soft));
-  --metric-value-group-bg-expected: color-mix(in srgb, var(--surface-background) 95%, var(--accent-color) 18%);
-  --metric-value-group-bg-current: color-mix(in srgb, var(--surface-background) 95%, var(--secondary-color) 22%);
+  --metric-value-group-bg-expected: color-mix(in srgb, var(--surface-background) 95%, var(--accent-color) 20%);
+  --metric-value-group-bg-current: color-mix(in srgb, var(--surface-background) 95%, var(--secondary-color) 25%);
   /* Цветове за code.html */
-  --code-bg: #F8FAFC;
-  --code-text-primary: #334155;
-  --code-accent: #4A90E2;
+  --code-bg: #f5f5f5;
+  --code-text-primary: #333333;
+  --code-accent: #5BC0BE;
 }
 
 body.dark-theme {
-  /* Модерна и спокойна тъмна тема */
-  --primary-color: #60D394;
-  --secondary-color: #EE6C4D;
-  --accent-color: #C77DFF;
+  /* Органична и спокойна тъмна тема */
+  --primary-color: #84A98C;
+  --secondary-color: #E4725C;
+  --accent-color: #B5A3C3;
   --accent-opacity: 1;
-  --tertiary-color: #A78BFA;
+  --tertiary-color: #8E6CC3;
 
-  --text-color-primary: #F1F5F9;
-  --text-color-secondary: #CBD5E1;
-  --text-color-muted: #94A3B8;
-  --text-color-on-primary: #0F172A;
+  --text-color-primary: #E0E0E0;
+  --text-color-secondary: #A0A5C0;
+  --text-color-muted: #bbb;
+  --text-color-on-primary: #1C1F2E;
   --text-color-on-secondary: #FFFFFF;
-  --text-color-disabled: #64748B;
+  --text-color-disabled: #adb5bd;
   --header-title-color: var(--bg-color);
   --font-color-primary: var(--text-color-primary);
   --font-color-secondary: var(--text-color-secondary);
   --font-color-muted: var(--text-color-muted);
   --font-color-on-primary: var(--text-color-on-primary);
 
-  --bg-color: #0F172A;
-  --bg-gradient: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-  --surface-background: #1E293B;
-  --surface-background-rgb: 30,41,59; /* За rgba overlay */
-  --card-bg: #1E293B;
-  --card-bg-rgb: 30,41,59;
-  --card-bg-opacity: 0.85;
-  --glass-blur: 16px;
+  --bg-color: #1C1F2E;
+  --bg-gradient: linear-gradient(135deg, #1C1F2E 0%, #252A41 100%);
+  --surface-background: #252A41;
+  --surface-background-rgb: 37,42,65; /* За rgba overlay */
+  --card-bg: #252A41;
+  --card-bg-rgb: 37,42,65;
+  --card-bg-opacity: 0.75;
+  --glass-blur: 12px;
 
-  --border-color: #334155;
-  --border-color-soft: #27364A;
+  --border-color: #34374B;
+  --border-color-soft: #2D3044;
 
-  --input-bg: #1E293B;
-  --input-bg-disabled: #27364A;
-  --input-border-color: #475569;
+  --input-bg: #252A41;
+  --input-bg-disabled: #2C3147;
+  --input-border-color: #3C425A;
   --input-focus-border: var(--primary-color);
-  --input-focus-shadow: rgba(96, 211, 148, 0.35);
+  --input-focus-shadow: rgba(132, 169, 140, 0.3);
 
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.25);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.45);
-  --shadow-soft: 0px 8px 20px rgba(96, 211, 148, 0.12), 0px 2px 8px rgba(96, 211, 148, 0.08);
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.15);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.20);
+  --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.25);
+  --shadow-soft: 0px 6px 18px rgba(var(--surface-background-rgb), 0.5), 0px 2px 7px rgba(var(--surface-background-rgb), 0.3);
 
-  --progress-bar-bg-empty: #334155;
+  --progress-bar-bg-empty: #393E57;
   --progress-color: var(--color-success);
 
   /* Макро диаграма - тъмна тема */
-  --macro-protein-color: #60D394;
-  --macro-fat-color: #FFB84D;
-  --macro-carbs-color: #FF6B9D;
-  --macro-fiber-color: #66D9A6;
-  --macro-ring-highlight: #F1F5F9;
-  --macro-stroke-color: #475569;
+  --macro-protein-color: #5BC0BE;
+  --macro-fat-color: #FFD166;
+  --macro-carbs-color: #FF6B6B;
+  --macro-fiber-color: #6FCF97;
+  --macro-ring-highlight: #ffffff;
+  --macro-stroke-color: #444444;
 
-  --toast-bg: rgba(30, 41, 59, 0.98); --toast-text: #F1F5F9;
+  --toast-bg: rgba(37, 42, 65, 0.95); --toast-text: #F0F2F5;
   --modal-overlay-bg: rgba(0,0,0, 0.75);
-  --scrollbar-thumb: var(--primary-color); --scrollbar-track: #1E293B;
+  --scrollbar-thumb: var(--primary-color); --scrollbar-track: #333;
 
   --icon-color-default: var(--accent-color);
 
-  --menu-bg: rgba(30, 41, 59, 0.95);
+  --menu-bg: rgba(37, 42, 65, 0.9);
   --menu-overlay-bg: rgba(0, 0, 0, 0.65);
-  --menu-hover-bg: color-mix(in srgb, var(--primary-color) 25%, transparent);
+  --menu-hover-bg: color-mix(in srgb, var(--primary-color) 35%, transparent);
 
-  --fab-bg: var(--primary-color); --fab-icon: #0F172A;
+  --fab-bg: var(--primary-color); --fab-icon: #1C1F2E;
 
-  --rating-empty-bg: #475569; --rating-border: #64748B;
+  --rating-empty-bg: #444; --rating-border: #666;
 
-  --chat-widget-bg: color-mix(in srgb, var(--surface-background) 92%, black);
+  --chat-widget-bg: color-mix(in srgb, var(--surface-background) 90%, black);
   --chat-header-bg: var(--primary-color);
-  --chat-header-text: #0F172A;
-  --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 30%, var(--surface-background));
-  --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 25%, var(--surface-background));
-  --chat-input-field-bg: color-mix(in srgb, var(--surface-background) 70%, #0F172A);
+  --chat-header-text: #FFFFFF;
+  --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 40%, var(--surface-background));
+  --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 40%, var(--surface-background));
+  --chat-input-field-bg: color-mix(in srgb, var(--surface-background) 70%, #1A1A2E);
 
-  --note-critical-bg: rgba(220, 38, 38, 0.25); --note-critical-text: #FCA5A5; --note-critical-border: #DC2626;
-  --note-important-bg: rgba(245, 158, 11, 0.20); --note-important-text: #FCD34D; --note-important-border: #F59E0B;
-  --note-info-bg: rgba(59, 130, 246, 0.20); --note-info-text: #93C5FD; --note-info-border: #3B82F6;
-  --note-success-bg: rgba(16, 185, 129, 0.20); --note-success-text: #6EE7B7; --note-success-border: #10B981;
-  --supplement-card-bg: rgba(96, 211, 148, 0.20);
+  --note-critical-bg: rgba(183, 28, 28, 0.3); --note-critical-text: #ef9a9a; --note-critical-border: #c62828;
+  --note-important-bg: rgba(255, 143, 0, 0.2); --note-important-text: #ffcc80; --note-important-border: #ff8f00;
+  --note-info-bg: rgba(25, 118, 210, 0.2); --note-info-text: #90caf9; --note-info-border: #1976d2;
+  --note-success-bg: rgba(46, 125, 50, 0.2); --note-success-text: #a5d6a7; --note-success-border: #2e7d32;
+  --supplement-card-bg: rgba(132, 169, 140, 0.25);
 
-  --primary-rgb: 96, 211, 148;
+  --primary-rgb: 132, 169, 140;
 
   --metric-value-group-bg-initial: color-mix(in srgb, var(--surface-background) 90%, var(--border-color-soft) 50%);
-  --metric-value-group-bg-expected: color-mix(in srgb, var(--surface-background) 90%, var(--accent-color) 22%);
-  --metric-value-group-bg-current: color-mix(in srgb, var(--surface-background) 90%, var(--secondary-color) 28%);
-  --code-bg: #0F172A;
-  --code-text-primary: #E2E8F0;
-  --code-accent: #C77DFF;
+  --metric-value-group-bg-expected: color-mix(in srgb, var(--surface-background) 90%, var(--accent-color) 25%);
+  --metric-value-group-bg-current: color-mix(in srgb, var(--surface-background) 90%, var(--secondary-color) 30%);
+  --code-bg: #1e1e1e;
+  --code-text-primary: #e0e0e0;
+  --code-accent: #ff3366;
 }
 
 body.vivid-theme {
-  /* Модерна ярка тема със запазен тъмен фон */
-  --primary-color: #22D3EE;
-  --secondary-color: #FBBF24;
-  --accent-color: #F472B6;
+  /* Ярка тема със запазен тъмен фон */
+  --primary-color: #5BC0BE;
+  --secondary-color: #FFD166;
+  --accent-color: #FF6B6B;
   --accent-opacity: 1;
-  --tertiary-color: #FB923C;
+  --tertiary-color: #FF9C9C;
 
-  --text-color-primary: #F1F5F9;
-  --text-color-secondary: #CBD5E1;
-  --text-color-muted: #94A3B8;
-  --text-color-on-primary: #0F172A;
-  --text-color-on-secondary: #0F172A;
-  --text-color-disabled: #64748B;
+  --text-color-primary: #E0E0E0;
+  --text-color-secondary: #A0A5C0;
+  --text-color-muted: #bbb;
+  --text-color-on-primary: #1C1F2E;
+  --text-color-on-secondary: #FFFFFF;
+  --text-color-disabled: #adb5bd;
   --header-title-color: var(--bg-color);
 
-  --bg-color: #0F172A;
-  --bg-gradient: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-  --surface-background: #1E293B;
-  --surface-background-rgb: 30,41,59; /* За rgba overlay */
-  --card-bg: #1E293B;
-  --card-bg-rgb: 30,41,59;
-  --card-bg-opacity: 0.85;
-  --glass-blur: 16px;
+  --bg-color: #1C1F2E;
+  --bg-gradient: linear-gradient(135deg, #1C1F2E 0%, #252A41 100%);
+  --surface-background: #252A41;
+  --surface-background-rgb: 37,42,65; /* За rgba overlay */
+  --card-bg: #252A41;
+  --card-bg-rgb: 37,42,65;
+  --card-bg-opacity: 0.75;
+  --glass-blur: 12px;
 
-  --border-color: #334155;
-  --border-color-soft: #27364A;
+  --border-color: #34374B;
+  --border-color-soft: #2D3044;
 
-  --input-bg: #1E293B;
-  --input-bg-disabled: #27364A;
-  --input-border-color: #475569;
+  --input-bg: #252A41;
+  --input-bg-disabled: #2C3147;
+  --input-border-color: #3C425A;
   --input-focus-border: var(--primary-color);
-  --input-focus-shadow: rgba(34, 211, 238, 0.40);
+  --input-focus-shadow: rgba(91, 192, 190, 0.3);
 
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.25);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.45);
-  --shadow-soft: 0px 8px 20px rgba(34, 211, 238, 0.15), 0px 2px 8px rgba(244, 114, 182, 0.10);
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.15);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.20);
+  --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.25);
+  --shadow-soft: 0px 6px 18px rgba(var(--surface-background-rgb), 0.5), 0px 2px 7px rgba(var(--surface-background-rgb), 0.3);
 
-  --progress-bar-bg-empty: #334155;
-  --progress-color: #10B981;
+  --progress-bar-bg-empty: #393E57;
+  --progress-color: #80FF80;
 
   /* Макро диаграма - ярка тема */
-  --macro-protein-color: #22D3EE;
-  --macro-fat-color: #FBBF24;
-  --macro-carbs-color: #F472B6;
-  --macro-fiber-color: #34D399;
-  --macro-ring-highlight: #F1F5F9;
-  --macro-stroke-color: #475569;
+  --macro-protein-color: #5BC0BE;
+  --macro-fat-color: #FFD166;
+  --macro-carbs-color: #FF6B6B;
+  --macro-fiber-color: #6FCF97;
+  --macro-ring-highlight: #ffffff;
+  --macro-stroke-color: #444444;
 
-  --toast-bg: rgba(30, 41, 59, 0.98); --toast-text: #F1F5F9;
+  --toast-bg: rgba(37, 42, 65, 0.95); --toast-text: #F0F2F5;
   --modal-overlay-bg: rgba(0,0,0, 0.75);
-  --scrollbar-thumb: var(--primary-color); --scrollbar-track: #1E293B;
+  --scrollbar-thumb: var(--primary-color); --scrollbar-track: #333;
 
   --icon-color-default: var(--accent-color);
 
-  --menu-bg: rgba(30, 41, 59, 0.95);
+  --menu-bg: rgba(37, 42, 65, 0.9);
   --menu-overlay-bg: rgba(0, 0, 0, 0.65);
-  --menu-hover-bg: color-mix(in srgb, var(--primary-color) 30%, transparent);
+  --menu-hover-bg: color-mix(in srgb, var(--primary-color) 35%, transparent);
 
-  --fab-bg: var(--primary-color); --fab-icon: #0F172A;
+  --fab-bg: var(--primary-color); --fab-icon: #1C1F2E;
 
-  --rating-empty-bg: #475569; --rating-border: #64748B;
+  --rating-empty-bg: #444; --rating-border: #666;
 
-  --chat-widget-bg: color-mix(in srgb, var(--surface-background) 92%, black);
+  --chat-widget-bg: color-mix(in srgb, var(--surface-background) 90%, black);
   --chat-header-bg: var(--primary-color);
-  --chat-header-text: #0F172A;
-  --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 25%, var(--surface-background));
-  --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 25%, var(--surface-background));
-  --chat-input-field-bg: color-mix(in srgb, var(--surface-background) 70%, #0F172A);
+  --chat-header-text: #FFFFFF;
+  --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 40%, var(--surface-background));
+  --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 40%, var(--surface-background));
+  --chat-input-field-bg: color-mix(in srgb, var(--surface-background) 70%, #1A1A2E);
 
-  --note-critical-bg: rgba(220, 38, 38, 0.25); --note-critical-text: #FCA5A5; --note-critical-border: #DC2626;
-  --note-important-bg: rgba(251, 191, 36, 0.25); --note-important-text: #FDE68A; --note-important-border: #FBBF24;
-  --note-info-bg: rgba(34, 211, 238, 0.25); --note-info-text: #A5F3FC; --note-info-border: #22D3EE;
-  --note-success-bg: rgba(16, 185, 129, 0.20); --note-success-text: #6EE7B7; --note-success-border: #10B981;
-  --supplement-card-bg: rgba(34, 211, 238, 0.20);
+  --note-critical-bg: rgba(183, 28, 28, 0.3); --note-critical-text: #ef9a9a; --note-critical-border: #c62828;
+  --note-important-bg: rgba(255, 143, 0, 0.2); --note-important-text: #ffcc80; --note-important-border: #ff8f00;
+  --note-info-bg: rgba(25, 118, 210, 0.2); --note-info-text: #90caf9; --note-info-border: #1976d2;
+  --note-success-bg: rgba(46, 125, 50, 0.2); --note-success-text: #a5d6a7; --note-success-border: #2e7d32;
+  --supplement-card-bg: rgba(91, 192, 190, 0.25);
 
-  --primary-rgb: 34, 211, 238;
+  --primary-rgb: 91, 192, 190;
 
   --metric-value-group-bg-initial: color-mix(in srgb, var(--surface-background) 90%, var(--border-color-soft) 50%);
-  --metric-value-group-bg-expected: color-mix(in srgb, var(--surface-background) 90%, var(--accent-color) 22%);
-  --metric-value-group-bg-current: color-mix(in srgb, var(--surface-background) 90%, var(--secondary-color) 25%);
-  --code-bg: #0C1222;
-  --code-text-primary: #E2E8F0;
-  --code-accent: #F472B6;
+  --metric-value-group-bg-expected: color-mix(in srgb, var(--surface-background) 90%, var(--accent-color) 25%);
+  --metric-value-group-bg-current: color-mix(in srgb, var(--surface-background) 90%, var(--secondary-color) 30%);
+  --code-bg: #001122;
+  --code-text-primary: #ffffff;
+  --code-accent: #ff6600;
 }
 
 /* По-ярките основни цветове правят заглавията трудни за четене.
