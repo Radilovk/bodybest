@@ -4780,10 +4780,10 @@ ${cleanedJson.substring(0, 2000)}
             // Calculate fiber using the standard formula: 14g per 1000 calories
             macros.fiber_grams = Math.round((calories / 1000) * 14);
             macros.fiber_percent = Math.round((macros.fiber_grams * CALORIES_PER_GRAM.fiber * 100) / calories);
-        } else if (!hasFiberPercent && hasFiberGrams && calories) {
+        } else if (!hasFiberPercent && hasFiberGrams && calories && calories > 0) {
             // Calculate percent from grams
             macros.fiber_percent = Math.round((fiber_grams * CALORIES_PER_GRAM.fiber * 100) / calories);
-        } else if (!hasFiberGrams && hasFiberPercent && calories) {
+        } else if (!hasFiberGrams && hasFiberPercent && calories && calories > 0) {
             // Calculate grams from percent
             macros.fiber_grams = Math.round((calories * fiber_percent) / 100 / CALORIES_PER_GRAM.fiber);
         }
