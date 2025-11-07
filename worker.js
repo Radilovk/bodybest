@@ -336,9 +336,12 @@ const finalizeTargetMacros = (macros) => {
     }
   }
 
-  // Calculate default fiber values if both are missing (recommended 14g per 1000 calories)
+  // Calculate default fiber values if both are missing or zero (recommended 14g per 1000 calories)
   if (normalized.calories && normalized.calories > 0) {
-    if (normalized.fiber_grams == null && normalized.fiber_percent == null) {
+    const hasFiberGrams = normalized.fiber_grams != null && normalized.fiber_grams > 0;
+    const hasFiberPercent = normalized.fiber_percent != null && normalized.fiber_percent > 0;
+    
+    if (!hasFiberGrams && !hasFiberPercent) {
       normalized.fiber_grams = roundValue((normalized.calories / 1000) * 14);
       normalized.fiber_percent = roundValue((normalized.fiber_grams * CALORIES_PER_GRAM.fiber * 100) / normalized.calories);
     }
@@ -4768,15 +4771,46 @@ ${cleanedJson.substring(0, 2000)}
     const ensureFiber = (macros) => {
         if (!macros) return;
         const { calories, fiber_percent, fiber_grams } = macros;
-        if (fiber_percent == null && fiber_grams != null && calories) {
+        
+        // If both fiber fields are missing or zero, calculate using default formula (14g per 1000 kcal)
+        const hasFiberGrams = fiber_grams != null && fiber_grams > 0;
+        const hasFiberPercent = fiber_percent != null && fiber_percent > 0;
+        
+        if (!hasFiberGrams && !hasFiberPercent && calories && calories > 0) {
+            // Calculate fiber using the standard formula: 14g per 1000 calories
+            macros.fiber_grams = Math.round((calories / 1000) * 14);
+            macros.fiber_percent = Math.round((macros.fiber_grams * 2 * 100) / calories);
+        } else if (!hasFiberPercent && hasFiberGrams && calories) {
+            // Calculate percent from grams
             macros.fiber_percent = Math.round((fiber_grams * 2 * 100) / calories);
-        }
-        if (fiber_grams == null && fiber_percent != null && calories) {
+        } else if (!hasFiberGrams && hasFiberPercent && calories) {
+            // Calculate grams from percent
             macros.fiber_grams = Math.round((calories * fiber_percent) / 100 / 2);
         }
     };
     if (planBuilder.caloriesMacros) {
         ensureFiber(planBuilder.caloriesMacros);
+    }
+    
+    // Ensure fiber is calculated for each meal in week1Menu
+    if (planBuilder.week1Menu && typeof planBuilder.week1Menu === 'object') {
+        for (const [dayKey, meals] of Object.entries(planBuilder.week1Menu)) {
+            if (!Array.isArray(meals)) continue;
+            meals.forEach((meal) => {
+                if (meal && meal.macros) {
+                    ensureFiber(meal.macros);
+                }
+            });
+        }
+    }
+    
+    // Ensure fiber is calculated for mealMacrosIndex entries
+    if (planBuilder.mealMacrosIndex && typeof planBuilder.mealMacrosIndex === 'object') {
+        for (const macros of Object.values(planBuilder.mealMacrosIndex)) {
+            if (macros && typeof macros === 'object') {
+                ensureFiber(macros);
+            }
+        }
     }
 
     if (!hasCompleteCaloriesMacros(planBuilder.caloriesMacros)) {
