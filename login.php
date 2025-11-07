@@ -1,18 +1,22 @@
 <?php
-session_start();
+// Remember me session duration: 30 days
+define('REMEMBER_ME_DURATION', 30 * 24 * 60 * 60);
 
-// Extend session lifetime if "remember me" is requested
+// Check for "remember me" before starting session
+$rememberMe = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $rawData = file_get_contents('php://input');
     $data = json_decode($rawData, true);
-    if (isset($data['rememberMe']) && $data['rememberMe'] === true) {
-        // Set session cookie to last 30 days
-        ini_set('session.cookie_lifetime', 30 * 24 * 60 * 60);
-        ini_set('session.gc_maxlifetime', 30 * 24 * 60 * 60);
-        // Regenerate session with extended lifetime
-        session_regenerate_id(true);
+    $rememberMe = isset($data['rememberMe']) && $data['rememberMe'] === true;
+    
+    // Configure session settings before starting session
+    if ($rememberMe) {
+        ini_set('session.cookie_lifetime', REMEMBER_ME_DURATION);
+        ini_set('session.gc_maxlifetime', REMEMBER_ME_DURATION);
     }
 }
+
+session_start();
 
 header('Content-Type: application/json; charset=utf-8');
 // Configure allowed origins
@@ -36,8 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$rawData = file_get_contents('php://input');
-$data = json_decode($rawData, true);
+// Data was already parsed above for rememberMe check
 if (!$data || !isset($data['password']) || !isset($data['username'])) {
     echo json_encode(["success"=>false, "message"=>"Липсват данни за вход"]);
     exit;
@@ -45,10 +48,16 @@ if (!$data || !isset($data['password']) || !isset($data['username'])) {
 
 $username = trim($data['username']);
 $password = $data['password'];
-$rememberMe = isset($data['rememberMe']) ? $data['rememberMe'] : false;
 $envUser = getenv('ADMIN_USERNAME');
 $envHash = getenv('ADMIN_PASS_HASH');
 $expectedUser = ($envUser !== false && $envUser !== '') ? $envUser : 'admin';
+
+// Helper function to set persistent cookie
+function setPersistentSessionCookie() {
+    $sessionName = session_name();
+    $sessionId = session_id();
+    setcookie($sessionName, $sessionId, time() + REMEMBER_ME_DURATION, '/');
+}
 
 if ($username === $expectedUser) {
     if ($envHash !== false && $envHash !== '' && password_verify($password, $envHash)) {
@@ -57,9 +66,7 @@ if ($username === $expectedUser) {
         
         // Set persistent cookie if "remember me" is checked
         if ($rememberMe) {
-            $sessionName = session_name();
-            $sessionId = session_id();
-            setcookie($sessionName, $sessionId, time() + (30 * 24 * 60 * 60), '/');
+            setPersistentSessionCookie();
         }
         
         echo json_encode(["success" => true, "message" => "Logged in"]);
@@ -71,9 +78,7 @@ if ($username === $expectedUser) {
         
         // Set persistent cookie if "remember me" is checked
         if ($rememberMe) {
-            $sessionName = session_name();
-            $sessionId = session_id();
-            setcookie($sessionName, $sessionId, time() + (30 * 24 * 60 * 60), '/');
+            setPersistentSessionCookie();
         }
         
         echo json_encode(["success" => true, "message" => "Logged in"]);
