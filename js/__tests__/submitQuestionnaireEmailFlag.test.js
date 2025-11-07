@@ -24,7 +24,18 @@ test('skips analysis email when config flag is disabled in RESOURCES_KV', async 
       get: jest.fn(key => key === 'send_questionnaire_email' ? '0' : null)
     }
   }
-  const req = { json: async () => ({ email: 'cfg@x.bg', name: 'Петър' }) }
+  const req = { 
+    json: async () => ({ 
+      email: 'cfg@x.bg', 
+      name: 'Петър',
+      gender: 'м',
+      age: 30,
+      height: 175,
+      weight: 75,
+      goal: 'загуба на тегло',
+      medicalConditions: ['нямам']
+    }) 
+  }
   const res = await handleSubmitQuestionnaire(req, env)
   expect(res.success).toBe(true)
   expect(fetch).not.toHaveBeenCalled()
