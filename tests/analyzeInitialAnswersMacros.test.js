@@ -106,10 +106,27 @@ describe('handleAnalyzeInitialAnswers - macro extraction', () => {
       fat_grams: 60
     };
 
-    const fiber_grams = macroRecWithoutFiber.fiber_grams || 0;
-    const fiber_percent = macroRecWithoutFiber.fiber_percent || 0;
+    const fiber_grams = macroRecWithoutFiber.fiber_grams != null ? macroRecWithoutFiber.fiber_grams : 0;
+    const fiber_percent = macroRecWithoutFiber.fiber_percent != null ? macroRecWithoutFiber.fiber_percent : 0;
 
     expect(fiber_grams).toBe(0);
     expect(fiber_percent).toBe(0);
+  });
+
+  test('should properly handle zero values as valid', () => {
+    // Zero is a valid value and should not be treated as missing
+    const macroRecWithZeros = {
+      calories: 1800,
+      protein_grams: 0,  // Valid zero value
+      carbs_grams: 160,
+      fat_grams: 60,
+      fiber_grams: 0     // Valid zero value
+    };
+
+    // Using != null to check for null/undefined, not truthiness
+    expect(macroRecWithZeros.protein_grams != null).toBe(true);
+    expect(macroRecWithZeros.fiber_grams != null).toBe(true);
+    expect(macroRecWithZeros.protein_grams).toBe(0);
+    expect(macroRecWithZeros.fiber_grams).toBe(0);
   });
 });

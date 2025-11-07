@@ -3214,8 +3214,8 @@ async function handleAnalyzeInitialAnswers(userId, env) {
             const analysisParsed = safeParseJson(cleaned, null);
             if (analysisParsed && analysisParsed.macroRecommendation) {
                 const macroRec = analysisParsed.macroRecommendation;
-                // Валидация на макрос стойностите
-                if (macroRec.calories && macroRec.protein_grams && macroRec.carbs_grams && macroRec.fat_grams) {
+                // Валидация на макрос стойностите - проверяваме за null/undefined, не за truthiness
+                if (macroRec.calories != null && macroRec.protein_grams != null && macroRec.carbs_grams != null && macroRec.fat_grams != null) {
                     const macrosRecord = {
                         status: 'initial',
                         data: {
@@ -3224,11 +3224,11 @@ async function handleAnalyzeInitialAnswers(userId, env) {
                                 protein_grams: macroRec.protein_grams,
                                 carbs_grams: macroRec.carbs_grams,
                                 fat_grams: macroRec.fat_grams,
-                                fiber_grams: macroRec.fiber_grams || 0,
-                                protein_percent: macroRec.protein_percent || 0,
-                                carbs_percent: macroRec.carbs_percent || 0,
-                                fat_percent: macroRec.fat_percent || 0,
-                                fiber_percent: macroRec.fiber_percent || 0
+                                fiber_grams: macroRec.fiber_grams != null ? macroRec.fiber_grams : 0,
+                                protein_percent: macroRec.protein_percent != null ? macroRec.protein_percent : 0,
+                                carbs_percent: macroRec.carbs_percent != null ? macroRec.carbs_percent : 0,
+                                fat_percent: macroRec.fat_percent != null ? macroRec.fat_percent : 0,
+                                fiber_percent: macroRec.fiber_percent != null ? macroRec.fiber_percent : 0
                             },
                             reasoning: macroRec.reasoning || 'AI препоръка'
                         }
