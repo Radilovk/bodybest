@@ -4299,7 +4299,10 @@ async function handleSetMaintenanceMode(request, env) {
 const PLAN_MACRO_RETRY_LIMIT = 2;
 const MAX_PLAN_SECTION_REPAIR_ATTEMPTS = 3; // Максимален брой опити за попълване на липсващи секции от AI
 const AI_CALL_TIMEOUT_MS = 25_000;
-const DEFAULT_PLAN_CALL_TIMEOUT_MS = 60_000;
+// Increased from 60s to 90s to reduce partial JSON responses for large plan payloads
+const DEFAULT_PLAN_CALL_TIMEOUT_MS = 90_000;
+// All days required in week1Menu - used for validation and logging
+const REQUIRED_WEEK_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 const parsePositiveInteger = (value) => {
     if (typeof value === 'number') {
@@ -4450,6 +4453,11 @@ function isPlanSectionValid(sectionKey, sectionValue) {
             );
         }
         
+        if (sectionKey === 'week1Menu') {
+            // Must have all 7 days with non-empty arrays
+            return REQUIRED_WEEK_DAYS.every(d => Array.isArray(sectionValue?.[d]) && sectionValue[d].length > 0);
+        }
+        
         if (sectionKey === 'detailedTargets') {
             // Must have at least some target fields
             const hasTargets = Object.values(sectionValue).some(val => {
@@ -4574,6 +4582,17 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
 
     let missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !isPlanSectionValid(key, generatedPlanObject[key]));
     const originallyMissing = [...missingSections];
+    
+    // Log missing days in week1Menu if it exists but is incomplete
+    if (generatedPlanObject.week1Menu && typeof generatedPlanObject.week1Menu === 'object') {
+        const missingDays = REQUIRED_WEEK_DAYS.filter(d => !Array.isArray(generatedPlanObject.week1Menu?.[d]) || generatedPlanObject.week1Menu[d].length === 0);
+        if (missingDays.length > 0) {
+            const missingDaysMsg = `Липсващи дни в week1Menu: ${missingDays.join(', ')}`;
+            planBuilder.generationMetadata.errors.push(missingDaysMsg);
+            await addLog(`Предупреждение: ${missingDaysMsg}`);
+            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): ${missingDaysMsg}`);
+        }
+    }
     
     if (missingSections.length > 0) {
         console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Initial missing sections: ${missingSections.join(', ')}. Original response (start): ${rawAiResponse.substring(0, 300)}`);
