@@ -9,6 +9,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $rawData = file_get_contents('php://input');
     $data = json_decode($rawData, true);
     
+    // Check for JSON parsing errors
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        $data = null;
+    }
+    
     // Only check rememberMe if JSON was successfully parsed
     if ($data && isset($data['rememberMe'])) {
         $rememberMe = $data['rememberMe'] === true;
@@ -57,37 +62,37 @@ $envUser = getenv('ADMIN_USERNAME');
 $envHash = getenv('ADMIN_PASS_HASH');
 $expectedUser = ($envUser !== false && $envUser !== '') ? $envUser : 'admin';
 
-// Helper function to set persistent cookie
+// Helper function to set persistent cookie with security flags
 function setPersistentSessionCookie() {
     $sessionName = session_name();
     $sessionId = session_id();
-    setcookie($sessionName, $sessionId, time() + REMEMBER_ME_DURATION, '/');
+    // Set cookie with secure and httponly flags for security
+    // secure=true requires HTTPS; for development with HTTP, this may need to be conditional
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') 
+                || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    setcookie($sessionName, $sessionId, time() + REMEMBER_ME_DURATION, '/', '', $isHttps, true);
+}
+
+// Helper function for successful login
+function handleSuccessfulLogin($rememberMe) {
+    $_SESSION['isAdmin'] = true;
+    session_regenerate_id(true);
+    
+    // Set persistent cookie if "remember me" is checked
+    if ($rememberMe) {
+        setPersistentSessionCookie();
+    }
+    
+    echo json_encode(["success" => true, "message" => "Logged in"]);
+    exit;
 }
 
 if ($username === $expectedUser) {
     if ($envHash !== false && $envHash !== '' && password_verify($password, $envHash)) {
-        $_SESSION['isAdmin'] = true;
-        session_regenerate_id(true);
-        
-        // Set persistent cookie if "remember me" is checked
-        if ($rememberMe) {
-            setPersistentSessionCookie();
-        }
-        
-        echo json_encode(["success" => true, "message" => "Logged in"]);
-        exit;
+        handleSuccessfulLogin($rememberMe);
     }
     if (($envHash === false || $envHash === '') && $password === '6131') {
-        $_SESSION['isAdmin'] = true;
-        session_regenerate_id(true);
-        
-        // Set persistent cookie if "remember me" is checked
-        if ($rememberMe) {
-            setPersistentSessionCookie();
-        }
-        
-        echo json_encode(["success" => true, "message" => "Logged in"]);
-        exit;
+        handleSuccessfulLogin($rememberMe);
     }
 }
 
