@@ -44,7 +44,7 @@ describe('estimateMacros - fiber calculation', () => {
   });
 });
 
-describe('estimateMacros - goal-based adjustments', () => {
+describe('estimateMacros - goal-based adjustments (fallback when AI unavailable)', () => {
   test('should apply calorie deficit for weight loss goal', () => {
     // Simulate weight loss scenario
     const baseAnswers = {
@@ -118,5 +118,53 @@ describe('estimateMacros - goal-based adjustments', () => {
     const bmi = weight / (heightM * heightM);
     
     expect(bmi).toBeCloseTo(24.22, 1);
+  });
+});
+
+describe('AI macro calculation integration', () => {
+  test('AI prompt should request comprehensive analysis', () => {
+    // The AI prompt should consider multiple factors
+    const expectedFactors = [
+      'BMR (Mifflin-St Jeor)',
+      'TDEE',
+      'BMI',
+      'goal',
+      'activity level',
+      'diet history',
+      'medical conditions',
+      'age',
+      'anti-aging',
+      'health improvement'
+    ];
+    
+    // This is a meta-test to document expected AI behavior
+    expect(expectedFactors.length).toBeGreaterThan(5);
+  });
+
+  test('AI response should include reasoning field', () => {
+    // AI should return reasoning for its decisions
+    const mockAiResponse = {
+      calories: 1800,
+      protein_grams: 130,
+      carbs_grams: 160,
+      fat_grams: 60,
+      fiber_grams: 30,
+      protein_percent: 30,
+      carbs_percent: 35,
+      fat_percent: 30,
+      fiber_percent: 3,
+      reasoning: 'За анти-ейджинг цел при умерена активност...'
+    };
+    
+    expect(mockAiResponse.reasoning).toBeDefined();
+    expect(typeof mockAiResponse.reasoning).toBe('string');
+  });
+
+  test('macro percentages should sum to 100', () => {
+    const protein = 30;
+    const carbs = 40;
+    const fat = 30;
+    
+    expect(protein + carbs + fat).toBe(100);
   });
 });

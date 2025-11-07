@@ -5282,20 +5282,58 @@ async function processSingleUserPlan(userId, env) {
         };
         const runTargetMacroFix = async () => {
             try {
-                // Използваме estimateMacros като окончателен fallback вместо AI prompt
-                const estimated = estimateMacros(initialAnswers);
-                if (estimated) {
-                    targetMacros = finalizeTargetMacros(extractTargetMacrosFromAny(estimated));
+                // Опит за изчисляване на макроси чрез AI модел
+                let aiMacros = null;
+                try {
+                    const macroPromptTemplate = await env.RESOURCES_KV.get('prompt_macro_calculation');
+                    const macroModelName = planModelName || await env.RESOURCES_KV.get('model_plan_generation');
+                    
+                    if (macroPromptTemplate && macroModelName) {
+                        await addLog('Изчисляване на оптимални макроси чрез AI модел...');
+                        const populatedMacroPrompt = populatePrompt(macroPromptTemplate, {
+                            '%%ANSWERS_JSON%%': JSON.stringify(initialAnswers)
+                        });
+                        
+                        const rawMacroResponse = await callModelRef.current(
+                            macroModelName, 
+                            populatedMacroPrompt, 
+                            env, 
+                            { temperature: 0.3, maxTokens: 1000 }
+                        );
+                        
+                        const cleanedMacroResponse = cleanGeminiJson(rawMacroResponse);
+                        const parsedMacros = safeParseJson(cleanedMacroResponse, null);
+                        
+                        if (parsedMacros && parsedMacros.calories && parsedMacros.protein_grams && 
+                            parsedMacros.carbs_grams && parsedMacros.fat_grams) {
+                            aiMacros = parsedMacros;
+                            console.log(`PROCESS_USER_PLAN (${userId}): AI calculated macros successfully.`);
+                            await addLog(`AI изчисли макроси: ${parsedMacros.calories} kcal (${parsedMacros.protein_percent}% протеин, ${parsedMacros.carbs_percent}% въглехидрати, ${parsedMacros.fat_percent}% мазнини)`);
+                        } else {
+                            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): AI macro response missing required fields.`);
+                        }
+                    } else {
+                        console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Macro calculation prompt or model not configured.`);
+                    }
+                } catch (aiError) {
+                    console.warn(`PROCESS_USER_PLAN_WARN (${userId}): AI macro calculation failed: ${aiError.message}`);
+                }
+                
+                // Ако AI не успя, използваме подобрения estimateMacros като fallback
+                if (aiMacros) {
+                    targetMacros = finalizeTargetMacros(extractTargetMacrosFromAny(aiMacros));
                     targetMacroFixAttempted = true;
-                    await addLog(
-                        `Таргет макросите са възстановени чрез estimateMacros fallback.`
-                    );
-                    await addLog(
-                        `PROCESS_USER_PLAN (${userId}): Target macros recovered using estimateMacros fallback.`,
-                        { checkpoint: false }
-                    );
+                    await addLog('Таргет макросите са определени чрез AI анализ.');
                 } else {
-                    throw new Error('Не може да се калкулират таргет макроси от наличните данни.');
+                    const estimated = estimateMacros(initialAnswers);
+                    if (estimated) {
+                        targetMacros = finalizeTargetMacros(extractTargetMacrosFromAny(estimated));
+                        targetMacroFixAttempted = true;
+                        await addLog('Таргет макросите са определени чрез формула (AI не бе достъпен).');
+                        console.log(`PROCESS_USER_PLAN (${userId}): Target macros calculated using enhanced estimateMacros fallback.`);
+                    } else {
+                        throw new Error('Не може да се калкулират таргет макроси от наличните данни.');
+                    }
                 }
             } catch (macroFixErr) {
                 await handleTargetMacroFailure(macroFixErr, 'target-macros-missing');
