@@ -7490,6 +7490,8 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
     let currentStreak = 0;
     let maxStreak = 0;
     let tempStreak = 0;
+    
+    // Обхождаме от днес назад във времето
     for (let i = 0; i < USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS; i++) {
         const loopDateObj = new Date(todayDate);
         loopDateObj.setDate(todayDate.getDate() - i);
@@ -7506,12 +7508,19 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         
         if (hasLog) {
             tempStreak++;
-            if (i === 0) currentStreak = tempStreak; // Streak from today
             maxStreak = Math.max(maxStreak, tempStreak);
         } else {
-            if (i === 0) currentStreak = 0;
+            // Ако е прекъснат streak-а, запазваме текущия само ако е от днес
+            if (tempStreak > 0 && currentStreak === 0) {
+                currentStreak = tempStreak;
+            }
             tempStreak = 0;
         }
+    }
+    
+    // Ако streak-ът продължава до края на периода, той е текущият
+    if (tempStreak > 0 && currentStreak === 0) {
+        currentStreak = tempStreak;
     }
     
     // Streak бонус: до +10% за активен streak от 7+ дни
@@ -7553,15 +7562,17 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
             const actualLoss = initialWeight - currentWeight;
             // Подобрена формула: нелинеен прогрес за по-реалистична оценка
             // Ранният прогрес се оценява по-високо (по-лесно е в началото)
+            const EARLY_PROGRESS_MULTIPLIER = 120; // Първите 50% се оценяват на 60%
+            const LATE_PROGRESS_MULTIPLIER = 80;   // Последните 50% се оценяват на 40%
             const rawProgress = (actualLoss / targetLossKg);
             if (rawProgress <= 0) {
                 goalProgress = 0;
             } else if (rawProgress < 0.5) {
                 // Първите 50% са по-лесни - оценяваме ги като 60% от общия прогрес
-                goalProgress = rawProgress * 120; // 0.5 -> 60%
+                goalProgress = rawProgress * EARLY_PROGRESS_MULTIPLIER; // 0.5 -> 60%
             } else {
                 // Последните 50% са по-трудни - те представляват останалите 40%
-                goalProgress = 60 + ((rawProgress - 0.5) * 80); // 0.5-1.0 -> 60-100%
+                goalProgress = 60 + ((rawProgress - 0.5) * LATE_PROGRESS_MULTIPLIER); // 0.5-1.0 -> 60-100%
             }
             goalProgress = Math.max(0, Math.min(100, Math.round(goalProgress)));
         } else goalProgress = 0;
