@@ -3156,6 +3156,7 @@ function estimateMacros(initial = {}) {
     const height = Number(initial.height);
     const age = Number(initial.age);
     if (!weight || !height || !age) return null;
+    
     const gender = (initial.gender || '').toLowerCase().startsWith('м') ? 'male' : 'female';
     const activity = (initial.dailyActivityLevel || initial.q1745878295708 || '').toLowerCase();
     const activityFactors = {
@@ -3165,18 +3166,87 @@ function estimateMacros(initial = {}) {
         'много високо': 1.725
     };
     const factor = activityFactors[activity] || 1.375;
+    
+    // Calculate BMR using Mifflin-St Jeor equation
     const bmr = 10 * weight + 6.25 * height - 5 * age + (gender === 'male' ? 5 : -161);
-    const calories = Math.round(bmr * factor);
-    const protein_percent = 30;
-    const carbs_percent = 40;
-    const fat_percent = 30;
+    let tdee = Math.round(bmr * factor);
+    
+    // Calculate BMI for additional adjustments
+    const heightM = height / 100;
+    const bmi = weight / (heightM * heightM);
+    
+    // Adjust calories based on goal
+    const goal = (initial.goal || '').toLowerCase();
+    let calories = tdee;
+    let calorieAdjustment = 0;
+    
+    if (goal.includes('отслабване') || goal.includes('weight loss') || goal.includes('загуба')) {
+        // Weight loss: deficit of 300-500 kcal depending on how much to lose
+        const lossKg = Number(initial.lossKg) || 5;
+        calorieAdjustment = lossKg > 10 ? -500 : (lossKg > 5 ? -400 : -300);
+    } else if (goal.includes('покачване') || goal.includes('muscle') || goal.includes('мускул')) {
+        // Muscle gain: surplus of 200-300 kcal
+        calorieAdjustment = 250;
+    }
+    // Maintenance: no adjustment
+    
+    calories = Math.round(tdee + calorieAdjustment);
+    
+    // Determine macro distribution based on goal, activity, and diet history
+    let protein_percent = 30;
+    let carbs_percent = 40;
+    let fat_percent = 30;
+    
+    // Check for diet history/preferences
+    const dietType = (initial.dietType || '').toLowerCase();
+    const dietHistory = (initial.dietHistory || '').toLowerCase();
+    
+    if (goal.includes('отслабване') || goal.includes('weight loss')) {
+        // Weight loss: higher protein to preserve muscle mass
+        protein_percent = 35;
+        carbs_percent = 35;
+        fat_percent = 30;
+        
+        // If high activity, increase carbs slightly
+        if (activity.includes('високо') || activity.includes('активно')) {
+            protein_percent = 30;
+            carbs_percent = 40;
+            fat_percent = 30;
+        }
+    } else if (goal.includes('покачване') || goal.includes('muscle')) {
+        // Muscle gain: higher carbs for energy
+        protein_percent = 25;
+        carbs_percent = 45;
+        fat_percent = 30;
+    }
+    
+    // Adjust for keto/low-carb history if applicable
+    if (dietType.includes('кето') || dietType.includes('keto') || 
+        dietType.includes('ниско въглехидратна') || dietType.includes('low carb')) {
+        protein_percent = 25;
+        carbs_percent = 25;
+        fat_percent = 50;
+    }
+    
     const protein_grams = calcMacroGrams(calories, protein_percent, 4);
     const carbs_grams = calcMacroGrams(calories, carbs_percent, 4);
     const fat_grams = calcMacroGrams(calories, fat_percent, 9);
+    
     // Calculate fiber based on recommended 14g per 1000 calories
     const fiber_grams = Math.round((calories / 1000) * 14);
     const fiber_percent = Math.round((fiber_grams * 2 * 100) / calories);
-    return { calories, protein_percent, carbs_percent, fat_percent, protein_grams, carbs_grams, fat_grams, fiber_grams, fiber_percent };
+    
+    return { 
+        calories, 
+        protein_percent, 
+        carbs_percent, 
+        fat_percent, 
+        protein_grams, 
+        carbs_grams, 
+        fat_grams, 
+        fiber_grams, 
+        fiber_percent 
+    };
 }
 // ------------- END FUNCTION: estimateMacros -------------
 
@@ -3208,43 +3278,6 @@ async function handleAnalyzeInitialAnswers(userId, env) {
         await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'ready');
         console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
-        
-        // Извличане и запазване на AI-препоръчаните макроси
-        try {
-            const analysisParsed = safeParseJson(cleaned, null);
-            if (analysisParsed && analysisParsed.macroRecommendation) {
-                const macroRec = analysisParsed.macroRecommendation;
-                // Валидация на макрос стойностите - проверяваме за null/undefined, не за truthiness
-                if (macroRec.calories != null && macroRec.protein_grams != null && macroRec.carbs_grams != null && macroRec.fat_grams != null) {
-                    const macrosRecord = {
-                        status: 'initial',
-                        data: {
-                            recommendation: {
-                                calories: macroRec.calories,
-                                protein_grams: macroRec.protein_grams,
-                                carbs_grams: macroRec.carbs_grams,
-                                fat_grams: macroRec.fat_grams,
-                                fiber_grams: macroRec.fiber_grams != null ? macroRec.fiber_grams : 0,
-                                protein_percent: macroRec.protein_percent != null ? macroRec.protein_percent : 0,
-                                carbs_percent: macroRec.carbs_percent != null ? macroRec.carbs_percent : 0,
-                                fat_percent: macroRec.fat_percent != null ? macroRec.fat_percent : 0,
-                                fiber_percent: macroRec.fiber_percent != null ? macroRec.fiber_percent : 0
-                            },
-                            reasoning: macroRec.reasoning || 'AI препоръка'
-                        }
-                    };
-                    await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
-                    console.log(`INITIAL_ANALYSIS (${userId}): AI macro recommendations stored.`);
-                } else {
-                    console.warn(`INITIAL_ANALYSIS (${userId}): Macro recommendation lacks required fields.`);
-                }
-            } else {
-                console.warn(`INITIAL_ANALYSIS (${userId}): No macroRecommendation found in analysis.`);
-            }
-        } catch (macroErr) {
-            console.error(`INITIAL_ANALYSIS (${userId}): Failed to extract macro recommendations - ${macroErr.message}`);
-        }
-        
         // Имейлът с линк към анализа вече се изпраща при подаване на въпросника,
         // затова тук не се изпраща повторно.
     } catch (error) {
