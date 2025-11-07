@@ -7376,6 +7376,9 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         const H_m = H_cm / 100;
         const bmi = W / (H_m * H_m);
 
+        // Константи за BMI формулата
+        const BMI_UNDERWEIGHT_MILD_RANGE = 1.5; // BMI диапазон 17-18.5
+
         // Подобрена формула с по-плавни прагове
         // Оптимална зона: 18.5 - 25
         if (bmi >= 18.5 && bmi < 25) {
@@ -7386,7 +7389,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         // Под оптималното тегло (BMI < 18.5)
         if (bmi < 18.5) {
             // Плавна крива: 17->85, 16->65, 15->40, <14->10
-            if (bmi >= 17) return Math.round(85 + (bmi - 17) / 1.5 * 15); // 17-18.5 -> 85-100
+            if (bmi >= 17) return Math.round(85 + (bmi - 17) / BMI_UNDERWEIGHT_MILD_RANGE * 15); // 17-18.5 -> 85-100
             if (bmi >= 16) return Math.round(65 + (bmi - 16) * 20); // 16-17 -> 65-85
             if (bmi >= 15) return Math.round(40 + (bmi - 15) * 25); // 15-16 -> 40-65
             if (bmi >= 14) return Math.round(20 + (bmi - 14) * 20); // 14-15 -> 20-40
@@ -7562,17 +7565,17 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
             const actualLoss = initialWeight - currentWeight;
             // Подобрена формула: нелинеен прогрес за по-реалистична оценка
             // Ранният прогрес се оценява по-високо (по-лесно е в началото)
-            const EARLY_PROGRESS_MULTIPLIER = 120; // Първите 50% се оценяват на 60%
-            const LATE_PROGRESS_MULTIPLIER = 80;   // Последните 50% се оценяват на 40%
+            const EARLY_PROGRESS_MULTIPLIER = 120; // Първите 50% на загубата дават 60 точки (0.5 * 120 = 60)
+            const LATE_PROGRESS_MULTIPLIER = 80;   // Последните 50% на загубата дават 40 точки (0.5 * 80 = 40)
             const rawProgress = (actualLoss / targetLossKg);
             if (rawProgress <= 0) {
                 goalProgress = 0;
             } else if (rawProgress < 0.5) {
-                // Първите 50% са по-лесни - оценяваме ги като 60% от общия прогрес
-                goalProgress = rawProgress * EARLY_PROGRESS_MULTIPLIER; // 0.5 -> 60%
+                // Първите 50% от целта - оценяват се като 60 точки
+                goalProgress = rawProgress * EARLY_PROGRESS_MULTIPLIER; // 0-0.5 -> 0-60
             } else {
-                // Последните 50% са по-трудни - те представляват останалите 40%
-                goalProgress = 60 + ((rawProgress - 0.5) * LATE_PROGRESS_MULTIPLIER); // 0.5-1.0 -> 60-100%
+                // Последните 50% от целта - оценяват се като 40 точки
+                goalProgress = 60 + ((rawProgress - 0.5) * LATE_PROGRESS_MULTIPLIER); // 0.5-1.0 -> 60-100
             }
             goalProgress = Math.max(0, Math.min(100, Math.round(goalProgress)));
         } else goalProgress = 0;
