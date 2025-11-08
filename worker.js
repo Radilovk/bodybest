@@ -4583,7 +4583,12 @@ function collectPlanMacroGaps(plan) {
     // Check caloriesMacros with fiber required
     for (const key of requiredKeysWithFiber) {
         const value = caloriesMerged ? caloriesMerged[key] : null;
-        if (!(typeof value === 'number' && Number.isFinite(value) && value > 0)) {
+        // For main macros (calories, protein, carbs, fat), require > 0
+        // For fiber, allow 0 but require the field to exist (some diets may have low fiber)
+        const isValid = key === 'fiber_grams'
+            ? (typeof value === 'number' && Number.isFinite(value) && value >= 0)
+            : (typeof value === 'number' && Number.isFinite(value) && value > 0);
+        if (!isValid) {
             result.missingCaloriesMacroFields.push(key);
         }
     }
