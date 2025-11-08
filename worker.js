@@ -4571,6 +4571,7 @@ class PlanCaloriesMacrosMissingError extends Error {
 
 function collectPlanMacroGaps(plan) {
     const requiredKeys = ['calories', 'protein_grams', 'carbs_grams', 'fat_grams'];
+    const requiredKeysWithFiber = ['calories', 'protein_grams', 'carbs_grams', 'fat_grams', 'fiber_grams'];
     const result = {
         missingCaloriesMacroFields: [],
         missingMealMacros: [],
@@ -4579,7 +4580,8 @@ function collectPlanMacroGaps(plan) {
 
     const caloriesExtracted = extractMacros(plan?.caloriesMacros || {});
     const caloriesMerged = mergeMacroSources(caloriesExtracted, null);
-    for (const key of requiredKeys) {
+    // Check caloriesMacros with fiber required
+    for (const key of requiredKeysWithFiber) {
         const value = caloriesMerged ? caloriesMerged[key] : null;
         if (!(typeof value === 'number' && Number.isFinite(value) && value > 0)) {
             result.missingCaloriesMacroFields.push(key);
@@ -4599,6 +4601,7 @@ function collectPlanMacroGaps(plan) {
                 const merged = mergeMacroSources(directMacros, indexedMacros);
                 if (!isCompleteMacroSet(merged)) {
                     const missingFields = [];
+                    // For individual meals, don't require fiber (some foods like meat have 0 fiber)
                     for (const key of requiredKeys) {
                         const value = merged ? merged[key] : null;
                         if (!(typeof value === 'number' && Number.isFinite(value) && value > 0)) {
@@ -5305,10 +5308,11 @@ async function processSingleUserPlan(userId, env) {
                         const parsedMacros = safeParseJson(cleanedMacroResponse, null);
                         
                         if (parsedMacros && parsedMacros.calories && parsedMacros.protein_grams && 
-                            parsedMacros.carbs_grams && parsedMacros.fat_grams) {
+                            parsedMacros.carbs_grams && parsedMacros.fat_grams && 
+                            parsedMacros.fiber_grams != null) {
                             aiMacros = parsedMacros;
                             console.log(`PROCESS_USER_PLAN (${userId}): AI calculated macros successfully.`);
-                            await addLog(`AI изчисли макроси: ${parsedMacros.calories} kcal (${parsedMacros.protein_percent}% протеин, ${parsedMacros.carbs_percent}% въглехидрати, ${parsedMacros.fat_percent}% мазнини)`);
+                            await addLog(`AI изчисли макроси: ${parsedMacros.calories} kcal (${parsedMacros.protein_percent}% протеин, ${parsedMacros.carbs_percent}% въглехидрати, ${parsedMacros.fat_percent}% мазнини, ${parsedMacros.fiber_grams}г фибри)`);
                         } else {
                             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): AI macro response missing required fields.`);
                         }
