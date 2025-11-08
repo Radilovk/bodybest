@@ -1939,7 +1939,6 @@ async function handleDashboardDataRequest(request, env) {
             env.USER_METADATA_KV.get(`${userId}_profile`)
         ]);
 
-        if (finalPlanStr) console.log(`final_plan snippet: ${finalPlanStr.slice(0,200)}`);
 
         const actualPlanStatus = planStatus || 'unknown';
         
@@ -2077,7 +2076,6 @@ async function handleDashboardDataRequest(request, env) {
         const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries, currentStatus, env); // Добавен userId
         const planDataForClient = { ...finalPlan };
 
-        console.log(`DASHBOARD_DATA (${userId}): Successfully fetched data. Plan status: ${actualPlanStatus}.`);
         return { ...baseResponse, planData: planDataForClient, analytics: analyticsData };
 
     } catch (error) {
@@ -4716,7 +4714,6 @@ ${cleanedJson.substring(0, 2000)}
                         if (isPlanSectionValid(key, repairedObject[key])) {
                             generatedPlanObject[key] = repairedObject[key];
                             filledCount++;
-                            console.log(`PROCESS_USER_PLAN (${userId}): Successfully filled section '${key}' from AI response`);
                         }
                     }
                     
@@ -5594,7 +5591,6 @@ async function processSingleUserPlan(userId, env) {
                 await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summary));
 
                 await addLog('Планът е готов', { checkpoint: true, reason: 'status-ready' });
-                console.log(`PROCESS_USER_PLAN (${userId}): Successfully generated and saved UNIFIED plan. Status set to 'ready'.`);
             }
         } else {
             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Макро-валидацията не бе успешна, планът остава в статус 'processing'.`);
@@ -5805,7 +5801,6 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
 
         if (principlesToSave && principlesToSave.length > 10) {
             await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
-            console.log(`PRINCIPLE_ADJUST (${userId}): Successfully updated principles.`);
 
             if (!summaryForUser) {
                 summaryForUser = createFallbackPrincipleSummary(principlesToSave);
