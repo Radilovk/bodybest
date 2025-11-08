@@ -96,7 +96,7 @@ export default {
     let data;
     try {
       data = await request.json();
-    } catch (err) {
+    } catch {
       return new Response('Invalid JSON', { status: 400 });
     }
 
@@ -136,7 +136,7 @@ export default {
           },
         body: JSON.stringify(payload)
       });
-    } catch (err) {
+    } catch {
       return new Response(JSON.stringify({ error: 'Request failed' }), {
         status: 500,
         headers: {

@@ -10,9 +10,6 @@ import { ensureChart } from './chartLoader.js';
 import { setupPlanRegeneration } from './planRegenerator.js';
 import { cachedFetch } from './requestCache.js';
 
-let activeUserId = null;
-let activeClientName = null;
-
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
         return;
@@ -23,7 +20,7 @@ async function ensureLoggedIn() {
         if (!resp.ok || !data.success) {
             window.location.href = 'login.html';
         }
-    } catch (err) {
+    } catch {
         window.location.href = 'login.html';
     }
 }
@@ -1457,7 +1454,7 @@ if (profileForm) {
     });
 }
 
-async function loadQueries(_markRead = false) {
+async function loadQueries() {
     if (!currentUserId) return;
     try {
         const endpoint = apiEndpoints.peekAdminQueries;
@@ -1632,7 +1629,7 @@ async function saveAiConfig() {
 async function loadEmailSettings() {
     try {
         const keys = ['from_email_name', 'contact_form_label'];
-        emailTypes.forEach(({ keyPrefix, sampleVars }) => {
+        emailTypes.forEach(({ keyPrefix }) => {
             keys.push(`${keyPrefix}_email_subject`);
             keys.push(`${keyPrefix}_email_body`);
             keys.push(`send_${keyPrefix}_email`);

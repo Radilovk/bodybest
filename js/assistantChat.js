@@ -103,7 +103,7 @@ async function sendImage(file) {
             chatHistory.push({ text, sender: 'bot', isError: !res.ok || !data.success });
             saveHistory();
         }
-    } catch (e) {
+    } catch {
         statusEl.textContent = 'Грешка';
         addMessage('Грешка при изпращане на изображението.', 'bot', true);
         chatHistory.push({ text: 'Грешка при изпращане на изображението.', sender: 'bot', isError: true });
@@ -150,7 +150,7 @@ async function sendMessage() {
             chatHistory.push({ text: msg, sender: 'bot', isError: true });
             saveHistory();
         }
-    } catch (err) {
+    } catch {
         const msg = 'Неуспешна връзка с Cloudflare Worker.';
         addMessage(msg, 'bot', true);
         chatHistory.push({ text: msg, sender: 'bot', isError: true });

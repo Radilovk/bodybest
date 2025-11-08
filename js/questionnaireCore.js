@@ -311,7 +311,7 @@ export function showPage(index) {
   const activePage = pages[state.currentPageIndex];
   if (activePage) {
     const firstInput = activePage.querySelector('input, select, textarea');
-    if (firstInput) setTimeout(() => { try { firstInput.focus(); } catch (e) { } }, 50);
+    if (firstInput) setTimeout(() => { try { firstInput.focus(); } catch { } }, 50);
   }
   updateProgress();
   const instr = document.getElementById('questInstructions');
@@ -427,7 +427,7 @@ function applySavedResponses() {
   }
 }
 
-function clearProgress() {
+export function clearProgress() {
   localStorage.removeItem('questResponses');
   localStorage.removeItem('questCurrentPage');
   for (const key in state.responses) delete state.responses[key];

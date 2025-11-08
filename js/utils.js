@@ -16,7 +16,7 @@ export const safeGet = (obj, path, defaultValue = null) => {
             result = result[key];
         }
         return result ?? defaultValue;
-    } catch (e) {
+    } catch {
         return defaultValue;
     }
 };

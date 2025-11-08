@@ -38,7 +38,7 @@ function collectCommitStats(commit) {
     output = execSync(`git show --numstat --format= --no-color ${commit}`, {
       encoding: 'utf8',
     });
-  } catch (error) {
+  } catch {
     throw new Error(`Неуспешно извличане на статистика за commit ${commit}.`);
   }
 
