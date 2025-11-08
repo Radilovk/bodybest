@@ -1192,11 +1192,7 @@ export default {
         const path = url.pathname;
         const method = request.method;
 
-        // Debug logging when header X-Debug: 1 е подаден
-        const debugEnabled = request.headers.get('X-Debug') === '1';
-        if (debugEnabled) {
-            console.log(`[DEBUG] ${method} ${path} @ ${new Date().toISOString()}`);
-        }
+        // Debug logging removed for production (previously used X-Debug header)
 
         const defaultAllowedOrigins = [
             'https://mybody.best',
@@ -1409,7 +1405,7 @@ export default {
 
     // ------------- START FUNCTION: scheduled -------------
     async scheduled(event, env, ctx) {
-        console.log(`[CRON] Trigger executing at: ${new Date(event.scheduledTime)}`);
+        // CRON trigger execution
         if (!env.USER_METADATA_KV) {
             console.error("[CRON] USER_METADATA_KV binding missing. Check configuration.");
             return;
@@ -1437,7 +1433,7 @@ export default {
                 const initialAnswers = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
                 if (!initialAnswers) {
                     await setPlanStatus(userId, 'pending_inputs', env);
-                    console.log(`[CRON-PlanGen] Missing initial answers for ${userId}`);
+                    // Missing initial answers, skip user
                     continue;
                 }
                 await setPlanStatus(userId, 'processing', env);
@@ -1461,7 +1457,7 @@ export default {
             if (remainingPendingJson !== pendingUsersJson) {
                 await env.USER_METADATA_KV.put('pending_plan_users', remainingPendingJson);
             }
-            if (processedUsersForPlan === 0) console.log("[CRON-PlanGen] No users for plan generation.");
+            // Plan generation complete
 
             planGenDuration = Date.now() - planGenStart;
 
@@ -1488,7 +1484,7 @@ export default {
                 const daysSinceLastPrincipleUpdate = (Date.now() - lastUpdateTsForPrinciples) / (1000 * 60 * 60 * 24);
 
                 if (daysSinceLastPrincipleUpdate >= PRINCIPLE_UPDATE_INTERVAL_DAYS) {
-                    console.log(`[CRON-Principles] User ${userId} due for standard principle update.`);
+                    // User due for standard principle update
                     ctx.waitUntil(handlePrincipleAdjustment(userId, env));
                     processedUsersForPrinciples++;
                 } else {
@@ -1500,7 +1496,7 @@ export default {
             if (remainingReadyJson !== readyUsersJson) {
                 await env.USER_METADATA_KV.put('ready_plan_users', remainingReadyJson);
             }
-            if (processedUsersForPrinciples === 0) console.log("[CRON-Principles] No users for standard principle update.");
+            // Principles update complete
 
             principlesDuration = Date.now() - principlesStart;
 
@@ -1545,9 +1541,9 @@ export default {
                 console.error("[CRON] Failed to store metrics:", storeErr.message);
             }
         } else {
-            console.log('[CRON] No activity detected; metrics storage skipped.');
+            // No activity detected
         }
-        console.log(`[CRON] Trigger finished. PlanGen: ${processedUsersForPlan}, Principles: ${processedUsersForPrinciples}, UserEvents: ${processedUserEvents}`);
+        // CRON trigger finished
     }
     // ------------- END FUNCTION: scheduled -------------
 };
@@ -1577,7 +1573,7 @@ async function handleRegisterRequest(request, env, ctx) {
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) { return { success: false, message: 'Невалиден имейл формат.', statusHint: 400 }; }
         const previousUserId = await env.USER_METADATA_KV.get(`email_to_uuid_${trimmedEmail}`);
         if (previousUserId) {
-            console.log(`REGISTER_OVERRIDE: ${trimmedEmail} was linked to ${previousUserId}. Overwriting with new account.`);
+            // Email was previously linked, overwriting with new account
         }
         const userId = crypto.randomUUID();
         const hashedPasswordWithSalt = await hashPassword(password);
@@ -1691,7 +1687,7 @@ async function handleLoginRequest(request, env) {
         const redirectTo = hasInitialAnswers
             ? (planStatus === 'ready' ? 'dashboard' : 'pending')
             : 'questionnaire';
-        console.log(`LOGIN_SUCCESS (${userId}): Login successful for ${trimmedEmail}. Plan status: ${planStatus}. Redirect hint: ${redirectTo}`);
+        // Login successful
         return { success: true, userId: userId, planStatus: planStatus, redirectTo: redirectTo };
     } catch (error) {
         console.error('Error in handleLoginRequest:', error.message, error.stack);
@@ -1728,7 +1724,7 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         await env.USER_METADATA_KV.put(`${userId}_initial_answers`, JSON.stringify(questionnaireData));
         await setPlanStatus(userId, 'pending', env);
         await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
-        console.log(`SUBMIT_QUESTIONNAIRE (${userId}): Saved initial answers, status set to pending.`);
+        // Initial answers saved, status set to pending
 
         // Execute plan generation synchronously to avoid Cloudflare Workers "IoContext timed out 
         // due to inactivity" errors. The tradeoff is longer response time, but reliable completion.
@@ -1813,7 +1809,7 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
         }
         questionnaireData.submissionDate = new Date().toISOString();
         await env.USER_METADATA_KV.put(`${userId}_initial_answers`, JSON.stringify(questionnaireData));
-        console.log(`SUBMIT_DEMO_QUESTIONNAIRE (${userId}): Saved initial answers.`);
+        // Demo questionnaire saved
 
         const baseUrl = env[ANALYSIS_PAGE_URL_VAR_NAME] ||
             'https://radilovk.github.io/bodybest/reganalize/analyze.html';
@@ -1866,7 +1862,7 @@ async function handlePlanStatusRequest(request, env) {
             const errorMsg = await env.USER_METADATA_KV.get(`${userId}_processing_error`);
             return { success: true, userId: userId, planStatus: status, error: errorMsg || "Неизвестна грешка при генериране на плана." };
         }
-        console.log(`PLAN_STATUS_CHECK (${userId}): Status is ${status}.`);
+        // Plan status check complete
         return { success: true, userId: userId, planStatus: status };
     } catch (error) {
         console.error(`Error fetching plan status for ${userId}:`, error.message, error.stack);
@@ -1946,7 +1942,7 @@ async function handleDashboardDataRequest(request, env) {
         if (!initialAnswersStr) {
             // Ако потребителят е в статус 'pending_inputs', значи е регистриран но не е попълнил въпросника
             if (actualPlanStatus === 'pending_inputs') {
-                console.log(`DASHBOARD_DATA (${userId}): User has not submitted questionnaire yet (status: pending_inputs).`);
+                // User has not submitted questionnaire yet
                 const recipeData = safeParseJson(recipeDataStr, {});
                 return { 
                     success: true, 
@@ -2040,7 +2036,7 @@ async function handleDashboardDataRequest(request, env) {
         };
 
         if (actualPlanStatus === 'pending' || actualPlanStatus === 'processing') {
-            console.log(`DASHBOARD_DATA (${userId}): Plan status is ${actualPlanStatus}.`);
+            // Plan is being generated
             return { ...baseResponse, message: `Вашият план все още се генерира (статус: ${actualPlanStatus}). Моля, проверете отново по-късно.`, planData: null, analytics: null };
         }
         if (actualPlanStatus === 'error') {
@@ -2152,7 +2148,7 @@ async function handleLogRequest(request, env) {
             const updatedRecord = createLogIndexRecord(updatedDates, parsedIndex);
             await env.USER_METADATA_KV.put(indexKey, JSON.stringify(updatedRecord));
             await refreshChatContextAfterLog(userId, env, dateToLog, null);
-            console.log(`LOG_REQUEST (${userId}): Daily log deleted for date ${dateToLog}.`);
+            // Daily log deleted
             return { success: true, message: 'Дневникът е изтрит успешно.', deletedDate: dateToLog };
         }
 
@@ -2198,7 +2194,7 @@ async function handleLogRequest(request, env) {
         if (payloadChanged) {
             await env.USER_METADATA_KV.put(logKey, serializedRecord);
         } else {
-            console.log(`LOG_REQUEST (${userId}): No changes detected for date ${dateToLog}, skipping log update.`);
+            // No changes detected, skipping log update
         }
 
         const lastActiveKey = `${userId}_lastActive`;
@@ -2223,11 +2219,11 @@ async function handleLogRequest(request, env) {
             if (weightChanged) {
                 const updatedStatus = { ...currentStatus, weight: log.weight, lastUpdated: timestamp };
                 await env.USER_METADATA_KV.put(statusKey, JSON.stringify(updatedStatus));
-                console.log(`LOG_REQUEST (${userId}): Updated current_status with weight ${log.weight}.`);
+                // Current status updated with new weight
             } else {
                 // Само обновяваме локалния timestamp, без да натоварваме KV със същата стойност
                 currentStatus.lastUpdated = timestamp;
-                console.log(`LOG_REQUEST (${userId}): Weight unchanged (${log.weight}), skipping current_status KV update.`);
+                // Weight unchanged, skipping KV update
             }
         }
 
@@ -2236,9 +2232,9 @@ async function handleLogRequest(request, env) {
         }
 
         if (payloadChanged) {
-            console.log(`LOG_REQUEST (${userId}): Daily log saved for date ${dateToLog}.`);
+            // Daily log saved
         } else {
-            console.log(`LOG_REQUEST (${userId}): Daily log already up to date for date ${dateToLog}.`);
+            // Daily log already up to date
         }
 
         await refreshChatContextAfterLog(
@@ -2284,7 +2280,7 @@ async function handleUpdateStatusRequest(request, env) {
          currentStatus.lastUpdated = new Date().toISOString();
 
          await env.USER_METADATA_KV.put(statusKey, JSON.stringify(currentStatus));
-         console.log(`UPDATE_STATUS (${userId}): Status updated. New data:`, statusDataToSave);
+         // Status updated successfully
          return { success: true, message: 'Текущият Ви статус е актуализиран успешно.', savedStatus: currentStatus };
      } catch (error) {
          console.error("Error in handleUpdateStatusRequest:", error.message, error.stack);
@@ -2470,7 +2466,7 @@ async function handleChatRequest(request, env) {
         if (sigIdx !== -1) {
             planModReq = respToUser.substring(sigIdx + sig.length).trim();
             respToUser = respToUser.substring(0, sigIdx).trim();
-            console.log(`CHAT_INFO (${userId}): Plan modification signal detected: "${planModReq}"`);
+            // Plan modification signal detected
             try {
                 const evaluation = await evaluatePlanChange(userId, { source: 'chat', request: planModReq }, env);
                 if (source === 'planModChat') {
@@ -2490,7 +2486,7 @@ async function handleChatRequest(request, env) {
             console.error(`CHAT_ERROR (${userId}): Failed async chat history save:`, err);
         });
 
-        console.log(`CHAT_REQUEST_SUCCESS (${userId}): Replied to user.`);
+        // Chat request processed successfully
         return { success: true, reply: respToUser };
 
     } catch (error) {
@@ -2565,7 +2561,7 @@ async function handleLogExtraMealRequest(request, env) {
         await env.USER_METADATA_KV.put(logKey, JSON.stringify(currentLogData));
         await ensureLogIndexEntry(userId, logDateStr, env);
         await refreshChatContextAfterLog(userId, env, logDateStr, currentLogData);
-        console.log(`LOG_EXTRA_MEAL_SUCCESS (${userId}): Extra meal logged for date ${logDateStr}. Entries now: ${currentLogData.extraMeals.length}`);
+        // Extra meal logged successfully
         return { success: true, message: 'Извънредното хранене е записано успешно.', savedDate: logDateStr };
     } catch (error) {
         console.error("Error in handleLogExtraMealRequest:", error.message, error.stack);
@@ -2798,9 +2794,8 @@ async function handleUpdatePlanRequest(request, env) {
             'Запази всички хранения, ред и описания, но попълни липсващите макроси (калории, протеин, въглехидрати, мазнини).',
             'Отговори само с валиден JSON, без обяснения.'
         ].join(' ');
-        const manualLog = async (msg) => {
-            console.log(`MANUAL_PLAN_UPDATE (${userId}): ${msg}`);
-        };
+        // Manual plan update logging removed for production
+        const manualLog = async () => {}; // No-op function
         const enforcementResult = await enforceCompletePlanBeforePersist({
             plan: safePlan,
             userId,
@@ -2914,7 +2909,7 @@ async function handleAcknowledgeAiUpdateRequest(request, env) {
             return { success: false, message: 'Липсва потребителско ID (userId).', statusHint: 400 };
         }
         await env.USER_METADATA_KV.delete(`${userId}_ai_update_pending_ack`); // Използваме новия ключ
-        console.log(`ACK_AI_UPDATE (${userId}): AI update summary acknowledged and cleared.`);
+        // AI update summary acknowledged and cleared
         return { success: true, message: "Резюмето от AI е потвърдено и скрито." };
     } catch (error) {
         console.error("Error in handleAcknowledgeAiUpdateRequest:", error.message, error.stack);
@@ -3270,7 +3265,7 @@ async function handleAnalyzeInitialAnswers(userId, env) {
         const cleaned = cleanGeminiJson(raw);
         await env.USER_METADATA_KV.put(`${userId}_analysis`, cleaned);
         await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'ready');
-        console.log(`INITIAL_ANALYSIS (${userId}): Analysis stored.`);
+        // Initial analysis stored
         // Имейлът с линк към анализа вече се изпраща при подаване на въпросника,
         // затова тук не се изпраща повторно.
     } catch (error) {
@@ -3512,14 +3507,12 @@ async function handleAnalyzeImageRequest(request, env) {
 
         let aiResp;
         if (provider === 'cf') {
-            console.log('Received image:', String(image || imageData).substring(0, 100));
-            console.log('Prompt:', finalPrompt);
+            // Processing image with Cloudflare AI
             const dataUrl = `data:${finalMime || 'image/jpeg'};base64,${base64}`;
             const payload = buildCfImagePayload(modelName, dataUrl, finalPrompt);
             aiResp = await callCfAi(modelName, payload, env);
         } else if (provider === 'gemini') {
-            console.log('Received image:', String(image || imageData).substring(0, 100));
-            console.log('Prompt:', finalPrompt);
+            // Processing image with Gemini
             const key = env[GEMINI_API_KEY_SECRET_NAME];
             if (!key) throw new Error('Missing Gemini API key.');
             aiResp = await callGeminiVisionAPI(
@@ -3531,8 +3524,7 @@ async function handleAnalyzeImageRequest(request, env) {
                 modelName
             );
         } else {
-            console.log('Received image:', String(image || imageData).substring(0, 100));
-            console.log('Prompt:', finalPrompt);
+            // Processing image with default model
             const textPrompt = finalPrompt || `Опиши съдържанието на това изображение: ${base64}`;
             aiResp = await callModelRef.current(modelName, textPrompt, env, { temperature: 0.2, maxTokens: 200 });
         }
@@ -3592,7 +3584,7 @@ async function handleListClientsRequest(request, env) {
                     .map(n => n.replace('_initial_answers', ''));
                 if (userIds.length > 0) {
                     await env.USER_METADATA_KV.put('all_user_ids', JSON.stringify(userIds));
-                    console.log(`Rebuilt all_user_ids index with ${userIds.length} entries`);
+                    // Rebuilt all_user_ids index
                 }
             } catch (err) {
                 console.warn('Fallback listing failed in handleListClientsRequest:', err.message);
@@ -4645,7 +4637,6 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
     let generatedPlanObject = safeParseJson(cleanedJson, {});
 
     let missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !isPlanSectionValid(key, generatedPlanObject[key]));
-    const originallyMissing = [...missingSections];
     
     // Log missing days in week1Menu if it exists but is incomplete
     if (generatedPlanObject.week1Menu && typeof generatedPlanObject.week1Menu === 'object') {
@@ -4699,7 +4690,7 @@ ${cleanedJson.substring(0, 2000)}
 - Използвай правилната структура за всяка секция
 - НЕ използвай placeholder стойности`;
 
-                console.log(`PROCESS_USER_PLAN (${userId}): Attempt ${repairAttempt}/${maxRepairAttempts} to get missing sections: ${missingSections.join(', ')}`);
+                // Attempting to repair missing sections
                 
                 const repairResponse = await callModelRef.current(planModelName, repairPrompt, env, {
                     temperature: 0.1,
@@ -4718,7 +4709,7 @@ ${cleanedJson.substring(0, 2000)}
                     }
                     
                     if (filledCount > 0) {
-                        console.log(`PROCESS_USER_PLAN (${userId}): Filled ${filledCount} section(s) in attempt ${repairAttempt}`);
+                        // Filled section(s) in attempt
                     }
                 }
                 
@@ -4727,7 +4718,7 @@ ${cleanedJson.substring(0, 2000)}
                 missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !isPlanSectionValid(key, generatedPlanObject[key]));
                 
                 if (missingSections.length === 0) {
-                    console.log(`PROCESS_USER_PLAN (${userId}): All missing sections filled after ${repairAttempt} repair attempt(s): ${originallyMissing.join(', ')}`);
+                    // All missing sections filled
                     break;
                 } else if (missingSections.length === previousMissingCount) {
                     console.warn(`PROCESS_USER_PLAN_WARN (${userId}): No progress in attempt ${repairAttempt}, still missing: ${missingSections.join(', ')}`);
@@ -4752,7 +4743,7 @@ ${cleanedJson.substring(0, 2000)}
             planBuilder.generationMetadata.errors.push(finalMissingMsg);
         }
     } else {
-        console.log(`PROCESS_USER_PLAN (${userId}): Unified plan JSON parsed successfully with all required sections.`);
+        // Unified plan JSON parsed successfully with all required sections
     }
 
     const { generationMetadata, ...restOfGeneratedPlan } = generatedPlanObject;
@@ -5016,7 +5007,7 @@ async function enforceCompletePlanBeforePersist({
 
 // ------------- START FUNCTION: processSingleUserPlan -------------
 async function processSingleUserPlan(userId, env) {
-    console.log(`PROCESS_USER_PLAN (${userId}): Starting plan generation.`);
+    // Starting plan generation
     const logKey = `${userId}_plan_log`;
     const logErrorKey = `${logKey}_flush_error`;
     const logBuffer = [];
@@ -5102,7 +5093,7 @@ async function processSingleUserPlan(userId, env) {
             return;
         }
         await addLog('Зареждане на изходни данни', { checkpoint: true, reason: 'load' });
-        console.log(`PROCESS_USER_PLAN (${userId}): Step 0 - Loading prerequisites.`);
+        // Step 0 - Loading prerequisites
         const initialAnswersKey = `${userId}_initial_answers`;
         const finalPlanKey = `${userId}_final_plan`;
         const initialAnswersString = await getKvValue(initialAnswersKey);
@@ -5221,7 +5212,7 @@ async function processSingleUserPlan(userId, env) {
         } catch (psychoErr) {
             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Грешка при зареждане на психопрофил - ${psychoErr.message}`);
         }
-        console.log(`PROCESS_USER_PLAN (${userId}): Processing for email: ${initialAnswers.email || 'N/A'}`);
+        // Processing plan for user
         await addLog('Подготовка на модела');
         let planBuilder = createEmptyPlanBuilder();
         const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, openaiApiKey, planModelName, unifiedPromptTemplate ] = await Promise.all([
@@ -5300,7 +5291,7 @@ async function processSingleUserPlan(userId, env) {
                         if (parsedMacros && parsedMacros.calories && parsedMacros.protein_grams && 
                             parsedMacros.carbs_grams && parsedMacros.fat_grams) {
                             aiMacros = parsedMacros;
-                            console.log(`PROCESS_USER_PLAN (${userId}): AI calculated macros successfully.`);
+                            // AI calculated macros successfully
                             await addLog(`AI изчисли макроси: ${parsedMacros.calories} kcal (${parsedMacros.protein_percent}% протеин, ${parsedMacros.carbs_percent}% въглехидрати, ${parsedMacros.fat_percent}% мазнини)`);
                         } else {
                             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): AI macro response missing required fields.`);
@@ -5323,7 +5314,7 @@ async function processSingleUserPlan(userId, env) {
                         targetMacros = finalizeTargetMacros(extractTargetMacrosFromAny(estimated));
                         targetMacroFixAttempted = true;
                         await addLog('Таргет макросите са определени чрез формула (AI не бе достъпен).');
-                        console.log(`PROCESS_USER_PLAN (${userId}): Target macros calculated using enhanced estimateMacros fallback.`);
+                        // Target macros calculated using enhanced estimateMacros fallback
                     } else {
                         throw new Error('Не може да се калкулират таргет макроси от наличните данни.');
                     }
@@ -5415,7 +5406,7 @@ async function processSingleUserPlan(userId, env) {
         const formattedAnswersForPrompt = Object.entries(initialAnswers).filter(([qId]) => qId !== 'submissionDate' && qId !== 'email' && qId !== 'name').map(([qId, aVal]) => { const qText = questionTextMap.get(qId) || qId.replace(/_/g, ' '); let aText = ''; if (aVal === null || aVal === undefined || String(aVal).trim() === '') aText = '(няма отговор)'; else if (Array.isArray(aVal)) aText = aVal.length > 0 ? aVal.join(', ') : '(няма избран отговор)'; else aText = String(aVal); return `В: ${qText}\nО: ${aText}`; }).join('\n\n').trim();
         const userAnswersJson = JSON.stringify(initialAnswers);
 
-        console.log(`PROCESS_USER_PLAN (${userId}): Preparing for unified AI call.`);
+        // Preparing for unified AI call
         const replacements = {
             '%%FORMATTED_ANSWERS%%': formattedAnswersForPrompt, '%%USER_ID%%': userId, '%%USER_NAME%%': safeGet(initialAnswers, 'name', 'Потребител'),
             '%%USER_EMAIL%%': safeGet(initialAnswers, 'email', 'N/A'), '%%USER_GOAL%%': safeGet(initialAnswers, 'goal', 'Общо здраве'),
@@ -5503,7 +5494,7 @@ async function processSingleUserPlan(userId, env) {
         let planStatusValue = 'processing';
         try {
             await addLog('Извикване на AI модела');
-            console.log(`PROCESS_USER_PLAN (${userId}): Calling model ${planModelName} for unified plan. Prompt length: ${finalPrompt.length}`);
+            // Calling AI model for unified plan
             rawAiResponse = await callModelWithTimeout({
                 model: planModelName,
                 prompt: finalPrompt,
@@ -5561,7 +5552,7 @@ async function processSingleUserPlan(userId, env) {
         }
 
         if (macroValidationPassed) {
-            console.log(`PROCESS_USER_PLAN (${userId}): Assembling and saving final plan. Recorded errors during generation: ${planBuilder.generationMetadata.errors.length}`);
+            // Assembling and saving final plan
             await addLog('Запис на генерирания план', { checkpoint: true, reason: 'save' });
             planBuilder.generationMetadata.timestamp = planBuilder.generationMetadata.timestamp || new Date().toISOString();
             const finalPlanString = JSON.stringify(planBuilder, null, 2);
@@ -5579,7 +5570,7 @@ async function processSingleUserPlan(userId, env) {
                 await setPlanStatus(userId, 'error', env);
                 await env.USER_METADATA_KV.put(`${userId}_processing_error`, planBuilder.generationMetadata.errors.join('\n---\n'));
                 await addLog('Процесът завърши с грешка', { checkpoint: true, reason: 'status-error' });
-                console.log(`PROCESS_USER_PLAN (${userId}): Finished with errors. Status set to 'error'.`);
+                // Finished with errors, status set to 'error'
             } else {
                 await setPlanStatus(userId, 'ready', env);
                 await env.USER_METADATA_KV.delete(`${userId}_processing_error`); // Изтриваме евентуална стара грешка
@@ -5622,21 +5613,21 @@ async function processSingleUserPlan(userId, env) {
             await setPlanStatus(userId, 'error', env);
             const detailedErrorMessage = `[${new Date().toISOString()}] FATAL ERROR during plan generation for user ${userId}: ${error.name}: ${error.message}\nStack: ${error.stack}`;
             await env.USER_METADATA_KV.put(`${userId}_processing_error`, detailedErrorMessage);
-            console.log(`PROCESS_USER_PLAN (${userId}): Set status to 'error' after fatal exception.`);
+            // Status set to 'error' after fatal exception
         } catch (statusError) {
             console.error(`PROCESS_USER_PLAN (${userId}): CRITICAL - Failed to set error status after fatal exception:`, statusError.message, statusError.stack);
         }
     } finally {
         await addLog('Процесът приключи');
         await flushLog('final');
-        console.log(`PROCESS_USER_PLAN (${userId}): Finished processing cycle.`);
+        // Processing cycle finished
     }
 }
 // ------------- END FUNCTION: processSingleUserPlan -------------
 
 // ------------- START FUNCTION: handlePrincipleAdjustment -------------
 async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = false) {
-    console.log(`PRINCIPLE_ADJUST (${userId}): Starting.`);
+    // Starting principle adjustment
     try {
         const [
             initialAnswersStr, finalPlanStr, currentStatusStr,
@@ -5769,7 +5760,7 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
         const populatedPrompt = populatePrompt(principleAdjustmentPromptTpl, replacements);
         const modelForAdjustment = await env.RESOURCES_KV.get('model_principle_adjustment') || planModelName; // Specific model or fallback
         
-        console.log(`PRINCIPLE_ADJUST (${userId}): Calling model ${modelForAdjustment} for principle adjustment. Prompt length: ${populatedPrompt.length}`);
+        // Calling AI model for principle adjustment
         const updatedPrinciplesTextRaw = await callModelRef.current(modelForAdjustment, populatedPrompt, env, { temperature: 0.55, maxTokens: 1500 });
         const updatedPrinciplesText = cleanGeminiJson(updatedPrinciplesTextRaw); // Добавено почистване
 
@@ -5795,7 +5786,7 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
             }
         } catch {
             // Не е JSON, използваме `updatedPrinciplesText` директно.
-            console.log(`PRINCIPLE_ADJUST (${userId}): Response from AI was not JSON, using raw text for principles.`);
+            // Response from AI was not JSON, using raw text for principles
         }
 
 
@@ -5808,7 +5799,7 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
 
             if (!calledFromQuizAnalysis) {
                 await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summaryForUser));
-                console.log(`PRINCIPLE_ADJUST (${userId}): AI update summary stored.`);
+                // AI update summary stored
             }
             return principlesToSave;
         } else {
@@ -7806,13 +7797,13 @@ function shouldTriggerAutomatedFeedbackChat(lastUpdateTs, lastChatTs, currentTim
 // ------------- END FUNCTION: shouldTriggerAutomatedFeedbackChat -------------
 
 async function handleTestResultEvent(userId, payload, env) {
-    console.log(`[CRON-UserEvent] Processing testResult for ${userId}`);
+    // Processing testResult event
     await env.USER_METADATA_KV.put(`${userId}_latest_test_result`, JSON.stringify(payload || {}));
     await processSingleUserPlan(userId, env);
 }
 
 async function handleIrisDiagEvent(userId, payload, env) {
-    console.log(`[CRON-UserEvent] Processing irisDiag for ${userId}`);
+    // Processing irisDiag event
     await env.USER_METADATA_KV.put(`${userId}_latest_iris_diag`, JSON.stringify(payload || {}));
     await processSingleUserPlan(userId, env);
 }
@@ -7849,7 +7840,7 @@ async function processPendingUserEvents(env, ctx, limit = 5, cursor) {
         if (handler) {
             ctx.waitUntil(handler(data.userId, env, data.payload));
         } else {
-            console.log(`[CRON-UserEvent] Unknown event type ${data.type} for user ${data.userId}`);
+            // Unknown event type
         }
         await env.USER_METADATA_KV.delete(key);
         processed++;
@@ -7860,8 +7851,7 @@ async function processPendingUserEvents(env, ctx, limit = 5, cursor) {
     } else {
         env.lastUserEventCursor = null;
     }
-    if (processed > 0) console.log(`[CRON-UserEvent] Processed ${processed} event(s).`);
-    else console.log('[CRON-UserEvent] No pending events.');
+    // User event processing complete
     return processed;
 }
 // ------------- END BLOCK: UserEventHandlers -------------

@@ -58,7 +58,7 @@ export async function ensureChart() {
         try {
           ChartLib = await window._chartPromise;
           if (!ChartLib) throw new Error('Chart.js failed to load');
-          console.debug('Chart.js loaded');
+          // Chart.js loaded successfully
         } catch (e) {
           console.warn('Failed to load Chart.js', e);
           if (typeof document !== 'undefined') {

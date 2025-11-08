@@ -136,10 +136,9 @@ export async function handleExtraMealFormSubmit(event) {
                     field.dataset.autofilled = 'true';
                 }
             });
-        } catch (error) {
+        } catch {
             // Грешката вече е обработена в fetchMacrosFromAi чрез showToast
             // Тук просто прекратяваме изпълнението
-            console.debug('Nutrient lookup cancelled or failed:', error.message);
             return;
         }
     }
