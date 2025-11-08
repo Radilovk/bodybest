@@ -139,7 +139,6 @@ export async function handleExtraMealFormSubmit(event) {
         } catch (error) {
             // Грешката вече е обработена в fetchMacrosFromAi чрез showToast
             // Тук просто прекратяваме изпълнението
-            console.debug('Nutrient lookup cancelled or failed:', error.message);
             return;
         }
     }
