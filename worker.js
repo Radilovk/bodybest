@@ -569,7 +569,7 @@ const roundValue = (value) => Math.round(Number.isFinite(value) ? value : 0);
 
 const isCompleteMacroSet = (macros) => {
   if (!macros || typeof macros !== 'object') return false;
-  const required = ['calories', 'protein_grams', 'carbs_grams', 'fat_grams'];
+  const required = ['calories', 'protein_grams', 'carbs_grams', 'fat_grams', 'fiber_grams'];
   return required.every((key) => {
     const value = macros[key];
     return typeof value === 'number' && Number.isFinite(value) && value > 0;
@@ -633,7 +633,7 @@ export function calculatePlanMacros(week1Menu = {}, mealMacrosIndex = null) {
     totals.fiber_grams * CALORIES_PER_GRAM.fiber;
 
   const caloriesTotal = macroCalories > 0 ? macroCalories : caloriesFromInput;
-  if (caloriesTotal <= 0 || totals.protein_grams + totals.carbs_grams + totals.fat_grams <= 0) {
+  if (caloriesTotal <= 0 || totals.protein_grams + totals.carbs_grams + totals.fat_grams + totals.fiber_grams <= 0) {
     return null;
   }
 
@@ -4570,7 +4570,7 @@ class PlanCaloriesMacrosMissingError extends Error {
 }
 
 function collectPlanMacroGaps(plan) {
-    const requiredKeys = ['calories', 'protein_grams', 'carbs_grams', 'fat_grams'];
+    const requiredKeys = ['calories', 'protein_grams', 'carbs_grams', 'fat_grams', 'fiber_grams'];
     const result = {
         missingCaloriesMacroFields: [],
         missingMealMacros: [],
@@ -5686,7 +5686,7 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
         const originalGoal = initialAnswers.goal || 'N/A';
         const calMac = finalPlan.caloriesMacros;
         const initCalMac = calMac
-            ? `Кал: ${calMac.calories || '?'} P:${calMac.protein_grams || '?'}g C:${calMac.carbs_grams || '?'}g F:${calMac.fat_grams || '?'}g`
+            ? `Кал: ${calMac.calories || '?'} P:${calMac.protein_grams || '?'}g C:${calMac.carbs_grams || '?'}g F:${calMac.fat_grams || '?'}g Fb:${calMac.fiber_grams || '?'}g`
             : 'N/A';
 
         const currentWeightVal = safeParseFloat(currentStatus?.weight);
@@ -6030,7 +6030,7 @@ function buildPromptDataFromRaw(initialAnswers, finalPlan, currentStatus, logEnt
     const userPreferences = `${safeGet(initialAnswers, 'foodPreference', 'N/A')}. Не харесва: ${dislikes}`;
     const calMac = safeGet(finalPlan, 'caloriesMacros', null);
     const initCalMac = calMac
-        ? `Кал: ${calMac.calories || '?'} P:${calMac.protein_grams || '?'}g C:${calMac.carbs_grams || '?'}g F:${calMac.fat_grams || '?'}g`
+        ? `Кал: ${calMac.calories || '?'} P:${calMac.protein_grams || '?'}g C:${calMac.carbs_grams || '?'}g F:${calMac.fat_grams || '?'}g Fb:${calMac.fiber_grams || '?'}g`
         : 'N/A';
     const planSum = safeGet(finalPlan, 'profileSummary', 'Персонализиран хранителен подход');
     const allowedFoods = safeGet(finalPlan, 'allowedForbiddenFoods.main_allowed_foods', []);
@@ -6175,7 +6175,7 @@ async function assembleChatContext(
     const menuSummary = buildMenuSummaryByDay(safeGet(plan, 'week1Menu', {}));
     const calMac = safeGet(plan, 'caloriesMacros', null);
     const initCalMac = calMac
-        ? `Кал: ${calMac.calories || '?'} P:${calMac.protein_grams || '?'}g C:${calMac.carbs_grams || '?'}g F:${calMac.fat_grams || '?'}g`
+        ? `Кал: ${calMac.calories || '?'} P:${calMac.protein_grams || '?'}g C:${calMac.carbs_grams || '?'}g F:${calMac.fat_grams || '?'}g Fb:${calMac.fiber_grams || '?'}g`
         : 'N/A';
     const allowedFoods = safeGet(plan, 'allowedForbiddenFoods.main_allowed_foods', []);
     const allowedF = Array.isArray(allowedFoods)
