@@ -1192,9 +1192,7 @@ export default {
         const path = url.pathname;
         const method = request.method;
 
-        // Debug logging when header X-Debug: 1 е подаден
-        const debugEnabled = request.headers.get('X-Debug') === '1';
-        // Debug logging removed for production
+        // Debug logging removed for production (previously used X-Debug header)
 
         const defaultAllowedOrigins = [
             'https://mybody.best',
@@ -2796,9 +2794,8 @@ async function handleUpdatePlanRequest(request, env) {
             'Запази всички хранения, ред и описания, но попълни липсващите макроси (калории, протеин, въглехидрати, мазнини).',
             'Отговори само с валиден JSON, без обяснения.'
         ].join(' ');
-        const manualLog = async (msg) => {
-            // Manual plan update log (removed for production)
-        };
+        // Manual plan update logging removed for production
+        const manualLog = async () => {}; // No-op function
         const enforcementResult = await enforceCompletePlanBeforePersist({
             plan: safePlan,
             userId,
@@ -4640,7 +4637,6 @@ async function buildPlanFromRawResponse(rawAiResponse, { planModelName, env, use
     let generatedPlanObject = safeParseJson(cleanedJson, {});
 
     let missingSections = REQUIRED_PLAN_SECTIONS.filter((key) => !isPlanSectionValid(key, generatedPlanObject[key]));
-    const originallyMissing = [...missingSections];
     
     // Log missing days in week1Menu if it exists but is incomplete
     if (generatedPlanObject.week1Menu && typeof generatedPlanObject.week1Menu === 'object') {

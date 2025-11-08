@@ -136,7 +136,7 @@ export async function handleExtraMealFormSubmit(event) {
                     field.dataset.autofilled = 'true';
                 }
             });
-        } catch (error) {
+        } catch {
             // Грешката вече е обработена в fetchMacrosFromAi чрез showToast
             // Тук просто прекратяваме изпълнението
             return;
