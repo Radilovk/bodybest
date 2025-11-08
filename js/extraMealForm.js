@@ -6,7 +6,7 @@ import { currentUserId } from './app.js';
 import nutrientOverrides from '../kv/DIET_RESOURCES/nutrient_overrides.json' with { type: 'json' };
 import * as macroUtils from './macroUtils.js';
 const { registerNutrientOverrides, getNutrientOverride, loadProductMacros } = macroUtils;
-const scaleMacros = macroUtils.scaleMacros || ((m, _g) => m);
+const scaleMacros = macroUtils.scaleMacros || ((m) => m);
 import {
     addExtraMealWithOverride,
     appendExtraMealCard
@@ -402,7 +402,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             if (index === currentStepIndex) {
                 step.classList.add('active-step');
                 const firstInput = step.querySelector('input:not([type="hidden"]):not(:disabled), textarea:not(:disabled), select:not(:disabled)');
-                if (firstInput) setTimeout(() => { try { firstInput.focus({ preventScroll: true }); } catch(e){} }, 60);
+                if (firstInput) setTimeout(() => { try { firstInput.focus({ preventScroll: true }); } catch {} }, 60);
             } else {
                 step.classList.remove('active-step');
             }
@@ -449,10 +449,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         quantityLookupSpinner.innerHTML = '<use href="#icon-spinner"></use>';
         quantityCustomInput.insertAdjacentElement('afterend', quantityLookupSpinner);
     }
-    const reasonRadioGroup = form.querySelectorAll('input[name="reasonPrimary"]');
-    const reasonOtherText = form.querySelector('#reasonOtherText');
-    const replacedPlannedRadioGroup = form.querySelectorAll('input[name="replacedPlanned"]');
-    const skippedMealSelect = form.querySelector('#skippedMeal');
     const macroInputsGrid = form.querySelector('.macro-inputs-grid');
     let autoFillMsg;
     if (macroInputsGrid) {

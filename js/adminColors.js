@@ -138,14 +138,6 @@ function setCssVar(key, val) {
   document.body.style.setProperty(`--${key}`, val);
 }
 
-function normalizeColor(val) {
-  const m = /^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/.exec(val);
-  if (m) {
-    return `#${m[1]}${m[1]}${m[2]}${m[2]}${m[3]}${m[3]}`;
-  }
-  return val;
-}
-
 function getCurrentColor(key) {
   const rootVal = getComputedStyle(document.documentElement)
     .getPropertyValue(`--${key}`).trim();

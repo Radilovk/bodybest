@@ -157,7 +157,7 @@ export async function openPlanModificationChat(
       try {
         const data = await respPrompt.json();
         if (data && data.message) message = data.message;
-      } catch (e) {
+      } catch {
         // ignore JSON parse errors
       }
       showToast(message, true);

@@ -1939,7 +1939,6 @@ async function handleDashboardDataRequest(request, env) {
             env.USER_METADATA_KV.get(`${userId}_profile`)
         ]);
 
-        if (finalPlanStr) console.log(`final_plan snippet: ${finalPlanStr.slice(0,200)}`);
 
         const actualPlanStatus = planStatus || 'unknown';
         
@@ -2077,7 +2076,6 @@ async function handleDashboardDataRequest(request, env) {
         const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries, currentStatus, env); // Добавен userId
         const planDataForClient = { ...finalPlan };
 
-        console.log(`DASHBOARD_DATA (${userId}): Successfully fetched data. Plan status: ${actualPlanStatus}.`);
         return { ...baseResponse, planData: planDataForClient, analytics: analyticsData };
 
     } catch (error) {
@@ -3171,10 +3169,6 @@ function estimateMacros(initial = {}) {
     const bmr = 10 * weight + 6.25 * height - 5 * age + (gender === 'male' ? 5 : -161);
     let tdee = Math.round(bmr * factor);
     
-    // Calculate BMI for additional adjustments
-    const heightM = height / 100;
-    const bmi = weight / (heightM * heightM);
-    
     // Adjust calories based on goal
     const goal = (initial.goal || '').toLowerCase();
     let calories = tdee;
@@ -3197,9 +3191,8 @@ function estimateMacros(initial = {}) {
     let carbs_percent = 40;
     let fat_percent = 30;
     
-    // Check for diet history/preferences
+    // Check for diet type
     const dietType = (initial.dietType || '').toLowerCase();
-    const dietHistory = (initial.dietHistory || '').toLowerCase();
     
     if (goal.includes('отслабване') || goal.includes('weight loss')) {
         // Weight loss: higher protein to preserve muscle mass
@@ -3735,7 +3728,7 @@ async function handlePeekAdminNotificationsRequest(request, env) {
                 })
             ].filter(msg => msg.text);
 
-            const normalizedFeedback = feedback.map(({ resolvedTs, ...rest }) => rest);
+            const normalizedFeedback = feedback.map(({ resolvedTs, ...rest }) => rest); // eslint-disable-line no-unused-vars
 
             messages.sort((a, b) => {
                 const tsA = typeof a.ts === 'number' ? a.ts : Date.parse(a.ts || '') || 0;
@@ -4622,6 +4615,7 @@ function collectPlanMacroGaps(plan) {
  * @param {Object} week1Menu - The weekly menu object
  * @returns {Object} The generated mealMacrosIndex
  */
+// eslint-disable-next-line no-unused-vars
 function generateMealMacrosIndexFromMenu(week1Menu) {
     const mealMacrosIndex = {};
     if (!week1Menu || typeof week1Menu !== 'object') {
@@ -4720,7 +4714,6 @@ ${cleanedJson.substring(0, 2000)}
                         if (isPlanSectionValid(key, repairedObject[key])) {
                             generatedPlanObject[key] = repairedObject[key];
                             filledCount++;
-                            console.log(`PROCESS_USER_PLAN (${userId}): Successfully filled section '${key}' from AI response`);
                         }
                     }
                     
@@ -5598,7 +5591,6 @@ async function processSingleUserPlan(userId, env) {
                 await env.USER_METADATA_KV.put(`${userId}_ai_update_pending_ack`, JSON.stringify(summary));
 
                 await addLog('Планът е готов', { checkpoint: true, reason: 'status-ready' });
-                console.log(`PROCESS_USER_PLAN (${userId}): Successfully generated and saved UNIFIED plan. Status set to 'ready'.`);
             }
         } else {
             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Макро-валидацията не бе успешна, планът остава в статус 'processing'.`);
@@ -5801,7 +5793,7 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
                 // Ако AI върне масив от принципи, ги съединяваме
                 principlesToSave = parsedResponse.updatedPrinciples.map(p => `- ${p}`).join('\n');
             }
-        } catch (e) {
+        } catch {
             // Не е JSON, използваме `updatedPrinciplesText` директно.
             console.log(`PRINCIPLE_ADJUST (${userId}): Response from AI was not JSON, using raw text for principles.`);
         }
@@ -5809,7 +5801,6 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
 
         if (principlesToSave && principlesToSave.length > 10) {
             await env.USER_METADATA_KV.put(`${userId}_last_significant_update_ts`, Date.now().toString());
-            console.log(`PRINCIPLE_ADJUST (${userId}): Successfully updated principles.`);
 
             if (!summaryForUser) {
                 summaryForUser = createFallbackPrincipleSummary(principlesToSave);
@@ -6425,7 +6416,7 @@ async function getUserLogDates(env, userId) {
         if (idxStr) {
             parsedIndex = parseLogIndexRecord(idxStr);
         }
-    } catch (err) {
+    } catch {
         parsedIndex = { dates: [], ts: 0, version: 0, extra: {} };
     }
 
@@ -6440,7 +6431,7 @@ async function getUserLogDates(env, userId) {
         dates = list.keys
             .map(k => k.name.split('_log_')[1])
             .filter(Boolean);
-    } catch (err) {
+    } catch {
         return parsedIndex.dates;
     }
 
@@ -6456,7 +6447,7 @@ async function getUserLogDates(env, userId) {
         const fallbackStr = await env.USER_METADATA_KV.get(fallbackKey);
         const fallbackCount = fallbackStr ? parseInt(fallbackStr, 10) || 0 : 0;
         await env.USER_METADATA_KV.put(fallbackKey, String(fallbackCount + 1));
-    } catch (err) {
+    } catch {
         /* noop */
     }
 
@@ -6797,7 +6788,7 @@ function cleanGeminiJson(rawJsonString) {
         try {
             JSON.parse(cleaned);
             return cleaned; // It's valid
-        } catch (e) {
+        } catch {
             // console.warn(`cleanGeminiJson: Extracted string is NOT valid JSON after slicing. Error: ${e.message}. Original (cleaned): ${cleaned.substring(0,200)}...`);
             // Fallback to empty object/array depending on what it looked like
             return isObject ? '{}' : (isArray ? '[]' : '{}');
@@ -7314,9 +7305,8 @@ function buildDeterministicAnalyticsSummary(analytics = {}, metrics = [], userGo
     return sentences.slice(0, 3).join(' ');
 }
 
-async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries = [], currentStatus = {}, env) {
-    const userLogId = initialAnswers?.email || userId || 'calcAnalyticsUser'; // Enhanced logging ID
-    // console.log(`ANALYTICS_CALC (${userLogId}): Starting calculation.`);
+async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries = [], currentStatus = {}) {
+    // console.log(`ANALYTICS_CALC (${userId}): Starting calculation.`);
 
     const safePFloat = safeParseFloat;
     const safeGetL = safeGet; // Using the improved safeGet

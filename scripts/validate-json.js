@@ -18,7 +18,6 @@ async function main() {
     files.push('kv/DIET_RESOURCES/product_macros.json');
   }
   for (const file of files) {
-    // eslint-disable-next-line no-await-in-loop
     await validateFile(file);
   }
   if (process.exitCode) {

@@ -636,7 +636,7 @@ async function savePlan() {
     } else {
       alert(data.message || 'Грешка при запис.');
     }
-  } catch (err) {
+  } catch {
     alert('Грешка при запис.');
   }
 }
