@@ -26,18 +26,18 @@ Json
 "caloriesMacros": {
     // КРИТИЧНО: Попълни тази секция с ТОЧНИТЕ стойности, предоставени в %%TARGET_...%% променливите. НЕ ги изчислявай отново.
     // ЗАБРАНЕНО е да оставяш стойности празни, null или като низове "". Всяко поле трябва да е реално число.
-    // ВАЖНО: ЗАДЪЛЖИТЕЛНО включи fiber_percent и fiber_grams! Фибрите са критично важни за храносмилането и общото здраве.
+    // ВАЖНО: ЗАДЪЛЖИТЕЛНО включи fiber_percent и fiber_grams!
     // Пример: {"calories": 1850, "protein_percent": 30, "protein_grams": 140, "fiber_percent": 10, "fiber_grams": 26, ...}
     // Финална проверка: Потвърди, че сборът на калориите от всички хранения в week1Menu ≈ дневната цел; ако отклонението е >5%, коригирай порциите и преразпредели макросите.
     "calories": "number (%%TARGET_CALORIES%%)",
     "protein_percent": "number (%%TARGET_PROTEIN_P%%)",
     "carbs_percent": "number (%%TARGET_CARBS_P%%)",
     "fat_percent": "number (%%TARGET_FAT_P%%)",
-    "fiber_percent": "number (%%TARGET_FIBER_P%%)", // ЗАДЪЛЖИТЕЛНО
+    "fiber_percent": "number (%%TARGET_FIBER_P%%)",
     "protein_grams": "number (%%TARGET_PROTEIN_G%%)",
     "carbs_grams": "number (%%TARGET_CARBS_G%%)",
     "fat_grams": "number (%%TARGET_FAT_G%%)",
-    "fiber_grams": "number (%%TARGET_FIBER_G%%)" // ЗАДЪЛЖИТЕЛНО
+    "fiber_grams": "number (%%TARGET_FIBER_G%%)"
   },
 
   "allowedForbiddenFoods": {
@@ -58,8 +58,7 @@ Json
     // - "Restrictive": Включи ЕДНО ясно обозначено "гъвкаво" или "любимо" хранене (напр. в събота), за да покажеш, че крайните ограничения не са цел.
     // - "LowSelfControl": Избирай храни, които изискват повече дъвчене и осъзнатост.
     // КОЛИЧЕСТВА: Всички количества ТРЯБВА да са с мерна единица (напр. "150г", "100мл", "1 бр. (среден)", "2 с.л.").
-    // ФИБРИ: Включвай храни с високо съдържание на фибри (зеленчуци, плодове, пълнозърнести храни, бобови) във всяко хранене, за да постигнеш целевия прием от %%TARGET_FIBER_G%% грама дневно.
-    // Пример: "Закуска": macros → всички стойности са числа, включително fiber_grams (напр. {"calories": 420, "protein_grams": 25, "fiber_grams": 8, ...}).
+    // Пример: "Закуска": macros → всички стойности са числа, без празни низове (напр. {"calories": 420, "protein_grams": 25, ...}).
     // Ключове: "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday". Всеки ден е масив от обекти за хранене.
     // Всеки обект: { "meal_name": "string", "macros": { ... }, "items": [{ "name": "string", "grams": "string" }], "recipeKey": "string" }
   },
