@@ -2069,7 +2069,7 @@ async function handleDashboardDataRequest(request, env) {
             };
         }
 
-        const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries, currentStatus, env); // Добавен userId
+        const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries, currentStatus); // Добавен userId
         const planDataForClient = { ...finalPlan };
 
         return { ...baseResponse, planData: planDataForClient, analytics: analyticsData };
@@ -3064,7 +3064,7 @@ async function handleGeneratePraiseRequest(request, env) {
             return null;
         }).filter(entry => entry && Object.keys(entry.data).length > 0);
 
-        const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, analyticsLogs, currentStatus, env);
+        const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, analyticsLogs, currentStatus);
         const bmiMetric = analyticsData.detailed.find(m => m.key === 'bmi_status');
         const currentSnapshot = {
             goalProgress: analyticsData.current.goalProgress,
