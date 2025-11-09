@@ -1442,7 +1442,7 @@ export default {
                     await processSingleUserPlan(userId, env);
                     processedUsersForPlan++; // Count only successful generations
                 } catch (err) {
-                    console.error(`[CRON-PlanGen] Plan generation failed for ${userId}:`, err.message, err.stack);
+                    console.error(`[CRON-PlanGen] Plan generation failed for ${userId}: ${err.message}\n${err.stack}`);
                     try {
                         await setPlanStatus(userId, 'error', env);
                         await env.USER_METADATA_KV.put(`${userId}_processing_error`, 
@@ -1501,7 +1501,7 @@ export default {
             principlesDuration = Date.now() - principlesStart;
 
         } catch(error) {
-            console.error("[CRON] Error during scheduled execution:", error.message, error.stack);
+            console.error(`[CRON] Error during scheduled execution: ${error.message}\n${error.stack}`);
         }
 
         const metrics = {
@@ -1605,7 +1605,7 @@ async function handleRegisterRequest(request, env, ctx) {
         }
         return { success: true, message: 'Регистрацията успешна!' };
      } catch (error) {
-        console.error('Error in handleRegisterRequest:', error.message, error.stack);
+        console.error(`Error in handleRegisterRequest: ${error.message}\n${error.stack}`);
         let userMessage = 'Вътрешна грешка при регистрация.';
         if (error.message.includes('Failed to fetch')) userMessage = 'Грешка при свързване със сървъра.';
         else if (error instanceof SyntaxError) userMessage = 'Грешка в отговора от сървъра.';
@@ -1690,7 +1690,7 @@ async function handleLoginRequest(request, env) {
         // Login successful
         return { success: true, userId: userId, planStatus: planStatus, redirectTo: redirectTo };
     } catch (error) {
-        console.error('Error in handleLoginRequest:', error.message, error.stack);
+        console.error(`Error in handleLoginRequest: ${error.message}\n${error.stack}`);
         let userMessage = 'Вътрешна грешка при вход.';
         if (error instanceof SyntaxError || error.message.includes('Invalid content') || error.message.includes('parse')) userMessage = 'Проблем с данните.';
         else if (error.message.includes('Password hash')) userMessage = 'Проблем с акаунта.';
@@ -1732,7 +1732,7 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
         try {
             await processSingleUserPlan(userId, env);
         } catch (err) {
-            console.error(`SUBMIT_QUESTIONNAIRE (${userId}): Plan generation failed:`, err.message, err.stack);
+            console.error(`SUBMIT_QUESTIONNAIRE (${userId}): Plan generation failed: ${err.message}\n${err.stack}`);
             try {
                 await setPlanStatus(userId, 'error', env);
                 await env.USER_METADATA_KV.put(`${userId}_processing_error`, 
@@ -1776,7 +1776,7 @@ async function handleSubmitQuestionnaire(request, env, ctx) {
             userId: userId
         };
     } catch (error) {
-        console.error(`Error in handleSubmitQuestionnaire:`, error.message, error.stack);
+        console.error(`Error in handleSubmitQuestionnaire: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Възникна грешка при обработка на данните от въпросника.', statusHint: 500 };
     }
 }
@@ -1845,7 +1845,7 @@ async function handleSubmitDemoQuestionnaire(request, env, ctx) {
             userId: userId
         };
     } catch (error) {
-        console.error('Error in handleSubmitDemoQuestionnaire:', error.message, error.stack);
+        console.error(`Error in handleSubmitDemoQuestionnaire: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при обработка на данните.', statusHint: 500 };
     }
 }
@@ -1865,7 +1865,7 @@ async function handlePlanStatusRequest(request, env) {
         // Plan status check complete
         return { success: true, userId: userId, planStatus: status };
     } catch (error) {
-        console.error(`Error fetching plan status for ${userId}:`, error.message, error.stack);
+        console.error(`Error fetching plan status for ${userId}: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при проверка на статус на плана.', statusHint: 500 };
     }
 }
@@ -1888,7 +1888,7 @@ async function handlePlanLogRequest(request, env) {
         if ((status || '') === 'error' && errorMsg) result.error = errorMsg;
         return result;
     } catch (error) {
-        console.error(`Error fetching plan log for ${userId}:`, error.message, error.stack);
+        console.error(`Error fetching plan log for ${userId}: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при зареждане на лога на плана.', statusHint: 500 };
     }
 }
@@ -1903,7 +1903,7 @@ async function handleAnalysisStatusRequest(request, env) {
         const status = await env.USER_METADATA_KV.get(`${userId}_analysis_status`) || 'unknown';
         return { success: true, userId: userId, analysisStatus: status };
     } catch (error) {
-        console.error(`Error fetching analysis status for ${userId}:`, error.message, error.stack);
+        console.error(`Error fetching analysis status for ${userId}: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при проверка на статус на анализа.', statusHint: 500 };
     }
 }
@@ -2075,7 +2075,7 @@ async function handleDashboardDataRequest(request, env) {
         return { ...baseResponse, planData: planDataForClient, analytics: analyticsData };
 
     } catch (error) {
-        console.error(`Error in handleDashboardDataRequest for ${userId}:`, error.message, error.stack);
+        console.error(`Error in handleDashboardDataRequest for ${userId}: ${error.message}\n${error.stack}`);
         const fallbackInitialAnswers = safeParseJson(await env.USER_METADATA_KV.get(`${userId}_initial_answers`), {});
         const planStatusOnError = await env.USER_METADATA_KV.get(`plan_status_${userId}`) || 'error';
         return {
@@ -2253,7 +2253,7 @@ async function handleLogRequest(request, env) {
             updated: payloadChanged
         };
     } catch (error) {
-        console.error("Error in handleLogRequest:", error.message, error.stack);
+        console.error(`Error in handleLogRequest: ${error.message}\n${error.stack}`);
         const userId = inputData?.userId || 'unknown_user';
         return { success: false, message: `Грешка при запис на дневник: ${error.message}`, statusHint: 400, userId };
     }
@@ -2283,7 +2283,7 @@ async function handleUpdateStatusRequest(request, env) {
          // Status updated successfully
          return { success: true, message: 'Текущият Ви статус е актуализиран успешно.', savedStatus: currentStatus };
      } catch (error) {
-         console.error("Error in handleUpdateStatusRequest:", error.message, error.stack);
+         console.error(`Error in handleUpdateStatusRequest: ${error.message}\n${error.stack}`);
          const userId = (await request.json().catch(() => ({}))).userId || 'unknown_user';
          return { success: false, message: `Грешка при актуализация на статус: ${error.message}`, statusHint: 400, userId };
      }
@@ -2490,7 +2490,7 @@ async function handleChatRequest(request, env) {
         return { success: true, reply: respToUser };
 
     } catch (error) {
-        console.error(`Error in handleChatRequest for userId ${userId}:`, error.message, error.stack);
+        console.error(`Error in handleChatRequest for userId ${userId}: ${error.message}\n${error.stack}`);
         let userMsg = 'Възникна грешка при обработка на Вашата заявка към чат асистента.';
         if (error.message.includes('Gemini API Error') || error.message.includes('OpenAI API Error') || error.message.includes('CF AI error')) {
             userMsg = `Грешка от AI асистента: ${error.message.replace(/(Gemini|OpenAI) API Error \([^)]+\): /, '')}`;
@@ -2564,7 +2564,7 @@ async function handleLogExtraMealRequest(request, env) {
         // Extra meal logged successfully
         return { success: true, message: 'Извънредното хранене е записано успешно.', savedDate: logDateStr };
     } catch (error) {
-        console.error("Error in handleLogExtraMealRequest:", error.message, error.stack);
+        console.error(`Error in handleLogExtraMealRequest: ${error.message}\n${error.stack}`);
         const userId = (await request.json().catch(() => ({}))).userId || 'unknown_user';
         return { success: false, message: `Грешка при запис на извънредно хранене: ${error.message}`, statusHint: 500, userId };
     }
@@ -2580,7 +2580,7 @@ async function handleGetProfileRequest(request, env) {
         const profile = profileStr ? safeParseJson(profileStr, {}) : {};
         return { success: true, ...profile };
     } catch (error) {
-        console.error("Error in handleGetProfileRequest:", error.message, error.stack);
+        console.error(`Error in handleGetProfileRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: "Грешка при зареждане на профила.", statusHint: 500 };
 }
 }
@@ -2611,7 +2611,7 @@ async function handleUpdateProfileRequest(request, env) {
         await env.USER_METADATA_KV.put(`${userId}_profile`, JSON.stringify(profile));
         return { success: true, message: "Профилът е обновен успешно" };
     } catch (error) {
-        console.error("Error in handleUpdateProfileRequest:", error.message, error.stack);
+        console.error(`Error in handleUpdateProfileRequest: ${error.message}\n${error.stack}`);
         const uid = (await request.json().catch(() => ({}))).userId || "unknown_user";
         return { success: false, message: "Грешка при запис на профила.", statusHint: 500, userId: uid };
 }
@@ -2677,7 +2677,7 @@ async function handleCheckPlanPrerequisitesRequest(request, env) {
         const precheck = await validatePlanPrerequisites(env, userId);
         return { success: true, ...precheck };
     } catch (error) {
-        console.error('Error in handleCheckPlanPrerequisitesRequest:', error.message, error.stack);
+        console.error(`Error in handleCheckPlanPrerequisitesRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при проверка на prerequisites.', statusHint: 500 };
     }
 }
@@ -2710,7 +2710,7 @@ async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = pr
         await planProcessor(userId, env);
         return { success: true, message: 'Генерирането на нов план завърши.' };
     } catch (error) {
-        console.error('Error in handleRegeneratePlanRequest:', error.message, error.stack);
+        console.error(`Error in handleRegeneratePlanRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при генериране на плана.', statusHint: 500, userId: body?.userId || 'unknown_user' };
     }
 }
@@ -2837,7 +2837,7 @@ async function handleUpdatePlanRequest(request, env) {
         await setPlanStatus(userId, 'ready', env);
         return { success: true, message: 'Планът е обновен успешно' };
     } catch (error) {
-        console.error('Error in handleUpdatePlanRequest:', error.message, error.stack);
+        console.error(`Error in handleUpdatePlanRequest: ${error.message}\n${error.stack}`);
         const uid = (await request.json().catch(() => ({}))).userId || 'unknown_user';
         return { success: false, message: 'Грешка при запис на плана.', statusHint: 500, userId: uid };
     }
@@ -2866,7 +2866,7 @@ async function handleRequestPasswordReset(request, env) {
         }
         return { success: true, message: 'Изпратихме линк за смяна на паролата.' };
     } catch (error) {
-        console.error('Error in handleRequestPasswordReset:', error.message, error.stack);
+        console.error(`Error in handleRequestPasswordReset: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при заявката.', statusHint: 500 };
     }
 }
@@ -2893,7 +2893,7 @@ async function handlePerformPasswordReset(request, env) {
         await env.USER_METADATA_KV.delete(`pwreset_${token}`);
         return { success: true, message: 'Паролата е обновена успешно.' };
     } catch (error) {
-        console.error('Error in handlePerformPasswordReset:', error.message, error.stack);
+        console.error(`Error in handlePerformPasswordReset: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при смяна на паролата.', statusHint: 500 };
     }
 }
@@ -2912,7 +2912,7 @@ async function handleAcknowledgeAiUpdateRequest(request, env) {
         // AI update summary acknowledged and cleared
         return { success: true, message: "Резюмето от AI е потвърдено и скрито." };
     } catch (error) {
-        console.error("Error in handleAcknowledgeAiUpdateRequest:", error.message, error.stack);
+        console.error(`Error in handleAcknowledgeAiUpdateRequest: ${error.message}\n${error.stack}`);
         const userIdFromBody = (await request.json().catch(() => ({}))).userId || 'unknown';
         return { success: false, message: "Грешка при потвърждаване на резюмето от AI.", statusHint: 500, userId: userIdFromBody };
     }
@@ -2927,7 +2927,7 @@ async function handleRecordFeedbackChatRequest(request, env) {
         await env.USER_METADATA_KV.put(`${userId}_last_feedback_chat_ts`, Date.now().toString());
         return { success: true };
     } catch (error) {
-        console.error('Error in handleRecordFeedbackChatRequest:', error.message, error.stack);
+        console.error(`Error in handleRecordFeedbackChatRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при запис на времето на обратната връзка.', statusHint: 500 };
     }
 }
@@ -2939,7 +2939,7 @@ async function handleSubmitFeedbackRequest(request, env) {
     try {
         data = await request.json();
     } catch (err) {
-        console.error('Error parsing feedback JSON:', err.message, err.stack);
+        console.error(`Error parsing feedback JSON: ${err.message}\n${err.stack}`);
         return { success: false, message: 'Невалидни данни.', statusHint: 400 };
     }
     const userId = data.userId;
@@ -2963,7 +2963,7 @@ async function handleSubmitFeedbackRequest(request, env) {
 
         return { success: true, message: 'Обратната връзка е записана.' };
     } catch (error) {
-        console.error('Error in handleSubmitFeedbackRequest:', error.message, error.stack);
+        console.error(`Error in handleSubmitFeedbackRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при запис на обратната връзка.', statusHint: 500, userId };
     }
 }
@@ -2988,7 +2988,7 @@ async function handleGetAchievementsRequest(request, env) {
         if (updated) await env.USER_METADATA_KV.put(`${userId}_achievements`, JSON.stringify(achievements));
         return { success: true, achievements };
     } catch (error) {
-        console.error('Error in handleGetAchievementsRequest:', error.message, error.stack);
+        console.error(`Error in handleGetAchievementsRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при зареждане на постижения.', statusHint: 500 };
     }
 }
@@ -3130,7 +3130,7 @@ async function handleGeneratePraiseRequest(request, env) {
 
         return { success: true, title, message, emoji };
     } catch (error) {
-        console.error('Error in handleGeneratePraiseRequest:', error.message, error.stack);
+        console.error(`Error in handleGeneratePraiseRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при генериране на похвала.', statusHint: 500 };
     }
 }
@@ -3269,7 +3269,7 @@ async function handleAnalyzeInitialAnswers(userId, env) {
         // Имейлът с линк към анализа вече се изпраща при подаване на въпросника,
         // затова тук не се изпраща повторно.
     } catch (error) {
-        console.error(`Error in handleAnalyzeInitialAnswers (${userId}):`, error.message, error.stack);
+        console.error(`Error in handleAnalyzeInitialAnswers (${userId}): ${error.message}\n${error.stack}`);
         try {
             await env.USER_METADATA_KV.put(`${userId}_analysis_status`, 'error');
         } catch (e) {
@@ -3289,7 +3289,7 @@ async function handleGetInitialAnalysisRequest(request, env) {
         const analysis = safeParseJson(analysisStr, analysisStr || null);
         return { success: true, analysis };
     } catch (error) {
-        console.error('Error in handleGetInitialAnalysisRequest:', error.message, error.stack);
+        console.error(`Error in handleGetInitialAnalysisRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при зареждане на анализа.', statusHint: 500 };
     }
 }
@@ -3323,7 +3323,7 @@ async function handleReAnalyzeQuestionnaireRequest(request, env, ctx) {
         url.searchParams.set('userId', userId);
         return { success: true, userId, link: url.toString() };
     } catch (error) {
-        console.error('Error in handleReAnalyzeQuestionnaireRequest:', error.message, error.stack);
+        console.error(`Error in handleReAnalyzeQuestionnaireRequest: ${error.message}\n${error.stack}`);
         const body = await request.json().catch(() => ({}));
         return { success: false, message: 'Грешка при стартиране на анализа.', statusHint: 500, userId: body.userId || 'unknown' };
     }
@@ -3340,7 +3340,7 @@ async function handleUploadTestResult(request, env) {
         await createUserEvent('testResult', userId, { result }, env);
         return { success: true };
     } catch (error) {
-        console.error('Error in handleUploadTestResult:', error.message, error.stack);
+        console.error(`Error in handleUploadTestResult: ${error.message}\n${error.stack}`);
         const body = await request.json().catch(() => ({}));
         return { success: false, message: 'Грешка при запис на резултата.', statusHint: 500, userId: body.userId || 'unknown' };
     }
@@ -3357,7 +3357,7 @@ async function handleUploadIrisDiag(request, env) {
         await createUserEvent('irisDiag', userId, { data }, env);
         return { success: true };
     } catch (error) {
-        console.error('Error in handleUploadIrisDiag:', error.message, error.stack);
+        console.error(`Error in handleUploadIrisDiag: ${error.message}\n${error.stack}`);
         const body = await request.json().catch(() => ({}));
         return { success: false, message: 'Грешка при запис на данните.', statusHint: 500, userId: body.userId || 'unknown' };
     }
@@ -3397,7 +3397,7 @@ async function handleAiHelperRequest(request, env) {
         );
         return { success: true, aiResponse: aiResp };
     } catch (error) {
-        console.error('Error in handleAiHelperRequest:', error.message, error.stack);
+        console.error(`Error in handleAiHelperRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: `Грешка от Cloudflare AI: ${error.message}`, statusHint: 500 };
     }
 }
@@ -3531,7 +3531,7 @@ async function handleAnalyzeImageRequest(request, env) {
 
         return { success: true, result: aiResp };
     } catch (error) {
-        console.error('Error in handleAnalyzeImageRequest:', error.message, error.stack);
+        console.error(`Error in handleAnalyzeImageRequest: ${error.message}\n${error.stack}`);
         if (/failed to decode u8|Tensor error/i.test(error.message)) {
             return {
                 success: false,
@@ -3564,7 +3564,7 @@ async function handleRunImageModelRequest(request, env) {
         const result = await env.AI.run(model, { prompt, image: bytes });
         return { success: true, result };
     } catch (error) {
-        console.error('Error in handleRunImageModelRequest:', error.message, error.stack);
+        console.error(`Error in handleRunImageModelRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при анализа на изображението.', statusHint: 500 };
     }
 }
@@ -3615,7 +3615,7 @@ async function handleListClientsRequest(request, env) {
         }
         return { success: true, clients };
     } catch (error) {
-        console.error('Error in handleListClientsRequest:', error.message, error.stack);
+        console.error(`Error in handleListClientsRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при зареждане на клиентите.', statusHint: 500 };
     }
 }
@@ -3746,7 +3746,7 @@ async function handlePeekAdminNotificationsRequest(request, env) {
 
         return { success: true, clients: aggregated };
     } catch (error) {
-        console.error('Error in handlePeekAdminNotificationsRequest:', error.message, error.stack);
+        console.error(`Error in handlePeekAdminNotificationsRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при агрегиране на известията.', statusHint: 500 };
     }
 }
@@ -3785,7 +3785,7 @@ async function handleDeleteClientRequest(request, env) {
 
         return { success: true };
     } catch (error) {
-        console.error('Error in handleDeleteClientRequest:', error.message, error.stack);
+        console.error(`Error in handleDeleteClientRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при изтриване на клиента.', statusHint: 500 };
     }
 }
@@ -3802,7 +3802,7 @@ async function handleAddAdminQueryRequest(request, env) {
         await env.USER_METADATA_KV.put(key, JSON.stringify(existing));
         return { success: true };
     } catch (error) {
-        console.error('Error in handleAddAdminQueryRequest:', error.message, error.stack);
+        console.error(`Error in handleAddAdminQueryRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при запис.', statusHint: 500 };
     }
 }
@@ -3852,7 +3852,7 @@ async function handleGetAdminQueriesRequest(request, env, peek = false) {
         }
         return { success: true, queries: unread };
     } catch (error) {
-        console.error('Error in handleGetAdminQueriesRequest:', error.message, error.stack);
+        console.error(`Error in handleGetAdminQueriesRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при зареждане на запитванията.', statusHint: 500 };
     }
 }
@@ -3869,7 +3869,7 @@ async function handleAddClientReplyRequest(request, env) {
         await env.USER_METADATA_KV.put(key, JSON.stringify(existing));
         return { success: true };
     } catch (error) {
-        console.error('Error in handleAddClientReplyRequest:', error.message, error.stack);
+        console.error(`Error in handleAddClientReplyRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при запис.', statusHint: 500 };
     }
 }
@@ -3890,7 +3890,7 @@ async function handleGetClientRepliesRequest(request, env, peek = false) {
         }
         return { success: true, replies: unread };
     } catch (error) {
-        console.error('Error in handleGetClientRepliesRequest:', error.message, error.stack);
+        console.error(`Error in handleGetClientRepliesRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при зареждане на отговорите.', statusHint: 500 };
     }
 }
@@ -3906,7 +3906,7 @@ async function handleGetFeedbackMessagesRequest(request, env) {
         const arr = safeParseJson(await env.USER_METADATA_KV.get(key), []);
         return { success: true, feedback: arr };
     } catch (error) {
-        console.error('Error in handleGetFeedbackMessagesRequest:', error.message, error.stack);
+        console.error(`Error in handleGetFeedbackMessagesRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при зареждане на обратната връзка.', statusHint: 500 };
     }
 }
@@ -3929,7 +3929,7 @@ async function handleGetPlanModificationPrompt(request, env) {
 
         return { success: true, prompt: promptTpl, model };
     } catch (error) {
-        console.error('Error in handleGetPlanModificationPrompt:', error.message, error.stack);
+        console.error(`Error in handleGetPlanModificationPrompt: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при зареждане на промпта.', statusHint: 500 };
     }
 }
@@ -3945,7 +3945,7 @@ async function handleGetAiConfig(request, env) {
         }
         return { success: true, config };
     } catch (error) {
-        console.error('Error in handleGetAiConfig:', error.message, error.stack);
+        console.error(`Error in handleGetAiConfig: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при зареждане на настройките.', statusHint: 500 };
     }
 }
@@ -3984,7 +3984,7 @@ async function handleSetAiConfig(request, env) {
         }
         return { success: true };
     } catch (error) {
-        console.error('Error in handleSetAiConfig:', error.message, error.stack);
+        console.error(`Error in handleSetAiConfig: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при запис на настройките.', statusHint: 500 };
     }
 }
@@ -4016,7 +4016,7 @@ async function handleListAiPresets(request, env) {
         await env.RESOURCES_KV.put(AI_PRESET_INDEX_KEY, JSON.stringify(presets));
         return { success: true, presets };
     } catch (error) {
-        console.error('Error in handleListAiPresets:', error.message, error.stack);
+        console.error(`Error in handleListAiPresets: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при зареждане на пресетите.', statusHint: 500 };
     }
 }
@@ -4036,7 +4036,7 @@ async function handleGetAiPreset(request, env) {
         }
         return { success: true, config: JSON.parse(val) };
     } catch (error) {
-        console.error('Error in handleGetAiPreset:', error.message, error.stack);
+        console.error(`Error in handleGetAiPreset: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при зареждане на пресета.', statusHint: 500 };
     }
 }
@@ -4079,7 +4079,7 @@ async function handleSaveAiPreset(request, env) {
         }
         return { success: true };
     } catch (error) {
-        console.error('Error in handleSaveAiPreset:', error.message, error.stack);
+        console.error(`Error in handleSaveAiPreset: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при запис на пресета.', statusHint: 500 };
     }
 }
@@ -4116,7 +4116,7 @@ async function handleDeleteAiPreset(request, env) {
         }
         return { success: true };
     } catch (error) {
-        console.error('Error in handleDeleteAiPreset:', error.message, error.stack);
+        console.error(`Error in handleDeleteAiPreset: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при изтриване на пресета.', statusHint: 500 };
     }
 }
@@ -4138,7 +4138,7 @@ async function handleTestAiModelRequest(request, env) {
         await callModelRef.current(model, 'Здравей', env, { temperature: 0, maxTokens: 5 });
         return { success: true };
     } catch (error) {
-        console.error('Error in handleTestAiModelRequest:', error.message, error.stack);
+        console.error(`Error in handleTestAiModelRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: error.message || 'Грешка при комуникацията.', statusHint: 500 };
     }
 }
@@ -4189,7 +4189,7 @@ async function handleContactFormRequest(request, env) {
         }
         return { success: true };
     } catch (error) {
-        console.error('Error in handleContactFormRequest:', error.message, error.stack);
+        console.error(`Error in handleContactFormRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при изпращане.', statusHint: 500 };
     }
 }
@@ -4213,7 +4213,7 @@ async function handleGetContactRequestsRequest(request, env) {
         }
         return { success: true, requests };
     } catch (error) {
-        console.error('Error in handleGetContactRequestsRequest:', error.message, error.stack);
+        console.error(`Error in handleGetContactRequestsRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при зареждане на заявките.', statusHint: 500 };
     }
 }
@@ -4241,7 +4241,7 @@ async function handleValidateIndexesRequest(request, env) {
         await env.CONTACT_REQUESTS_KV.put('contactRequests_index', JSON.stringify(contactIds));
         return { success: true };
     } catch (error) {
-        console.error('Error in handleValidateIndexesRequest:', error.message, error.stack);
+        console.error(`Error in handleValidateIndexesRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при валидиране на индексите.', statusHint: 500 };
     }
 }
@@ -4297,7 +4297,7 @@ async function handleSendTestEmailRequest(request, env) {
         await sendEmailUniversal(recipient, subject, body, env);
         return { success: true };
     } catch (error) {
-        console.error('Error in handleSendTestEmailRequest:', error.message, error.stack);
+        console.error(`Error in handleSendTestEmailRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: error.message || 'Грешка при изпращане.', statusHint: 500 };
     }
 }
@@ -4317,7 +4317,7 @@ async function handleGetMaintenanceMode(request, env) {
         const enabled = (val === '1') || env.MAINTENANCE_MODE === '1';
         return { success: true, enabled };
     } catch (error) {
-        console.error('Error in handleGetMaintenanceMode:', error.message, error.stack);
+        console.error(`Error in handleGetMaintenanceMode: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при зареждане.', statusHint: 500 };
     }
 }
@@ -4338,7 +4338,7 @@ async function handleSetMaintenanceMode(request, env) {
         clearResourceCache([MAINTENANCE_MODE_CACHE_KEY, MAINTENANCE_PAGE_CACHE_KEY]);
         return { success: true };
     } catch (error) {
-        console.error('Error in handleSetMaintenanceMode:', error.message, error.stack);
+        console.error(`Error in handleSetMaintenanceMode: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при запис.', statusHint: 500 };
     }
 }
@@ -5607,7 +5607,7 @@ async function processSingleUserPlan(userId, env) {
             }
         }
     } catch (error) {
-        console.error(`PROCESS_USER_PLAN (${userId}): >>> FATAL Processing Error <<< :`, error.name, error.message, error.stack);
+        console.error(`PROCESS_USER_PLAN (${userId}): >>> FATAL Processing Error <<<: ${error.name} - ${error.message}\n${error.stack}`);
         try {
             await addLog(`Фатална грешка: ${error.message}`, { checkpoint: true, reason: 'fatal' });
             await setPlanStatus(userId, 'error', env);
@@ -5807,7 +5807,7 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
             return null;
         }
     } catch (error) {
-        console.error(`PRINCIPLE_ADJUST_ERROR (${userId}): Error during principle adjustment:`, error.message, error.stack);
+        console.error(`PRINCIPLE_ADJUST_ERROR (${userId}): Error during principle adjustment: ${error.message}\n${error.stack}`);
         return null;
     }
 }
@@ -6848,7 +6848,7 @@ async function verifyPassword(password, storedSaltAndHash) {
         const inputHashHex = Array.from(inputHashBuffer).map(b => b.toString(16).padStart(2, '0')).join('');
         return inputHashHex === storedHashHex;
     } catch (error) {
-        console.error("Error verifying password:", error.message, error.stack);
+        console.error(`Error verifying password: ${error.message}\n${error.stack}`);
         return false;
     }
 }
@@ -6911,17 +6911,17 @@ async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettin
             if (!cand) {
                 const blockR = data?.promptFeedback?.blockReason;
                 if (blockR) {
-                    console.error(`Gemini API prompt blocked for model ${model}. Reason: ${blockR}`, JSON.stringify(data.promptFeedback, null, 2));
+                    console.error(`Gemini API prompt blocked for model ${model}. Reason: ${blockR}\n${JSON.stringify(data.promptFeedback, null, 2)}`);
                     throw new Error(`AI assistant blocked prompt (Model: ${model}, Reason: ${blockR}).`);
                 } else {
-                    console.error(`Gemini API Error for model ${model}: No candidates in response. Full response:`, JSON.stringify(data, null, 2));
+                    console.error(`Gemini API Error for model ${model}: No candidates in response. Full response:\n${JSON.stringify(data, null, 2)}`);
                     throw new Error(`Gemini API Error (Model: ${model}): No candidates found in response.`);
                 }
             }
 
             if (cand.finishReason === 'SAFETY') {
                 const safetyInfo = cand.safetyRatings?.map(r => `${r.category}: ${r.probability}`).join(', ') || 'N/A';
-                console.error(`Gemini API content blocked by safety settings for model ${model}. Ratings: [${safetyInfo}]`, JSON.stringify(cand, null, 2));
+                console.error(`Gemini API content blocked by safety settings for model ${model}. Ratings: [${safetyInfo}]\n${JSON.stringify(cand, null, 2)}`);
                 throw new Error(`AI response blocked by safety settings (Model: ${model}, Ratings: ${safetyInfo}).`);
             }
 
@@ -6935,7 +6935,7 @@ async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettin
                 console.warn(`Gemini API call for model ${model} finished due to MAX_TOKENS and no text content was produced or it was empty.`);
                 return "";
             }
-            console.error(`Gemini API Error for model ${model}: Text content missing from successful candidate. FinishReason: '${cand.finishReason || 'N/A'}'. Full candidate:`, JSON.stringify(cand, null, 2));
+            console.error(`Gemini API Error for model ${model}: Text content missing from successful candidate. FinishReason: '${cand.finishReason || 'N/A'}'. Full candidate:\n${JSON.stringify(cand, null, 2)}`);
             throw new Error(`Gemini API Error (Model: ${model}): Unexpected response structure or missing text content from candidate.`);
         } catch (error) {
             const overloaded = /overload/i.test(error.message);
@@ -6947,7 +6947,7 @@ async function callGeminiAPI(prompt, apiKey, generationConfig = {}, safetySettin
             if (!error.message.includes(`Model: ${model}`)) {
                 error.message = `[Gemini Call Error - Model: ${model}] ${error.message}`;
             }
-            console.error(`Error during Gemini API call (${model}):`, error.message, error.stack ? error.stack.substring(0, 500) : "No stack");
+            console.error(`Error during Gemini API call (${model}): ${error.message}\n${error.stack ? error.stack.substring(0, 500) : "No stack"}`);
             throw error;
         }
     }
@@ -7025,7 +7025,7 @@ async function callGeminiVisionAPI(
             if (txtContent !== undefined && txtContent !== null) {
                 return txtContent;
             }
-            console.error(`Gemini vision response missing text for model ${model}.`, JSON.stringify(data, null, 2));
+            console.error(`Gemini vision response missing text for model ${model}.\n${JSON.stringify(data, null, 2)}`);
             throw new Error(`Gemini API Error (Model: ${model}): Missing text response.`);
         } catch (error) {
             const overloaded = /overload/i.test(error.message);
@@ -7037,7 +7037,7 @@ async function callGeminiVisionAPI(
             if (!error.message.includes(`Model: ${model}`)) {
                 error.message = `[Gemini Vision Call Error - Model: ${model}] ${error.message}`;
             }
-            console.error(`Error during Gemini vision API call (${model}):`, error.message, error.stack ? error.stack.substring(0, 500) : 'No stack');
+            console.error(`Error during Gemini vision API call (${model}): ${error.message}\n${error.stack ? error.stack.substring(0, 500) : 'No stack'}`);
             throw error;
         }
     }
@@ -7886,7 +7886,7 @@ async function handleListUserKvRequest(request, env) {
             listComplete: list.list_complete
         };
     } catch (error) {
-        console.error('Error in handleListUserKvRequest:', error.message, error.stack);
+        console.error(`Error in handleListUserKvRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Failed to list KV data' };
     }
 }
@@ -7936,7 +7936,7 @@ async function handleUpdateKvRequest(request, env) {
         await rebuildUserKvIndex(userId, env);
         return { success: true };
     } catch (error) {
-        console.error('Error in handleUpdateKvRequest:', error.message, error.stack);
+        console.error(`Error in handleUpdateKvRequest: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Failed to update KV data' };
     }
 }
