@@ -106,38 +106,28 @@ export const macroColorVars = ['macro-protein-color', 'macro-carbs-color', 'macr
 export const sampleThemes = {
   "dashboard": {
     "Light": {
-      "primary-color": "#3A506B",
-      "secondary-color": "#5BC0BE",
-      "accent-color": "#778DA9",
-      "tertiary-color": "#CBBADD",
-      "accent-opacity": "1",
-      "text-color-primary": "#2c3e50",
-      "text-color-secondary": "#555",
-      "text-color-muted": "#7f8c8d",
-      "text-color-on-primary": "#FFFFFF",
-      "font-color-primary": "#2c3e50",
-      "font-color-secondary": "#555",
-      "font-color-muted": "#7f8c8d",
-      "font-color-on-primary": "#FFFFFF",
-      "bg-color": "#F0F4F8",
-      "surface-background": "#FFFFFF",
-      "card-bg": "#ffffff",
-      "card-bg-opacity": "0.85",
-      "input-bg": "#FFFFFF",
-      "text-color-on-secondary": "#FFFFFF",
-      "text-color-disabled": "#6c757d",
-      "border-color": "#d0d8e0",
-      "border-color-soft": "#e1e8f0",
-      "input-bg-disabled": "#e9ecef",
-      "input-border-color": "#ced4da",
-      "progress-color": "#2ecc71",
-      "progress-bar-bg-empty": "#e9ecef",
-      "macro-protein-color": "#5BC0BE",
-      "macro-carbs-color": "#FF6B6B",
-      "macro-fat-color": "#FFD166",
-      "macro-fiber-color": "#6FCF97",
-      "macro-ring-highlight": "#ffffff",
-      "macro-stroke-color": "#e0e0e0"
+      "primary-color": "#5BC0BE",
+      "secondary-color": "#FFD166",
+      "accent-color": "#FF6B6B",
+      "bg-color": "#f8f8f8",
+      "card-bg": "#fff",
+      "text-color-primary": "#333333",
+      "text-color-secondary": "#666",
+      "border-color": "#eee",
+      "color-danger": "#e74c3c",
+      "color-success": "#2ecc71"
+    },
+    "Night": {
+      "primary-color": "#22253B",
+      "secondary-color": "#9D70FF",
+      "accent-color": "#49EEC2",
+      "bg-color": "#181A30",
+      "card-bg": "#20243B",
+      "text-color-primary": "#F2F6FC",
+      "text-color-secondary": "#C2CBF5",
+      "border-color": "#282C44",
+      "color-danger": "#ff3366",
+      "color-success": "#49EEC2"
     },
     "Dark": {
       "primary-color": "#84A98C",
@@ -293,6 +283,18 @@ export const sampleThemes = {
       "error-color": "#d32f2f",
       "success-color": "#388e3c"
     },
+    "Night": {
+      "bg-primary": "#181A30",
+      "bg-secondary": "#20243B",
+      "bg-surface": "#20243B",
+      "accent-primary": "#9D70FF",
+      "accent-secondary": "#49EEC2",
+      "text-primary": "#F2F6FC",
+      "text-secondary": "#C2CBF5",
+      "border-color": "#282C44",
+      "error-color": "#ff3366",
+      "success-color": "#49EEC2"
+    },
     "Dark": {
       "bg-primary": "#121212",
       "bg-secondary": "#1e1e1e",
@@ -323,6 +325,12 @@ export const sampleThemes = {
       "code-bg": "#f5f5f5",
       "code-text-primary": "#333333",
       "code-accent": "#5BC0BE"
+    },
+    "Night": {
+      "code-bg": "#181A30",
+      "code-text-primary": "#F2F6FC",
+      "code-accent": "#9D70FF",
+      "code-secondary-accent": "#49EEC2"
     },
     "Dark": {
       "code-bg": "#1e1e1e",
