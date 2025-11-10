@@ -153,17 +153,17 @@
 }
 
 body.dark-theme {
-  /* Органична и спокойна тъмна тема */
-  --primary-color: #84A98C;
-  --secondary-color: #E4725C;
-  --accent-color: #B5A3C3;
+  /* Тъмна тема от index.html - прецизно приложена */
+  --primary-color: #5BC0BE;
+  --secondary-color: #8fa6c9;
+  --accent-color: #7D9D9C;
   --accent-opacity: 1;
   --tertiary-color: #8E6CC3;
 
   --text-color-primary: #E0E0E0;
   --text-color-secondary: #A0A5C0;
   --text-color-muted: #bbb;
-  --text-color-on-primary: #1C1F2E;
+  --text-color-on-primary: #1b263b;
   --text-color-on-secondary: #FFFFFF;
   --text-color-disabled: #adb5bd;
   --header-title-color: var(--bg-color);
@@ -171,28 +171,30 @@ body.dark-theme {
   --font-color-secondary: var(--text-color-secondary);
   --font-color-muted: var(--text-color-muted);
   --font-color-on-primary: var(--text-color-on-primary);
+  --header-bg-solid: rgb(40, 40, 60);
+  --mobile-menu-bg: var(--header-bg-solid);
 
-  --bg-color: #1C1F2E;
-  --bg-gradient: linear-gradient(135deg, #1C1F2E 0%, #252A41 100%);
-  --surface-background: #252A41;
-  --surface-background-rgb: 37,42,65; /* За rgba overlay */
-  --card-bg: #252A41;
-  --card-bg-rgb: 37,42,65;
+  --bg-color: #16213E;
+  --bg-gradient: linear-gradient(135deg, #16213E 0%, #1A1A2E 100%);
+  --surface-background: rgba(40, 40, 60, 0.75);
+  --surface-background-rgb: 40,40,60; /* За rgba overlay */
+  --card-bg: rgba(40, 40, 60, 0.75);
+  --card-bg-rgb: 40,40,60;
   --card-bg-opacity: 0.75;
-  --glass-blur: 12px;
+  --glass-blur: 10px;
 
-  --border-color: #34374B;
-  --border-color-soft: #2D3044;
+  --border-color: rgba(91, 192, 190, 0.2);
+  --border-color-soft: rgba(91, 192, 190, 0.1);
 
-  --input-bg: #252A41;
+  --input-bg: rgba(40, 40, 60, 0.75);
   --input-bg-disabled: #2C3147;
-  --input-border-color: #3C425A;
+  --input-border-color: rgba(91, 192, 190, 0.2);
   --input-focus-border: var(--primary-color);
-  --input-focus-shadow: rgba(132, 169, 140, 0.3);
+  --input-focus-shadow: rgba(91, 192, 190, 0.3);
 
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.15);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.20);
-  --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.25);
+  --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.3);
   --shadow-soft: 0px 6px 18px rgba(var(--surface-background-rgb), 0.5), 0px 2px 7px rgba(var(--surface-background-rgb), 0.3);
 
   --progress-bar-bg-empty: #393E57;
@@ -206,17 +208,17 @@ body.dark-theme {
   --macro-ring-highlight: #ffffff;
   --macro-stroke-color: #444444;
 
-  --toast-bg: rgba(37, 42, 65, 0.95); --toast-text: #F0F2F5;
+  --toast-bg: rgba(40, 40, 60, 0.95); --toast-text: #E0E0E0;
   --modal-overlay-bg: rgba(0,0,0, 0.75);
   --scrollbar-thumb: var(--primary-color); --scrollbar-track: #333;
 
   --icon-color-default: var(--accent-color);
 
-  --menu-bg: rgba(37, 42, 65, 0.9);
+  --menu-bg: rgba(40, 40, 60, 0.9);
   --menu-overlay-bg: rgba(0, 0, 0, 0.65);
   --menu-hover-bg: color-mix(in srgb, var(--primary-color) 35%, transparent);
 
-  --fab-bg: var(--primary-color); --fab-icon: #1C1F2E;
+  --fab-bg: var(--primary-color); --fab-icon: #1b263b;
 
   --rating-empty-bg: #444; --rating-border: #666;
 
@@ -231,16 +233,16 @@ body.dark-theme {
   --note-important-bg: rgba(255, 143, 0, 0.2); --note-important-text: #ffcc80; --note-important-border: #ff8f00;
   --note-info-bg: rgba(25, 118, 210, 0.2); --note-info-text: #90caf9; --note-info-border: #1976d2;
   --note-success-bg: rgba(46, 125, 50, 0.2); --note-success-text: #a5d6a7; --note-success-border: #2e7d32;
-  --supplement-card-bg: rgba(132, 169, 140, 0.25);
+  --supplement-card-bg: rgba(91, 192, 190, 0.25);
 
-  --primary-rgb: 132, 169, 140;
+  --primary-rgb: 91, 192, 190;
 
   --metric-value-group-bg-initial: color-mix(in srgb, var(--surface-background) 90%, var(--border-color-soft) 50%);
   --metric-value-group-bg-expected: color-mix(in srgb, var(--surface-background) 90%, var(--accent-color) 25%);
   --metric-value-group-bg-current: color-mix(in srgb, var(--surface-background) 90%, var(--secondary-color) 30%);
-  --code-bg: #1e1e1e;
-  --code-text-primary: #e0e0e0;
-  --code-accent: #ff3366;
+  --code-bg: #16213E;
+  --code-text-primary: #E0E0E0;
+  --code-accent: #5BC0BE;
 }
 
 body.vivid-theme {
