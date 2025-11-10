@@ -154,11 +154,12 @@
 
 body.dark-theme {
   /* Тъмна тема от index.html - прецизно приложена */
-  --primary-color: #5BC0BE;
-  --secondary-color: #8fa6c9;
-  --accent-color: #7D9D9C;
-  --accent-opacity: 1;
-  --tertiary-color: #8E6CC3;
+  /* Приглушени цветове за по-добра визия и намален контраст */
+  --primary-color: #6B9B9E;
+  --secondary-color: #7A8FA8;
+  --accent-color: #6D8A89;
+  --accent-opacity: 0.85;
+  --tertiary-color: #7D6CAD;
 
   --text-color-primary: #E0E0E0;
   --text-color-secondary: #A0A5C0;
@@ -183,14 +184,14 @@ body.dark-theme {
   --card-bg-opacity: 0.75;
   --glass-blur: 10px;
 
-  --border-color: rgba(91, 192, 190, 0.2);
-  --border-color-soft: rgba(91, 192, 190, 0.1);
+  --border-color: rgba(107, 155, 158, 0.25);
+  --border-color-soft: rgba(107, 155, 158, 0.12);
 
   --input-bg: rgba(40, 40, 60, 0.75);
   --input-bg-disabled: #2C3147;
-  --input-border-color: rgba(91, 192, 190, 0.2);
+  --input-border-color: rgba(107, 155, 158, 0.25);
   --input-focus-border: var(--primary-color);
-  --input-focus-shadow: rgba(91, 192, 190, 0.3);
+  --input-focus-shadow: rgba(107, 155, 158, 0.35);
 
   --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.25);
@@ -200,11 +201,11 @@ body.dark-theme {
   --progress-bar-bg-empty: #393E57;
   --progress-color: var(--color-success);
 
-  /* Макро диаграма - тъмна тема */
-  --macro-protein-color: #5BC0BE;
-  --macro-fat-color: #FFD166;
-  --macro-carbs-color: #FF6B6B;
-  --macro-fiber-color: #6FCF97;
+  /* Макро диаграма - тъмна тема - приглушени цветове */
+  --macro-protein-color: #6B9B9E;
+  --macro-fat-color: #E8C060;
+  --macro-carbs-color: #E8746D;
+  --macro-fiber-color: #68BB84;
   --macro-ring-highlight: #ffffff;
   --macro-stroke-color: #444444;
 
@@ -216,7 +217,7 @@ body.dark-theme {
 
   --menu-bg: rgba(40, 40, 60, 0.9);
   --menu-overlay-bg: rgba(0, 0, 0, 0.65);
-  --menu-hover-bg: color-mix(in srgb, var(--primary-color) 35%, transparent);
+  --menu-hover-bg: color-mix(in srgb, var(--primary-color) 25%, transparent);
 
   --fab-bg: var(--primary-color); --fab-icon: #1b263b;
 
@@ -225,24 +226,24 @@ body.dark-theme {
   --chat-widget-bg: color-mix(in srgb, var(--surface-background) 90%, black);
   --chat-header-bg: var(--primary-color);
   --chat-header-text: #FFFFFF;
-  --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 40%, var(--surface-background));
-  --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 40%, var(--surface-background));
+  --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 30%, var(--surface-background));
+  --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 30%, var(--surface-background));
   --chat-input-field-bg: color-mix(in srgb, var(--surface-background) 70%, #1A1A2E);
 
-  --note-critical-bg: rgba(183, 28, 28, 0.3); --note-critical-text: #ef9a9a; --note-critical-border: #c62828;
-  --note-important-bg: rgba(255, 143, 0, 0.2); --note-important-text: #ffcc80; --note-important-border: #ff8f00;
-  --note-info-bg: rgba(25, 118, 210, 0.2); --note-info-text: #90caf9; --note-info-border: #1976d2;
-  --note-success-bg: rgba(46, 125, 50, 0.2); --note-success-text: #a5d6a7; --note-success-border: #2e7d32;
-  --supplement-card-bg: rgba(91, 192, 190, 0.25);
+  --note-critical-bg: rgba(183, 28, 28, 0.25); --note-critical-text: #ef9a9a; --note-critical-border: #c62828;
+  --note-important-bg: rgba(255, 143, 0, 0.18); --note-important-text: #ffcc80; --note-important-border: #ff8f00;
+  --note-info-bg: rgba(25, 118, 210, 0.18); --note-info-text: #90caf9; --note-info-border: #1976d2;
+  --note-success-bg: rgba(46, 125, 50, 0.18); --note-success-text: #a5d6a7; --note-success-border: #2e7d32;
+  --supplement-card-bg: rgba(107, 155, 158, 0.20);
 
-  --primary-rgb: 91, 192, 190;
+  --primary-rgb: 107, 155, 158;
 
   --metric-value-group-bg-initial: color-mix(in srgb, var(--surface-background) 90%, var(--border-color-soft) 50%);
   --metric-value-group-bg-expected: color-mix(in srgb, var(--surface-background) 90%, var(--accent-color) 25%);
   --metric-value-group-bg-current: color-mix(in srgb, var(--surface-background) 90%, var(--secondary-color) 30%);
   --code-bg: #16213E;
   --code-text-primary: #E0E0E0;
-  --code-accent: #5BC0BE;
+  --code-accent: #6B9B9E;
 }
 
 body.vivid-theme {
@@ -399,6 +400,20 @@ a { color: var(--secondary-color); text-decoration: none; transition: var(--tran
 li { margin-bottom: var(--space-sm); }
 a:hover { color: var(--primary-color); text-decoration: underline; }
 
+/* Приглушаване на ярките цветове в тъмна тема за по-добър визуален комфорт */
+body.dark-theme h1,
+body.dark-theme h2,
+body.dark-theme h3,
+body.dark-theme h4 {
+  opacity: 0.95;
+}
+body.dark-theme a {
+  opacity: 0.92;
+}
+body.dark-theme a:hover {
+  opacity: 1;
+}
+
 /* ==========================================================================
    1. ОСНОВНИ КОМПОНЕНТИ (Forms, Buttons, Icons)
    ========================================================================== */
@@ -434,8 +449,20 @@ button:focus-visible, .button:focus-visible {
 }
 .button-primary { background-color: var(--primary-color); color: var(--text-color-on-primary); }
 .button-primary:hover { background-color: color-mix(in srgb, var(--primary-color) 85%, black); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+body.dark-theme .button-primary {
+  opacity: 0.95;
+}
+body.dark-theme .button-primary:hover {
+  opacity: 1;
+}
 .button-secondary { background-color: var(--secondary-color); color: var(--text-color-on-secondary); }
 .button-secondary:hover { background-color: color-mix(in srgb, var(--secondary-color) 85%, black); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+body.dark-theme .button-secondary {
+  opacity: 0.95;
+}
+body.dark-theme .button-secondary:hover {
+  opacity: 1;
+}
 .button-danger { background-color: var(--color-danger); color: #fff;}
 .button-danger:hover { background-color: color-mix(in srgb, var(--color-danger) 85%, black); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 button:disabled, .button:disabled {
