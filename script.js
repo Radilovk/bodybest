@@ -154,15 +154,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (themeToggleBtn) {
         const icons = {
             light: '<i class="bi bi-moon-stars-fill"></i>',
-            dark: '<i class="bi bi-palette-fill"></i>',
-            vivid: '<i class="bi bi-brightness-high-fill"></i>'
+            dark: '<i class="bi bi-brightness-high-fill"></i>'
         };
-        const themeOrder = ['light', 'dark', 'vivid'];
+        const themeOrder = ['light', 'dark'];
         const getCurrent = () =>
             document.body.classList.contains('dark-theme')
                 ? 'dark'
-                : document.body.classList.contains('vivid-theme')
-                ? 'vivid'
                 : 'light';
         const updateIcon = () => {
             const current = getCurrent();

@@ -46,9 +46,7 @@ function getAllVars() {
 function readDefaultTheme(variant) {
   const className = variant === 'dark'
     ? 'dark-theme'
-    : variant === 'vivid'
-      ? 'vivid-theme'
-      : null;
+    : null;
   if (className) document.body.classList.add(className);
   const styles = getComputedStyle(document.body);
   const theme = {};

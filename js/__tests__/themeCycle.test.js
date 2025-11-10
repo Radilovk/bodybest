@@ -31,13 +31,13 @@ describe('theme cycling', () => {
     ({ toggleTheme, applyTheme, updateThemeButtonText, initializeTheme } = await import('../uiHandlers.js'));
   });
 
-  test('initializeTheme applies saved vivid theme', () => {
-    localStorage.setItem('theme', 'vivid');
+  test('initializeTheme applies saved dark theme', () => {
+    localStorage.setItem('theme', 'dark');
     initializeTheme();
-    expect(document.body.classList.contains('vivid-theme')).toBe(true);
+    expect(document.body.classList.contains('dark-theme')).toBe(true);
   });
 
-  test('toggleTheme cycles light -> dark -> vivid -> light', () => {
+  test('toggleTheme cycles light -> dark -> light', () => {
     applyTheme('light');
     updateThemeButtonText();
     expect(document.querySelector('.theme-text').textContent).toBe('Тъмна Тема');
@@ -45,11 +45,11 @@ describe('theme cycling', () => {
     toggleTheme();
     updateThemeButtonText();
     expect(document.body.classList.contains('dark-theme')).toBe(true);
-    expect(document.querySelector('.theme-text').textContent).toBe('Ярка Тема');
+    expect(document.querySelector('.theme-text').textContent).toBe('Светла Тема');
 
     toggleTheme();
     updateThemeButtonText();
-    expect(document.body.classList.contains('vivid-theme')).toBe(true);
-    expect(document.querySelector('.theme-text').textContent).toBe('Цветна Тема');
+    expect(document.body.classList.contains('light-theme')).toBe(true);
+    expect(document.querySelector('.theme-text').textContent).toBe('Тъмна Тема');
   });
 });
