@@ -8,9 +8,9 @@ import { cachedFetch } from './requestCache.js';
   const saved = localStorage.getItem('theme') || 'system';
   const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   let theme = saved === 'system' ? system : saved;
-  if (!['light', 'dark', 'vivid'].includes(theme)) theme = 'light';
+  if (!['light', 'dark'].includes(theme)) theme = 'light';
   document.body.classList.remove('light-theme', 'dark-theme', 'vivid-theme');
-  document.body.classList.add(theme === 'dark' ? 'dark-theme' : theme === 'vivid' ? 'vivid-theme' : 'light-theme');
+  document.body.classList.add(theme === 'dark' ? 'dark-theme' : 'light-theme');
 })();
 
 const form = document.getElementById('profileEditForm');

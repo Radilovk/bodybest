@@ -11,14 +11,11 @@ const inputs = {};
 let activeGroup = 'Dashboard';
 let activeVariant = document.body.classList.contains('dark-theme')
   ? 'dark'
-  : document.body.classList.contains('vivid-theme')
-  ? 'vivid'
   : 'light';
 
 const variants = {
   light: 'Светла',
-  dark: 'Тъмна',
-  vivid: 'Ярка'
+  dark: 'Тъмна'
 };
 
 const storageMap = {

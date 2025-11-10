@@ -1,4 +1,4 @@
-const themes = ['light', 'dark', 'vivid'];
+const themes = ['light', 'dark'];
 let systemThemeMediaQuery;
 
 function handleSystemThemeChange(e) {
@@ -24,7 +24,7 @@ export function initializeTheme() {
 
 export function applyTheme(theme) {
   document.body.classList.remove('light-theme', 'dark-theme', 'vivid-theme');
-  const cls = theme === 'dark' ? 'dark-theme' : theme === 'vivid' ? 'vivid-theme' : 'light-theme';
+  const cls = theme === 'dark' ? 'dark-theme' : 'light-theme';
   document.body.classList.add(cls);
   document.dispatchEvent(new Event('themechange'));
   document.dispatchEvent(new Event('progressChartThemeChange'));
@@ -33,8 +33,6 @@ export function applyTheme(theme) {
 export function toggleTheme() {
   const current = document.body.classList.contains('dark-theme')
     ? 'dark'
-    : document.body.classList.contains('vivid-theme')
-    ? 'vivid'
     : 'light';
   const idx = themes.indexOf(current);
   const nextTheme = themes[(idx + 1) % themes.length];
@@ -50,21 +48,13 @@ export function updateThemeButtonText() {
   const themeIconSpan = menu.querySelector('.menu-icon');
   const current = document.body.classList.contains('dark-theme')
     ? 'dark'
-    : document.body.classList.contains('vivid-theme')
-    ? 'vivid'
     : 'light';
   const nextTheme = themes[(themes.indexOf(current) + 1) % themes.length];
-  const labels = { light: 'Светла Тема', dark: 'Тъмна Тема', vivid: 'Ярка Тема' };
+  const labels = { light: 'Светла Тема', dark: 'Тъмна Тема' };
   const icons = {
     light: '<i class="bi bi-moon"></i>',
-    dark: '<i class="bi bi-palette-fill"></i>',
-    vivid: '<i class="bi bi-sun"></i>'
+    dark: '<i class="bi bi-sun"></i>'
   };
-  if (current === 'vivid') {
-    if (themeTextSpan) themeTextSpan.textContent = 'Цветна Тема';
-    if (themeIconSpan) themeIconSpan.innerHTML = '<i class="bi bi-palette"></i>';
-  } else {
-    if (themeTextSpan) themeTextSpan.textContent = labels[nextTheme];
-    if (themeIconSpan) themeIconSpan.innerHTML = icons[nextTheme];
-  }
+  if (themeTextSpan) themeTextSpan.textContent = labels[nextTheme];
+  if (themeIconSpan) themeIconSpan.innerHTML = icons[nextTheme];
 }
