@@ -256,18 +256,6 @@ export const sampleThemes = {
       "border-color": "#34374B",
       "color-danger": "#e74c3c",
       "color-success": "#2ecc71"
-    },
-    "Vivid": {
-      "primary-color": "#5BC0BE",
-      "secondary-color": "#FFD166",
-      "accent-color": "#FF6B6B",
-      "bg-color": "#1C1F2E",
-      "card-bg": "#252A41",
-      "text-color-primary": "#F0F2F5",
-      "text-color-secondary": "#A0A5B9",
-      "border-color": "#34374B",
-      "color-danger": "#e74c3c",
-      "color-success": "#2ecc71"
     }
   },
   "quest": {
