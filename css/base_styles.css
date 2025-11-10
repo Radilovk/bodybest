@@ -155,7 +155,7 @@
 body.dark-theme {
   /* Тъмна тема от index.html - прецизно приложена */
   /* Приглушени цветове за по-добра визия и намален контраст */
-  --primary-color: #6B9B9E;
+  --primary-color: #6B81A1;
   --secondary-color: #7A8FA8;
   --accent-color: #6D8A89;
   --accent-opacity: 0.85;
@@ -202,7 +202,7 @@ body.dark-theme {
   --progress-color: var(--color-success);
 
   /* Макро диаграма - тъмна тема - приглушени цветове */
-  --macro-protein-color: #6B9B9E;
+  --macro-protein-color: #6B81A1;
   --macro-fat-color: #E8C060;
   --macro-carbs-color: #E8746D;
   --macro-fiber-color: #68BB84;
@@ -243,7 +243,7 @@ body.dark-theme {
   --metric-value-group-bg-current: color-mix(in srgb, var(--surface-background) 90%, var(--secondary-color) 30%);
   --code-bg: #16213E;
   --code-text-primary: #E0E0E0;
-  --code-accent: #6B9B9E;
+  --code-accent: #6B81A1;
 }
 
 body.vivid-theme {
