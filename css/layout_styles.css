@@ -143,14 +143,15 @@ nav.tabs.has-overflow::after {
 }
 
 nav.tabs.styled-tabs {
-  background: var(--primary-color);
+  background: #23263B;
   color: var(--text-color-on-primary);
+  border-top: 1px solid #292B39;
   border-bottom: none;
   box-shadow: var(--shadow-sm);
 }
 
 nav.tabs.styled-tabs.has-overflow::after {
-  background: linear-gradient(to left, var(--primary-color), transparent);
+  background: linear-gradient(to left, #23263B, transparent);
 }
 
 nav.tabs.styled-tabs .tab-btn {
@@ -161,9 +162,9 @@ nav.tabs.styled-tabs .tab-btn {
   padding: var(--space-sm) var(--space-sm);
   flex-grow: 1; 
   flex-basis: 0; 
-  transition: color 0.25s, background-color 0.2s;
+  transition: color 0.18s, background-color 0.18s;
   background: transparent; border-top: none; border-left: none; border-right: none;
-  color: var(--text-color-on-primary);
+  color: #A0A1B4;
   font-weight: 500;
   text-align: center; 
   line-height: 1.3;
@@ -177,32 +178,32 @@ nav.tabs.styled-tabs .tab-btn::after {
     left: 50%;
     width: 70%;
     height: 3px;
-    background-color: var(--text-color-on-primary);
+    background-color: var(--primary-color);
     transform: translateX(-50%) scaleX(0);
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 nav.tabs.styled-tabs .tab-btn .tab-icon {
-  width: 1.4em;
-  height: 1.4em;
-  margin-bottom: 0.15rem;
+  width: 1.5em;
+  height: 1.5em;
+  margin-bottom: 0.25rem;
   flex-shrink: 0;
   transition: transform 0.2s ease-in-out;
 }
 nav.tabs.styled-tabs .tab-btn .tab-label {
-  font-size: 0.65rem; 
+  font-size: 0.75rem; /* 12px */
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
 }
 nav.tabs.styled-tabs .tab-btn:hover {
-  color: var(--text-color-on-primary);
-  background-color: color-mix(in srgb, var(--text-color-on-primary) 10%, var(--primary-color));
+  color: var(--primary-color);
+  background-color: rgba(85, 185, 243, 0.08);
 }
 nav.tabs.styled-tabs .tab-btn:hover .tab-icon {
   transform: scale(1.1);
 }
 nav.tabs.styled-tabs .tab-btn[aria-selected="true"] {
-  color: var(--text-color-on-primary);
+  color: var(--primary-color);
   font-weight: 700;
 }
 nav.tabs.styled-tabs .tab-btn[aria-selected="true"]::after {
