@@ -66,7 +66,11 @@ export const apiEndpoints = {
     analysisStatus: `${workerBaseUrl}/api/analysisStatus`,
     getInitialAnalysis: `${workerBaseUrl}/api/getInitialAnalysis`,
     getMaintenanceMode: `${workerBaseUrl}/api/getMaintenanceMode`,
-    setMaintenanceMode: `${workerBaseUrl}/api/setMaintenanceMode`
+    setMaintenanceMode: `${workerBaseUrl}/api/setMaintenanceMode`,
+    proposePlanChange: `${workerBaseUrl}/api/proposePlanChange`,
+    approvePlanChange: `${workerBaseUrl}/api/approvePlanChange`,
+    getPendingPlanChanges: `${workerBaseUrl}/api/getPendingPlanChanges`,
+    rejectPlanChange: `${workerBaseUrl}/api/rejectPlanChange`
 };
 
 // Cloudflare Account ID за използване в чат асистента

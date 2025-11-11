@@ -1382,6 +1382,14 @@ export default {
                 responseBody = await handleListUserKvRequest(request, env);
             } else if (method === 'POST' && path === '/api/updateKv') {
                 responseBody = await handleUpdateKvRequest(request, env);
+            } else if (method === 'POST' && path === '/api/proposePlanChange') {
+                responseBody = await handleProposePlanChangeRequest(request, env);
+            } else if (method === 'POST' && path === '/api/approvePlanChange') {
+                responseBody = await handleApprovePlanChangeRequest(request, env);
+            } else if (method === 'GET' && path === '/api/getPendingPlanChanges') {
+                responseBody = await handleGetPendingPlanChangesRequest(request, env);
+            } else if (method === 'POST' && path === '/api/rejectPlanChange') {
+                responseBody = await handleRejectPlanChangeRequest(request, env);
             } else {
                 responseBody = { success: false, error: 'Not Found', message: 'Ресурсът не е намерен.' };
                 responseStatus = 404;
@@ -2468,13 +2476,34 @@ async function handleChatRequest(request, env) {
             respToUser = respToUser.substring(0, sigIdx).trim();
             // Plan modification signal detected
             try {
-                const evaluation = await evaluatePlanChange(userId, { source: 'chat', request: planModReq }, env);
-                if (source === 'planModChat') {
-                    const evRes = await createUserEvent('planMod', userId, { description: planModReq, originalMessage: message, evaluation }, env);
-                    if (evRes && evRes.message) respToUser += `\n\n${evRes.message}`;
+                // Parse the AI's plan modification request to extract structured changes
+                const proposedChanges = await parsePlanModificationRequest(planModReq, userId, env);
+                
+                // Create a proposal for user approval
+                const proposalResult = await handleProposePlanChangeRequest(
+                    new Request('http://localhost/api/proposePlanChange', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            userId,
+                            proposedChanges,
+                            reasoning: planModReq,
+                            source: source || 'chat'
+                        })
+                    }),
+                    env
+                );
+                
+                if (proposalResult.success) {
+                    respToUser += `\n\n✅ Предложението за промяна на плана е създадено успешно. Моля, прегледайте го и одобрете или отхвърлете промените. Използвайте бутона "Преглед на предложените промени" за да видите детайлите.`;
+                } else if (proposalResult.statusHint === 409) {
+                    respToUser += `\n\n⚠️ ${proposalResult.message}`;
+                } else {
+                    respToUser += `\n\nЗабележка: Предложението не можа да бъде създадено автоматично. Моля, свържете се с поддръжка ако проблемът продължава.`;
                 }
+                
             } catch (kvErr) {
-                console.error(`CHAT_ERROR (${userId}): Failed save pending modification request:`, kvErr);
+                console.error(`CHAT_ERROR (${userId}): Failed to create plan proposal:`, kvErr);
+                respToUser += `\n\nЗабележка: Възникна грешка при създаване на предложението за промяна на плана.`;
             }
         }
 
@@ -7942,6 +7971,561 @@ async function handleUpdateKvRequest(request, env) {
 }
 // ------------- END FUNCTION: handleUpdateKvRequest -------------
 
+// ------------- START FUNCTION: handleProposePlanChangeRequest -------------
+/**
+ * Handles AI assistant proposals for plan changes.
+ * This endpoint is called by the AI assistant when it wants to suggest changes to the user's plan.
+ * The changes are stored as pending and require explicit user approval.
+ * 
+ * @param {Request} request - Contains userId, proposedChanges (description and structured changes), and reasoning
+ * @param {Object} env - Worker environment with KV bindings
+ * @returns {Object} Success response with proposal ID
+ */
+async function handleProposePlanChangeRequest(request, env) {
+    try {
+        const { userId, proposedChanges, reasoning, source } = await request.json();
+        
+        if (!userId || !proposedChanges) {
+            return { 
+                success: false, 
+                message: 'Липсва userId или предложени промени.', 
+                statusHint: 400 
+            };
+        }
+
+        // Check if there's already a pending proposal
+        const existingProposalStr = await env.USER_METADATA_KV.get(`${userId}_pending_plan_proposal`);
+        if (existingProposalStr) {
+            const existingProposal = safeParseJson(existingProposalStr, null);
+            if (existingProposal && existingProposal.status === 'pending') {
+                return { 
+                    success: false, 
+                    message: 'Вече има чакащо предложение за промяна на плана. Моля, прегледайте и одобрете или отхвърлете текущото предложение преди да създавате ново.', 
+                    statusHint: 409 
+                };
+            }
+        }
+
+        // Get current plan for comparison
+        const currentPlanStr = await env.USER_METADATA_KV.get(`${userId}_final_plan`);
+        const currentPlan = safeParseJson(currentPlanStr, null);
+        
+        if (!currentPlan) {
+            return { 
+                success: false, 
+                message: 'Не е намерен текущ план за потребителя.', 
+                statusHint: 404 
+            };
+        }
+
+        // Create proposal object
+        const proposalId = `proposal_${Date.now()}`;
+        const proposal = {
+            id: proposalId,
+            userId,
+            status: 'pending',
+            proposedChanges,
+            reasoning: reasoning || 'AI асистентът предлага тази промяна за оптимизиране на вашия план.',
+            source: source || 'ai_assistant',
+            currentPlanSnapshot: currentPlan,
+            createdAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
+        };
+
+        // Store the proposal
+        await env.USER_METADATA_KV.put(
+            `${userId}_pending_plan_proposal`,
+            JSON.stringify(proposal)
+        );
+
+        // Log the proposal creation
+        console.log(`PLAN_PROPOSAL_CREATED: User ${userId}, Proposal ${proposalId}`);
+
+        return {
+            success: true,
+            message: 'Предложението за промяна на плана е създадено успешно.',
+            proposalId,
+            proposal: {
+                id: proposalId,
+                proposedChanges,
+                reasoning: proposal.reasoning,
+                createdAt: proposal.createdAt
+            }
+        };
+
+    } catch (error) {
+        console.error(`Error in handleProposePlanChangeRequest: ${error.message}\n${error.stack}`);
+        return { 
+            success: false, 
+            message: 'Грешка при създаване на предложение за промяна на плана.', 
+            statusHint: 500 
+        };
+    }
+}
+// ------------- END FUNCTION: handleProposePlanChangeRequest -------------
+
+// ------------- START FUNCTION: handleApprovePlanChangeRequest -------------
+/**
+ * Handles user approval of AI-proposed plan changes.
+ * After approval, the changes are applied to the user's final_plan.
+ * 
+ * @param {Request} request - Contains userId and proposalId
+ * @param {Object} env - Worker environment with KV bindings
+ * @returns {Object} Success response with updated plan
+ */
+async function handleApprovePlanChangeRequest(request, env) {
+    try {
+        const { userId, proposalId, userComment } = await request.json();
+        
+        if (!userId) {
+            return { 
+                success: false, 
+                message: 'Липсва userId.', 
+                statusHint: 400 
+            };
+        }
+
+        // Get the pending proposal
+        const proposalStr = await env.USER_METADATA_KV.get(`${userId}_pending_plan_proposal`);
+        if (!proposalStr) {
+            return { 
+                success: false, 
+                message: 'Не е намерено чакащо предложение за промяна на плана.', 
+                statusHint: 404 
+            };
+        }
+
+        const proposal = safeParseJson(proposalStr, null);
+        if (!proposal || proposal.status !== 'pending') {
+            return { 
+                success: false, 
+                message: 'Предложението вече е обработено или е невалидно.', 
+                statusHint: 400 
+            };
+        }
+
+        // Validate proposal ID if provided
+        if (proposalId && proposal.id !== proposalId) {
+            return { 
+                success: false, 
+                message: 'Невалиден идентификатор на предложение.', 
+                statusHint: 400 
+            };
+        }
+
+        // Check if proposal has expired
+        const expiresAt = new Date(proposal.expiresAt);
+        if (expiresAt < new Date()) {
+            // Mark as expired and remove
+            await env.USER_METADATA_KV.delete(`${userId}_pending_plan_proposal`);
+            return { 
+                success: false, 
+                message: 'Предложението е изтекло. Моля, поискайте ново от асистента.', 
+                statusHint: 410 
+            };
+        }
+
+        // Get current plan
+        const currentPlanStr = await env.USER_METADATA_KV.get(`${userId}_final_plan`);
+        const currentPlan = safeParseJson(currentPlanStr, {});
+
+        // Apply the proposed changes
+        const updatedPlan = await applyPlanChanges(currentPlan, proposal.proposedChanges);
+
+        // Validate the updated plan has all required macros
+        const validationResult = await enforceCompletePlanBeforePersist({
+            plan: updatedPlan,
+            userId,
+            env,
+            planModelName: await env.RESOURCES_KV.get('model_plan_generation'),
+            basePrompt: 'Попълни липсващите макроси в обновения план.',
+            addLog: async () => {},
+            retryArtifactKey: null
+        });
+
+        if (!validationResult.success) {
+            return { 
+                success: false, 
+                message: 'Обновеният план не успя валидацията на макросите.', 
+                statusHint: 422 
+            };
+        }
+
+        const validatedPlan = validationResult.plan;
+
+        // Update metadata
+        if (!validatedPlan.generationMetadata) {
+            validatedPlan.generationMetadata = {};
+        }
+        validatedPlan.generationMetadata.lastModified = new Date().toISOString();
+        validatedPlan.generationMetadata.modifiedBy = 'ai_assistant_with_user_approval';
+        validatedPlan.generationMetadata.approvalComment = userComment || null;
+
+        // Save the updated plan
+        await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(validatedPlan));
+
+        // Update macros record
+        const macrosRecord = {
+            status: 'final',
+            data: validatedPlan.caloriesMacros ? { ...validatedPlan.caloriesMacros } : null
+        };
+        await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify(macrosRecord));
+
+        // Archive the approved proposal
+        proposal.status = 'approved';
+        proposal.approvedAt = new Date().toISOString();
+        proposal.userComment = userComment || null;
+        await env.USER_METADATA_KV.put(
+            `${userId}_plan_proposal_history_${proposal.id}`,
+            JSON.stringify(proposal)
+        );
+
+        // Remove the pending proposal
+        await env.USER_METADATA_KV.delete(`${userId}_pending_plan_proposal`);
+
+        // Clear pending mod flag if exists
+        await env.USER_METADATA_KV.delete(`pending_plan_mod_${userId}`);
+
+        // Log the approval
+        console.log(`PLAN_PROPOSAL_APPROVED: User ${userId}, Proposal ${proposal.id}`);
+
+        return {
+            success: true,
+            message: 'Промените в плана са приложени успешно!',
+            updatedPlan: validatedPlan
+        };
+
+    } catch (error) {
+        console.error(`Error in handleApprovePlanChangeRequest: ${error.message}\n${error.stack}`);
+        return { 
+            success: false, 
+            message: 'Грешка при одобряване на промените в плана.', 
+            statusHint: 500 
+        };
+    }
+}
+// ------------- END FUNCTION: handleApprovePlanChangeRequest -------------
+
+// ------------- START FUNCTION: handleGetPendingPlanChangesRequest -------------
+/**
+ * Gets pending plan change proposals for a user.
+ * 
+ * @param {Request} request - Contains userId as query parameter
+ * @param {Object} env - Worker environment with KV bindings
+ * @returns {Object} Pending proposals if any
+ */
+async function handleGetPendingPlanChangesRequest(request, env) {
+    try {
+        const url = new URL(request.url);
+        const userId = url.searchParams.get('userId');
+        
+        if (!userId) {
+            return { 
+                success: false, 
+                message: 'Липсва userId.', 
+                statusHint: 400 
+            };
+        }
+
+        const proposalStr = await env.USER_METADATA_KV.get(`${userId}_pending_plan_proposal`);
+        
+        if (!proposalStr) {
+            return {
+                success: true,
+                hasPending: false,
+                proposal: null
+            };
+        }
+
+        const proposal = safeParseJson(proposalStr, null);
+        
+        // Check if expired
+        if (proposal && proposal.expiresAt) {
+            const expiresAt = new Date(proposal.expiresAt);
+            if (expiresAt < new Date()) {
+                // Clean up expired proposal
+                await env.USER_METADATA_KV.delete(`${userId}_pending_plan_proposal`);
+                return {
+                    success: true,
+                    hasPending: false,
+                    proposal: null
+                };
+            }
+        }
+
+        return {
+            success: true,
+            hasPending: !!proposal,
+            proposal: proposal ? {
+                id: proposal.id,
+                proposedChanges: proposal.proposedChanges,
+                reasoning: proposal.reasoning,
+                createdAt: proposal.createdAt,
+                expiresAt: proposal.expiresAt
+            } : null
+        };
+
+    } catch (error) {
+        console.error(`Error in handleGetPendingPlanChangesRequest: ${error.message}\n${error.stack}`);
+        return { 
+            success: false, 
+            message: 'Грешка при зареждане на чакащите промени.', 
+            statusHint: 500 
+        };
+    }
+}
+// ------------- END FUNCTION: handleGetPendingPlanChangesRequest -------------
+
+// ------------- START FUNCTION: handleRejectPlanChangeRequest -------------
+/**
+ * Handles user rejection of AI-proposed plan changes.
+ * 
+ * @param {Request} request - Contains userId, proposalId, and optional reason
+ * @param {Object} env - Worker environment with KV bindings
+ * @returns {Object} Success response
+ */
+async function handleRejectPlanChangeRequest(request, env) {
+    try {
+        const { userId, proposalId, reason } = await request.json();
+        
+        if (!userId) {
+            return { 
+                success: false, 
+                message: 'Липсва userId.', 
+                statusHint: 400 
+            };
+        }
+
+        // Get the pending proposal
+        const proposalStr = await env.USER_METADATA_KV.get(`${userId}_pending_plan_proposal`);
+        if (!proposalStr) {
+            return { 
+                success: false, 
+                message: 'Не е намерено чакащо предложение за промяна на плана.', 
+                statusHint: 404 
+            };
+        }
+
+        const proposal = safeParseJson(proposalStr, null);
+        if (!proposal) {
+            return { 
+                success: false, 
+                message: 'Невалидно предложение.', 
+                statusHint: 400 
+            };
+        }
+
+        // Validate proposal ID if provided
+        if (proposalId && proposal.id !== proposalId) {
+            return { 
+                success: false, 
+                message: 'Невалиден идентификатор на предложение.', 
+                statusHint: 400 
+            };
+        }
+
+        // Archive the rejected proposal
+        proposal.status = 'rejected';
+        proposal.rejectedAt = new Date().toISOString();
+        proposal.rejectionReason = reason || null;
+        await env.USER_METADATA_KV.put(
+            `${userId}_plan_proposal_history_${proposal.id}`,
+            JSON.stringify(proposal)
+        );
+
+        // Remove the pending proposal
+        await env.USER_METADATA_KV.delete(`${userId}_pending_plan_proposal`);
+
+        // Clear pending mod flag if exists
+        await env.USER_METADATA_KV.delete(`pending_plan_mod_${userId}`);
+
+        // Log the rejection
+        console.log(`PLAN_PROPOSAL_REJECTED: User ${userId}, Proposal ${proposal.id}, Reason: ${reason || 'none'}`);
+
+        return {
+            success: true,
+            message: 'Предложението за промяна на плана е отхвърлено.'
+        };
+
+    } catch (error) {
+        console.error(`Error in handleRejectPlanChangeRequest: ${error.message}\n${error.stack}`);
+        return { 
+            success: false, 
+            message: 'Грешка при отхвърляне на промените в плана.', 
+            statusHint: 500 
+        };
+    }
+}
+// ------------- END FUNCTION: handleRejectPlanChangeRequest -------------
+
+// ------------- START FUNCTION: applyPlanChanges -------------
+/**
+ * Applies proposed changes to the current plan.
+ * This function merges the proposed changes into the existing plan structure.
+ * 
+ * @param {Object} currentPlan - Current user plan
+ * @param {Object} proposedChanges - Changes to apply
+ * @returns {Object} Updated plan
+ */
+async function applyPlanChanges(currentPlan, proposedChanges) {
+    const updatedPlan = typeof structuredClone === 'function'
+        ? structuredClone(currentPlan)
+        : JSON.parse(JSON.stringify(currentPlan));
+
+    // Apply changes based on the structure of proposedChanges
+    if (proposedChanges.caloriesMacros) {
+        if (proposedChanges.caloriesMacros.plan) {
+            updatedPlan.caloriesMacros = updatedPlan.caloriesMacros || {};
+            updatedPlan.caloriesMacros.plan = {
+                ...updatedPlan.caloriesMacros.plan,
+                ...proposedChanges.caloriesMacros.plan
+            };
+        }
+        if (proposedChanges.caloriesMacros.recommendation) {
+            updatedPlan.caloriesMacros = updatedPlan.caloriesMacros || {};
+            updatedPlan.caloriesMacros.recommendation = {
+                ...updatedPlan.caloriesMacros.recommendation,
+                ...proposedChanges.caloriesMacros.recommendation
+            };
+        }
+    }
+
+    // Apply changes to week1Menu if specified
+    if (proposedChanges.week1Menu) {
+        updatedPlan.week1Menu = updatedPlan.week1Menu || {};
+        for (const [day, meals] of Object.entries(proposedChanges.week1Menu)) {
+            if (meals) {
+                updatedPlan.week1Menu[day] = meals;
+            }
+        }
+    }
+
+    // Apply changes to principlesWeek2_4 if specified
+    if (proposedChanges.principlesWeek2_4) {
+        updatedPlan.principlesWeek2_4 = {
+            ...updatedPlan.principlesWeek2_4,
+            ...proposedChanges.principlesWeek2_4
+        };
+    }
+
+    // Apply changes to allowedForbiddenFoods if specified
+    if (proposedChanges.allowedForbiddenFoods) {
+        updatedPlan.allowedForbiddenFoods = {
+            ...updatedPlan.allowedForbiddenFoods,
+            ...proposedChanges.allowedForbiddenFoods
+        };
+    }
+
+    // Apply changes to hydrationCookingSupplements if specified
+    if (proposedChanges.hydrationCookingSupplements) {
+        updatedPlan.hydrationCookingSupplements = {
+            ...updatedPlan.hydrationCookingSupplements,
+            ...proposedChanges.hydrationCookingSupplements
+        };
+    }
+
+    // Apply changes to psychologicalGuidance if specified
+    if (proposedChanges.psychologicalGuidance) {
+        updatedPlan.psychologicalGuidance = {
+            ...updatedPlan.psychologicalGuidance,
+            ...proposedChanges.psychologicalGuidance
+        };
+    }
+
+    // Apply changes to detailedTargets if specified
+    if (proposedChanges.detailedTargets) {
+        updatedPlan.detailedTargets = {
+            ...updatedPlan.detailedTargets,
+            ...proposedChanges.detailedTargets
+        };
+    }
+
+    // Apply changes to profileSummary if specified
+    if (proposedChanges.profileSummary) {
+        updatedPlan.profileSummary = proposedChanges.profileSummary;
+    }
+
+    return updatedPlan;
+}
+// ------------- END FUNCTION: applyPlanChanges -------------
+
+// ------------- START FUNCTION: parsePlanModificationRequest -------------
+/**
+ * Parses AI's textual plan modification request into structured changes.
+ * Uses AI to extract structured data from the modification description.
+ * 
+ * @param {string} modificationText - The text description of changes from AI
+ * @param {string} userId - User ID
+ * @param {Object} env - Worker environment
+ * @returns {Object} Structured changes to apply
+ */
+async function parsePlanModificationRequest(modificationText, userId, env) {
+    try {
+        // Get current plan for context
+        const currentPlanStr = await env.USER_METADATA_KV.get(`${userId}_final_plan`);
+        const currentPlan = safeParseJson(currentPlanStr, null);
+        
+        if (!currentPlan) {
+            // Return a simple text-based change if no plan exists
+            return {
+                textDescription: modificationText,
+                structuredChanges: {}
+            };
+        }
+
+        // Use AI to parse the modification request into structured format
+        const parsePrompt = `
+Анализирай следната заявка за промяна на хранителен план и извлечи структурирани данни.
+
+ТЕКУЩА СТРУКТУРА НА ПЛАНА:
+${JSON.stringify(currentPlan, null, 2)}
+
+ЗАЯВКА ЗА ПРОМЯНА:
+${modificationText}
+
+Твоята задача е да извлечеш конкретните промени и да ги форматираш като JSON обект.
+Върни само валиден JSON без обяснения. Включи само полетата, които трябва да се променят.
+
+Възможни полета за промяна:
+- caloriesMacros: { plan: { calories, protein_grams, carbs_grams, fat_grams, fiber_grams }, recommendation: {...} }
+- week1Menu: { monday: [...], tuesday: [...], ... }
+- principlesWeek2_4: { generalGuidelines: "...", specificInstructions: [...] }
+- allowedForbiddenFoods: { allowed: [...], forbidden: [...] }
+- hydrationCookingSupplements: { hydration: "...", cookingMethods: [...], supplements: [...] }
+- psychologicalGuidance: { strategies: [...], motivationalMessages: [...] }
+- detailedTargets: { quantitative: [...], descriptive: [...] }
+- profileSummary: "..."
+
+Отговори само с JSON:`;
+
+        const modelName = await env.RESOURCES_KV.get('model_plan_generation');
+        const parsedResponse = await callModelRef.current(
+            modelName,
+            parsePrompt,
+            env,
+            { temperature: 0.3, maxTokens: 2000 }
+        );
+
+        // Clean and parse the AI response
+        const cleanedJson = cleanGeminiJson(parsedResponse);
+        const structuredChanges = safeParseJson(cleanedJson, {});
+
+        return {
+            textDescription: modificationText,
+            ...structuredChanges
+        };
+
+    } catch (error) {
+        console.error(`Error parsing plan modification request: ${error.message}`);
+        // Return the raw text as fallback
+        return {
+            textDescription: modificationText,
+            structuredChanges: {}
+        };
+    }
+}
+// ------------- END FUNCTION: parsePlanModificationRequest -------------
+
 // ------------- START FUNCTION: resetAiPresetIndexCache -------------
 function resetAiPresetIndexCache() {
     aiPresetIndexCache = null;
@@ -7992,4 +8576,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callModelWithTimeout, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary, AI_CALL_TIMEOUT_MS, DEFAULT_PLAN_CALL_TIMEOUT_MS, resolvePlanCallTimeoutMs };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callModelWithTimeout, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleProposePlanChangeRequest, handleApprovePlanChangeRequest, handleGetPendingPlanChangesRequest, handleRejectPlanChangeRequest, applyPlanChanges, parsePlanModificationRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary, AI_CALL_TIMEOUT_MS, DEFAULT_PLAN_CALL_TIMEOUT_MS, resolvePlanCallTimeoutMs };
