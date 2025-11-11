@@ -5,14 +5,84 @@
 
 import { apiEndpoints } from './config.js';
 
+// Cache configuration
+const CACHE_KEY_PREFIX = 'plan_proposal_cache_';
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
+
 /**
- * Checks for pending plan change proposals
+ * Gets cached proposal check result if available and not expired
  * @param {string} userId - User ID
+ * @returns {Object|null} Cached data or null
+ */
+function getCachedProposalCheck(userId) {
+    try {
+        const cacheKey = CACHE_KEY_PREFIX + userId;
+        const cached = sessionStorage.getItem(cacheKey);
+        
+        if (!cached) return null;
+        
+        const { data, timestamp } = JSON.parse(cached);
+        const age = Date.now() - timestamp;
+        
+        if (age > CACHE_TTL_MS) {
+            sessionStorage.removeItem(cacheKey);
+            return null;
+        }
+        
+        return data;
+    } catch (error) {
+        console.warn('Error reading proposal cache:', error);
+        return null;
+    }
+}
+
+/**
+ * Caches proposal check result
+ * @param {string} userId - User ID
+ * @param {Object} data - Data to cache
+ */
+function cacheProposalCheck(userId, data) {
+    try {
+        const cacheKey = CACHE_KEY_PREFIX + userId;
+        sessionStorage.setItem(cacheKey, JSON.stringify({
+            data,
+            timestamp: Date.now()
+        }));
+    } catch (error) {
+        console.warn('Error caching proposal check:', error);
+    }
+}
+
+/**
+ * Clears proposal check cache for a user
+ * @param {string} userId - User ID
+ */
+export function clearProposalCache(userId) {
+    try {
+        const cacheKey = CACHE_KEY_PREFIX + userId;
+        sessionStorage.removeItem(cacheKey);
+    } catch (error) {
+        console.warn('Error clearing proposal cache:', error);
+    }
+}
+
+/**
+ * Checks for pending plan change proposals (with caching)
+ * @param {string} userId - User ID
+ * @param {boolean} skipCache - Force skip cache and fetch fresh data
  * @returns {Promise<Object>} Proposal data if exists
  */
-export async function checkPendingProposals(userId) {
+export async function checkPendingProposals(userId, skipCache = false) {
     if (!userId) {
         throw new Error('User ID is required');
+    }
+
+    // Try cache first unless explicitly skipped
+    if (!skipCache) {
+        const cached = getCachedProposalCheck(userId);
+        if (cached) {
+            return cached;
+        }
     }
 
     try {
@@ -22,6 +92,9 @@ export async function checkPendingProposals(userId) {
         if (!data.success) {
             throw new Error(data.message || 'Грешка при проверка за чакащи предложения');
         }
+
+        // Cache the result
+        cacheProposalCheck(userId, data);
 
         return data;
     } catch (error) {
@@ -61,6 +134,9 @@ export async function approvePlanChange(userId, proposalId, userComment = '') {
             throw new Error(data.message || 'Грешка при одобряване на промените');
         }
 
+        // Clear cache after approval
+        clearProposalCache(userId);
+
         return data;
     } catch (error) {
         console.error('Error approving plan change:', error);
@@ -98,6 +174,9 @@ export async function rejectPlanChange(userId, proposalId, reason = '') {
         if (!data.success) {
             throw new Error(data.message || 'Грешка при отхвърляне на промените');
         }
+
+        // Clear cache after rejection
+        clearProposalCache(userId);
 
         return data;
     } catch (error) {
@@ -300,17 +379,20 @@ function escapeHtml(text) {
 
 /**
  * Initializes the proposal manager for the current page
- * Checks for pending proposals on page load and shows notification
+ * Uses sessionStorage cache (5min TTL) to minimize backend requests.
+ * Only makes API call on first load within cache window.
  * @param {string} userId - User ID
+ * @param {Object} options - Configuration options
+ * @param {boolean} options.skipCache - Force fresh check, bypass cache
  */
-export async function initPlanProposalManager(userId) {
+export async function initPlanProposalManager(userId, options = {}) {
     if (!userId) {
         console.warn('No user ID provided for plan proposal manager');
         return;
     }
 
     try {
-        const result = await checkPendingProposals(userId);
+        const result = await checkPendingProposals(userId, options.skipCache);
         
         if (result.hasPending && result.proposal) {
             // Show a notification badge or banner
@@ -318,6 +400,25 @@ export async function initPlanProposalManager(userId) {
         }
     } catch (error) {
         console.error('Error initializing plan proposal manager:', error);
+    }
+}
+
+/**
+ * Checks for proposals after a chat interaction
+ * This should be called when AI mentions plan changes in chat
+ * @param {string} userId - User ID
+ */
+export async function checkAfterChatInteraction(userId) {
+    if (!userId) return;
+    
+    // Force fresh check after chat (skip cache)
+    try {
+        const result = await checkPendingProposals(userId, true);
+        if (result.hasPending && result.proposal) {
+            showPendingProposalNotification(result.proposal);
+        }
+    } catch (error) {
+        console.error('Error checking proposals after chat:', error);
     }
 }
 

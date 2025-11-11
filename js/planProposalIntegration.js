@@ -3,27 +3,52 @@
  * 
  * This file demonstrates how to integrate the plan proposal system
  * into the user dashboard (code.html / app.js)
+ * 
+ * OPTIMIZATION NOTES:
+ * - Uses sessionStorage cache with 5-minute TTL
+ * - Only makes backend request once per cache window
+ * - Cache is automatically cleared after approve/reject
+ * - Minimal backend load impact
  */
 
 // 1. Import the module at the top of your app.js or relevant script
 import { 
     initPlanProposalManager, 
     checkPendingProposals, 
+    checkAfterChatInteraction,
     showProposalModal, 
     approvePlanChange, 
     rejectPlanChange 
 } from './planProposalManager.js';
 
-// 2. Initialize on page load
+// 2. Initialize on page load (uses cache, minimal backend impact)
 document.addEventListener('DOMContentLoaded', async () => {
     const userId = localStorage.getItem('userId');
     if (!userId) return;
 
-    // Initialize the proposal manager
-    // This will automatically check for pending proposals
-    // and show a notification if any exist
+    // This will check cache first. Only makes API call if cache is empty/expired.
+    // Result is cached for 5 minutes to prevent repeated requests.
     await initPlanProposalManager(userId);
 });
+
+// 2b. RECOMMENDED: Check after chat interactions instead of on every page load
+// This is the most efficient approach - only check when AI might have created a proposal
+export function setupChatProposalListener() {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+    
+    // Listen for chat responses that mention plan modifications
+    // This should be integrated into your chat handler
+    document.addEventListener('chatResponseReceived', async (event) => {
+        const message = event.detail?.message || '';
+        
+        // Check if AI mentioned creating a proposal
+        if (message.includes('Предложението за промяна на плана е създадено')) {
+            // Force fresh check (bypasses cache)
+            await checkAfterChatInteraction(userId);
+        }
+    });
+}
 
 // 3. Optional: Add a manual check button in your UI
 // For example, in the dashboard toolbar or settings menu
@@ -41,7 +66,8 @@ export function setupProposalCheckButton() {
             checkButton.disabled = true;
             checkButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Проверява се...';
             
-            const result = await checkPendingProposals(userId);
+            // Force fresh check when user clicks button (bypass cache)
+            const result = await checkPendingProposals(userId, true);
             
             if (result.hasPending && result.proposal) {
                 showProposalModal(
@@ -88,6 +114,7 @@ export function highlightProposalInChat(chatMessage) {
             const userId = localStorage.getItem('userId');
             if (!userId) return;
             
+            // Use cached check if available (efficient)
             const result = await checkPendingProposals(userId);
             if (result.hasPending && result.proposal) {
                 showProposalModal(
