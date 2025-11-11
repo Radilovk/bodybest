@@ -2,7 +2,7 @@
    universal_template_styles.css - Стил за Универсалното Табло MyBody.Best
    Версия: 2.11.0 (Корекции по UI/UX от скрийншоти v3, стилове за адаптивен въпросник)
    ========================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Inter:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Nunito+Sans:wght@400;700&display=swap');
 
 /* ==========================================================================
    0. ОСНОВНИ ПРОМЕНЛИВИ И ГЛОБАЛНИ СТИЛОВЕ
@@ -68,30 +68,30 @@
   --space-md: calc(var(--space-unit) * 3);
   --space-lg: calc(var(--space-unit) * 4);
   --space-xl: calc(var(--space-unit) * 5);
-  --radius-sm: 0.5rem; --radius-md: 0.75rem; --radius-lg: 1rem; --radius-xl: 1.25rem; --radius-round: 50%;
+  --radius-sm: 0.3rem; --radius-md: 0.6rem; --radius-lg: 0.8rem; --radius-xl: 1rem; --radius-round: 50%;
 
-  --font-primary: 'Montserrat', 'Inter', system-ui, sans-serif;
+  --font-primary: 'Inter', 'Nunito Sans', system-ui, sans-serif;
   --font-secondary: var(--font-primary);
-  /* Размери на шрифтове - оптимизирани за четимост */
-  --fs-base: 1rem; /* 16px */
-  --fs-sm: 0.875rem; /* 14px */
-  --fs-xs: 0.75rem; /* 12px */
-  --fs-md: 1.125rem; /* 18px */
-  --fs-lg: 1.25rem; /* 20px */
-  --fs-xl: 1.5rem; /* 24px */
-  --fs-xxl: 2rem; /* 32px */
-  --fs-3xl: 3rem; /* 48px */
+  /* Размери на шрифтове */
+  --fs-base: 1rem;
+  --fs-sm: 0.875rem;
+  --fs-xs: 0.75rem;
+  --fs-md: 1.125rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.5rem;
+  --fs-xxl: 2rem;
+  --fs-3xl: 3rem;
 
-  --color-success: #50C878; --color-success-bg: rgba(80, 200, 120, 0.1);
+  --color-success: #2ecc71; --color-success-bg: rgba(46, 204, 113, 0.1);
   --color-warning: #f39c12; --color-warning-bg: rgba(243, 156, 18, 0.1);
-  --color-danger: #E54358; --color-danger-bg: rgba(229, 67, 88, 0.1);
+  --color-danger: #e74c3c; --color-danger-bg: rgba(231, 76, 60, 0.1);
   --color-info: #3498db; --color-info-bg: rgba(52, 152, 219, 0.1);
 
   /* Цветови точки за прогрес баровете */
-  --progress-color-0: 229, 67, 88;
+  --progress-color-0: 231, 76, 60;
   --progress-color-50: 243, 156, 18;
   --progress-color-75: 255, 203, 0;
-  --progress-color-100: 80, 200, 120;
+  --progress-color-100: 46, 204, 113;
 
   --progress-bar-bg-empty: #e9ecef;
   --progress-gradient: linear-gradient(to right, var(--color-danger), var(--color-warning), var(--color-success));
@@ -115,8 +115,8 @@
   --fab-bg: var(--primary-color); --fab-icon: #fff;
 
   --rating-empty-bg: #e0e0e0; --rating-border: #ccc;
-  --rating-1: #E54358; --rating-2: #f39c12; --rating-3: #f1c40f;
-  --rating-4: #a6d96a; --rating-5: #50C878;
+  --rating-1: #e74c3c; --rating-2: #f39c12; --rating-3: #f1c40f;
+  --rating-4: #a6d96a; --rating-5: #2ecc71;
 
   --progress-level-1: var(--rating-1);
   --progress-level-2: var(--rating-2);
@@ -153,97 +153,97 @@
 }
 
 body.dark-theme {
-  /* Подобрена тъмна тема - WCAG, Material Design, iOS HIG */
-  /* Основана на #171923 фон с леко изсветлени карти */
-  --primary-color: #55B9F3;
-  --secondary-color: #46F0DE;
-  --accent-color: #F445AB;
-  --accent-opacity: 0.92;
+  /* Тъмна тема от index.html - прецизно приложена */
+  /* Приглушени цветове за по-добра визия и намален контраст */
+  --primary-color: #405872;
+  --secondary-color: #7A8FA8;
+  --accent-color: #6D8A89;
+  --accent-opacity: 0.85;
   --tertiary-color: #7D6CAD;
 
-  --text-color-primary: #F3F3FA;
-  --text-color-secondary: #A0A1B4;
-  --text-color-muted: #6E7080;
-  --text-color-on-primary: #171923;
-  --text-color-on-secondary: #171923;
-  --text-color-disabled: #6E7080;
-  --header-title-color: var(--text-color-primary);
+  --text-color-primary: #E0E0E0;
+  --text-color-secondary: #A0A5C0;
+  --text-color-muted: #bbb;
+  --text-color-on-primary: #1b263b;
+  --text-color-on-secondary: #FFFFFF;
+  --text-color-disabled: #adb5bd;
+  --header-title-color: var(--bg-color);
   --font-color-primary: var(--text-color-primary);
   --font-color-secondary: var(--text-color-secondary);
   --font-color-muted: var(--text-color-muted);
   --font-color-on-primary: var(--text-color-on-primary);
-  --header-bg-solid: #23263B;
+  --header-bg-solid: rgb(40, 40, 60);
   --mobile-menu-bg: var(--header-bg-solid);
 
-  --bg-color: #171923;
-  --bg-gradient: linear-gradient(135deg, #171923 0%, #22222A 100%);
-  --surface-background: #23263B;
-  --surface-background-rgb: 35,38,59; /* За rgba overlay */
-  --card-bg: #23263B;
-  --card-bg-rgb: 35,38,59;
-  --card-bg-opacity: 0.95;
+  --bg-color: #16213E;
+  --bg-gradient: linear-gradient(135deg, #16213E 0%, #1A1A2E 100%);
+  --surface-background: rgba(40, 40, 60, 0.75);
+  --surface-background-rgb: 40,40,60; /* За rgba overlay */
+  --card-bg: rgba(40, 40, 60, 0.75);
+  --card-bg-rgb: 40,40,60;
+  --card-bg-opacity: 0.75;
   --glass-blur: 10px;
 
-  --border-color: rgba(85, 185, 243, 0.2);
-  --border-color-soft: rgba(85, 185, 243, 0.1);
+  --border-color: rgba(107, 155, 158, 0.25);
+  --border-color-soft: rgba(107, 155, 158, 0.12);
 
-  --input-bg: #282B3D;
-  --input-bg-disabled: #1F2231;
-  --input-border-color: rgba(85, 185, 243, 0.2);
+  --input-bg: rgba(40, 40, 60, 0.75);
+  --input-bg-disabled: #2C3147;
+  --input-border-color: rgba(107, 155, 158, 0.25);
   --input-focus-border: var(--primary-color);
-  --input-focus-shadow: rgba(85, 185, 243, 0.3);
+  --input-focus-shadow: rgba(107, 155, 158, 0.35);
 
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.36);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.36);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.36);
-  --shadow-soft: 0px 6px 18px rgba(0, 0, 0, 0.36), 0px 2px 7px rgba(0, 0, 0, 0.24);
+  --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.3);
+  --shadow-soft: 0px 6px 18px rgba(var(--surface-background-rgb), 0.5), 0px 2px 7px rgba(var(--surface-background-rgb), 0.3);
 
-  --progress-bar-bg-empty: #282B3D;
-  --progress-color: #50C878;
+  --progress-bar-bg-empty: #393E57;
+  --progress-color: var(--color-success);
 
-  /* Макро диаграма - тъмна тема - ярки но не крещящи цветове */
-  --macro-protein-color: #55B9F3;
-  --macro-fat-color: #FFD166;
-  --macro-carbs-color: #FF6B6B;
-  --macro-fiber-color: #50C878;
-  --macro-ring-highlight: #F3F3FA;
-  --macro-stroke-color: #282B3D;
+  /* Макро диаграма - тъмна тема - приглушени цветове */
+  --macro-protein-color: #405872;
+  --macro-fat-color: #E8C060;
+  --macro-carbs-color: #E8746D;
+  --macro-fiber-color: #68BB84;
+  --macro-ring-highlight: #ffffff;
+  --macro-stroke-color: #444444;
 
-  --toast-bg: rgba(35, 38, 59, 0.98); --toast-text: #F3F3FA;
+  --toast-bg: rgba(40, 40, 60, 0.95); --toast-text: #E0E0E0;
   --modal-overlay-bg: rgba(0,0,0, 0.75);
-  --scrollbar-thumb: var(--primary-color); --scrollbar-track: #171923;
+  --scrollbar-thumb: var(--primary-color); --scrollbar-track: #333;
 
-  --icon-color-default: var(--primary-color);
+  --icon-color-default: var(--accent-color);
 
-  --menu-bg: rgba(35, 38, 59, 0.95);
+  --menu-bg: rgba(40, 40, 60, 0.9);
   --menu-overlay-bg: rgba(0, 0, 0, 0.65);
-  --menu-hover-bg: rgba(85, 185, 243, 0.15);
+  --menu-hover-bg: color-mix(in srgb, var(--primary-color) 25%, transparent);
 
-  --fab-bg: var(--primary-color); --fab-icon: #171923;
+  --fab-bg: var(--primary-color); --fab-icon: #1b263b;
 
-  --rating-empty-bg: #282B3D; --rating-border: #3A3F54;
+  --rating-empty-bg: #444; --rating-border: #666;
 
-  --chat-widget-bg: #23263B;
+  --chat-widget-bg: color-mix(in srgb, var(--surface-background) 90%, black);
   --chat-header-bg: var(--primary-color);
-  --chat-header-text: #171923;
-  --chat-message-user-bg: rgba(85, 185, 243, 0.15);
-  --chat-message-bot-bg: rgba(70, 240, 222, 0.12);
-  --chat-input-field-bg: #282B3D;
+  --chat-header-text: #FFFFFF;
+  --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 30%, var(--surface-background));
+  --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 30%, var(--surface-background));
+  --chat-input-field-bg: color-mix(in srgb, var(--surface-background) 70%, #1A1A2E);
 
-  --note-critical-bg: rgba(229, 67, 88, 0.15); --note-critical-text: #FF8A9B; --note-critical-border: #E54358;
-  --note-important-bg: rgba(255, 209, 102, 0.12); --note-important-text: #FFD166; --note-important-border: #FFD166;
-  --note-info-bg: rgba(85, 185, 243, 0.12); --note-info-text: #55B9F3; --note-info-border: #55B9F3;
-  --note-success-bg: rgba(80, 200, 120, 0.12); --note-success-text: #50C878; --note-success-border: #50C878;
-  --supplement-card-bg: rgba(70, 240, 222, 0.12);
+  --note-critical-bg: rgba(183, 28, 28, 0.25); --note-critical-text: #ef9a9a; --note-critical-border: #c62828;
+  --note-important-bg: rgba(255, 143, 0, 0.18); --note-important-text: #ffcc80; --note-important-border: #ff8f00;
+  --note-info-bg: rgba(25, 118, 210, 0.18); --note-info-text: #90caf9; --note-info-border: #1976d2;
+  --note-success-bg: rgba(46, 125, 50, 0.18); --note-success-text: #a5d6a7; --note-success-border: #2e7d32;
+  --supplement-card-bg: rgba(107, 155, 158, 0.20);
 
-  --primary-rgb: 85, 185, 243;
+  --primary-rgb: 107, 155, 158;
 
-  --metric-value-group-bg-initial: rgba(160, 161, 180, 0.08);
-  --metric-value-group-bg-expected: rgba(85, 185, 243, 0.12);
-  --metric-value-group-bg-current: rgba(70, 240, 222, 0.12);
-  --code-bg: #171923;
-  --code-text-primary: #F3F3FA;
-  --code-accent: #55B9F3;
+  --metric-value-group-bg-initial: color-mix(in srgb, var(--surface-background) 90%, var(--border-color-soft) 50%);
+  --metric-value-group-bg-expected: color-mix(in srgb, var(--surface-background) 90%, var(--accent-color) 25%);
+  --metric-value-group-bg-current: color-mix(in srgb, var(--surface-background) 90%, var(--secondary-color) 30%);
+  --code-bg: #16213E;
+  --code-text-primary: #E0E0E0;
+  --code-accent: #405872;
 }
 
 body.vivid-theme {
@@ -353,7 +353,7 @@ body {
   font-family: var(--font-primary);
   font-size: var(--fs-base);
   font-weight: 400;
-  line-height: 1.4;
+  line-height: 1.65;
   background: var(--bg-color) var(--bg-gradient);
   background-attachment: fixed;
   color: var(--text-color-primary);
