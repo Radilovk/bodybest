@@ -7979,7 +7979,7 @@ async function handleUpdateKvRequest(request, env) {
  * 
  * @param {Request} request - Contains userId, proposedChanges (description and structured changes), and reasoning
  * @param {Object} env - Worker environment with KV bindings
- * @returns {Object} Success response with proposal ID
+ * @returns {Promise<Object>} Success response with proposal ID
  */
 async function handleProposePlanChangeRequest(request, env) {
     try {
@@ -8071,7 +8071,7 @@ async function handleProposePlanChangeRequest(request, env) {
  * 
  * @param {Request} request - Contains userId and proposalId
  * @param {Object} env - Worker environment with KV bindings
- * @returns {Object} Success response with updated plan
+ * @returns {Promise<Object>} Success response with updated plan
  */
 async function handleApprovePlanChangeRequest(request, env) {
     try {
@@ -8212,7 +8212,7 @@ async function handleApprovePlanChangeRequest(request, env) {
  * 
  * @param {Request} request - Contains userId as query parameter
  * @param {Object} env - Worker environment with KV bindings
- * @returns {Object} Pending proposals if any
+ * @returns {Promise<Object>} Pending proposals if any
  */
 async function handleGetPendingPlanChangesRequest(request, env) {
     try {
@@ -8282,7 +8282,7 @@ async function handleGetPendingPlanChangesRequest(request, env) {
  * 
  * @param {Request} request - Contains userId, proposalId, and optional reason
  * @param {Object} env - Worker environment with KV bindings
- * @returns {Object} Success response
+ * @returns {Promise<Object>} Success response
  */
 async function handleRejectPlanChangeRequest(request, env) {
     try {
@@ -8365,7 +8365,7 @@ async function handleRejectPlanChangeRequest(request, env) {
  * 
  * @param {Object} currentPlan - Current user plan
  * @param {Object} proposedChanges - Changes to apply
- * @returns {Object} Updated plan
+ * @returns {Promise<Object>} Updated plan
  */
 async function applyPlanChanges(currentPlan, proposedChanges) {
     const updatedPlan = typeof structuredClone === 'function'
@@ -8457,7 +8457,7 @@ async function applyPlanChanges(currentPlan, proposedChanges) {
  * @param {string} modificationText - The text description of changes from AI
  * @param {string} userId - User ID
  * @param {Object} env - Worker environment
- * @returns {Object} Structured changes to apply
+ * @returns {Promise<Object>} Structured changes to apply
  */
 async function parsePlanModificationRequest(modificationText, userId, env) {
     try {
