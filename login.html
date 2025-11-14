@@ -45,10 +45,11 @@
   document.getElementById('loginBtn').addEventListener('click', () => {
     const user = userInput.value;
     const pass = passInput.value;
+    const rememberMe = rememberChk.checked;
     fetch('login.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: user, password: pass })
+      body: JSON.stringify({ username: user, password: pass, rememberMe: rememberMe })
     })
     .then(res => res.json())
     .then(data => {
