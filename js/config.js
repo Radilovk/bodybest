@@ -19,6 +19,7 @@ export const apiEndpoints = {
     registerDemo: `${workerBaseUrl}/api/registerDemo`,
     dashboard: `${workerBaseUrl}/api/dashboardData`,
     log: `${workerBaseUrl}/api/log`,
+    batchLog: `${workerBaseUrl}/api/batch-log`,
     chat: `${workerBaseUrl}/api/chat`,
     planStatus: `${workerBaseUrl}/api/planStatus`,
     planLog: `${workerBaseUrl}/api/planLog`,
