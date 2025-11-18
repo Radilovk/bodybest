@@ -1285,6 +1285,8 @@ export default {
                 responseBody = await handleDashboardDataRequest(request, env);
             } else if (method === 'POST' && path === '/api/log') {
                 responseBody = await handleLogRequest(request, env);
+            } else if (method === 'POST' && path === '/api/batch-log') {
+                responseBody = await handleBatchLogRequest(request, env);
             } else if (method === 'POST' && path === '/api/regeneratePlan') {
                 responseBody = await handleRegeneratePlanRequest(request, env, ctx);
             } else if (method === 'POST' && path === '/api/updateStatus') {
@@ -2267,6 +2269,96 @@ async function handleLogRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleLogRequest -------------
+
+// ------------- START FUNCTION: handleBatchLogRequest -------------
+/**
+ * Обработва batch операция за множество log записи
+ * Оптимизира синхронизацията при offline-first подход
+ */
+async function handleBatchLogRequest(request, env) {
+    try {
+        const inputData = await request.json();
+        const logs = inputData.logs;
+        
+        if (!Array.isArray(logs) || logs.length === 0) {
+            return { 
+                success: false, 
+                message: 'Липсват логове за обработка.', 
+                statusHint: 400 
+            };
+        }
+
+        // Валидираме всички логове преди обработка
+        for (const log of logs) {
+            if (!log.userId) {
+                return { 
+                    success: false, 
+                    message: 'Липсва userId в един от логовете.', 
+                    statusHint: 400 
+                };
+            }
+        }
+
+        const results = [];
+        const errors = [];
+
+        // Обработваме всеки лог
+        for (const logData of logs) {
+            try {
+                // Създаваме mock request за handleLogRequest
+                const mockRequest = {
+                    json: async () => logData
+                };
+
+                const result = await handleLogRequest(mockRequest, env);
+                
+                if (result.success) {
+                    results.push({
+                        offlineId: logData._offlineId,
+                        userId: logData.userId,
+                        savedDate: result.savedDate,
+                        success: true
+                    });
+                } else {
+                    errors.push({
+                        offlineId: logData._offlineId,
+                        userId: logData.userId,
+                        error: result.message,
+                        success: false
+                    });
+                }
+            } catch (error) {
+                console.error(`Error processing log in batch: ${error.message}`);
+                errors.push({
+                    offlineId: logData._offlineId,
+                    userId: logData.userId,
+                    error: error.message,
+                    success: false
+                });
+            }
+        }
+
+        const successCount = results.length;
+        const errorCount = errors.length;
+
+        return {
+            success: errorCount === 0,
+            message: `Обработени ${successCount} от ${logs.length} логове.`,
+            processed: successCount,
+            total: logs.length,
+            results: results,
+            errors: errorCount > 0 ? errors : undefined
+        };
+    } catch (error) {
+        console.error(`Error in handleBatchLogRequest: ${error.message}\n${error.stack}`);
+        return { 
+            success: false, 
+            message: `Грешка при batch обработка: ${error.message}`, 
+            statusHint: 500 
+        };
+    }
+}
+// ------------- END FUNCTION: handleBatchLogRequest -------------
 
 // ------------- START FUNCTION: handleUpdateStatusRequest -------------
 async function handleUpdateStatusRequest(request, env) {

@@ -179,3 +179,217 @@ export function getCacheStats() {
     })),
   };
 }
+
+/**
+ * Persistent Cache клас с localStorage поддръжка
+ * Използва се за кеширане на dashboard и profile данни
+ */
+export class PersistentCache {
+  /**
+   * @param {string} storageKey - Ключ за localStorage
+   * @param {number} defaultTTL - TTL по подразбиране в милисекунди (5 минути)
+   */
+  constructor(storageKey = 'bodybest_cache', defaultTTL = 300000) {
+    this.storageKey = storageKey;
+    this.defaultTTL = defaultTTL;
+    this.memoryCache = new Map();
+    this.loadFromStorage();
+  }
+
+  /**
+   * Зарежда кеша от localStorage
+   */
+  loadFromStorage() {
+    try {
+      const stored = localStorage.getItem(this.storageKey);
+      if (!stored) return;
+
+      const data = JSON.parse(stored);
+      const now = Date.now();
+
+      // Зареждаме само валидните записи
+      Object.entries(data).forEach(([key, entry]) => {
+        if (entry.expiry > now) {
+          this.memoryCache.set(key, entry);
+        }
+      });
+    } catch (error) {
+      console.warn('Failed to load cache from storage:', error);
+      // При грешка изчистваме локалния кеш
+      try {
+        localStorage.removeItem(this.storageKey);
+      } catch {
+        // Игнорираме грешки при изчистване
+      }
+    }
+  }
+
+  /**
+   * Записва кеша в localStorage
+   */
+  saveToStorage() {
+    try {
+      const data = Object.fromEntries(this.memoryCache);
+      localStorage.setItem(this.storageKey, JSON.stringify(data));
+    } catch (error) {
+      console.warn('Failed to save cache to storage:', error);
+      
+      // Ако localStorage е пълен, почистваме стари записи
+      if (error.name === 'QuotaExceededError') {
+        this.cleanupExpired();
+        // Опитваме отново
+        try {
+          const data = Object.fromEntries(this.memoryCache);
+          localStorage.setItem(this.storageKey, JSON.stringify(data));
+        } catch (retryError) {
+          console.warn('Failed to save cache even after cleanup:', retryError);
+        }
+      }
+    }
+  }
+
+  /**
+   * Задава стойност в кеша
+   * @param {string} key - Ключ
+   * @param {any} value - Стойност
+   * @param {number} ttl - Time to live в милисекунди
+   */
+  set(key, value, ttl = this.defaultTTL) {
+    const entry = {
+      value,
+      expiry: Date.now() + ttl,
+      timestamp: Date.now()
+    };
+    
+    this.memoryCache.set(key, entry);
+    this.saveToStorage();
+  }
+
+  /**
+   * Извлича стойност от кеша
+   * @param {string} key - Ключ
+   * @returns {any} Кешираната стойност или null ако не е намерена/изтекла
+   */
+  get(key) {
+    const entry = this.memoryCache.get(key);
+    if (!entry) return null;
+
+    const now = Date.now();
+    if (entry.expiry < now) {
+      // Изтекъл запис - изчистваме го
+      this.memoryCache.delete(key);
+      this.saveToStorage();
+      return null;
+    }
+
+    return entry.value;
+  }
+
+  /**
+   * Проверява дали има кеширана стойност
+   * @param {string} key - Ключ
+   * @returns {boolean} True ако има валиден кеш
+   */
+  has(key) {
+    return this.get(key) !== null;
+  }
+
+  /**
+   * Премахва запис от кеша
+   * @param {string} key - Ключ
+   */
+  delete(key) {
+    const deleted = this.memoryCache.delete(key);
+    if (deleted) {
+      this.saveToStorage();
+    }
+  }
+
+  /**
+   * Invalidate записи, които съдържат даден pattern в ключа
+   * @param {string} pattern - Pattern за търсене в ключовете
+   */
+  invalidate(pattern) {
+    let hasChanges = false;
+    
+    for (const key of this.memoryCache.keys()) {
+      if (key.includes(pattern)) {
+        this.memoryCache.delete(key);
+        hasChanges = true;
+      }
+    }
+    
+    if (hasChanges) {
+      this.saveToStorage();
+    }
+  }
+
+  /**
+   * Изчиства всички изтекли записи
+   */
+  cleanupExpired() {
+    const now = Date.now();
+    let hasChanges = false;
+
+    for (const [key, entry] of this.memoryCache.entries()) {
+      if (entry.expiry < now) {
+        this.memoryCache.delete(key);
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      this.saveToStorage();
+    }
+  }
+
+  /**
+   * Изчиства целия кеш
+   */
+  clear() {
+    this.memoryCache.clear();
+    try {
+      localStorage.removeItem(this.storageKey);
+    } catch (error) {
+      console.warn('Failed to clear cache storage:', error);
+    }
+  }
+
+  /**
+   * Връща статистика за кеша
+   * @returns {Object} Статистика
+   */
+  getStats() {
+    const entries = Array.from(this.memoryCache.entries());
+    const now = Date.now();
+    
+    return {
+      size: this.memoryCache.size,
+      validEntries: entries.filter(([, entry]) => entry.expiry > now).length,
+      expiredEntries: entries.filter(([, entry]) => entry.expiry <= now).length,
+      totalSize: JSON.stringify(Object.fromEntries(this.memoryCache)).length,
+      entries: entries.map(([key, entry]) => ({
+        key,
+        age: now - entry.timestamp,
+        ttl: entry.expiry - now,
+        expired: entry.expiry <= now
+      }))
+    };
+  }
+}
+
+/**
+ * Създава и връща инстанция на PersistentCache за dashboard данни
+ * @returns {PersistentCache}
+ */
+export function getDashboardCache() {
+  return new PersistentCache('bodybest_dashboard_cache', 300000); // 5 минути TTL
+}
+
+/**
+ * Създава и връща инстанция на PersistentCache за profile данни
+ * @returns {PersistentCache}
+ */
+export function getProfileCache() {
+  return new PersistentCache('bodybest_profile_cache', 600000); // 10 минути TTL
+}
