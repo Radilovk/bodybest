@@ -1,4 +1,4 @@
-const themes = ['light', 'dark'];
+const themes = ['light', 'dark', 'vivid'];
 let systemThemeMediaQuery;
 
 function handleSystemThemeChange(e) {
@@ -24,8 +24,12 @@ export function initializeTheme() {
 
 export function applyTheme(theme) {
   document.body.classList.remove('light-theme', 'dark-theme', 'vivid-theme');
-  const cls = theme === 'dark' ? 'dark-theme' : 'light-theme';
+  const cls = theme === 'dark' ? 'dark-theme' : theme === 'vivid' ? 'vivid-theme' : 'light-theme';
   document.body.classList.add(cls);
+  
+  // Добавяме subtle animation при смяна на тема
+  document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
+  
   document.dispatchEvent(new Event('themechange'));
   document.dispatchEvent(new Event('progressChartThemeChange'));
 }
@@ -33,6 +37,8 @@ export function applyTheme(theme) {
 export function toggleTheme() {
   const current = document.body.classList.contains('dark-theme')
     ? 'dark'
+    : document.body.classList.contains('vivid-theme')
+    ? 'vivid'
     : 'light';
   const idx = themes.indexOf(current);
   const nextTheme = themes[(idx + 1) % themes.length];
@@ -48,13 +54,35 @@ export function updateThemeButtonText() {
   const themeIconSpan = menu.querySelector('.menu-icon');
   const current = document.body.classList.contains('dark-theme')
     ? 'dark'
+    : document.body.classList.contains('vivid-theme')
+    ? 'vivid'
     : 'light';
   const nextTheme = themes[(themes.indexOf(current) + 1) % themes.length];
-  const labels = { light: 'Светла Тема', dark: 'Тъмна Тема' };
+  const labels = { light: 'Светла Тема', dark: 'Тъмна Тема', vivid: 'Ярка Тема' };
   const icons = {
     light: '<i class="bi bi-moon"></i>',
-    dark: '<i class="bi bi-sun"></i>'
+    dark: '<i class="bi bi-palette"></i>',
+    vivid: '<i class="bi bi-sun"></i>'
   };
   if (themeTextSpan) themeTextSpan.textContent = labels[nextTheme];
   if (themeIconSpan) themeIconSpan.innerHTML = icons[nextTheme];
+  
+  // Добавяме tooltip с preview
+  const tooltip = getNextThemeTooltip(nextTheme);
+  menu.setAttribute('title', tooltip);
+  menu.setAttribute('data-next-theme', nextTheme);
+}
+
+/**
+ * Генерира tooltip текст с preview на следващата тема
+ * @param {string} nextTheme - Следващата тема
+ * @returns {string} Tooltip текст
+ */
+function getNextThemeTooltip(nextTheme) {
+  const descriptions = {
+    light: 'Превключи към светла тема - Идеална за дневна употреба',
+    dark: 'Превключи към тъмна тема - По-меки цветове за работа вечер',
+    vivid: 'Превключи към ярка тема - Контрастни и наситени цветове'
+  };
+  return descriptions[nextTheme] || 'Превключи тема';
 }

@@ -24,12 +24,75 @@ BodyBest използва offline-first подход за оптимално п�
 - 💾 **Persistent кеширане** - Dashboard и profile данни в localStorage
 - 🔄 **Offline работа** - Пълна функционалност без интернет връзка
 - ⚡ **70-80% по-малко API calls** - Batch синхронизация и smart кеширане
+- 🔁 **Retry с exponential backoff** - Автоматични опити при грешка
+- 📊 **Sync status indicator** - Визуален индикатор за състоянието на синхронизацията
+
+### Retry и Error Handling
+
+Модулът `offlineLogSync.js` включва интелигентна система за retry при грешки:
+
+- **Exponential backoff**: Изчаква 5s, 10s, 20s и т.н. между опитите
+- **Consecutive failure tracking**: Следи броя неуспешни опити
+- **User notification**: След 3 consecutive failures показва уведомление
+- **Automatic recovery**: Автоматично възобновява синхронизацията при връзка
+
+```javascript
+import { getOfflineLogSync } from './js/offlineLogSync.js';
+import { getSyncStatusIndicator } from './js/syncStatusIndicator.js';
+
+const syncManager = getOfflineLogSync({
+  onSyncStatusChange: (status) => {
+    // Update UI indicator
+    getSyncStatusIndicator().updateStatus(status);
+  },
+  onSyncError: (result) => {
+    if (result.consecutiveFailures >= 3) {
+      // Show user notification
+      showNotification('Синхронизацията се провали. Проверете връзката си.');
+    }
+  }
+});
+```
+
+### Storage Quota Management
+
+При пълен localStorage, системата автоматично:
+
+1. **Evict старите записи** - Премахва до 30% от некритичните данни
+2. **Fallback към IndexedDB** - За по-големи payloads
+3. **User warning** - Показва ясно съобщение: "Локалният кеш е пълен – изтривам най-старите записи"
+
+```javascript
+import { safeSetItem } from './js/safeStorage.js';
+
+// Safe storage с automatic quota handling
+const result = safeSetItem('myKey', largeData, {
+  critical: false, // Може да се evict при нужда
+  showWarning: true // Показва UI warning
+});
+
+if (!result.success) {
+  console.error('Storage failed:', result.error);
+}
+```
+
+### Sync Status Indicator
+
+Визуален индикатор показва текущото състояние:
+
+- 🟢 **Online** - Всичко е синхронизирано
+- ⚪ **Offline** - Работи локално, ще синхронизира по-късно
+- 🔵 **Syncing** - Активна синхронизация
+- 🟡 **Error** - Проблем при синхронизация, ще опита отново
+
+Индикаторът се показва в долния десен ъгъл и автоматично се скрива когато всичко е наред.
 
 ### Технически детайли
 
 Вижте [PHASE2_IMPLEMENTATION.md](PHASE2_IMPLEMENTATION.md) за пълна документация на:
 - Модула `offlineLogSync.js` за offline логване
 - Класа `PersistentCache` за кеширане
+- Класа `SafeStorage` за quota handling
 - Backend `/api/batch-log` endpoint
 - Примери за интеграция
 
@@ -66,12 +129,43 @@ window.USE_LOCAL_PROXY = true;
 Бутонът за смяна на тема циклира през последователността **Светла → Тъмна → Ярка (Vivid)**. Изборът се запазва в `localStorage` и се прилага при следващи посещения. В режим Vivid основните цветове са по-наситени и прогрес баровете завършват с ярко зелено.
 Локалният избор се пази под ключ `theme` със стойности `light`, `dark`, `vivid` или `system`.
 
+Всеки бутон за смяна на тема показва tooltip с preview на следващата тема и има subtle animation при превключване.
+
 ### Видове теми
 | Стойност | Описание |
 |----------|---------|
 | `light`  | Светъл фон, подходящ за дневна употреба. |
 | `dark`   | Тъмен фон и по-меки цветове за работа вечер. |
 | `vivid`  | Ярки и контрастни цветове, подчертаващи прогреса. |
+
+### High Contrast Mode
+
+За потребители с нужда от по-висок контраст, има опция **High Contrast Mode**:
+
+```javascript
+import { toggleHighContrast } from './js/highContrastMode.js';
+
+// Toggle high contrast mode
+const enabled = toggleHighContrast();
+console.log('High contrast:', enabled);
+```
+
+High Contrast Mode:
+- Увеличава contrast ratio на всички текстове
+- Добавя по-силни borders и outlines
+- Underline на всички links
+- Работи с всички три теми (Light, Dark, Vivid)
+- Запазва се в localStorage
+
+### Accessibility
+
+Всички теми са тествани за WCAG 2.1 AA съответствие:
+- Minimum contrast ratio 4.5:1 за нормален текст
+- Minimum contrast ratio 3:1 за large text и UI компоненти
+- Focus indicators с минимум 3px outline
+- Keyboard navigation support
+
+Вижте `js/__tests__/themeAccessibility.test.js` за automated accessibility tests.
 
 ### Включване на Vivid
 1. Натиснете бутона за смяна на тема, докато текстът показва "Ярка Тема".
@@ -95,6 +189,96 @@ Index, Quest и Code. Всеки таб съдържа полета от съо�
 Промените се съхраняват отделно в `localStorage.dashboardColorThemes`,
 `localStorage.indexColorThemes`, `localStorage.questColorThemes` и `localStorage.codeColorThemes`. При зареждане
 на всяка страница избраните стойности се прилагат автоматично.
+
+### Onboarding Wizard
+
+При първо посещение на приложението, потребителите преминават през интерактивен onboarding wizard:
+
+**Стъпки:**
+1. **Welcome** - Кратко въведение в приложението
+2. **Theme Selection** - Избор на визуална тема (Light/Dark/Vivid)
+3. **Goal Selection** - Избор на основна цел:
+   - **Cutting** - Отслабване с калориен дефицит
+   - **Bulking** - Натрупване на мускулна маса
+   - **Maintenance** - Поддържане на текущото тегло
+4. **Offline Features** - Обяснение на offline-first функционалността
+5. **Complete** - Обобщение на избраните настройки
+
+```javascript
+import { showOnboardingIfNeeded } from './js/onboardingWizard.js';
+
+// Показва wizard само ако не е завършен
+showOnboardingIfNeeded({
+  onComplete: (config) => {
+    console.log('Onboarding complete:', config.theme, config.goal);
+    // Redirect или initialize app
+  }
+});
+```
+
+Wizard-ът се показва автоматично само веднъж. За reset на onboarding:
+
+```javascript
+import { OnboardingWizard } from './js/onboardingWizard.js';
+OnboardingWizard.reset();
+```
+
+### User Profiles / Templates
+
+Потребителите могат да запазват и зареждат персонализирани профили с различни настройки:
+
+#### Predefined Profiles
+
+**Cutting** - Оптимизиран за отслабване
+- Светла тема
+- 15% калориен дефицит
+- 2.2г/кг протеини
+- Dashboard карти: Calories, Macros, Weight, Progress
+
+**Bulking** - Оптимизиран за натрупване
+- Vivid тема
+- 10% калориен излишък
+- 2.0г/кг протеини
+- Dashboard карти: Calories, Macros, Strength, Meals
+
+**Maintenance** - Балансиран за поддръжка
+- Тъмна тема
+- Балансиран калориен прием
+- 1.8г/кг протеини
+- Dashboard карти: Calories, Macros, Hydration, Sleep
+
+#### Управление на Profiles
+
+```javascript
+import { 
+  getAllProfiles, 
+  applyProfile, 
+  createProfileFromCurrent,
+  exportProfile,
+  importProfile
+} from './js/userProfiles.js';
+
+// Зареждане на всички profiles
+const profiles = getAllProfiles();
+
+// Прилагане на profile
+const result = applyProfile('cutting');
+if (result.success) {
+  console.log('Profile applied:', result.profile.name);
+}
+
+// Създаване на custom profile от текущи настройки
+createProfileFromCurrent('Мой Профил', 'Custom настройки за лятото');
+
+// Export profile като JSON
+const { json } = exportProfile('cutting');
+console.log(json);
+
+// Import profile от JSON
+importProfile(jsonString, 'Imported Profile');
+```
+
+Profiles се запазват в `localStorage` и могат да се export/import за споделяне или backup.
 
 ### Build
 
@@ -184,6 +368,24 @@ npm run coverage
 
 Файловете се намират в `coverage/lcov-report`.
 Папката `coverage/` е добавена в `.gitignore` и се генерира локално при нужда.
+
+### Чести проблеми (Common Issues)
+
+| Проблем | Причина | Решение |
+|---------|---------|---------|
+| **Dev proxy misconfiguration** | Vite proxy не е правилно конфигуриран или не работи | Проверете `vite.config.js` и задайте `window.USE_LOCAL_PROXY = true` ако искате локален proxy. По подразбиране се използва production worker URL. |
+| **Missing Jest dependencies** | Jest не е инсталиран или версията е несъвместима | Изпълнете `npm ci` или `npm install` за инсталация на всички dependencies |
+| **Node.js heap errors** | Тестовете изискват повече памет | Използвайте `NODE_OPTIONS=--max-old-space-size=4096 npm test` за увеличаване на heap размера |
+| **HTTP proxy warnings** | npm proxy настройките смущават Jest | Изключете proxy променливите: `unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy` преди да стартирате тестовете |
+| **localStorage quota exceeded** | Твърде много данни в localStorage | Модулът `safeStorage.js` автоматично управлява quota. За мануално изчистване: `localStorage.clear()` или използвайте SafeStorage API |
+| **Sync failures after network change** | Offline sync не се възобновява след връзка | Проверете Network tab в DevTools. Sync status indicator трябва да показва "syncing" или "online". При нужда refresh страницата |
+| **Theme не се прилага** | CSS файлът не е зареден или има конфликт | Уверете се, че `base_styles.css` е включен и че няма conflicting CSS. Проверете browser console за грешки |
+| **Onboarding wizard се показва многократно** | localStorage не работи или е блокиран | Проверете дали browser-ът позволява localStorage. В private/incognito mode може да не работи правилно |
+| **Tests fail with "Cannot find module"** | ES modules не се зареждат правилно | Уверете се, че `jest.config.js` е конфигуриран за ES modules и че файловете имат правилните imports |
+| **Accessibility tests fail** | Contrast ratios не са достатъчни | Прегледайте `themeAccessibility.test.js` за точните violations. Може да активирате High Contrast Mode за по-добър contrast |
+
+За допълнителна помощ, вижте GitHub Issues или се свържете с maintainers.
+
 ### Registration Module Example
 
 Include the common registration logic by importing `setupRegistration`:
