@@ -253,7 +253,7 @@ export class UserProfilesManager {
   createFromCurrentSettings(name, description = '') {
     try {
       // Генерираме ID
-      const id = `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `custom_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
       // Събираме текущите настройки
       const currentTheme = localStorage.getItem('theme') || 'light';
@@ -345,7 +345,7 @@ export class UserProfilesManager {
       const profile = JSON.parse(json);
       
       // Генерираме нов ID
-      const id = `imported_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `imported_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
       
       // Override името ако е подадено
       if (name) {
