@@ -19,8 +19,16 @@ export class OfflineLogSync {
     this.maxBatchSize = config.maxBatchSize || 50;
     this.onSyncSuccess = config.onSyncSuccess || (() => {});
     this.onSyncError = config.onSyncError || (() => {});
+    this.onSyncStatusChange = config.onSyncStatusChange || (() => {});
     this.syncTimer = null;
     this.isSyncing = false;
+    
+    // Retry with exponential backoff
+    this.consecutiveFailures = 0;
+    this.maxConsecutiveFailures = 3;
+    this.baseRetryDelay = 5000; // 5 секунди
+    this.maxRetryDelay = 60000; // 1 минута
+    this.retryTimer = null;
   }
 
   /**
@@ -141,6 +149,18 @@ export class OfflineLogSync {
   }
 
   /**
+   * Изчислява retry delay с exponential backoff
+   * @returns {number} Delay в милисекунди
+   */
+  getRetryDelay() {
+    const delay = Math.min(
+      this.baseRetryDelay * Math.pow(2, this.consecutiveFailures - 1),
+      this.maxRetryDelay
+    );
+    return delay;
+  }
+
+  /**
    * Синхронизира pending логове със сървъра
    * @param {string} apiEndpoint - API endpoint за batch sync
    * @returns {Promise<Object>} Резултат от синхронизацията
@@ -151,15 +171,20 @@ export class OfflineLogSync {
     }
     
     if (!navigator.onLine) {
+      this.onSyncStatusChange('offline');
       return { success: false, message: 'Offline - sync postponed' };
     }
 
     const pending = this.getPendingLogs();
     if (pending.length === 0) {
+      this.consecutiveFailures = 0;
+      this.onSyncStatusChange('online');
       return { success: true, synced: 0 };
     }
 
     this.isSyncing = true;
+    this.onSyncStatusChange('syncing');
+    
     let totalSynced = 0;
     let errors = [];
 
@@ -216,17 +241,47 @@ export class OfflineLogSync {
         success: errors.length === 0,
         synced: totalSynced,
         errors: errors.length > 0 ? errors : undefined,
-        remaining: this.getPendingLogs().length
+        remaining: this.getPendingLogs().length,
+        consecutiveFailures: this.consecutiveFailures
       };
 
       if (errors.length > 0) {
+        this.consecutiveFailures++;
+        this.onSyncStatusChange('error');
         this.onSyncError(finalResult);
+        
+        // Schedule retry with exponential backoff
+        this.scheduleRetry(apiEndpoint);
+      } else {
+        this.consecutiveFailures = 0;
+        this.onSyncStatusChange(pending.length > totalSynced ? 'syncing' : 'online');
       }
 
       return finalResult;
     } finally {
       this.isSyncing = false;
     }
+  }
+
+  /**
+   * Планира retry с exponential backoff
+   * @param {string} apiEndpoint - API endpoint за retry
+   */
+  scheduleRetry(apiEndpoint) {
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+    }
+    
+    const delay = this.getRetryDelay();
+    console.log(`Scheduling retry in ${delay}ms (attempt ${this.consecutiveFailures}/${this.maxConsecutiveFailures})`);
+    
+    this.retryTimer = setTimeout(() => {
+      if (navigator.onLine && !this.isSyncing) {
+        this.syncPendingLogs(apiEndpoint).catch(err => {
+          console.warn('Retry sync failed:', err);
+        });
+      }
+    }, delay);
   }
 
   /**
@@ -261,6 +316,25 @@ export class OfflineLogSync {
       clearInterval(this.syncTimer);
       this.syncTimer = null;
     }
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+  }
+
+  /**
+   * Проверява дали има consecutive failures над лимита
+   * @returns {boolean} True ако е над лимита
+   */
+  hasExceededFailureLimit() {
+    return this.consecutiveFailures >= this.maxConsecutiveFailures;
+  }
+
+  /**
+   * Ресетва consecutive failures counter
+   */
+  resetFailureCounter() {
+    this.consecutiveFailures = 0;
   }
 
   /**

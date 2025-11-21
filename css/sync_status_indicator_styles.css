@@ -1,0 +1,141 @@
+/* sync_status_indicator_styles.css - Стилове за sync status indicator */
+
+.sync-status-indicator {
+  position: fixed;
+  z-index: 9999;
+  padding: 0.75rem 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(var(--glass-blur));
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  max-width: 300px;
+  font-size: var(--fs-sm);
+}
+
+/* Позиции */
+.sync-status-indicator.top-left {
+  top: 1rem;
+  left: 1rem;
+}
+
+.sync-status-indicator.top-right {
+  top: 1rem;
+  right: 1rem;
+}
+
+.sync-status-indicator.bottom-left {
+  bottom: 1rem;
+  left: 1rem;
+}
+
+.sync-status-indicator.bottom-right {
+  bottom: 1rem;
+  right: 1rem;
+}
+
+.sync-status-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sync-status-icon {
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sync-status-label {
+  font-weight: 500;
+  color: var(--text-color-primary);
+  white-space: nowrap;
+}
+
+.sync-pending-count {
+  color: var(--text-color-muted);
+  font-size: 0.85em;
+  margin-left: 0.25rem;
+}
+
+.sync-status-error-message {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  color: var(--text-color-secondary);
+  line-height: 1.4;
+}
+
+/* Status-specific styling */
+.sync-status-indicator.sync-status-online {
+  border-color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 5%, var(--card-bg));
+}
+
+.sync-status-indicator.sync-status-offline {
+  border-color: var(--text-color-muted);
+}
+
+.sync-status-indicator.sync-status-syncing {
+  border-color: var(--color-info);
+  background: color-mix(in srgb, var(--color-info) 5%, var(--card-bg));
+}
+
+.sync-status-indicator.sync-status-error {
+  border-color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 5%, var(--card-bg));
+}
+
+/* Rotating animation for syncing icon */
+@keyframes sync-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sync-rotating {
+  animation: sync-rotate 2s linear infinite;
+  display: inline-block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sync-status-indicator {
+    max-width: 200px;
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .sync-status-icon {
+    font-size: 1rem;
+  }
+  
+  /* На mobile, показваме само иконата ако showLabel е false */
+  .sync-status-indicator:not(.show-label) .sync-status-label {
+    display: none;
+  }
+}
+
+/* Dark theme adjustments */
+body.dark-theme .sync-status-indicator {
+  background: color-mix(in srgb, var(--card-bg) 95%, transparent);
+}
+
+/* Vivid theme adjustments */
+body.vivid-theme .sync-status-indicator {
+  border-width: 2px;
+}
+
+body.vivid-theme .sync-status-indicator.sync-status-online {
+  border-color: #00ff00;
+}
+
+body.vivid-theme .sync-status-indicator.sync-status-error {
+  border-color: #ff6b00;
+}
