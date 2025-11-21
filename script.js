@@ -1,4 +1,6 @@
 import { toggleTheme, initializeTheme } from './js/themeControls.js';
+import { showOnboardingIfNeeded } from './js/onboardingWizard.js';
+import { initHighContrastMode } from './js/highContrastMode.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const header = document.getElementById('header');
@@ -8,6 +10,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeToggleBtn = document.getElementById('theme-toggle');
     const openModalBtns = document.querySelectorAll('.open-modal-btn');
     let authModule;
+
+    // Initialize theme system
+    initializeTheme();
+    
+    // Initialize high contrast mode if enabled
+    initHighContrastMode();
+
+    // Show onboarding wizard for first-time users
+    showOnboardingIfNeeded({
+        onComplete: (config) => {
+            console.log('Onboarding завършен с конфигурация:', config);
+        }
+    });
 
     // Кратка анимация при зареждане: превъртане надолу и обратно
     const heroSection = document.querySelector('.hero');
@@ -170,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleTheme();
             updateIcon();
         });
-        initializeTheme();
         updateIcon();
     }
 });
