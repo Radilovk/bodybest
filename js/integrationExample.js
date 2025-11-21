@@ -3,7 +3,7 @@
 
 import { getOfflineLogSync } from './offlineLogSync.js';
 import { getSyncStatusIndicator } from './syncStatusIndicator.js';
-import { getSafeStorage, safeSetItem, safeGetItem } from './safeStorage.js';
+import { safeSetItem, safeGetItem } from './safeStorage.js';
 import { showOnboardingIfNeeded } from './onboardingWizard.js';
 import { applyProfile, getActiveProfile } from './userProfiles.js';
 import { initializeTheme } from './themeControls.js';
@@ -59,7 +59,7 @@ export async function initializeApp() {
 
   // 5. Setup storage quota warning listener
   window.addEventListener('storage-quota-warning', (event) => {
-    const { message, evictedCount, failed } = event.detail;
+    const { message, failed } = event.detail;
     showStorageWarning(message, failed);
   });
 
@@ -84,7 +84,10 @@ export async function initializeApp() {
     const activeProfile = getActiveProfile();
     if (activeProfile) {
       console.log('Applying active profile:', activeProfile.name);
-      applyProfile(activeProfile.id);
+      const profileResult = applyProfile(activeProfile.id);
+      if (profileResult.success) {
+        console.log('Profile applied successfully');
+      }
     }
     
     initializeMainApp();
@@ -92,7 +95,7 @@ export async function initializeApp() {
 
   // 8. Listen for profile changes
   window.addEventListener('profile-applied', (event) => {
-    const { profileId, profile } = event.detail;
+    const { profile } = event.detail;
     console.log(`Profile "${profile.name}" applied`);
     
     // Reload dashboard or update UI as needed
@@ -175,11 +178,12 @@ function showStorageWarning(message, failed) {
   
   document.body.appendChild(toast);
   
-  // Auto-remove after 5 seconds
+  // Auto-remove after 5 seconds (longer if failed)
+  const duration = failed ? 8000 : 5000;
   setTimeout(() => {
     toast.style.animation = 'slideOutRight 0.3s ease';
     setTimeout(() => toast.remove(), 300);
-  }, 5000);
+  }, duration);
 }
 
 /**
