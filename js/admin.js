@@ -1124,6 +1124,7 @@ async function showClient(userId) {
 
         let initialAnswers = dashData?.initialAnswers || {};
         let userKv = {};
+        let profileData = data?.success ? { ...data } : {};
 
         const profileStatus = data?.status ?? 'unknown';
         const profileMessage = data?.message ?? 'Няма съобщение';
@@ -1148,6 +1149,12 @@ async function showClient(userId) {
                 const iaStr = userKv[`${userId}_initial_answers`];
                 if (iaStr) {
                     try { initialAnswers = JSON.parse(iaStr); } catch {}
+                }
+                const profileStr = userKv[`${userId}_profile`];
+                if (profileStr) {
+                    try {
+                        profileData = { ...JSON.parse(profileStr), ...profileData };
+                    } catch {}
                 }
                 Object.entries(userKv).forEach(([fullKey, val]) => {
                     const detailsEl = document.createElement('details');
@@ -1185,14 +1192,17 @@ async function showClient(userId) {
             openDetailsSections();
             const clientInfo = allClients.find(c => c.userId === userId);
             const regDate = clientInfo?.registrationDate ? new Date(clientInfo.registrationDate).toLocaleDateString('bg-BG') : '';
-            const name = clientInfo?.name || data.name || initialAnswers.name || userId;
-            activeUserId = userId;
-            activeClientName = name;
+            const name = clientInfo?.name || profileData.name || initialAnswers.name || userId;
             clientNameHeading.textContent = regDate ? `${name} - ${regDate}` : name;
-            if (profileName) profileName.value = data.name || initialAnswers.name || '';
-            if (profileEmail) profileEmail.value = data.email || userKv[`${userId}_email`] || initialAnswers.email || '';
-            if (profilePhone) profilePhone.value = data.phone || userKv[`${userId}_phone`] || initialAnswers.phone || '';
-            if (profileMacroThreshold) profileMacroThreshold.value = data.macroExceedThreshold ?? '';
+            window.activeUserId = userId;
+            window.activeClientName = name;
+            const emailVal = profileData.email || userKv[`${userId}_email`] || initialAnswers.email || '';
+            const phoneVal = profileData.phone || userKv[`${userId}_phone`] || initialAnswers.phone || '';
+            const macroThresholdVal = profileData.macroExceedThreshold ?? '';
+            if (profileName) profileName.value = profileData.name || initialAnswers.name || '';
+            if (profileEmail) profileEmail.value = emailVal;
+            if (profilePhone) profilePhone.value = phoneVal;
+            if (profileMacroThreshold) profileMacroThreshold.value = macroThresholdVal;
             if (openFullProfileLink) openFullProfileLink.href = `clientProfile.html?userId=${encodeURIComponent(userId)}`;
             if (openUserDataLink) openUserDataLink.href = `Userdata.html?userId=${encodeURIComponent(userId)}`;
             try {
