@@ -109,6 +109,10 @@ const testAnalysisBtn = document.getElementById('testAnalysisModel');
 const modelOptionsList = document.getElementById('modelOptions');
 let availableModels = new Set(JSON.parse(localStorage.getItem('aiModelHistory') || '[]'));
 
+// Active client tracking variables
+let activeUserId = null;
+let activeClientName = null;
+
 function populateModelOptions() {
     if (!modelOptionsList) return;
     modelOptionsList.innerHTML = '';
