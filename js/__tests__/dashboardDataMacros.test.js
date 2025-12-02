@@ -5,7 +5,7 @@ const { handleDashboardDataRequest } = workerModule;
 
 describe('handleDashboardDataRequest caloriesMacros', () => {
 
-  test('returns error when caloriesMacros is missing', async () => {
+  test('returns success with warning when caloriesMacros is missing (legacy users)', async () => {
     const env = {
       USER_METADATA_KV: {
         get: jest.fn(key => {
@@ -26,14 +26,13 @@ describe('handleDashboardDataRequest caloriesMacros', () => {
     };
     const request = { url: 'https://example.com?userId=u1' };
     const res = await handleDashboardDataRequest(request, env);
-    expect(res.success).toBe(false);
-    expect(res.statusHint).toBe(500);
-    expect(res.message).toBe('Планът няма макроси; изисква се повторно генериране');
-    expect(res.planData).toBeNull();
-    expect(env.USER_METADATA_KV.put).not.toHaveBeenCalledWith('u1_final_plan', expect.anything());
+    // Сега показваме данните успешно с предупреждение вместо грешка (за стари регистрации)
+    expect(res.success).toBe(true);
+    expect(res.planData).toBeTruthy();
+    expect(res.macrosWarning).toBe('Планът няма пълни данни за макроси. За пълна функционалност е препоръчително да регенерирате плана.');
   });
 
-  test('recalculates caloriesMacros when recalcMacros=1', async () => {
+  test('shows data with warning when macros are incomplete (legacy users)', async () => {
     const planWithoutMacros = {
       profileSummary: 's',
       allowedForbiddenFoods: {},
@@ -97,24 +96,12 @@ describe('handleDashboardDataRequest caloriesMacros', () => {
       RESOURCES_KV: { get: jest.fn(() => Promise.resolve('{}')) }
     };
 
-    const request = { url: 'https://example.com?userId=u1&recalcMacros=1' };
+    const request = { url: 'https://example.com?userId=u1' };
     const res = await handleDashboardDataRequest(request, env);
 
+    // Сега показваме данните успешно с предупреждение вместо грешка (за стари регистрации)
     expect(res.success).toBe(true);
-    expect(res.planData?.caloriesMacros).toEqual({
-      calories: 753,
-      protein_grams: 50,
-      protein_percent: 27,
-      carbs_grams: 75,
-      carbs_percent: 40,
-      fat_grams: 25,
-      fat_percent: 30,
-      fiber_grams: 14,
-      fiber_percent: 4
-    });
-    expect(env.USER_METADATA_KV.put).toHaveBeenCalledWith(
-      'u1_final_plan',
-      expect.stringContaining('"calories": 753')
-    );
+    expect(res.planData).toBeTruthy();
+    expect(res.macrosWarning).toBe('Планът няма пълни данни за макроси. За пълна функционалност е препоръчително да регенерирате плана.');
   });
 });

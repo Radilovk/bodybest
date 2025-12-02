@@ -627,17 +627,23 @@ export async function loadDashboardData() {
         }
         
         // Проверка дали има валидни данни за плана дори при статус "ready"
-        if (!data.planData || !data.planData.caloriesMacros) {
+        // За стари регистрации позволяваме показване дори при липсващи макроси
+        if (!data.planData) {
             console.error('Missing plan data despite success response:', {
                 planStatus: data.planStatus,
-                hasPlanData: !!data.planData,
-                hasCaloriesMacros: !!data.planData?.caloriesMacros
+                hasPlanData: false
             });
             const errorMsg = data.planStatus === 'ready' 
                 ? 'Планът Ви изглежда е готов, но липсват необходими данни. Моля, свържете се с поддръжка или използвайте бутона за регенериране на план в админ панела.'
                 : 'Липсват необходими данни за показване на плана. Моля, опитайте да <a href="#" onclick="location.reload();" style="color: var(--primary-color); text-decoration: underline;">презаредите страницата</a>.';
             showPlanPendingState('error', errorMsg);
             return;
+        }
+        
+        // Показваме предупреждение ако има непълни макроси (за стари регистрации)
+        if (data.macrosWarning) {
+            console.warn('Macros warning from server:', data.macrosWarning);
+            showToast(data.macrosWarning, true, 6000);
         }
 
         fullDashboardData.dailyLogs = normalizeDailyLogs(fullDashboardData.dailyLogs);

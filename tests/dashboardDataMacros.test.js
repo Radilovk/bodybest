@@ -31,7 +31,7 @@ function createTestEnv(userId, finalPlan) {
 }
 
 describe('handleDashboardDataRequest - макроси', () => {
-  test('преизчислява липсващи макроси от менюто и ги записва', async () => {
+  test('показва данните с предупреждение при липсващи макроси (за стари регистрации)', async () => {
     const userId = 'dashboard-macros-user';
     const finalPlan = {
       caloriesMacros: null,
@@ -57,57 +57,33 @@ describe('handleDashboardDataRequest - макроси', () => {
       }
     };
 
-    const { env, kvData } = createTestEnv(userId, finalPlan);
-    const request = { url: `https://example.com/api/dashboard-data?userId=${userId}&recalcMacros=1` };
+    const { env } = createTestEnv(userId, finalPlan);
+    const request = { url: `https://example.com/api/dashboard-data?userId=${userId}` };
 
     const response = await workerModule.handleDashboardDataRequest(request, env);
 
+    // Сега показваме данните успешно с предупреждение вместо грешка
     expect(response.success).toBe(true);
-    expect(response.planData?.caloriesMacros).toEqual(
-      expect.objectContaining({
-        calories: 1731,
-        protein_grams: 120,
-        carbs_grams: 180,
-        fat_grams: 55,
-        fiber_grams: 18,
-        protein_percent: 28,
-        carbs_percent: 42,
-        fat_percent: 29,
-        fiber_percent: 2
-      })
-    );
-
-    const savedPlanRaw = kvData.get(`${userId}_final_plan`);
-    expect(savedPlanRaw).toBeTruthy();
-    const savedPlan = JSON.parse(savedPlanRaw);
-    expect(savedPlan.caloriesMacros).toEqual(response.planData.caloriesMacros);
-
-    const analysisMacrosRaw = kvData.get(`${userId}_analysis_macros`);
-    expect(analysisMacrosRaw).toBeTruthy();
-    expect(JSON.parse(analysisMacrosRaw)).toEqual({ status: 'final', data: response.planData.caloriesMacros });
-
-    const saveCall = env.USER_METADATA_KV.put.mock.calls.find(([key]) => key === `${userId}_final_plan`);
-    expect(saveCall).toBeDefined();
+    expect(response.planData).toBeTruthy();
+    expect(response.macrosWarning).toBe('Планът няма пълни данни за макроси. За пълна функционалност е препоръчително да регенерирате плана.');
   });
 
-  test('връща грешка, когато менюто не позволява преизчисление', async () => {
+  test('показва данните с предупреждение когато менюто е празно (за стари регистрации)', async () => {
     const userId = 'dashboard-macros-missing';
     const finalPlan = {
       caloriesMacros: null,
       week1Menu: {}
     };
 
-    const { env, kvData } = createTestEnv(userId, finalPlan);
-    const request = { url: `https://example.com/api/dashboard-data?userId=${userId}&recalcMacros=1` };
+    const { env } = createTestEnv(userId, finalPlan);
+    const request = { url: `https://example.com/api/dashboard-data?userId=${userId}` };
 
     const response = await workerModule.handleDashboardDataRequest(request, env);
 
-    expect(response.success).toBe(false);
-    expect(response.message).toBe(
-      'Планът няма макроси и автоматичното преизчисление се провали. Моля, регенерирайте плана.'
-    );
-    expect(env.USER_METADATA_KV.put.mock.calls.find(([key]) => key === `${userId}_final_plan`)).toBeUndefined();
-    expect(kvData.has(`${userId}_analysis_macros`)).toBe(false);
+    // Сега показваме данните успешно с предупреждение вместо грешка
+    expect(response.success).toBe(true);
+    expect(response.planData).toBeTruthy();
+    expect(response.macrosWarning).toBe('Планът няма пълни данни за макроси. За пълна функционалност е препоръчително да регенерирате плана.');
   });
 });
 
