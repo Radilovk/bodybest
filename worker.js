@@ -2066,23 +2066,17 @@ async function handleDashboardDataRequest(request, env) {
         }
 
         // Проверка дали caloriesMacros са налични и пълни от AI отговора
-        // ВАЖНО: Не използваме резервни изчисления - всички данни трябва да идват от AI
+        // За стари регистрации може да липсват пълни макроси - показваме предупреждение вместо грешка
+        let macrosWarning = null;
         if (!hasCompleteCaloriesMacros(finalPlan.caloriesMacros)) {
-            console.error(`DASHBOARD_DATA (${userId}): Missing or incomplete caloriesMacros in final plan. All data must come from AI response.`);
-            return {
-                ...baseResponse,
-                success: false,
-                message: 'Планът няма пълни данни за макроси от AI анализа. Моля, регенерирайте плана.',
-                statusHint: 500,
-                planData: null,
-                analytics: null
-            };
+            console.warn(`DASHBOARD_DATA (${userId}): Missing or incomplete caloriesMacros in final plan. Legacy user data will be displayed with warning.`);
+            macrosWarning = 'Планът няма пълни данни за макроси. За пълна функционалност е препоръчително да регенерирате плана.';
         }
 
         const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries, currentStatus); // Добавен userId
         const planDataForClient = { ...finalPlan };
 
-        return { ...baseResponse, planData: planDataForClient, analytics: analyticsData };
+        return { ...baseResponse, planData: planDataForClient, analytics: analyticsData, macrosWarning };
 
     } catch (error) {
         console.error(`Error in handleDashboardDataRequest for ${userId}: ${error.message}\n${error.stack}`);
