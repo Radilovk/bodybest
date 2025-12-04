@@ -22,16 +22,18 @@ const numericRanges = {
   lossKg: { min: 1, max: 100 }
 };
 
+// Base required fields - excludes conditional fields that only appear based on other answers
+// Conditional fields (like lossKg, weightChangeDetails, dietType, dietResult, etc.) 
+// are validated only when their parent question triggers their display
 const requiredFields = [
-  'name', 'gender', 'age', 'height', 'weight', 'goal', 'lossKg',
-  'weightChange', 'weightChangeDetails', 'dietHistory', 'dietType', 'dietResult',
+  'name', 'gender', 'age', 'height', 'weight', 'goal',
+  'weightChange', 'dietHistory',
   'sleepHours', 'sleepInterrupt', 'chronotype', 'dailyActivityLevel', 'stressLevel',
   'sportActivityLevel', 'waterIntake', 'juicesSodas', 'alcoholFrequency',
-  'overeatingFrequency', 'foodCravings', 'foodCravingsOther', 'foodTriggers', 'foodTriggersOther',
-  'eatingHabits', 'compensationMethod', 'compensationMethodOther', 'comparison',
-  'dietPreference', 'foodDislikes', 'foodLoves',
-  'medicalConditions', 'medicalConditionsOther', 'medications', 'medicationsDetails',
-  'additionalNotes'
+  'overeatingFrequency', 'foodCravings', 'foodTriggers',
+  'eatingHabits', 'compensationMethod', 'comparison',
+  'dietPreference',
+  'medicalConditions', 'medications'
 ];
 
 function flattenQuestions(questions) {

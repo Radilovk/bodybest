@@ -3288,8 +3288,9 @@ function estimateMacros(initial = {}) {
     
     let baseFactor = dailyFactors[dailyActivity] || 1.375;
     let bonus = 0;
+    // Use startsWith for more reliable matching of sport activity levels
     for (const [key, val] of Object.entries(sportBonus)) {
-        if (sportActivity.includes(key)) {
+        if (sportActivity.startsWith(key)) {
             bonus = val;
             break;
         }
@@ -3325,12 +3326,12 @@ function estimateMacros(initial = {}) {
     const dietPref = Array.isArray(initial.dietPreference) ? initial.dietPreference : [];
     const dietType = (initial.dietType || '').toLowerCase();
     
-    // Keto preference
-    const isKeto = dietPref.some(d => d.toLowerCase().includes('кето')) || 
-                   dietType.includes('кето') || dietType.includes('keto');
+    // Keto preference - use exact match for preference value
+    const isKeto = dietPref.some(d => d === 'Кето') || 
+                   dietType.startsWith('кето') || dietType.startsWith('keto');
     
-    // High protein preference
-    const isHighProtein = dietPref.some(d => d.toLowerCase().includes('високопротеинова'));
+    // High protein preference - use exact match
+    const isHighProtein = dietPref.some(d => d === 'Високопротеинова');
     
     // Note: Vegan, Vegetarian, and Fasting preferences are captured in dietPreference
     // and can be used for food recommendations in the AI prompt
