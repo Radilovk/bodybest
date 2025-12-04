@@ -1,281 +1,158 @@
 [
-    {
-        "id": "secDemo",
-        "type": "section",
-        "sectionTitle": "Демо въпроси"
-    },
-    {
-        "id": "name",
-        "text": "Въведете вашето име:",
-        "type": "text",
-        "options": [],
-        "children": []
-    },
-    {
-        "id": "email",
-        "text": "Въведете вашия имейл адрес:",
-        "type": "email",
-        "options": [],
-        "children": []
-    },
-    {
-        "id": "gender",
-        "text": "Моля, изберете вашия пол:",
-        "type": "radio",
-        "options": [
-            "Мъж",
-            "Жена"
-        ],
-        "children": []
-    },
-    {
-        "id": "age",
-        "text": "Въведете вашата възраст:",
-        "type": "number",
-        "options": [],
-        "children": []
-    },
-    {
-        "id": "height",
-        "text": "Въведете вашия ръст (в см):",
-        "type": "number",
-        "options": [],
-        "children": []
-    },
-    {
-        "id": "weight",
-        "text": "Въведете вашето тегло (в кг):",
-        "type": "number",
-        "options": [],
-        "children": []
-    },
-    {
-        "id": "goal",
-        "text": "Изберете основната си цел:",
-        "type": "radio",
-        "options": [
-            "Подобряване на здравето",
-            "Отслабване",
-            "Оформяне",
-            "Покачване на мускулна маса",
-            "Антиейджинг"
-        ],
-        "children": {
-            "Отслабване": [
-                {
-                    "id": "lossKg",
-                    "text": "Колко килограма бихте искали да свалите?",
-                    "type": "number"
-                }
-            ]
-        },
-        "dependsOn": null
-    },
-    {
-        "id": "physicalActivity",
-        "text": "Ниво на физическа активност:",
-        "type": "radio",
-        "options": ["Без активност", "Лека", "Умерена", "Интензивна"],
-        "children": []
-    },
-    {
-        "id": "sleepHours",
-        "text": "Средно колко часа спите на денонощие?",
-        "type": "number",
-        "options": [],
-        "children": []
-    },
-    {
-        "id": "stressLevel",
-        "text": "Оценете нивото си на стрес:",
-        "type": "radio",
-        "options": ["Ниско", "Средно", "Високо"],
-        "children": []
-    },
-    {
-        "id": "waterIntake",
-        "text": "Колко вода пиете дневно?",
-        "type": "radio",
-        "options": [
-            "<1л",
-            "1-1.5л",
-            "1.5-2л",
-            ">2л"
-        ],
-        "dependsOn": null
-    },
-    {
-        "id": "waterReplaceFreq",
-        "text": "Колко често заменяте водата с други напитки?",
-        "type": "radio",
-        "options": [
-            "Не",
-            "Рядко",
-            "Понякога",
-            "Често"
-        ],
-        "children": {
-            "Рядко": [
-                {
-                    "id": "q1745891342178",
-                    "text": "С какви напитки замествате приема на вода?",
-                    "type": "checkbox",
-                    "options": [
-                        "Сокове",
-                        "Кафе",
-                        "Газирани",
-                        "Друго"
-                    ],
-                    "dependsOn": {
-                        "question": "waterReplaceFreq",
-                        "value": "Рядко"
-                    },
-                    "children": {
-                        "Друго": [
-                            {
-                                "id": "q1745891416176",
-                                "text": "Уточнете",
-                                "type": "text",
-                                "options": [],
-                                "dependsOn": {
-                                    "question": "q1745891342178",
-                                    "value": "Друго"
-                                },
-                                "children": []
-                            }
-                        ]
-                    }
-                }
-            ],
-            "Понякога": [
-                {
-                    "id": "q1745891468155",
-                    "text": "С какви напитки замествате приема на вода?",
-                    "type": "checkbox",
-                    "options": [
-                        "Сокове",
-                        "Кафе",
-                        "Газирани",
-                        "Друго"
-                    ],
-                    "dependsOn": {
-                        "question": "waterReplaceFreq",
-                        "value": "Понякога"
-                    },
-                    "children": {
-                        "Друго": [
-                            {
-                                "id": "q1745891643967",
-                                "text": "Уточнете",
-                                "type": "text",
-                                "options": [],
-                                "dependsOn": {
-                                    "question": "q1745891468155",
-                                    "value": "Друго"
-                                },
-                                "children": []
-                            }
-                        ]
-                    }
-                }
-            ],
-            "Често": [
-                {
-                    "id": "q1745891537884",
-                    "text": "С какви напитки замествате приема на вода?",
-                    "type": "checkbox",
-                    "options": [
-                        "Сокове",
-                        "Кафе",
-                        "Газирани",
-                        "Друго"
-                    ],
-                    "dependsOn": {
-                        "question": "waterReplaceFreq",
-                        "value": "Често"
-                    },
-                    "children": {
-                        "Друго": [
-                            {
-                                "id": "q1745891620471",
-                                "text": "Уточнете",
-                                "type": "text",
-                                "options": [],
-                                "dependsOn": {
-                                    "question": "q1745891537884",
-                                    "value": "Друго"
-                                },
-                                "children": []
-                            }
-                        ]
-                    }
-                }
-            ]
-        },
-        "dependsOn": null
-    },
-    {
-        "id": "overeatingFrequency",
-        "text": "Колко често преяждате?",
-        "type": "radio",
-        "options": ["Никога", "Понякога", "Често"],
-        "children": []
-    },
-    {
-        "id": "comparisson",
-        "text": "Сравнете сегашното си хранене с това от миналата година:",
-        "type": "textarea",
-        "options": [],
-        "children": []
-    },
-    {
-        "id": "secMedical",
-        "type": "section",
-        "sectionTitle": "Медицинско състояние"
-    },
-    {
-        "id": "medicalConditions",
-        "text": "Медицинско състояние:",
-        "type": "checkbox",
-        "options": [
-            "Инсулинова резистентност",
-            "Диабет",
-            "Хипотиреоидизъм/ Хашимото",
-            "Депресия/Тревожност",
-            "Хиперхолестеролемия",
-            "Цьолиакия / глутенова непоносимост",
-            "Лактозна непоносимост",
-            "Алергия към мляко",
-            "Алергия към яйца",
-            "Алергия към ядки",
-            "Алергия към соя",
-            "PCOS",
-            "IBS",
-            "IBD (Crohn/UC)",
-            "Хиперлипидемия",
-            "Анемия",
-            "Високи чернодробни ензими",
-            "Автоимунно заболяване",
-            "Рефлуксна болест",
-            "Хеликобактерии",
-            "Друго",
-            "Нямам"
-        ],
-        "dependsOn": null,
-        "children": {
-            "Друго": [
-                {
-                    "id": "q1745804366749",
-                    "text": "Попълнете медицинско състояние/диагноза:",
-                    "type": "textarea",
-                    "options": [],
-                    "dependsOn": {
-                        "question": "medicalConditions",
-                        "value": "Друго"
-                    },
-                    "children": []
-                }
-            ]
+  {
+    "id": "secDemo",
+    "type": "section",
+    "sectionTitle": "Демо въпросник"
+  },
+  {
+    "id": "name",
+    "text": "Въведете вашето име:",
+    "type": "text",
+    "options": [],
+    "children": []
+  },
+  {
+    "id": "gender",
+    "text": "Моля, изберете вашия пол:",
+    "type": "radio",
+    "options": ["Мъж", "Жена"],
+    "children": []
+  },
+  {
+    "id": "age",
+    "text": "Въведете вашата възраст:",
+    "type": "number",
+    "options": [],
+    "children": []
+  },
+  {
+    "id": "height",
+    "text": "Въведете вашия ръст (в см):",
+    "type": "number",
+    "options": [],
+    "children": []
+  },
+  {
+    "id": "weight",
+    "text": "Въведете вашето тегло (в кг):",
+    "type": "number",
+    "options": [],
+    "children": []
+  },
+  {
+    "id": "email",
+    "text": "Въведете вашия имейл адрес:",
+    "type": "email",
+    "options": [],
+    "children": []
+  },
+  {
+    "id": "goal",
+    "text": "Изберете основната си цел:",
+    "type": "radio",
+    "options": [
+      "Подобряване на здравето",
+      "Отслабване",
+      "Оформяне",
+      "Покачване на мускулна маса",
+      "Антиейджинг"
+    ],
+    "children": {
+      "Отслабване": [
+        {
+          "id": "lossKg",
+          "text": "Колко килограма бихте искали да свалите?",
+          "type": "number",
+          "options": [],
+          "children": []
         }
+      ]
     }
+  },
+  {
+    "id": "sleepHours",
+    "text": "Колко часа сън имате средно на нощ?",
+    "type": "radio",
+    "options": ["Под 5", "5–6", "6–7", "7–8", "Над 8"],
+    "children": []
+  },
+  {
+    "id": "dailyActivityLevel",
+    "text": "Ниво на активност през деня:",
+    "type": "radio",
+    "options": ["Ниско", "Средно", "Високо"],
+    "children": []
+  },
+  {
+    "id": "stressLevel",
+    "text": "Ниво на стрес:",
+    "type": "radio",
+    "options": ["Ниско", "Средно", "Високо"],
+    "children": []
+  },
+  {
+    "id": "sportActivity",
+    "text": "Ниво на спортна активност:",
+    "type": "radio",
+    "options": [
+      "Висока (5–7 дни седмично)",
+      "Средна (2–4 дни седмично)",
+      "Ниска (1–2 дни седмично)",
+      "Никаква (0 дни седмично)"
+    ],
+    "children": []
+  },
+  {
+    "id": "waterIntake",
+    "text": "Колко вода пиете дневно?",
+    "type": "radio",
+    "options": ["под 1 л", "1–1.5 л", "1.5–2 л", "над 2 л"],
+    "children": []
+  },
+  {
+    "id": "overeatingFrequency",
+    "text": "Колко често ядете повече от планираното количество?",
+    "type": "radio",
+    "options": ["Постоянно", "Често", "Понякога", "Рядко", "Никога"],
+    "children": []
+  },
+  {
+    "id": "secMedical",
+    "type": "section",
+    "sectionTitle": "Медицинско състояние"
+  },
+  {
+    "id": "medicalConditions",
+    "text": "Имате ли някое от следните медицински състояния?",
+    "type": "checkbox",
+    "options": [
+      "Инсулинова резистентност",
+      "Диабет",
+      "Хашимото",
+      "Депресия",
+      "Тревожност",
+      "IBS",
+      "IBD",
+      "Алергии",
+      "Автоимунно",
+      "Рефлукс",
+      "Друго",
+      "Нямам"
+    ],
+    "children": {
+      "Друго": [
+        {
+          "id": "medicalOther",
+          "text": "Моля, опишете медицинското състояние:",
+          "type": "textarea",
+          "options": [],
+          "dependsOn": {
+            "question": "medicalConditions",
+            "value": "Друго"
+          },
+          "children": []
+        }
+      ]
+    }
+  }
 ]

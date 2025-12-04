@@ -3266,14 +3266,36 @@ function estimateMacros(initial = {}) {
     if (!weight || !height || !age) return null;
     
     const gender = (initial.gender || '').toLowerCase().startsWith('м') ? 'male' : 'female';
-    const activity = (initial.dailyActivityLevel || initial.q1745878295708 || '').toLowerCase();
-    const activityFactors = {
-        'ниско': 1.2, 'sedentary': 1.2, 'седящ': 1.2,
-        'средно': 1.375, 'умерено': 1.375,
-        'високо': 1.55, 'активно': 1.55,
-        'много високо': 1.725
+    
+    // Combine daily activity level and sport activity level for total activity factor
+    const dailyActivity = (initial.dailyActivityLevel || '').toLowerCase();
+    const sportActivity = (initial.sportActivity || initial.sportActivityLevel || '').toLowerCase();
+    
+    // Base activity factors from dailyActivityLevel
+    const dailyFactors = {
+        'ниско': 1.2,
+        'средно': 1.375,
+        'високо': 1.55
     };
-    const factor = activityFactors[activity] || 1.375;
+    
+    // Sport activity bonus
+    const sportBonus = {
+        'висока': 0.2,        // 5-7 days/week
+        'средна': 0.1,        // 2-4 days/week
+        'ниска': 0.05,        // 1-2 days/week
+        'никаква': 0          // 0 days/week
+    };
+    
+    let baseFactor = dailyFactors[dailyActivity] || 1.375;
+    let bonus = 0;
+    // Use startsWith for more reliable matching of sport activity levels
+    for (const [key, val] of Object.entries(sportBonus)) {
+        if (sportActivity.startsWith(key)) {
+            bonus = val;
+            break;
+        }
+    }
+    const factor = baseFactor + bonus;
     
     // Calculate BMR using Mifflin-St Jeor equation
     const bmr = 10 * weight + 6.25 * height - 5 * age + (gender === 'male' ? 5 : -161);
@@ -3281,7 +3303,6 @@ function estimateMacros(initial = {}) {
     
     // Adjust calories based on goal
     const goal = (initial.goal || '').toLowerCase();
-    let calories = tdee;
     let calorieAdjustment = 0;
     
     if (goal.includes('отслабване') || goal.includes('weight loss') || goal.includes('загуба')) {
@@ -3292,17 +3313,28 @@ function estimateMacros(initial = {}) {
         // Muscle gain: surplus of 200-300 kcal
         calorieAdjustment = 250;
     }
-    // Maintenance: no adjustment
+    // Maintenance/Оформяне/Health improvement: no adjustment
     
-    calories = Math.round(tdee + calorieAdjustment);
+    let calories = Math.round(tdee + calorieAdjustment);
     
-    // Determine macro distribution based on goal, activity, and diet history
+    // Determine macro distribution based on goal, activity, and diet preference
     let protein_percent = 30;
     let carbs_percent = 40;
     let fat_percent = 30;
     
-    // Check for diet type
+    // Check for diet preference (from question 25)
+    const dietPref = Array.isArray(initial.dietPreference) ? initial.dietPreference : [];
     const dietType = (initial.dietType || '').toLowerCase();
+    
+    // Keto preference - use exact match for preference value
+    const isKeto = dietPref.some(d => d === 'Кето') || 
+                   dietType.startsWith('кето') || dietType.startsWith('keto');
+    
+    // High protein preference - use exact match
+    const isHighProtein = dietPref.some(d => d === 'Високопротеинова');
+    
+    // Note: Vegan, Vegetarian, and Fasting preferences are captured in dietPreference
+    // and can be used for food recommendations in the AI prompt
     
     if (goal.includes('отслабване') || goal.includes('weight loss')) {
         // Weight loss: higher protein to preserve muscle mass
@@ -3310,8 +3342,8 @@ function estimateMacros(initial = {}) {
         carbs_percent = 35;
         fat_percent = 30;
         
-        // If high activity, increase carbs slightly
-        if (activity.includes('високо') || activity.includes('активно')) {
+        // If high sport activity, increase carbs slightly
+        if (sportActivity.includes('висока') || sportActivity.includes('средна')) {
             protein_percent = 30;
             carbs_percent = 40;
             fat_percent = 30;
@@ -3321,14 +3353,25 @@ function estimateMacros(initial = {}) {
         protein_percent = 25;
         carbs_percent = 45;
         fat_percent = 30;
+    } else if (goal.includes('антиейджинг') || goal.includes('anti-aging')) {
+        // Anti-aging: balanced with emphasis on protein
+        protein_percent = 30;
+        carbs_percent = 35;
+        fat_percent = 35;
     }
     
-    // Adjust for keto/low-carb history if applicable
-    if (dietType.includes('кето') || dietType.includes('keto') || 
-        dietType.includes('ниско въглехидратна') || dietType.includes('low carb')) {
+    // Adjust for keto preference
+    if (isKeto) {
         protein_percent = 25;
-        carbs_percent = 25;
-        fat_percent = 50;
+        carbs_percent = 10;
+        fat_percent = 65;
+    }
+    
+    // Adjust for high protein preference
+    if (isHighProtein && !isKeto) {
+        protein_percent = Math.min(40, protein_percent + 10);
+        carbs_percent = Math.max(25, carbs_percent - 5);
+        fat_percent = Math.max(25, fat_percent - 5);
     }
     
     const protein_grams = calcMacroGrams(calories, protein_percent, 4);
@@ -5525,13 +5568,13 @@ async function processSingleUserPlan(userId, env) {
         const replacements = {
             '%%FORMATTED_ANSWERS%%': formattedAnswersForPrompt, '%%USER_ID%%': userId, '%%USER_NAME%%': safeGet(initialAnswers, 'name', 'Потребител'),
             '%%USER_EMAIL%%': safeGet(initialAnswers, 'email', 'N/A'), '%%USER_GOAL%%': safeGet(initialAnswers, 'goal', 'Общо здраве'),
-            '%%FOOD_PREFERENCE%%': safeGet(initialAnswers, 'foodPreference', 'Нямам специфични предпочитания'),
-            '%%INTOLERANCES%%': (() => { const c = safeGet(initialAnswers, 'medicalConditions', []); let i = []; if (c.includes("Цьолиакия / глутенова непоносимост")) i.push("глутен"); if (c.includes("Лактозна непоносимост")) i.push("лактоза"); if (c.includes("Алергия към мляко")) i.push("мляко (алергия)"); if (c.includes("Алергия към яйца")) i.push("яйца (алергия)"); if (c.includes("Алергия към ядки")) i.push("ядки (алергия)"); if (c.includes("Алергия към соя")) i.push("соя (алергия)"); return i.length > 0 ? i.join(', ') : "Няма декларирани"; })(),
-            '%%DISLIKED_FOODS%%': safeGet(initialAnswers, 'foodPreferenceDisliked', '') || safeGet(initialAnswers, 'q1745806494081', '') || safeGet(initialAnswers, 'foodPreferenceOther', '') || safeGet(initialAnswers, 'q1745806409218', 'Няма посочени нехаресвани храни'),
+            '%%FOOD_PREFERENCE%%': (() => { const prefs = safeGet(initialAnswers, 'dietPreference', []); return Array.isArray(prefs) && prefs.length > 0 ? prefs.join(', ') : 'Нямам специфични предпочитания'; })(),
+            '%%INTOLERANCES%%': (() => { const c = safeGet(initialAnswers, 'medicalConditions', []); let i = []; if (c.includes("Инсулинова резистентност")) i.push("инсулинова резистентност"); if (c.includes("Диабет")) i.push("диабет"); if (c.includes("IBS")) i.push("IBS"); if (c.includes("IBD")) i.push("IBD"); if (c.includes("Алергии")) i.push("алергии"); if (c.includes("Рефлукс")) i.push("рефлукс"); return i.length > 0 ? i.join(', ') : "Няма декларирани"; })(),
+            '%%DISLIKED_FOODS%%': safeGet(initialAnswers, 'dietDislike', '') || safeGet(initialAnswers, 'foodPreferenceDisliked', '') || 'Няма посочени нехаресвани храни',
             '%%CONDITIONS%%': (safeGet(initialAnswers, 'medicalConditions', []).filter(c => c && c.toLowerCase() !== 'нямам' && c.toLowerCase() !== 'друго')).join(', ') || 'Няма декларирани специфични медицински състояния',
-            '%%ACTIVITY_LEVEL%%': (() => { const pa = safeGet(initialAnswers, 'physicalActivity', 'Не'); const da = safeGet(initialAnswers, 'dailyActivityLevel', '') || safeGet(initialAnswers, 'q1745878295708', 'Не е посочено'); let sd = "Няма регулярни спортни занимания."; if (pa === 'Да') { const stArr = safeGet(initialAnswers, 'regularActivityTypes', []) || safeGet(initialAnswers, 'q1745877358368', []); const st = Array.isArray(stArr) ? stArr.join(', ') : 'Не е посочен тип спорт'; const sf = safeGet(initialAnswers, 'weeklyActivityFrequency', '') || safeGet(initialAnswers, 'q1745878063775', 'Непосочена честота'); const sDur = safeGet(initialAnswers, 'activityDuration', '') || safeGet(initialAnswers, 'q1745890775342', 'Непосочена продължителност'); sd = `Спорт: ${st || 'Не е посочен тип'}; Честота: ${sf}; Продължителност: ${sDur}`; } return `Ежедневна активност (общо ниво): ${da}. ${sd}`; })(),
+            '%%ACTIVITY_LEVEL%%': (() => { const da = safeGet(initialAnswers, 'dailyActivityLevel', 'Не е посочено'); const sa = safeGet(initialAnswers, 'sportActivity', '') || safeGet(initialAnswers, 'sportActivityLevel', ''); return `Ежедневна активност: ${da}. Спортна активност: ${sa || 'Не е посочено'}`; })(),
             '%%STRESS_LEVEL%%': safeGet(initialAnswers, 'stressLevel', 'Не е посочено'), '%%SLEEP_INFO%%': `Часове сън: ${safeGet(initialAnswers, 'sleepHours', 'Непос.')}, Прекъсвания на съня: ${safeGet(initialAnswers, 'sleepInterrupt', 'Непос.')}`,
-            '%%MAIN_CHALLENGES%%': safeGet(initialAnswers, 'mainChallenge', 'Няма посочени основни предизвикателства'), '%%USER_AGE%%': safeGet(initialAnswers, 'age', 'Няма данни'),
+            '%%MAIN_CHALLENGES%%': safeGet(initialAnswers, 'additionalNotes', '') || safeGet(initialAnswers, 'mainChallenge', 'Няма посочени основни предизвикателства'), '%%USER_AGE%%': safeGet(initialAnswers, 'age', 'Няма данни'),
             '%%USER_GENDER%%': safeGet(initialAnswers, 'gender', 'Няма данни'), '%%USER_HEIGHT%%': safeGet(initialAnswers, 'height', 'Няма данни'),
             '%%USER_WEIGHT%%': safeGet(initialAnswers, 'weight', 'Няма данни'), '%%TARGET_WEIGHT_CHANGE_KG%%': safeGet(initialAnswers, 'lossKg', safeGet(initialAnswers, 'gainKg', 'N/A')),
             '%%BASE_DIET_MODEL_SUMMARY%%': (baseDietModelContent || '').substring(0, 3000), '%%ALLOWED_MEAL_COMBINATIONS%%': (allowedMealCombinationsContent || '').substring(0, 2500),
@@ -6123,8 +6166,10 @@ function buildPromptDataFromRaw(initialAnswers, finalPlan, currentStatus, logEnt
     const userConditions = Array.isArray(conditionsList)
         ? conditionsList.filter(c => c && c.toLowerCase() !== 'нямам').join(', ') || 'Няма специфични'
         : 'Няма специфични';
-    const dislikes = safeGet(initialAnswers, 'foodPreferenceDisliked', '') || safeGet(initialAnswers, 'q1745806494081', '') || safeGet(initialAnswers, 'foodPreferenceOther', '') || safeGet(initialAnswers, 'q1745806409218', 'Няма');
-    const userPreferences = `${safeGet(initialAnswers, 'foodPreference', 'N/A')}. Не харесва: ${dislikes}`;
+    const dislikes = safeGet(initialAnswers, 'dietDislike', '') || safeGet(initialAnswers, 'foodPreferenceDisliked', '') || 'Няма';
+    const dietPrefArr = safeGet(initialAnswers, 'dietPreference', []);
+    const dietPrefStr = Array.isArray(dietPrefArr) && dietPrefArr.length > 0 ? dietPrefArr.join(', ') : 'N/A';
+    const userPreferences = `${dietPrefStr}. Не харесва: ${dislikes}`;
     const calMac = safeGet(finalPlan, 'caloriesMacros', null);
     const initCalMac = calMac
         ? `Кал: ${calMac.calories || '?'} P:${calMac.protein_grams || '?'}g C:${calMac.carbs_grams || '?'}g F:${calMac.fat_grams || '?'}g Fb:${calMac.fiber_grams || '?'}g`
@@ -6294,8 +6339,10 @@ async function assembleChatContext(
     const userConditions = Array.isArray(conditionsList)
         ? conditionsList.filter(c => c && c.toLowerCase() !== 'нямам').join(', ') || 'Няма специфични'
         : 'Няма специфични';
-    const dislikes = safeGet(answers, 'foodPreferenceDisliked', '') || safeGet(answers, 'q1745806494081', '') || safeGet(answers, 'foodPreferenceOther', '') || safeGet(answers, 'q1745806409218', 'Няма');
-    const userPreferences = `${safeGet(answers, 'foodPreference', 'N/A')}. Не харесва: ${dislikes}`;
+    const dislikes = safeGet(answers, 'dietDislike', '') || safeGet(answers, 'foodPreferenceDisliked', '') || 'Няма';
+    const dietPrefArr = safeGet(answers, 'dietPreference', []);
+    const dietPrefStr = Array.isArray(dietPrefArr) && dietPrefArr.length > 0 ? dietPrefArr.join(', ') : 'N/A';
+    const userPreferences = `${dietPrefStr}. Не харесва: ${dislikes}`;
     const currWeight = safeParseFloat(safeGet(status, 'weight', null), null);
     const currW = currWeight !== null ? `${currWeight.toFixed(1)} кг` : 'N/A';
 
@@ -7881,7 +7928,7 @@ function createPraiseReplacements(initialAnswers, logs, avgMetric, mealAdh) {
         '%%име%%': initialAnswers.name || 'Клиент',
         '%%възраст%%': initialAnswers.age || 'N/A',
         '%%формулировка_на_целта%%': initialAnswers.goal || 'N/A',
-        '%%извлечени_от_въпросника_ключови_моменти_като_mainChallenge_стрес_ниво_мотивационни_проблеми_или_синтезиран_кратък_психо_портрет_ако_има%%': initialAnswers.mainChallenge || '',
+        '%%извлечени_от_въпросника_ключови_моменти_като_mainChallenge_стрес_ниво_мотивационни_проблеми_или_синтезиран_кратък_психо_портрет_ако_има%%': initialAnswers.additionalNotes || initialAnswers.mainChallenge || '',
         '%%брой_попълнени_дни%%': logs.length,
         '%%общо_дни_в_периода%%': PRAISE_INTERVAL_DAYS,
         '%%средна_енергия_за_периода%%': avgMetric('energy'),
