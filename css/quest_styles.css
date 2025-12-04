@@ -623,6 +623,36 @@ select:invalid:not(:focus) {
   background-color: var(--success-bg);
   border-left: 4px solid var(--success-color);
 }
+
+/* =================================================================== */
+/*                    OTHER INPUT CONTAINER STYLES                      */
+/* =================================================================== */
+.other-input-container {
+  margin: 10px auto;
+  width: 90%;
+  max-width: 450px;
+}
+
+.other-input-container input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.other-input-container input:focus {
+  outline: none;
+  border-color: var(--border-color-hover);
+  box-shadow: 0 0 8px var(--accent-focus-shadow);
+  background-color: var(--bg-secondary);
+}
+
+@media (min-width: 1200px) {
+  .stat-icon {
     width: 120px;
     height: 120px;
   }

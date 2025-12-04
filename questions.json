@@ -226,21 +226,8 @@
       "Чипс / снакс",
       "Друго"
     ],
-    "children": {
-      "Друго": [
-        {
-          "id": "foodCravingsOther",
-          "text": "Други храни:",
-          "type": "text",
-          "options": [],
-          "dependsOn": {
-            "question": "foodCravings",
-            "value": "Друго"
-          },
-          "children": []
-        }
-      ]
-    }
+    "hasOtherInput": true,
+    "children": []
   },
   {
     "id": "foodTriggers",
@@ -254,21 +241,8 @@
       "Нито едно",
       "Друго"
     ],
-    "children": {
-      "Друго": [
-        {
-          "id": "foodTriggersOther",
-          "text": "Какво точно предизвиква желание за храна?",
-          "type": "text",
-          "options": [],
-          "dependsOn": {
-            "question": "foodTriggers",
-            "value": "Друго"
-          },
-          "children": []
-        }
-      ]
-    }
+    "hasOtherInput": true,
+    "children": []
   },
   {
     "id": "eatingHabits",
@@ -291,21 +265,8 @@
     "text": "Използвате ли методи за компенсация след прекомерно хранене?",
     "type": "checkbox",
     "options": ["Гладуване", "Спорт", "Хапчета за отслабване", "Друго", "Не"],
-    "children": {
-      "Друго": [
-        {
-          "id": "compensationOther",
-          "text": "Какво използвате като компенсация?",
-          "type": "textarea",
-          "options": [],
-          "dependsOn": {
-            "question": "compensationMethods",
-            "value": "Друго"
-          },
-          "children": []
-        }
-      ]
-    }
+    "hasOtherInput": true,
+    "children": []
   },
   {
     "id": "socialComparison",
@@ -331,8 +292,10 @@
       "Веган",
       "Сезонна",
       "Фастинг",
-      "Високопротеинова"
+      "Високопротеинова",
+      "Друго"
     ],
+    "hasOtherInput": true,
     "children": []
   },
   {
@@ -373,21 +336,8 @@
       "Друго",
       "Нямам"
     ],
-    "children": {
-      "Друго": [
-        {
-          "id": "medicalOther",
-          "text": "Моля, опишете медицинското състояние:",
-          "type": "textarea",
-          "options": [],
-          "dependsOn": {
-            "question": "medicalConditions",
-            "value": "Друго"
-          },
-          "children": []
-        }
-      ]
-    }
+    "hasOtherInput": true,
+    "children": []
   },
   {
     "id": "medications",
