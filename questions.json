@@ -331,9 +331,24 @@
       "Веган",
       "Сезонна",
       "Фастинг",
-      "Високопротеинова"
+      "Високопротеинова",
+      "Друго"
     ],
-    "children": []
+    "children": {
+      "Друго": [
+        {
+          "id": "dietPreferenceOther",
+          "text": "Моля, опишете вашия тип диета:",
+          "type": "text",
+          "options": [],
+          "dependsOn": {
+            "question": "dietPreference",
+            "value": "Друго"
+          },
+          "children": []
+        }
+      ]
+    }
   },
   {
     "id": "dietDislike",

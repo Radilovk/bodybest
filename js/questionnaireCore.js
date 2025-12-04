@@ -31,7 +31,6 @@ const requiredFields = [
   'sportActivity', 'waterIntake', 'drinksSweet', 'drinksAlcohol',
   'weightChange', 'dietHistory', 'overeatingFrequency', 'foodCravings', 'foodTriggers',
   'eatingHabits', 'compensationMethods', 'socialComparison',
-  'dietPreference',
   'medicalConditions', 'medications'
 ];
 
