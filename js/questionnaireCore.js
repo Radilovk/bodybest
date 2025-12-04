@@ -176,6 +176,12 @@ function createQuestionPage(question, pageIndex) {
       const optionValue = String(opt);
       html += `<label class="answer-label"><input name="${question.id}" type="checkbox" value="${optionValue}"> ${optionValue}</label>`;
     });
+    // Add inline text input for "Друго" option if hasOtherInput is true
+    if (question.hasOtherInput) {
+      html += `<div id="${question.id}OtherContainer" class="other-input-container" style="display: none;">
+        <input type="text" id="${question.id}Other" placeholder="Моля, уточнете...">
+      </div>`;
+    }
   } else if (question.type !== 'section') {
     console.warn(`Unsupported question type: ${question.type} for question ID: ${question.id}`);
     html += `<p style="color: red;">Грешка: Неподдържан тип въпрос.</p>`;
@@ -186,6 +192,22 @@ function createQuestionPage(question, pageIndex) {
   html += `<div class="nav-buttons">${pageIndex > 1 ? `<button type="button" id="prevBtn${pageIndex}">◀ Назад</button>` : ''}<button type="button" id="nextBtn${pageIndex}">Напред ▶</button></div>`;
   pageDiv.innerHTML = html;
   container.appendChild(pageDiv);
+  
+  // Setup event listener for "Друго" checkbox to show/hide inline text input
+  if (question.type === 'checkbox' && question.hasOtherInput) {
+    const otherCheckbox = pageDiv.querySelector(`input[name="${question.id}"][value="Друго"]`);
+    const otherContainer = pageDiv.querySelector(`#${question.id}OtherContainer`);
+    if (otherCheckbox && otherContainer) {
+      otherCheckbox.addEventListener('change', () => {
+        otherContainer.style.display = otherCheckbox.checked ? 'block' : 'none';
+        if (!otherCheckbox.checked) {
+          const otherInput = otherContainer.querySelector('input');
+          if (otherInput) otherInput.value = '';
+        }
+      });
+    }
+  }
+  
   const nextBtn = pageDiv.querySelector(`#nextBtn${pageIndex}`);
   if (nextBtn) {
     nextBtn.addEventListener('click', () => {
@@ -408,6 +430,9 @@ function loadProgress() {
 
 function applySavedResponses() {
   for (const [qId, answer] of Object.entries(state.responses)) {
+    // Skip "Other" text fields - they will be handled with their parent question
+    if (qId.endsWith('Other')) continue;
+    
     const question = state.flatPages.find(q => q.id === qId);
     if (!question) continue;
     const el = document.getElementById(qId);
@@ -421,6 +446,15 @@ function applySavedResponses() {
         const chk = document.querySelector(`input[name="${qId}"][value="${val}"]`);
         if (chk) chk.checked = true;
       });
+      // Restore "Other" input visibility and value
+      if (question.hasOtherInput && answer.includes('Друго')) {
+        const otherContainer = document.getElementById(`${qId}OtherContainer`);
+        const otherInput = document.getElementById(`${qId}Other`);
+        if (otherContainer) otherContainer.style.display = 'block';
+        if (otherInput && state.responses[`${qId}Other`]) {
+          otherInput.value = state.responses[`${qId}Other`];
+        }
+      }
     }
   }
 }
@@ -447,6 +481,15 @@ export function saveAnswer(question) {
   } else if (question.type === 'checkbox') {
     const checked = document.querySelectorAll(`input[name="${qId}"]:checked`);
     answer = Array.from(checked).map(ch => ch.value);
+    // Save the "Other" text input value if exists
+    if (question.hasOtherInput) {
+      const otherInput = document.getElementById(`${qId}Other`);
+      if (otherInput && otherInput.value.trim()) {
+        state.responses[`${qId}Other`] = otherInput.value.trim();
+      } else {
+        delete state.responses[`${qId}Other`];
+      }
+    }
   }
   if (answer !== undefined) {
     state.responses[qId] = answer;
