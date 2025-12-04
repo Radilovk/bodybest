@@ -3266,14 +3266,35 @@ function estimateMacros(initial = {}) {
     if (!weight || !height || !age) return null;
     
     const gender = (initial.gender || '').toLowerCase().startsWith('м') ? 'male' : 'female';
-    const activity = (initial.dailyActivityLevel || initial.q1745878295708 || '').toLowerCase();
-    const activityFactors = {
-        'ниско': 1.2, 'sedentary': 1.2, 'седящ': 1.2,
-        'средно': 1.375, 'умерено': 1.375,
-        'високо': 1.55, 'активно': 1.55,
-        'много високо': 1.725
+    
+    // Combine daily activity level and sport activity level for total activity factor
+    const dailyActivity = (initial.dailyActivityLevel || '').toLowerCase();
+    const sportActivity = (initial.sportActivityLevel || '').toLowerCase();
+    
+    // Base activity factors from dailyActivityLevel
+    const dailyFactors = {
+        'ниско': 1.2,
+        'средно': 1.375,
+        'високо': 1.55
     };
-    const factor = activityFactors[activity] || 1.375;
+    
+    // Sport activity bonus
+    const sportBonus = {
+        'висока': 0.2,        // 5-7 days/week
+        'средна': 0.1,        // 2-4 days/week
+        'ниска': 0.05,        // 1-2 days/week
+        'никаква': 0          // 0 days/week
+    };
+    
+    let baseFactor = dailyFactors[dailyActivity] || 1.375;
+    let bonus = 0;
+    for (const [key, val] of Object.entries(sportBonus)) {
+        if (sportActivity.includes(key)) {
+            bonus = val;
+            break;
+        }
+    }
+    const factor = baseFactor + bonus;
     
     // Calculate BMR using Mifflin-St Jeor equation
     const bmr = 10 * weight + 6.25 * height - 5 * age + (gender === 'male' ? 5 : -161);
@@ -3281,7 +3302,6 @@ function estimateMacros(initial = {}) {
     
     // Adjust calories based on goal
     const goal = (initial.goal || '').toLowerCase();
-    let calories = tdee;
     let calorieAdjustment = 0;
     
     if (goal.includes('отслабване') || goal.includes('weight loss') || goal.includes('загуба')) {
@@ -3292,17 +3312,28 @@ function estimateMacros(initial = {}) {
         // Muscle gain: surplus of 200-300 kcal
         calorieAdjustment = 250;
     }
-    // Maintenance: no adjustment
+    // Maintenance/Оформяне/Health improvement: no adjustment
     
-    calories = Math.round(tdee + calorieAdjustment);
+    let calories = Math.round(tdee + calorieAdjustment);
     
-    // Determine macro distribution based on goal, activity, and diet history
+    // Determine macro distribution based on goal, activity, and diet preference
     let protein_percent = 30;
     let carbs_percent = 40;
     let fat_percent = 30;
     
-    // Check for diet type
+    // Check for diet preference (from question 25)
+    const dietPref = Array.isArray(initial.dietPreference) ? initial.dietPreference : [];
     const dietType = (initial.dietType || '').toLowerCase();
+    
+    // Keto preference
+    const isKeto = dietPref.some(d => d.toLowerCase().includes('кето')) || 
+                   dietType.includes('кето') || dietType.includes('keto');
+    
+    // High protein preference
+    const isHighProtein = dietPref.some(d => d.toLowerCase().includes('високопротеинова'));
+    
+    // Note: Vegan, Vegetarian, and Fasting preferences are captured in dietPreference
+    // and can be used for food recommendations in the AI prompt
     
     if (goal.includes('отслабване') || goal.includes('weight loss')) {
         // Weight loss: higher protein to preserve muscle mass
@@ -3310,8 +3341,8 @@ function estimateMacros(initial = {}) {
         carbs_percent = 35;
         fat_percent = 30;
         
-        // If high activity, increase carbs slightly
-        if (activity.includes('високо') || activity.includes('активно')) {
+        // If high sport activity, increase carbs slightly
+        if (sportActivity.includes('висока') || sportActivity.includes('средна')) {
             protein_percent = 30;
             carbs_percent = 40;
             fat_percent = 30;
@@ -3321,14 +3352,25 @@ function estimateMacros(initial = {}) {
         protein_percent = 25;
         carbs_percent = 45;
         fat_percent = 30;
+    } else if (goal.includes('антиейджинг') || goal.includes('anti-aging')) {
+        // Anti-aging: balanced with emphasis on protein
+        protein_percent = 30;
+        carbs_percent = 35;
+        fat_percent = 35;
     }
     
-    // Adjust for keto/low-carb history if applicable
-    if (dietType.includes('кето') || dietType.includes('keto') || 
-        dietType.includes('ниско въглехидратна') || dietType.includes('low carb')) {
+    // Adjust for keto preference
+    if (isKeto) {
         protein_percent = 25;
-        carbs_percent = 25;
-        fat_percent = 50;
+        carbs_percent = 10;
+        fat_percent = 65;
+    }
+    
+    // Adjust for high protein preference
+    if (isHighProtein && !isKeto) {
+        protein_percent = Math.min(40, protein_percent + 10);
+        carbs_percent = Math.max(25, carbs_percent - 5);
+        fat_percent = Math.max(25, fat_percent - 5);
     }
     
     const protein_grams = calcMacroGrams(calories, protein_percent, 4);

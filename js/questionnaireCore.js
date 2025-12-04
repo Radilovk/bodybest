@@ -19,21 +19,19 @@ const numericRanges = {
   age: { min: 10, max: 120 },
   height: { min: 100, max: 250 },
   weight: { min: 30, max: 300 },
-  lossKg: { min: 1, max: 100 },
-  activityDurationDaily: { min: 1, max: 300 },
-  activityDurationWeekly: { min: 1, max: 300 },
-  activityDurationRare: { min: 1, max: 300 }
+  lossKg: { min: 1, max: 100 }
 };
 
 const requiredFields = [
-  'name','gender','age','height','weight','goal','lossKg','motivation','weightChange','weightChangeDetails',
-  'dietHistory','dietType','dietResult','sleepHours','sleepInterrupt','chronotype','dailyActivityLevel','stressLevel',
-  'physicalActivity','activityTypeDaily','activityDurationDaily','activityTypeWeekly','activityDurationWeekly','activityTypeRare',
-  'activityDurationRare','regularActivityTypes','weeklyActivityFrequency','activityDuration','waterIntake','waterReplaceFreq','waterReplacementRare',
-  'waterReplacementSometimes','waterReplacementOften','overeatingFrequency','foodCravings','foodCravingsDetails','foodTriggers',
-  'foodTriggersOther','nighteat','eatingHabitsOther','compensationmethod','compensationMethodOther','comparisson','eatingOutFrequency',
-  'eatingOutType','alcoholFrequency','foodPreference','foodPreferenceOther','foodPreferenceDisliked','mainChallenge','additionalComments',
-  'medicalConditions','medicalConditionsOther','medications','medicationsList','supplementsList'
+  'name', 'gender', 'age', 'height', 'weight', 'goal', 'lossKg',
+  'weightChange', 'weightChangeDetails', 'dietHistory', 'dietType', 'dietResult',
+  'sleepHours', 'sleepInterrupt', 'chronotype', 'dailyActivityLevel', 'stressLevel',
+  'sportActivityLevel', 'waterIntake', 'juicesSodas', 'alcoholFrequency',
+  'overeatingFrequency', 'foodCravings', 'foodCravingsOther', 'foodTriggers', 'foodTriggersOther',
+  'eatingHabits', 'compensationMethod', 'compensationMethodOther', 'comparison',
+  'dietPreference', 'foodDislikes', 'foodLoves',
+  'medicalConditions', 'medicalConditionsOther', 'medications', 'medicationsDetails',
+  'additionalNotes'
 ];
 
 function flattenQuestions(questions) {
