@@ -27,11 +27,10 @@ const numericRanges = {
 // are validated only when their parent question triggers their display
 const requiredFields = [
   'name', 'gender', 'age', 'height', 'weight', 'goal',
-  'weightChange', 'dietHistory',
   'sleepHours', 'sleepInterrupt', 'chronotype', 'dailyActivityLevel', 'stressLevel',
-  'sportActivityLevel', 'waterIntake', 'juicesSodas', 'alcoholFrequency',
-  'overeatingFrequency', 'foodCravings', 'foodTriggers',
-  'eatingHabits', 'compensationMethod', 'comparison',
+  'sportActivity', 'waterIntake', 'drinksSweet', 'drinksAlcohol',
+  'weightChange', 'dietHistory', 'overeatingFrequency', 'foodCravings', 'foodTriggers',
+  'eatingHabits', 'compensationMethods', 'socialComparison',
   'dietPreference',
   'medicalConditions', 'medications'
 ];

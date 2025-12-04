@@ -3269,7 +3269,7 @@ function estimateMacros(initial = {}) {
     
     // Combine daily activity level and sport activity level for total activity factor
     const dailyActivity = (initial.dailyActivityLevel || '').toLowerCase();
-    const sportActivity = (initial.sportActivityLevel || '').toLowerCase();
+    const sportActivity = (initial.sportActivity || initial.sportActivityLevel || '').toLowerCase();
     
     // Base activity factors from dailyActivityLevel
     const dailyFactors = {

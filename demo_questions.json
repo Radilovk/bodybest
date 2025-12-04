@@ -1,186 +1,158 @@
 [
-    {
-        "id": "secDemo",
-        "type": "section",
-        "sectionTitle": "Демо въпросник"
-    },
-    {
-        "id": "name",
-        "text": "1. Име",
-        "type": "text",
-        "options": [],
-        "children": []
-    },
-    {
-        "id": "gender",
-        "text": "2. Пол",
-        "type": "radio",
-        "options": [
-            "Мъж",
-            "Жена"
-        ],
-        "children": []
-    },
-    {
-        "id": "age",
-        "text": "3. Възраст (години)",
-        "type": "number",
-        "options": [],
-        "children": []
-    },
-    {
-        "id": "height",
-        "text": "4. Ръст (см)",
-        "type": "number",
-        "options": [],
-        "children": []
-    },
-    {
-        "id": "weight",
-        "text": "5. Тегло (кг)",
-        "type": "number",
-        "options": [],
-        "children": []
-    },
-    {
-        "id": "email",
-        "text": "6. Имейл",
-        "type": "email",
-        "options": [],
-        "children": []
-    },
-    {
-        "id": "goal",
-        "text": "7. Основна цел",
-        "type": "radio",
-        "options": [
-            "Подобряване на здравето",
-            "Отслабване",
-            "Оформяне",
-            "Покачване на мускулна маса",
-            "Антиейджинг"
-        ],
-        "children": {
-            "Отслабване": [
-                {
-                    "id": "lossKg",
-                    "text": "7.1. Желани килограми за сваляне",
-                    "type": "number"
-                }
-            ]
-        },
-        "dependsOn": null
-    },
-    {
-        "id": "sleepHours",
-        "text": "10. Колко часа сън имате средно на нощ?",
-        "type": "radio",
-        "options": [
-            "Под 5",
-            "5–6",
-            "6–7",
-            "7–8",
-            "Над 8"
-        ],
-        "dependsOn": null
-    },
-    {
-        "id": "dailyActivityLevel",
-        "text": "13. Ниво на активност през деня:",
-        "type": "radio",
-        "options": [
-            "Ниско",
-            "Средно",
-            "Високо"
-        ],
-        "dependsOn": null,
-        "children": []
-    },
-    {
-        "id": "stressLevel",
-        "text": "14. Ниво на стрес:",
-        "type": "radio",
-        "options": [
-            "Ниско",
-            "Средно",
-            "Високо"
-        ],
-        "dependsOn": null
-    },
-    {
-        "id": "sportActivityLevel",
-        "text": "15. Ниво на спортна активност:",
-        "type": "radio",
-        "options": [
-            "Висока (5–7 дни седмично)",
-            "Средна (2–4 дни седмично)",
-            "Ниска (1–2 дни седмично)",
-            "Никаква (0 дни седмично)"
-        ],
-        "dependsOn": null
-    },
-    {
-        "id": "waterIntake",
-        "text": "16. Колко вода пиете дневно:",
-        "type": "radio",
-        "options": [
-            "Под 1 л",
-            "1–1.5 л",
-            "1.5–2 л",
-            "Над 2 л"
-        ],
-        "dependsOn": null
-    },
-    {
-        "id": "overeatingFrequency",
-        "text": "19. Колко често ядете повече от планираното количество:",
-        "type": "radio",
-        "options": [
-            "Постоянно",
-            "Често",
-            "Понякога",
-            "Рядко",
-            "Никога"
-        ]
-    },
-    {
-        "id": "secMedical",
-        "type": "section",
-        "sectionTitle": "Медицинско състояние"
-    },
-    {
-        "id": "medicalConditions",
-        "text": "26. Имате ли някое от следните медицински състояния: (Може да се изберат няколко)",
-        "type": "checkbox",
-        "options": [
-            "Инсулинова резистентност",
-            "Диабет",
-            "Хашимото",
-            "Депресия",
-            "Тревожност",
-            "IBS",
-            "IBD",
-            "Алергии",
-            "Автоимунно",
-            "Рефлукс",
-            "Друго",
-            "Нямам"
-        ],
-        "dependsOn": null,
-        "children": {
-            "Друго": [
-                {
-                    "id": "medicalConditionsOther",
-                    "text": "26.1. Ако Друго – кое?",
-                    "type": "textarea",
-                    "options": [],
-                    "dependsOn": {
-                        "question": "medicalConditions",
-                        "value": "Друго"
-                    },
-                    "children": []
-                }
-            ]
+  {
+    "id": "secDemo",
+    "type": "section",
+    "sectionTitle": "Демо въпросник"
+  },
+  {
+    "id": "name",
+    "text": "Въведете вашето име:",
+    "type": "text",
+    "options": [],
+    "children": []
+  },
+  {
+    "id": "gender",
+    "text": "Моля, изберете вашия пол:",
+    "type": "radio",
+    "options": ["Мъж", "Жена"],
+    "children": []
+  },
+  {
+    "id": "age",
+    "text": "Въведете вашата възраст:",
+    "type": "number",
+    "options": [],
+    "children": []
+  },
+  {
+    "id": "height",
+    "text": "Въведете вашия ръст (в см):",
+    "type": "number",
+    "options": [],
+    "children": []
+  },
+  {
+    "id": "weight",
+    "text": "Въведете вашето тегло (в кг):",
+    "type": "number",
+    "options": [],
+    "children": []
+  },
+  {
+    "id": "email",
+    "text": "Въведете вашия имейл адрес:",
+    "type": "email",
+    "options": [],
+    "children": []
+  },
+  {
+    "id": "goal",
+    "text": "Изберете основната си цел:",
+    "type": "radio",
+    "options": [
+      "Подобряване на здравето",
+      "Отслабване",
+      "Оформяне",
+      "Покачване на мускулна маса",
+      "Антиейджинг"
+    ],
+    "children": {
+      "Отслабване": [
+        {
+          "id": "lossKg",
+          "text": "Колко килограма бихте искали да свалите?",
+          "type": "number",
+          "options": [],
+          "children": []
         }
+      ]
     }
+  },
+  {
+    "id": "sleepHours",
+    "text": "Колко часа сън имате средно на нощ?",
+    "type": "radio",
+    "options": ["Под 5", "5–6", "6–7", "7–8", "Над 8"],
+    "children": []
+  },
+  {
+    "id": "dailyActivityLevel",
+    "text": "Ниво на активност през деня:",
+    "type": "radio",
+    "options": ["Ниско", "Средно", "Високо"],
+    "children": []
+  },
+  {
+    "id": "stressLevel",
+    "text": "Ниво на стрес:",
+    "type": "radio",
+    "options": ["Ниско", "Средно", "Високо"],
+    "children": []
+  },
+  {
+    "id": "sportActivity",
+    "text": "Ниво на спортна активност:",
+    "type": "radio",
+    "options": [
+      "Висока (5–7 дни седмично)",
+      "Средна (2–4 дни седмично)",
+      "Ниска (1–2 дни седмично)",
+      "Никаква (0 дни седмично)"
+    ],
+    "children": []
+  },
+  {
+    "id": "waterIntake",
+    "text": "Колко вода пиете дневно?",
+    "type": "radio",
+    "options": ["под 1 л", "1–1.5 л", "1.5–2 л", "над 2 л"],
+    "children": []
+  },
+  {
+    "id": "overeatingFrequency",
+    "text": "Колко често ядете повече от планираното количество?",
+    "type": "radio",
+    "options": ["Постоянно", "Често", "Понякога", "Рядко", "Никога"],
+    "children": []
+  },
+  {
+    "id": "secMedical",
+    "type": "section",
+    "sectionTitle": "Медицинско състояние"
+  },
+  {
+    "id": "medicalConditions",
+    "text": "Имате ли някое от следните медицински състояния?",
+    "type": "checkbox",
+    "options": [
+      "Инсулинова резистентност",
+      "Диабет",
+      "Хашимото",
+      "Депресия",
+      "Тревожност",
+      "IBS",
+      "IBD",
+      "Алергии",
+      "Автоимунно",
+      "Рефлукс",
+      "Друго",
+      "Нямам"
+    ],
+    "children": {
+      "Друго": [
+        {
+          "id": "medicalOther",
+          "text": "Моля, опишете медицинското състояние:",
+          "type": "textarea",
+          "options": [],
+          "dependsOn": {
+            "question": "medicalConditions",
+            "value": "Друго"
+          },
+          "children": []
+        }
+      ]
+    }
+  }
 ]
