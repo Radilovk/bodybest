@@ -5568,13 +5568,13 @@ async function processSingleUserPlan(userId, env) {
         const replacements = {
             '%%FORMATTED_ANSWERS%%': formattedAnswersForPrompt, '%%USER_ID%%': userId, '%%USER_NAME%%': safeGet(initialAnswers, 'name', 'Потребител'),
             '%%USER_EMAIL%%': safeGet(initialAnswers, 'email', 'N/A'), '%%USER_GOAL%%': safeGet(initialAnswers, 'goal', 'Общо здраве'),
-            '%%FOOD_PREFERENCE%%': safeGet(initialAnswers, 'foodPreference', 'Нямам специфични предпочитания'),
-            '%%INTOLERANCES%%': (() => { const c = safeGet(initialAnswers, 'medicalConditions', []); let i = []; if (c.includes("Цьолиакия / глутенова непоносимост")) i.push("глутен"); if (c.includes("Лактозна непоносимост")) i.push("лактоза"); if (c.includes("Алергия към мляко")) i.push("мляко (алергия)"); if (c.includes("Алергия към яйца")) i.push("яйца (алергия)"); if (c.includes("Алергия към ядки")) i.push("ядки (алергия)"); if (c.includes("Алергия към соя")) i.push("соя (алергия)"); return i.length > 0 ? i.join(', ') : "Няма декларирани"; })(),
-            '%%DISLIKED_FOODS%%': safeGet(initialAnswers, 'foodPreferenceDisliked', '') || safeGet(initialAnswers, 'q1745806494081', '') || safeGet(initialAnswers, 'foodPreferenceOther', '') || safeGet(initialAnswers, 'q1745806409218', 'Няма посочени нехаресвани храни'),
+            '%%FOOD_PREFERENCE%%': (() => { const prefs = safeGet(initialAnswers, 'dietPreference', []); return Array.isArray(prefs) && prefs.length > 0 ? prefs.join(', ') : 'Нямам специфични предпочитания'; })(),
+            '%%INTOLERANCES%%': (() => { const c = safeGet(initialAnswers, 'medicalConditions', []); let i = []; if (c.includes("Инсулинова резистентност")) i.push("инсулинова резистентност"); if (c.includes("Диабет")) i.push("диабет"); if (c.includes("IBS")) i.push("IBS"); if (c.includes("IBD")) i.push("IBD"); if (c.includes("Алергии")) i.push("алергии"); if (c.includes("Рефлукс")) i.push("рефлукс"); return i.length > 0 ? i.join(', ') : "Няма декларирани"; })(),
+            '%%DISLIKED_FOODS%%': safeGet(initialAnswers, 'dietDislike', '') || safeGet(initialAnswers, 'foodPreferenceDisliked', '') || 'Няма посочени нехаресвани храни',
             '%%CONDITIONS%%': (safeGet(initialAnswers, 'medicalConditions', []).filter(c => c && c.toLowerCase() !== 'нямам' && c.toLowerCase() !== 'друго')).join(', ') || 'Няма декларирани специфични медицински състояния',
-            '%%ACTIVITY_LEVEL%%': (() => { const pa = safeGet(initialAnswers, 'physicalActivity', 'Не'); const da = safeGet(initialAnswers, 'dailyActivityLevel', '') || safeGet(initialAnswers, 'q1745878295708', 'Не е посочено'); let sd = "Няма регулярни спортни занимания."; if (pa === 'Да') { const stArr = safeGet(initialAnswers, 'regularActivityTypes', []) || safeGet(initialAnswers, 'q1745877358368', []); const st = Array.isArray(stArr) ? stArr.join(', ') : 'Не е посочен тип спорт'; const sf = safeGet(initialAnswers, 'weeklyActivityFrequency', '') || safeGet(initialAnswers, 'q1745878063775', 'Непосочена честота'); const sDur = safeGet(initialAnswers, 'activityDuration', '') || safeGet(initialAnswers, 'q1745890775342', 'Непосочена продължителност'); sd = `Спорт: ${st || 'Не е посочен тип'}; Честота: ${sf}; Продължителност: ${sDur}`; } return `Ежедневна активност (общо ниво): ${da}. ${sd}`; })(),
+            '%%ACTIVITY_LEVEL%%': (() => { const da = safeGet(initialAnswers, 'dailyActivityLevel', 'Не е посочено'); const sa = safeGet(initialAnswers, 'sportActivity', '') || safeGet(initialAnswers, 'sportActivityLevel', ''); return `Ежедневна активност: ${da}. Спортна активност: ${sa || 'Не е посочено'}`; })(),
             '%%STRESS_LEVEL%%': safeGet(initialAnswers, 'stressLevel', 'Не е посочено'), '%%SLEEP_INFO%%': `Часове сън: ${safeGet(initialAnswers, 'sleepHours', 'Непос.')}, Прекъсвания на съня: ${safeGet(initialAnswers, 'sleepInterrupt', 'Непос.')}`,
-            '%%MAIN_CHALLENGES%%': safeGet(initialAnswers, 'mainChallenge', 'Няма посочени основни предизвикателства'), '%%USER_AGE%%': safeGet(initialAnswers, 'age', 'Няма данни'),
+            '%%MAIN_CHALLENGES%%': safeGet(initialAnswers, 'additionalNotes', '') || safeGet(initialAnswers, 'mainChallenge', 'Няма посочени основни предизвикателства'), '%%USER_AGE%%': safeGet(initialAnswers, 'age', 'Няма данни'),
             '%%USER_GENDER%%': safeGet(initialAnswers, 'gender', 'Няма данни'), '%%USER_HEIGHT%%': safeGet(initialAnswers, 'height', 'Няма данни'),
             '%%USER_WEIGHT%%': safeGet(initialAnswers, 'weight', 'Няма данни'), '%%TARGET_WEIGHT_CHANGE_KG%%': safeGet(initialAnswers, 'lossKg', safeGet(initialAnswers, 'gainKg', 'N/A')),
             '%%BASE_DIET_MODEL_SUMMARY%%': (baseDietModelContent || '').substring(0, 3000), '%%ALLOWED_MEAL_COMBINATIONS%%': (allowedMealCombinationsContent || '').substring(0, 2500),
@@ -6166,8 +6166,10 @@ function buildPromptDataFromRaw(initialAnswers, finalPlan, currentStatus, logEnt
     const userConditions = Array.isArray(conditionsList)
         ? conditionsList.filter(c => c && c.toLowerCase() !== 'нямам').join(', ') || 'Няма специфични'
         : 'Няма специфични';
-    const dislikes = safeGet(initialAnswers, 'foodPreferenceDisliked', '') || safeGet(initialAnswers, 'q1745806494081', '') || safeGet(initialAnswers, 'foodPreferenceOther', '') || safeGet(initialAnswers, 'q1745806409218', 'Няма');
-    const userPreferences = `${safeGet(initialAnswers, 'foodPreference', 'N/A')}. Не харесва: ${dislikes}`;
+    const dislikes = safeGet(initialAnswers, 'dietDislike', '') || safeGet(initialAnswers, 'foodPreferenceDisliked', '') || 'Няма';
+    const dietPrefArr = safeGet(initialAnswers, 'dietPreference', []);
+    const dietPrefStr = Array.isArray(dietPrefArr) && dietPrefArr.length > 0 ? dietPrefArr.join(', ') : 'N/A';
+    const userPreferences = `${dietPrefStr}. Не харесва: ${dislikes}`;
     const calMac = safeGet(finalPlan, 'caloriesMacros', null);
     const initCalMac = calMac
         ? `Кал: ${calMac.calories || '?'} P:${calMac.protein_grams || '?'}g C:${calMac.carbs_grams || '?'}g F:${calMac.fat_grams || '?'}g Fb:${calMac.fiber_grams || '?'}g`
@@ -6337,8 +6339,10 @@ async function assembleChatContext(
     const userConditions = Array.isArray(conditionsList)
         ? conditionsList.filter(c => c && c.toLowerCase() !== 'нямам').join(', ') || 'Няма специфични'
         : 'Няма специфични';
-    const dislikes = safeGet(answers, 'foodPreferenceDisliked', '') || safeGet(answers, 'q1745806494081', '') || safeGet(answers, 'foodPreferenceOther', '') || safeGet(answers, 'q1745806409218', 'Няма');
-    const userPreferences = `${safeGet(answers, 'foodPreference', 'N/A')}. Не харесва: ${dislikes}`;
+    const dislikes = safeGet(answers, 'dietDislike', '') || safeGet(answers, 'foodPreferenceDisliked', '') || 'Няма';
+    const dietPrefArr = safeGet(answers, 'dietPreference', []);
+    const dietPrefStr = Array.isArray(dietPrefArr) && dietPrefArr.length > 0 ? dietPrefArr.join(', ') : 'N/A';
+    const userPreferences = `${dietPrefStr}. Не харесва: ${dislikes}`;
     const currWeight = safeParseFloat(safeGet(status, 'weight', null), null);
     const currW = currWeight !== null ? `${currWeight.toFixed(1)} кг` : 'N/A';
 
@@ -7924,7 +7928,7 @@ function createPraiseReplacements(initialAnswers, logs, avgMetric, mealAdh) {
         '%%име%%': initialAnswers.name || 'Клиент',
         '%%възраст%%': initialAnswers.age || 'N/A',
         '%%формулировка_на_целта%%': initialAnswers.goal || 'N/A',
-        '%%извлечени_от_въпросника_ключови_моменти_като_mainChallenge_стрес_ниво_мотивационни_проблеми_или_синтезиран_кратък_психо_портрет_ако_има%%': initialAnswers.mainChallenge || '',
+        '%%извлечени_от_въпросника_ключови_моменти_като_mainChallenge_стрес_ниво_мотивационни_проблеми_или_синтезиран_кратък_психо_портрет_ако_има%%': initialAnswers.additionalNotes || initialAnswers.mainChallenge || '',
         '%%брой_попълнени_дни%%': logs.length,
         '%%общо_дни_в_периода%%': PRAISE_INTERVAL_DAYS,
         '%%средна_енергия_за_периода%%': avgMetric('energy'),
