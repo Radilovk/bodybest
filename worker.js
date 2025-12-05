@@ -1195,6 +1195,7 @@ export default {
         // Debug logging removed for production (previously used X-Debug header)
 
         const defaultAllowedOrigins = [
+            'https://onebody.top',
             'https://mybody.best',
             'https://radilovk.github.io',
             'https://radilov-k.github.io',

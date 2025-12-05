@@ -71,7 +71,7 @@ describe('handleSendEmailRequest and sendEmailUniversal', () => {
     const env = { WORKER_ADMIN_TOKEN: 'secret' };
     const res = await handleSendEmailRequest(req, env);
     expect(fetch).toHaveBeenCalledWith(
-      'https://mybody.best/mailer/mail.php',
+      'https://onebody.top/mailer/mail.php',
       expect.any(Object)
     );
     expect(res.status).toBe(200);
@@ -213,7 +213,7 @@ describe('handleSendTestEmailRequest', () => {
     const res = await handleSendTestEmailRequest(request, env);
     expect(res.success).toBe(true);
     expect(fetch).toHaveBeenCalledWith(
-      'https://mybody.best/mailer/mail.php',
+      'https://onebody.top/mailer/mail.php',
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

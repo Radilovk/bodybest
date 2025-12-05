@@ -43,7 +43,7 @@ test('falls back to default PHP endpoint when none configured', async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: true });
   await sendEmailUniversal('n@a.bg', 'S', 'B');
   expect(fetch).toHaveBeenCalledWith(
-    'https://mybody.best/mailer/mail.php',
+    'https://onebody.top/mailer/mail.php',
     expect.any(Object)
   );
   fetch.mockRestore();

@@ -43,14 +43,14 @@ $mail = new PHPMailer(true);
 
 try {
     $mail->isSMTP();
-    $mail->Host = 'mybody.best';
+    $mail->Host = 'onebody.top';
     $mail->Port = 465;
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->SMTPAuth = true;
-    $mail->Username = getenv('FROM_EMAIL') ?: 'info@mybody.best';
+    $mail->Username = getenv('FROM_EMAIL') ?: 'info@onebody.top';
     $mail->Password = getenv('EMAIL_PASSWORD');
 
-    $fromEmail = getenv('FROM_EMAIL') ?: 'info@mybody.best';
+    $fromEmail = getenv('FROM_EMAIL') ?: 'info@onebody.top';
     $fromName = $data['fromName'] ?? (getenv('FROM_NAME') ?: '');
     if ($fromName) {
         $mail->setFrom($fromEmail, $fromName);
