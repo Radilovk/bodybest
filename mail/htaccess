@@ -1,0 +1,3 @@
+SetEnv TZ Europe/Sofia
+RewriteEngine Off
+```    *   Запазете файла.

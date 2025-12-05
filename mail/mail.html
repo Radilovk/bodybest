@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <title>Изпрати имейл</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #222; color: #eee; padding: 40px; }
+        form { background: #333; padding: 20px; border-radius: 8px; max-width: 400px; margin: auto; }
+        label { display: block; margin-bottom: 6px; }
+        input, textarea { width: 100%; margin-bottom: 14px; padding: 8px; border-radius: 4px; border: 1px solid #444; background: #222; color: #eee;}
+        button { padding: 10px 18px; border: none; border-radius: 4px; background: #56b45d; color: #fff; font-weight: bold; cursor: pointer;}
+        .result { margin-top: 18px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <form id="mailForm">
+        <label for="to">До (имейл):</label>
+        <input type="email" id="to" name="to" required>
+        <label for="subject">Тема:</label>
+        <input type="text" id="subject" name="subject" required>
+        <label for="message">Съобщение:</label>
+        <textarea id="message" name="message" rows="6" required></textarea>
+        <button type="submit">Изпрати</button>
+        <div class="result" id="result"></div>
+    </form>
+    <script>
+        document.getElementById('mailForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const result = document.getElementById('result');
+            result.textContent = "Изпраща...";
+            const formData = new FormData(this);
+            const payload = {};
+            formData.forEach((value, key) => payload[key] = value);
+
+            try {
+                const resp = await fetch('mail.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    result.style.color = 'lightgreen';
+                    result.textContent = "Имейлът е изпратен успешно!";
+                } else {
+                    result.style.color = 'orange';
+                    result.textContent = "Грешка: " + (data.error || "Неуспех");
+                }
+            } catch (err) {
+                result.style.color = 'red';
+                result.textContent = "Грешка при заявката!";
+            }
+        });
+    </script>
+</body>
+</html>
