@@ -7,7 +7,7 @@
  */
 const WORKER_ADMIN_TOKEN_SECRET_NAME = 'WORKER_ADMIN_TOKEN';
 const MAIL_PHP_URL_VAR_NAME = 'MAIL_PHP_URL';
-export const DEFAULT_MAIL_PHP_URL = 'https://mybody.best/mailer/mail.php';
+export const DEFAULT_MAIL_PHP_URL = 'https://onebody.top/mailer/mail.php';
 const EMAIL_TIMEOUT_MS = 10000; // 10 seconds timeout for email sending
 
 async function recordUsage(env, identifier = '') {
@@ -142,6 +142,7 @@ export async function handleSendEmailRequest(request, env = {}) {
 export default {
   async fetch(request, env) {
     const defaultAllowedOrigins = [
+      'https://onebody.top',
       'https://mybody.best',
       'https://radilovk.github.io',
       'https://radilov-k.github.io',

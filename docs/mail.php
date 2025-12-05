@@ -43,7 +43,7 @@ if (preg_match("/[\r\n]/", $to) || preg_match("/[\r\n]/", $subject)) {
 // Имейл заглавки за HTML
 $headers = "MIME-Version: 1.0\r\n";
 $headers .= "Content-type: text/html; charset=UTF-8\r\n";
-$fromEmail = getenv('FROM_EMAIL') ?: 'info@mybody.best';
+$fromEmail = getenv('FROM_EMAIL') ?: 'info@onebody.top';
 $fromName = isset($data['fromName']) ? $data['fromName'] : (getenv('FROM_NAME') ?: '');
 $fromHeader = $fromName ? "$fromName <{$fromEmail}>" : $fromEmail;
 $headers .= "From: {$fromHeader}\r\n";

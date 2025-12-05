@@ -63,17 +63,17 @@ if (mb_strlen($message) < 2) {
 }
 
 // PHPMailer конфиг
-$from_email = 'info@mybody.best';
-$from_name = 'MyBody.Best';
+$from_email = 'info@onebody.top';
+$from_name = 'OneBody.Top';
 
 $mail = new PHPMailer(true);
 
 try {
   // SMTP Настройки
   $mail->isSMTP();
-  $mail->Host       = 'mybody.best';
+  $mail->Host       = 'onebody.top';
   $mail->SMTPAuth   = true;
-  $mail->Username   = 'info@mybody.best';
+  $mail->Username   = 'info@onebody.top';
   $mail->Password   = 'Legion69.#'; // ВАЖНО: Пазете паролата сигурно, не я качвайте в публични хранилища!
   $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
   $mail->Port       = 465;
