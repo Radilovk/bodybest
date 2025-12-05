@@ -756,7 +756,7 @@ function showPlanPendingState(stateOrMessage, customMessage) {
     if (state === 'pending_inputs') {
         // User needs to fill questionnaire - hide spinner, change title
         if (spinnerElement) spinnerElement.style.display = 'none';
-        if (h2Element) h2Element.textContent = 'Добре дошли в MyBody.Best!';
+        if (h2Element) h2Element.textContent = 'Добре дошли в ONE BODY!';
         if (pElements.length > 0) pElements[0].innerHTML = message || 'Моля, попълнете въпросника за да започнете.';
         if (pElements.length > 1) pElements[1].innerHTML = '';
     } else if (state === 'error') {
@@ -769,7 +769,7 @@ function showPlanPendingState(stateOrMessage, customMessage) {
         // Default 'generating' state - show spinner, generating message
         if (spinnerElement) spinnerElement.style.display = '';
         if (h2Element) h2Element.textContent = 'Вашият план се генерира...';
-        if (pElements.length > 0) pElements[0].textContent = message || 'Благодарим ви за попълнения въпросник! Вашият персонализиран план MyBody.Best се генерира.';
+        if (pElements.length > 0) pElements[0].textContent = message || 'Благодарим ви за попълнения въпросник! Вашият персонализиран план ONE BODY се генерира.';
         if (pElements.length > 1) pElements[1].textContent = 'Моля, проверете отново по-късно. Ще бъдете уведомени (ако сте позволили известия) или опитайте да презаредите страницата след известно време.';
     }
     
