@@ -817,7 +817,7 @@ function clearResourceCache(keys) {
   }
 }
 
-const WELCOME_SUBJECT = 'Добре дошъл в MyBody!';
+const WELCOME_SUBJECT = 'Добре дошъл в ONE BODY!';
 const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
 <html lang="bg">
 <head>
@@ -879,14 +879,14 @@ const WELCOME_BODY_TEMPLATE = `<!DOCTYPE html>
                 <td align="center" style="padding: 40px 30px;" class="content">
 
                   <!-- ЗАГЛАВИЕ -->
-                  <h1 class="email-font" style="font-size: 28px; font-weight: 700; color: #2C3E50; margin: 0 0 20px 0;">Добре дошли в MyBody!</h1>
+                  <h1 class="email-font" style="font-size: 28px; font-weight: 700; color: #2C3E50; margin: 0 0 20px 0;">Добре дошли в ONE BODY!</h1>
 
                   <!-- ТЕКСТ -->
                   <p class="email-font" style="font-size: 16px; line-height: 1.7; color: #333333; margin: 0 0 15px 0;">
                     Здравейте, <strong>{{name}}</strong>,
                   </p>
                   <p class="email-font" style="font-size: 16px; line-height: 1.7; color: #333333; margin: 0 0 30px 0;">
-                    Благодарим Ви, че се присъединихте към <strong>MyBody</strong>. Започнете своя път към по-здравословен и балансиран начин на живот още сега.
+                    Благодарим Ви, че се присъединихте към <strong>ONE BODY</strong>. Започнете своя път към по-здравословен и балансиран начин на живот още сега.
                   </p>
 
                   <!-- БУТОН (CTA) -->
@@ -934,7 +934,7 @@ const ANALYSIS_READY_SUBJECT = 'Вашият персонален анализ �
 const ANALYSIS_READY_BODY_TEMPLATE = '<p>Здравей, {{name}}.</p>' +
     '<p>Благодарим ти, че попълни въпросника. Изготвихме първоначален анализ въз основа на отговорите ти. Можеш да го разгледаш <a href="{{link}}">тук</a>.</p>' +
     '<p>Ще използваме резултатите, за да финализираме персоналния ти план.</p>' +
-    '<p>– Екипът на MyBody</p>';
+    '<p>– Екипът на ONE BODY</p>';
 const ANALYSIS_PAGE_URL_VAR_NAME = 'ANALYSIS_PAGE_URL';
 const PASSWORD_RESET_SUBJECT = 'Смяна на парола';
 const PASSWORD_RESET_BODY_TEMPLATE = '<p>За да зададете нова парола, използвайте <a href="{{link}}">този линк</a>. Линкът е валиден 1 час.</p>';
@@ -1147,7 +1147,7 @@ const AI_CONFIG_KEYS = [
 const MAINTENANCE_FALLBACK_HTML = `<!DOCTYPE html>
 <html lang="bg">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MyBody.Best – Поддръжка</title>
+<title>ONE BODY – Поддръжка</title>
 </head>
 <body><h1>В момента обновяваме сайта</h1><p>Опитайте отново след малко.</p></body>
 </html>`;
@@ -1196,7 +1196,6 @@ export default {
 
         const defaultAllowedOrigins = [
             'https://onebody.top',
-            'https://mybody.best',
             'https://radilovk.github.io',
             'https://radilov-k.github.io',
             'http://localhost:5173',

@@ -143,7 +143,6 @@ export default {
   async fetch(request, env) {
     const defaultAllowedOrigins = [
       'https://onebody.top',
-      'https://mybody.best',
       'https://radilovk.github.io',
       'https://radilov-k.github.io',
       'http://localhost:5173',

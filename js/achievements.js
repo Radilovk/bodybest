@@ -34,7 +34,7 @@ export function shareAchievement() {
     const title = document.getElementById('achievementModalTitle')?.textContent || '';
     const message = document.getElementById('achievementModalBody')?.textContent || '';
     const shareData = {
-        title: 'MyBody.Best',
+        title: 'ONE BODY',
         text: `${title} - ${message}`,
         url: window.location.href
     };
