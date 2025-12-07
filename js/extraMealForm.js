@@ -87,10 +87,10 @@ export function __setNutrientLookupFn(fn) {
 }
 
 export async function fetchMacrosFromAi(name, quantity) {
-    if (!(quantity > 0)) {
-        console.warn('Invalid quantity for AI macro fetch:', quantity);
-        throw new Error('Invalid quantity');
-    }
+    // Allow any quantity value - the backend AI can handle:
+    // - Numeric values (e.g., 150)
+    // - Descriptive quantities (e.g., "2 парчета", "1 чаша")
+    // - Empty/undefined (AI will estimate per 100g)
     try {
         return await nutrientLookup(name, quantity);
     } catch (err) {
@@ -416,12 +416,16 @@ async function populateSummaryWithAiMacros(form) {
             } else if (quantityCountVal > 0 && measureText) {
                 // Използваме комбинацията count + measure ако са въведени
                 quantity = `${quantityCountVal} ${measureText}`;
+            } else if (quantityCountVal > 0) {
+                // Имаме само брой без мярка
+                quantity = quantityCountVal;
+            } else if (measureText) {
+                // Имаме само мярка без брой (напр. "чаша", "парче")
+                quantity = `1 ${measureText}`;
             }
             
-            // Проверяваме дали имаме валидно количество
-            if (!quantity || (typeof quantity === 'string' && !quantity.trim())) {
-                throw new Error('Не е въведено количество');
-            }
+            // AI може да работи и без количество (ще изчисли на 100г база)
+            // Затова не хвърляме грешка, а просто подаваме каквото имаме
             
             // Извличаме макросите от AI
             const fetched = await nutrientLookup(foodDesc, quantity);
@@ -456,11 +460,23 @@ async function populateSummaryWithAiMacros(form) {
         } catch (err) {
             console.error('Failed to automatically calculate macros', err);
             
+            // Определяме по-информативно съобщение за грешка
+            let errorMessage = 'Макросите не могат да бъдат изчислени автоматично. ';
+            
+            // Проверяваме дали имаме описание на храната
+            if (!foodDesc || !foodDesc.trim()) {
+                errorMessage += 'Моля, въведете описание на храната.';
+            } else if (err.message && err.message.includes('fetch')) {
+                errorMessage += 'Проблем с връзката. Моля, опитайте отново.';
+            } else {
+                errorMessage += 'Може да ги въведете ръчно или да продължите без тях.';
+            }
+            
             // Показваме съобщение за грешка, но не блокираме потребителя
             if (summaryBox) {
                 const loadingIndicator = summaryBox.querySelector('.ai-loading-indicator');
                 if (loadingIndicator) {
-                    loadingIndicator.innerHTML = '<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-alert"></use></svg><span>Макросите не могат да бъдат изчислени автоматично. Може да ги въведете ръчно или да продължите без тях.</span>';
+                    loadingIndicator.innerHTML = `<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-alert"></use></svg><span>${errorMessage}</span>`;
                     loadingIndicator.style.backgroundColor = 'var(--warning-color-light, #fff3e0)';
                     loadingIndicator.style.color = 'var(--warning-color, #f57c00)';
                 }
