@@ -576,7 +576,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     }
     const measureInput = form.querySelector('#measureInput');
     const measureSuggestionList = form.querySelector('#measureSuggestionList');
-    if (measureInput) measureInput.classList.add('hidden');
+    // Keep measureInput visible by default so users can enter custom measures
+    // for unknown foods (e.g., "парчета", "чаши", etc.)
     const quantityHiddenInput = form.querySelector('#quantity');
     const quantityCustomInput = form.querySelector('#quantityCustom');
     const quantityCountInput = form.querySelector('#quantityCountInput');
@@ -716,16 +717,14 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (!measureSuggestionList || !measureInput) return;
         const labels = getMeasureLabels(desc);
         measureSuggestionList.innerHTML = '';
-        if (labels.length === 0) {
-            measureInput.classList.add('hidden');
-            return;
-        }
+        // Always keep measureInput visible so users can enter custom measures
+        // for unknown foods, even if there are no predefined suggestions
         labels.forEach(l => {
             const opt = document.createElement('option');
             opt.value = l;
             measureSuggestionList.appendChild(opt);
         });
-        measureInput.classList.remove('hidden');
+        // measureInput remains visible regardless of suggestions
     }
 
     function computeQuantity() {

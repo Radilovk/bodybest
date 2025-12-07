@@ -67,13 +67,15 @@ test('попълва предложения и показва/скрива measu
   const measureInput = document.getElementById('measureInput');
   const datalist = document.getElementById('measureSuggestionList');
 
-  expect(measureInput.classList.contains('hidden')).toBe(true);
+  // measureInput is now always visible, even initially, so users can enter custom measures
+  expect(measureInput.classList.contains('hidden')).toBe(false);
 
   food.value = 'apple';
   food.dispatchEvent(new Event('input', { bubbles: true }));
 
   let options = Array.from(datalist.querySelectorAll('option')).map(o => o.value);
   expect(options).toEqual(['малка', 'средна']);
+  // measureInput should remain visible
   expect(measureInput.classList.contains('hidden')).toBe(false);
 
   food.value = 'unknown';
@@ -81,7 +83,8 @@ test('попълва предложения и показва/скрива measu
 
   options = Array.from(datalist.querySelectorAll('option')).map(o => o.value);
   expect(options.length).toBe(0);
-  expect(measureInput.classList.contains('hidden')).toBe(true);
+  // measureInput should STILL be visible for unknown foods so users can enter custom measures
+  expect(measureInput.classList.contains('hidden')).toBe(false);
 
   expect(getMeasureLabels('banana')).toEqual(['средна']);
 });
