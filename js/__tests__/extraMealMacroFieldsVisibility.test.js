@@ -113,17 +113,31 @@ describe('extraMealForm macro fields visibility', () => {
       loadCurrentIntake: jest.fn(),
       updateMacrosAndAnalytics: jest.fn(),
     }));
+    
+    // Mock a product database with a known product
+    const mockProduct = {
+      name: 'ябълка',
+      calories: 52,
+      protein: 0.3,
+      carbs: 14,
+      fat: 0.2,
+      fiber: 2.4
+    };
+    
     jest.unstable_mockModule('../macroUtils.js', () => ({
       removeMealMacros: jest.fn(),
       registerNutrientOverrides: jest.fn(),
       getNutrientOverride: jest.fn(),
-      loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
+      loadProductMacros: jest.fn().mockResolvedValue({ 
+        overrides: {}, 
+        products: [mockProduct]
+      }),
       scaleMacros: jest.fn((product, grams) => ({
-        calories: 100,
-        protein: 10,
-        carbs: 15,
-        fat: 5,
-        fiber: 2
+        calories: (product.calories * grams / 100).toFixed(2),
+        protein: (product.protein * grams / 100).toFixed(2),
+        carbs: (product.carbs * grams / 100).toFixed(2),
+        fat: (product.fat * grams / 100).toFixed(2),
+        fiber: (product.fiber * grams / 100).toFixed(2)
       })),
     }));
     jest.unstable_mockModule('../populateUI.js', () => ({
@@ -144,7 +158,8 @@ describe('extraMealForm macro fields visibility', () => {
     document.body.innerHTML = `
       <form id="extraMealEntryFormActual">
         <div class="form-step" data-step="1">
-          <textarea id="foodDescription">known product</textarea>
+          <textarea id="foodDescription">ябълка</textarea>
+          <div id="foodSuggestionsDropdown" class="hidden"></div>
         </div>
         <div class="form-step" data-step="2" style="display:none">
           <input type="text" id="quantityCustom">
