@@ -890,6 +890,14 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                             triggerBackgroundMacroLookup(key, grams);
                             parsed = true;
                         }
+                    } else if (count > 0) {
+                        // Product not found in database, trigger AI lookup with descriptive quantity
+                        const desc = foodDescriptionInput?.value?.trim();
+                        if (desc) {
+                            const quantityDescription = `${count} ${prod}`;
+                            triggerBackgroundMacroLookup(desc, quantityDescription);
+                            parsed = true;
+                        }
                     }
                 }
             }
