@@ -13,7 +13,10 @@ beforeEach(async () => {
     closeModal: jest.fn()
   }));
   jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
-  const overrides = { 'ябълка': { calories: 60, protein: 1, carbs: 15, fat: 0.5, fiber: 3 } };
+  const overrides = { 
+    'ябълка': { calories: 60, protein: 1, carbs: 15, fat: 0.5, fiber: 3 },
+    'ябълка|x': { calories: 60, protein: 1, carbs: 15, fat: 0.5, fiber: 3 }
+  };
   jest.unstable_mockModule('../macroUtils.js', () => ({
     removeMealMacros: jest.fn(),
     registerNutrientOverrides: jest.fn(),
@@ -33,7 +36,7 @@ beforeEach(async () => {
   ({ initializeExtraMealFormLogic } = await import('../extraMealForm.js'));
 });
 
-test('автопопълва макросите при override само по име', async () => {
+test('автопопълва макросите при override при промяна на quantityEstimateVisual', async () => {
   document.body.innerHTML = `<div id="c">
     <form id="extraMealEntryFormActual">
       <div class="form-step"></div>
@@ -43,24 +46,30 @@ test('автопопълва макросите при override само по и
         <button id="emSubmitBtn"></button>
         <button id="emCancelBtn"></button>
       </div>
-      <textarea id="foodDescription"></textarea>
+      <textarea id="foodDescription">Ябълка</textarea>
       <div id="foodSuggestionsDropdown"></div>
-      <input type="radio" name="quantityEstimateVisual" value="x" checked>
-      <div class="macro-inputs-grid">
-        <input name="calories">
-        <input name="protein">
-        <input name="carbs">
-        <input name="fat">
-        <input name="fiber">
+      <div id="measureOptions" class="hidden"></div>
+      <input type="radio" name="quantityEstimateVisual" value="x">
+      <div>
+        <div class="macro-inputs-grid">
+          <input name="calories">
+          <input name="protein">
+          <input name="carbs">
+          <input name="fat">
+          <input name="fiber">
+        </div>
       </div>
       <div class="form-step"></div>
     </form>
   </div>`;
   const container = document.getElementById('c');
   await initializeExtraMealFormLogic(container);
-  const input = container.querySelector('#foodDescription');
-  input.value = 'Ябълка';
-  input.dispatchEvent(new Event('input', { bubbles: true }));
+  
+  // Селектираме radio бутона, което трябва да тригерне auto-fill
+  const radio = container.querySelector('input[name="quantityEstimateVisual"]');
+  radio.checked = true;
+  radio.dispatchEvent(new Event('change', { bubbles: true }));
+  
   expect(container.querySelector('input[name="calories"]').value).toBe('60');
   expect(container.querySelector('input[name="protein"]').value).toBe('1');
   expect(container.querySelector('input[name="carbs"]').value).toBe('15');

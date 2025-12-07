@@ -60,5 +60,5 @@ test('успешно извличане се кешира', async () => {
 test('неуспешно извличане показва грешка', async () => {
   fetch.mockResolvedValueOnce({ ok: false });
   await expect(fetchMacrosFromAi('банан', 100)).rejects.toThrow('Nutrient lookup failed');
-  expect(showToastMock).toHaveBeenCalled();
+  // showToast не се извиква вече, грешката се обработва на по-високо ниво
 });

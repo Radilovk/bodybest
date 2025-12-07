@@ -232,6 +232,12 @@ describe('extraMealForm populateSummary', () => {
     setVal('fat', '5');
     setVal('fiber', '4');
 
+    // Трябва да маркираме полетата като автоматично попълнени за форматиране
+    ['calories', 'protein', 'carbs', 'fat', 'fiber'].forEach(name => {
+      const input = document.querySelector(`input[name="${name}"]`);
+      if (input) input.dataset.autofilled = 'true';
+    });
+
     document.getElementById('emNextStepBtn').click();
 
     const summary = document.getElementById('extraMealSummary');

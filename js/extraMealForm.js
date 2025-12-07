@@ -87,13 +87,13 @@ export function __setNutrientLookupFn(fn) {
 
 export async function fetchMacrosFromAi(name, quantity) {
     if (!(quantity > 0)) {
-        showToast('Невалидно количество', true);
+        console.warn('Invalid quantity for AI macro fetch:', quantity);
         throw new Error('Invalid quantity');
     }
     try {
         return await nutrientLookup(name, quantity);
     } catch (err) {
-        showToast('Nutrient lookup failed', true);
+        console.error('Nutrient lookup failed:', err);
         throw err;
     }
 }
@@ -125,6 +125,7 @@ export async function handleExtraMealFormSubmit(event) {
         if (isNaN(val)) macrosMissing = true; else macros[f] = val;
     });
 
+    // Ако липсват макроси, опитваме се да ги извлечем от AI, но не блокираме изпращането
     if (macrosMissing && foodDesc) {
         try {
             const fetched = await fetchMacrosFromAi(foodDesc, quantity);
@@ -136,10 +137,11 @@ export async function handleExtraMealFormSubmit(event) {
                     field.dataset.autofilled = 'true';
                 }
             });
-        } catch {
-            // Грешката вече е обработена в fetchMacrosFromAi чрез showToast
-            // Тук просто прекратяваме изпълнението
-            return;
+        } catch (err) {
+            // Не спираме изпращането, просто логваме грешката
+            console.warn('AI macro lookup failed during submission, continuing without macros', err);
+            // Използваме празни макроси ако не успеем да ги извлечем
+            macros = {};
         }
     }
 
@@ -362,6 +364,91 @@ function populateSummary(form) {
     });
 }
 
+async function populateSummaryWithAiMacros(form) {
+    if (!form) return;
+    
+    // Първо попълваме обобщението с наличните данни
+    populateSummary(form);
+    
+    // Проверяваме дали имаме липсващи макроси
+    const formData = new FormData(form);
+    const foodDesc = formData.get('foodDescription')?.trim();
+    const quantityVal = parseFloat(formData.get('quantity'));
+    const quantityText = (formData.get('quantityCustom') || '').trim();
+    
+    let macrosMissing = false;
+    MACRO_FIELDS.forEach(f => {
+        const val = parseFloat(formData.get(f));
+        if (isNaN(val)) macrosMissing = true;
+    });
+    
+    // Ако липсват макроси и имаме описание на храната, зареждаме ги автоматично на заден план
+    if (macrosMissing && foodDesc) {
+        // Показваме индикатор за зареждане в обобщителния екран
+        const summaryBox = form.querySelector('#extraMealSummary');
+        if (summaryBox) {
+            // Добавяме съобщение за зареждане
+            let loadingIndicator = summaryBox.querySelector('.ai-loading-indicator');
+            if (!loadingIndicator) {
+                loadingIndicator = document.createElement('div');
+                loadingIndicator.className = 'ai-loading-indicator';
+                loadingIndicator.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:var(--space-sm);background-color:var(--info-color-light, #e3f2fd);border-radius:var(--radius-sm);margin-top:var(--space-sm);color:var(--info-color, #1976d2);font-size:0.9rem;';
+                loadingIndicator.innerHTML = '<svg class="icon spinner" style="width:1.2rem;height:1.2rem;"><use href="#icon-spinner"></use></svg><span>Автоматично изчисляване на макроси...</span>';
+                summaryBox.appendChild(loadingIndicator);
+            }
+            loadingIndicator.classList.remove('hidden');
+        }
+        
+        try {
+            // Определяме количеството за заявката
+            const quantity = quantityVal > 0 ? quantityVal : quantityText;
+            
+            // Извличаме макросите от AI
+            const fetched = await nutrientLookup(foodDesc, quantity);
+            
+            // Попълваме полетата с получените данни
+            MACRO_FIELDS.forEach(f => {
+                const field = form.querySelector(`input[name="${f}"]`);
+                if (field && fetched[f] !== undefined) {
+                    const value = Number(fetched[f]);
+                    field.value = Number.isFinite(value) ? value.toFixed(2) : fetched[f];
+                    field.dataset.autofilled = 'true';
+                }
+            });
+            
+            // Обновяваме обобщителния екран с новите данни
+            populateSummary(form);
+            
+            // Премахваме индикатора за зареждане и показваме съобщение за успех
+            if (summaryBox) {
+                const loadingIndicator = summaryBox.querySelector('.ai-loading-indicator');
+                if (loadingIndicator) {
+                    loadingIndicator.innerHTML = '<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-check"></use></svg><span>Макросите са изчислени автоматично</span>';
+                    loadingIndicator.style.backgroundColor = 'var(--success-color-light, #e8f5e9)';
+                    loadingIndicator.style.color = 'var(--success-color, #2e7d32)';
+                    
+                    // Скриваме съобщението след 3 секунди
+                    setTimeout(() => {
+                        loadingIndicator.classList.add('hidden');
+                    }, 3000);
+                }
+            }
+        } catch (err) {
+            console.error('Неуспешно автоматично изчисление на макроси', err);
+            
+            // Показваме съобщение за грешка, но не блокираме потребителя
+            if (summaryBox) {
+                const loadingIndicator = summaryBox.querySelector('.ai-loading-indicator');
+                if (loadingIndicator) {
+                    loadingIndicator.innerHTML = '<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-alert"></use></svg><span>Макросите не могат да бъдат изчислени автоматично. Може да ги въведете ръчно или да продължите без тях.</span>';
+                    loadingIndicator.style.backgroundColor = 'var(--warning-color-light, #fff3e0)';
+                    loadingIndicator.style.color = 'var(--warning-color, #f57c00)';
+                }
+            }
+        }
+    }
+}
+
 export async function initializeExtraMealFormLogic(formContainerElement) {
     const form = formContainerElement.querySelector('#extraMealEntryFormActual');
     if (!form) {
@@ -395,7 +482,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (currentStepNumberEl) currentStepNumberEl.textContent = currentStepIndex + 1;
         if (totalStepNumberEl) totalStepNumberEl.textContent = totalSteps;
     }
-    function showCurrentStep() {
+    async function showCurrentStep() {
         steps.forEach((step, index) => {
             step.style.display = (index === currentStepIndex) ? 'block' : 'none';
             if (index === currentStepIndex) {
@@ -411,10 +498,29 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (submitBtn) submitBtn.style.display = (currentStepIndex === totalSteps - 1) ? 'inline-flex' : 'none';
         if (cancelBtn) cancelBtn.style.display = 'inline-flex';
         updateStepIndicator();
-        if (currentStepIndex === totalSteps - 1) populateSummary(form);
+        if (currentStepIndex === totalSteps - 1) {
+            await populateSummaryWithAiMacros(form);
+        }
     }
-    if (nextBtn) nextBtn.addEventListener('click', () => { if (currentStepIndex < totalSteps - 1) { currentStepIndex++; showCurrentStep(); }});
-    if (prevBtn) prevBtn.addEventListener('click', () => { if (currentStepIndex > 0) { currentStepIndex--; showCurrentStep(); }});
+    let navigationInProgress = false;
+    if (nextBtn) nextBtn.addEventListener('click', async () => { 
+        if (navigationInProgress) return;
+        if (currentStepIndex < totalSteps - 1) { 
+            navigationInProgress = true;
+            currentStepIndex++; 
+            await showCurrentStep();
+            navigationInProgress = false;
+        }
+    });
+    if (prevBtn) prevBtn.addEventListener('click', async () => { 
+        if (navigationInProgress) return;
+        if (currentStepIndex > 0) { 
+            navigationInProgress = true;
+            currentStepIndex--; 
+            await showCurrentStep();
+            navigationInProgress = false;
+        }
+    });
 
     const foodDescriptionInput = form.querySelector('#foodDescription');
     const suggestionsDropdown = form.querySelector('#foodSuggestionsDropdown');
