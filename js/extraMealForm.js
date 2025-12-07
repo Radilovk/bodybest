@@ -404,6 +404,7 @@ async function populateSummaryWithAiMacros(form) {
         
         try {
             // Определяме количеството за заявката - опитваме се от различни източници
+            // Приоритет: числово количество > текстово количество > count + measure комбинация
             let quantity = '';
             
             if (quantityVal > 0) {

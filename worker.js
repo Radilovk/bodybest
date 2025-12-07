@@ -8508,14 +8508,14 @@ async function handleNutrientLookupRequest(request, env) {
 
         const foodName = food.toLowerCase().trim();
         
-        // Normalize quantity - ensure we have a meaningful value
+        // Normalize quantity - ensure we have a meaningful value for AI query
+        // This handles various input formats: numbers, strings like "150 гр", "2 парчета", etc.
         let normalizedQuantity = quantity;
         if (typeof quantity === 'string') {
             normalizedQuantity = quantity.trim();
         }
-        // If quantity is empty string, undefined, null, or NaN, don't include it
-        if (!normalizedQuantity || normalizedQuantity === '' || 
-            (typeof normalizedQuantity === 'number' && !isFinite(normalizedQuantity))) {
+        // If quantity is falsy or NaN, don't include it in the query
+        if (!normalizedQuantity || (typeof normalizedQuantity === 'number' && !isFinite(normalizedQuantity))) {
             normalizedQuantity = null;
         }
         
