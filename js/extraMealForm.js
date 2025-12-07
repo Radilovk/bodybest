@@ -531,18 +531,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
 
     const foodDescriptionInput = form.querySelector('#foodDescription');
     const suggestionsDropdown = form.querySelector('#foodSuggestionsDropdown');
-    const quantityVisualRadios = form.querySelectorAll('input[name="quantityEstimateVisual"]');
-    quantityVisualRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            quantityVisualRadios.forEach(r => r.closest('.quantity-card-option')?.classList.toggle('selected', r.checked));
-            const desc = foodDescriptionInput?.value?.trim();
-            if (!measureOptionsContainer || measureOptionsContainer.classList.contains('hidden')) {
-                if (!tryAutofillFromOverride(form, desc, radio.value, autoFillMsg) && autoFillMsg) {
-                    autoFillMsg.classList.add('hidden');
-                }
-            }
-        });
-    });
     const measureOptionsContainer = form.querySelector('#measureOptions');
     if (measureOptionsContainer && measureOptionsContainer.children.length === 0) {
         measureOptionsContainer.classList.add('hidden');
@@ -553,14 +541,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     const quantityHiddenInput = form.querySelector('#quantity');
     const quantityCustomInput = form.querySelector('#quantityCustom');
     const quantityCountInput = form.querySelector('#quantityCountInput');
-    let quantityLookupLoading = false;
-    let quantityLookupSpinner;
-    if (quantityCustomInput) {
-        quantityLookupSpinner = document.createElement('svg');
-        quantityLookupSpinner.classList.add('icon', 'spinner', 'lookup-spinner', 'hidden');
-        quantityLookupSpinner.innerHTML = '<use href="#icon-spinner"></use>';
-        quantityCustomInput.insertAdjacentElement('afterend', quantityLookupSpinner);
-    }
     const macroFieldsContainer = form.querySelector('#macroFieldsContainer');
     const macroInputsGrid = form.querySelector('.macro-inputs-grid');
     let autoFillMsg;
@@ -573,6 +553,28 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         macroInputsGrid.parentElement?.appendChild(autoFillMsg);
         macroInputsGrid.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => autoFillMsg.classList.add('hidden')));
     }
+    
+    let quantityLookupLoading = false;
+    let quantityLookupSpinner;
+    if (quantityCustomInput) {
+        quantityLookupSpinner = document.createElement('svg');
+        quantityLookupSpinner.classList.add('icon', 'spinner', 'lookup-spinner', 'hidden');
+        quantityLookupSpinner.innerHTML = '<use href="#icon-spinner"></use>';
+        quantityCustomInput.insertAdjacentElement('afterend', quantityLookupSpinner);
+    }
+    
+    const quantityVisualRadios = form.querySelectorAll('input[name="quantityEstimateVisual"]');
+    quantityVisualRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            quantityVisualRadios.forEach(r => r.closest('.quantity-card-option')?.classList.toggle('selected', r.checked));
+            const desc = foodDescriptionInput?.value?.trim();
+            if (!measureOptionsContainer || measureOptionsContainer.classList.contains('hidden')) {
+                if (!tryAutofillFromOverride(form, desc, radio.value, autoFillMsg) && autoFillMsg) {
+                    autoFillMsg.classList.add('hidden');
+                }
+            }
+        });
+    });
 
     // Function to show macro fields when quantity is entered
     function showMacroFieldsIfQuantityEntered() {
