@@ -413,9 +413,6 @@
             z-index: 0;
         }
         
-        .summary-quote { margin-bottom: 25px; padding-left: 20px; border-left: 4px solid var(--accent-color); }
-        .summary-quote .quote-text { font-style: italic; font-size: 1.1em; margin: 0 0 5px 0; color: var(--heading-color); }
-        .summary-quote .quote-author { font-size: 0.9em; text-align: left; color: #718096; }
         .conclusion-box p { margin: 0; font-weight: 600; line-height: 1.6; color: var(--heading-color); position: relative; z-index: 1; }
 
         /* 4. CTA Section --- ENHANCED --- */
@@ -832,12 +829,6 @@
                 </div>
                 <div class="key-takeaway">
                     <h3><i class="fas fa-key"></i> Ключов Извод</h3>
-                    ${item.summaryQuote && item.summaryQuote.text ? `
-                    <div class="summary-quote">
-                        <p class="quote-text">"${escapeHtml(item.summaryQuote.text)}"</p>
-                        <p class="quote-author">— ${escapeHtml(item.summaryQuote.author || 'Вашите думи')}</p>
-                    </div>
-                    ` : ''}
                     <div class="conclusion-box">
                         <p>${item.conclusion}</p>
                     </div>
