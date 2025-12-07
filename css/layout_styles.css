@@ -241,7 +241,7 @@ nav.tabs.styled-tabs .tab-btn::after {
   );
   transform: translateX(-50%);
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
 }
 
 nav.tabs.styled-tabs .tab-btn .tab-icon {
@@ -265,11 +265,10 @@ nav.tabs.styled-tabs .tab-btn .tab-label {
 nav.tabs.styled-tabs .tab-btn:hover {
   color: var(--text-color-on-primary);
   background-color: color-mix(in srgb, var(--text-color-on-primary) 15%, var(--primary-color));
-  transform: translateY(-2px);
 }
 
 nav.tabs.styled-tabs .tab-btn:hover .tab-icon {
-  transform: scale(1.15) rotate(-5deg);
+  transform: scale(1.12);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
@@ -278,7 +277,7 @@ nav.tabs.styled-tabs .tab-btn:hover .tab-label {
 }
 
 nav.tabs.styled-tabs .tab-btn:active {
-  transform: translateY(0);
+  transform: scale(0.98);
 }
 
 nav.tabs.styled-tabs .tab-btn[aria-selected="true"] {
