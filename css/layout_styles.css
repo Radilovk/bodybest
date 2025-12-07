@@ -22,7 +22,10 @@
    3. ХЕДЪР И ГЛАВНО МЕНЮ
    ========================================================================== */
 header {
-  background: var(--primary-color); color: var(--header-title-color);
+  background: var(--header-bg); 
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  color: var(--header-title-color);
   padding: var(--space-md) var(--space-lg); display: flex;
   align-items: center; justify-content: space-between; box-shadow: var(--shadow-md);
   position: sticky; top: 0; z-index: 1000;
@@ -37,6 +40,17 @@ header h1 { color: var(--header-title-color); margin: 0; font-size: clamp(1.3rem
   width: 50px;
   height: 50px;
   object-fit: contain;
+}
+.header-user-name {
+  flex: 1;
+  text-align: center;
+  color: var(--header-title-color);
+  font-weight: 600;
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+  margin: 0 var(--space-md);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 #menu-toggle {
   color: var(--header-title-color); padding: var(--space-sm); margin-left: var(--space-md);

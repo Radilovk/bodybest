@@ -583,10 +583,41 @@ button[id^="prevBtn"]:hover, button[id="regBackBtn"]:hover, button[id="restartBt
     font-size: 16px;
     min-height: 52px;
   }
-  /* Увеличени статистически икони за мобилни екрани */
+  /* Статистически икони и текст за мобилни екрани */
+  .stats-bar {
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 30px;
+  }
+  .stats-bar .stat-item {
+    flex: 1;
+    min-width: 0;
+  }
   .stats-bar .stat-icon {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
+  }
+  .stats-bar .stat-label {
+    font-size: 0.7rem;
+    line-height: 1.2;
+    word-wrap: break-word;
+  }
+  /* Съкратен текст за мобилни екрани */
+  .stat-item:nth-child(1) .stat-label::after {
+    content: 'AI-Med алгоритъм';
+  }
+  .stat-item:nth-child(2) .stat-label::after {
+    content: 'Експертен екип';
+  }
+  .stat-item:nth-child(3) .stat-label::after {
+    content: '24/7 асистент';
+  }
+  .stat-item .stat-label {
+    font-size: 0;
+  }
+  .stat-item .stat-label::after {
+    font-size: 0.7rem;
   }
 }
 

@@ -413,6 +413,25 @@ function planHasRecContent(plan) {
 export { planHasRecContent };
 
 // ==========================================================================
+// HELPER FUNCTIONS
+// ==========================================================================
+/**
+ * Updates the header with the user's name from session storage
+ */
+function updateHeaderUserName() {
+    const headerUserNameEl = document.getElementById('header-user-name');
+    if (!headerUserNameEl) return;
+    
+    const userEmail = sessionStorage.getItem('userEmail');
+    if (userEmail) {
+        // Extract name from email (before @) and capitalize first letter
+        const userName = userEmail.split('@')[0];
+        const displayName = userName.charAt(0).toUpperCase() + userName.slice(1);
+        headerUserNameEl.textContent = displayName;
+    }
+}
+
+// ==========================================================================
 // ИНИЦИАЛИЗАЦИЯ НА ПРИЛОЖЕНИЕТО
 // ==========================================================================
 /**
@@ -462,6 +481,7 @@ async function initializeApp() {
             window.location.href = 'index.html';
             return;
         }
+        updateHeaderUserName();
         setupStaticEventListeners(); // from eventListeners.js
         initializeCollapsibleCards();
         initializeTheme(); // from uiHandlers.js
