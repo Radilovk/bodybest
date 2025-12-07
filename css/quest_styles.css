@@ -598,18 +598,15 @@ button[id^="prevBtn"]:hover, button[id="regBackBtn"]:hover, button[id="restartBt
     width: 40px;
     height: 40px;
   }
+  /* Използване на data атрибут за съкратен текст */
   .stats-bar .stat-label {
-    font-size: 0.7rem;
+    font-size: 0;
     line-height: 1.2;
     word-wrap: break-word;
   }
-  /* Използване на data атрибут за съкратен текст */
   .stats-bar .stat-label::before {
     content: attr(data-mobile-text);
     font-size: 0.7rem;
-  }
-  .stats-bar .stat-label {
-    font-size: 0;
   }
 }
 
