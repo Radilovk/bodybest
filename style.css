@@ -102,8 +102,8 @@ section { padding: 100px 0; }
 .btn:disabled { background-color: #ccc !important; color: #666 !important; cursor: not-allowed; box-shadow: none !important; transform: none !important; opacity: 0.65; }
 
 /* 4. ХЕДЪР И НАВИГАЦИЯ - ОТ ai_studio_code.css */
-header { position: fixed; top: 0; left: 0; width: 100%; padding: 25px 0; z-index: 1000; transition: all 0.3s ease-in-out; background: var(--header-bg); }
-header.scrolled { padding: 15px 0; background: var(--header-bg); backdrop-filter: blur(var(--glass-blur)); box-shadow: var(--shadow-md); }
+header { position: fixed; top: 0; left: 0; width: 100%; padding: 15px 0; z-index: 1000; transition: all 0.3s ease-in-out; background: var(--header-bg); }
+header.scrolled { padding: 10px 0; background: var(--header-bg); backdrop-filter: blur(var(--glass-blur)); box-shadow: var(--shadow-md); }
 .header-container { display: flex; justify-content: space-between; align-items: center; }
 .logo-link { 
     text-decoration: none; 
@@ -112,8 +112,10 @@ header.scrolled { padding: 15px 0; background: var(--header-bg); backdrop-filter
     gap: 15px;
 }
 .logo { 
-    width: 60px; 
-    height: 60px; 
+    max-width: 45px; 
+    max-height: 45px; 
+    width: auto;
+    height: auto;
     display: block;
     object-fit: contain;
 }
