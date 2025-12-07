@@ -58,6 +58,12 @@
             border-radius: 50%;
         }
         
+        .header-logo-img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+        
         .header h1 {
             font-weight: 700;
             margin-bottom: 5px;
@@ -384,9 +390,12 @@
     <div class="container container-main">
         <div class="header">
             <div class="d-flex justify-content-between align-items-center flex-wrap">
-                <div>
-                    <h1><i class="fas fa-user-circle me-2"></i><span id="userName"><span class="loader"></span>Зареждане...</span></h1>
-                    <p><i class="fas fa-id-card me-2"></i>Потребителски профил</p>
+                <div class="d-flex align-items-center gap-3">
+                    <img src="https://radilovk.github.io/bodybest/img/logoindex.png" alt="ONE BODY" class="header-logo-img" />
+                    <div>
+                        <h1><i class="fas fa-user-circle me-2"></i><span id="userName"><span class="loader"></span>Зареждане...</span></h1>
+                        <p><i class="fas fa-id-card me-2"></i>Потребителски профил</p>
+                    </div>
                 </div>
                 <div class="text-end mt-2 mt-md-0">
                     <p class="mb-1"><i class="fas fa-weight me-2"></i><strong>Текущо тегло:</strong> <span id="currentWeightHeader">--</span></p>

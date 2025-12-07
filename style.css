@@ -105,8 +105,36 @@ section { padding: 100px 0; }
 header { position: fixed; top: 0; left: 0; width: 100%; padding: 25px 0; z-index: 1000; transition: all 0.3s ease-in-out; background: var(--header-bg); }
 header.scrolled { padding: 15px 0; background: var(--header-bg); backdrop-filter: blur(var(--glass-blur)); box-shadow: var(--shadow-md); }
 .header-container { display: flex; justify-content: space-between; align-items: center; }
-.logo-link { text-decoration: none; }
-.logo { width: 225px; height: auto; display: block; }
+.logo-link { 
+    text-decoration: none; 
+    display: flex; 
+    align-items: center; 
+    gap: 15px;
+}
+.logo { 
+    width: 60px; 
+    height: 60px; 
+    display: block;
+    object-fit: contain;
+}
+.brand-name {
+    font-family: 'Montserrat', sans-serif;
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: var(--transition);
+}
+.dark-theme .brand-name {
+    background: linear-gradient(135deg, var(--primary-color), var(--light-text));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
 nav { display: flex; align-items: center; }
 nav ul { display: flex; list-style: none; align-items: center; background-color: inherit; }
 nav ul li { margin-left: 35px; }
@@ -293,7 +321,14 @@ footer { background: var(--dark-bg); color: var(--light-text); padding: 80px 0 3
     .hero-btns { flex-direction: column; gap: 15px; }
     .btn { width: 100%; padding: 16px 20px; }
     .section-title h2 { font-size: 1.8rem; }
-    .logo { width: 180px; }
+    .logo { 
+        width: 50px; 
+        height: 50px; 
+    }
+    .brand-name {
+        font-size: 1.3rem;
+        letter-spacing: 1px;
+    }
     .slider-item { font-size: clamp(1.8rem, 8vw, 2.5rem); }
 }
 
