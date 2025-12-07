@@ -8549,7 +8549,7 @@ async function handleNutrientLookupRequest(request, env) {
                 const messages = [
                     { 
                         role: 'system', 
-                        content: 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food. All values are per 100g unless a different quantity is specified.' 
+                        content: 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food. Calories in kcal, protein/carbs/fat/fiber in grams. All values are per 100g unless a different quantity is specified.' 
                     },
                     { role: 'user', content: foodQuery }
                 ];
