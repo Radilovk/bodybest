@@ -15,6 +15,7 @@ import { getLocalDate } from './utils.js';
 import { debounce } from './debounce.js';
 
 const MACRO_FIELDS = ['calories','protein','carbs','fat','fiber'];
+const SUCCESS_MESSAGE_TIMEOUT_MS = 3000;
 
 const dynamicNutrientOverrides = { ...nutrientOverrides };
 registerNutrientOverrides(dynamicNutrientOverrides);
@@ -427,14 +428,14 @@ async function populateSummaryWithAiMacros(form) {
                     loadingIndicator.style.backgroundColor = 'var(--success-color-light, #e8f5e9)';
                     loadingIndicator.style.color = 'var(--success-color, #2e7d32)';
                     
-                    // Скриваме съобщението след 3 секунди
+                    // Скриваме съобщението след определено време
                     setTimeout(() => {
                         loadingIndicator.classList.add('hidden');
-                    }, 3000);
+                    }, SUCCESS_MESSAGE_TIMEOUT_MS);
                 }
             }
         } catch (err) {
-            console.error('Неуспешно автоматично изчисление на макроси', err);
+            console.error('Failed to automatically calculate macros', err);
             
             // Показваме съобщение за грешка, но не блокираме потребителя
             if (summaryBox) {
@@ -507,18 +508,24 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (navigationInProgress) return;
         if (currentStepIndex < totalSteps - 1) { 
             navigationInProgress = true;
-            currentStepIndex++; 
-            await showCurrentStep();
-            navigationInProgress = false;
+            try {
+                currentStepIndex++; 
+                await showCurrentStep();
+            } finally {
+                navigationInProgress = false;
+            }
         }
     });
     if (prevBtn) prevBtn.addEventListener('click', async () => { 
         if (navigationInProgress) return;
         if (currentStepIndex > 0) { 
             navigationInProgress = true;
-            currentStepIndex--; 
-            await showCurrentStep();
-            navigationInProgress = false;
+            try {
+                currentStepIndex--; 
+                await showCurrentStep();
+            } finally {
+                navigationInProgress = false;
+            }
         }
     });
 
