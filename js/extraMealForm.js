@@ -561,6 +561,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         quantityLookupSpinner.innerHTML = '<use href="#icon-spinner"></use>';
         quantityCustomInput.insertAdjacentElement('afterend', quantityLookupSpinner);
     }
+    const macroFieldsContainer = form.querySelector('#macroFieldsContainer');
     const macroInputsGrid = form.querySelector('.macro-inputs-grid');
     let autoFillMsg;
     if (macroInputsGrid) {
@@ -571,6 +572,22 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         autoFillMsg.innerHTML = '<i class="bi bi-magic"></i><span>Стойностите са попълнени автоматично</span>';
         macroInputsGrid.parentElement?.appendChild(autoFillMsg);
         macroInputsGrid.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => autoFillMsg.classList.add('hidden')));
+    }
+
+    // Function to show macro fields when quantity is entered
+    function showMacroFieldsIfQuantityEntered() {
+        if (!macroFieldsContainer) return;
+        
+        // Check if any quantity has been entered
+        const hasQuantity = (quantityCustomInput && quantityCustomInput.value.trim()) ||
+                           (quantityCountInput && quantityCountInput.value) ||
+                           (quantityHiddenInput && quantityHiddenInput.value) ||
+                           (measureOptionsContainer && !measureOptionsContainer.classList.contains('hidden') && 
+                            measureOptionsContainer.querySelector('input[name="measureOption"]:checked'));
+        
+        if (hasQuantity) {
+            macroFieldsContainer.classList.remove('hidden');
+        }
     }
 
     // --- measureOptions с fuzzy и автоматичен избор
@@ -640,6 +657,10 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         const selectedMeasure = measureOptionsContainer?.querySelector('input[name="measureOption"]:checked');
         const total = Number(selectedMeasure?.dataset.grams || 0);
         if (quantityHiddenInput) quantityHiddenInput.value = total > 0 ? String(total) : '';
+        
+        // Show macro fields when quantity is entered
+        showMacroFieldsIfQuantityEntered();
+        
         const description = foodDescriptionInput?.value?.trim().toLowerCase();
         if (autoFillMsg) autoFillMsg.classList.add('hidden');
         if (description && total > 0) {
@@ -678,6 +699,10 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         const grams = measure.grams * count;
         if (quantityHiddenInput) quantityHiddenInput.value = String(grams);
         quantityCustomInput.value = `${grams} гр`;
+        
+        // Show macro fields when quantity is entered
+        showMacroFieldsIfQuantityEntered();
+        
         if (autoFillMsg) autoFillMsg.classList.add('hidden');
         let applied = false;
         const product = findClosestProduct(desc);
@@ -725,6 +750,9 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             const val = quantityCustomInput.value.trim();
             const quantityKey = val;
             let parsed = false;
+
+            // Show macro fields when user starts entering quantity
+            showMacroFieldsIfQuantityEntered();
 
             // 1) Чисто число или "<число> гр"
             const gramsMatch = val.match(/^(\d+(?:[.,]\d+)?)\s*(гр|g)?$/i);
