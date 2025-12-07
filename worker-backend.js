@@ -158,6 +158,17 @@ export default {
 };
 
 async function lookupNutrients(query, env) {
+  // Helper function to extract quantity from query
+  function parseQuantityFromQuery(queryStr) {
+    const quantityMatch = queryStr.match(/(\d+(?:[.,]\d+)?)\s*(гр|g|грам)/i);
+    return quantityMatch ? parseFloat(quantityMatch[1].replace(',', '.')) : 100;
+  }
+
+  // Helper function to scale nutrient values
+  function scaleNutrient(value, scale) {
+    return Number((value * scale).toFixed(2)) || 0;
+  }
+
   // First, try to load from local product_macros database if RESOURCES_KV is available
   if (env.RESOURCES_KV) {
     try {
@@ -167,20 +178,24 @@ async function lookupNutrients(query, env) {
         const queryLower = query.toLowerCase().trim();
         
         // Try to find exact match or close match in product database
+        // Use bidirectional matching to catch both "apple" in "green apple" and "green apple" in "apple"
         for (const product of products) {
-          if (product.name && queryLower.includes(product.name.toLowerCase())) {
-            // Found a match in local database - return scaled values if quantity is specified
-            const quantityMatch = query.match(/(\d+(?:[.,]\d+)?)\s*(гр|g|грам)/i);
-            const quantity = quantityMatch ? parseFloat(quantityMatch[1].replace(',', '.')) : 100;
-            const scale = quantity / 100;
-            
-            return {
-              calories: Number((product.calories * scale).toFixed(2)) || 0,
-              protein: Number((product.protein * scale).toFixed(2)) || 0,
-              carbs: Number((product.carbs * scale).toFixed(2)) || 0,
-              fat: Number((product.fat * scale).toFixed(2)) || 0,
-              fiber: Number((product.fiber * scale).toFixed(2)) || 0
-            };
+          if (product.name) {
+            const productNameLower = product.name.toLowerCase();
+            // Match if product name is in query OR query is in product name
+            if (queryLower.includes(productNameLower) || productNameLower.includes(queryLower)) {
+              // Found a match in local database - return scaled values if quantity is specified
+              const quantity = parseQuantityFromQuery(query);
+              const scale = quantity / 100;
+              
+              return {
+                calories: scaleNutrient(product.calories, scale),
+                protein: scaleNutrient(product.protein, scale),
+                carbs: scaleNutrient(product.carbs, scale),
+                fat: scaleNutrient(product.fat, scale),
+                fiber: scaleNutrient(product.fiber, scale)
+              };
+            }
           }
         }
       }
@@ -224,7 +239,9 @@ async function lookupNutrients(query, env) {
         try {
           const promptTemplate = await env.RESOURCES_KV.get('prompt_nutrient_lookup');
           if (promptTemplate) {
-            systemPrompt = promptTemplate.replace('%%FOOD_QUERY%%', query);
+            // Sanitize query to prevent injection issues - escape special characters
+            const sanitizedQuery = query.replace(/[\\`${}]/g, '\\$&');
+            systemPrompt = promptTemplate.replace('%%FOOD_QUERY%%', sanitizedQuery);
           }
         } catch (e) {
           console.warn('Could not load specialized prompt, using default', e);
