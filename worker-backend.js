@@ -158,100 +158,6 @@ export default {
 };
 
 async function lookupNutrients(query, env) {
-  // Helper function to extract quantity from query - handles multiple formats
-  function parseQuantityFromQuery(queryStr) {
-    // Match quantities in various formats: гр, гр., g, g., грам, kg, кг
-    const quantityMatch = queryStr.match(/(\d+(?:[.,]\d+)?)\s*(гр\.?|g\.?|грам[а]?|kg|кг)/i);
-    if (quantityMatch) {
-      let quantity = parseFloat(quantityMatch[1].replace(',', '.'));
-      const unit = quantityMatch[2].toLowerCase();
-      // Convert kg to grams
-      if (unit.startsWith('kg') || unit.startsWith('кг')) {
-        quantity *= 1000;
-      }
-      return quantity;
-    }
-    return 100; // Default to 100g
-  }
-
-  // Helper function to scale nutrient values
-  function scaleNutrient(value, scale) {
-    return Number((value * scale).toFixed(2)) || 0;
-  }
-
-  // Helper function to match product name with query
-  // Prioritizes exact matches, then word boundary matches
-  function findBestProductMatch(products, queryLower) {
-    // Remove quantity information from query for matching
-    const cleanQuery = queryLower.replace(/\d+(?:[.,]\d+)?\s*(гр\.?|g\.?|грам[а]?|kg|кг)/i, '').trim();
-    
-    // Try exact match first
-    for (const product of products) {
-      if (product.name && product.name.toLowerCase() === cleanQuery) {
-        return product;
-      }
-    }
-    
-    // Try word boundary match (product name appears as whole word in query)
-    const words = cleanQuery.split(/\s+/);
-    for (const product of products) {
-      if (product.name) {
-        const productNameLower = product.name.toLowerCase();
-        // Check if product name matches any combination of consecutive words
-        for (let i = 0; i < words.length; i++) {
-          for (let j = i + 1; j <= words.length; j++) {
-            const wordGroup = words.slice(i, j).join(' ');
-            if (wordGroup === productNameLower) {
-              return product;
-            }
-          }
-        }
-      }
-    }
-    
-    // Fallback: simple contains match (less precise)
-    for (const product of products) {
-      if (product.name) {
-        const productNameLower = product.name.toLowerCase();
-        if (cleanQuery.includes(productNameLower)) {
-          return product;
-        }
-      }
-    }
-    
-    return null;
-  }
-
-  // First, try to load from local product_macros database if RESOURCES_KV is available
-  if (env.RESOURCES_KV) {
-    try {
-      const productMacrosJson = await env.RESOURCES_KV.get('product_macros');
-      if (productMacrosJson) {
-        const products = JSON.parse(productMacrosJson);
-        const queryLower = query.toLowerCase().trim();
-        
-        const product = findBestProductMatch(products, queryLower);
-        if (product) {
-          // Found a match in local database - return scaled values if quantity is specified
-          const quantity = parseQuantityFromQuery(query);
-          const scale = quantity / 100;
-          
-          return {
-            calories: scaleNutrient(product.calories, scale),
-            protein: scaleNutrient(product.protein, scale),
-            carbs: scaleNutrient(product.carbs, scale),
-            fat: scaleNutrient(product.fat, scale),
-            fiber: scaleNutrient(product.fiber, scale)
-          };
-        }
-      }
-    } catch (e) {
-      console.error('Error checking local product database', e);
-      // Continue to external APIs if local lookup fails
-    }
-  }
-
-  // If not found in local database, try external nutrition API
   if (env.NUTRITION_API_URL) {
     try {
       const url = `${env.NUTRITION_API_URL}${encodeURIComponent(query)}`;
@@ -274,32 +180,11 @@ async function lookupNutrients(query, env) {
       console.error('Nutrient API error', e);
     }
   }
-
-  // Finally, fall back to AI model with specialized prompt
   if (env.CF_ACCOUNT_ID && env.CF_AI_TOKEN && env.MODEL) {
     try {
-      // Try to load specialized nutrient lookup prompt
-      let systemPrompt = 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food.';
-      
-      if (env.RESOURCES_KV) {
-        try {
-          const promptTemplate = await env.RESOURCES_KV.get('prompt_nutrient_lookup');
-          if (promptTemplate) {
-            // Sanitize query comprehensively to prevent injection
-            // Only allow alphanumeric, spaces, and common food-related punctuation
-            const sanitizedQuery = query
-              .replace(/[^\p{L}\p{N}\s.,\-()\/]/gu, '') // Remove special chars, keep letters, numbers, and basic punctuation
-              .slice(0, 200); // Limit length to prevent prompt overflow
-            systemPrompt = promptTemplate.replace('%%FOOD_QUERY%%', sanitizedQuery);
-          }
-        } catch (e) {
-          console.warn('Could not load specialized prompt, using default', e);
-        }
-      }
-
       const cfEndpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/run/${env.MODEL}`;
       const messages = [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food.' },
         { role: 'user', content: query }
       ];
       const resp = await fetch(cfEndpoint, {

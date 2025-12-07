@@ -1392,6 +1392,8 @@ export default {
                 responseBody = await handleGetPendingPlanChangesRequest(request, env);
             } else if (method === 'POST' && path === '/api/rejectPlanChange') {
                 responseBody = await handleRejectPlanChangeRequest(request, env);
+            } else if (method === 'POST' && path === '/nutrient-lookup') {
+                responseBody = await handleNutrientLookupRequest(request, env);
             } else {
                 responseBody = { success: false, error: 'Not Found', message: 'Ресурсът не е намерен.' };
                 responseStatus = 404;
@@ -8490,6 +8492,114 @@ async function handleRejectPlanChangeRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleRejectPlanChangeRequest -------------
+
+// ------------- START FUNCTION: handleNutrientLookupRequest -------------
+async function handleNutrientLookupRequest(request, env) {
+    try {
+        const { food, quantity } = await request.json();
+        
+        if (!food || !food.trim()) {
+            return { 
+                success: false,
+                error: 'Missing food',
+                statusHint: 400 
+            };
+        }
+
+        const foodName = food.toLowerCase().trim();
+        const foodQuery = [quantity, foodName].filter(Boolean).join(' ');
+
+        // First, try to find in local product_macros database
+        if (env.RESOURCES_KV) {
+            try {
+                const productMacrosJson = await env.RESOURCES_KV.get('product_macros');
+                if (productMacrosJson) {
+                    const products = JSON.parse(productMacrosJson);
+                    const product = products.find(p => p.name && p.name.toLowerCase() === foodName);
+                    
+                    if (product) {
+                        // Parse quantity if provided
+                        let grams = 100;
+                        if (quantity) {
+                            const match = String(quantity).match(/(\d+(?:[.,]\d+)?)/);
+                            if (match) {
+                                grams = parseFloat(match[1].replace(',', '.'));
+                            }
+                        }
+                        const scale = grams / 100;
+                        
+                        return {
+                            calories: Number((product.calories * scale).toFixed(2)) || 0,
+                            protein: Number((product.protein * scale).toFixed(2)) || 0,
+                            carbs: Number((product.carbs * scale).toFixed(2)) || 0,
+                            fat: Number((product.fat * scale).toFixed(2)) || 0,
+                            fiber: Number((product.fiber * scale).toFixed(2)) || 0
+                        };
+                    }
+                }
+            } catch (err) {
+                console.warn('Error checking local product database:', err);
+            }
+        }
+
+        // If not found locally, use AI model
+        if (env.CF_ACCOUNT_ID && env.CF_AI_TOKEN && env.MODEL) {
+            try {
+                const cfEndpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/run/${env.MODEL}`;
+                const messages = [
+                    { 
+                        role: 'system', 
+                        content: 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food. All values are per 100g unless a different quantity is specified.' 
+                    },
+                    { role: 'user', content: foodQuery }
+                ];
+                
+                const resp = await fetch(cfEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${env.CF_AI_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ messages })
+                });
+                
+                const text = await resp.text();
+                const parsed = JSON.parse(text);
+                const data = parsed.result || parsed;
+                const payload = data.output || data.response || data;
+                const obj = typeof payload === 'string' ? JSON.parse(payload) : payload;
+                
+                return {
+                    calories: Number(obj.calories) || 0,
+                    protein: Number(obj.protein) || 0,
+                    carbs: Number(obj.carbs) || 0,
+                    fat: Number(obj.fat) || 0,
+                    fiber: Number(obj.fiber) || 0
+                };
+            } catch (err) {
+                console.error('AI nutrient lookup error:', err);
+            }
+        }
+
+        // Fallback to zeros if everything fails
+        return {
+            calories: 0,
+            protein: 0,
+            carbs: 0,
+            fat: 0,
+            fiber: 0
+        };
+
+    } catch (error) {
+        console.error(`Error in handleNutrientLookupRequest: ${error.message}`);
+        return { 
+            success: false,
+            error: 'Internal Server Error',
+            statusHint: 500 
+        };
+    }
+}
+// ------------- END FUNCTION: handleNutrientLookupRequest -------------
 
 // ------------- START FUNCTION: applyPlanChanges -------------
 /**
