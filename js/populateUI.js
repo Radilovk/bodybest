@@ -135,8 +135,10 @@ export async function populateUI() {
     try { populateRecsTab(data.planData, data.initialAnswers, guidelinesData); } catch(e) { console.error("Error in populateRecsTab:", e); }
 }
 
+// eslint-disable-next-line no-unused-vars
 function populateUserInfo(userName) {
-    if (selectors.headerTitle) selectors.headerTitle.textContent = `Табло: ${userName || 'Потребител'}`;
+    // Header logo is now static, no need to update title text
+    // Previously: if (selectors.headerTitle) selectors.headerTitle.textContent = `Табло: ${userName || 'Потребител'}`;
 }
 
 function populateDashboardMainIndexes(currentAnalytics) {

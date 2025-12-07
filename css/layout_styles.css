@@ -29,6 +29,15 @@ header {
   height: var(--header-height); 
 }
 header h1 { color: var(--header-title-color); margin: 0; font-size: clamp(1.3rem, 3.5vw, 1.7rem); }
+.header-logo {
+  display: flex;
+  align-items: center;
+}
+.header-logo .logo {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
 #menu-toggle {
   color: var(--header-title-color); padding: var(--space-sm); margin-left: var(--space-md);
   background: transparent; border: none; cursor: pointer;
