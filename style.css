@@ -16,7 +16,7 @@
     --bg-color: #F0F4F8;
     --bg-gradient: linear-gradient(135deg, #e9eff5 0%, #f0f4f8 100%);
     --card-bg: rgba(255, 255, 255, 0.8);
-    --header-bg: rgba(255, 255, 255, 0.7);
+    --header-bg: rgba(255, 255, 255, 0.85);
     --header-bg-solid: rgb(255, 255, 255);
     /* Цвят на мобилното меню - следва хедъра */
     --mobile-menu-bg: var(--header-bg-solid);
@@ -42,22 +42,23 @@
 }
 
 .dark-theme {
-    --secondary-color: #8fa6c9; 
-    --accent-color: #7D9D9C;
-    --bg-color: #16213E;
-    --bg-gradient: linear-gradient(135deg, #16213E 0%, #1A1A2E 100%);
-    --card-bg: rgba(40, 40, 60, 0.75);
-    --header-bg: rgba(40, 40, 60, 0.65);
-    --header-bg-solid: rgb(40, 40, 60);
+    --primary-color: #4A90E2;
+    --secondary-color: #7ED4E6; 
+    --accent-color: #88B8D4;
+    --bg-color: #1A1F2E;
+    --bg-gradient: linear-gradient(135deg, #1A1F2E 0%, #242938 100%);
+    --card-bg: rgba(35, 42, 58, 0.85);
+    --header-bg: rgba(26, 31, 46, 0.85);
+    --header-bg-solid: rgb(26, 31, 46);
     /* Цвят на мобилното меню - следва хедъра */
     --mobile-menu-bg: var(--header-bg-solid);
-    --text-color-primary: #E0E0E0;
-    --text-color-secondary: #A0A5C0;
-    --border-color: rgba(91, 192, 190, 0.2);
-    --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.25);
-    --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.3);
-    --header-title-color: var(--bg-color);
+    --text-color-primary: #ECEFF4;
+    --text-color-secondary: #B4BCD0;
+    --border-color: rgba(126, 212, 230, 0.25);
+    --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.5);
+    --header-title-color: #ECEFF4;
 }
 
 /* 2. БАЗОВИ СТИЛОВЕ И ДОСТЪПНОСТ - ОТ ai_studio_code.css */
