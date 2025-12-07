@@ -781,12 +781,12 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         });
     }
 
-    function computeQuantityFromManual() {
+    function computeQuantityFromCount() {
         if (!quantityHiddenInput || !quantityCustomInput || !quantityCountInput) return;
         const count = parseFloat(quantityCountInput.value);
         const desc = foodDescriptionInput?.value?.trim().toLowerCase() || '';
         
-        console.log('[extraMealForm] computeQuantityFromManual called:', { desc, count });
+        console.log('[extraMealForm] computeQuantityFromCount called:', { desc, count });
         
         if (!desc || !(count > 0)) {
             console.log('[extraMealForm] Early return - missing required fields:', { hasDesc: !!desc, validCount: count > 0 });
@@ -799,7 +799,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         
         let grams = 0;
         if (key && productMeasures[key] && productMeasures[key][0]) {
-            // Product found in database, calculate grams from first measure
+            // Product found in database, calculate grams from first measure (typically the standard serving size)
+            // Note: Using first measure as the default for count-based calculations
             grams = productMeasures[key][0].grams * count;
             console.log('[extraMealForm] Product found in DB, calculated grams:', grams);
         } else {
@@ -837,7 +838,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         }
     }
 
-    if (quantityCountInput) quantityCountInput.addEventListener('input', computeQuantityFromManual);
+    if (quantityCountInput) quantityCountInput.addEventListener('input', computeQuantityFromCount);
 
     // ОПТИМИЗАЦИЯ: Използваме debounce за nutrient lookup, за да намалим API заявките
     // Създаваме debounced версия на lookup функцията
