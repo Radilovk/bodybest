@@ -8507,7 +8507,20 @@ async function handleNutrientLookupRequest(request, env) {
         }
 
         const foodName = food.toLowerCase().trim();
-        const foodQuery = [quantity, foodName].filter(Boolean).join(' ');
+        
+        // Normalize quantity - ensure we have a meaningful value
+        let normalizedQuantity = quantity;
+        if (typeof quantity === 'string') {
+            normalizedQuantity = quantity.trim();
+        }
+        // If quantity is empty string, undefined, null, or NaN, don't include it
+        if (!normalizedQuantity || normalizedQuantity === '' || 
+            (typeof normalizedQuantity === 'number' && !isFinite(normalizedQuantity))) {
+            normalizedQuantity = null;
+        }
+        
+        // Build food query - only include quantity if it's meaningful
+        const foodQuery = normalizedQuantity ? `${normalizedQuantity} ${foodName}` : foodName;
 
         // First, try to find in local product_macros database
         if (env.RESOURCES_KV) {
@@ -8520,8 +8533,8 @@ async function handleNutrientLookupRequest(request, env) {
                     if (product) {
                         // Parse quantity if provided
                         let grams = 100;
-                        if (quantity) {
-                            const match = String(quantity).match(/(\d+(?:[.,]\d+)?)/);
+                        if (normalizedQuantity) {
+                            const match = String(normalizedQuantity).match(/(\d+(?:[.,]\d+)?)/);
                             if (match) {
                                 grams = parseFloat(match[1].replace(',', '.'));
                             }
@@ -8546,10 +8559,16 @@ async function handleNutrientLookupRequest(request, env) {
         if (env.CF_ACCOUNT_ID && env.CF_AI_TOKEN && env.MODEL) {
             try {
                 const cfEndpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/run/${env.MODEL}`;
+                
+                // Enhanced system prompt to handle various quantity formats
+                const systemPrompt = normalizedQuantity 
+                    ? 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the EXACT quantity of food specified. Calories in kcal, protein/carbs/fat/fiber in grams. Calculate for the specific quantity provided (e.g., if given "150 гр", calculate for 150 grams, not per 100g). If given descriptive quantities like "2 парчета" or "1 чаша", estimate the weight in grams and calculate accordingly.'
+                    : 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food per 100g. Calories in kcal, protein/carbs/fat/fiber in grams.';
+                
                 const messages = [
                     { 
                         role: 'system', 
-                        content: 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food. Calories in kcal, protein/carbs/fat/fiber in grams. All values are per 100g unless a different quantity is specified.' 
+                        content: systemPrompt
                     },
                     { role: 'user', content: foodQuery }
                 ];
