@@ -592,6 +592,41 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         }
     }
 
+    // Function to trigger background AI macro lookup when macros are not in local database
+    async function triggerBackgroundMacroLookup(description, quantity) {
+        if (!description || !quantity) return;
+        
+        // Check if macros are already filled
+        let macrosFilled = true;
+        MACRO_FIELDS.forEach(f => {
+            const field = form.querySelector(`input[name="${f}"]`);
+            if (!field || !field.value || field.value.trim() === '') {
+                macrosFilled = false;
+            }
+        });
+        
+        if (macrosFilled) return; // Don't lookup if already filled
+        
+        try {
+            // Call nutrientLookup in background
+            const data = await nutrientLookup(description, quantity);
+            
+            // Fill the macro fields with the retrieved data
+            MACRO_FIELDS.forEach(f => {
+                const field = form.querySelector(`input[name="${f}"]`);
+                if (field && data[f] !== undefined) {
+                    field.value = data[f];
+                    field.dataset.autofilled = 'true';
+                }
+            });
+            
+            if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+        } catch (err) {
+            console.warn('Background macro lookup failed, will retry in summary', err);
+            // Don't show error to user, will retry in summary screen if needed
+        }
+    }
+
     // --- measureOptions с fuzzy и автоматичен избор
     function updateMeasureOptions(desc) {
         if (!measureOptionsContainer) return;
@@ -676,6 +711,11 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 }
             }
             if (!applied && autoFillMsg) autoFillMsg.classList.add('hidden');
+            
+            // If macros were not found, trigger AI lookup in background
+            if (!applied) {
+                triggerBackgroundMacroLookup(description, total);
+            }
         }
     }
 
@@ -715,6 +755,11 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (!applied) {
             applied = tryAutofillFromOverride(form, desc, grams, autoFillMsg);
         }
+        
+        // If macros were not found, trigger AI lookup in background
+        if (!applied) {
+            triggerBackgroundMacroLookup(desc, grams);
+        }
     }
 
     if (quantityCountInput) quantityCountInput.addEventListener('input', computeQuantityFromManual);
@@ -752,6 +797,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             const val = quantityCustomInput.value.trim();
             const quantityKey = val;
             let parsed = false;
+            let applied = false;
 
             // Show macro fields when user starts entering quantity
             showMacroFieldsIfQuantityEntered();
@@ -762,7 +808,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 const grams = parseFloat(gramsMatch[1].replace(',', '.'));
                 const desc = foodDescriptionInput?.value?.trim();
                 const product = desc ? findClosestProduct(desc) : null;
-                let applied = false;
                 if (product && grams > 0) {
                     if (quantityHiddenInput) quantityHiddenInput.value = String(grams);
                     const scaled = scaleMacros(product, grams);
@@ -773,7 +818,14 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                     if (tryAutofillFromOverride(form, desc, quantityKey, autoFillMsg)) {
                         if (quantityHiddenInput) quantityHiddenInput.value = String(grams);
                         parsed = true;
+                        applied = true;
                     }
+                }
+                
+                // If not found in local database, trigger background AI lookup
+                if (!applied && desc && grams > 0) {
+                    triggerBackgroundMacroLookup(desc, grams);
+                    parsed = true; // Consider it parsed even if we need AI lookup
                 }
             }
 
@@ -788,7 +840,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                         const grams = count * productMeasures[key][0].grams;
                         if (quantityHiddenInput) quantityHiddenInput.value = grams;
                         const product = findClosestProduct(key);
-                        let applied = false;
                         if (product) {
                             const scaled = scaleMacros(product, grams);
                             applied = applyAutofillMacros(form, scaled, autoFillMsg, true);
@@ -797,6 +848,10 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                             applied = tryAutofillFromOverride(form, key, quantityKey, autoFillMsg);
                         }
                         if (applied) {
+                            parsed = true;
+                        } else {
+                            // If not found in local database, trigger background AI lookup
+                            triggerBackgroundMacroLookup(key, grams);
                             parsed = true;
                         }
                     }
