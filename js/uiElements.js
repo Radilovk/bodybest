@@ -8,7 +8,7 @@ export function initializeSelectors() {
         appWrapper: 'appWrapper', loadingOverlay: 'loadingOverlay', loadingOverlayText: 'loadingOverlayText', planPendingState: 'planPendingState',
         headerTitle: 'headerTitle', menuToggle: 'menu-toggle', mainMenu: 'main-menu', menuClose: 'main-menu .menu-close',
         menuOverlay: 'menu-overlay',
-        themeToggleMenu: 'theme-toggle-menu', logoutButton: 'logoutButton', menuContactLink: 'menu-contact-link', menuPersonalizationLink: 'menu-personalization-link', menuFeedbackBtn: 'menu-feedback-btn',
+        themeToggleMenu: 'theme-toggle-menu', logoutButton: 'logoutButton', menuContactLink: 'menu-contact-link', menuFeedbackBtn: 'menu-feedback-btn',
         tabsContainer: '.tabs[role="tablist"]', tabButtons: '.tabs button[role="tab"]',
         goalName: 'goalName', goalProgressBar: 'goalProgressBar', goalProgressFill: 'goalProgressFill', goalProgressText: 'goalProgressText',
         engagementProgressBar: 'engagementProgressBar', engagementProgressFill: 'engagementProgressFill', engagementProgressText: 'engagementProgressText',
@@ -69,7 +69,7 @@ export function initializeSelectors() {
         }
         if (!selectors[key] || (key === 'tabButtons' && selectors[key].length === 0)) {
             const optionalOrDynamic = [
-                'menuClose', 'menuPersonalizationLink', 'extraMealFormContainer', 'userAllergiesNote', 'userAllergiesList',
+                'menuClose', 'extraMealFormContainer', 'userAllergiesNote', 'userAllergiesList',
                 'feedbackForm', 'tooltipTracker', 'planModificationBtn', 'planModInProgressIcon',
                 'planModChatModal', 'planModChatMessages', 'planModChatInput',
                 'planModChatSend', 'planModChatClose', 'planModChatClear',
