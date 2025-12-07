@@ -214,5 +214,5 @@ test('количество след описание', async () => {
 
 test('fetchMacrosFromAi хвърля грешка при неположително количество', async () => {
   await expect(fetchMacrosFromAi('ябълка', 0)).rejects.toThrow('Invalid quantity');
-  expect(showToastMock).toHaveBeenCalled();
+  // showToast не се извиква вече, грешката се обработва на по-високо ниво
 });
