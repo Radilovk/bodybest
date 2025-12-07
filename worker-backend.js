@@ -158,6 +158,39 @@ export default {
 };
 
 async function lookupNutrients(query, env) {
+  // First, try to load from local product_macros database if RESOURCES_KV is available
+  if (env.RESOURCES_KV) {
+    try {
+      const productMacrosJson = await env.RESOURCES_KV.get('product_macros');
+      if (productMacrosJson) {
+        const products = JSON.parse(productMacrosJson);
+        const queryLower = query.toLowerCase().trim();
+        
+        // Try to find exact match or close match in product database
+        for (const product of products) {
+          if (product.name && queryLower.includes(product.name.toLowerCase())) {
+            // Found a match in local database - return scaled values if quantity is specified
+            const quantityMatch = query.match(/(\d+(?:[.,]\d+)?)\s*(гр|g|грам)/i);
+            const quantity = quantityMatch ? parseFloat(quantityMatch[1].replace(',', '.')) : 100;
+            const scale = quantity / 100;
+            
+            return {
+              calories: Number((product.calories * scale).toFixed(2)) || 0,
+              protein: Number((product.protein * scale).toFixed(2)) || 0,
+              carbs: Number((product.carbs * scale).toFixed(2)) || 0,
+              fat: Number((product.fat * scale).toFixed(2)) || 0,
+              fiber: Number((product.fiber * scale).toFixed(2)) || 0
+            };
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error checking local product database', e);
+      // Continue to external APIs if local lookup fails
+    }
+  }
+
+  // If not found in local database, try external nutrition API
   if (env.NUTRITION_API_URL) {
     try {
       const url = `${env.NUTRITION_API_URL}${encodeURIComponent(query)}`;
@@ -180,11 +213,27 @@ async function lookupNutrients(query, env) {
       console.error('Nutrient API error', e);
     }
   }
+
+  // Finally, fall back to AI model with specialized prompt
   if (env.CF_ACCOUNT_ID && env.CF_AI_TOKEN && env.MODEL) {
     try {
+      // Try to load specialized nutrient lookup prompt
+      let systemPrompt = 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food.';
+      
+      if (env.RESOURCES_KV) {
+        try {
+          const promptTemplate = await env.RESOURCES_KV.get('prompt_nutrient_lookup');
+          if (promptTemplate) {
+            systemPrompt = promptTemplate.replace('%%FOOD_QUERY%%', query);
+          }
+        } catch (e) {
+          console.warn('Could not load specialized prompt, using default', e);
+        }
+      }
+
       const cfEndpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/run/${env.MODEL}`;
       const messages = [
-        { role: 'system', content: 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food.' },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: query }
       ];
       const resp = await fetch(cfEndpoint, {
