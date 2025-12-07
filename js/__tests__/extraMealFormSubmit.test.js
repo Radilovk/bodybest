@@ -212,7 +212,23 @@ test('количество след описание', async () => {
   jest.useRealTimers();
 });
 
-test('fetchMacrosFromAi хвърля грешка при неположително количество', async () => {
-  await expect(fetchMacrosFromAi('ябълка', 0)).rejects.toThrow('Invalid quantity');
-  // showToast не се извиква вече, грешката се обработва на по-високо ниво
+test('fetchMacrosFromAi работи дори с количество 0 (AI ще оцени на база 100г)', async () => {
+  // Mock nutrient-lookup endpoint to return macros
+  global.fetch.mockResolvedValueOnce({
+    ok: true,
+    json: async () => ({
+      calories: 52,
+      protein: 0.3,
+      carbs: 14,
+      fat: 0.2,
+      fiber: 2.4
+    })
+  });
+  
+  // С новата логика, AI-то може да обработва всяко количество, включително 0
+  // В този случай AI ще върне макроси на база 100г
+  const result = await fetchMacrosFromAi('ябълка', 0);
+  expect(result).toBeDefined();
+  expect(result.calories).toBe(52);
+  expect(result.protein).toBe(0.3);
 });
