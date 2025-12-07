@@ -25,13 +25,15 @@ body {
 }
 
 .header {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(135deg, rgba(44, 62, 80, 0.9), rgba(52, 152, 219, 0.9));
   color: white;
-  padding: 20px;
+  padding: 12px 20px;
   border-radius: 8px;
   margin-bottom: 25px;
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .header::before {
@@ -48,11 +50,13 @@ body {
 .header h1 {
   font-weight: 700;
   margin-bottom: 5px;
+  font-size: 1.5rem;
 }
 
 .header p {
   opacity: 0.9;
   margin-bottom: 0;
+  font-size: 0.85rem;
 }
 
 .nav-tabs .nav-link {

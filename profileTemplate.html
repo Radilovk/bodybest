@@ -38,13 +38,15 @@
         }
         
         .header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(135deg, rgba(44, 62, 80, 0.9), rgba(52, 152, 219, 0.9));
             color: white;
-            padding: 20px;
+            padding: 12px 20px;
             border-radius: var(--border-radius);
             margin-bottom: 25px;
             position: relative;
             overflow: hidden;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
         
         .header::before {
@@ -59,21 +61,23 @@
         }
         
         .header-logo-img {
-            width: 50px;
-            height: 50px;
+            max-width: 40px;
+            max-height: 40px;
+            width: auto;
+            height: auto;
             object-fit: contain;
         }
         
         .header h1 {
             font-weight: 700;
             margin-bottom: 5px;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
         }
         
         .header p {
             opacity: 0.9;
             margin-bottom: 0;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
         }
         
         .nav-tabs .nav-link {
@@ -321,17 +325,18 @@
             }
             
             .header h1 {
-                font-size: 1.5rem;
+                font-size: 1.2rem;
             }
             
-            .header > div {
+            .header .d-flex {
                 flex-direction: column;
                 align-items: flex-start;
+                gap: 10px;
             }
             
             .header .text-end {
-                text-align: left !important;
-                margin-top: 10px;
+                text-align: left;
+                margin-top: 5px;
             }
             
             .nav-tabs .nav-link {
@@ -389,21 +394,21 @@
 <body>
     <div class="container container-main">
         <div class="header">
-            <div class="d-flex justify-content-between align-items-center flex-wrap">
-                <div class="d-flex align-items-center gap-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-2">
                     <img src="https://radilovk.github.io/bodybest/img/logoindex.png" alt="ONE BODY" class="header-logo-img" />
                     <div>
-                        <h1><i class="fas fa-user-circle me-2"></i><span id="userName"><span class="loader"></span>Зареждане...</span></h1>
-                        <p><i class="fas fa-id-card me-2"></i>Потребителски профил</p>
+                        <h1 class="mb-0"><span id="userName"><span class="loader"></span>Зареждане...</span></h1>
                     </div>
                 </div>
-                <div class="text-end mt-2 mt-md-0">
-                    <p class="mb-1"><i class="fas fa-weight me-2"></i><strong>Текущо тегло:</strong> <span id="currentWeightHeader">--</span></p>
-                    <p class="mb-1"><i class="fas fa-ruler-vertical me-2"></i><strong>Височина:</strong> <span id="userHeightHeader">--</span></p>
-                    <p class="mb-0"><i class="fas fa-bullseye me-2"></i><strong>Основна цел:</strong> <span id="userGoalHeader">--</span></p>
-                </div>
-                <div class="mt-2 mt-md-0">
-                    <button class="btn btn-primary" id="planModificationBtn"><i class="bi bi-chat-dots"></i> Промени план</button>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <div class="text-end">
+                        <p class="mb-0 small"><i class="fas fa-weight me-1"></i><strong>Тегло:</strong> <span id="currentWeightHeader">--</span> <span class="mx-1">|</span> <i class="fas fa-ruler-vertical me-1"></i><strong>Височина:</strong> <span id="userHeightHeader">--</span></p>
+                        <p class="mb-0 small"><i class="fas fa-bullseye me-1"></i><strong>Цел:</strong> <span id="userGoalHeader">--</span></p>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary btn-sm" id="planModificationBtn"><i class="bi bi-chat-dots"></i> Промени план</button>
+                    </div>
                 </div>
             </div>
         </div>
