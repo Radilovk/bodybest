@@ -26,7 +26,7 @@
   --font-color-muted: var(--text-color-muted);
   --font-color-on-primary: var(--text-color-on-primary);
   --header-title-color: var(--bg-color);
-  --header-bg: rgba(91, 192, 190, 0.7);
+  --header-bg: rgba(91, 192, 190, 0.85);
   --header-bg-solid: #ffffff;
   --mobile-menu-bg: var(--header-bg-solid);
   --glass-blur: 10px;
@@ -154,194 +154,198 @@
 }
 
 body.dark-theme {
-  /* Тъмна тема от index.html - прецизно приложена */
-  /* Приглушени цветове за по-добра визия и намален контраст */
-  --primary-color: #405872;
-  --secondary-color: #7A8FA8;
-  --accent-color: #6D8A89;
-  --accent-opacity: 0.85;
-  --tertiary-color: #7D6CAD;
+  /* Тъмна тема - Подобрен дизайн с елегантна цветова палитра */
+  /* Професионална и естетична визия с отличен контраст */
+  --primary-color: #4A90E2;
+  --secondary-color: #7ED4E6;
+  --accent-color: #88B8D4;
+  --accent-opacity: 0.9;
+  --tertiary-color: #9B8FC5;
 
-  --text-color-primary: #E0E0E0;
-  --text-color-secondary: #A0A5C0;
-  --text-color-muted: #bbb;
-  --text-color-on-primary: #1b263b;
+  --text-color-primary: #ECEFF4;
+  --text-color-secondary: #B4BCD0;
+  --text-color-muted: #8892AB;
+  --text-color-on-primary: #1A1F2E;
   --text-color-on-secondary: #FFFFFF;
-  --text-color-disabled: #adb5bd;
-  --header-title-color: var(--bg-color);
+  --text-color-disabled: #6C7A89;
+  --header-title-color: #ECEFF4;
   --font-color-primary: var(--text-color-primary);
   --font-color-secondary: var(--text-color-secondary);
   --font-color-muted: var(--text-color-muted);
   --font-color-on-primary: var(--text-color-on-primary);
-  --header-bg: rgba(40, 40, 60, 0.65);
-  --header-bg-solid: rgb(40, 40, 60);
+  --header-bg: rgba(26, 31, 46, 0.85);
+  --header-bg-solid: rgb(26, 31, 46);
   --mobile-menu-bg: var(--header-bg-solid);
 
-  --bg-color: #16213E;
-  --bg-gradient: linear-gradient(135deg, #16213E 0%, #1A1A2E 100%);
-  --surface-background: rgba(40, 40, 60, 0.75);
-  --surface-background-rgb: 40,40,60; /* За rgba overlay */
-  --card-bg: rgba(40, 40, 60, 0.75);
-  --card-bg-rgb: 40,40,60;
-  --card-bg-opacity: 0.75;
-  --glass-blur: 10px;
+  --bg-color: #1A1F2E;
+  --bg-gradient: linear-gradient(135deg, #1A1F2E 0%, #242938 100%);
+  --surface-background: rgba(35, 42, 58, 0.85);
+  --surface-background-rgb: 35,42,58; /* За rgba overlay */
+  --card-bg: rgba(35, 42, 58, 0.85);
+  --card-bg-rgb: 35,42,58;
+  --card-bg-opacity: 0.85;
+  --glass-blur: 12px;
 
-  --border-color: rgba(107, 155, 158, 0.25);
-  --border-color-soft: rgba(107, 155, 158, 0.12);
+  --border-color: rgba(126, 212, 230, 0.25);
+  --border-color-soft: rgba(126, 212, 230, 0.15);
 
-  --input-bg: rgba(40, 40, 60, 0.75);
-  --input-bg-disabled: #2C3147;
-  --input-border-color: rgba(107, 155, 158, 0.25);
+  --input-bg: rgba(35, 42, 58, 0.85);
+  --input-bg-disabled: #2A3142;
+  --input-border-color: rgba(126, 212, 230, 0.3);
   --input-focus-border: var(--primary-color);
-  --input-focus-shadow: rgba(107, 155, 158, 0.35);
+  --input-focus-shadow: rgba(74, 144, 226, 0.4);
 
-  --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.3);
-  --shadow-soft: 0px 6px 18px rgba(var(--surface-background-rgb), 0.5), 0px 2px 7px rgba(var(--surface-background-rgb), 0.3);
+  --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.5);
+  --shadow-soft: 0px 6px 18px rgba(var(--surface-background-rgb), 0.6), 0px 2px 7px rgba(var(--surface-background-rgb), 0.4);
 
-  --progress-bar-bg-empty: #393E57;
+  --progress-bar-bg-empty: #2A3142;
   --progress-color: var(--color-success);
 
-  /* Макро диаграма - тъмна тема - приглушени цветове */
-  --macro-protein-color: #405872;
-  --macro-fat-color: #E8C060;
-  --macro-carbs-color: #E8746D;
-  --macro-fiber-color: #68BB84;
-  --macro-ring-highlight: #ffffff;
-  --macro-stroke-color: #444444;
+  /* Макро диаграма - тъмна тема - подобрени и балансирани цветове */
+  --macro-protein-color: #4A90E2;
+  --macro-fat-color: #F5C26B;
+  --macro-carbs-color: #E88B8C;
+  --macro-fiber-color: #6FCF97;
+  --macro-ring-highlight: #ECEFF4;
+  --macro-stroke-color: #3A4556;
 
-  --toast-bg: rgba(40, 40, 60, 0.95); --toast-text: #E0E0E0;
+  --toast-bg: rgba(35, 42, 58, 0.95); --toast-text: #ECEFF4;
   --modal-overlay-bg: rgba(0,0,0, 0.75);
-  --scrollbar-thumb: var(--primary-color); --scrollbar-track: #333;
+  --scrollbar-thumb: var(--primary-color); --scrollbar-track: #242938;
 
   --icon-color-default: var(--accent-color);
 
-  --menu-bg: rgba(40, 40, 60, 0.9);
-  --menu-overlay-bg: rgba(0, 0, 0, 0.65);
+  --menu-bg: rgba(26, 31, 46, 0.9);
+  --menu-overlay-bg: rgba(0, 0, 0, 0.7);
   --menu-hover-bg: color-mix(in srgb, var(--primary-color) 25%, transparent);
 
-  --fab-bg: var(--primary-color); --fab-icon: #1b263b;
+  --fab-bg: var(--primary-color); --fab-icon: #1A1F2E;
 
-  --rating-empty-bg: #444; --rating-border: #666;
+  --rating-empty-bg: #3A4556; --rating-border: #4A5568;
 
   --chat-widget-bg: color-mix(in srgb, var(--surface-background) 90%, black);
   --chat-header-bg: var(--primary-color);
   --chat-header-text: #FFFFFF;
   --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 30%, var(--surface-background));
   --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 30%, var(--surface-background));
-  --chat-input-field-bg: color-mix(in srgb, var(--surface-background) 70%, #1A1A2E);
+  --chat-input-field-bg: color-mix(in srgb, var(--surface-background) 70%, #1A1F2E);
 
-  --note-critical-bg: rgba(183, 28, 28, 0.25); --note-critical-text: #ef9a9a; --note-critical-border: #c62828;
-  --note-important-bg: rgba(255, 143, 0, 0.18); --note-important-text: #ffcc80; --note-important-border: #ff8f00;
-  --note-info-bg: rgba(25, 118, 210, 0.18); --note-info-text: #90caf9; --note-info-border: #1976d2;
-  --note-success-bg: rgba(46, 125, 50, 0.18); --note-success-text: #a5d6a7; --note-success-border: #2e7d32;
-  --supplement-card-bg: rgba(107, 155, 158, 0.20);
+  --note-critical-bg: rgba(220, 38, 38, 0.25); --note-critical-text: #FCA5A5; --note-critical-border: #DC2626;
+  --note-important-bg: rgba(245, 158, 11, 0.2); --note-important-text: #FCD34D; --note-important-border: #F59E0B;
+  --note-info-bg: rgba(59, 130, 246, 0.2); --note-info-text: #93C5FD; --note-info-border: #3B82F6;
+  --note-success-bg: rgba(34, 197, 94, 0.2); --note-success-text: #86EFAC; --note-success-border: #22C55E;
+  --supplement-card-bg: rgba(126, 212, 230, 0.2);
 
-  --primary-rgb: 107, 155, 158;
+  --primary-rgb: 74, 144, 226;
 
   --metric-value-group-bg-initial: color-mix(in srgb, var(--surface-background) 90%, var(--border-color-soft) 50%);
   --metric-value-group-bg-expected: color-mix(in srgb, var(--surface-background) 90%, var(--accent-color) 25%);
   --metric-value-group-bg-current: color-mix(in srgb, var(--surface-background) 90%, var(--secondary-color) 30%);
-  --code-bg: #16213E;
-  --code-text-primary: #E0E0E0;
-  --code-accent: #405872;
+  --code-bg: #1A1F2E;
+  --code-text-primary: #ECEFF4;
+  --code-accent: #4A90E2;
 }
 
 body.vivid-theme {
-  /* Ярка тема със запазен тъмен фон */
-  --primary-color: #5BC0BE;
-  --secondary-color: #FFD166;
-  --accent-color: #FF6B6B;
+  /* Ярка тема - Модерен и жизнен дизайн с наситени цветове */
+  /* Отличен контраст и енергична визия */
+  --primary-color: #00D9FF;
+  --secondary-color: #FF6B9D;
+  --accent-color: #FFB800;
   --accent-opacity: 1;
-  --tertiary-color: #FF9C9C;
+  --tertiary-color: #A78BFA;
 
-  --text-color-primary: #E0E0E0;
-  --text-color-secondary: #A0A5C0;
-  --text-color-muted: #bbb;
-  --text-color-on-primary: #1C1F2E;
+  --text-color-primary: #F5F7FA;
+  --text-color-secondary: #C4CAD9;
+  --text-color-muted: #9CA3AF;
+  --text-color-on-primary: #0F172A;
   --text-color-on-secondary: #FFFFFF;
-  --text-color-disabled: #adb5bd;
-  --header-title-color: var(--bg-color);
+  --text-color-disabled: #6B7280;
+  --header-title-color: #F5F7FA;
+  --header-bg: rgba(15, 23, 42, 0.85);
+  --header-bg-solid: rgb(15, 23, 42);
+  --mobile-menu-bg: var(--header-bg-solid);
 
-  --bg-color: #1C1F2E;
-  --bg-gradient: linear-gradient(135deg, #1C1F2E 0%, #252A41 100%);
-  --surface-background: #252A41;
-  --surface-background-rgb: 37,42,65; /* За rgba overlay */
-  --card-bg: #252A41;
-  --card-bg-rgb: 37,42,65;
-  --card-bg-opacity: 0.75;
+  --bg-color: #0F172A;
+  --bg-gradient: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  --surface-background: #1E293B;
+  --surface-background-rgb: 30,41,59; /* За rgba overlay */
+  --card-bg: #1E293B;
+  --card-bg-rgb: 30,41,59;
+  --card-bg-opacity: 0.9;
   --glass-blur: 12px;
 
-  --border-color: #34374B;
-  --border-color-soft: #2D3044;
+  --border-color: rgba(0, 217, 255, 0.3);
+  --border-color-soft: rgba(0, 217, 255, 0.15);
 
-  --input-bg: #252A41;
-  --input-bg-disabled: #2C3147;
-  --input-border-color: #3C425A;
+  --input-bg: #1E293B;
+  --input-bg-disabled: #334155;
+  --input-border-color: rgba(0, 217, 255, 0.4);
   --input-focus-border: var(--primary-color);
-  --input-focus-shadow: rgba(91, 192, 190, 0.3);
+  --input-focus-shadow: rgba(0, 217, 255, 0.4);
 
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.15);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.20);
-  --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.25);
-  --shadow-soft: 0px 6px 18px rgba(var(--surface-background-rgb), 0.5), 0px 2px 7px rgba(var(--surface-background-rgb), 0.3);
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.4);
+  --shadow-soft: 0px 6px 18px rgba(var(--surface-background-rgb), 0.6), 0px 2px 7px rgba(var(--surface-background-rgb), 0.4);
 
-  --progress-bar-bg-empty: #393E57;
-  --progress-color: #80FF80;
+  --progress-bar-bg-empty: #334155;
+  --progress-color: #10B981;
 
   /* Макро диаграма - ярка тема */
-  --macro-protein-color: #5BC0BE;
-  --macro-fat-color: #FFD166;
-  --macro-carbs-color: #FF6B6B;
-  --macro-fiber-color: #6FCF97;
-  --macro-ring-highlight: #ffffff;
-  --macro-stroke-color: #444444;
+  --macro-protein-color: #00D9FF;
+  --macro-fat-color: #FFB800;
+  --macro-carbs-color: #FF6B9D;
+  --macro-fiber-color: #10B981;
+  --macro-ring-highlight: #F5F7FA;
+  --macro-stroke-color: #334155;
 
-  --toast-bg: rgba(37, 42, 65, 0.95); --toast-text: #F0F2F5;
-  --modal-overlay-bg: rgba(0,0,0, 0.75);
-  --scrollbar-thumb: var(--primary-color); --scrollbar-track: #333;
+  --toast-bg: rgba(30, 41, 59, 0.95); --toast-text: #F5F7FA;
+  --modal-overlay-bg: rgba(0,0,0, 0.8);
+  --scrollbar-thumb: var(--primary-color); --scrollbar-track: #1E293B;
 
   --icon-color-default: var(--accent-color);
 
-  --menu-bg: rgba(37, 42, 65, 0.9);
-  --menu-overlay-bg: rgba(0, 0, 0, 0.65);
+  --menu-bg: rgba(15, 23, 42, 0.9);
+  --menu-overlay-bg: rgba(0, 0, 0, 0.7);
   --menu-hover-bg: color-mix(in srgb, var(--primary-color) 35%, transparent);
 
-  --fab-bg: var(--primary-color); --fab-icon: #1C1F2E;
+  --fab-bg: var(--primary-color); --fab-icon: #0F172A;
 
-  --rating-empty-bg: #444; --rating-border: #666;
+  --rating-empty-bg: #334155; --rating-border: #475569;
 
   --chat-widget-bg: color-mix(in srgb, var(--surface-background) 90%, black);
   --chat-header-bg: var(--primary-color);
-  --chat-header-text: #FFFFFF;
+  --chat-header-text: #0F172A;
   --chat-message-user-bg: color-mix(in srgb, var(--primary-color) 40%, var(--surface-background));
   --chat-message-bot-bg: color-mix(in srgb, var(--accent-color) 40%, var(--surface-background));
-  --chat-input-field-bg: color-mix(in srgb, var(--surface-background) 70%, #1A1A2E);
+  --chat-input-field-bg: color-mix(in srgb, var(--surface-background) 70%, #0F172A);
 
-  --note-critical-bg: rgba(183, 28, 28, 0.3); --note-critical-text: #ef9a9a; --note-critical-border: #c62828;
-  --note-important-bg: rgba(255, 143, 0, 0.2); --note-important-text: #ffcc80; --note-important-border: #ff8f00;
-  --note-info-bg: rgba(25, 118, 210, 0.2); --note-info-text: #90caf9; --note-info-border: #1976d2;
-  --note-success-bg: rgba(46, 125, 50, 0.2); --note-success-text: #a5d6a7; --note-success-border: #2e7d32;
-  --supplement-card-bg: rgba(91, 192, 190, 0.25);
+  --note-critical-bg: rgba(239, 68, 68, 0.3); --note-critical-text: #FCA5A5; --note-critical-border: #EF4444;
+  --note-important-bg: rgba(251, 191, 36, 0.25); --note-important-text: #FCD34D; --note-important-border: #FBBF24;
+  --note-info-bg: rgba(0, 217, 255, 0.25); --note-info-text: #7DD3FC; --note-info-border: #00D9FF;
+  --note-success-bg: rgba(16, 185, 129, 0.25); --note-success-text: #6EE7B7; --note-success-border: #10B981;
+  --supplement-card-bg: rgba(0, 217, 255, 0.25);
 
-  --primary-rgb: 91, 192, 190;
+  --primary-rgb: 0, 217, 255;
 
   --metric-value-group-bg-initial: color-mix(in srgb, var(--surface-background) 90%, var(--border-color-soft) 50%);
   --metric-value-group-bg-expected: color-mix(in srgb, var(--surface-background) 90%, var(--accent-color) 25%);
   --metric-value-group-bg-current: color-mix(in srgb, var(--surface-background) 90%, var(--secondary-color) 30%);
-  --code-bg: #001122;
-  --code-text-primary: #ffffff;
-  --code-accent: #ff6600;
+  --code-bg: #0A0F1C;
+  --code-text-primary: #F5F7FA;
+  --code-accent: #00D9FF;
 }
 
-/* По-ярките основни цветове правят заглавията трудни за четене.
-   Смесваме ги с основния текстов цвят за по-добър контраст */
+/* Ярката тема има отлична визия с балансирани контрастни цветове.
+   Заглавията вече са добре видими с новата цветова палитра. */
 body.vivid-theme h1,
 body.vivid-theme h2,
 body.vivid-theme h3,
 body.vivid-theme h4 {
-  color: color-mix(in srgb, var(--primary-color) 75%, var(--text-color-primary));
+  color: color-mix(in srgb, var(--primary-color) 80%, var(--text-color-primary));
 }
 body.vivid-theme header h1 {
   color: var(--header-title-color);
