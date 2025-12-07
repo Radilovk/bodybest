@@ -299,7 +299,6 @@ nav.tabs.styled-tabs .tab-btn[aria-selected="true"] .tab-icon {
 }
 
 nav.tabs.styled-tabs .tab-btn[aria-selected="true"] .tab-label {
-  font-weight: 700;
   letter-spacing: 1px;
 }
 
