@@ -466,8 +466,12 @@ async function populateSummaryWithAiMacros(form) {
             // Проверяваме дали имаме описание на храната
             if (!foodDesc || !foodDesc.trim()) {
                 errorMessage += 'Моля, въведете описание на храната.';
-            } else if (err.message && err.message.includes('fetch')) {
+            } else if (err instanceof TypeError && err.message && err.message.toLowerCase().includes('fetch')) {
+                // TypeError with 'fetch' typically indicates network error
                 errorMessage += 'Проблем с връзката. Моля, опитайте отново.';
+            } else if (!navigator.onLine) {
+                // Browser reports offline
+                errorMessage += 'Няма интернет връзка. Моля, проверете връзката си.';
             } else {
                 errorMessage += 'Може да ги въведете ръчно или да продължите без тях.';
             }
