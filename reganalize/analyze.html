@@ -156,6 +156,26 @@
             animation: fadeIn 1s 0.4s ease-out backwards;
             z-index: 2;
         }
+        
+        header .client-info {
+            position: relative;
+            font-size: 1em;
+            opacity: 0.8;
+            margin-top: 15px;
+            color: rgba(255, 255, 255, 0.9);
+            animation: fadeIn 1s 0.6s ease-out backwards;
+            z-index: 2;
+        }
+        
+        header .client-info .bmi-badge {
+            display: inline-block;
+            background: rgba(8, 217, 214, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            margin: 0 5px;
+            font-weight: 600;
+            color: var(--cta-color);
+        }
 
         /* --- Section Shared --- */
         .section-header { text-align: center; margin-bottom: 50px; }
@@ -222,7 +242,7 @@
         /* 1. Obstacles Section --- */
         #obstacles-container { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
             gap: 25px; 
             margin-top: -100px; 
             position: relative; 
@@ -231,7 +251,7 @@
         
         .obstacle-card { 
             text-align: center; 
-            padding: 35px 20px;
+            padding: 30px 25px;
             position: relative;
             border: double 2px transparent;
             background-clip: padding-box;
@@ -239,6 +259,9 @@
                             linear-gradient(45deg, #08D9D6, #2563eb);
             background-origin: border-box;
             z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         
         .obstacle-card::after {
@@ -260,7 +283,7 @@
         }
         
         .obstacle-card .icon { 
-            font-size: 3.5em; 
+            font-size: 3.2em; 
             color: var(--color-high); 
             margin-bottom: 15px; 
             transition: transform 0.4s ease;
@@ -273,11 +296,25 @@
         
         .obstacle-card h3 { 
             font-size: 1.1em; 
-            font-weight: 600; 
+            font-weight: 700; 
             color: var(--heading-color); 
-            margin: 0; 
+            margin: 0 0 12px 0; 
             position: relative;
             z-index: 2;
+        }
+        
+        .obstacle-card .description {
+            font-size: 0.9em;
+            line-height: 1.5;
+            color: var(--text-color);
+            text-align: left;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .obstacle-card .description strong {
+            color: var(--heading-color);
+            font-weight: 600;
         }
 
         /* 2. Risk Profile --- DONUT CHARTS --- */
@@ -346,6 +383,11 @@
         }
         .analysis-points li i.icon-ok { color: var(--color-ok); }
         .analysis-points li i.icon-low { color: var(--color-low); }
+        
+        .analysis-points li strong {
+            color: var(--heading-color);
+            font-weight: 700;
+        }
 
         .key-takeaway { 
             background: #f0f5ff;
@@ -574,6 +616,18 @@
             }
         }
         
+        /* --- Tablet optimizations --- */
+        @media (max-width: 768px) {
+            #obstacles-container {
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                gap: 20px;
+            }
+            
+            .obstacle-card {
+                padding: 25px 20px;
+            }
+        }
+        
         /* --- Precise optimizations for phone screens --- */
         @media (max-width: 576px) {
             header h1 {
@@ -584,6 +638,9 @@
             }
             header .main-goal {
                 font-size: 1.4em;
+            }
+            header .client-info {
+                font-size: 0.9em;
             }
             .section-title {
                 font-size: 1.8em;
@@ -627,6 +684,21 @@
                 font-size: 1em;
                 padding: 12px 20px;
             }
+            
+            /* Optimize obstacles for mobile */
+            #obstacles-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                margin-top: -80px;
+            }
+            
+            .obstacle-card {
+                padding: 25px 20px;
+            }
+            
+            .obstacle-card .icon {
+                font-size: 2.8em;
+            }
         }
     </style>
 </head>
@@ -636,6 +708,7 @@
         <h1 id="client-name"></h1>
         <p class="goal-label">Основна цел</p>
         <p class="main-goal" id="main-goal"></p>
+        <div class="client-info" id="client-info"></div>
     </header>
 
     <main class="container">
@@ -702,10 +775,19 @@
     document.addEventListener('DOMContentLoaded', function() {
         const analysisData = {/*---JSON_DATA_PLACEHOLDER---*/};
         
+        // Helper function to escape HTML to prevent XSS
+        const escapeHtml = (text) => {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        };
+        
         const generateObstaclesHTML = (obstacles) => obstacles.map(o => `
             <div class="card obstacle-card">
                 <div class="icon"><i class="${o.icon}"></i></div>
                 <h3>${o.title}</h3>
+                ${o.description ? `<p class="description">${o.description}</p>` : ''}
             </div>`).join('');
         
         const getRiskDefinition = (riskClass, category) => {
@@ -750,6 +832,12 @@
                 </div>
                 <div class="key-takeaway">
                     <h3><i class="fas fa-key"></i> Ключов Извод</h3>
+                    ${item.summaryQuote && item.summaryQuote.text ? `
+                    <div class="summary-quote">
+                        <p class="quote-text">"${escapeHtml(item.summaryQuote.text)}"</p>
+                        <p class="quote-author">— ${escapeHtml(item.summaryQuote.author || 'Вашите думи')}</p>
+                    </div>
+                    ` : ''}
                     <div class="conclusion-box">
                         <p>${item.conclusion}</p>
                     </div>
@@ -776,6 +864,50 @@
             }
             goalLine = goalLine.replace(/^[Оо]сновна цел[:\s-]*/, '').trim();
             document.getElementById('main-goal').textContent = goalLine;
+            
+            // Display client info with BMI
+            const clientInfoEl = document.getElementById('client-info');
+            if (clientInfoEl && data.client) {
+                const { age, height, weight, gender } = data.client;
+                const parts = [];
+                
+                // Build client info parts with validation
+                if (gender) parts.push(escapeHtml(gender));
+                if (age && typeof age === 'number') parts.push(`${age} години`);
+                if (height && typeof height === 'number') parts.push(`${height} см`);
+                if (weight && typeof weight === 'number') parts.push(`${weight} кг`);
+                
+                let infoHTML = parts.join(' | ');
+                
+                // Calculate and display BMI if both height and weight are available
+                if (height && weight && typeof height === 'number' && typeof weight === 'number' && height > 0) {
+                    // BMI Formula: weight (kg) / (height (m))²
+                    // Convert height from cm to meters
+                    const heightInMeters = height / 100;
+                    const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
+                    
+                    // Determine BMI category according to WHO standards
+                    let bmiCategory = '';
+                    const bmiValue = parseFloat(bmi);
+                    if (bmiValue < 18.5) bmiCategory = 'Поднормено';
+                    else if (bmiValue < 25) bmiCategory = 'Нормално';
+                    else if (bmiValue < 30) bmiCategory = 'Наднормено';
+                    else bmiCategory = 'Затлъстяване';
+                    
+                    // Use textContent for BMI value to prevent XSS
+                    const bmiBadge = document.createElement('span');
+                    bmiBadge.className = 'bmi-badge';
+                    bmiBadge.textContent = `BMI: ${bmi} (${bmiCategory})`;
+                    
+                    if (infoHTML) infoHTML += ' | ';
+                    infoHTML += bmiBadge.outerHTML;
+                }
+                
+                if (infoHTML) {
+                    clientInfoEl.innerHTML = infoHTML;
+                }
+            }
+            
             document.getElementById('obstacles-container').innerHTML = generateObstaclesHTML(data.topObstacles);
             document.getElementById('dashboard-grid').innerHTML = generateDashboardHTML(data.healthDashboard);
             document.getElementById('deep-dive-container').innerHTML = generateDeepDiveHTML(data.deepDive);
