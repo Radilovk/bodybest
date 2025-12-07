@@ -531,6 +531,38 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
 
     const foodDescriptionInput = form.querySelector('#foodDescription');
     const suggestionsDropdown = form.querySelector('#foodSuggestionsDropdown');
+    const measureOptionsContainer = form.querySelector('#measureOptions');
+    if (measureOptionsContainer && measureOptionsContainer.children.length === 0) {
+        measureOptionsContainer.classList.add('hidden');
+    }
+    const measureInput = form.querySelector('#measureInput');
+    const measureSuggestionList = form.querySelector('#measureSuggestionList');
+    if (measureInput) measureInput.classList.add('hidden');
+    const quantityHiddenInput = form.querySelector('#quantity');
+    const quantityCustomInput = form.querySelector('#quantityCustom');
+    const quantityCountInput = form.querySelector('#quantityCountInput');
+    const macroFieldsContainer = form.querySelector('#macroFieldsContainer');
+    const macroInputsGrid = form.querySelector('.macro-inputs-grid');
+    let autoFillMsg;
+    if (macroInputsGrid) {
+        autoFillMsg = document.createElement('div');
+        autoFillMsg.id = 'autoFillMsg';
+        autoFillMsg.className = 'auto-fill-msg hidden';
+        autoFillMsg.style.cssText = 'display:flex;align-items:center;gap:0.25rem;font-size:0.8rem;color:var(--text-color-muted);margin-top:var(--space-xs);';
+        autoFillMsg.innerHTML = '<i class="bi bi-magic"></i><span>Стойностите са попълнени автоматично</span>';
+        macroInputsGrid.parentElement?.appendChild(autoFillMsg);
+        macroInputsGrid.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => autoFillMsg.classList.add('hidden')));
+    }
+    
+    let quantityLookupLoading = false;
+    let quantityLookupSpinner;
+    if (quantityCustomInput) {
+        quantityLookupSpinner = document.createElement('svg');
+        quantityLookupSpinner.classList.add('icon', 'spinner', 'lookup-spinner', 'hidden');
+        quantityLookupSpinner.innerHTML = '<use href="#icon-spinner"></use>';
+        quantityCustomInput.insertAdjacentElement('afterend', quantityLookupSpinner);
+    }
+    
     const quantityVisualRadios = form.querySelectorAll('input[name="quantityEstimateVisual"]');
     quantityVisualRadios.forEach(radio => {
         radio.addEventListener('change', () => {
@@ -543,34 +575,56 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             }
         });
     });
-    const measureOptionsContainer = form.querySelector('#measureOptions');
-    if (measureOptionsContainer && measureOptionsContainer.children.length === 0) {
-        measureOptionsContainer.classList.add('hidden');
+
+    // Function to show macro fields when quantity is entered
+    function showMacroFieldsIfQuantityEntered() {
+        if (!macroFieldsContainer) return;
+        
+        // Check if any quantity has been entered
+        const hasQuantity = (quantityCustomInput && quantityCustomInput.value.trim()) ||
+                           (quantityCountInput && quantityCountInput.value) ||
+                           (quantityHiddenInput && quantityHiddenInput.value) ||
+                           (measureOptionsContainer && !measureOptionsContainer.classList.contains('hidden') && 
+                            measureOptionsContainer.querySelector('input[name="measureOption"]:checked'));
+        
+        if (hasQuantity) {
+            macroFieldsContainer.classList.remove('hidden');
+        }
     }
-    const measureInput = form.querySelector('#measureInput');
-    const measureSuggestionList = form.querySelector('#measureSuggestionList');
-    if (measureInput) measureInput.classList.add('hidden');
-    const quantityHiddenInput = form.querySelector('#quantity');
-    const quantityCustomInput = form.querySelector('#quantityCustom');
-    const quantityCountInput = form.querySelector('#quantityCountInput');
-    let quantityLookupLoading = false;
-    let quantityLookupSpinner;
-    if (quantityCustomInput) {
-        quantityLookupSpinner = document.createElement('svg');
-        quantityLookupSpinner.classList.add('icon', 'spinner', 'lookup-spinner', 'hidden');
-        quantityLookupSpinner.innerHTML = '<use href="#icon-spinner"></use>';
-        quantityCustomInput.insertAdjacentElement('afterend', quantityLookupSpinner);
-    }
-    const macroInputsGrid = form.querySelector('.macro-inputs-grid');
-    let autoFillMsg;
-    if (macroInputsGrid) {
-        autoFillMsg = document.createElement('div');
-        autoFillMsg.id = 'autoFillMsg';
-        autoFillMsg.className = 'auto-fill-msg hidden';
-        autoFillMsg.style.cssText = 'display:flex;align-items:center;gap:0.25rem;font-size:0.8rem;color:var(--text-color-muted);margin-top:var(--space-xs);';
-        autoFillMsg.innerHTML = '<i class="bi bi-magic"></i><span>Стойностите са попълнени автоматично</span>';
-        macroInputsGrid.parentElement?.appendChild(autoFillMsg);
-        macroInputsGrid.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => autoFillMsg.classList.add('hidden')));
+
+    // Function to trigger background AI macro lookup when macros are not in local database
+    async function triggerBackgroundMacroLookup(description, quantity) {
+        if (!description || !quantity) return;
+        
+        // Check if macros are already filled
+        let macrosFilled = true;
+        MACRO_FIELDS.forEach(f => {
+            const field = form.querySelector(`input[name="${f}"]`);
+            if (!field || !field.value || field.value.trim() === '') {
+                macrosFilled = false;
+            }
+        });
+        
+        if (macrosFilled) return; // Don't lookup if already filled
+        
+        try {
+            // Call nutrientLookup in background
+            const data = await nutrientLookup(description, quantity);
+            
+            // Fill the macro fields with the retrieved data
+            MACRO_FIELDS.forEach(f => {
+                const field = form.querySelector(`input[name="${f}"]`);
+                if (field && data[f] !== undefined) {
+                    field.value = data[f];
+                    field.dataset.autofilled = 'true';
+                }
+            });
+            
+            if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+        } catch (err) {
+            console.warn('Background macro lookup failed, will retry in summary', err);
+            // Don't show error to user, will retry in summary screen if needed
+        }
     }
 
     // --- measureOptions с fuzzy и автоматичен избор
@@ -640,6 +694,10 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         const selectedMeasure = measureOptionsContainer?.querySelector('input[name="measureOption"]:checked');
         const total = Number(selectedMeasure?.dataset.grams || 0);
         if (quantityHiddenInput) quantityHiddenInput.value = total > 0 ? String(total) : '';
+        
+        // Show macro fields when quantity is entered
+        showMacroFieldsIfQuantityEntered();
+        
         const description = foodDescriptionInput?.value?.trim().toLowerCase();
         if (autoFillMsg) autoFillMsg.classList.add('hidden');
         if (description && total > 0) {
@@ -653,6 +711,11 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 }
             }
             if (!applied && autoFillMsg) autoFillMsg.classList.add('hidden');
+            
+            // If macros were not found, trigger AI lookup in background
+            if (!applied) {
+                triggerBackgroundMacroLookup(description, total);
+            }
         }
     }
 
@@ -678,6 +741,10 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         const grams = measure.grams * count;
         if (quantityHiddenInput) quantityHiddenInput.value = String(grams);
         quantityCustomInput.value = `${grams} гр`;
+        
+        // Show macro fields when quantity is entered
+        showMacroFieldsIfQuantityEntered();
+        
         if (autoFillMsg) autoFillMsg.classList.add('hidden');
         let applied = false;
         const product = findClosestProduct(desc);
@@ -687,6 +754,11 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         }
         if (!applied) {
             applied = tryAutofillFromOverride(form, desc, grams, autoFillMsg);
+        }
+        
+        // If macros were not found, trigger AI lookup in background
+        if (!applied) {
+            triggerBackgroundMacroLookup(desc, grams);
         }
     }
 
@@ -725,6 +797,10 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             const val = quantityCustomInput.value.trim();
             const quantityKey = val;
             let parsed = false;
+            let applied = false;
+
+            // Show macro fields when user starts entering quantity
+            showMacroFieldsIfQuantityEntered();
 
             // 1) Чисто число или "<число> гр"
             const gramsMatch = val.match(/^(\d+(?:[.,]\d+)?)\s*(гр|g)?$/i);
@@ -732,7 +808,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 const grams = parseFloat(gramsMatch[1].replace(',', '.'));
                 const desc = foodDescriptionInput?.value?.trim();
                 const product = desc ? findClosestProduct(desc) : null;
-                let applied = false;
                 if (product && grams > 0) {
                     if (quantityHiddenInput) quantityHiddenInput.value = String(grams);
                     const scaled = scaleMacros(product, grams);
@@ -743,7 +818,14 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                     if (tryAutofillFromOverride(form, desc, quantityKey, autoFillMsg)) {
                         if (quantityHiddenInput) quantityHiddenInput.value = String(grams);
                         parsed = true;
+                        applied = true;
                     }
+                }
+                
+                // If not found in local database, trigger background AI lookup
+                if (!applied && desc && grams > 0) {
+                    triggerBackgroundMacroLookup(desc, grams);
+                    parsed = true; // Consider it parsed even if we need AI lookup
                 }
             }
 
@@ -758,7 +840,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                         const grams = count * productMeasures[key][0].grams;
                         if (quantityHiddenInput) quantityHiddenInput.value = grams;
                         const product = findClosestProduct(key);
-                        let applied = false;
                         if (product) {
                             const scaled = scaleMacros(product, grams);
                             applied = applyAutofillMacros(form, scaled, autoFillMsg, true);
@@ -767,6 +848,10 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                             applied = tryAutofillFromOverride(form, key, quantityKey, autoFillMsg);
                         }
                         if (applied) {
+                            parsed = true;
+                        } else {
+                            // If not found in local database, trigger background AI lookup
+                            triggerBackgroundMacroLookup(key, grams);
                             parsed = true;
                         }
                     }
