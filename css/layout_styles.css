@@ -187,7 +187,9 @@ nav.tabs.styled-tabs .tab-btn {
   padding: var(--space-sm) var(--space-md);
   flex-grow: 1; 
   flex-basis: 0; 
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: transparent; 
   border-top: none; 
   border-left: none; 
@@ -249,7 +251,8 @@ nav.tabs.styled-tabs .tab-btn .tab-icon {
   height: 1.5em;
   margin-bottom: 0.2rem;
   flex-shrink: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
@@ -259,7 +262,7 @@ nav.tabs.styled-tabs .tab-btn .tab-label {
   letter-spacing: 0.8px;
   white-space: nowrap;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: letter-spacing 0.3s ease;
 }
 
 nav.tabs.styled-tabs .tab-btn:hover {
