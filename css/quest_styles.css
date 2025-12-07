@@ -612,7 +612,7 @@ button[id^="prevBtn"]:hover, button[id="regBackBtn"]:hover, button[id="restartBt
     right: 0;
     top: 0;
     font-size: 0.7rem;
-    color: var(--text-secondary);
+    color: var(--text-color-secondary);
   }
 }
 
