@@ -587,8 +587,8 @@ button[id^="prevBtn"]:hover, button[id="regBackBtn"]:hover, button[id="restartBt
   .stats-bar {
     flex-direction: row;
     justify-content: center;
-    gap: 10px;
-    margin-top: 30px;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
   }
   .stats-bar .stat-item {
     flex: 1;
@@ -598,15 +598,21 @@ button[id^="prevBtn"]:hover, button[id="regBackBtn"]:hover, button[id="restartBt
     width: 40px;
     height: 40px;
   }
-  /* Използване на data атрибут за съкратен текст */
+  /* Използване на data атрибут за съкратен текст с accessibility */
   .stats-bar .stat-label {
-    font-size: 0;
+    position: relative;
+    color: transparent;
     line-height: 1.2;
     word-wrap: break-word;
   }
   .stats-bar .stat-label::before {
     content: attr(data-mobile-text);
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
     font-size: 0.7rem;
+    color: var(--text-secondary);
   }
 }
 

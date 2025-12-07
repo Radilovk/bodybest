@@ -423,10 +423,11 @@ function updateHeaderUserName() {
     if (!headerUserNameEl) return;
     
     const userEmail = sessionStorage.getItem('userEmail');
-    if (userEmail && userEmail.includes('@')) {
+    // Basic email validation: check for @ and at least one character before and after
+    if (userEmail && /^[^@]+@[^@]+$/.test(userEmail)) {
         // Extract name from email (before @) and capitalize first letter
         const userName = userEmail.split('@')[0];
-        if (userName) {
+        if (userName && userName.length > 0) {
             const displayName = userName.charAt(0).toUpperCase() + userName.slice(1);
             headerUserNameEl.textContent = displayName;
         }
