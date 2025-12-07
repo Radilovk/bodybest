@@ -377,7 +377,6 @@ async function populateSummaryWithAiMacros(form) {
     const quantityVal = parseFloat(formData.get('quantity'));
     const quantityText = (formData.get('quantityCustom') || '').trim();
     const quantityCountVal = parseFloat(formData.get('quantityCountInput'));
-    const measureText = formData.get('measureInput')?.trim();
     
     let macrosMissing = false;
     MACRO_FIELDS.forEach(f => {
@@ -404,7 +403,7 @@ async function populateSummaryWithAiMacros(form) {
         
         try {
             // Определяме количеството за заявката - опитваме се от различни източници
-            // Приоритет: числово количество > текстово количество > count + measure комбинация
+            // Приоритет: числово количество > текстово количество > count (брой)
             let quantity = '';
             
             if (quantityVal > 0) {
@@ -413,15 +412,9 @@ async function populateSummaryWithAiMacros(form) {
             } else if (quantityText) {
                 // Използваме текстовото количество ако е въведено
                 quantity = quantityText;
-            } else if (quantityCountVal > 0 && measureText) {
-                // Използваме комбинацията count + measure ако са въведени
-                quantity = `${quantityCountVal} ${measureText}`;
             } else if (quantityCountVal > 0) {
-                // Имаме само брой без мярка
-                quantity = quantityCountVal;
-            } else if (measureText) {
-                // Имаме само мярка без брой (напр. "чаша", "парче")
-                quantity = `1 ${measureText}`;
+                // Имаме само брой - подаваме като "X броя"
+                quantity = `${quantityCountVal} броя`;
             }
             
             // AI може да работи и без количество (ще изчисли на 100г база)
@@ -574,10 +567,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     if (measureOptionsContainer && measureOptionsContainer.children.length === 0) {
         measureOptionsContainer.classList.add('hidden');
     }
-    const measureInput = form.querySelector('#measureInput');
-    const measureSuggestionList = form.querySelector('#measureSuggestionList');
-    // Keep measureInput visible by default so users can enter custom measures
-    // for unknown foods (e.g., "парчета" (pieces), "чаши" (cups), "гр" (grams), etc.)
     const quantityHiddenInput = form.querySelector('#quantity');
     const quantityCustomInput = form.querySelector('#quantityCustom');
     const quantityCountInput = form.querySelector('#quantityCountInput');
@@ -616,19 +605,24 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         });
     });
 
-    // Function to show macro fields when quantity is entered
-    function showMacroFieldsIfQuantityEntered() {
+    // Function to show macro fields ONLY when they have values populated
+    function showMacroFieldsIfFilled() {
         if (!macroFieldsContainer) return;
         
-        // Check if any quantity has been entered
-        const hasQuantity = (quantityCustomInput && quantityCustomInput.value.trim()) ||
-                           (quantityCountInput && quantityCountInput.value) ||
-                           (quantityHiddenInput && quantityHiddenInput.value) ||
-                           (measureOptionsContainer && !measureOptionsContainer.classList.contains('hidden') && 
-                            measureOptionsContainer.querySelector('input[name="measureOption"]:checked'));
+        // Check if ALL macro fields have values
+        let allFilled = true;
+        MACRO_FIELDS.forEach(f => {
+            const field = form.querySelector(`input[name="${f}"]`);
+            if (!field || !field.value || field.value.trim() === '') {
+                allFilled = false;
+            }
+        });
         
-        if (hasQuantity) {
+        // Only show macro fields if all are filled
+        if (allFilled) {
             macroFieldsContainer.classList.remove('hidden');
+        } else {
+            macroFieldsContainer.classList.add('hidden');
         }
     }
 
@@ -672,7 +666,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             MACRO_FIELDS.forEach(f => {
                 const field = form.querySelector(`input[name="${f}"]`);
                 if (field && data[f] !== undefined) {
-                    field.value = data[f];
+                    const value = Number(data[f]);
+                    field.value = Number.isFinite(value) ? value.toFixed(2) : data[f];
                     field.dataset.autofilled = 'true';
                 }
             });
@@ -681,6 +676,9 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 autoFillMsg.innerHTML = '<i class="bi bi-magic"></i><span>Стойностите са попълнени автоматично</span>';
                 autoFillMsg.classList.remove('hidden');
             }
+            
+            // Show macro fields after filling them
+            showMacroFieldsIfFilled();
         } catch (err) {
             console.error('[extraMealForm] AI lookup failed:', err);
             // Show error message to user so they know what happened
@@ -743,27 +741,11 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         computeQuantity();
     }
 
-    function updateMeasureSuggestions(desc) {
-        if (!measureSuggestionList || !measureInput) return;
-        const labels = getMeasureLabels(desc);
-        measureSuggestionList.innerHTML = '';
-        // Always keep measureInput visible so users can enter custom measures
-        // for unknown foods, even if there are no predefined suggestions
-        labels.forEach(l => {
-            const opt = document.createElement('option');
-            opt.value = l;
-            measureSuggestionList.appendChild(opt);
-        });
-    }
-
     function computeQuantity() {
         if (!quantityHiddenInput) return;
         const selectedMeasure = measureOptionsContainer?.querySelector('input[name="measureOption"]:checked');
         const total = Number(selectedMeasure?.dataset.grams || 0);
         if (quantityHiddenInput) quantityHiddenInput.value = total > 0 ? String(total) : '';
-        
-        // Show macro fields when quantity is entered
-        showMacroFieldsIfQuantityEntered();
         
         const description = foodDescriptionInput?.value?.trim().toLowerCase();
         if (autoFillMsg) autoFillMsg.classList.add('hidden');
@@ -782,6 +764,9 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             // If macros were not found, trigger AI lookup in background
             if (!applied) {
                 triggerBackgroundMacroLookup(description, total);
+            } else {
+                // Show macro fields if they were filled from local data
+                showMacroFieldsIfFilled();
             }
         }
     }
@@ -796,39 +781,34 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         });
     }
 
-    function computeQuantityFromManual() {
-        if (!quantityHiddenInput || !quantityCustomInput || !measureInput || !quantityCountInput) return;
+    function computeQuantityFromCount() {
+        if (!quantityHiddenInput || !quantityCustomInput || !quantityCountInput) return;
         const count = parseFloat(quantityCountInput.value);
-        const label = measureInput.value.trim().toLowerCase();
         const desc = foodDescriptionInput?.value?.trim().toLowerCase() || '';
         
-        console.log('[extraMealForm] computeQuantityFromManual called:', { desc, count, label });
+        console.log('[extraMealForm] computeQuantityFromCount called:', { desc, count });
         
-        if (!desc || !label || !(count > 0)) {
-            console.log('[extraMealForm] Early return - missing required fields:', { hasDesc: !!desc, hasLabel: !!label, validCount: count > 0 });
+        if (!desc || !(count > 0)) {
+            console.log('[extraMealForm] Early return - missing required fields:', { hasDesc: !!desc, validCount: count > 0 });
             return;
         }
         
         const key = fuzzyFindProductKey(desc);
-        const measure = key ? (productMeasures[key] || []).find(m => m.label.toLowerCase() === label) : null;
         
-        console.log('[extraMealForm] Product lookup result:', { key, measureFound: !!measure });
+        console.log('[extraMealForm] Product lookup result:', { key });
         
         let grams = 0;
-        if (measure) {
-            // Product found in database, calculate grams from measure
-            grams = measure.grams * count;
+        if (key && productMeasures[key] && productMeasures[key][0]) {
+            // Product found in database, calculate grams from first measure (typically the standard serving size)
+            // Note: Using first measure as the default for count-based calculations
+            grams = productMeasures[key][0].grams * count;
             console.log('[extraMealForm] Product found in DB, calculated grams:', grams);
         } else {
-            // Product not in database, ask AI to estimate
-            // Build a descriptive query for AI
-            const quantityDescription = `${count} ${label}`;
+            // Product not in database, build descriptive query for AI
+            const quantityDescription = `${count} броя`;
             if (quantityCustomInput) quantityCustomInput.value = quantityDescription;
             
             console.log('[extraMealForm] Product NOT in DB, triggering AI lookup with:', { desc, quantityDescription });
-            
-            // Show macro fields
-            showMacroFieldsIfQuantityEntered();
             
             // Trigger AI lookup with descriptive quantity
             triggerBackgroundMacroLookup(desc, quantityDescription);
@@ -837,9 +817,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         
         if (quantityHiddenInput) quantityHiddenInput.value = String(grams);
         quantityCustomInput.value = `${grams} гр`;
-        
-        // Show macro fields when quantity is entered
-        showMacroFieldsIfQuantityEntered();
         
         if (autoFillMsg) autoFillMsg.classList.add('hidden');
         let applied = false;
@@ -855,11 +832,13 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         // If macros were not found, trigger AI lookup in background
         if (!applied) {
             triggerBackgroundMacroLookup(desc, grams);
+        } else {
+            // Show macro fields if they were filled from local data
+            showMacroFieldsIfFilled();
         }
     }
 
-    if (quantityCountInput) quantityCountInput.addEventListener('input', computeQuantityFromManual);
-    if (measureInput) measureInput.addEventListener('input', computeQuantityFromManual);
+    if (quantityCountInput) quantityCountInput.addEventListener('input', computeQuantityFromCount);
 
     // ОПТИМИЗАЦИЯ: Използваме debounce за nutrient lookup, за да намалим API заявките
     // Създаваме debounced версия на lookup функцията
@@ -874,11 +853,13 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             MACRO_FIELDS.forEach(f => {
                 const field = form.querySelector(`input[name="${f}"]`);
                 if (field && data[f] !== undefined) {
-                    field.value = data[f];
+                    const value = Number(data[f]);
+                    field.value = Number.isFinite(value) ? value.toFixed(2) : data[f];
                     field.dataset.autofilled = 'true';
                 }
             });
             if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+            showMacroFieldsIfFilled(); // Show macro fields after filling them
         } catch (err) {
             console.error('Невъзможно изчисление на макроси', err);
         } finally {
@@ -894,9 +875,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             const quantityKey = val;
             let parsed = false;
             let applied = false;
-
-            // Show macro fields when user starts entering quantity
-            showMacroFieldsIfQuantityEntered();
 
             // 1) Чисто число или "<число> гр"
             const gramsMatch = val.match(/^(\d+(?:[.,]\d+)?)\s*(гр|g)?$/i);
@@ -922,6 +900,9 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 if (!applied && desc && grams > 0) {
                     triggerBackgroundMacroLookup(desc, grams);
                     parsed = true; // Consider it parsed even if we need AI lookup
+                } else if (applied) {
+                    // Show macro fields if they were filled from local data
+                    showMacroFieldsIfFilled();
                 }
             }
 
@@ -945,6 +926,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                         }
                         if (applied) {
                             parsed = true;
+                            showMacroFieldsIfFilled();
                         } else {
                             // If not found in local database, trigger background AI lookup
                             triggerBackgroundMacroLookup(key, grams);
@@ -976,6 +958,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 if (field) field.value = '';
             });
             if (autoFillMsg) autoFillMsg.classList.add('hidden');
+            macroFieldsContainer.classList.add('hidden'); // Hide macro fields if parsing failed
             quantityCustomInput.classList.add('invalid-format');
             quantityCustomInput.title = 'Формат: "150" или "150 гр"';
 
@@ -1001,7 +984,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 suggestionsDropdown.classList.add('hidden');
                 foodDescriptionInput.focus();
                 updateMeasureOptions(name);
-                updateMeasureSuggestions(name);
             });
             suggestionsDropdown.appendChild(div);
         });
@@ -1011,7 +993,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     if (foodDescriptionInput) {
         foodDescriptionInput.addEventListener('input', function() {
             updateMeasureOptions(this.value);
-            updateMeasureSuggestions(this.value);
             showSuggestions(this.value);
             if (!measureOptionsContainer || measureOptionsContainer.classList.contains('hidden')) {
                 const selectedVisual = form.querySelector('input[name="quantityEstimateVisual"]:checked');

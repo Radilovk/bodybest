@@ -71,7 +71,7 @@ describe('extraMealForm - unknown food handling', () => {
     ({ initializeExtraMealFormLogic } = await import('../extraMealForm.js'));
   });
 
-  test('should trigger AI lookup when using quantityCountInput + measureInput for unknown food', async () => {
+  test('should trigger AI lookup when using quantityCountInput for unknown food', async () => {
     document.body.innerHTML = `
       <div id="container">
         <form id="extraMealEntryFormActual">
@@ -81,8 +81,6 @@ describe('extraMealForm - unknown food handling', () => {
           </div>
           <div class="form-step" data-step="2" style="display:none">
             <input type="number" id="quantityCountInput" name="quantityCountInput">
-            <input type="text" id="measureInput" name="measureInput">
-            <datalist id="measureSuggestionList"></datalist>
             <input type="text" id="quantityCustom" name="quantityCustom">
             <input type="number" id="quantity" name="quantity" class="hidden">
             <div id="macroFieldsContainer" class="hidden">
@@ -134,22 +132,19 @@ describe('extraMealForm - unknown food handling', () => {
     const container = document.getElementById('container');
     await initializeExtraMealFormLogic(container);
 
-    // User enters count and measure
+    // User enters count
     const quantityCountInput = container.querySelector('#quantityCountInput');
-    const measureInput = container.querySelector('#measureInput');
     quantityCountInput.value = '2';
-    measureInput.value = 'парчета';
 
     // Trigger input event (should trigger computeQuantityFromManual)
     quantityCountInput.dispatchEvent(new Event('input', { bubbles: true }));
-    measureInput.dispatchEvent(new Event('input', { bubbles: true }));
 
     // Wait for async operations
     await new Promise(resolve => setTimeout(resolve, 200));
 
     // Check that quantityCustom was populated with descriptive quantity
     const quantityCustom = container.querySelector('#quantityCustom');
-    expect(quantityCustom.value).toBe('2 парчета');
+    expect(quantityCustom.value).toBe('2 броя');
 
     // Verify that fetch was called with proper parameters
     const nutrientCalls = mockFetch.mock.calls.filter(c => c[0] === '/nutrient-lookup');
@@ -158,7 +153,7 @@ describe('extraMealForm - unknown food handling', () => {
     const lastCall = nutrientCalls[nutrientCalls.length - 1];
     const requestBody = JSON.parse(lastCall[1].body);
     expect(requestBody.food).toBe('непозната пица');
-    expect(requestBody.quantity).toBe('2 парчета');
+    expect(requestBody.quantity).toBe('2 броя');
   });
 
   test('should extract quantity from multiple sources in summary step', async () => {
@@ -171,9 +166,7 @@ describe('extraMealForm - unknown food handling', () => {
           </div>
           <div class="form-step" data-step="2" style="display:none">
             <input type="number" id="quantityCountInput" name="quantityCountInput" value="3">
-            <input type="text" id="measureInput" name="measureInput" value="лъжици">
-            <datalist id="measureSuggestionList"></datalist>
-            <input type="text" id="quantityCustom" name="quantityCustom">
+            <input type="text" id="quantityCustom" name="quantityCustom" value="3 броя">
             <input type="number" id="quantity" name="quantity" class="hidden">
             <div id="macroFieldsContainer" class="hidden">
               <div class="macro-inputs-grid">
@@ -247,10 +240,10 @@ describe('extraMealForm - unknown food handling', () => {
     const nutrientCalls = mockFetch.mock.calls.filter(c => c[0] === '/nutrient-lookup');
     expect(nutrientCalls.length).toBeGreaterThan(0);
 
-    // Verify quantity was extracted correctly (should be "3 лъжици")
+    // Verify quantity was extracted correctly (should be "3 броя")
     const lastCall = nutrientCalls[nutrientCalls.length - 1];
     const requestBody = JSON.parse(lastCall[1].body);
-    expect(requestBody.quantity).toBe('3 лъжици');
+    expect(requestBody.quantity).toBe('3 броя');
 
     // Verify macros were populated
     expect(container.querySelector('input[name="calories"]').value).toBe('250.00');
@@ -267,8 +260,6 @@ describe('extraMealForm - unknown food handling', () => {
           </div>
           <div class="form-step" data-step="2" style="display:none">
             <input type="number" id="quantityCountInput" name="quantityCountInput">
-            <input type="text" id="measureInput" name="measureInput">
-            <datalist id="measureSuggestionList"></datalist>
             <input type="text" id="quantityCustom" name="quantityCustom">
             <input type="number" id="quantity" name="quantity" class="hidden">
             <div id="macroFieldsContainer" class="hidden">

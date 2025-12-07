@@ -113,12 +113,32 @@ describe('extraMealForm macro fields visibility', () => {
       loadCurrentIntake: jest.fn(),
       updateMacrosAndAnalytics: jest.fn(),
     }));
+    
+    // Mock a product database with a known product
+    const mockProduct = {
+      name: 'ябълка',
+      calories: 52,
+      protein: 0.3,
+      carbs: 14,
+      fat: 0.2,
+      fiber: 2.4
+    };
+    
     jest.unstable_mockModule('../macroUtils.js', () => ({
       removeMealMacros: jest.fn(),
       registerNutrientOverrides: jest.fn(),
       getNutrientOverride: jest.fn(),
-      loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
-      scaleMacros: jest.fn(),
+      loadProductMacros: jest.fn().mockResolvedValue({ 
+        overrides: {}, 
+        products: [mockProduct]
+      }),
+      scaleMacros: jest.fn((product, grams) => ({
+        calories: (product.calories * grams / 100).toFixed(2),
+        protein: (product.protein * grams / 100).toFixed(2),
+        carbs: (product.carbs * grams / 100).toFixed(2),
+        fat: (product.fat * grams / 100).toFixed(2),
+        fiber: (product.fiber * grams / 100).toFixed(2)
+      })),
     }));
     jest.unstable_mockModule('../populateUI.js', () => ({
       addExtraMealWithOverride: jest.fn(),
@@ -138,14 +158,13 @@ describe('extraMealForm macro fields visibility', () => {
     document.body.innerHTML = `
       <form id="extraMealEntryFormActual">
         <div class="form-step" data-step="1">
-          <textarea id="foodDescription"></textarea>
+          <textarea id="foodDescription">ябълка</textarea>
+          <div id="foodSuggestionsDropdown" class="hidden"></div>
         </div>
         <div class="form-step" data-step="2" style="display:none">
           <input type="text" id="quantityCustom">
           <input type="number" id="quantity" class="hidden">
           <input type="number" id="quantityCountInput">
-          <input type="text" id="measureInput" class="hidden">
-          <datalist id="measureSuggestionList"></datalist>
           <div id="macroFieldsContainer" class="hidden">
             <div class="macro-inputs-grid">
               <input type="number" name="calories">
@@ -195,12 +214,15 @@ describe('extraMealForm macro fields visibility', () => {
     // Macro fields should be hidden initially
     expect(macroFieldsContainer.classList.contains('hidden')).toBe(true);
 
-    // Enter quantity
+    // Enter quantity - this should trigger macro calculation from local data
     quantityCustomInput.value = '100гр';
     const event = new Event('input', { bubbles: true });
     quantityCustomInput.dispatchEvent(event);
 
-    // Macro fields should now be visible
+    // Wait for async operations
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Macro fields should now be visible because macros were filled
     expect(macroFieldsContainer.classList.contains('hidden')).toBe(false);
 
     global.fetch = originalFetch;

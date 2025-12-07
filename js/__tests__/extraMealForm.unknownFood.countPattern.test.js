@@ -150,8 +150,8 @@ describe('extraMealForm - unknown food with count pattern', () => {
     expect(requestBody.quantity).toBe('2 парчета');
 
     // Verify macros were populated
-    expect(container.querySelector('input[name="calories"]').value).toBe('300');
-    expect(container.querySelector('input[name="protein"]').value).toBe('15');
+    expect(container.querySelector('input[name="calories"]').value).toBe('300.00');
+    expect(container.querySelector('input[name="protein"]').value).toBe('15.00');
   });
 
   test('should trigger AI lookup for "3 x непознат продукт" pattern', async () => {

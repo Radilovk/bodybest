@@ -208,7 +208,7 @@ test('количество след описание', async () => {
   qty.value = '200';
   qty.dispatchEvent(new Event('input', { bubbles: true }));
   await jest.runOnlyPendingTimersAsync();
-  expect(container.querySelector('input[name="calories"]').value).toBe('60');
+  expect(container.querySelector('input[name="calories"]').value).toBe('60.00');
   jest.useRealTimers();
 });
 
