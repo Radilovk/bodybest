@@ -5,7 +5,7 @@ describe('extraMealForm AI macro calculation in summary', () => {
     jest.resetModules();
   });
 
-  test.skip('loads macros from AI when missing in summary screen', async () => {
+  test('loads macros from AI when missing in summary screen', async () => {
     const mockNutrientData = {
       calories: 95,
       protein: 0.5,
@@ -63,13 +63,14 @@ describe('extraMealForm AI macro calculation in summary', () => {
     document.body.innerHTML = `
       <form id="extraMealEntryFormActual">
         <div class="form-step" data-step="1">
-          <textarea id="foodDescription">ябълка</textarea>
+          <textarea id="foodDescription" name="foodDescription">ябълка</textarea>
+          <div id="foodSuggestionsDropdown" class="hidden"></div>
         </div>
         <div class="form-step" data-step="2" style="display:none">
-          <input type="text" id="quantityCustom" value="150гр">
-          <input type="number" id="quantity" class="hidden" value="150">
-          <input type="number" id="quantityCountInput">
-          <input type="text" id="measureInput" class="hidden">
+          <input type="text" id="quantityCustom" name="quantityCustom" value="150гр">
+          <input type="number" id="quantity" name="quantity" class="hidden" value="150">
+          <input type="number" id="quantityCountInput" name="quantityCountInput">
+          <input type="text" id="measureInput" name="measureInput" class="hidden">
           <datalist id="measureSuggestionList"></datalist>
           <div id="macroFieldsContainer" class="hidden">
             <div class="macro-inputs-grid">
@@ -83,6 +84,7 @@ describe('extraMealForm AI macro calculation in summary', () => {
         </div>
         <div class="form-step" data-step="3" style="display:none">
           <input type="radio" name="reasonPrimary" value="глад" checked>
+          <input type="text" id="reasonOtherText" name="reasonOtherText" class="hidden">
         </div>
         <div class="form-step" data-step="4" style="display:none">
           <input type="radio" name="feelingAfter" value="ситост_доволство" checked>
@@ -208,13 +210,14 @@ describe('extraMealForm AI macro calculation in summary', () => {
     document.body.innerHTML = `
       <form id="extraMealEntryFormActual">
         <div class="form-step" data-step="1">
-          <textarea id="foodDescription">ябълка</textarea>
+          <textarea id="foodDescription" name="foodDescription">ябълка</textarea>
+          <div id="foodSuggestionsDropdown" class="hidden"></div>
         </div>
         <div class="form-step" data-step="2" style="display:none">
-          <input type="text" id="quantityCustom" value="150гр">
-          <input type="number" id="quantity" class="hidden" value="150">
-          <input type="number" id="quantityCountInput">
-          <input type="text" id="measureInput" class="hidden">
+          <input type="text" id="quantityCustom" name="quantityCustom" value="150гр">
+          <input type="number" id="quantity" name="quantity" class="hidden" value="150">
+          <input type="number" id="quantityCountInput" name="quantityCountInput">
+          <input type="text" id="measureInput" name="measureInput" class="hidden">
           <datalist id="measureSuggestionList"></datalist>
           <div id="macroFieldsContainer" class="hidden">
             <div class="macro-inputs-grid">
@@ -228,6 +231,7 @@ describe('extraMealForm AI macro calculation in summary', () => {
         </div>
         <div class="form-step" data-step="3" style="display:none">
           <input type="radio" name="reasonPrimary" value="глад" checked>
+          <input type="text" id="reasonOtherText" name="reasonOtherText" class="hidden">
         </div>
         <div class="form-step" data-step="4" style="display:none">
           <input type="radio" name="feelingAfter" value="ситост_доволство" checked>
