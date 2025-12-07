@@ -8564,18 +8564,23 @@ async function handleNutrientLookupRequest(request, env) {
                 });
                 
                 const text = await resp.text();
-                const parsed = JSON.parse(text);
-                const data = parsed.result || parsed;
-                const payload = data.output || data.response || data;
-                const obj = typeof payload === 'string' ? JSON.parse(payload) : payload;
-                
-                return {
-                    calories: Number(obj.calories) || 0,
-                    protein: Number(obj.protein) || 0,
-                    carbs: Number(obj.carbs) || 0,
-                    fat: Number(obj.fat) || 0,
-                    fiber: Number(obj.fiber) || 0
-                };
+                try {
+                    const parsed = JSON.parse(text);
+                    const data = parsed.result || parsed;
+                    const payload = data.output || data.response || data;
+                    const obj = typeof payload === 'string' ? JSON.parse(payload) : payload;
+                    
+                    return {
+                        calories: Number(obj.calories) || 0,
+                        protein: Number(obj.protein) || 0,
+                        carbs: Number(obj.carbs) || 0,
+                        fat: Number(obj.fat) || 0,
+                        fiber: Number(obj.fiber) || 0
+                    };
+                } catch (parseErr) {
+                    console.error('AI response parsing error:', parseErr);
+                    // Fall through to return zeros
+                }
             } catch (err) {
                 console.error('AI nutrient lookup error:', err);
             }
