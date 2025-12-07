@@ -775,6 +775,14 @@
     document.addEventListener('DOMContentLoaded', function() {
         const analysisData = {/*---JSON_DATA_PLACEHOLDER---*/};
         
+        // Helper function to escape HTML to prevent XSS
+        const escapeHtml = (text) => {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        };
+        
         const generateObstaclesHTML = (obstacles) => obstacles.map(o => `
             <div class="card obstacle-card">
                 <div class="icon"><i class="${o.icon}"></i></div>
@@ -826,8 +834,8 @@
                     <h3><i class="fas fa-key"></i> Ключов Извод</h3>
                     ${item.summaryQuote && item.summaryQuote.text ? `
                     <div class="summary-quote">
-                        <p class="quote-text">"${item.summaryQuote.text}"</p>
-                        <p class="quote-author">— ${item.summaryQuote.author || 'Вашите думи'}</p>
+                        <p class="quote-text">"${escapeHtml(item.summaryQuote.text)}"</p>
+                        <p class="quote-author">— ${escapeHtml(item.summaryQuote.author || 'Вашите думи')}</p>
                     </div>
                     ` : ''}
                     <div class="conclusion-box">
@@ -861,29 +869,41 @@
             const clientInfoEl = document.getElementById('client-info');
             if (clientInfoEl && data.client) {
                 const { age, height, weight, gender } = data.client;
-                let infoHTML = '';
+                const parts = [];
                 
-                if (age || height || weight) {
-                    const parts = [];
-                    if (gender) parts.push(gender);
-                    if (age) parts.push(`${age} години`);
-                    if (height) parts.push(`${height} см`);
-                    if (weight) parts.push(`${weight} кг`);
+                // Build client info parts with validation
+                if (gender) parts.push(escapeHtml(gender));
+                if (age && typeof age === 'number') parts.push(`${age} години`);
+                if (height && typeof height === 'number') parts.push(`${height} см`);
+                if (weight && typeof weight === 'number') parts.push(`${weight} кг`);
+                
+                let infoHTML = parts.join(' | ');
+                
+                // Calculate and display BMI if both height and weight are available
+                if (height && weight && typeof height === 'number' && typeof weight === 'number' && height > 0) {
+                    // BMI Formula: weight (kg) / (height (m))²
+                    // Convert height from cm to meters
+                    const heightInMeters = height / 100;
+                    const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
                     
-                    infoHTML = parts.join(' | ');
+                    // Determine BMI category according to WHO standards
+                    let bmiCategory = '';
+                    const bmiValue = parseFloat(bmi);
+                    if (bmiValue < 18.5) bmiCategory = 'Поднормено';
+                    else if (bmiValue < 25) bmiCategory = 'Нормално';
+                    else if (bmiValue < 30) bmiCategory = 'Наднормено';
+                    else bmiCategory = 'Затлъстяване';
                     
-                    // Calculate and display BMI
-                    if (height && weight) {
-                        const bmi = (weight / Math.pow(height / 100, 2)).toFixed(1);
-                        let bmiCategory = '';
-                        if (bmi < 18.5) bmiCategory = 'Поднормено';
-                        else if (bmi < 25) bmiCategory = 'Нормално';
-                        else if (bmi < 30) bmiCategory = 'Наднормено';
-                        else bmiCategory = 'Затлъстяване';
-                        
-                        infoHTML += ` | <span class="bmi-badge">BMI: ${bmi} (${bmiCategory})</span>`;
-                    }
+                    // Use textContent for BMI value to prevent XSS
+                    const bmiBadge = document.createElement('span');
+                    bmiBadge.className = 'bmi-badge';
+                    bmiBadge.textContent = `BMI: ${bmi} (${bmiCategory})`;
                     
+                    if (infoHTML) infoHTML += ' | ';
+                    infoHTML += bmiBadge.outerHTML;
+                }
+                
+                if (infoHTML) {
                     clientInfoEl.innerHTML = infoHTML;
                 }
             }
