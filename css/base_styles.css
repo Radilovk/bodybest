@@ -26,8 +26,10 @@
   --font-color-muted: var(--text-color-muted);
   --font-color-on-primary: var(--text-color-on-primary);
   --header-title-color: var(--bg-color);
+  --header-bg: rgba(91, 192, 190, 0.7);
   --header-bg-solid: #ffffff;
   --mobile-menu-bg: var(--header-bg-solid);
+  --glass-blur: 10px;
 
   --bg-color: #F0F4F8;
   --bg-gradient: linear-gradient(135deg, #e6eff5 0%, #f0f4f8 100%);
@@ -172,6 +174,7 @@ body.dark-theme {
   --font-color-secondary: var(--text-color-secondary);
   --font-color-muted: var(--text-color-muted);
   --font-color-on-primary: var(--text-color-on-primary);
+  --header-bg: rgba(40, 40, 60, 0.65);
   --header-bg-solid: rgb(40, 40, 60);
   --mobile-menu-bg: var(--header-bg-solid);
 

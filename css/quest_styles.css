@@ -603,21 +603,13 @@ button[id^="prevBtn"]:hover, button[id="regBackBtn"]:hover, button[id="restartBt
     line-height: 1.2;
     word-wrap: break-word;
   }
-  /* Съкратен текст за мобилни екрани */
-  .stat-item:nth-child(1) .stat-label::after {
-    content: 'AI-Med алгоритъм';
-  }
-  .stat-item:nth-child(2) .stat-label::after {
-    content: 'Експертен екип';
-  }
-  .stat-item:nth-child(3) .stat-label::after {
-    content: '24/7 асистент';
-  }
-  .stat-item .stat-label {
-    font-size: 0;
-  }
-  .stat-item .stat-label::after {
+  /* Използване на data атрибут за съкратен текст */
+  .stats-bar .stat-label::before {
+    content: attr(data-mobile-text);
     font-size: 0.7rem;
+  }
+  .stats-bar .stat-label {
+    font-size: 0;
   }
 }
 
