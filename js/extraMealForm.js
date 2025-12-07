@@ -377,7 +377,6 @@ async function populateSummaryWithAiMacros(form) {
     const quantityVal = parseFloat(formData.get('quantity'));
     const quantityText = (formData.get('quantityCustom') || '').trim();
     const quantityCountVal = parseFloat(formData.get('quantityCountInput'));
-    const measureText = formData.get('measureInput')?.trim();
     
     let macrosMissing = false;
     MACRO_FIELDS.forEach(f => {
@@ -404,7 +403,7 @@ async function populateSummaryWithAiMacros(form) {
         
         try {
             // Определяме количеството за заявката - опитваме се от различни източници
-            // Приоритет: числово количество > текстово количество > count + measure комбинация
+            // Приоритет: числово количество > текстово количество > count (брой)
             let quantity = '';
             
             if (quantityVal > 0) {
@@ -413,15 +412,9 @@ async function populateSummaryWithAiMacros(form) {
             } else if (quantityText) {
                 // Използваме текстовото количество ако е въведено
                 quantity = quantityText;
-            } else if (quantityCountVal > 0 && measureText) {
-                // Използваме комбинацията count + measure ако са въведени
-                quantity = `${quantityCountVal} ${measureText}`;
             } else if (quantityCountVal > 0) {
-                // Имаме само брой без мярка
-                quantity = quantityCountVal;
-            } else if (measureText) {
-                // Имаме само мярка без брой (напр. "чаша", "парче")
-                quantity = `1 ${measureText}`;
+                // Имаме само брой - подаваме като "X броя"
+                quantity = `${quantityCountVal} броя`;
             }
             
             // AI може да работи и без количество (ще изчисли на 100г база)

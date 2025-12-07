@@ -118,7 +118,13 @@ describe('extraMealForm macro fields visibility', () => {
       registerNutrientOverrides: jest.fn(),
       getNutrientOverride: jest.fn(),
       loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
-      scaleMacros: jest.fn(),
+      scaleMacros: jest.fn((product, grams) => ({
+        calories: 100,
+        protein: 10,
+        carbs: 15,
+        fat: 5,
+        fiber: 2
+      })),
     }));
     jest.unstable_mockModule('../populateUI.js', () => ({
       addExtraMealWithOverride: jest.fn(),
@@ -138,14 +144,12 @@ describe('extraMealForm macro fields visibility', () => {
     document.body.innerHTML = `
       <form id="extraMealEntryFormActual">
         <div class="form-step" data-step="1">
-          <textarea id="foodDescription"></textarea>
+          <textarea id="foodDescription">known product</textarea>
         </div>
         <div class="form-step" data-step="2" style="display:none">
           <input type="text" id="quantityCustom">
           <input type="number" id="quantity" class="hidden">
           <input type="number" id="quantityCountInput">
-          <input type="text" id="measureInput" class="hidden">
-          <datalist id="measureSuggestionList"></datalist>
           <div id="macroFieldsContainer" class="hidden">
             <div class="macro-inputs-grid">
               <input type="number" name="calories">
@@ -195,12 +199,15 @@ describe('extraMealForm macro fields visibility', () => {
     // Macro fields should be hidden initially
     expect(macroFieldsContainer.classList.contains('hidden')).toBe(true);
 
-    // Enter quantity
+    // Enter quantity - this should trigger macro calculation from local data
     quantityCustomInput.value = '100гр';
     const event = new Event('input', { bubbles: true });
     quantityCustomInput.dispatchEvent(event);
 
-    // Macro fields should now be visible
+    // Wait for async operations
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Macro fields should now be visible because macros were filled
     expect(macroFieldsContainer.classList.contains('hidden')).toBe(false);
 
     global.fetch = originalFetch;
