@@ -577,7 +577,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     const measureInput = form.querySelector('#measureInput');
     const measureSuggestionList = form.querySelector('#measureSuggestionList');
     // Keep measureInput visible by default so users can enter custom measures
-    // for unknown foods (e.g., "парчета", "чаши", etc.)
+    // for unknown foods (e.g., "парчета" (pieces), "чаши" (cups), "гр" (grams), etc.)
     const quantityHiddenInput = form.querySelector('#quantity');
     const quantityCustomInput = form.querySelector('#quantityCustom');
     const quantityCountInput = form.querySelector('#quantityCountInput');
@@ -724,7 +724,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             opt.value = l;
             measureSuggestionList.appendChild(opt);
         });
-        // measureInput remains visible regardless of suggestions
     }
 
     function computeQuantity() {
