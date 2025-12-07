@@ -331,12 +331,16 @@ describe('extraMealForm - unknown food handling', () => {
     nextBtn.click();
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    // Should show error indicator since no quantity was provided
+    // AI should now calculate macros even without quantity (per 100g estimation)
     const summaryBox = container.querySelector('#extraMealSummary');
     const loadingIndicator = summaryBox.querySelector('.ai-loading-indicator');
     
-    // Verify that an error/warning message is shown
+    // Verify that macros were calculated successfully
     expect(loadingIndicator).toBeTruthy();
-    expect(loadingIndicator.textContent).toContain('не могат да бъдат изчислени');
+    expect(loadingIndicator.textContent).toContain('изчислени автоматично');
+    
+    // Verify macros were populated
+    expect(container.querySelector('input[name="calories"]').value).toBe('250.00');
+    expect(container.querySelector('input[name="protein"]').value).toBe('12.00');
   });
 });

@@ -87,10 +87,10 @@ export function __setNutrientLookupFn(fn) {
 }
 
 export async function fetchMacrosFromAi(name, quantity) {
-    if (!(quantity > 0)) {
-        console.warn('Invalid quantity for AI macro fetch:', quantity);
-        throw new Error('Invalid quantity');
-    }
+    // Allow any quantity value - the backend AI can handle:
+    // - Numeric values (e.g., 150)
+    // - Descriptive quantities (e.g., "2 парчета", "1 чаша")
+    // - Empty/undefined (AI will estimate per 100g)
     try {
         return await nutrientLookup(name, quantity);
     } catch (err) {
@@ -416,12 +416,16 @@ async function populateSummaryWithAiMacros(form) {
             } else if (quantityCountVal > 0 && measureText) {
                 // Използваме комбинацията count + measure ако са въведени
                 quantity = `${quantityCountVal} ${measureText}`;
+            } else if (quantityCountVal > 0) {
+                // Имаме само брой без мярка
+                quantity = quantityCountVal;
+            } else if (measureText) {
+                // Имаме само мярка без брой (напр. "чаша", "парче")
+                quantity = `1 ${measureText}`;
             }
             
-            // Проверяваме дали имаме валидно количество
-            if (!quantity || (typeof quantity === 'string' && !quantity.trim())) {
-                throw new Error('Не е въведено количество');
-            }
+            // AI може да работи и без количество (ще изчисли на 100г база)
+            // Затова не хвърляме грешка, а просто подаваме каквото имаме
             
             // Извличаме макросите от AI
             const fetched = await nutrientLookup(foodDesc, quantity);
@@ -456,11 +460,27 @@ async function populateSummaryWithAiMacros(form) {
         } catch (err) {
             console.error('Failed to automatically calculate macros', err);
             
+            // Определяме по-информативно съобщение за грешка
+            let errorMessage = 'Макросите не могат да бъдат изчислени автоматично. ';
+            
+            // Проверяваме дали имаме описание на храната
+            if (!foodDesc || !foodDesc.trim()) {
+                errorMessage += 'Моля, въведете описание на храната.';
+            } else if (err instanceof TypeError && err.message && err.message.toLowerCase().includes('fetch')) {
+                // TypeError with 'fetch' typically indicates network error
+                errorMessage += 'Проблем с връзката. Моля, опитайте отново.';
+            } else if (!navigator.onLine) {
+                // Browser reports offline
+                errorMessage += 'Няма интернет връзка. Моля, проверете връзката си.';
+            } else {
+                errorMessage += 'Може да ги въведете ръчно или да продължите без тях.';
+            }
+            
             // Показваме съобщение за грешка, но не блокираме потребителя
             if (summaryBox) {
                 const loadingIndicator = summaryBox.querySelector('.ai-loading-indicator');
                 if (loadingIndicator) {
-                    loadingIndicator.innerHTML = '<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-alert"></use></svg><span>Макросите не могат да бъдат изчислени автоматично. Може да ги въведете ръчно или да продължите без тях.</span>';
+                    loadingIndicator.innerHTML = `<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-alert"></use></svg><span>${errorMessage}</span>`;
                     loadingIndicator.style.backgroundColor = 'var(--warning-color-light, #fff3e0)';
                     loadingIndicator.style.color = 'var(--warning-color, #f57c00)';
                 }
@@ -556,7 +576,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     }
     const measureInput = form.querySelector('#measureInput');
     const measureSuggestionList = form.querySelector('#measureSuggestionList');
-    if (measureInput) measureInput.classList.add('hidden');
+    // Keep measureInput visible by default so users can enter custom measures
+    // for unknown foods (e.g., "парчета" (pieces), "чаши" (cups), "гр" (grams), etc.)
     const quantityHiddenInput = form.querySelector('#quantity');
     const quantityCustomInput = form.querySelector('#quantityCustom');
     const quantityCountInput = form.querySelector('#quantityCountInput');
@@ -613,7 +634,12 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
 
     // Function to trigger background AI macro lookup when macros are not in local database
     async function triggerBackgroundMacroLookup(description, quantity) {
-        if (!description || !quantity) return;
+        console.log('[extraMealForm] triggerBackgroundMacroLookup called:', { description, quantity });
+        
+        if (!description || !quantity) {
+            console.log('[extraMealForm] Early return - missing description or quantity');
+            return;
+        }
         
         // Check if macros are already filled
         let macrosFilled = true;
@@ -624,11 +650,23 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             }
         });
         
-        if (macrosFilled) return; // Don't lookup if already filled
+        if (macrosFilled) {
+            console.log('[extraMealForm] Macros already filled, skipping lookup');
+            return; // Don't lookup if already filled
+        }
+        
+        console.log('[extraMealForm] Starting AI macro lookup...');
+        
+        // Show loading indicator
+        if (autoFillMsg) {
+            autoFillMsg.innerHTML = '<svg class="icon spinner" style="width:1rem;height:1rem;"><use href="#icon-spinner"></use></svg><span>Изчисляване на макроси...</span>';
+            autoFillMsg.classList.remove('hidden');
+        }
         
         try {
             // Call nutrientLookup in background
             const data = await nutrientLookup(description, quantity);
+            console.log('[extraMealForm] AI lookup successful:', data);
             
             // Fill the macro fields with the retrieved data
             MACRO_FIELDS.forEach(f => {
@@ -639,10 +677,23 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 }
             });
             
-            if (autoFillMsg) autoFillMsg.classList.remove('hidden');
+            if (autoFillMsg) {
+                autoFillMsg.innerHTML = '<i class="bi bi-magic"></i><span>Стойностите са попълнени автоматично</span>';
+                autoFillMsg.classList.remove('hidden');
+            }
         } catch (err) {
-            console.warn('Background macro lookup failed, will retry in summary', err);
-            // Don't show error to user, will retry in summary screen if needed
+            console.error('[extraMealForm] AI lookup failed:', err);
+            // Show error message to user so they know what happened
+            if (autoFillMsg) {
+                autoFillMsg.innerHTML = '<i class="bi bi-exclamation-triangle"></i><span>Неуспешно изчисляване. Ще се опита отново в обобщението.</span>';
+                autoFillMsg.style.color = 'var(--warning-color, #f57c00)';
+                autoFillMsg.classList.remove('hidden');
+                // Hide after a delay
+                setTimeout(() => {
+                    autoFillMsg.classList.add('hidden');
+                    autoFillMsg.style.color = ''; // Reset color
+                }, 3000);
+            }
         }
     }
 
@@ -696,16 +747,13 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (!measureSuggestionList || !measureInput) return;
         const labels = getMeasureLabels(desc);
         measureSuggestionList.innerHTML = '';
-        if (labels.length === 0) {
-            measureInput.classList.add('hidden');
-            return;
-        }
+        // Always keep measureInput visible so users can enter custom measures
+        // for unknown foods, even if there are no predefined suggestions
         labels.forEach(l => {
             const opt = document.createElement('option');
             opt.value = l;
             measureSuggestionList.appendChild(opt);
         });
-        measureInput.classList.remove('hidden');
     }
 
     function computeQuantity() {
@@ -753,19 +801,31 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         const count = parseFloat(quantityCountInput.value);
         const label = measureInput.value.trim().toLowerCase();
         const desc = foodDescriptionInput?.value?.trim().toLowerCase() || '';
-        if (!desc || !label || !(count > 0)) return;
+        
+        console.log('[extraMealForm] computeQuantityFromManual called:', { desc, count, label });
+        
+        if (!desc || !label || !(count > 0)) {
+            console.log('[extraMealForm] Early return - missing required fields:', { hasDesc: !!desc, hasLabel: !!label, validCount: count > 0 });
+            return;
+        }
+        
         const key = fuzzyFindProductKey(desc);
         const measure = key ? (productMeasures[key] || []).find(m => m.label.toLowerCase() === label) : null;
+        
+        console.log('[extraMealForm] Product lookup result:', { key, measureFound: !!measure });
         
         let grams = 0;
         if (measure) {
             // Product found in database, calculate grams from measure
             grams = measure.grams * count;
+            console.log('[extraMealForm] Product found in DB, calculated grams:', grams);
         } else {
             // Product not in database, ask AI to estimate
             // Build a descriptive query for AI
             const quantityDescription = `${count} ${label}`;
             if (quantityCustomInput) quantityCustomInput.value = quantityDescription;
+            
+            console.log('[extraMealForm] Product NOT in DB, triggering AI lookup with:', { desc, quantityDescription });
             
             // Show macro fields
             showMacroFieldsIfQuantityEntered();
