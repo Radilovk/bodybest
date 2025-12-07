@@ -376,6 +376,8 @@ async function populateSummaryWithAiMacros(form) {
     const foodDesc = formData.get('foodDescription')?.trim();
     const quantityVal = parseFloat(formData.get('quantity'));
     const quantityText = (formData.get('quantityCustom') || '').trim();
+    const quantityCountVal = parseFloat(formData.get('quantityCountInput'));
+    const measureText = formData.get('measureInput')?.trim();
     
     let macrosMissing = false;
     MACRO_FIELDS.forEach(f => {
@@ -401,8 +403,25 @@ async function populateSummaryWithAiMacros(form) {
         }
         
         try {
-            // Определяме количеството за заявката
-            const quantity = quantityVal > 0 ? quantityVal : quantityText;
+            // Определяме количеството за заявката - опитваме се от различни източници
+            // Приоритет: числово количество > текстово количество > count + measure комбинация
+            let quantity = '';
+            
+            if (quantityVal > 0) {
+                // Предпочитаме числовото количество ако е налично
+                quantity = quantityVal;
+            } else if (quantityText) {
+                // Използваме текстовото количество ако е въведено
+                quantity = quantityText;
+            } else if (quantityCountVal > 0 && measureText) {
+                // Използваме комбинацията count + measure ако са въведени
+                quantity = `${quantityCountVal} ${measureText}`;
+            }
+            
+            // Проверяваме дали имаме валидно количество
+            if (!quantity || (typeof quantity === 'string' && !quantity.trim())) {
+                throw new Error('Не е въведено количество');
+            }
             
             // Извличаме макросите от AI
             const fetched = await nutrientLookup(foodDesc, quantity);
@@ -737,8 +756,25 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         if (!desc || !label || !(count > 0)) return;
         const key = fuzzyFindProductKey(desc);
         const measure = key ? (productMeasures[key] || []).find(m => m.label.toLowerCase() === label) : null;
-        if (!measure) return;
-        const grams = measure.grams * count;
+        
+        let grams = 0;
+        if (measure) {
+            // Product found in database, calculate grams from measure
+            grams = measure.grams * count;
+        } else {
+            // Product not in database, ask AI to estimate
+            // Build a descriptive query for AI
+            const quantityDescription = `${count} ${label}`;
+            if (quantityCustomInput) quantityCustomInput.value = quantityDescription;
+            
+            // Show macro fields
+            showMacroFieldsIfQuantityEntered();
+            
+            // Trigger AI lookup with descriptive quantity
+            triggerBackgroundMacroLookup(desc, quantityDescription);
+            return; // Exit early as AI lookup is in progress
+        }
+        
         if (quantityHiddenInput) quantityHiddenInput.value = String(grams);
         quantityCustomInput.value = `${grams} гр`;
         
