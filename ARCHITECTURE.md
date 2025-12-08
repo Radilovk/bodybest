@@ -739,6 +739,8 @@ await env.USER_METADATA_KV.put(`${userId}_kv_index`, JSON.stringify(index));
 
 ## Потоци от данни
 
+> **Note:** Диаграмите по-долу използват Mermaid синтаксис. За да ги видиш рендерирани, отвори файла в GitHub, VS Code с Mermaid extension, или друг Mermaid-compatible viewer.
+
 ### 1. Регистрация и първоначален въпросник
 
 ```mermaid
