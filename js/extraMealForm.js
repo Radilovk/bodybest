@@ -71,6 +71,11 @@ function getErrorMessageForUser(err, hasDescription = true) {
         return 'Моля, въведете описание на храната.';
     }
     
+    // Check for AI returning all zeros - this means the AI couldn't process the request
+    if (err.message && err.message.includes('всички стойности са 0')) {
+        return 'AI не може да разпознае храната. Моля, въведете макросите ръчно или опитайте с по-подробно описание (напр. "1.5 броя мъфин с шоколад").';
+    }
+    
     // Check for network errors - be more robust
     if (err.name === 'TypeError' || 
         (err.message && (err.message.includes('fetch') || err.message.includes('Network error')))) {
