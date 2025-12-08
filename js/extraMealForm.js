@@ -65,21 +65,88 @@ function buildCacheKey(name, quantity = '') {
     return `${n}|${q}`;
 }
 
+// Helper function to determine user-friendly error message based on error type
+function getErrorMessageForUser(err, hasDescription = true) {
+    if (!hasDescription) {
+        return 'Моля, въведете описание на храната.';
+    }
+    
+    // Check for network errors - be more robust
+    if (err.name === 'TypeError' || 
+        (err.message && (err.message.includes('fetch') || err.message.includes('Network error')))) {
+        return 'Проблем с връзката. Моля, опитайте отново.';
+    }
+    
+    // Check HTTP status codes if available
+    if (err.status === 400) {
+        return 'Невалидно описание на храната. Моля, проверете входните данни.';
+    }
+    if (err.status === 500 || err.status === 503) {
+        return 'Временен проблем със сървъра. Моля, опитайте отново след малко.';
+    }
+    
+    // Check if browser is offline
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        return 'Няма интернет връзка. Моля, проверете връзката си.';
+    }
+    
+    // Default fallback message
+    return 'Може да ги въведете ръчно или да продължите без тях.';
+}
+
 let nutrientLookup = async function (name, quantity = '') {
     const cacheKey = buildCacheKey(name, quantity);
     const cached = nutrientLookupCache[cacheKey] || getNutrientOverride(cacheKey);
     if (cached) return cached;
-    const resp = await fetch('/nutrient-lookup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ food: (name || '').toLowerCase().trim(), quantity })
-    });
-    if (!resp.ok) throw new Error('Nutrient lookup failed');
-    const data = await resp.json();
-    nutrientLookupCache[cacheKey] = data;
-    dynamicNutrientOverrides[cacheKey] = data;
-    registerNutrientOverrides(dynamicNutrientOverrides);
-    return data;
+    
+    try {
+        const resp = await fetch('/nutrient-lookup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ food: (name || '').toLowerCase().trim(), quantity })
+        });
+        
+        if (!resp.ok) {
+            // Try to extract error details from response
+            let errorDetails = `HTTP ${resp.status}`;
+            try {
+                const errorData = await resp.json();
+                if (errorData.error) {
+                    errorDetails += `: ${errorData.error}`;
+                }
+            } catch {
+                // If we can't parse the error response, use status text
+                errorDetails += ` ${resp.statusText}`;
+            }
+            
+            const error = new Error(`Nutrient lookup failed: ${errorDetails}`);
+            error.status = resp.status;
+            error.statusText = resp.statusText;
+            throw error;
+        }
+        
+        const data = await resp.json();
+        
+        // Validate that we got usable data
+        if (!data || typeof data !== 'object') {
+            throw new Error('Nutrient lookup returned invalid data');
+        }
+        
+        nutrientLookupCache[cacheKey] = data;
+        dynamicNutrientOverrides[cacheKey] = data;
+        registerNutrientOverrides(dynamicNutrientOverrides);
+        return data;
+    } catch (err) {
+        // Re-throw with more context if it's a network error
+        if (err instanceof TypeError && err.message.includes('fetch')) {
+            const networkError = new Error(`Network error during nutrient lookup: ${err.message}`);
+            networkError.name = 'TypeError';
+            networkError.originalError = err;
+            throw networkError;
+        }
+        // Re-throw other errors as-is
+        throw err;
+    }
 };
 
 export function __setNutrientLookupFn(fn) {
@@ -453,21 +520,10 @@ async function populateSummaryWithAiMacros(form) {
         } catch (err) {
             console.error('Failed to automatically calculate macros', err);
             
-            // Определяме по-информативно съобщение за грешка
-            let errorMessage = 'Макросите не могат да бъдат изчислени автоматично. ';
-            
-            // Проверяваме дали имаме описание на храната
-            if (!foodDesc || !foodDesc.trim()) {
-                errorMessage += 'Моля, въведете описание на храната.';
-            } else if (err instanceof TypeError && err.message && err.message.toLowerCase().includes('fetch')) {
-                // TypeError with 'fetch' typically indicates network error
-                errorMessage += 'Проблем с връзката. Моля, опитайте отново.';
-            } else if (!navigator.onLine) {
-                // Browser reports offline
-                errorMessage += 'Няма интернет връзка. Моля, проверете връзката си.';
-            } else {
-                errorMessage += 'Може да ги въведете ръчно или да продължите без тях.';
-            }
+            // Use helper function to get appropriate error message
+            const foodDesc = form.querySelector('textarea[name="foodDescription"], input[name="foodDescription"]')?.value?.trim() || '';
+            const specificMessage = getErrorMessageForUser(err, !!foodDesc);
+            const errorMessage = `Макросите не могат да бъдат изчислени автоматично. ${specificMessage}`;
             
             // Показваме съобщение за грешка, но не блокираме потребителя
             if (summaryBox) {
@@ -681,9 +737,23 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             showMacroFieldsIfFilled();
         } catch (err) {
             console.error('[extraMealForm] AI lookup failed:', err);
+            
+            // Use helper function for consistent error messages - short version for background lookup
+            const specificMessage = getErrorMessageForUser(err, true);
+            let errorMsg = 'Неуспешно изчисляване';
+            
+            // Extract shorter message for inline display
+            if (specificMessage.includes('връзка')) {
+                errorMsg = 'Проблем с връзката';
+            } else if (specificMessage.includes('сървър')) {
+                errorMsg = 'Временен проблем със сървъра';
+            } else if (specificMessage.includes('Невалидно')) {
+                errorMsg = 'Невалидни данни';
+            }
+            
             // Show error message to user so they know what happened
             if (autoFillMsg) {
-                autoFillMsg.innerHTML = '<i class="bi bi-exclamation-triangle"></i><span>Неуспешно изчисляване. Ще се опита отново в обобщението.</span>';
+                autoFillMsg.innerHTML = `<i class="bi bi-exclamation-triangle"></i><span>${errorMsg}. Ще се опита отново в обобщението.</span>`;
                 autoFillMsg.style.color = 'var(--warning-color, #f57c00)';
                 autoFillMsg.classList.remove('hidden');
                 // Hide after a delay
