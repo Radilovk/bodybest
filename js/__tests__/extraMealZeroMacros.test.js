@@ -14,7 +14,7 @@ describe('extraMealForm - zero macro values handling', () => {
     jest.resetModules();
     
     // Mock AI nutrient lookup that returns some zero values
-    mockFetch = jest.fn((url, opts) => {
+    mockFetch = jest.fn((url) => {
       if (url === '/nutrient-lookup') {
         return Promise.resolve({
           ok: true,
@@ -172,7 +172,6 @@ describe('extraMealForm - zero macro values handling', () => {
     // What matters is:
     // 1. The fields have values (which we verified above)
     // 2. The container no longer has the 'hidden' class (so if user goes back to step 2, they'll see the fields)
-    const macroFieldsContainer = container.querySelector('#macroFieldsContainer');
     
     // The key test: fields should have values including zeros
     // This is the actual fix - accepting zero values
@@ -182,7 +181,7 @@ describe('extraMealForm - zero macro values handling', () => {
 
   test('should reject when ALL macros are zero (AI failure)', async () => {
     // Mock AI returning all zeros (indicates failure)
-    mockFetch = jest.fn((url, opts) => {
+    mockFetch = jest.fn((url) => {
       if (url === '/nutrient-lookup') {
         return Promise.resolve({
           ok: true,
