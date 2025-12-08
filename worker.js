@@ -8608,7 +8608,69 @@ async function handleNutrientLookupRequest(request, env) {
                     const parsed = JSON.parse(text);
                     const data = parsed.result || parsed;
                     const payload = data.output || data.response || data;
-                    const obj = typeof payload === 'string' ? JSON.parse(payload) : payload;
+                    
+                    // Try to extract JSON if payload is a string (AI may add explanatory text)
+                    let obj;
+                    if (typeof payload === 'string') {
+                        // Try direct parse first
+                        try {
+                            obj = JSON.parse(payload);
+                        } catch (directParseErr) {
+                            // Direct parse failed, try to extract JSON from text using bracket matching
+                            // Note: This is a simplified approach that works for most AI responses
+                            // It doesn't handle escaped braces or braces in strings, but that's acceptable
+                            // since AI responses rarely contain such patterns in our use case
+                            const startIdx = payload.indexOf('{');
+                            if (startIdx === -1) {
+                                console.error('No JSON object found in AI response');
+                                // Fall through to return zeros
+                                obj = null;
+                            } else {
+                                let depth = 0;
+                                let endIdx = -1;
+                                
+                                for (let i = startIdx; i < payload.length; i++) {
+                                    const char = payload[i];
+                                    if (char === '{') {
+                                        depth++;
+                                    } else if (char === '}') {
+                                        depth--;
+                                        if (depth === 0) {
+                                            endIdx = i + 1;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                if (endIdx === -1) {
+                                    console.error('Incomplete JSON object in AI response');
+                                    obj = null;
+                                } else {
+                                    const jsonStr = payload.substring(startIdx, endIdx);
+                                    try {
+                                        obj = JSON.parse(jsonStr);
+                                    } catch (extractParseErr) {
+                                        // Extraction also failed - log and fall through to zeros
+                                        console.error('Failed to parse extracted JSON from AI response');
+                                        obj = null;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        obj = payload;
+                    }
+                    
+                    if (!obj) {
+                        // Fall through to return zeros if extraction failed
+                        return {
+                            calories: 0,
+                            protein: 0,
+                            carbs: 0,
+                            fat: 0,
+                            fiber: 0
+                        };
+                    }
                     
                     return {
                         calories: Number(obj.calories) || 0,

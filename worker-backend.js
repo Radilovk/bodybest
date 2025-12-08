@@ -157,6 +157,55 @@ export default {
   }
 };
 
+// AI system prompt for nutrition data extraction
+const NUTRITION_AI_SYSTEM_PROMPT = 'You are a nutrition assistant. Return ONLY a valid JSON object with nutritional information. Do not include any explanatory text, just the JSON. The JSON must have this exact structure: {"calories": number, "protein": number, "carbs": number, "fat": number, "fiber": number}. All values must be positive numbers, never zero unless the food truly has zero of that nutrient.';
+
+/**
+ * Attempts to extract JSON from text that might contain additional content
+ * Uses a bracket-matching approach to handle nested objects and arrays
+ * @param {string} text - Text that may contain JSON
+ * @returns {object|null} Parsed JSON object or null
+ */
+function extractJsonFromText(text) {
+  // Try direct parse first
+  try {
+    return JSON.parse(text);
+  } catch {
+    // Not direct JSON, try to extract
+  }
+  
+  // Find first opening brace
+  const startIdx = text.indexOf('{');
+  if (startIdx === -1) return null;
+  
+  // Match brackets to find the complete JSON object
+  let depth = 0;
+  let endIdx = -1;
+  
+  for (let i = startIdx; i < text.length; i++) {
+    const char = text[i];
+    if (char === '{') {
+      depth++;
+    } else if (char === '}') {
+      depth--;
+      if (depth === 0) {
+        endIdx = i + 1;
+        break;
+      }
+    }
+  }
+  
+  if (endIdx === -1) return null;
+  
+  // Extract and parse the JSON substring
+  const jsonStr = text.substring(startIdx, endIdx);
+  try {
+    return JSON.parse(jsonStr);
+  } catch {
+    return null;
+  }
+}
+
 async function lookupNutrients(query, env) {
   if (env.NUTRITION_API_URL) {
     try {
@@ -184,8 +233,14 @@ async function lookupNutrients(query, env) {
     try {
       const cfEndpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/run/${env.MODEL}`;
       const messages = [
-        { role: 'system', content: 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food.' },
-        { role: 'user', content: query }
+        { 
+          role: 'system', 
+          content: NUTRITION_AI_SYSTEM_PROMPT
+        },
+        { 
+          role: 'user', 
+          content: `Provide nutritional information for: ${query}. Return only JSON, no other text.` 
+        }
       ];
       const resp = await fetch(cfEndpoint, {
         method: 'POST',
@@ -195,24 +250,57 @@ async function lookupNutrients(query, env) {
         },
         body: JSON.stringify({ messages })
       });
+      
+      if (!resp.ok) {
+        console.error('AI API returned error:', resp.status, resp.statusText);
+        return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+      }
+      
       const text = await resp.text();
+      
       try {
         const parsed = JSON.parse(text);
         const data = parsed.result || parsed;
         const payload = data.output || data.response || data;
-        const obj = typeof payload === 'string' ? JSON.parse(payload) : payload;
-        return {
+        
+        // Try to extract JSON if payload is a string
+        let obj;
+        if (typeof payload === 'string') {
+          obj = extractJsonFromText(payload);
+          if (!obj) {
+            // Log only in development/debug mode - avoid exposing user data
+            if (env.DEBUG_MODE) {
+              console.error('Failed to extract JSON from AI response. Length:', payload.length);
+            }
+            return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+          }
+        } else {
+          obj = payload;
+        }
+        
+        // Validate that we have the required fields and they are not all zero
+        const result = {
           calories: Number(obj.calories) || 0,
           protein: Number(obj.protein) || 0,
           carbs: Number(obj.carbs) || 0,
           fat: Number(obj.fat) || 0,
           fiber: Number(obj.fiber) || 0
         };
-      } catch {
+        
+        // Check if all values are zero - this indicates AI failure
+        const allZero = Object.values(result).every(v => v === 0);
+        if (allZero) {
+          console.error('AI returned all zero values for query:', query);
+        }
+        
+        return result;
+      } catch (parseError) {
+        console.error('Failed to parse AI response:', parseError, 'Text:', text);
         return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
       }
     } catch (e) {
       console.error('AI nutrient lookup error', e);
+      return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
     }
   }
   return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
