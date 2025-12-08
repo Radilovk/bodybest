@@ -8579,7 +8579,7 @@ async function handleNutrientLookupRequest(request, env) {
                     // Use configured prompt with simple string replacement for {quantity} placeholder
                     // This is safe as the prompt comes from admin config (trusted source)
                     systemPrompt = normalizedQuantity 
-                        ? nutrientPromptBase.split('{quantity}').join(normalizedQuantity)
+                        ? nutrientPromptBase.replaceAll('{quantity}', normalizedQuantity)
                         : nutrientPromptBase;
                 } else {
                     // Fallback to default prompts

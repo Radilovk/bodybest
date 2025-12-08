@@ -10,6 +10,16 @@ import { ensureChart } from './chartLoader.js';
 import { setupPlanRegeneration } from './planRegenerator.js';
 import { cachedFetch } from './requestCache.js';
 
+// AI model configuration keys
+const AI_MODEL_KEYS = [
+    'model_plan_generation',
+    'model_chat',
+    'model_principle_adjustment',
+    'model_image_analysis',
+    'model_questionnaire_analysis',
+    'model_nutrient_lookup'
+];
+
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
         return;
@@ -1591,8 +1601,7 @@ async function loadAiConfig() {
         updateHints(modModelInput, modHints);
         updateHints(imageModelInput, imageHints);
         updateHints(nutrientModelInput, nutrientHints);
-        ['model_plan_generation', 'model_chat', 'model_principle_adjustment', 'model_image_analysis', 'model_questionnaire_analysis', 'model_nutrient_lookup']
-            .forEach(k => { if (cfg[k]) availableModels.add(cfg[k]); });
+        AI_MODEL_KEYS.forEach(k => { if (cfg[k]) availableModels.add(cfg[k]); });
         populateModelOptions();
     } catch (err) {
         console.error('Error loading AI config:', err);
