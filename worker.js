@@ -8557,8 +8557,13 @@ async function handleNutrientLookupRequest(request, env) {
 
         // If not found locally, use AI model for nutrient lookup
         // Get model and prompt from RESOURCES_KV (configurable via admin panel)
-        const nutrientModel = env.RESOURCES_KV ? await env.RESOURCES_KV.get('model_nutrient_lookup') : null;
-        const nutrientPromptBase = env.RESOURCES_KV ? await env.RESOURCES_KV.get('prompt_nutrient_lookup') : null;
+        // Fetch both values concurrently for better performance
+        const [nutrientModel, nutrientPromptBase] = env.RESOURCES_KV 
+            ? await Promise.all([
+                env.RESOURCES_KV.get('model_nutrient_lookup'),
+                env.RESOURCES_KV.get('prompt_nutrient_lookup')
+              ])
+            : [null, null];
         
         if (env.CF_ACCOUNT_ID && env.CF_AI_TOKEN && nutrientModel) {
             try {
@@ -8571,9 +8576,10 @@ async function handleNutrientLookupRequest(request, env) {
                 
                 let systemPrompt;
                 if (nutrientPromptBase) {
-                    // Use configured prompt with quantity placeholder if needed
+                    // Use configured prompt with simple string replacement for {quantity} placeholder
+                    // This is safe as the prompt comes from admin config (trusted source)
                     systemPrompt = normalizedQuantity 
-                        ? nutrientPromptBase.replace(/\{quantity\}/g, normalizedQuantity)
+                        ? nutrientPromptBase.split('{quantity}').join(normalizedQuantity)
                         : nutrientPromptBase;
                 } else {
                     // Fallback to default prompts
