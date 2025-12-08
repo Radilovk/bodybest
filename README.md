@@ -8,6 +8,9 @@ A simple static web application for tracking nutrition and workouts.
 
 ## 📚 Documentation
 
+### 🗺️ Navigation
+**[DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md)** - Пълен индекс на цялата документация
+
 ### Core Documentation
 - **[QUICK_START.md](./QUICK_START.md)** - Бърз старт за нови разработчици ⭐
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Цялостна архитектура и философия на проекта
@@ -17,7 +20,8 @@ A simple static web application for tracking nutrition and workouts.
 
 ### Usage
 За бърз преглед прочети [QUICK_START.md](./QUICK_START.md).  
-За детайлно разбиране прочети [ARCHITECTURE.md](./ARCHITECTURE.md).
+За детайлно разбиране прочети [ARCHITECTURE.md](./ARCHITECTURE.md).  
+За навигация използвай [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md).
 
 ## Development Setup
 
