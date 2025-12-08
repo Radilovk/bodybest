@@ -69,7 +69,7 @@ export function initializeSelectors() {
         }
         if (!selectors[key] || (key === 'tabButtons' && selectors[key].length === 0)) {
             const optionalOrDynamic = [
-                'headerTitle', 'menuClose', 'extraMealFormContainer', 'userAllergiesNote', 'userAllergiesList',
+                'menuClose', 'extraMealFormContainer', 'userAllergiesNote', 'userAllergiesList',
                 'feedbackForm', 'tooltipTracker', 'planModificationBtn', 'planModInProgressIcon',
                 'planModChatModal', 'planModChatMessages', 'planModChatInput',
                 'planModChatSend', 'planModChatClose', 'planModChatClear',

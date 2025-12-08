@@ -21,16 +21,6 @@ const dynamicNutrientOverrides = { ...nutrientOverrides };
 registerNutrientOverrides(dynamicNutrientOverrides);
 const nutrientLookupCache = {};
 
-/**
- * Checks if macro data contains meaningful values (not all zeros)
- * @param {Object} data - Macro data object with fields like calories, protein, carbs, fat
- * @returns {boolean} True if at least one macro field has a value > 0
- */
-function hasMeaningfulMacroData(data) {
-    if (!data) return false;
-    return MACRO_FIELDS.some(f => data[f] && Number(data[f]) > 0);
-}
-
 function applyAutofillMacros(form, macros, autoFillMsg, formatToFixed = false) {
     if (!form || !macros || typeof macros !== 'object') return false;
     let applied = false;
@@ -79,34 +69,17 @@ let nutrientLookup = async function (name, quantity = '') {
     const cacheKey = buildCacheKey(name, quantity);
     const cached = nutrientLookupCache[cacheKey] || getNutrientOverride(cacheKey);
     if (cached) return cached;
-    
-    try {
-        const resp = await fetch('/nutrient-lookup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ food: (name || '').toLowerCase().trim(), quantity })
-        });
-        
-        if (!resp.ok) {
-            const errorText = await resp.text().catch(() => 'Непозната грешка');
-            throw new Error(`Неуспешно извличане на макроси (${resp.status}): ${errorText}`);
-        }
-        
-        const data = await resp.json();
-        
-        // Cache the result even if it's zero values (backend returns zeros when no data available)
-        // This is not an error - it just means user needs to fill manually
-        nutrientLookupCache[cacheKey] = data;
-        dynamicNutrientOverrides[cacheKey] = data;
-        registerNutrientOverrides(dynamicNutrientOverrides);
-        return data;
-    } catch (err) {
-        // Re-throw with more context about what we were looking up
-        if (err instanceof TypeError && err.message.includes('fetch')) {
-            throw new Error(`Мрежова грешка при извличане на "${name}": ${err.message}`);
-        }
-        throw err;
-    }
+    const resp = await fetch('/nutrient-lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ food: (name || '').toLowerCase().trim(), quantity })
+    });
+    if (!resp.ok) throw new Error('Nutrient lookup failed');
+    const data = await resp.json();
+    nutrientLookupCache[cacheKey] = data;
+    dynamicNutrientOverrides[cacheKey] = data;
+    registerNutrientOverrides(dynamicNutrientOverrides);
+    return data;
 };
 
 export function __setNutrientLookupFn(fn) {
@@ -450,49 +423,31 @@ async function populateSummaryWithAiMacros(form) {
             // Извличаме макросите от AI
             const fetched = await nutrientLookup(foodDesc, quantity);
             
-            // Check if we got meaningful data (not all zeros)
-            const hasData = hasMeaningfulMacroData(fetched);
-            
-            if (hasData) {
-                // Попълваме полетата с получените данни
-                MACRO_FIELDS.forEach(f => {
-                    const field = form.querySelector(`input[name="${f}"]`);
-                    if (field && fetched[f] !== undefined) {
-                        const value = Number(fetched[f]);
-                        field.value = Number.isFinite(value) ? value.toFixed(2) : fetched[f];
-                        field.dataset.autofilled = 'true';
-                    }
-                });
-                
-                // Обновяваме обобщителния екран с новите данни
-                populateSummary(form);
-                
-                // Премахваме индикатора за зареждане и показваме съобщение за успех
-                if (summaryBox) {
-                    const loadingIndicator = summaryBox.querySelector('.ai-loading-indicator');
-                    if (loadingIndicator) {
-                        loadingIndicator.innerHTML = '<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-check"></use></svg><span>Макросите са изчислени автоматично</span>';
-                        loadingIndicator.style.backgroundColor = 'var(--success-color-light, #e8f5e9)';
-                        loadingIndicator.style.color = 'var(--success-color, #2e7d32)';
-                        
-                        // Скриваме съобщението след определено време
-                        setTimeout(() => {
-                            loadingIndicator.classList.add('hidden');
-                        }, SUCCESS_MESSAGE_TIMEOUT_MS);
-                    }
+            // Попълваме полетата с получените данни
+            MACRO_FIELDS.forEach(f => {
+                const field = form.querySelector(`input[name="${f}"]`);
+                if (field && fetched[f] !== undefined) {
+                    const value = Number(fetched[f]);
+                    field.value = Number.isFinite(value) ? value.toFixed(2) : fetched[f];
+                    field.dataset.autofilled = 'true';
                 }
-            } else {
-                // No data available from backend - inform user to fill manually
-                console.log('[extraMealForm] No nutrient data available in summary, user needs to fill manually');
-                populateSummary(form); // Still populate summary with what we have
-                
-                if (summaryBox) {
-                    const loadingIndicator = summaryBox.querySelector('.ai-loading-indicator');
-                    if (loadingIndicator) {
-                        loadingIndicator.innerHTML = '<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-info"></use></svg><span>Няма налична информация за този продукт. Моля, попълнете макросите ръчно.</span>';
-                        loadingIndicator.style.backgroundColor = 'var(--info-color-light, #e3f2fd)';
-                        loadingIndicator.style.color = 'var(--info-color, #2196f3)';
-                    }
+            });
+            
+            // Обновяваме обобщителния екран с новите данни
+            populateSummary(form);
+            
+            // Премахваме индикатора за зареждане и показваме съобщение за успех
+            if (summaryBox) {
+                const loadingIndicator = summaryBox.querySelector('.ai-loading-indicator');
+                if (loadingIndicator) {
+                    loadingIndicator.innerHTML = '<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-check"></use></svg><span>Макросите са изчислени автоматично</span>';
+                    loadingIndicator.style.backgroundColor = 'var(--success-color-light, #e8f5e9)';
+                    loadingIndicator.style.color = 'var(--success-color, #2e7d32)';
+                    
+                    // Скриваме съобщението след определено време
+                    setTimeout(() => {
+                        loadingIndicator.classList.add('hidden');
+                    }, SUCCESS_MESSAGE_TIMEOUT_MS);
                 }
             }
         } catch (err) {
@@ -504,9 +459,6 @@ async function populateSummaryWithAiMacros(form) {
             // Проверяваме дали имаме описание на храната
             if (!foodDesc || !foodDesc.trim()) {
                 errorMessage += 'Моля, въведете описание на храната.';
-            } else if (err.message && (err.message.includes('Мрежова грешка') || err.message.includes('Network error'))) {
-                // Network error from our improved nutrientLookup
-                errorMessage += 'Проблем с връзката до сървъра. Моля, опитайте отново.';
             } else if (err instanceof TypeError && err.message && err.message.toLowerCase().includes('fetch')) {
                 // TypeError with 'fetch' typically indicates network error
                 errorMessage += 'Проблем с връзката. Моля, опитайте отново.';
@@ -710,54 +662,28 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             const data = await nutrientLookup(description, quantity);
             console.log('[extraMealForm] AI lookup successful:', data);
             
-            // Check if we got meaningful data (not all zeros)
-            const hasData = hasMeaningfulMacroData(data);
+            // Fill the macro fields with the retrieved data
+            MACRO_FIELDS.forEach(f => {
+                const field = form.querySelector(`input[name="${f}"]`);
+                if (field && data[f] !== undefined) {
+                    const value = Number(data[f]);
+                    field.value = Number.isFinite(value) ? value.toFixed(2) : data[f];
+                    field.dataset.autofilled = 'true';
+                }
+            });
             
-            if (hasData) {
-                // Fill the macro fields with the retrieved data
-                MACRO_FIELDS.forEach(f => {
-                    const field = form.querySelector(`input[name="${f}"]`);
-                    if (field && data[f] !== undefined) {
-                        const value = Number(data[f]);
-                        field.value = Number.isFinite(value) ? value.toFixed(2) : data[f];
-                        field.dataset.autofilled = 'true';
-                    }
-                });
-                
-                if (autoFillMsg) {
-                    autoFillMsg.innerHTML = '<i class="bi bi-magic"></i><span>Стойностите са попълнени автоматично</span>';
-                    autoFillMsg.classList.remove('hidden');
-                }
-                
-                // Show macro fields after filling them
-                showMacroFieldsIfFilled();
-            } else {
-                // No data available from backend (returns zeros) - inform user they need to fill manually
-                console.log('[extraMealForm] No nutrient data available, user needs to fill manually');
-                if (autoFillMsg) {
-                    autoFillMsg.innerHTML = '<i class="bi bi-info-circle"></i><span>Моля, попълнете макросите ръчно</span>';
-                    autoFillMsg.style.color = 'var(--info-color, #2196f3)';
-                    autoFillMsg.classList.remove('hidden');
-                    setTimeout(() => {
-                        autoFillMsg.classList.add('hidden');
-                        autoFillMsg.style.color = ''; // Reset color
-                    }, 3000);
-                }
+            if (autoFillMsg) {
+                autoFillMsg.innerHTML = '<i class="bi bi-magic"></i><span>Стойностите са попълнени автоматично</span>';
+                autoFillMsg.classList.remove('hidden');
             }
+            
+            // Show macro fields after filling them
+            showMacroFieldsIfFilled();
         } catch (err) {
             console.error('[extraMealForm] AI lookup failed:', err);
             // Show error message to user so they know what happened
             if (autoFillMsg) {
-                let userMessage = 'Неуспешно изчисляване. ';
-                
-                // Provide more specific error messages
-                if (err.message && (err.message.includes('Мрежова грешка') || err.message.includes('Network error'))) {
-                    userMessage += 'Проблем с връзката.';
-                } else {
-                    userMessage += 'Ще се опита отново в обобщението.';
-                }
-                
-                autoFillMsg.innerHTML = `<i class="bi bi-exclamation-triangle"></i><span>${userMessage}</span>`;
+                autoFillMsg.innerHTML = '<i class="bi bi-exclamation-triangle"></i><span>Неуспешно изчисляване. Ще се опита отново в обобщението.</span>';
                 autoFillMsg.style.color = 'var(--warning-color, #f57c00)';
                 autoFillMsg.classList.remove('hidden');
                 // Hide after a delay
