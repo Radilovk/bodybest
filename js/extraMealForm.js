@@ -21,6 +21,16 @@ const dynamicNutrientOverrides = { ...nutrientOverrides };
 registerNutrientOverrides(dynamicNutrientOverrides);
 const nutrientLookupCache = {};
 
+/**
+ * Checks if macro data contains meaningful values (not all zeros)
+ * @param {Object} data - Macro data object with fields like calories, protein, carbs, fat
+ * @returns {boolean} True if at least one macro field has a value > 0
+ */
+function hasMeaningfulMacroData(data) {
+    if (!data) return false;
+    return MACRO_FIELDS.some(f => data[f] && Number(data[f]) > 0);
+}
+
 function applyAutofillMacros(form, macros, autoFillMsg, formatToFixed = false) {
     if (!form || !macros || typeof macros !== 'object') return false;
     let applied = false;
@@ -441,7 +451,7 @@ async function populateSummaryWithAiMacros(form) {
             const fetched = await nutrientLookup(foodDesc, quantity);
             
             // Check if we got meaningful data (not all zeros)
-            const hasData = MACRO_FIELDS.some(f => fetched[f] && Number(fetched[f]) > 0);
+            const hasData = hasMeaningfulMacroData(fetched);
             
             if (hasData) {
                 // Попълваме полетата с получените данни
@@ -701,7 +711,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             console.log('[extraMealForm] AI lookup successful:', data);
             
             // Check if we got meaningful data (not all zeros)
-            const hasData = MACRO_FIELDS.some(f => data[f] && Number(data[f]) > 0);
+            const hasData = hasMeaningfulMacroData(data);
             
             if (hasData) {
                 // Fill the macro fields with the retrieved data

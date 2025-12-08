@@ -222,53 +222,65 @@ async function lookupNutrients(query, env) {
 }
 
 /**
+ * Food category patterns for nutrient estimation
+ * Each entry contains pattern to match and approximate macros per 100g
+ */
+const FOOD_CATEGORY_PATTERNS = [
+  {
+    name: 'fruits',
+    pattern: /ябълка|банан|круша|портокал|грозде|праскова|кайсия|ягод|малин|череш|сли/,
+    macros: { calories: 60, protein: 0.5, carbs: 15, fat: 0.2, fiber: 2 }
+  },
+  {
+    name: 'vegetables',
+    pattern: /домат|краставиц|чушк|моркова|зеле|брокол|спанак|салат|тикв/,
+    macros: { calories: 25, protein: 1, carbs: 5, fat: 0.3, fiber: 2 }
+  },
+  {
+    name: 'baked_goods',
+    pattern: /мъфин|кекс|кроасан|понички|бисквит|курабии|вафл|палачинк/,
+    macros: { calories: 350, protein: 6, carbs: 50, fat: 15, fiber: 2 }
+  },
+  {
+    name: 'grains',
+    pattern: /хляб|питка|козунак|гевре|царевица|ориз|макарон|спагет/,
+    macros: { calories: 250, protein: 8, carbs: 50, fat: 2, fiber: 3 }
+  },
+  {
+    name: 'dairy',
+    pattern: /мляко|кисело|йогурт|сирене|кашкавал|извара/,
+    macros: { calories: 100, protein: 8, carbs: 5, fat: 4, fiber: 0 }
+  },
+  {
+    name: 'meat',
+    pattern: /пилешко|свинско|телешко|риба|сьомга|тон|яйца|месо/,
+    macros: { calories: 180, protein: 20, carbs: 0, fat: 10, fiber: 0 }
+  },
+  {
+    name: 'nuts',
+    pattern: /ядки|бадем|орех|кашу|фъстък|слънчоглед/,
+    macros: { calories: 600, protein: 20, carbs: 20, fat: 50, fiber: 8 }
+  },
+  {
+    name: 'sweets',
+    pattern: /шоколад|бонбон|торт|сладол|захар|мед|конфитюр/,
+    macros: { calories: 400, protein: 3, carbs: 60, fat: 18, fiber: 1 }
+  }
+];
+
+/**
  * Provides basic nutrient estimation when AI/API is unavailable
- * Uses common food patterns and reasonable defaults per 100g
+ * @param {string} query - Food description query (e.g., "1 мъфин", "100 гр ябълка")
+ * @returns {Object} Estimated macros: { calories, protein, carbs, fat, fiber }
  */
 function estimateNutrientsFromQuery(query) {
   const lowerQuery = query.toLowerCase();
   
-  // Pattern matching for common food categories
-  // Values are approximate per 100g serving unless quantity is specified
-  
-  // Fruits (low calorie, high carbs, low protein/fat)
-  if (lowerQuery.match(/ябълка|банан|круша|портокал|грозде|праскова|кайсия|ягод|малин|череш|сли/)) {
-    return { calories: 60, protein: 0.5, carbs: 15, fat: 0.2, fiber: 2 };
-  }
-  
-  // Vegetables (very low calorie, moderate carbs)
-  if (lowerQuery.match(/домат|краставиц|чушк|моркова|зеле|брокол|спанак|салат|тикв/)) {
-    return { calories: 25, protein: 1, carbs: 5, fat: 0.3, fiber: 2 };
-  }
-  
-  // Baked goods / pastries (high calorie, moderate protein, high carbs and fat)
-  if (lowerQuery.match(/мъфин|кекс|кроасан|понички|бисквит|курабии|вафл|палачинк/)) {
-    return { calories: 350, protein: 6, carbs: 50, fat: 15, fiber: 2 };
-  }
-  
-  // Bread and grains (moderate calorie, moderate protein, high carbs)
-  if (lowerQuery.match(/хляб|питка|козунак|гевре|царевица|ориз|макарон|спагет/)) {
-    return { calories: 250, protein: 8, carbs: 50, fat: 2, fiber: 3 };
-  }
-  
-  // Dairy (moderate calorie, good protein, moderate fat)
-  if (lowerQuery.match(/мляко|кисело|йогурт|сирене|кашкавал|извара/)) {
-    return { calories: 100, protein: 8, carbs: 5, fat: 4, fiber: 0 };
-  }
-  
-  // Meat / protein sources (high protein, high fat, low carbs)
-  if (lowerQuery.match(/пилешко|свинско|телешко|риба|сьомга|тон|яйца|месо/)) {
-    return { calories: 180, protein: 20, carbs: 0, fat: 10, fiber: 0 };
-  }
-  
-  // Nuts and seeds (very high calorie, high fat, moderate protein)
-  if (lowerQuery.match(/ядки|бадем|орех|кашу|фъстък|слънчоглед/)) {
-    return { calories: 600, protein: 20, carbs: 20, fat: 50, fiber: 8 };
-  }
-  
-  // Sweets / desserts (very high calorie, high sugar)
-  if (lowerQuery.match(/шоколад|бонбон|торт|сладол|захар|мед|конфитюр/)) {
-    return { calories: 400, protein: 3, carbs: 60, fat: 18, fiber: 1 };
+  // Try to match against known food categories
+  for (const category of FOOD_CATEGORY_PATTERNS) {
+    if (lowerQuery.match(category.pattern)) {
+      return category.macros;
+    }
   }
   
   // Default fallback for unknown foods - reasonable mixed meal estimate
