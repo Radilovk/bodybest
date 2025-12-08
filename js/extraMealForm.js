@@ -69,17 +69,54 @@ let nutrientLookup = async function (name, quantity = '') {
     const cacheKey = buildCacheKey(name, quantity);
     const cached = nutrientLookupCache[cacheKey] || getNutrientOverride(cacheKey);
     if (cached) return cached;
-    const resp = await fetch('/nutrient-lookup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ food: (name || '').toLowerCase().trim(), quantity })
-    });
-    if (!resp.ok) throw new Error('Nutrient lookup failed');
-    const data = await resp.json();
-    nutrientLookupCache[cacheKey] = data;
-    dynamicNutrientOverrides[cacheKey] = data;
-    registerNutrientOverrides(dynamicNutrientOverrides);
-    return data;
+    
+    try {
+        const resp = await fetch('/nutrient-lookup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ food: (name || '').toLowerCase().trim(), quantity })
+        });
+        
+        if (!resp.ok) {
+            // Try to extract error details from response
+            let errorDetails = `HTTP ${resp.status}`;
+            try {
+                const errorData = await resp.json();
+                if (errorData.error) {
+                    errorDetails += `: ${errorData.error}`;
+                }
+            } catch {
+                // If we can't parse the error response, use status text
+                errorDetails += ` ${resp.statusText}`;
+            }
+            
+            const error = new Error(`Nutrient lookup failed: ${errorDetails}`);
+            error.status = resp.status;
+            error.statusText = resp.statusText;
+            throw error;
+        }
+        
+        const data = await resp.json();
+        
+        // Validate that we got usable data
+        if (!data || typeof data !== 'object') {
+            throw new Error('Nutrient lookup returned invalid data');
+        }
+        
+        nutrientLookupCache[cacheKey] = data;
+        dynamicNutrientOverrides[cacheKey] = data;
+        registerNutrientOverrides(dynamicNutrientOverrides);
+        return data;
+    } catch (err) {
+        // Re-throw with more context if it's a network error
+        if (err instanceof TypeError && err.message.includes('fetch')) {
+            const networkError = new Error(`Network error during nutrient lookup: ${err.message}`);
+            networkError.originalError = err;
+            throw networkError;
+        }
+        // Re-throw other errors as-is
+        throw err;
+    }
 };
 
 export function __setNutrientLookupFn(fn) {
@@ -459,6 +496,15 @@ async function populateSummaryWithAiMacros(form) {
             // Проверяваме дали имаме описание на храната
             if (!foodDesc || !foodDesc.trim()) {
                 errorMessage += 'Моля, въведете описание на храната.';
+            } else if (err.message && err.message.includes('Network error')) {
+                // Network error from our improved nutrientLookup
+                errorMessage += 'Проблем с връзката. Моля, опитайте отново.';
+            } else if (err.status === 400) {
+                // Bad request - likely missing or invalid food description
+                errorMessage += 'Невалидно описание на храната. Моля, проверете входните данни.';
+            } else if (err.status === 500 || err.status === 503) {
+                // Server error
+                errorMessage += 'Временен проблем със сървъра. Моля, опитайте отново след малко.';
             } else if (err instanceof TypeError && err.message && err.message.toLowerCase().includes('fetch')) {
                 // TypeError with 'fetch' typically indicates network error
                 errorMessage += 'Проблем с връзката. Моля, опитайте отново.';
@@ -681,9 +727,20 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             showMacroFieldsIfFilled();
         } catch (err) {
             console.error('[extraMealForm] AI lookup failed:', err);
+            
+            // Determine more specific error message based on error type
+            let errorMsg = 'Неуспешно изчисляване';
+            if (err.message && err.message.includes('Network error')) {
+                errorMsg = 'Проблем с връзката';
+            } else if (err.status === 400) {
+                errorMsg = 'Невалидни данни';
+            } else if (err.status === 500 || err.status === 503) {
+                errorMsg = 'Временен проблем със сървъра';
+            }
+            
             // Show error message to user so they know what happened
             if (autoFillMsg) {
-                autoFillMsg.innerHTML = '<i class="bi bi-exclamation-triangle"></i><span>Неуспешно изчисляване. Ще се опита отново в обобщението.</span>';
+                autoFillMsg.innerHTML = `<i class="bi bi-exclamation-triangle"></i><span>${errorMsg}. Ще се опита отново в обобщението.</span>`;
                 autoFillMsg.style.color = 'var(--warning-color, #f57c00)';
                 autoFillMsg.classList.remove('hidden');
                 // Hide after a delay
