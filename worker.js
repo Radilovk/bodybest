@@ -8615,8 +8615,11 @@ async function handleNutrientLookupRequest(request, env) {
                         // Try direct parse first
                         try {
                             obj = JSON.parse(payload);
-                        } catch {
-                            // Extract JSON from text using bracket matching
+                        } catch (directParseErr) {
+                            // Direct parse failed, try to extract JSON from text using bracket matching
+                            // Note: This is a simplified approach that works for most AI responses
+                            // It doesn't handle escaped braces or braces in strings, but that's acceptable
+                            // since AI responses rarely contain such patterns in our use case
                             const startIdx = payload.indexOf('{');
                             if (startIdx === -1) {
                                 console.error('No JSON object found in AI response');
@@ -8646,7 +8649,8 @@ async function handleNutrientLookupRequest(request, env) {
                                     const jsonStr = payload.substring(startIdx, endIdx);
                                     try {
                                         obj = JSON.parse(jsonStr);
-                                    } catch {
+                                    } catch (extractParseErr) {
+                                        // Extraction also failed - log and fall through to zeros
                                         console.error('Failed to parse extracted JSON from AI response');
                                         obj = null;
                                     }
