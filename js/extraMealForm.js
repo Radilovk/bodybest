@@ -78,8 +78,8 @@ let nutrientLookup = async function (name, quantity = '') {
         });
         
         if (!resp.ok) {
-            const errorText = await resp.text().catch(() => 'Unknown error');
-            throw new Error(`Nutrient lookup failed (${resp.status}): ${errorText}`);
+            const errorText = await resp.text().catch(() => 'Непозната грешка');
+            throw new Error(`Неуспешно извличане на макроси (${resp.status}): ${errorText}`);
         }
         
         const data = await resp.json();
@@ -87,7 +87,7 @@ let nutrientLookup = async function (name, quantity = '') {
         // Validate that we got some macro data back
         if (!data || (data.calories === undefined && data.protein === undefined && 
                       data.carbs === undefined && data.fat === undefined)) {
-            throw new Error('Invalid response: No nutrient data returned');
+            throw new Error('Невалиден отговор: Не са върнати данни за макроси');
         }
         
         nutrientLookupCache[cacheKey] = data;
@@ -97,7 +97,7 @@ let nutrientLookup = async function (name, quantity = '') {
     } catch (err) {
         // Re-throw with more context about what we were looking up
         if (err instanceof TypeError && err.message.includes('fetch')) {
-            throw new Error(`Network error looking up "${name}": ${err.message}`);
+            throw new Error(`Мрежова грешка при извличане на "${name}": ${err.message}`);
         }
         throw err;
     }
@@ -480,10 +480,10 @@ async function populateSummaryWithAiMacros(form) {
             // Проверяваме дали имаме описание на храната
             if (!foodDesc || !foodDesc.trim()) {
                 errorMessage += 'Моля, въведете описание на храната.';
-            } else if (err.message && err.message.includes('Network error')) {
+            } else if (err.message && (err.message.includes('Мрежова грешка') || err.message.includes('Network error'))) {
                 // Network error from our improved nutrientLookup
                 errorMessage += 'Проблем с връзката до сървъра. Моля, опитайте отново.';
-            } else if (err.message && err.message.includes('Invalid response')) {
+            } else if (err.message && (err.message.includes('Невалиден отговор') || err.message.includes('Invalid response'))) {
                 // Got a response but no data
                 errorMessage += 'Сървърът не можа да намери информация за този продукт.';
             } else if (err instanceof TypeError && err.message && err.message.toLowerCase().includes('fetch')) {
@@ -713,9 +713,9 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 let userMessage = 'Неуспешно изчисляване. ';
                 
                 // Provide more specific error messages
-                if (err.message && err.message.includes('Network error')) {
+                if (err.message && (err.message.includes('Мрежова грешка') || err.message.includes('Network error'))) {
                     userMessage += 'Проблем с връзката.';
-                } else if (err.message && err.message.includes('Invalid response')) {
+                } else if (err.message && (err.message.includes('Невалиден отговор') || err.message.includes('Invalid response'))) {
                     userMessage += 'Сървърът не можа да намери продукта.';
                 } else {
                     userMessage += 'Ще се опита отново в обобщението.';
