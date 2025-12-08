@@ -878,11 +878,11 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             const quantityDescription = `${count} броя`;
             if (quantityCustomInput) quantityCustomInput.value = quantityDescription;
             
-            console.log('[extraMealForm] Product NOT in DB, quantityCustom set to:', quantityDescription);
+            console.log('[extraMealForm] Product NOT in DB, triggering AI lookup with:', { desc, quantityDescription });
             
-            // Don't trigger AI lookup here - let it happen in the summary step
-            // after user has had a chance to review and adjust the values
-            return; // Exit early, AI lookup will happen in summary
+            // Trigger AI lookup with descriptive quantity
+            triggerBackgroundMacroLookup(desc, quantityDescription);
+            return; // Exit early as AI lookup is in progress
         }
         
         if (quantityHiddenInput) quantityHiddenInput.value = String(grams);

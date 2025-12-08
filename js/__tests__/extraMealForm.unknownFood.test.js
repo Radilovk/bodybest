@@ -132,45 +132,22 @@ describe('extraMealForm - unknown food handling', () => {
     const container = document.getElementById('container');
     await initializeExtraMealFormLogic(container);
 
-    // User enters count in step 2
+    // User enters count
     const quantityCountInput = container.querySelector('#quantityCountInput');
     quantityCountInput.value = '2';
 
-    // Trigger input event (should set quantityCustom but NOT trigger AI lookup yet)
+    // Trigger input event (should trigger computeQuantityFromManual)
     quantityCountInput.dispatchEvent(new Event('input', { bubbles: true }));
 
-    // Wait for any synchronous operations
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Wait for async operations
+    await new Promise(resolve => setTimeout(resolve, 200));
 
     // Check that quantityCustom was populated with descriptive quantity
     const quantityCustom = container.querySelector('#quantityCustom');
     expect(quantityCustom.value).toBe('2 броя');
 
-    // Verify that fetch was NOT called yet (AI lookup should happen in summary)
-    let nutrientCalls = mockFetch.mock.calls.filter(c => c[0] === '/nutrient-lookup');
-    expect(nutrientCalls.length).toBe(0);
-
-    // Now navigate to summary step
-    const nextBtn = container.querySelector('#emNextStepBtn');
-    
-    // Step 1 -> 2
-    nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Step 2 -> 3
-    nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Step 3 -> 4
-    nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Step 4 -> 5 (summary)
-    nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // NOW verify that fetch was called with proper parameters
-    nutrientCalls = mockFetch.mock.calls.filter(c => c[0] === '/nutrient-lookup');
+    // Verify that fetch was called with proper parameters
+    const nutrientCalls = mockFetch.mock.calls.filter(c => c[0] === '/nutrient-lookup');
     expect(nutrientCalls.length).toBeGreaterThan(0);
     
     const lastCall = nutrientCalls[nutrientCalls.length - 1];
