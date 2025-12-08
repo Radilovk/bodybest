@@ -165,18 +165,6 @@ describe('extraMealForm - zero macro values handling', () => {
     expect(carbsField.value).toBe('35.00');
     expect(fatField.value).toBe('0.00'); // Zero should be accepted!
     expect(fiberField.value).toBe('3.00');
-
-    // Verify macro fields container status
-    // Important: The macro fields container is on step 2, but we're on step 5 (summary)
-    // The parent step has display:none, so the fields won't be visually rendered even if the container's 'hidden' class is removed
-    // What matters is:
-    // 1. The fields have values (which we verified above)
-    // 2. The container no longer has the 'hidden' class (so if user goes back to step 2, they'll see the fields)
-    
-    // The key test: fields should have values including zeros
-    // This is the actual fix - accepting zero values
-    // The visibility of the container is less important since we're on a different step
-    // What matters is the data is there for form submission
   });
 
   test('should reject when ALL macros are zero (AI failure)', async () => {
