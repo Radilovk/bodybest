@@ -10,29 +10,10 @@ describe('extraMealForm - AI JSON extraction', () => {
   let initializeExtraMealFormLogic;
   let mockFetch;
 
-  beforeEach(async () => {
-    jest.resetModules();
-  });
-
-  test('should handle AI response with explanatory text before JSON', async () => {
-    // Mock AI response that includes text before the JSON
-    mockFetch = jest.fn((url, opts) => {
-      if (url === '/nutrient-lookup') {
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({
-            calories: 180,
-            protein: 8,
-            carbs: 22,
-            fat: 7,
-            fiber: 1.5
-          })
-        });
-      }
-      return Promise.resolve({ json: async () => [] });
-    });
-    global.fetch = mockFetch;
-
+  /**
+   * Helper function to setup common module mocks
+   */
+  const setupCommonMocks = () => {
     jest.unstable_mockModule('../uiHandlers.js', () => ({
       showLoading: jest.fn(),
       showToast: jest.fn(),
@@ -67,19 +48,22 @@ describe('extraMealForm - AI JSON extraction', () => {
         return fn;
       }
     }));
+  };
 
-    ({ initializeExtraMealFormLogic } = await import('../extraMealForm.js'));
-
+  /**
+   * Helper function to create test DOM structure
+   */
+  const createTestDOM = (foodDescription, quantityCount, quantityCustom) => {
     document.body.innerHTML = `
       <div id="container">
         <form id="extraMealEntryFormActual">
           <div class="form-step active-step" data-step="1">
-            <textarea id="foodDescription" name="foodDescription">мъфин</textarea>
+            <textarea id="foodDescription" name="foodDescription">${foodDescription}</textarea>
             <div id="foodSuggestionsDropdown" class="hidden"></div>
           </div>
           <div class="form-step" data-step="2" style="display:none">
-            <input type="number" id="quantityCountInput" name="quantityCountInput" value="1.5">
-            <input type="text" id="quantityCustom" name="quantityCustom" value="1.5 броя">
+            <input type="number" id="quantityCountInput" name="quantityCountInput" value="${quantityCount}">
+            <input type="text" id="quantityCustom" name="quantityCustom" value="${quantityCustom}">
             <input type="number" id="quantity" name="quantity" class="hidden">
             <div id="macroFieldsContainer" class="hidden">
               <div class="macro-inputs-grid">
@@ -126,11 +110,13 @@ describe('extraMealForm - AI JSON extraction', () => {
         </form>
       </div>
     `;
+    return document.getElementById('container');
+  };
 
-    const container = document.getElementById('container');
-    await initializeExtraMealFormLogic(container);
-
-    // Navigate to summary step (step 5)
+  /**
+   * Helper function to navigate to summary step
+   */
+  const navigateToSummary = async (container) => {
     const nextBtn = container.querySelector('#emNextStepBtn');
     
     // Step 1 -> 2
@@ -148,6 +134,37 @@ describe('extraMealForm - AI JSON extraction', () => {
     // Step 4 -> 5 (summary)
     nextBtn.click();
     await new Promise(resolve => setTimeout(resolve, 300));
+  };
+
+  beforeEach(async () => {
+    jest.resetModules();
+  });
+
+  test('should handle AI response with explanatory text before JSON', async () => {
+    // Mock AI response that includes text before the JSON
+    mockFetch = jest.fn((url, opts) => {
+      if (url === '/nutrient-lookup') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            calories: 180,
+            protein: 8,
+            carbs: 22,
+            fat: 7,
+            fiber: 1.5
+          })
+        });
+      }
+      return Promise.resolve({ json: async () => [] });
+    });
+    global.fetch = mockFetch;
+
+    setupCommonMocks();
+    ({ initializeExtraMealFormLogic } = await import('../extraMealForm.js'));
+
+    const container = createTestDOM('мъфин', '1.5', '1.5 броя');
+    await initializeExtraMealFormLogic(container);
+    await navigateToSummary(container);
 
     // Verify fetch was called
     expect(mockFetch).toHaveBeenCalledWith(
@@ -185,113 +202,12 @@ describe('extraMealForm - AI JSON extraction', () => {
     });
     global.fetch = mockFetch;
 
-    jest.unstable_mockModule('../uiHandlers.js', () => ({
-      showLoading: jest.fn(),
-      showToast: jest.fn(),
-      openModal: jest.fn(),
-      closeModal: jest.fn()
-    }));
-    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: { nutrientLookup: '/nutrient-lookup' } }));
-    jest.unstable_mockModule('../macroUtils.js', () => ({
-      removeMealMacros: jest.fn(),
-      registerNutrientOverrides: jest.fn(),
-      getNutrientOverride: jest.fn(() => null),
-      loadProductMacros: jest.fn().mockResolvedValue({ overrides: {}, products: [] }),
-      scaleMacros: jest.fn()
-    }));
-    jest.unstable_mockModule('../populateUI.js', () => ({
-      addExtraMealWithOverride: jest.fn(),
-      populateDashboardMacros: jest.fn(),
-      appendExtraMealCard: jest.fn()
-    }));
-    jest.unstable_mockModule('../app.js', () => ({
-      currentUserId: 'u1',
-      todaysExtraMeals: [],
-      todaysMealCompletionStatus: {},
-      currentIntakeMacros: {},
-      fullDashboardData: { planData: { week1Menu: {}, caloriesMacros: { fiber_percent: 10, fiber_grams: 30 } } },
-      loadCurrentIntake: jest.fn(),
-      updateMacrosAndAnalytics: jest.fn()
-    }));
-    jest.unstable_mockModule('../debounce.js', () => ({
-      debounce: (fn) => {
-        fn.cancel = jest.fn();
-        return fn;
-      }
-    }));
-
+    setupCommonMocks();
     ({ initializeExtraMealFormLogic } = await import('../extraMealForm.js'));
 
-    document.body.innerHTML = `
-      <div id="container">
-        <form id="extraMealEntryFormActual">
-          <div class="form-step active-step" data-step="1">
-            <textarea id="foodDescription" name="foodDescription">непозната екзотична храна</textarea>
-            <div id="foodSuggestionsDropdown" class="hidden"></div>
-          </div>
-          <div class="form-step" data-step="2" style="display:none">
-            <input type="number" id="quantityCountInput" name="quantityCountInput" value="2">
-            <input type="text" id="quantityCustom" name="quantityCustom" value="2 броя">
-            <input type="number" id="quantity" name="quantity" class="hidden">
-            <div id="macroFieldsContainer" class="hidden">
-              <div class="macro-inputs-grid">
-                <input type="number" name="calories">
-                <input type="number" name="protein">
-                <input type="number" name="carbs">
-                <input type="number" name="fat">
-                <input type="number" name="fiber">
-              </div>
-            </div>
-          </div>
-          <div class="form-step" data-step="3" style="display:none">
-            <input type="radio" name="reasonPrimary" value="глад" checked>
-            <input type="text" id="reasonOtherText" name="reasonOtherText" class="hidden">
-          </div>
-          <div class="form-step" data-step="4" style="display:none">
-            <input type="radio" name="feelingAfter" value="ситост_доволство" checked>
-            <input type="radio" name="replacedPlanned" value="не" checked>
-            <select id="skippedMeal" name="skippedMeal" class="hidden"></select>
-          </div>
-          <div class="form-step" data-step="5" style="display:none">
-            <div id="extraMealSummary">
-              <span data-summary="foodDescription"></span>
-              <span data-summary="quantityEstimate"></span>
-              <span data-summary="calories"></span>
-              <span data-summary="protein"></span>
-              <span data-summary="carbs"></span>
-              <span data-summary="fat"></span>
-              <span data-summary="fiber"></span>
-              <span data-summary="reasonPrimary"></span>
-              <span data-summary="feelingAfter"></span>
-              <span data-summary="replacedPlanned"></span>
-            </div>
-          </div>
-          <div class="form-wizard-navigation">
-            <button type="button" id="emPrevStepBtn"></button>
-            <button type="button" id="emNextStepBtn"></button>
-            <button type="submit" id="emSubmitBtn"></button>
-            <button type="button" id="emCancelBtn"></button>
-          </div>
-          <div id="stepProgressBar"></div>
-          <span id="currentStepNumber"></span>
-          <span id="totalStepNumber"></span>
-        </form>
-      </div>
-    `;
-
-    const container = document.getElementById('container');
+    const container = createTestDOM('непозната екзотична храна', '2', '2 броя');
     await initializeExtraMealFormLogic(container);
-
-    // Navigate to summary step
-    const nextBtn = container.querySelector('#emNextStepBtn');
-    nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 100));
-    nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 100));
-    nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 100));
-    nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await navigateToSummary(container);
 
     // Should show error message with helpful guidance
     const summaryBox = container.querySelector('#extraMealSummary');

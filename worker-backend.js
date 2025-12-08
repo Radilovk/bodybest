@@ -157,8 +157,12 @@ export default {
   }
 };
 
+// AI system prompt for nutrition data extraction
+const NUTRITION_AI_SYSTEM_PROMPT = 'You are a nutrition assistant. Return ONLY a valid JSON object with nutritional information. Do not include any explanatory text, just the JSON. The JSON must have this exact structure: {"calories": number, "protein": number, "carbs": number, "fat": number, "fiber": number}. All values must be positive numbers, never zero unless the food truly has zero of that nutrient.';
+
 /**
  * Attempts to extract JSON from text that might contain additional content
+ * Uses a bracket-matching approach to handle nested objects and arrays
  * @param {string} text - Text that may contain JSON
  * @returns {object|null} Parsed JSON object or null
  */
@@ -170,17 +174,36 @@ function extractJsonFromText(text) {
     // Not direct JSON, try to extract
   }
   
-  // Look for JSON object pattern {...}
-  const jsonMatch = text.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/);
-  if (jsonMatch) {
-    try {
-      return JSON.parse(jsonMatch[0]);
-    } catch {
-      // Invalid JSON
+  // Find first opening brace
+  const startIdx = text.indexOf('{');
+  if (startIdx === -1) return null;
+  
+  // Match brackets to find the complete JSON object
+  let depth = 0;
+  let endIdx = -1;
+  
+  for (let i = startIdx; i < text.length; i++) {
+    const char = text[i];
+    if (char === '{') {
+      depth++;
+    } else if (char === '}') {
+      depth--;
+      if (depth === 0) {
+        endIdx = i + 1;
+        break;
+      }
     }
   }
   
-  return null;
+  if (endIdx === -1) return null;
+  
+  // Extract and parse the JSON substring
+  const jsonStr = text.substring(startIdx, endIdx);
+  try {
+    return JSON.parse(jsonStr);
+  } catch {
+    return null;
+  }
 }
 
 async function lookupNutrients(query, env) {
@@ -212,7 +235,7 @@ async function lookupNutrients(query, env) {
       const messages = [
         { 
           role: 'system', 
-          content: 'You are a nutrition assistant. Return ONLY a valid JSON object with nutritional information. Do not include any explanatory text, just the JSON. The JSON must have this exact structure: {"calories": number, "protein": number, "carbs": number, "fat": number, "fiber": number}. All values must be positive numbers, never zero unless the food truly has zero of that nutrient.' 
+          content: NUTRITION_AI_SYSTEM_PROMPT
         },
         { 
           role: 'user', 
@@ -234,7 +257,6 @@ async function lookupNutrients(query, env) {
       }
       
       const text = await resp.text();
-      console.log('AI response text:', text);
       
       try {
         const parsed = JSON.parse(text);
@@ -246,7 +268,10 @@ async function lookupNutrients(query, env) {
         if (typeof payload === 'string') {
           obj = extractJsonFromText(payload);
           if (!obj) {
-            console.error('Failed to extract JSON from AI response:', payload);
+            // Log only in development/debug mode - avoid exposing user data
+            if (env.DEBUG_MODE) {
+              console.error('Failed to extract JSON from AI response. Length:', payload.length);
+            }
             return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
           }
         } else {
