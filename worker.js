@@ -8555,15 +8555,30 @@ async function handleNutrientLookupRequest(request, env) {
             }
         }
 
-        // If not found locally, use AI model
-        if (env.CF_ACCOUNT_ID && env.CF_AI_TOKEN && env.MODEL) {
+        // If not found locally, use AI model for nutrient lookup
+        // Get model and prompt from RESOURCES_KV (configurable via admin panel)
+        const nutrientModel = env.RESOURCES_KV ? await env.RESOURCES_KV.get('model_nutrient_lookup') : null;
+        const nutrientPromptBase = env.RESOURCES_KV ? await env.RESOURCES_KV.get('prompt_nutrient_lookup') : null;
+        
+        if (env.CF_ACCOUNT_ID && env.CF_AI_TOKEN && nutrientModel) {
             try {
-                const cfEndpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/run/${env.MODEL}`;
+                const cfEndpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/run/${nutrientModel}`;
                 
-                // Enhanced system prompt to handle various quantity formats
-                const systemPrompt = normalizedQuantity 
-                    ? 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the EXACT quantity of food specified. Calories in kcal, protein/carbs/fat/fiber in grams. Calculate for the specific quantity provided (e.g., if given "150 гр", calculate for 150 grams, not per 100g). If given descriptive quantities like "2 парчета" or "1 чаша", estimate the weight in grams and calculate accordingly.'
-                    : 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food per 100g. Calories in kcal, protein/carbs/fat/fiber in grams.';
+                // Use custom prompt from admin config or fallback to default
+                // The prompt can be customized to work better with specific models
+                const defaultPromptQuantity = 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the EXACT quantity of food specified. Calories in kcal, protein/carbs/fat/fiber in grams. Calculate for the specific quantity provided (e.g., if given "150 гр", calculate for 150 grams, not per 100g). If given descriptive quantities like "2 парчета" or "1 чаша", estimate the weight in grams and calculate accordingly.';
+                const defaultPromptPer100g = 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food per 100g. Calories in kcal, protein/carbs/fat/fiber in grams.';
+                
+                let systemPrompt;
+                if (nutrientPromptBase) {
+                    // Use configured prompt with quantity placeholder if needed
+                    systemPrompt = normalizedQuantity 
+                        ? nutrientPromptBase.replace(/\{quantity\}/g, normalizedQuantity)
+                        : nutrientPromptBase;
+                } else {
+                    // Fallback to default prompts
+                    systemPrompt = normalizedQuantity ? defaultPromptQuantity : defaultPromptPer100g;
+                }
                 
                 const messages = [
                     { 
