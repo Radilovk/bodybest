@@ -13,6 +13,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/nutrient-lookup': {
+        target: 'https://openapichatbot.radilov-k.workers.dev',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   build: {
