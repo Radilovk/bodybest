@@ -511,8 +511,8 @@ async function populateSummaryWithAiMacros(form) {
                 const field = form.querySelector(`input[name="${f}"]`);
                 if (field && fetched[f] !== undefined) {
                     const value = Number(fetched[f]);
-                    // Приемаме само положителни стойности (не 0 или отрицателни)
-                    if (Number.isFinite(value) && value > 0) {
+                    // Приемаме всички неотрицателни стойности (включително 0, което е валидна стойност)
+                    if (Number.isFinite(value) && value >= 0) {
                         field.value = value.toFixed(2);
                         field.dataset.autofilled = 'true';
                     }
@@ -521,6 +521,9 @@ async function populateSummaryWithAiMacros(form) {
             
             // Обновяваме обобщителния екран с новите данни
             populateSummary(form);
+            
+            // Показваме полетата за макроси след попълването им и обновяване на обобщението
+            showMacroFieldsIfFilled();
             
             // Премахваме индикатора за зареждане и показваме съобщение за успех
             if (summaryBox) {
@@ -753,8 +756,8 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 const field = form.querySelector(`input[name="${f}"]`);
                 if (field && data[f] !== undefined) {
                     const value = Number(data[f]);
-                    // Приемаме само положителни стойности (не 0 или отрицателни)
-                    if (Number.isFinite(value) && value > 0) {
+                    // Приемаме всички неотрицателни стойности (включително 0, което е валидна стойност)
+                    if (Number.isFinite(value) && value >= 0) {
                         field.value = value.toFixed(2);
                         field.dataset.autofilled = 'true';
                     }
