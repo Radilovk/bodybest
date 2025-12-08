@@ -22,7 +22,7 @@ beforeEach(async () => {
     loadAndApplyColors: jest.fn()
   }));
   jest.unstable_mockModule('../config.js', () => ({
-    apiEndpoints: { logExtraMeal: '/api' }
+    apiEndpoints: { logExtraMeal: '/api', nutrientLookup: '/nutrient-lookup' }
   }));
   jest.unstable_mockModule('../macroUtils.js', () => ({
     removeMealMacros: jest.fn(),

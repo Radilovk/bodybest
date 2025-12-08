@@ -100,7 +100,7 @@ let nutrientLookup = async function (name, quantity = '') {
     if (cached) return cached;
     
     try {
-        const resp = await fetch('/nutrient-lookup', {
+        const resp = await fetch(apiEndpoints.nutrientLookup, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ food: (name || '').toLowerCase().trim(), quantity })

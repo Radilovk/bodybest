@@ -71,7 +71,8 @@ export const apiEndpoints = {
     proposePlanChange: `${workerBaseUrl}/api/proposePlanChange`,
     approvePlanChange: `${workerBaseUrl}/api/approvePlanChange`,
     getPendingPlanChanges: `${workerBaseUrl}/api/getPendingPlanChanges`,
-    rejectPlanChange: `${workerBaseUrl}/api/rejectPlanChange`
+    rejectPlanChange: `${workerBaseUrl}/api/rejectPlanChange`,
+    nutrientLookup: `${workerBaseUrl}/nutrient-lookup`
 };
 
 // Cloudflare Account ID за използване в чат асистента
