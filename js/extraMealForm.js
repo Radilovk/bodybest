@@ -490,10 +490,10 @@ async function populateSummaryWithAiMacros(form) {
             // Извличаме макросите от AI
             const fetched = await nutrientLookup(foodDesc, quantity);
             
-            // Валидираме дали AI отговорът е валиден (не всички стойности са 0)
+            // Валидираме дали AI отговорът е валиден (не всички стойности са 0 или невалидни)
             const allZeros = MACRO_FIELDS.every(f => {
                 const value = Number(fetched[f]);
-                return !value || value === 0;
+                return isNaN(value) || value === 0;
             });
             
             if (allZeros) {
@@ -732,10 +732,10 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             const data = await nutrientLookup(description, quantity);
             console.log('[extraMealForm] AI lookup successful:', data);
             
-            // Валидираме дали AI отговорът е валиден (не всички стойности са 0)
+            // Валидираме дали AI отговорът е валиден (не всички стойности са 0 или невалидни)
             const allZeros = MACRO_FIELDS.every(f => {
                 const value = Number(data[f]);
-                return !value || value === 0;
+                return isNaN(value) || value === 0;
             });
             
             if (allZeros) {
