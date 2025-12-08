@@ -451,11 +451,20 @@ async function populateSummaryWithAiMacros(form) {
     const quantityText = (formData.get('quantityCustom') || '').trim();
     const quantityCountVal = parseFloat(formData.get('quantityCountInput'));
     
+    console.log('[populateSummaryWithAiMacros] Form data:', {
+        foodDesc,
+        quantityVal,
+        quantityText,
+        quantityCountVal
+    });
+    
     let macrosMissing = false;
     MACRO_FIELDS.forEach(f => {
         const val = parseFloat(formData.get(f));
         if (isNaN(val)) macrosMissing = true;
     });
+    
+    console.log('[populateSummaryWithAiMacros] Macros missing:', macrosMissing);
     
     // Ако липсват макроси и имаме описание на храната, зареждаме ги автоматично на заден план
     if (macrosMissing && foodDesc) {
@@ -490,11 +499,15 @@ async function populateSummaryWithAiMacros(form) {
                 quantity = `${quantityCountVal} броя`;
             }
             
+            console.log('[populateSummaryWithAiMacros] Final quantity for AI:', quantity);
+            
             // AI може да работи и без количество (ще изчисли на 100г база)
             // Затова не хвърляме грешка, а просто подаваме каквото имаме
             
             // Извличаме макросите от AI
             const fetched = await nutrientLookup(foodDesc, quantity);
+            
+            console.log('[populateSummaryWithAiMacros] AI response:', fetched);
             
             // Попълваме полетата с получените данни
             MACRO_FIELDS.forEach(f => {
