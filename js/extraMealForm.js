@@ -132,6 +132,12 @@ let nutrientLookup = async function (name, quantity = '') {
         
         const data = await resp.json();
         
+        // Check if backend returned an error response
+        if (data && data.success === false) {
+            const errorMessage = data.message || data.error || 'Unknown error';
+            throw new Error(`Nutrient lookup failed: ${errorMessage}`);
+        }
+        
         // Validate that we got usable data
         if (!data || typeof data !== 'object') {
             throw new Error('Nutrient lookup returned invalid data');
@@ -495,17 +501,6 @@ async function populateSummaryWithAiMacros(form) {
             // Извличаме макросите от AI
             const fetched = await nutrientLookup(foodDesc, quantity);
             
-            // Валидираме дали AI отговорът е валиден (не всички стойности са 0 или невалидни)
-            const allZeros = MACRO_FIELDS.every(f => {
-                const value = Number(fetched[f]);
-                return isNaN(value) || value === 0;
-            });
-            
-            if (allZeros) {
-                // Ако всички стойности са 0, това е невалиден отговор
-                throw new Error('AI върна невалидни данни (всички стойности са 0)');
-            }
-            
             // Попълваме полетата с получените данни
             MACRO_FIELDS.forEach(f => {
                 const field = form.querySelector(`input[name="${f}"]`);
@@ -739,17 +734,6 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             // Call nutrientLookup in background
             const data = await nutrientLookup(description, quantity);
             console.log('[extraMealForm] AI lookup successful:', data);
-            
-            // Валидираме дали AI отговорът е валиден (не всички стойности са 0 или невалидни)
-            const allZeros = MACRO_FIELDS.every(f => {
-                const value = Number(data[f]);
-                return isNaN(value) || value === 0;
-            });
-            
-            if (allZeros) {
-                // Ако всички стойности са 0, това е невалиден отговор
-                throw new Error('AI върна невалидни данни (всички стойности са 0)');
-            }
             
             // Fill the macro fields with the retrieved data
             MACRO_FIELDS.forEach(f => {

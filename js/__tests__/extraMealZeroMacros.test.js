@@ -4,7 +4,7 @@ import { jest } from '@jest/globals';
 /**
  * Test for the fix: AI macro lookup should accept zero values
  * Some foods naturally have zero values for certain macros (e.g., fiber in many processed foods)
- * The code should accept zero values and only reject when ALL macros are zero (which indicates AI failure)
+ * The code should accept zero values. Backend now returns errors instead of all-zeros when AI fails.
  */
 describe('extraMealForm - zero macro values handling', () => {
   let initializeExtraMealFormLogic;
@@ -167,18 +167,16 @@ describe('extraMealForm - zero macro values handling', () => {
     expect(fiberField.value).toBe('3.00');
   });
 
-  test('should reject when ALL macros are zero (AI failure)', async () => {
-    // Mock AI returning all zeros (indicates failure)
+  test('should reject when backend returns error (AI failure)', async () => {
+    // Mock AI returning error response (backend now returns errors instead of zeros)
     mockFetch = jest.fn((url) => {
       if (url === '/nutrient-lookup') {
         return Promise.resolve({
           ok: true,
           json: async () => ({
-            calories: 0,
-            protein: 0,
-            carbs: 0,
-            fat: 0,
-            fiber: 0
+            success: false,
+            error: 'AI extraction failed',
+            message: 'AI не успя да извлече хранителни данни'
           })
         });
       }
@@ -296,7 +294,7 @@ describe('extraMealForm - zero macro values handling', () => {
     nextBtn.click();
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    // Verify that an error was shown (all zeros should be rejected)
+    // Verify that an error was shown (backend error should be handled)
     const summaryBox = container.querySelector('#extraMealSummary');
     const loadingIndicator = summaryBox.querySelector('.ai-loading-indicator');
     
@@ -304,7 +302,7 @@ describe('extraMealForm - zero macro values handling', () => {
     // Error message should be shown
     expect(loadingIndicator.textContent).toContain('не могат да бъдат изчислени');
 
-    // Verify macro fields are still empty (rejected)
+    // Verify macro fields are still empty (error occurred)
     expect(container.querySelector('input[name="calories"]').value).toBe('');
     expect(container.querySelector('input[name="protein"]').value).toBe('');
   });

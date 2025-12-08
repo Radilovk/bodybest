@@ -8662,13 +8662,13 @@ async function handleNutrientLookupRequest(request, env) {
                     }
                     
                     if (!obj) {
-                        // Fall through to return zeros if extraction failed
+                        // AI failed to extract valid nutrition data - return error instead of zeros
+                        console.error('AI failed to extract nutrition data from response');
                         return {
-                            calories: 0,
-                            protein: 0,
-                            carbs: 0,
-                            fat: 0,
-                            fiber: 0
+                            success: false,
+                            error: 'AI extraction failed',
+                            message: 'AI не успя да извлече хранителни данни от отговора',
+                            statusHint: 500
                         };
                     }
                     
@@ -8681,20 +8681,30 @@ async function handleNutrientLookupRequest(request, env) {
                     };
                 } catch (parseErr) {
                     console.error('AI response parsing error:', parseErr);
-                    // Fall through to return zeros
+                    return {
+                        success: false,
+                        error: 'AI parsing error',
+                        message: 'AI не успя да обработи отговора',
+                        statusHint: 500
+                    };
                 }
             } catch (err) {
                 console.error('AI nutrient lookup error:', err);
+                return {
+                    success: false,
+                    error: 'AI lookup error',
+                    message: 'AI не успя да изчисли хранителни данни',
+                    statusHint: 500
+                };
             }
         }
 
-        // Fallback to zeros if everything fails
+        // If AI is not configured, return error
         return {
-            calories: 0,
-            protein: 0,
-            carbs: 0,
-            fat: 0,
-            fiber: 0
+            success: false,
+            error: 'AI not configured',
+            message: 'AI услугата не е конфигурирана',
+            statusHint: 503
         };
 
     } catch (error) {
