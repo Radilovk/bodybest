@@ -429,6 +429,13 @@
         <label>Модел: <input id="analysisModel" type="text" list="modelOptions"> <button type="button" id="testAnalysisModel">Тествай</button></label>
         <label>Промпт:<br><textarea id="analysisPrompt" rows="2"></textarea></label>
       </fieldset>
+      <fieldset>
+        <legend>Извличане на макроси (Nutrient Lookup)</legend>
+        <label>Модел: <input id="nutrientModel" type="text" list="modelOptions"> <button type="button" id="testNutrientModel">Тествай</button></label>
+        <label>Промпт:<br><textarea id="nutrientPrompt" rows="3" placeholder="Промпт за извличане на макроси. Използвай {quantity} за позиция на количеството."></textarea></label>
+        <small id="nutrientHints" class="text-muted"></small>
+        <p class="note">Използва се за несъществуващи продукти в базата данни. Модел трябва да е същият като за чат асистента за по-добра точност.</p>
+      </fieldset>
       <div class="preset-controls">
         <label>Запазени настройки:
           <select id="aiPresetSelect"></select>

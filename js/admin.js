@@ -10,6 +10,16 @@ import { ensureChart } from './chartLoader.js';
 import { setupPlanRegeneration } from './planRegenerator.js';
 import { cachedFetch } from './requestCache.js';
 
+// AI model configuration keys
+const AI_MODEL_KEYS = [
+    'model_plan_generation',
+    'model_chat',
+    'model_principle_adjustment',
+    'model_image_analysis',
+    'model_questionnaire_analysis',
+    'model_nutrient_lookup'
+];
+
 async function ensureLoggedIn() {
     if (localStorage.getItem('adminSession') === 'true') {
         return;
@@ -104,6 +114,10 @@ const testImageBtn = document.getElementById('testImageModel');
 const analysisModelInput = document.getElementById('analysisModel');
 const analysisPromptInput = document.getElementById('analysisPrompt');
 const testAnalysisBtn = document.getElementById('testAnalysisModel');
+const nutrientModelInput = document.getElementById('nutrientModel');
+const nutrientPromptInput = document.getElementById('nutrientPrompt');
+const nutrientHints = document.getElementById('nutrientHints');
+const testNutrientBtn = document.getElementById('testNutrientModel');
 
 
 const modelOptionsList = document.getElementById('modelOptions');
@@ -1569,6 +1583,8 @@ async function loadAiConfig() {
         if (imagePromptInput) imagePromptInput.value = cfg.prompt_image_analysis || '';
         if (analysisModelInput) analysisModelInput.value = cfg.model_questionnaire_analysis || '';
         if (analysisPromptInput) analysisPromptInput.value = cfg.prompt_questionnaire_analysis || '';
+        if (nutrientModelInput) nutrientModelInput.value = cfg.model_nutrient_lookup || '';
+        if (nutrientPromptInput) nutrientPromptInput.value = cfg.prompt_nutrient_lookup || '';
         if (planPromptInput) planPromptInput.value = cfg.prompt_unified_plan_generation_v2 || '';
         if (planTokensInput) planTokensInput.value = cfg.plan_token_limit || '';
         if (planTemperatureInput) planTemperatureInput.value = cfg.plan_temperature || '';
@@ -1584,8 +1600,8 @@ async function loadAiConfig() {
         updateHints(chatModelInput, chatHints);
         updateHints(modModelInput, modHints);
         updateHints(imageModelInput, imageHints);
-        ['model_plan_generation', 'model_chat', 'model_principle_adjustment', 'model_image_analysis', 'model_questionnaire_analysis']
-            .forEach(k => { if (cfg[k]) availableModels.add(cfg[k]); });
+        updateHints(nutrientModelInput, nutrientHints);
+        AI_MODEL_KEYS.forEach(k => { if (cfg[k]) availableModels.add(cfg[k]); });
         populateModelOptions();
     } catch (err) {
         console.error('Error loading AI config:', err);
@@ -1603,6 +1619,8 @@ async function saveAiConfig() {
             prompt_image_analysis: imagePromptInput ? imagePromptInput.value.trim() : '',
             model_questionnaire_analysis: analysisModelInput ? analysisModelInput.value.trim() : '',
             prompt_questionnaire_analysis: analysisPromptInput ? analysisPromptInput.value.trim() : '',
+            model_nutrient_lookup: nutrientModelInput ? nutrientModelInput.value.trim() : '',
+            prompt_nutrient_lookup: nutrientPromptInput ? nutrientPromptInput.value.trim() : '',
             prompt_unified_plan_generation_v2: planPromptInput ? planPromptInput.value.trim() : '',
             plan_token_limit: planTokensInput ? planTokensInput.value.trim() : '',
             plan_temperature: planTemperatureInput ? planTemperatureInput.value.trim() : '',
@@ -2081,10 +2099,12 @@ if (aiConfigForm) {
     testModBtn?.addEventListener('click', () => testAiModel(modModelInput.value.trim()));
     testImageBtn?.addEventListener('click', () => testAiModel(imageModelInput.value.trim()));
     testAnalysisBtn?.addEventListener('click', () => testAiModel(analysisModelInput.value.trim()));
+    testNutrientBtn?.addEventListener('click', () => testAiModel(nutrientModelInput.value.trim()));
     planModelInput?.addEventListener('input', () => updateHints(planModelInput, planHints));
     chatModelInput?.addEventListener('input', () => updateHints(chatModelInput, chatHints));
     modModelInput?.addEventListener('input', () => updateHints(modModelInput, modHints));
     imageModelInput?.addEventListener('input', () => updateHints(imageModelInput, imageHints));
+    nutrientModelInput?.addEventListener('input', () => updateHints(nutrientModelInput, nutrientHints));
 }
 
 if (emailSettingsForm) {
