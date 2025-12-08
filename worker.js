@@ -8712,6 +8712,7 @@ async function handleNutrientLookupRequest(request, env) {
         return { 
             success: false,
             error: 'Internal Server Error',
+            message: 'Вътрешна грешка на сървъра',
             statusHint: 500 
         };
     }
