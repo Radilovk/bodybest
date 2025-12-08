@@ -981,12 +981,21 @@ curl https://your-worker.workers.dev/api/healthcheck
 
 ## Следващи стъпки
 
-За по-детайлна информация:
+### За нови разработчици
+🚀 **Започни с [QUICK_START.md](./QUICK_START.md)** - Бърз старт за работа с проекта
+
+### За детайлна информация
 - 📁 [FILE_STRUCTURE.md](./FILE_STRUCTURE.md) - Детайлна структура на файловете
 - 🗺️ [MODULE_MAP.md](./MODULE_MAP.md) - Карта на модулите и техните отговорности
-- 🔌 [API_REFERENCE.md](./docs/API_REFERENCE.md) - API endpoint документация
-- 🎨 [THEME_SYSTEM.md](./docs/THEME_SYSTEM.md) - Тема система
+- 🔌 [API_REFERENCE.md](./docs/API_REFERENCE.md) - API endpoint документация (ако съществува)
+- 🎨 [THEME_SYSTEM.md](./docs/THEME_SYSTEM.md) - Тема система (ако съществува)
 - 📖 [DEV_GUIDE_BG.md](./docs/DEV_GUIDE_BG.md) - Ръководство за разработчици
+
+### Допълнителна документация
+- 📊 [ANALYTICS_FORMULAS_BG.md](./docs/ANALYTICS_FORMULAS_BG.md) - Формули за аналитика
+- 🤖 [AI_PLAN_MODIFICATION_BG.md](./docs/AI_PLAN_MODIFICATION_BG.md) - AI план промени
+- 📋 [QUESTIONNAIRE_ANALYSIS_CORRELATION.md](./docs/QUESTIONNAIRE_ANALYSIS_CORRELATION.md) - Анализ на въпросник
+- ⚡ [OPTIMIZATIONS.md](./docs/OPTIMIZATIONS.md) - Оптимизации
 
 ---
 

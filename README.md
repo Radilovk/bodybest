@@ -2,12 +2,22 @@
 
 A simple static web application for tracking nutrition and workouts.
 
+## 🚀 Quick Start
+
+**Нов в проекта?** → Започни с **[QUICK_START.md](./QUICK_START.md)** (5-10 минути)
+
 ## 📚 Documentation
 
+### Core Documentation
+- **[QUICK_START.md](./QUICK_START.md)** - Бърз старт за нови разработчици ⭐
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Цялостна архитектура и философия на проекта
 - **[MODULE_MAP.md](./MODULE_MAP.md)** - Детайлна карта на всички модули и техните отговорности
 - **[FILE_STRUCTURE.md](./FILE_STRUCTURE.md)** - Пълна структура на файловете и директориите
 - **[DEV_GUIDE_BG.md](./docs/DEV_GUIDE_BG.md)** - Кратко ръководство за разработчици
+
+### Usage
+За бърз преглед прочети [QUICK_START.md](./QUICK_START.md).  
+За детайлно разбиране прочети [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## Development Setup
 
