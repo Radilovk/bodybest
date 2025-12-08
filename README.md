@@ -2,6 +2,13 @@
 
 A simple static web application for tracking nutrition and workouts.
 
+## 📚 Documentation
+
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Цялостна архитектура и философия на проекта
+- **[MODULE_MAP.md](./MODULE_MAP.md)** - Детайлна карта на всички модули и техните отговорности
+- **[FILE_STRUCTURE.md](./FILE_STRUCTURE.md)** - Пълна структура на файловете и директориите
+- **[DEV_GUIDE_BG.md](./docs/DEV_GUIDE_BG.md)** - Кратко ръководство за разработчици
+
 ## Development Setup
 
 For a quick overview in Bulgarian, see [docs/DEV_GUIDE_BG.md](docs/DEV_GUIDE_BG.md).
