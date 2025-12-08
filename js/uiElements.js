@@ -79,7 +79,8 @@ export function initializeSelectors() {
                 'macroAnalyticsCardContainer', 'macroMetricsGrid',
                 'macroMetricsPreview',
                 'recFoodAllowedCard', 'recFoodLimitCard', 'recHydrationCard',
-                'recCookingMethodsCard', 'recSupplementsCard'
+                'recCookingMethodsCard', 'recSupplementsCard',
+                'headerTitle' // No longer used, previously removed from UI
             ];
             if (!optionalOrDynamic.includes(key)) {
                 console.warn(`HTML element not found: ${key} (selector: '${selectorValue}')`);
