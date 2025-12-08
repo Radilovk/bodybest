@@ -490,13 +490,27 @@ async function populateSummaryWithAiMacros(form) {
             // Извличаме макросите от AI
             const fetched = await nutrientLookup(foodDesc, quantity);
             
+            // Валидираме дали AI отговорът е валиден (не всички стойности са 0)
+            const allZeros = MACRO_FIELDS.every(f => {
+                const value = Number(fetched[f]);
+                return !value || value === 0;
+            });
+            
+            if (allZeros) {
+                // Ако всички стойности са 0, това е невалиден отговор
+                throw new Error('AI върна невалидни данни (всички стойности са 0)');
+            }
+            
             // Попълваме полетата с получените данни
             MACRO_FIELDS.forEach(f => {
                 const field = form.querySelector(`input[name="${f}"]`);
                 if (field && fetched[f] !== undefined) {
                     const value = Number(fetched[f]);
-                    field.value = Number.isFinite(value) ? value.toFixed(2) : fetched[f];
-                    field.dataset.autofilled = 'true';
+                    // Приемаме само положителни стойности (не 0 или отрицателни)
+                    if (Number.isFinite(value) && value > 0) {
+                        field.value = value.toFixed(2);
+                        field.dataset.autofilled = 'true';
+                    }
                 }
             });
             
@@ -718,13 +732,27 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             const data = await nutrientLookup(description, quantity);
             console.log('[extraMealForm] AI lookup successful:', data);
             
+            // Валидираме дали AI отговорът е валиден (не всички стойности са 0)
+            const allZeros = MACRO_FIELDS.every(f => {
+                const value = Number(data[f]);
+                return !value || value === 0;
+            });
+            
+            if (allZeros) {
+                // Ако всички стойности са 0, това е невалиден отговор
+                throw new Error('AI върна невалидни данни (всички стойности са 0)');
+            }
+            
             // Fill the macro fields with the retrieved data
             MACRO_FIELDS.forEach(f => {
                 const field = form.querySelector(`input[name="${f}"]`);
                 if (field && data[f] !== undefined) {
                     const value = Number(data[f]);
-                    field.value = Number.isFinite(value) ? value.toFixed(2) : data[f];
-                    field.dataset.autofilled = 'true';
+                    // Приемаме само положителни стойности (не 0 или отрицателни)
+                    if (Number.isFinite(value) && value > 0) {
+                        field.value = value.toFixed(2);
+                        field.dataset.autofilled = 'true';
+                    }
                 }
             });
             
@@ -874,15 +902,16 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             grams = productMeasures[key][0].grams * count;
             console.log('[extraMealForm] Product found in DB, calculated grams:', grams);
         } else {
-            // Product not in database, build descriptive query for AI
+            // Product not in database - DO NOT trigger AI lookup here
+            // AI lookup will happen at the summary step after user completes ALL quantity fields
+            // This prevents premature API calls with incomplete data (00 values issue)
             const quantityDescription = `${count} броя`;
             if (quantityCustomInput) quantityCustomInput.value = quantityDescription;
             
-            console.log('[extraMealForm] Product NOT in DB, triggering AI lookup with:', { desc, quantityDescription });
+            console.log('[extraMealForm] Product NOT in DB, will calculate macros at summary step after all data is entered');
             
-            // Trigger AI lookup with descriptive quantity
-            triggerBackgroundMacroLookup(desc, quantityDescription);
-            return; // Exit early as AI lookup is in progress
+            // Exit early - no macro calculation yet
+            return;
         }
         
         if (quantityHiddenInput) quantityHiddenInput.value = String(grams);
