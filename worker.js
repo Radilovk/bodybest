@@ -8541,13 +8541,24 @@ async function handleNutrientLookupRequest(request, env) {
                         }
                         const scale = grams / 100;
                         
-                        return {
+                        const macros = {
                             calories: Number((product.calories * scale).toFixed(2)) || 0,
                             protein: Number((product.protein * scale).toFixed(2)) || 0,
                             carbs: Number((product.carbs * scale).toFixed(2)) || 0,
                             fat: Number((product.fat * scale).toFixed(2)) || 0,
                             fiber: Number((product.fiber * scale).toFixed(2)) || 0
                         };
+                        
+                        // Check if all macros are zero - if so, don't use local data, use AI instead
+                        // This handles products like water/tea which legitimately have zero calories
+                        // but we want AI to provide more context-aware response
+                        const allZero = macros.calories === 0 && macros.protein === 0 && 
+                                       macros.carbs === 0 && macros.fat === 0 && macros.fiber === 0;
+                        
+                        if (!allZero) {
+                            return macros;
+                        }
+                        // If all zeros, continue to AI lookup for better response
                     }
                 }
             } catch (err) {
