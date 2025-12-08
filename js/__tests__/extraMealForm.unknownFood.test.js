@@ -71,7 +71,7 @@ describe('extraMealForm - unknown food handling', () => {
     ({ initializeExtraMealFormLogic } = await import('../extraMealForm.js'));
   });
 
-  test('should trigger AI lookup when using quantityCountInput for unknown food', async () => {
+  test('should NOT trigger AI lookup immediately when using quantityCountInput for unknown food', async () => {
     document.body.innerHTML = `
       <div id="container">
         <form id="extraMealEntryFormActual">
@@ -136,7 +136,7 @@ describe('extraMealForm - unknown food handling', () => {
     const quantityCountInput = container.querySelector('#quantityCountInput');
     quantityCountInput.value = '2';
 
-    // Trigger input event (should trigger computeQuantityFromManual)
+    // Trigger input event - should NOT trigger AI lookup immediately for unknown foods
     quantityCountInput.dispatchEvent(new Event('input', { bubbles: true }));
 
     // Wait for async operations
@@ -146,14 +146,10 @@ describe('extraMealForm - unknown food handling', () => {
     const quantityCustom = container.querySelector('#quantityCustom');
     expect(quantityCustom.value).toBe('2 броя');
 
-    // Verify that fetch was called with proper parameters
+    // Verify that fetch was NOT called immediately (this is the fix!)
+    // AI lookup should only happen at summary step when all quantity fields are complete
     const nutrientCalls = mockFetch.mock.calls.filter(c => c[0] === '/nutrient-lookup');
-    expect(nutrientCalls.length).toBeGreaterThan(0);
-    
-    const lastCall = nutrientCalls[nutrientCalls.length - 1];
-    const requestBody = JSON.parse(lastCall[1].body);
-    expect(requestBody.food).toBe('непозната пица');
-    expect(requestBody.quantity).toBe('2 броя');
+    expect(nutrientCalls.length).toBe(0);
   });
 
   test('should extract quantity from multiple sources in summary step', async () => {
