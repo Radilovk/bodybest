@@ -49,7 +49,7 @@ describe('extraMealForm populateSummary', () => {
       openModal: jest.fn(),
       closeModal: jest.fn(),
     }));
-    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
+    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: { nutrientLookup: '/nutrient-lookup' } }));
     jest.unstable_mockModule('../app.js', () => ({
       currentUserId: 'u1',
       todaysExtraMeals: [],
@@ -140,7 +140,7 @@ describe('extraMealForm populateSummary', () => {
       openModal: jest.fn(),
       closeModal: jest.fn(),
     }));
-    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
+    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: { nutrientLookup: '/nutrient-lookup' } }));
     jest.unstable_mockModule('../app.js', () => ({
       currentUserId: 'u1',
       todaysExtraMeals: [],
@@ -258,7 +258,7 @@ describe('extraMealForm populateSummary', () => {
       openModal: jest.fn(),
       closeModal: jest.fn(),
     }));
-    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
+    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: { nutrientLookup: '/nutrient-lookup' } }));
     jest.unstable_mockModule('../app.js', () => ({
       currentUserId: 'u1',
       todaysExtraMeals: [],
@@ -375,7 +375,7 @@ describe('quantity card selection', () => {
       openModal: jest.fn(),
       closeModal: jest.fn(),
     }));
-    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
+    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: { nutrientLookup: '/nutrient-lookup' } }));
     jest.unstable_mockModule('../app.js', () => ({
       currentUserId: 'u1',
       todaysExtraMeals: [],
@@ -444,7 +444,7 @@ describe('autocomplete suggestions', () => {
       openModal: jest.fn(),
       closeModal: jest.fn(),
     }));
-    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
+    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: { nutrientLookup: '/nutrient-lookup' } }));
     jest.unstable_mockModule('../app.js', () => ({
       currentUserId: 'u1',
       todaysExtraMeals: [],
@@ -506,7 +506,7 @@ describe('quantityCustom grams parsing', () => {
       openModal: jest.fn(),
       closeModal: jest.fn(),
     }));
-    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
+    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: { nutrientLookup: '/nutrient-lookup' } }));
     jest.unstable_mockModule('../app.js', () => ({
       currentUserId: 'u1',
       todaysExtraMeals: [],

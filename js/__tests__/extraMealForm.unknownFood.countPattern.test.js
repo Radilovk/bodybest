@@ -36,7 +36,7 @@ describe('extraMealForm - unknown food with count pattern', () => {
       openModal: jest.fn(),
       closeModal: jest.fn()
     }));
-    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
+    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: { nutrientLookup: '/nutrient-lookup' } }));
     jest.unstable_mockModule('../macroUtils.js', () => ({
       removeMealMacros: jest.fn(),
       registerNutrientOverrides: jest.fn(),

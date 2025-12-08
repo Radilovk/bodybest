@@ -20,7 +20,7 @@ describe('extraMealForm AI macro calculation in summary', () => {
       openModal: jest.fn(),
       closeModal: jest.fn(),
     }));
-    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
+    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: { nutrientLookup: '/nutrient-lookup' } }));
     jest.unstable_mockModule('../app.js', () => ({
       currentUserId: 'u1',
       todaysExtraMeals: [],
@@ -176,7 +176,7 @@ describe('extraMealForm AI macro calculation in summary', () => {
       openModal: jest.fn(),
       closeModal: jest.fn(),
     }));
-    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: {} }));
+    jest.unstable_mockModule('../config.js', () => ({ apiEndpoints: { nutrientLookup: '/nutrient-lookup' } }));
     jest.unstable_mockModule('../app.js', () => ({
       currentUserId: 'u1',
       todaysExtraMeals: [],
