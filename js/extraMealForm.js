@@ -69,17 +69,38 @@ let nutrientLookup = async function (name, quantity = '') {
     const cacheKey = buildCacheKey(name, quantity);
     const cached = nutrientLookupCache[cacheKey] || getNutrientOverride(cacheKey);
     if (cached) return cached;
-    const resp = await fetch('/nutrient-lookup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ food: (name || '').toLowerCase().trim(), quantity })
-    });
-    if (!resp.ok) throw new Error('Nutrient lookup failed');
-    const data = await resp.json();
-    nutrientLookupCache[cacheKey] = data;
-    dynamicNutrientOverrides[cacheKey] = data;
-    registerNutrientOverrides(dynamicNutrientOverrides);
-    return data;
+    
+    try {
+        const resp = await fetch('/nutrient-lookup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ food: (name || '').toLowerCase().trim(), quantity })
+        });
+        
+        if (!resp.ok) {
+            const errorText = await resp.text().catch(() => 'Unknown error');
+            throw new Error(`Nutrient lookup failed (${resp.status}): ${errorText}`);
+        }
+        
+        const data = await resp.json();
+        
+        // Validate that we got some macro data back
+        if (!data || (data.calories === undefined && data.protein === undefined && 
+                      data.carbs === undefined && data.fat === undefined)) {
+            throw new Error('Invalid response: No nutrient data returned');
+        }
+        
+        nutrientLookupCache[cacheKey] = data;
+        dynamicNutrientOverrides[cacheKey] = data;
+        registerNutrientOverrides(dynamicNutrientOverrides);
+        return data;
+    } catch (err) {
+        // Re-throw with more context about what we were looking up
+        if (err instanceof TypeError && err.message.includes('fetch')) {
+            throw new Error(`Network error looking up "${name}": ${err.message}`);
+        }
+        throw err;
+    }
 };
 
 export function __setNutrientLookupFn(fn) {
@@ -459,6 +480,12 @@ async function populateSummaryWithAiMacros(form) {
             // Проверяваме дали имаме описание на храната
             if (!foodDesc || !foodDesc.trim()) {
                 errorMessage += 'Моля, въведете описание на храната.';
+            } else if (err.message && err.message.includes('Network error')) {
+                // Network error from our improved nutrientLookup
+                errorMessage += 'Проблем с връзката до сървъра. Моля, опитайте отново.';
+            } else if (err.message && err.message.includes('Invalid response')) {
+                // Got a response but no data
+                errorMessage += 'Сървърът не можа да намери информация за този продукт.';
             } else if (err instanceof TypeError && err.message && err.message.toLowerCase().includes('fetch')) {
                 // TypeError with 'fetch' typically indicates network error
                 errorMessage += 'Проблем с връзката. Моля, опитайте отново.';
@@ -683,7 +710,18 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             console.error('[extraMealForm] AI lookup failed:', err);
             // Show error message to user so they know what happened
             if (autoFillMsg) {
-                autoFillMsg.innerHTML = '<i class="bi bi-exclamation-triangle"></i><span>Неуспешно изчисляване. Ще се опита отново в обобщението.</span>';
+                let userMessage = 'Неуспешно изчисляване. ';
+                
+                // Provide more specific error messages
+                if (err.message && err.message.includes('Network error')) {
+                    userMessage += 'Проблем с връзката.';
+                } else if (err.message && err.message.includes('Invalid response')) {
+                    userMessage += 'Сървърът не можа да намери продукта.';
+                } else {
+                    userMessage += 'Ще се опита отново в обобщението.';
+                }
+                
+                autoFillMsg.innerHTML = `<i class="bi bi-exclamation-triangle"></i><span>${userMessage}</span>`;
                 autoFillMsg.style.color = 'var(--warning-color, #f57c00)';
                 autoFillMsg.classList.remove('hidden');
                 // Hide after a delay
