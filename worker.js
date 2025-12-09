@@ -8738,12 +8738,127 @@ async function handleNutrientLookupRequest(request, env) {
                 };
             }
         }
+        
+        // Try Gemini API as fallback if Cloudflare AI is not configured
+        const geminiKey = env[GEMINI_API_KEY_SECRET_NAME];
+        if (geminiKey && nutrientModel) {
+            try {
+                // Use custom prompt from admin config or fallback to default
+                const defaultPromptQuantity = 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the EXACT quantity of food specified. Calories in kcal, protein/carbs/fat/fiber in grams. Calculate for the specific quantity provided (e.g., if given "150 гр", calculate for 150 grams, not per 100g). If given descriptive quantities like "2 парчета" or "1 чаша", estimate the weight in grams and calculate accordingly. Return ONLY the JSON object, no explanations.';
+                const defaultPromptPer100g = 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food per 100g. Calories in kcal, protein/carbs/fat/fiber in grams. Return ONLY the JSON object, no explanations.';
+                
+                let userPrompt;
+                if (nutrientPromptBase) {
+                    // Use configured prompt with quantity
+                    const promptWithQuantity = normalizedQuantity 
+                        ? nutrientPromptBase.replaceAll('{quantity}', normalizedQuantity)
+                        : nutrientPromptBase;
+                    userPrompt = `${promptWithQuantity}\n\nFood: ${foodQuery}`;
+                } else {
+                    // Fallback to default prompts
+                    const systemPrompt = normalizedQuantity ? defaultPromptQuantity : defaultPromptPer100g;
+                    userPrompt = `${systemPrompt}\n\nFood: ${foodQuery}`;
+                }
+                
+                const responseText = await callGeminiAPI(
+                    userPrompt,
+                    geminiKey,
+                    { 
+                        temperature: 0.3,  // Lower temperature for more consistent results
+                        maxOutputTokens: 256  // Short response expected
+                    },
+                    [],
+                    nutrientModel
+                );
+                
+                // Extract JSON from Gemini response
+                let obj;
+                try {
+                    obj = JSON.parse(responseText);
+                } catch (directParseErr) {
+                    // Try to extract JSON from text using bracket matching
+                    const startIdx = responseText.indexOf('{');
+                    if (startIdx === -1) {
+                        console.error('No JSON object found in Gemini response');
+                        obj = null;
+                    } else {
+                        let depth = 0;
+                        let endIdx = -1;
+                        
+                        for (let i = startIdx; i < responseText.length; i++) {
+                            const char = responseText[i];
+                            if (char === '{') {
+                                depth++;
+                            } else if (char === '}') {
+                                depth--;
+                                if (depth === 0) {
+                                    endIdx = i + 1;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (endIdx === -1) {
+                            console.error('Incomplete JSON object in Gemini response');
+                            obj = null;
+                        } else {
+                            const jsonStr = responseText.substring(startIdx, endIdx);
+                            try {
+                                obj = JSON.parse(jsonStr);
+                            } catch (extractParseErr) {
+                                console.error('Failed to parse extracted JSON from Gemini response');
+                                obj = null;
+                            }
+                        }
+                    }
+                }
+                
+                if (!obj) {
+                    console.error('Gemini failed to extract nutrition data from response');
+                    return {
+                        success: false,
+                        error: 'Gemini extraction failed',
+                        message: 'Gemini не успя да извлече хранителни данни от отговора',
+                        statusHint: 500
+                    };
+                }
+                
+                const macros = {
+                    calories: Number(obj.calories) || 0,
+                    protein: Number(obj.protein) || 0,
+                    carbs: Number(obj.carbs) || 0,
+                    fat: Number(obj.fat) || 0,
+                    fiber: Number(obj.fiber) || 0
+                };
+                
+                // Check if Gemini returned all zeros
+                if (areAllMacrosZero(macros)) {
+                    console.error('Gemini returned all zeros - unable to recognize food:', foodQuery);
+                    return {
+                        success: false,
+                        error: 'Gemini returned all zeros',
+                        message: 'AI не може да разпознае храната. Моля, въведете макросите ръчно или опитайте с по-подробно описание (напр. "шоколадов мъфин 80г").',
+                        statusHint: 422
+                    };
+                }
+                
+                return macros;
+            } catch (err) {
+                console.error('Gemini nutrient lookup error:', err);
+                return {
+                    success: false,
+                    error: 'Gemini lookup error',
+                    message: 'Gemini не успя да изчисли хранителни данни',
+                    statusHint: 500
+                };
+            }
+        }
 
         // If AI is not configured, return error
         return {
             success: false,
             error: 'AI not configured',
-            message: 'AI услугата не е конфигурирана',
+            message: 'AI услугата не е конфигурирана. Моля, конфигурирайте модел в KV store (model_nutrient_lookup) или уверете се, че имате GEMINI_API_KEY.',
             statusHint: 503
         };
 
@@ -8977,4 +9092,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callModelWithTimeout, setCallModelImplementation, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleProposePlanChangeRequest, handleApprovePlanChangeRequest, handleGetPendingPlanChangesRequest, handleRejectPlanChangeRequest, applyPlanChanges, parsePlanModificationRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary, AI_CALL_TIMEOUT_MS, DEFAULT_PLAN_CALL_TIMEOUT_MS, resolvePlanCallTimeoutMs };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callModelWithTimeout, setCallModelImplementation, callGeminiAPI, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleProposePlanChangeRequest, handleApprovePlanChangeRequest, handleGetPendingPlanChangesRequest, handleRejectPlanChangeRequest, handleNutrientLookupRequest, applyPlanChanges, parsePlanModificationRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary, AI_CALL_TIMEOUT_MS, DEFAULT_PLAN_CALL_TIMEOUT_MS, resolvePlanCallTimeoutMs };
