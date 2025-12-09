@@ -16,6 +16,9 @@ import { debounce } from './debounce.js';
 
 const MACRO_FIELDS = ['calories','protein','carbs','fat','fiber'];
 const SUCCESS_MESSAGE_TIMEOUT_MS = 3000;
+const RETRY_DELAY_503_MS = 300000; // 5 minutes for AI not configured errors
+const RETRY_DELAY_DEFAULT_MS = 60000; // 1 minute for other errors
+const NETWORK_ERROR_STATUS = 0; // Status code for network errors
 
 const dynamicNutrientOverrides = { ...nutrientOverrides };
 registerNutrientOverrides(dynamicNutrientOverrides);
@@ -109,7 +112,7 @@ let nutrientLookup = async function (name, quantity = '') {
     const failedEntry = failedLookupCache[cacheKey];
     if (failedEntry) {
         const timeSinceFailure = Date.now() - failedEntry.timestamp;
-        const retryDelay = failedEntry.status === 503 ? 300000 : 60000; // 5 min for 503, 1 min for others
+        const retryDelay = failedEntry.status === 503 ? RETRY_DELAY_503_MS : RETRY_DELAY_DEFAULT_MS;
         
         if (timeSinceFailure < retryDelay) {
             console.log(`[nutrientLookup] Skipping retry for "${name}" (failed ${Math.round(timeSinceFailure / 1000)}s ago)`);
@@ -167,7 +170,7 @@ let nutrientLookup = async function (name, quantity = '') {
             // Cache the failure
             failedLookupCache[cacheKey] = {
                 timestamp: Date.now(),
-                status: 500,
+                status: 500, // Treat backend errors as server errors
                 message: error.message
             };
             
@@ -190,10 +193,10 @@ let nutrientLookup = async function (name, quantity = '') {
             networkError.name = 'TypeError';
             networkError.originalError = err;
             
-            // Cache network errors too
+            // Cache network errors
             failedLookupCache[cacheKey] = {
                 timestamp: Date.now(),
-                status: 0,
+                status: NETWORK_ERROR_STATUS,
                 message: networkError.message
             };
             

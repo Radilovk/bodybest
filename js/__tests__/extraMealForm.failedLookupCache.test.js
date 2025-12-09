@@ -10,6 +10,10 @@ describe('extraMealForm - failed lookup caching', () => {
   let initializeExtraMealFormLogic;
   let mockFetch;
   let fetchCallCount;
+  
+  // Test constants
+  const TEST_WAIT_SHORT_MS = 100;
+  const TEST_WAIT_LONG_MS = 300;
 
   beforeEach(async () => {
     jest.resetModules();
@@ -139,7 +143,7 @@ describe('extraMealForm - failed lookup caching', () => {
     quantityCustom.value = '100';
     quantityCustom.dispatchEvent(new Event('input', { bubbles: true }));
     
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, TEST_WAIT_LONG_MS));
     
     expect(fetchCallCount).toBe(1); // First call made
     
@@ -147,7 +151,7 @@ describe('extraMealForm - failed lookup caching', () => {
     quantityCustom.value = '100';
     quantityCustom.dispatchEvent(new Event('input', { bubbles: true }));
     
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, TEST_WAIT_LONG_MS));
     
     expect(fetchCallCount).toBe(1); // Still only 1 call - second was cached
     
@@ -155,7 +159,7 @@ describe('extraMealForm - failed lookup caching', () => {
     quantityCustom.value = '150';
     quantityCustom.dispatchEvent(new Event('input', { bubbles: true }));
     
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, TEST_WAIT_LONG_MS));
     
     // For different quantities, the cache key is different, so this will try again
     // This is expected behavior - we cache per food+quantity combination
@@ -165,7 +169,7 @@ describe('extraMealForm - failed lookup caching', () => {
     quantityCustom.value = '100';
     quantityCustom.dispatchEvent(new Event('input', { bubbles: true }));
     
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, TEST_WAIT_LONG_MS));
     
     expect(fetchCallCount).toBe(2); // Still cached, no new call
   });
@@ -233,13 +237,13 @@ describe('extraMealForm - failed lookup caching', () => {
     
     // Navigate through steps
     nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, TEST_WAIT_SHORT_MS));
     nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, TEST_WAIT_SHORT_MS));
     nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, TEST_WAIT_SHORT_MS));
     nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, TEST_WAIT_LONG_MS));
 
     // Check that error message is displayed
     const summaryBox = container.querySelector('#extraMealSummary');
@@ -366,13 +370,13 @@ describe('extraMealForm - failed lookup caching', () => {
     // Navigate to summary
     const nextBtn = container.querySelector('#emNextStepBtn');
     nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, TEST_WAIT_SHORT_MS));
     nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, TEST_WAIT_SHORT_MS));
     nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, TEST_WAIT_SHORT_MS));
     nextBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, TEST_WAIT_LONG_MS));
 
     // Check that network error message is displayed
     const summaryBox = container.querySelector('#extraMealSummary');
