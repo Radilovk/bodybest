@@ -8494,7 +8494,25 @@ async function handleRejectPlanChangeRequest(request, env) {
 // ------------- END FUNCTION: handleRejectPlanChangeRequest -------------
 
 // ------------- START FUNCTION: handleNutrientLookupRequest -------------
+/**
+ * Handles requests for nutrient lookup by food name and quantity.
+ * First checks local product database, then falls back to AI model if not found.
+ * 
+ * @param {Request} request - HTTP request with {food, quantity} in body
+ * @param {Object} env - Environment bindings (KV stores, API keys)
+ * @returns {Promise<Object>} Macro nutrients or error response
+ */
 async function handleNutrientLookupRequest(request, env) {
+    /**
+     * Helper function to check if all macro values are zero
+     * @param {Object} macros - Object with calories, protein, carbs, fat, fiber
+     * @returns {boolean} True if all values are zero
+     */
+    const areAllMacrosZero = (macros) => {
+        return macros.calories === 0 && macros.protein === 0 && 
+               macros.carbs === 0 && macros.fat === 0 && macros.fiber === 0;
+    };
+    
     try {
         const { food, quantity } = await request.json();
         
@@ -8552,10 +8570,7 @@ async function handleNutrientLookupRequest(request, env) {
                         // Check if all macros are zero - if so, don't use local data, use AI instead
                         // This handles products like water/tea which legitimately have zero calories
                         // but we want AI to provide more context-aware response
-                        const allZero = macros.calories === 0 && macros.protein === 0 && 
-                                       macros.carbs === 0 && macros.fat === 0 && macros.fiber === 0;
-                        
-                        if (!allZero) {
+                        if (!areAllMacrosZero(macros)) {
                             return macros;
                         }
                         // If all zeros, continue to AI lookup for better response
@@ -8693,10 +8708,7 @@ async function handleNutrientLookupRequest(request, env) {
                     
                     // Check if AI returned all zeros - this indicates AI couldn't process the food
                     // We should return an error instead of misleading zero values
-                    const allZero = macros.calories === 0 && macros.protein === 0 && 
-                                   macros.carbs === 0 && macros.fat === 0 && macros.fiber === 0;
-                    
-                    if (allZero) {
+                    if (areAllMacrosZero(macros)) {
                         console.error('AI returned all zeros - unable to recognize food:', foodQuery);
                         return {
                             success: false,
