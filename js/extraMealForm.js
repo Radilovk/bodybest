@@ -71,11 +71,6 @@ function getErrorMessageForUser(err, hasDescription = true) {
         return 'Моля, въведете описание на храната.';
     }
     
-    // Check for AI returning all zeros - this means the AI couldn't process the request
-    if (err.message && err.message.includes('всички стойности са 0')) {
-        return 'AI не може да разпознае храната. Моля, въведете макросите ръчно или опитайте с по-подробно описание (напр. "1.5 броя мъфин с шоколад").';
-    }
-    
     // Check for network errors - be more robust
     if (err.name === 'TypeError' || 
         (err.message && (err.message.includes('fetch') || err.message.includes('Network error')))) {
@@ -131,6 +126,12 @@ let nutrientLookup = async function (name, quantity = '') {
         }
         
         const data = await resp.json();
+        
+        // Check if backend returned an error response
+        if (data && data.success === false) {
+            const errorMessage = data.message || data.error || 'Unknown error';
+            throw new Error(`Nutrient lookup failed: ${errorMessage}`);
+        }
         
         // Validate that we got usable data
         if (!data || typeof data !== 'object') {
@@ -450,11 +451,20 @@ async function populateSummaryWithAiMacros(form) {
     const quantityText = (formData.get('quantityCustom') || '').trim();
     const quantityCountVal = parseFloat(formData.get('quantityCountInput'));
     
+    console.log('[populateSummaryWithAiMacros] Form data:', {
+        foodDesc,
+        quantityVal,
+        quantityText,
+        quantityCountVal
+    });
+    
     let macrosMissing = false;
     MACRO_FIELDS.forEach(f => {
         const val = parseFloat(formData.get(f));
         if (isNaN(val)) macrosMissing = true;
     });
+    
+    console.log('[populateSummaryWithAiMacros] Macros missing:', macrosMissing);
     
     // Ако липсват макроси и имаме описание на храната, зареждаме ги автоматично на заден план
     if (macrosMissing && foodDesc) {
@@ -489,30 +499,23 @@ async function populateSummaryWithAiMacros(form) {
                 quantity = `${quantityCountVal} броя`;
             }
             
+            console.log('[populateSummaryWithAiMacros] Final quantity for AI:', quantity);
+            
             // AI може да работи и без количество (ще изчисли на 100г база)
             // Затова не хвърляме грешка, а просто подаваме каквото имаме
             
             // Извличаме макросите от AI
             const fetched = await nutrientLookup(foodDesc, quantity);
             
-            // Валидираме дали AI отговорът е валиден (не всички стойности са 0 или невалидни)
-            const allZeros = MACRO_FIELDS.every(f => {
-                const value = Number(fetched[f]);
-                return isNaN(value) || value === 0;
-            });
-            
-            if (allZeros) {
-                // Ако всички стойности са 0, това е невалиден отговор
-                throw new Error('AI върна невалидни данни (всички стойности са 0)');
-            }
+            console.log('[populateSummaryWithAiMacros] AI response:', fetched);
             
             // Попълваме полетата с получените данни
             MACRO_FIELDS.forEach(f => {
                 const field = form.querySelector(`input[name="${f}"]`);
                 if (field && fetched[f] !== undefined) {
                     const value = Number(fetched[f]);
-                    // Приемаме само положителни стойности (не 0 или отрицателни)
-                    if (Number.isFinite(value) && value > 0) {
+                    // Приемаме всички неотрицателни стойности (включително 0, което е валидна стойност)
+                    if (Number.isFinite(value) && value >= 0) {
                         field.value = value.toFixed(2);
                         field.dataset.autofilled = 'true';
                     }
@@ -521,6 +524,9 @@ async function populateSummaryWithAiMacros(form) {
             
             // Обновяваме обобщителния екран с новите данни
             populateSummary(form);
+            
+            // Показваме полетата за макроси след попълването им и обновяване на обобщението
+            showMacroFieldsIfFilled();
             
             // Премахваме индикатора за зареждане и показваме съобщение за успех
             if (summaryBox) {
@@ -737,24 +743,13 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             const data = await nutrientLookup(description, quantity);
             console.log('[extraMealForm] AI lookup successful:', data);
             
-            // Валидираме дали AI отговорът е валиден (не всички стойности са 0 или невалидни)
-            const allZeros = MACRO_FIELDS.every(f => {
-                const value = Number(data[f]);
-                return isNaN(value) || value === 0;
-            });
-            
-            if (allZeros) {
-                // Ако всички стойности са 0, това е невалиден отговор
-                throw new Error('AI върна невалидни данни (всички стойности са 0)');
-            }
-            
             // Fill the macro fields with the retrieved data
             MACRO_FIELDS.forEach(f => {
                 const field = form.querySelector(`input[name="${f}"]`);
                 if (field && data[f] !== undefined) {
                     const value = Number(data[f]);
-                    // Приемаме само положителни стойности (не 0 или отрицателни)
-                    if (Number.isFinite(value) && value > 0) {
+                    // Приемаме всички неотрицателни стойности (включително 0, което е валидна стойност)
+                    if (Number.isFinite(value) && value >= 0) {
                         field.value = value.toFixed(2);
                         field.dataset.autofilled = 'true';
                     }

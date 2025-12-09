@@ -8494,7 +8494,25 @@ async function handleRejectPlanChangeRequest(request, env) {
 // ------------- END FUNCTION: handleRejectPlanChangeRequest -------------
 
 // ------------- START FUNCTION: handleNutrientLookupRequest -------------
+/**
+ * Handles requests for nutrient lookup by food name and quantity.
+ * First checks local product database, then falls back to AI model if not found.
+ * 
+ * @param {Request} request - HTTP request with {food, quantity} in body
+ * @param {Object} env - Environment bindings (KV stores, API keys)
+ * @returns {Promise<Object>} Macro nutrients or error response
+ */
 async function handleNutrientLookupRequest(request, env) {
+    /**
+     * Helper function to check if all macro values are zero
+     * @param {Object} macros - Object with calories, protein, carbs, fat, fiber
+     * @returns {boolean} True if all values are zero
+     */
+    const areAllMacrosZero = (macros) => {
+        return macros.calories === 0 && macros.protein === 0 && 
+               macros.carbs === 0 && macros.fat === 0 && macros.fiber === 0;
+    };
+    
     try {
         const { food, quantity } = await request.json();
         
@@ -8541,13 +8559,21 @@ async function handleNutrientLookupRequest(request, env) {
                         }
                         const scale = grams / 100;
                         
-                        return {
+                        const macros = {
                             calories: Number((product.calories * scale).toFixed(2)) || 0,
                             protein: Number((product.protein * scale).toFixed(2)) || 0,
                             carbs: Number((product.carbs * scale).toFixed(2)) || 0,
                             fat: Number((product.fat * scale).toFixed(2)) || 0,
                             fiber: Number((product.fiber * scale).toFixed(2)) || 0
                         };
+                        
+                        // Check if all macros are zero - if so, don't use local data, use AI instead
+                        // This handles products like water/tea which legitimately have zero calories
+                        // but we want AI to provide more context-aware response
+                        if (!areAllMacrosZero(macros)) {
+                            return macros;
+                        }
+                        // If all zeros, continue to AI lookup for better response
                     }
                 }
             } catch (err) {
@@ -8662,39 +8688,63 @@ async function handleNutrientLookupRequest(request, env) {
                     }
                     
                     if (!obj) {
-                        // Fall through to return zeros if extraction failed
+                        // AI failed to extract valid nutrition data - return error instead of zeros
+                        console.error('AI failed to extract nutrition data from response');
                         return {
-                            calories: 0,
-                            protein: 0,
-                            carbs: 0,
-                            fat: 0,
-                            fiber: 0
+                            success: false,
+                            error: 'AI extraction failed',
+                            message: 'AI не успя да извлече хранителни данни от отговора',
+                            statusHint: 500
                         };
                     }
                     
-                    return {
+                    const macros = {
                         calories: Number(obj.calories) || 0,
                         protein: Number(obj.protein) || 0,
                         carbs: Number(obj.carbs) || 0,
                         fat: Number(obj.fat) || 0,
                         fiber: Number(obj.fiber) || 0
                     };
+                    
+                    // Check if AI returned all zeros - this indicates AI couldn't process the food
+                    // We should return an error instead of misleading zero values
+                    if (areAllMacrosZero(macros)) {
+                        console.error('AI returned all zeros - unable to recognize food:', foodQuery);
+                        return {
+                            success: false,
+                            error: 'AI returned all zeros',
+                            message: 'AI не може да разпознае храната. Моля, въведете макросите ръчно или опитайте с по-подробно описание (напр. "шоколадов мъфин 80г").',
+                            statusHint: 422
+                        };
+                    }
+                    
+                    return macros;
                 } catch (parseErr) {
                     console.error('AI response parsing error:', parseErr);
-                    // Fall through to return zeros
+                    return {
+                        success: false,
+                        error: 'AI parsing error',
+                        message: 'AI не успя да обработи отговора',
+                        statusHint: 500
+                    };
                 }
             } catch (err) {
                 console.error('AI nutrient lookup error:', err);
+                return {
+                    success: false,
+                    error: 'AI lookup error',
+                    message: 'AI не успя да изчисли хранителни данни',
+                    statusHint: 500
+                };
             }
         }
 
-        // Fallback to zeros if everything fails
+        // If AI is not configured, return error
         return {
-            calories: 0,
-            protein: 0,
-            carbs: 0,
-            fat: 0,
-            fiber: 0
+            success: false,
+            error: 'AI not configured',
+            message: 'AI услугата не е конфигурирана',
+            statusHint: 503
         };
 
     } catch (error) {
@@ -8702,6 +8752,7 @@ async function handleNutrientLookupRequest(request, env) {
         return { 
             success: false,
             error: 'Internal Server Error',
+            message: 'Вътрешна грешка на сървъра',
             statusHint: 500 
         };
     }
