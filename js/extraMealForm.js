@@ -171,16 +171,18 @@ let nutrientLookup = async function (name, quantity = '') {
         
         const data = await resp.json();
         
-        // Check if backend returned an error response
+        // Check if backend returned an error response (validation failed)
         if (data && data.success === false) {
             const errorMessage = data.message || data.error || 'Unknown error';
-            const error = new Error(`Nutrient lookup failed: ${errorMessage}`);
+            const error = new Error(errorMessage); // Use clean error message for display
+            error.status = data.statusHint || 422; // Use statusHint from backend
+            error.validationError = true; // Mark as validation error
             
-            // Cache the failure
+            // Cache validation failures with appropriate status code
             failedLookupCache[cacheKey] = {
                 timestamp: Date.now(),
-                status: 500, // Treat backend errors as server errors
-                message: error.message
+                status: error.status,
+                message: errorMessage
             };
             
             throw error;
@@ -191,9 +193,13 @@ let nutrientLookup = async function (name, quantity = '') {
             throw new Error('Nutrient lookup returned invalid data');
         }
         
-        nutrientLookupCache[cacheKey] = data;
-        dynamicNutrientOverrides[cacheKey] = data;
-        registerNutrientOverrides(dynamicNutrientOverrides);
+        // Only cache successful responses with actual macro data
+        if (data.success === true || (data.calories !== undefined)) {
+            nutrientLookupCache[cacheKey] = data;
+            dynamicNutrientOverrides[cacheKey] = data;
+            registerNutrientOverrides(dynamicNutrientOverrides);
+        }
+        
         return data;
     } catch (err) {
         // Re-throw with more context if it's a network error
@@ -733,6 +739,10 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
     const quantityCountInput = form.querySelector('#quantityCountInput');
     const macroFieldsContainer = form.querySelector('#macroFieldsContainer');
     const macroInputsGrid = form.querySelector('.macro-inputs-grid');
+    const aiCalculateSection = form.querySelector('#aiCalculateSection');
+    const calculateMacrosBtn = form.querySelector('#calculateMacrosBtn');
+    const aiCalculateStatus = form.querySelector('#aiCalculateStatus');
+    
     let autoFillMsg;
     if (macroInputsGrid) {
         autoFillMsg = document.createElement('div');
@@ -977,6 +987,128 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         computeQuantity();
     }
 
+    // Function to show/hide calculate button based on whether product is in database
+    function updateCalculateButtonVisibility() {
+        if (!aiCalculateSection || !foodDescriptionInput) return;
+        
+        const desc = foodDescriptionInput.value?.trim().toLowerCase() || '';
+        if (!desc) {
+            aiCalculateSection.classList.add('hidden');
+            return;
+        }
+        
+        // Check if product exists in local database
+        const key = fuzzyFindProductKey(desc);
+        const product = findClosestProduct(desc);
+        
+        // Show calculate button only if product is NOT in database
+        if (!key && !product) {
+            aiCalculateSection.classList.remove('hidden');
+        } else {
+            aiCalculateSection.classList.add('hidden');
+        }
+    }
+    
+    // Function to handle "Calculate" button click
+    async function handleCalculateMacros() {
+        if (!calculateMacrosBtn || !aiCalculateStatus) return;
+        
+        const foodDesc = foodDescriptionInput?.value?.trim();
+        const quantityText = quantityCustomInput?.value?.trim();
+        const quantityCount = parseFloat(quantityCountInput?.value);
+        
+        // Clear previous status
+        aiCalculateStatus.classList.add('hidden');
+        aiCalculateStatus.innerHTML = '';
+        
+        // Validate inputs
+        if (!foodDesc) {
+            aiCalculateStatus.innerHTML = '<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-alert"></use></svg><span>Моля, въведете описание на храната.</span>';
+            aiCalculateStatus.style.cssText = 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--warning-color-light, #fff3e0); color: var(--warning-color, #f57c00); display: flex; align-items: center; gap: var(--space-xs);';
+            aiCalculateStatus.classList.remove('hidden');
+            return;
+        }
+        
+        // Determine quantity for AI request
+        let quantity = '';
+        if (quantityText) {
+            quantity = quantityText;
+        } else if (quantityCount > 0) {
+            quantity = `${quantityCount} броя`;
+        }
+        
+        if (!quantity) {
+            aiCalculateStatus.innerHTML = '<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-alert"></use></svg><span>Моля, въведете количество.</span>';
+            aiCalculateStatus.style.cssText = 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--warning-color-light, #fff3e0); color: var(--warning-color, #f57c00); display: flex; align-items: center; gap: var(--space-xs);';
+            aiCalculateStatus.classList.remove('hidden');
+            return;
+        }
+        
+        // Show loading state
+        calculateMacrosBtn.disabled = true;
+        aiCalculateStatus.innerHTML = '<svg class="icon spinner" style="width:1.2rem;height:1.2rem;"><use href="#icon-spinner"></use></svg><span>Изчисляване...</span>';
+        aiCalculateStatus.style.cssText = 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--info-color-light, #e3f2fd); color: var(--info-color, #1976d2); display: flex; align-items: center; gap: var(--space-xs);';
+        aiCalculateStatus.classList.remove('hidden');
+        
+        try {
+            // Call AI API
+            const data = await nutrientLookup(foodDesc, quantity);
+            
+            console.log('[handleCalculateMacros] AI response:', data);
+            
+            // Check if response indicates an error
+            if (data.success === false) {
+                // AI validation failed - show error message
+                const errorMessage = data.error || data.message || 'Неуспешна валидация на входните данни.';
+                aiCalculateStatus.innerHTML = `<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-alert"></use></svg><span>${errorMessage}</span>`;
+                aiCalculateStatus.style.cssText = 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--warning-color-light, #fff3e0); color: var(--warning-color, #f57c00); display: flex; align-items: flex-start; gap: var(--space-xs);';
+                aiCalculateStatus.classList.remove('hidden');
+                return;
+            }
+            
+            // Success - fill macro fields
+            MACRO_FIELDS.forEach(f => {
+                const field = form.querySelector(`input[name="${f}"]`);
+                if (field && data[f] !== undefined) {
+                    const value = Number(data[f]);
+                    if (Number.isFinite(value) && value >= 0) {
+                        field.value = value.toFixed(2);
+                        field.dataset.autofilled = 'true';
+                    }
+                }
+            });
+            
+            // Show success message
+            aiCalculateStatus.innerHTML = '<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-check"></use></svg><span>Хранителната стойност е изчислена успешно!</span>';
+            aiCalculateStatus.style.cssText = 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--success-color-light, #e8f5e9); color: var(--success-color, #2e7d32); display: flex; align-items: center; gap: var(--space-xs);';
+            aiCalculateStatus.classList.remove('hidden');
+            
+            // Show macro fields
+            showMacroFieldsIfFilled();
+            
+            // Hide success message after delay
+            setTimeout(() => {
+                aiCalculateStatus.classList.add('hidden');
+            }, SUCCESS_MESSAGE_TIMEOUT_MS);
+            
+        } catch (err) {
+            console.error('[handleCalculateMacros] Error:', err);
+            
+            // Show error message
+            const errorMessage = err.message || 'Неуспешно изчисляване на хранителната стойност.';
+            aiCalculateStatus.innerHTML = `<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-alert"></use></svg><span>${errorMessage}</span>`;
+            aiCalculateStatus.style.cssText = 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--error-color-light, #ffebee); color: var(--error-color, #c62828); display: flex; align-items: flex-start; gap: var(--space-xs);';
+            aiCalculateStatus.classList.remove('hidden');
+        } finally {
+            calculateMacrosBtn.disabled = false;
+        }
+    }
+    
+    // Attach event listener to calculate button
+    if (calculateMacrosBtn) {
+        calculateMacrosBtn.addEventListener('click', handleCalculateMacros);
+    }
+
     if (measureOptionsContainer) {
         measureOptionsContainer.querySelectorAll('input[name="measureOption"]').forEach((radio) => {
             radio.addEventListener('change', computeQuantity);
@@ -1197,6 +1329,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         foodDescriptionInput.addEventListener('input', function() {
             updateMeasureOptions(this.value);
             showSuggestions(this.value);
+            updateCalculateButtonVisibility(); // Check if calculate button should be shown
             if (!measureOptionsContainer || measureOptionsContainer.classList.contains('hidden')) {
                 const selectedVisual = form.querySelector('input[name="quantityEstimateVisual"]:checked');
                 if (!tryAutofillFromOverride(form, this.value, selectedVisual?.value, autoFillMsg) && autoFillMsg) {
@@ -1211,6 +1344,20 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
                 const first = suggestionsDropdown.querySelector('div');
                 if (first) first.click();
             }
+        });
+    }
+    
+    // Also update calculate button visibility when quantity changes
+    if (quantityCustomInput) {
+        const originalInputHandler = quantityCustomInput.oninput;
+        quantityCustomInput.addEventListener('input', () => {
+            updateCalculateButtonVisibility();
+        });
+    }
+    
+    if (quantityCountInput) {
+        quantityCountInput.addEventListener('input', () => {
+            updateCalculateButtonVisibility();
         });
     }
 
