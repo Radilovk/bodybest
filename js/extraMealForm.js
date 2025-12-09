@@ -1009,6 +1009,46 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         }
     }
     
+    // Helper function to show status messages safely (prevents XSS)
+    function showCalculateStatus(type, message) {
+        if (!aiCalculateStatus) return;
+        
+        // Clear previous content
+        aiCalculateStatus.innerHTML = '';
+        
+        // Create icon
+        const icon = document.createElement('svg');
+        icon.className = type === 'loading' ? 'icon spinner' : 'icon';
+        icon.style.cssText = 'width:1.2rem;height:1.2rem;';
+        const use = document.createElement('use');
+        const iconMap = {
+            'warning': '#icon-alert',
+            'error': '#icon-alert',
+            'loading': '#icon-spinner',
+            'success': '#icon-check'
+        };
+        use.setAttribute('href', iconMap[type] || '#icon-alert');
+        icon.appendChild(use);
+        
+        // Create message span (use textContent for XSS protection)
+        const span = document.createElement('span');
+        span.textContent = message;
+        
+        // Append elements
+        aiCalculateStatus.appendChild(icon);
+        aiCalculateStatus.appendChild(span);
+        
+        // Apply styles based on type
+        const styleMap = {
+            'warning': 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--warning-color-light, #fff3e0); color: var(--warning-color, #f57c00); display: flex; align-items: flex-start; gap: var(--space-xs);',
+            'error': 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--error-color-light, #ffebee); color: var(--error-color, #c62828); display: flex; align-items: flex-start; gap: var(--space-xs);',
+            'loading': 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--info-color-light, #e3f2fd); color: var(--info-color, #1976d2); display: flex; align-items: center; gap: var(--space-xs);',
+            'success': 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--success-color-light, #e8f5e9); color: var(--success-color, #2e7d32); display: flex; align-items: center; gap: var(--space-xs);'
+        };
+        aiCalculateStatus.style.cssText = styleMap[type] || styleMap['warning'];
+        aiCalculateStatus.classList.remove('hidden');
+    }
+    
     // Function to handle "Calculate" button click
     async function handleCalculateMacros() {
         if (!calculateMacrosBtn || !aiCalculateStatus) return;
@@ -1023,9 +1063,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         
         // Validate inputs
         if (!foodDesc) {
-            aiCalculateStatus.innerHTML = '<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-alert"></use></svg><span>Моля, въведете описание на храната.</span>';
-            aiCalculateStatus.style.cssText = 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--warning-color-light, #fff3e0); color: var(--warning-color, #f57c00); display: flex; align-items: center; gap: var(--space-xs);';
-            aiCalculateStatus.classList.remove('hidden');
+            showCalculateStatus('warning', 'Моля, въведете описание на храната.');
             return;
         }
         
@@ -1038,17 +1076,13 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         }
         
         if (!quantity) {
-            aiCalculateStatus.innerHTML = '<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-alert"></use></svg><span>Моля, въведете количество.</span>';
-            aiCalculateStatus.style.cssText = 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--warning-color-light, #fff3e0); color: var(--warning-color, #f57c00); display: flex; align-items: center; gap: var(--space-xs);';
-            aiCalculateStatus.classList.remove('hidden');
+            showCalculateStatus('warning', 'Моля, въведете количество.');
             return;
         }
         
         // Show loading state
         calculateMacrosBtn.disabled = true;
-        aiCalculateStatus.innerHTML = '<svg class="icon spinner" style="width:1.2rem;height:1.2rem;"><use href="#icon-spinner"></use></svg><span>Изчисляване...</span>';
-        aiCalculateStatus.style.cssText = 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--info-color-light, #e3f2fd); color: var(--info-color, #1976d2); display: flex; align-items: center; gap: var(--space-xs);';
-        aiCalculateStatus.classList.remove('hidden');
+        showCalculateStatus('loading', 'Изчисляване...');
         
         try {
             // Call AI API
@@ -1060,9 +1094,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             if (data.success === false) {
                 // AI validation failed - show error message
                 const errorMessage = data.error || data.message || 'Неуспешна валидация на входните данни.';
-                aiCalculateStatus.innerHTML = `<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-alert"></use></svg><span>${errorMessage}</span>`;
-                aiCalculateStatus.style.cssText = 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--warning-color-light, #fff3e0); color: var(--warning-color, #f57c00); display: flex; align-items: flex-start; gap: var(--space-xs);';
-                aiCalculateStatus.classList.remove('hidden');
+                showCalculateStatus('warning', errorMessage);
                 return;
             }
             
@@ -1079,9 +1111,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             });
             
             // Show success message
-            aiCalculateStatus.innerHTML = '<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-check"></use></svg><span>Хранителната стойност е изчислена успешно!</span>';
-            aiCalculateStatus.style.cssText = 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--success-color-light, #e8f5e9); color: var(--success-color, #2e7d32); display: flex; align-items: center; gap: var(--space-xs);';
-            aiCalculateStatus.classList.remove('hidden');
+            showCalculateStatus('success', 'Хранителната стойност е изчислена успешно!');
             
             // Show macro fields
             showMacroFieldsIfFilled();
@@ -1096,9 +1126,7 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             
             // Show error message
             const errorMessage = err.message || 'Неуспешно изчисляване на хранителната стойност.';
-            aiCalculateStatus.innerHTML = `<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-alert"></use></svg><span>${errorMessage}</span>`;
-            aiCalculateStatus.style.cssText = 'margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm); background-color: var(--error-color-light, #ffebee); color: var(--error-color, #c62828); display: flex; align-items: flex-start; gap: var(--space-xs);';
-            aiCalculateStatus.classList.remove('hidden');
+            showCalculateStatus('error', errorMessage);
         } finally {
             calculateMacrosBtn.disabled = false;
         }
