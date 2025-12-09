@@ -16,10 +16,15 @@ import { debounce } from './debounce.js';
 
 const MACRO_FIELDS = ['calories','protein','carbs','fat','fiber'];
 const SUCCESS_MESSAGE_TIMEOUT_MS = 3000;
+const RETRY_DELAY_503_MS = 300000; // 5 minutes for AI not configured errors
+const RETRY_DELAY_NETWORK_MS = 120000; // 2 minutes for network errors
+const RETRY_DELAY_DEFAULT_MS = 60000; // 1 minute for other errors
+const NETWORK_ERROR_STATUS = 0; // Status code for network errors
 
 const dynamicNutrientOverrides = { ...nutrientOverrides };
 registerNutrientOverrides(dynamicNutrientOverrides);
 const nutrientLookupCache = {};
+const failedLookupCache = {}; // Track failed lookups to avoid repeated attempts
 
 function applyAutofillMacros(form, macros, autoFillMsg, formatToFixed = false) {
     if (!form || !macros || typeof macros !== 'object') return false;
@@ -71,18 +76,23 @@ function getErrorMessageForUser(err, hasDescription = true) {
         return 'Моля, въведете описание на храната.';
     }
     
+    // Check for AI not configured - this is a permanent issue
+    if (err.status === 503) {
+        return 'AI функционалността не е налична в момента. Моля, въведете данните ръчно.';
+    }
+    
     // Check for network errors - be more robust
     if (err.name === 'TypeError' || 
         (err.message && (err.message.includes('fetch') || err.message.includes('Network error')))) {
-        return 'Проблем с връзката. Моля, опитайте отново.';
+        return 'Проблем с връзката. Автоматичните опити ще продължат при следващо въвеждане.';
     }
     
     // Check HTTP status codes if available
     if (err.status === 400) {
         return 'Невалидно описание на храната. Моля, проверете входните данни.';
     }
-    if (err.status === 500 || err.status === 503) {
-        return 'Временен проблем със сървъра. Моля, опитайте отново след малко.';
+    if (err.status === 500) {
+        return 'Временен проблем със сървъра. Автоматичните опити са ограничени за да не претоварваме системата.';
     }
     
     // Check if browser is offline
@@ -98,6 +108,32 @@ let nutrientLookup = async function (name, quantity = '') {
     const cacheKey = buildCacheKey(name, quantity);
     const cached = nutrientLookupCache[cacheKey] || getNutrientOverride(cacheKey);
     if (cached) return cached;
+    
+    // Check if this lookup failed recently - avoid repeated attempts
+    const failedEntry = failedLookupCache[cacheKey];
+    if (failedEntry) {
+        const timeSinceFailure = Date.now() - failedEntry.timestamp;
+        // Different retry delays for different error types
+        let retryDelay;
+        if (failedEntry.status === 503) {
+            retryDelay = RETRY_DELAY_503_MS; // 5 minutes for AI not configured
+        } else if (failedEntry.status === NETWORK_ERROR_STATUS) {
+            retryDelay = RETRY_DELAY_NETWORK_MS; // 2 minutes for network errors
+        } else {
+            retryDelay = RETRY_DELAY_DEFAULT_MS; // 1 minute for other errors
+        }
+        
+        if (timeSinceFailure < retryDelay) {
+            console.log(`[nutrientLookup] Skipping retry for "${name}" (failed ${Math.round(timeSinceFailure / 1000)}s ago)`);
+            const error = new Error(failedEntry.message);
+            error.status = failedEntry.status;
+            error.cached = true;
+            throw error;
+        } else {
+            // Enough time has passed, remove from failed cache and retry
+            delete failedLookupCache[cacheKey];
+        }
+    }
     
     try {
         const resp = await fetch(apiEndpoints.nutrientLookup, {
@@ -122,6 +158,14 @@ let nutrientLookup = async function (name, quantity = '') {
             const error = new Error(`Nutrient lookup failed: ${errorDetails}`);
             error.status = resp.status;
             error.statusText = resp.statusText;
+            
+            // Cache the failure to avoid repeated attempts
+            failedLookupCache[cacheKey] = {
+                timestamp: Date.now(),
+                status: resp.status,
+                message: error.message
+            };
+            
             throw error;
         }
         
@@ -130,7 +174,16 @@ let nutrientLookup = async function (name, quantity = '') {
         // Check if backend returned an error response
         if (data && data.success === false) {
             const errorMessage = data.message || data.error || 'Unknown error';
-            throw new Error(`Nutrient lookup failed: ${errorMessage}`);
+            const error = new Error(`Nutrient lookup failed: ${errorMessage}`);
+            
+            // Cache the failure
+            failedLookupCache[cacheKey] = {
+                timestamp: Date.now(),
+                status: 500, // Treat backend errors as server errors
+                message: error.message
+            };
+            
+            throw error;
         }
         
         // Validate that we got usable data
@@ -148,9 +201,17 @@ let nutrientLookup = async function (name, quantity = '') {
             const networkError = new Error(`Network error during nutrient lookup: ${err.message}`);
             networkError.name = 'TypeError';
             networkError.originalError = err;
+            
+            // Cache network errors
+            failedLookupCache[cacheKey] = {
+                timestamp: Date.now(),
+                status: NETWORK_ERROR_STATUS,
+                message: networkError.message
+            };
+            
             throw networkError;
         }
-        // Re-throw other errors as-is
+        // Re-throw other errors as-is (may already be cached above)
         throw err;
     }
 };
@@ -545,18 +606,37 @@ async function populateSummaryWithAiMacros(form) {
         } catch (err) {
             console.error('Failed to automatically calculate macros', err);
             
+            // Check if this is a cached failure
+            if (err.cached) {
+                console.log('[populateSummaryWithAiMacros] Using cached error');
+            }
+            
             // Use helper function to get appropriate error message
             const foodDesc = form.querySelector('textarea[name="foodDescription"], input[name="foodDescription"]')?.value?.trim() || '';
             const specificMessage = getErrorMessageForUser(err, !!foodDesc);
-            const errorMessage = `Макросите не могат да бъдат изчислени автоматично. ${specificMessage}`;
+            
+            let errorMessage = 'Макросите не могат да бъдат изчислени автоматично. ';
+            let errorStyle = 'warning';
+            
+            // Provide specific guidance based on error type
+            if (err.status === 503) {
+                errorMessage += 'AI не е конфигуриран. Моля, въведете макросите ръчно или продължете без тях.';
+                errorStyle = 'info';
+            } else {
+                errorMessage += specificMessage;
+            }
             
             // Показваме съобщение за грешка, но не блокираме потребителя
             if (summaryBox) {
                 const loadingIndicator = summaryBox.querySelector('.ai-loading-indicator');
                 if (loadingIndicator) {
-                    loadingIndicator.innerHTML = `<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#icon-alert"></use></svg><span>${errorMessage}</span>`;
-                    loadingIndicator.style.backgroundColor = 'var(--warning-color-light, #fff3e0)';
-                    loadingIndicator.style.color = 'var(--warning-color, #f57c00)';
+                    const iconName = errorStyle === 'info' ? 'icon-info' : 'icon-alert';
+                    const bgColor = errorStyle === 'info' ? 'var(--info-color-light, #e3f2fd)' : 'var(--warning-color-light, #fff3e0)';
+                    const textColor = errorStyle === 'info' ? 'var(--info-color, #1976d2)' : 'var(--warning-color, #f57c00)';
+                    
+                    loadingIndicator.innerHTML = `<svg class="icon" style="width:1.2rem;height:1.2rem;"><use href="#${iconName}"></use></svg><span>${errorMessage}</span>`;
+                    loadingIndicator.style.backgroundColor = bgColor;
+                    loadingIndicator.style.color = textColor;
                 }
             }
         }
@@ -766,12 +846,26 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
         } catch (err) {
             console.error('[extraMealForm] AI lookup failed:', err);
             
+            // Check if this is a cached failure to avoid showing redundant messages
+            if (err.cached) {
+                console.log('[extraMealForm] Using cached error, not showing message again');
+                if (autoFillMsg) {
+                    autoFillMsg.classList.add('hidden');
+                }
+                return;
+            }
+            
             // Use helper function for consistent error messages - short version for background lookup
             const specificMessage = getErrorMessageForUser(err, true);
             let errorMsg = 'Неуспешно изчисляване';
+            let showManualEntry = false;
             
             // Extract shorter message for inline display
-            if (specificMessage.includes('връзка')) {
+            if (err.status === 503) {
+                // AI not configured - this is a permanent issue, show manual entry option
+                errorMsg = 'AI не е конфигуриран';
+                showManualEntry = true;
+            } else if (specificMessage.includes('връзка')) {
                 errorMsg = 'Проблем с връзката';
             } else if (specificMessage.includes('сървър')) {
                 errorMsg = 'Временен проблем със сървъра';
@@ -781,14 +875,24 @@ export async function initializeExtraMealFormLogic(formContainerElement) {
             
             // Show error message to user so they know what happened
             if (autoFillMsg) {
-                autoFillMsg.innerHTML = `<i class="bi bi-exclamation-triangle"></i><span>${errorMsg}. Ще се опита отново в обобщението.</span>`;
+                let message = `${errorMsg}.`;
+                if (showManualEntry) {
+                    message += ' Моля, въведете макросите ръчно.';
+                } else {
+                    message += ' Ще се опита отново в обобщението.';
+                }
+                
+                autoFillMsg.innerHTML = `<i class="bi bi-exclamation-triangle"></i><span>${message}</span>`;
                 autoFillMsg.style.color = 'var(--warning-color, #f57c00)';
                 autoFillMsg.classList.remove('hidden');
-                // Hide after a delay
-                setTimeout(() => {
-                    autoFillMsg.classList.add('hidden');
-                    autoFillMsg.style.color = ''; // Reset color
-                }, 3000);
+                
+                // For non-503 errors, hide after a delay
+                if (!showManualEntry) {
+                    setTimeout(() => {
+                        autoFillMsg.classList.add('hidden');
+                        autoFillMsg.style.color = ''; // Reset color
+                    }, 3000);
+                }
             }
         }
     }
