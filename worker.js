@@ -8683,13 +8683,30 @@ async function handleNutrientLookupRequest(request, env) {
                         };
                     }
                     
-                    return {
+                    const macros = {
                         calories: Number(obj.calories) || 0,
                         protein: Number(obj.protein) || 0,
                         carbs: Number(obj.carbs) || 0,
                         fat: Number(obj.fat) || 0,
                         fiber: Number(obj.fiber) || 0
                     };
+                    
+                    // Check if AI returned all zeros - this indicates AI couldn't process the food
+                    // We should return an error instead of misleading zero values
+                    const allZero = macros.calories === 0 && macros.protein === 0 && 
+                                   macros.carbs === 0 && macros.fat === 0 && macros.fiber === 0;
+                    
+                    if (allZero) {
+                        console.error('AI returned all zeros - unable to recognize food:', foodQuery);
+                        return {
+                            success: false,
+                            error: 'AI returned all zeros',
+                            message: 'AI не може да разпознае храната. Моля, въведете макросите ръчно или опитайте с по-подробно описание (напр. "шоколадов мъфин 80г").',
+                            statusHint: 422
+                        };
+                    }
+                    
+                    return macros;
                 } catch (parseErr) {
                     console.error('AI response parsing error:', parseErr);
                     return {
