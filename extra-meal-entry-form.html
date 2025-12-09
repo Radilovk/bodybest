@@ -52,6 +52,19 @@
         <input type="text" id="quantityCustom" name="quantityCustom" class="input-focus-animate" style="margin-top: var(--space-sm);" placeholder="Грамаж (напр. 100гр, 150г) или описание (напр. 2 парчета)" aria-label="Грамаж или описание">
         <input type="number" id="quantity" name="quantity" class="hidden input-focus-animate" min="0" step="0.01" inputmode="decimal" aria-hidden="true">
 
+        <!-- Бутон и статус за AI изчисление на макроси -->
+        <div id="aiCalculateSection" class="hidden" style="margin-top: var(--space-md);">
+            <button type="button" id="calculateMacrosBtn" class="button button-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: var(--space-xs);">
+                <svg class="icon" style="width: 1.2rem; height: 1.2rem;"><use href="#icon-magic"></use></svg>
+                <span>Изчисли хранителна стойност</span>
+            </button>
+            
+            <!-- Съобщения за статус и грешки -->
+            <div id="aiCalculateStatus" class="hidden" style="margin-top: var(--space-sm); padding: var(--space-sm); border-radius: var(--radius-sm);">
+                <!-- Динамично попълване от JavaScript -->
+            </div>
+        </div>
+
         <div id="macroFieldsContainer" class="form-group hidden" style="margin-top: var(--space-md);">
             <label style="display:block;margin-bottom:var(--space-xs);">Макроси (можете да коригирате)</label>
             <div class="macro-inputs-grid" style="display:flex;flex-wrap:wrap;gap:var(--space-sm);">

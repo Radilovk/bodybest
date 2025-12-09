@@ -8571,7 +8571,10 @@ async function handleNutrientLookupRequest(request, env) {
                         // This handles products like water/tea which legitimately have zero calories
                         // but we want AI to provide more context-aware response
                         if (!areAllMacrosZero(macros)) {
-                            return macros;
+                            return {
+                                success: true,
+                                ...macros
+                            };
                         }
                         // If all zeros, continue to AI lookup for better response
                     }
@@ -8595,10 +8598,39 @@ async function handleNutrientLookupRequest(request, env) {
             try {
                 const cfEndpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/run/${nutrientModel}`;
                 
-                // Use custom prompt from admin config or fallback to default
+                // Use custom prompt from admin config or fallback to default with validation
                 // The prompt can be customized to work better with specific models
-                const defaultPromptQuantity = 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the EXACT quantity of food specified. Calories in kcal, protein/carbs/fat/fiber in grams. Calculate for the specific quantity provided (e.g., if given "150 гр", calculate for 150 grams, not per 100g). If given descriptive quantities like "2 парчета" or "1 чаша", estimate the weight in grams and calculate accordingly.';
-                const defaultPromptPer100g = 'Give nutrition data as JSON {calories, protein, carbs, fat, fiber} for the given food per 100g. Calories in kcal, protein/carbs/fat/fiber in grams.';
+                const defaultPromptWithValidation = `You are a nutrition assistant that validates food descriptions and provides nutritional information.
+
+CRITICAL: You must ALWAYS respond with valid JSON only, no other text or markdown.
+
+Your task:
+1. Analyze if the input describes a real food/drink item
+2. Check if the quantity/measure is clear and reasonable  
+3. If valid, calculate nutritional values
+4. If invalid, explain the specific problem in Bulgarian
+
+Response format (MUST be valid JSON):
+- For VALID food with clear quantity:
+  {"success": true, "calories": number, "protein": number, "carbs": number, "fat": number, "fiber": number}
+
+- For INVALID input (unclear food, non-food item, unclear quantity, etc.):
+  {"success": false, "error": "Bulgarian language error message explaining the specific problem"}
+
+${normalizedQuantity ? `Calculate for the EXACT quantity specified: ${normalizedQuantity}. If quantity is descriptive (like "2 парчета"), estimate weight and calculate.` : 'Calculate per 100g if no quantity is specified.'}
+
+Error message examples in Bulgarian:
+- "Не мога да разпозная храната. Моля, опишете по-ясно какво сте консумирали."
+- "Количеството не е ясно. Моля, посочете конкретна мярка (напр. '100 гр', '2 парчета', '1 чаша')."
+- "Това не изглежда като хранителен продукт. Моля, въведете храна или напитка."
+- "Описанието е твърде неясно. Моля, бъдете по-конкретни за продукта и количеството."
+
+Rules:
+- All nutritional values must be non-negative numbers
+- Reject non-food items (furniture, electronics, etc.)
+- Reject vague quantities like "малко", "доста" without specific measure
+- Accept both precise ("150 гр") and approximate ("2 средни ябълки") quantities
+- Return ONLY JSON, no explanations outside the JSON`;
                 
                 let systemPrompt;
                 if (nutrientPromptBase) {
@@ -8608,8 +8640,8 @@ async function handleNutrientLookupRequest(request, env) {
                         ? nutrientPromptBase.replaceAll('{quantity}', normalizedQuantity)
                         : nutrientPromptBase;
                 } else {
-                    // Fallback to default prompts
-                    systemPrompt = normalizedQuantity ? defaultPromptQuantity : defaultPromptPer100g;
+                    // Fallback to default prompt with validation
+                    systemPrompt = defaultPromptWithValidation;
                 }
                 
                 const messages = [
@@ -8698,6 +8730,17 @@ async function handleNutrientLookupRequest(request, env) {
                         };
                     }
                     
+                    // Check if AI returned an error/validation response
+                    if (obj.success === false) {
+                        // AI identified a problem with the input
+                        return {
+                            success: false,
+                            error: obj.error || 'Неуспешна валидация на входните данни.',
+                            message: obj.error || 'AI не може да обработи заявката',
+                            statusHint: 422  // Unprocessable Entity
+                        };
+                    }
+                    
                     const macros = {
                         calories: Number(obj.calories) || 0,
                         protein: Number(obj.protein) || 0,
@@ -8718,7 +8761,11 @@ async function handleNutrientLookupRequest(request, env) {
                         };
                     }
                     
-                    return macros;
+                    // Success response with macros
+                    return {
+                        success: true,
+                        ...macros
+                    };
                 } catch (parseErr) {
                     console.error('AI response parsing error:', parseErr);
                     return {
@@ -8823,6 +8870,17 @@ async function handleNutrientLookupRequest(request, env) {
                     };
                 }
                 
+                // Check if AI returned an error/validation response
+                if (obj.success === false) {
+                    // AI identified a problem with the input
+                    return {
+                        success: false,
+                        error: obj.error || 'Неуспешна валидация на входните данни.',
+                        message: obj.error || 'AI не може да обработи заявката',
+                        statusHint: 422  // Unprocessable Entity
+                    };
+                }
+                
                 const macros = {
                     calories: Number(obj.calories) || 0,
                     protein: Number(obj.protein) || 0,
@@ -8842,7 +8900,11 @@ async function handleNutrientLookupRequest(request, env) {
                     };
                 }
                 
-                return macros;
+                // Success response with macros
+                return {
+                    success: true,
+                    ...macros
+                };
             } catch (err) {
                 console.error('Gemini nutrient lookup error:', err);
                 return {

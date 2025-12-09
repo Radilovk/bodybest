@@ -157,8 +157,36 @@ export default {
   }
 };
 
-// AI system prompt for nutrition data extraction
-const NUTRITION_AI_SYSTEM_PROMPT = 'You are a nutrition assistant. Return ONLY a valid JSON object with nutritional information. Do not include any explanatory text, just the JSON. The JSON must have this exact structure: {"calories": number, "protein": number, "carbs": number, "fat": number, "fiber": number}. All values must be positive numbers, never zero unless the food truly has zero of that nutrient.';
+// AI system prompt for nutrition data extraction with validation
+const NUTRITION_AI_SYSTEM_PROMPT = `You are a nutrition assistant that validates food descriptions and provides nutritional information.
+
+CRITICAL: You must ALWAYS respond with valid JSON only, no other text.
+
+Your task:
+1. Analyze if the input describes a real food/drink item
+2. Check if the quantity/measure is clear and reasonable
+3. If valid, calculate nutritional values
+4. If invalid, explain the specific problem
+
+Response format (MUST be valid JSON):
+- For VALID food with clear quantity:
+  {"success": true, "calories": number, "protein": number, "carbs": number, "fat": number, "fiber": number}
+
+- For INVALID input (unclear food, non-food item, unclear quantity, etc.):
+  {"success": false, "error": "Bulgarian language error message explaining the specific problem"}
+
+Error message examples in Bulgarian:
+- "Не мога да разпозная храната. Моля, опишете по-ясно какво сте консумирали."
+- "Количеството не е ясно. Моля, посочете конкретна мярка (напр. '100 гр', '2 парчета', '1 чаша')."
+- "Това не изглежда като хранителен продукт. Моля, въведете храна или напитка."
+- "Описанието е твърде неясно. Моля, бъдете по-конкретни за продукта и количеството."
+
+Rules:
+- All nutritional values must be non-negative numbers
+- Reject non-food items (furniture, electronics, etc.)
+- Reject unclear quantities like "малко", "доста", "няколко" without specific measure
+- Accept both precise ("150 гр") and approximate ("2 средни ябълки") quantities
+- Return ONLY JSON, no markdown, no explanations outside the JSON`;
 
 /**
  * Attempts to extract JSON from text that might contain additional content
@@ -272,14 +300,27 @@ async function lookupNutrients(query, env) {
             if (env.DEBUG_MODE) {
               console.error('Failed to extract JSON from AI response. Length:', payload.length);
             }
-            return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+            return { 
+              success: false, 
+              error: 'Неуспешно обработване на AI отговора. Моля, опитайте отново или въведете данните ръчно.' 
+            };
           }
         } else {
           obj = payload;
         }
         
-        // Validate that we have the required fields and they are not all zero
+        // Check if AI returned an error response
+        if (obj.success === false) {
+          // AI identified a problem with the input
+          return {
+            success: false,
+            error: obj.error || 'Неуспешна валидация на входните данни.'
+          };
+        }
+        
+        // Validate that we have the required fields
         const result = {
+          success: true,
           calories: Number(obj.calories) || 0,
           protein: Number(obj.protein) || 0,
           carbs: Number(obj.carbs) || 0,
@@ -287,10 +328,14 @@ async function lookupNutrients(query, env) {
           fiber: Number(obj.fiber) || 0
         };
         
-        // Check if all values are zero - this indicates AI failure
-        const allZero = Object.values(result).every(v => v === 0);
+        // Check if all values are zero - this might indicate unclear input
+        const allZero = Object.values(result).filter(v => typeof v === 'number').every(v => v === 0);
         if (allZero) {
           console.error('AI returned all zero values for query:', query);
+          return {
+            success: false,
+            error: 'Не мога да определя хранителната стойност. Моля, проверете дали описанието и количеството са ясни.'
+          };
         }
         
         return result;
