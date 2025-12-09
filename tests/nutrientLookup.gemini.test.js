@@ -34,10 +34,21 @@ describe('handleNutrientLookupRequest - Gemini API fallback', () => {
       // Note: NO CF_ACCOUNT_ID or CF_AI_TOKEN - should fallback to Gemini
     };
 
+    // Helper function to safely check if URL is a Gemini API call
+    const isGeminiApiUrl = (url) => {
+      try {
+        if (typeof url !== 'string') return false;
+        const urlObj = new URL(url);
+        return urlObj.hostname === 'generativelanguage.googleapis.com';
+      } catch {
+        return false;
+      }
+    };
+
     // Mock global fetch for Gemini API calls
     global.fetch = jest.fn((url) => {
       // Check if it's a Gemini API call
-      if (url && typeof url === 'string' && url.includes('generativelanguage.googleapis.com')) {
+      if (isGeminiApiUrl(url)) {
         return Promise.resolve({
           ok: true,
           status: 200,
@@ -82,11 +93,20 @@ describe('handleNutrientLookupRequest - Gemini API fallback', () => {
 
     const result = await handleNutrientLookupRequest(request, env);
 
+    // Helper to safely check Gemini API URLs
+    const isGeminiApiUrl = (url) => {
+      try {
+        if (typeof url !== 'string') return false;
+        const urlObj = new URL(url);
+        return urlObj.hostname === 'generativelanguage.googleapis.com';
+      } catch {
+        return false;
+      }
+    };
+
     // Should have called Gemini API (fetch with generativelanguage.googleapis.com)
     expect(global.fetch).toHaveBeenCalled();
-    const geminiCalls = global.fetch.mock.calls.filter(call => 
-      call[0] && typeof call[0] === 'string' && call[0].includes('generativelanguage.googleapis.com')
-    );
+    const geminiCalls = global.fetch.mock.calls.filter(call => isGeminiApiUrl(call[0]));
     expect(geminiCalls.length).toBeGreaterThan(0);
     
     // Should return nutrition data from Gemini
@@ -132,9 +152,20 @@ describe('handleNutrientLookupRequest - Gemini API fallback', () => {
   });
 
   test('should handle Gemini API errors gracefully', async () => {
+    // Helper to safely check Gemini API URLs
+    const isGeminiApiUrl = (url) => {
+      try {
+        if (typeof url !== 'string') return false;
+        const urlObj = new URL(url);
+        return urlObj.hostname === 'generativelanguage.googleapis.com';
+      } catch {
+        return false;
+      }
+    };
+
     // Mock Gemini to throw an error
     global.fetch = jest.fn((url) => {
-      if (url && typeof url === 'string' && url.includes('generativelanguage.googleapis.com')) {
+      if (isGeminiApiUrl(url)) {
         return Promise.reject(new Error('Gemini API Error: Rate limit exceeded'));
       }
       return originalFetch(url);
@@ -156,9 +187,20 @@ describe('handleNutrientLookupRequest - Gemini API fallback', () => {
   });
 
   test('should extract JSON from Gemini response with explanatory text', async () => {
+    // Helper to safely check Gemini API URLs
+    const isGeminiApiUrl = (url) => {
+      try {
+        if (typeof url !== 'string') return false;
+        const urlObj = new URL(url);
+        return urlObj.hostname === 'generativelanguage.googleapis.com';
+      } catch {
+        return false;
+      }
+    };
+
     // Mock Gemini to return JSON with explanatory text (common scenario)
     global.fetch = jest.fn((url) => {
-      if (url && typeof url === 'string' && url.includes('generativelanguage.googleapis.com')) {
+      if (isGeminiApiUrl(url)) {
         return Promise.resolve({
           ok: true,
           status: 200,
@@ -194,9 +236,20 @@ describe('handleNutrientLookupRequest - Gemini API fallback', () => {
   });
 
   test('should return error when Gemini returns all zeros', async () => {
+    // Helper to safely check Gemini API URLs
+    const isGeminiApiUrl = (url) => {
+      try {
+        if (typeof url !== 'string') return false;
+        const urlObj = new URL(url);
+        return urlObj.hostname === 'generativelanguage.googleapis.com';
+      } catch {
+        return false;
+      }
+    };
+
     // Mock Gemini to return all zeros (indicates it couldn't recognize the food)
     global.fetch = jest.fn((url) => {
-      if (url && typeof url === 'string' && url.includes('generativelanguage.googleapis.com')) {
+      if (isGeminiApiUrl(url)) {
         return Promise.resolve({
           ok: true,
           status: 200,
