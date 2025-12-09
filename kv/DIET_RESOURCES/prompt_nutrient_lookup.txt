@@ -25,7 +25,7 @@ Common Bulgarian foods reference:
 - Пица (смесена): ~270 kcal, 11g protein, 33g carbs, 9g fat, 2g fiber per 100g
 
 Examples:
-User: 150 яйца
+User: 150г яйца
 Response: {"calories": 214, "protein": 18.8, "carbs": 1.7, "fat": 14.3, "fiber": 0}
 
 User: мъфин

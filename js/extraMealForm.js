@@ -17,6 +17,7 @@ import { debounce } from './debounce.js';
 const MACRO_FIELDS = ['calories','protein','carbs','fat','fiber'];
 const SUCCESS_MESSAGE_TIMEOUT_MS = 3000;
 const RETRY_DELAY_503_MS = 300000; // 5 minutes for AI not configured errors
+const RETRY_DELAY_NETWORK_MS = 120000; // 2 minutes for network errors
 const RETRY_DELAY_DEFAULT_MS = 60000; // 1 minute for other errors
 const NETWORK_ERROR_STATUS = 0; // Status code for network errors
 
@@ -83,7 +84,7 @@ function getErrorMessageForUser(err, hasDescription = true) {
     // Check for network errors - be more robust
     if (err.name === 'TypeError' || 
         (err.message && (err.message.includes('fetch') || err.message.includes('Network error')))) {
-        return 'Проблем с връзката. Моля, опитайте отново.';
+        return 'Проблем с връзката. Автоматичните опити ще продължат при следващо въвеждане.';
     }
     
     // Check HTTP status codes if available
@@ -91,7 +92,7 @@ function getErrorMessageForUser(err, hasDescription = true) {
         return 'Невалидно описание на храната. Моля, проверете входните данни.';
     }
     if (err.status === 500) {
-        return 'Временен проблем със сървъра. Моля, опитайте отново след малко.';
+        return 'Временен проблем със сървъра. Автоматичните опити са ограничени за да не претоварваме системата.';
     }
     
     // Check if browser is offline
@@ -112,7 +113,15 @@ let nutrientLookup = async function (name, quantity = '') {
     const failedEntry = failedLookupCache[cacheKey];
     if (failedEntry) {
         const timeSinceFailure = Date.now() - failedEntry.timestamp;
-        const retryDelay = failedEntry.status === 503 ? RETRY_DELAY_503_MS : RETRY_DELAY_DEFAULT_MS;
+        // Different retry delays for different error types
+        let retryDelay;
+        if (failedEntry.status === 503) {
+            retryDelay = RETRY_DELAY_503_MS; // 5 minutes for AI not configured
+        } else if (failedEntry.status === NETWORK_ERROR_STATUS) {
+            retryDelay = RETRY_DELAY_NETWORK_MS; // 2 minutes for network errors
+        } else {
+            retryDelay = RETRY_DELAY_DEFAULT_MS; // 1 minute for other errors
+        }
         
         if (timeSinceFailure < retryDelay) {
             console.log(`[nutrientLookup] Skipping retry for "${name}" (failed ${Math.round(timeSinceFailure / 1000)}s ago)`);
