@@ -190,11 +190,10 @@ describe('extraMealForm - AI JSON extraction', () => {
         return Promise.resolve({
           ok: true,
           json: async () => ({
-            calories: 0,
-            protein: 0,
-            carbs: 0,
-            fat: 0,
-            fiber: 0
+            success: false,
+            error: 'AI не може да разпознае храната. Моля, въведете макросите ръчно или опитайте с по-подробно описание (напр. "шоколадов мъфин 80г").',
+            message: 'AI не може да разпознае храната. Моля, въведете макросите ръчно или опитайте с по-подробно описание (напр. "шоколадов мъфин 80г").',
+            statusHint: 422
           })
         });
       }
