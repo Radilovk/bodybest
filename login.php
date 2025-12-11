@@ -1,5 +1,34 @@
 <?php
+// Remember me session duration: 30 days
+define('REMEMBER_ME_DURATION', 30 * 24 * 60 * 60);
+
+// Check for "remember me" before starting session
+$rememberMe = false;
+$data = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $rawData = file_get_contents('php://input');
+    $data = json_decode($rawData, true);
+    
+    // Check for JSON parsing errors
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        $data = null;
+    }
+    
+    // Only check rememberMe if JSON was successfully parsed
+    if ($data && isset($data['rememberMe'])) {
+        // Use filter_var to handle various truthy values (true, "true", 1, "1")
+        $rememberMe = filter_var($data['rememberMe'], FILTER_VALIDATE_BOOLEAN);
+    }
+    
+    // Configure session settings before starting session
+    if ($rememberMe) {
+        ini_set('session.cookie_lifetime', REMEMBER_ME_DURATION);
+        ini_set('session.gc_maxlifetime', REMEMBER_ME_DURATION);
+    }
+}
+
 session_start();
+
 header('Content-Type: application/json; charset=utf-8');
 // Configure allowed origins
 $defaultAllowedOrigins = [
@@ -22,8 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$rawData = file_get_contents('php://input');
-$data = json_decode($rawData, true);
+// Data was already parsed above for rememberMe check
 if (!$data || !isset($data['password']) || !isset($data['username'])) {
     echo json_encode(["success"=>false, "message"=>"Липсват данни за вход"]);
     exit;
@@ -35,18 +63,51 @@ $envUser = getenv('ADMIN_USERNAME');
 $envHash = getenv('ADMIN_PASS_HASH');
 $expectedUser = ($envUser !== false && $envUser !== '') ? $envUser : 'admin';
 
+// Helper function to check if request is over HTTPS
+function isHttpsRequest() {
+    return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') 
+            || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+}
+
+// Helper function to set persistent cookie with security flags
+function setPersistentSessionCookie() {
+    $sessionName = session_name();
+    $sessionId = session_id();
+    // Set cookie with secure, httponly, and samesite flags for security
+    setcookie(
+        $sessionName, 
+        $sessionId, 
+        [
+            'expires' => time() + REMEMBER_ME_DURATION,
+            'path' => '/',
+            'domain' => '',
+            'secure' => isHttpsRequest(),
+            'httponly' => true,
+            'samesite' => 'Strict'
+        ]
+    );
+}
+
+// Helper function for successful login
+function handleSuccessfulLogin($rememberMe) {
+    $_SESSION['isAdmin'] = true;
+    session_regenerate_id(true);
+    
+    // Set persistent cookie if "remember me" is checked
+    if ($rememberMe) {
+        setPersistentSessionCookie();
+    }
+    
+    echo json_encode(["success" => true, "message" => "Logged in"]);
+    exit;
+}
+
 if ($username === $expectedUser) {
     if ($envHash !== false && $envHash !== '' && password_verify($password, $envHash)) {
-        $_SESSION['isAdmin'] = true;
-        session_regenerate_id(true);
-        echo json_encode(["success" => true, "message" => "Logged in"]);
-        exit;
+        handleSuccessfulLogin($rememberMe);
     }
     if (($envHash === false || $envHash === '') && $password === '6131') {
-        $_SESSION['isAdmin'] = true;
-        session_regenerate_id(true);
-        echo json_encode(["success" => true, "message" => "Logged in"]);
-        exit;
+        handleSuccessfulLogin($rememberMe);
     }
 }
 
