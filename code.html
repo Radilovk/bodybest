@@ -1343,7 +1343,7 @@
             };
 
             for (const [dim, score] of Object.entries(pt.scores)) {
-              const percentage = Math.round((score / 100) * 100);
+              const percentage = score;
               const barColor = percentage > 60 ? 'var(--color-primary)' : 
                                percentage > 40 ? 'var(--color-warning)' : 'var(--color-secondary)';
               
