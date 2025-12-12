@@ -2,236 +2,18 @@
 <html lang="bg">
 <head>
   <meta charset="utf-8" />
-  <title>Визуален тест за хранителен профил</title>
+  <title>Визуален тест за хранителен профил | BodyBest</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- Интегрирани стилове от дизайн системата -->
+  <link rel="stylesheet" href="../css/base_styles.css" />
+  <link rel="stylesheet" href="../css/psy_test_styles.css" />
+  
   <style>
-    :root{
-      --bg:#020617;
-      --panel:#061024;
-      --text:#e5e7eb;
-      --muted:#9ca3af;
-      --border:#1f2937;
-      --accent:#22c55e;
-      --radius:14px;
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{
-      min-height:100vh;
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
-    .screen{display:none;min-height:100vh;padding:16px}
-    .screen.active{display:flex;flex-direction:column}
-
-    /* --------- Screen 1 --------- */
-    .intro{justify-content:center;gap:14px}
-    .title{font-size:22px;line-height:1.2}
-    .title span{color:var(--accent)}
-    .p{font-size:14px;line-height:1.55;color:var(--muted)}
-    .rules{margin-top:8px;padding-left:18px;color:var(--text);font-size:13px;line-height:1.5}
-    .rules li{margin-bottom:5px}
-    .btn{
-      width:100%;
-      border:none;
-      border-radius:999px;
-      padding:14px 16px;
-      background:var(--accent);
-      color:#052e1b;
-      font-weight:700;
-      font-size:15px;
-      cursor:pointer;
-      margin-top:10px;
-    }
-    .btnGhost{
-      width:100%;
-      border:1px solid var(--border);
-      border-radius:999px;
-      padding:12px 14px;
-      background:transparent;
-      color:var(--muted);
-      font-weight:600;
-      font-size:14px;
-      cursor:pointer;
-    }
-
-    /* --------- Screen 2 (Grid) --------- */
-    .gridHead{font-size:14px;color:var(--muted)}
-    .grid{
-      margin-top:12px;
-      flex:1;
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      grid-auto-rows:1fr;
-      gap:8px;
-    }
-    .thumb{
-      position:relative;
-      border-radius:var(--radius);
-      overflow:hidden;
-      border:1px solid var(--border);
-      background:#000;
-      padding:0;
-      cursor:pointer;
-    }
-    .thumb img{
-      width:100%;
-      height:100%;
-      display:block;
-      object-fit:cover;       /* миниатюрите може да режат */
-      aspect-ratio:1/1;
-    }
-    .gridFoot{
-      margin-top:10px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      color:var(--muted);
-      font-size:12px;
-    }
-    .linkBtn{
-      border:none;
-      background:transparent;
-      color:var(--accent);
-      font-size:13px;
-      font-weight:700;
-      padding:6px 0;
-      cursor:pointer;
-    }
-
-    /* --------- Fullscreen Preview Overlay --------- */
-    .overlay{
-      position:fixed;
-      inset:0;
-      z-index:50;
-      display:none;
-      background:rgba(2,6,23,.92);
-      backdrop-filter: blur(10px);
-    }
-    .overlay.active{display:flex;flex-direction:column}
-    .ovTop{
-      padding:12px 12px 8px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .ovTitle{
-      font-size:13px;
-      color:var(--muted);
-      display:flex;
-      gap:8px;
-      align-items:center;
-    }
-    .chip{
-      padding:3px 10px;
-      border-radius:999px;
-      border:1px solid rgba(31,41,55,.9);
-      background:rgba(6,16,36,.65);
-      color:var(--muted);
-      font-size:12px;
-    }
-    .ovClose{
-      border:1px solid rgba(31,41,55,.9);
-      background:rgba(6,16,36,.65);
-      color:var(--text);
-      border-radius:999px;
-      padding:10px 12px;
-      font-weight:700;
-      cursor:pointer;
-    }
-    .ovBody{
-      flex:1;
-      padding:8px 12px 12px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .ovImgWrap{
-      width:100%;
-      height:100%;
-      border-radius:16px;
-      border:1px solid rgba(31,41,55,.8);
-      overflow:hidden;
-      background:#000;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .ovImgWrap img{
-      width:100%;
-      height:100%;
-      object-fit:contain; /* тук се вижда цялото изображение */
-      background:#000;
-    }
-    .ovBottom{
-      padding:12px;
-      display:flex;
-      gap:10px;
-    }
-    .btnSelect{
-      flex:1;
-      border:none;
-      border-radius:999px;
-      padding:14px 14px;
-      background:var(--accent);
-      color:#052e1b;
-      font-weight:800;
-      font-size:14px;
-      cursor:pointer;
-    }
-    .btnBack{
-      flex:1;
-      border:1px solid rgba(31,41,55,.9);
-      border-radius:999px;
-      padding:14px 14px;
-      background:rgba(6,16,36,.65);
-      color:var(--muted);
-      font-weight:800;
-      font-size:14px;
-      cursor:pointer;
-    }
-
-    /* --------- Screen 3 (Result) --------- */
-    .resultImg{
-      border-radius:var(--radius);
-      overflow:hidden;
-      border:1px solid var(--border);
-      max-height:280px;
-      background:#000;
-    }
-    .resultImg img{width:100%;height:100%;display:block;object-fit:cover}
-    .h2{margin-top:10px;font-size:18px;line-height:1.2}
-    .sub{margin-top:6px;color:var(--muted);font-size:13px;line-height:1.45}
-    .label{
-      margin-top:14px;
-      margin-bottom:6px;
-      font-size:11px;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      color:var(--muted);
-    }
-    .card{
-      border:1px solid rgba(31,41,55,.8);
-      background:rgba(6,16,36,.55);
-      border-radius:14px;
-      padding:12px;
-    }
-    ul.clean{list-style:none;padding-left:0}
-    ul.clean li{display:flex;gap:8px;margin-bottom:8px;font-size:13px;line-height:1.45;color:var(--text)}
-    .dot{width:7px;height:7px;border-radius:999px;background:var(--accent);margin-top:7px;flex-shrink:0}
-    .dot2{background:var(--muted)}
-    .actions{margin-top:14px;display:flex;gap:10px}
-    .btnSmall{
-      flex:1;
-      border:1px solid var(--border);
-      border-radius:999px;
-      padding:12px 14px;
-      background:transparent;
-      color:var(--muted);
-      font-weight:700;
-      cursor:pointer;
+    /* Специфични за визуалния тест overrides */
+    body {
+      background: var(--psy-bg);
+      color: var(--psy-text);
     }
   </style>
 </head>
@@ -250,7 +32,7 @@
         <li>След като се отвори на цял екран потвърди или избери друго.</li>
       </ol>
       <button class="btn" id="start">Започни</button>
-      <a class="btnGhost" href="about.html" style="display:block;text-align:center;text-decoration:none;margin-top:10px">About</a>
+      <a class="btnGhost" href="../about.html" style="display:block;text-align:center;text-decoration:none;margin-top:var(--space-sm)">За проекта</a>
     </div>
   </section>
 
@@ -289,9 +71,10 @@
   <!-- Screen 3 -->
   <section class="screen" id="s3">
     <div id="result"></div>
+    <div id="saveStatus" style="display:none;"></div>
     <div class="actions">
+      <button class="btnSmall" id="saveResult" style="background: var(--psy-accent); color: var(--text-color-on-secondary); border-color: var(--psy-accent);">Запази резултата</button>
       <button class="btnSmall" id="again">Друг избор</button>
-      <button class="btnSmall" id="toGrid">Към изображенията</button>
     </div>
   </section>
 
@@ -467,9 +250,11 @@
   const ovSelect = document.getElementById("ovSelect");
 
   const result = document.getElementById("result");
+  const saveStatus = document.getElementById("saveStatus");
 
   let pendingId = null;
   let pendingSrc = null;
+  let currentTestResult = null; // Store current test result for saving
 
   function show(screen){
     [s1,s2,s3].forEach(x=>x.classList.remove("active"));
@@ -478,8 +263,10 @@
 
   document.getElementById("start").addEventListener("click", ()=>show(s2));
   document.getElementById("backToIntro").addEventListener("click", ()=>show(s1));
-  document.getElementById("again").addEventListener("click", ()=>show(s2));
-  document.getElementById("toGrid").addEventListener("click", ()=>show(s2));
+  document.getElementById("again").addEventListener("click", ()=>{
+    saveStatus.style.display = "none";
+    show(s2);
+  });
 
   // Build grid
   const ids = ["01","02","03","04","05","06","07","08"];
@@ -539,6 +326,17 @@
       return;
     }
 
+    // Store current result for saving
+    currentTestResult = {
+      profileId: id,
+      name: p.name,
+      short: p.short,
+      psycho: p.psycho,
+      habits: p.habits,
+      risks: p.risks,
+      timestamp: new Date().toISOString()
+    };
+
     result.innerHTML = `
       <div class="resultImg">
         <img src="${src}" alt="Избрано изображение ${id}">
@@ -568,6 +366,41 @@
         </ul>
       </div>
     `;
+  }
+
+  // Save result to localStorage
+  document.getElementById("saveResult").addEventListener("click", async ()=>{
+    if(!currentTestResult){
+      showSaveStatus('Няма резултат за запазване', 'error');
+      return;
+    }
+
+    try {
+      // Get existing psychTests data from localStorage
+      const existingDataStr = localStorage.getItem('psychTests');
+      const existingData = existingDataStr ? JSON.parse(existingDataStr) : {};
+      
+      // Add visual test result
+      existingData.visualTest = currentTestResult;
+      
+      // Save to localStorage
+      localStorage.setItem('psychTests', JSON.stringify(existingData));
+      
+      showSaveStatus('✓ Резултатът е успешно запазен! Може да се върнете към главното табло.', 'success');
+      
+      // Optional: Redirect after a delay
+      setTimeout(() => {
+        window.location.href = '../code.html';
+      }, 2000);
+    } catch (error) {
+      console.error('Error saving visual test result:', error);
+      showSaveStatus('Грешка при запазване на резултата', 'error');
+    }
+  });
+
+  function showSaveStatus(message, type){
+    saveStatus.innerHTML = `<div class="success-message" style="${type === 'error' ? 'background: var(--color-danger-bg); border-color: var(--color-danger); color: var(--color-danger);' : ''}">${message}</div>`;
+    saveStatus.style.display = 'block';
   }
 </script>
 </body>
