@@ -6,14 +6,14 @@
   <title>Личностен Психотест | BodyBest</title>
   <style>
     :root {
-      --bg: #f8f9fb;
-      --panel: #ffffff;
+      --bg: #fff7f0;
+      --panel: #fffdf9;
       --text: #2d3748;
-      --muted: #718096;
-      --border: #e2e8f0;
-      --accent: #4c9adb;
-      --accent-hover: #3182ce;
-      --accent-light: #ebf5ff;
+      --muted: #6b5b52;
+      --border: #f1e5da;
+      --accent: #f28c52;
+      --accent-hover: #e07a3a;
+      --accent-light: #fff1e6;
       --warning: #ed8936;
       --danger: #e53e3e;
       --success: #38a169;
@@ -31,7 +31,7 @@
     body {
       min-height: 100vh;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      background: linear-gradient(135deg, #fff7f0 0%, #e7f0ff 100%);
       color: var(--text);
       line-height: 1.6;
     }
@@ -172,7 +172,7 @@
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--accent) 0%, #667eea 100%);
+      background: linear-gradient(90deg, var(--accent) 0%, #f6ad55 100%);
       transition: width 0.3s ease;
       border-radius: 999px;
     }
@@ -356,7 +356,7 @@
     .score-bar {
       width: 100%;
       height: 24px;
-      background: linear-gradient(90deg, #667eea 0%, var(--accent) 100%);
+      background: linear-gradient(90deg, #f6d365 0%, var(--accent) 100%);
       border-radius: 999px;
       position: relative;
       overflow: hidden;
@@ -382,7 +382,7 @@
     }
 
     .type-code-card {
-      background: linear-gradient(135deg, var(--accent-light) 0%, #e0f2fe 100%);
+      background: linear-gradient(135deg, var(--accent-light) 0%, #ffe9d6 100%);
       border: 2px solid var(--accent);
       border-radius: var(--radius);
       padding: 24px;
@@ -743,7 +743,7 @@
           "options": [
             "Избирам сигурното и предвидимото",
             "Избирам балансирано: среден риск за средна полза",
-            "Моят принцип е \\\"Всичко или нищо\\\""
+            "Моят принцип е всичко или нищо."
           ],
           "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
         },
@@ -1192,6 +1192,23 @@
       }, 1500);
     }
 
+    function simplifyText(text, maxSentences = 2) {
+      const clean = text.replace(/"([^"]*)"/g, '$1').replace(/[„“]/g, '');
+      const parts = clean.split('.').map(p => p.trim()).filter(Boolean);
+      if (parts.length === 0) {
+        const trimmed = clean.trim();
+        return trimmed && /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+      }
+      const simplified = parts.slice(0, maxSentences).join('. ');
+      const withPeriod = /[.!?]$/.test(simplified) ? simplified : `${simplified}.`;
+      return withPeriod + (parts.length > maxSentences ? '…' : '');
+    }
+
+    function simplifyList(list, limit = 5, sentences = 1) {
+      const unique = Array.from(new Set(list.map(item => simplifyText(item, sentences))));
+      return unique.slice(0, limit);
+    }
+
     function analyzeNutritionalRisks(scores) {
       const risks = [];
       const recommendations = [];
@@ -1427,7 +1444,17 @@
         recommendations.push('Следете за промени в стреса или емоционалното състояние, които могат да повлияят храненето');
       }
       
-      return { risks, recommendations, strengths, behavioralPatterns };
+      const simplifiedRisks = risks.map(risk => ({
+        ...risk,
+        description: simplifyText(risk.description, 2)
+      })).slice(0, 4);
+
+      return {
+        risks: simplifiedRisks,
+        recommendations: simplifyList(recommendations, 6, 1),
+        strengths: simplifyList(strengths, 4, 1),
+        behavioralPatterns: simplifyList(behavioralPatterns, 5, 1)
+      };
     }
 
     function renderAIAnalysis(analysis) {
