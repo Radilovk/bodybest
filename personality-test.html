@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Личностен Психопрофил | BodyBest</title>
+  <link rel="stylesheet" href="css/base_styles.css" />
+  <link rel="stylesheet" href="css/components_styles.css" />
+  <link rel="stylesheet" href="css/quest_styles.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+  <style>
+    .personality-test-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: var(--space-lg);
+    }
+
+    .intro-section {
+      text-align: center;
+      padding: var(--space-xl) var(--space-lg);
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      margin-bottom: var(--space-lg);
+    }
+
+    .intro-section h1 {
+      color: var(--primary-color);
+      margin-bottom: var(--space-sm);
+    }
+
+    .intro-section .subtitle {
+      color: var(--secondary-color);
+      font-size: var(--fs-lg);
+      font-weight: 700;
+      margin-bottom: var(--space-md);
+    }
+
+    .intro-section p {
+      color: var(--text-color-secondary);
+      line-height: 1.6;
+      margin-bottom: var(--space-md);
+    }
+
+    .test-info {
+      background: var(--color-info-bg);
+      border-left: 4px solid var(--color-info);
+      padding: var(--space-md);
+      border-radius: var(--radius-md);
+      margin: var(--space-md) 0;
+      text-align: left;
+    }
+
+    .test-info p {
+      margin: 0;
+      color: var(--text-color-primary);
+      font-size: var(--fs-sm);
+    }
+
+    .question-container {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      box-shadow: var(--shadow-md);
+      margin-bottom: var(--space-md);
+      border: 2px solid var(--border-color);
+      transition: border-color 0.3s ease;
+    }
+
+    .question-container.answered {
+      border-color: var(--secondary-color);
+    }
+
+    .question-number {
+      display: inline-block;
+      background: var(--secondary-color);
+      color: white;
+      padding: 4px 12px;
+      border-radius: var(--radius-round);
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      margin-bottom: var(--space-sm);
+    }
+
+    .question-text {
+      font-size: var(--fs-md);
+      color: var(--text-color-primary);
+      margin-bottom: var(--space-md);
+      font-weight: 600;
+    }
+
+    .options-container {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .option-label {
+      display: flex;
+      align-items: center;
+      padding: var(--space-md);
+      background: var(--bg-color);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .option-label:hover {
+      border-color: var(--secondary-color);
+      background: var(--card-bg);
+      transform: translateX(4px);
+    }
+
+    .option-label input[type="radio"] {
+      margin-right: var(--space-sm);
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: var(--secondary-color);
+    }
+
+    .option-label.selected {
+      border-color: var(--secondary-color);
+      background: rgba(91, 192, 190, 0.1);
+      font-weight: 600;
+    }
+
+    .legend-text {
+      font-size: var(--fs-xs);
+      color: var(--text-color-muted);
+      font-style: italic;
+      margin-top: var(--space-sm);
+      padding: var(--space-sm);
+      background: var(--bg-color);
+      border-radius: var(--radius-sm);
+    }
+
+    .progress-bar {
+      background: var(--progress-bar-bg-empty);
+      border-radius: var(--radius-round);
+      height: 8px;
+      margin: var(--space-lg) 0;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--secondary-color);
+      transition: width 0.3s ease;
+      border-radius: var(--radius-round);
+    }
+
+    .progress-text {
+      text-align: center;
+      color: var(--text-color-muted);
+      font-size: var(--fs-sm);
+      margin-top: var(--space-xs);
+    }
+
+    .navigation-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: var(--space-lg);
+      gap: var(--space-sm);
+    }
+
+    .result-container {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      box-shadow: var(--shadow-lg);
+      margin-top: var(--space-lg);
+    }
+
+    .result-header {
+      text-align: center;
+      padding: var(--space-lg);
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      border-radius: var(--radius-lg);
+      color: white;
+      margin-bottom: var(--space-lg);
+    }
+
+    .result-header h2 {
+      margin: 0;
+      font-size: var(--fs-xxl);
+    }
+
+    .dimension-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--space-md);
+      margin: var(--space-lg) 0;
+    }
+
+    .dimension-card {
+      background: var(--bg-color);
+      padding: var(--space-md);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .dimension-label {
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: var(--space-xs);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dimension-score {
+      font-size: var(--fs-lg);
+      font-weight: 700;
+      color: var(--secondary-color);
+    }
+
+    .dimension-bar {
+      background: var(--progress-bar-bg-empty);
+      border-radius: var(--radius-round);
+      height: 10px;
+      margin: var(--space-xs) 0;
+      overflow: hidden;
+    }
+
+    .dimension-bar-fill {
+      height: 100%;
+      background: var(--secondary-color);
+      transition: width 0.3s ease;
+      border-radius: var(--radius-round);
+    }
+
+    .dimension-description {
+      font-size: var(--fs-sm);
+      color: var(--text-color-secondary);
+      margin-top: var(--space-xs);
+    }
+
+    .type-code {
+      background: var(--primary-color);
+      color: white;
+      padding: var(--space-md);
+      border-radius: var(--radius-md);
+      text-align: center;
+      font-size: var(--fs-xl);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      margin: var(--space-lg) 0;
+    }
+
+    .risk-flags {
+      background: var(--color-warning-bg);
+      border-left: 4px solid var(--color-warning);
+      padding: var(--space-md);
+      border-radius: var(--radius-md);
+      margin-top: var(--space-lg);
+    }
+
+    .risk-flags h3 {
+      color: var(--color-warning);
+      margin-top: 0;
+      margin-bottom: var(--space-sm);
+    }
+
+    .risk-flags ul {
+      margin: 0;
+      padding-left: var(--space-lg);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .dimension-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .navigation-buttons {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="personality-test-container">
+    <!-- Introduction Section -->
+    <div id="introSection">
+      <div class="intro-section">
+        <h1>Личностен профил</h1>
+        <p class="subtitle">Кратък личностен модул (по избор)</p>
+        <p>
+          Този въпросник помага да разберем вашия личностен стил и как той влияе 
+          върху вашите хранителни навици и отношение към храненето.
+        </p>
+        <div class="test-info">
+          <p>
+            <strong>📋 Инструкции:</strong> Отговорете на 14 въпроса, като изберете 
+            опцията, която най-добре описва вашето естествено поведение през последните 
+            шест месеца. Няма правилни или грешни отговори.
+          </p>
+        </div>
+        <button class="button" id="startTestBtn">
+          <i class="bi bi-play-circle"></i> Започни теста
+        </button>
+        <a href="code.html" class="button-secondary" style="display: inline-block; margin-top: var(--space-sm); text-decoration: none;">
+          <i class="bi bi-arrow-left"></i> Назад към профила
+        </a>
+      </div>
+    </div>
+
+    <!-- Questions Section -->
+    <div id="questionsSection" class="hidden">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-text" id="progressText">Въпрос 0 от 14</div>
+
+      <div id="questionsContainer"></div>
+
+      <div class="navigation-buttons">
+        <button class="button-secondary" id="prevBtn" disabled>
+          <i class="bi bi-arrow-left"></i> Предишен
+        </button>
+        <button class="button" id="nextBtn">
+          Следващ <i class="bi bi-arrow-right"></i>
+        </button>
+        <button class="button hidden" id="submitBtn">
+          <i class="bi bi-check-circle"></i> Завърши теста
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="resultsSection" class="hidden">
+      <div class="result-container">
+        <div class="result-header">
+          <h2><i class="bi bi-trophy"></i> Вашият резултат</h2>
+        </div>
+
+        <div class="type-code" id="typeCode"></div>
+
+        <div class="dimension-grid" id="dimensionsGrid"></div>
+
+        <div id="riskFlags" class="risk-flags hidden">
+          <h3><i class="bi bi-exclamation-triangle"></i> Важни забележки</h3>
+          <ul id="riskFlagsList"></ul>
+        </div>
+
+        <div class="navigation-buttons">
+          <button class="button-secondary" id="retakeBtn">
+            <i class="bi bi-arrow-clockwise"></i> Направи отново
+          </button>
+          <button class="button" id="savePersonalityBtn">
+            <i class="bi bi-check-circle"></i> Запази резултата
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { parseJsonSafe } from './utils/parseJsonSafe.js';
+
+    let questionsData = [];
+    let scoringKey = {};
+    let answers = {};
+    let currentQuestionIndex = 0;
+
+    const introSection = document.getElementById('introSection');
+    const questionsSection = document.getElementById('questionsSection');
+    const resultsSection = document.getElementById('resultsSection');
+    const questionsContainer = document.getElementById('questionsContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Load test data
+    async function loadTestData() {
+      try {
+        const [questionsResponse, keyResponse] = await Promise.all([
+          fetch('./psy/bb_optional_personality_v1_1.json'),
+          fetch('./psy/bb_optional_personality_key_v1_1.json to psykey.json')
+        ]);
+
+        const questionsJson = await questionsResponse.json();
+        const keyJson = await keyResponse.json();
+
+        // Filter out section headers, keep only questions
+        questionsData = questionsJson.items.filter(item => item.type === 'radio');
+        scoringKey = keyJson;
+
+        return true;
+      } catch (error) {
+        console.error('Error loading test data:', error);
+        alert('Възникна грешка при зареждане на теста. Моля, опитайте отново.');
+        return false;
+      }
+    }
+
+    function renderQuestions() {
+      questionsContainer.innerHTML = '';
+      
+      questionsData.forEach((question, index) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'question-container';
+        questionDiv.id = `question-${index}`;
+        if (answers[question.id] !== undefined) {
+          questionDiv.classList.add('answered');
+        }
+
+        const optionsHtml = question.options.map((option, optionIndex) => `
+          <label class="option-label ${answers[question.id] === optionIndex ? 'selected' : ''}">
+            <input 
+              type="radio" 
+              name="${question.id}" 
+              value="${optionIndex}"
+              ${answers[question.id] === optionIndex ? 'checked' : ''}
+            />
+            <span>${option}</span>
+          </label>
+        `).join('');
+
+        questionDiv.innerHTML = `
+          <span class="question-number">Въпрос ${index + 1}</span>
+          <div class="question-text">${question.text}</div>
+          <div class="options-container">
+            ${optionsHtml}
+          </div>
+          ${question.legend ? `<div class="legend-text">${question.legend}</div>` : ''}
+        `;
+
+        // Add event listeners to radio buttons
+        questionDiv.querySelectorAll('input[type="radio"]').forEach(radio => {
+          radio.addEventListener('change', (e) => {
+            const questionId = e.target.name;
+            const value = parseInt(e.target.value);
+            answers[questionId] = value;
+            
+            // Update selected state
+            questionDiv.querySelectorAll('.option-label').forEach(label => {
+              label.classList.remove('selected');
+            });
+            e.target.closest('.option-label').classList.add('selected');
+            
+            questionDiv.classList.add('answered');
+            updateProgress();
+            updateNavigationButtons();
+          });
+        });
+
+        questionsContainer.appendChild(questionDiv);
+      });
+    }
+
+    function updateProgress() {
+      const answeredCount = Object.keys(answers).length;
+      const totalQuestions = questionsData.length;
+      const percentage = (answeredCount / totalQuestions) * 100;
+      
+      progressFill.style.width = `${percentage}%`;
+      progressText.textContent = `Отговорени: ${answeredCount} от ${totalQuestions}`;
+    }
+
+    function updateNavigationButtons() {
+      const allAnswered = Object.keys(answers).length === questionsData.length;
+      
+      if (allAnswered) {
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+      } else {
+        nextBtn.classList.remove('hidden');
+        submitBtn.classList.add('hidden');
+      }
+    }
+
+    function calculateResults() {
+      const dimensions = ['E', 'C', 'O', 'A', 'N', 'I', 'R'];
+      const rawScores = {};
+      const minScores = {};
+      const maxScores = {};
+
+      // Initialize scores
+      dimensions.forEach(dim => {
+        rawScores[dim] = 0;
+        minScores[dim] = 0;
+        maxScores[dim] = 0;
+      });
+
+      // Calculate raw scores and min/max
+      Object.keys(answers).forEach(questionId => {
+        const answerIndex = answers[questionId];
+        const questionScoring = scoringKey.scoring_key[questionId];
+        
+        if (questionScoring && questionScoring[answerIndex]) {
+          const weights = questionScoring[answerIndex];
+          dimensions.forEach(dim => {
+            rawScores[dim] += weights[dim] || 0;
+          });
+        }
+
+        // Calculate min/max for each dimension
+        if (questionScoring) {
+          dimensions.forEach(dim => {
+            const values = questionScoring.map(option => option[dim] || 0);
+            minScores[dim] += Math.min(...values);
+            maxScores[dim] += Math.max(...values);
+          });
+        }
+      });
+
+      // Normalize to 0-100
+      const normalizedScores = {};
+      dimensions.forEach(dim => {
+        const range = maxScores[dim] - minScores[dim];
+        if (range > 0) {
+          normalizedScores[dim] = Math.round(
+            ((rawScores[dim] - minScores[dim]) / range) * 100
+          );
+        } else {
+          normalizedScores[dim] = 50; // Default to middle if no range
+        }
+      });
+
+      return normalizedScores;
+    }
+
+    function generateTypeCode(scores) {
+      const axes = scoringKey.derived_outputs.axes;
+      let code = '';
+
+      axes.forEach(axis => {
+        const score = scores[axis.from_dimension];
+        const threshold = axis.threshold || 60;
+        
+        if (score >= threshold) {
+          // Extract high label letter (first letter before parenthesis)
+          code += axis.high_label.charAt(0);
+        } else {
+          // Extract low label letter
+          code += axis.low_label.charAt(0);
+        }
+      });
+
+      return code;
+    }
+
+    function checkRiskFlags(scores) {
+      const flags = [];
+      const riskFlags = scoringKey.derived_outputs.risk_flags;
+
+      riskFlags.forEach(flag => {
+        const [dimension, operator, threshold] = flag.condition.split(/\s+/);
+        const score = scores[dimension];
+        
+        if (operator === '>=' && score >= parseInt(threshold)) {
+          flags.push(flag.meaning);
+        }
+      });
+
+      return flags;
+    }
+
+    function displayResults() {
+      const scores = calculateResults();
+      const typeCode = generateTypeCode(scores);
+      const riskFlags = checkRiskFlags(scores);
+
+      // Display type code
+      document.getElementById('typeCode').textContent = `Вашият тип: ${typeCode}`;
+
+      // Display dimension scores
+      const dimensionsGrid = document.getElementById('dimensionsGrid');
+      dimensionsGrid.innerHTML = '';
+
+      const dimensionLabels = scoringKey.meta.dimension_legend;
+      Object.keys(dimensionLabels).forEach(dim => {
+        const score = scores[dim];
+        const card = document.createElement('div');
+        card.className = 'dimension-card';
+        
+        card.innerHTML = `
+          <div class="dimension-label">
+            <span>${dim}</span>
+            <span class="dimension-score">${score}%</span>
+          </div>
+          <div class="dimension-bar">
+            <div class="dimension-bar-fill" style="width: ${score}%"></div>
+          </div>
+          <div class="dimension-description">${dimensionLabels[dim]}</div>
+        `;
+        
+        dimensionsGrid.appendChild(card);
+      });
+
+      // Display risk flags if any
+      if (riskFlags.length > 0) {
+        const riskFlagsContainer = document.getElementById('riskFlags');
+        const riskFlagsList = document.getElementById('riskFlagsList');
+        
+        riskFlagsList.innerHTML = riskFlags.map(flag => `<li>${flag}</li>`).join('');
+        riskFlagsContainer.classList.remove('hidden');
+      }
+
+      // Store results for saving
+      window.personalityTestResults = {
+        typeCode,
+        scores,
+        riskFlags,
+        timestamp: new Date().toISOString()
+      };
+
+      // Show results section
+      questionsSection.classList.add('hidden');
+      resultsSection.classList.remove('hidden');
+    }
+
+    async function saveResults() {
+      if (!window.personalityTestResults) {
+        alert('Няма резултати за запазване.');
+        return;
+      }
+
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          alert('Не сте влезли в системата.');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        // Save to localStorage temporarily
+        const existingData = parseJsonSafe(localStorage.getItem('psychTests'), {});
+        existingData.personalityTest = window.personalityTestResults;
+        localStorage.setItem('psychTests', JSON.stringify(existingData));
+
+        alert('Резултатът е успешно запазен!');
+        window.location.href = 'code.html';
+      } catch (error) {
+        console.error('Error saving results:', error);
+        alert('Възникна грешка при запазване на резултата.');
+      }
+    }
+
+    // Event listeners
+    document.getElementById('startTestBtn').addEventListener('click', async () => {
+      const loaded = await loadTestData();
+      if (loaded) {
+        introSection.classList.add('hidden');
+        questionsSection.classList.remove('hidden');
+        renderQuestions();
+        updateProgress();
+      }
+    });
+
+    submitBtn.addEventListener('click', () => {
+      if (Object.keys(answers).length === questionsData.length) {
+        displayResults();
+      } else {
+        alert('Моля, отговорете на всички въпроси.');
+      }
+    });
+
+    document.getElementById('retakeBtn').addEventListener('click', () => {
+      answers = {};
+      resultsSection.classList.add('hidden');
+      introSection.classList.remove('hidden');
+    });
+
+    document.getElementById('savePersonalityBtn').addEventListener('click', saveResults);
+  </script>
+</body>
+</html>

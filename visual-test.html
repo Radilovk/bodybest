@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Визуален Тест за Хранителен Профил | BodyBest</title>
+  <link rel="stylesheet" href="css/base_styles.css" />
+  <link rel="stylesheet" href="css/components_styles.css" />
+  <link rel="stylesheet" href="css/quest_styles.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+  <style>
+    .visual-test-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--space-lg);
+    }
+    
+    .screen {
+      display: none;
+    }
+    
+    .screen.active {
+      display: block;
+    }
+    
+    /* Intro Screen */
+    .intro-screen {
+      text-align: center;
+      padding: var(--space-xl) var(--space-lg);
+    }
+    
+    .intro-screen h1 {
+      color: var(--primary-color);
+      margin-bottom: var(--space-md);
+    }
+    
+    .intro-screen .subtitle {
+      color: var(--secondary-color);
+      font-size: var(--fs-lg);
+      font-weight: 700;
+    }
+    
+    .intro-screen p {
+      color: var(--text-color-secondary);
+      margin: var(--space-md) 0;
+      line-height: 1.6;
+    }
+    
+    .rules-list {
+      text-align: left;
+      max-width: 600px;
+      margin: var(--space-lg) auto;
+      padding: var(--space-md);
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .rules-list li {
+      margin-bottom: var(--space-sm);
+      color: var(--text-color-primary);
+    }
+    
+    /* Grid Screen */
+    .grid-screen {
+      padding: var(--space-lg);
+    }
+    
+    .grid-header {
+      text-align: center;
+      margin-bottom: var(--space-lg);
+      color: var(--text-color-secondary);
+    }
+    
+    .images-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+    
+    .image-card {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 2px solid var(--border-color);
+      background: var(--card-bg);
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      aspect-ratio: 1;
+    }
+    
+    .image-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--secondary-color);
+    }
+    
+    .image-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    
+    /* Overlay for fullscreen preview */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(10px);
+    }
+    
+    .overlay.active {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .overlay-header {
+      padding: var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .overlay-title {
+      color: white;
+      font-size: var(--fs-md);
+    }
+    
+    .overlay-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      border-radius: var(--radius-round);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: var(--fs-lg);
+      transition: background 0.3s ease;
+    }
+    
+    .overlay-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .overlay-body {
+      flex: 1;
+      padding: var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .overlay-image-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .overlay-image-wrapper img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      border-radius: var(--radius-lg);
+    }
+    
+    .overlay-footer {
+      padding: var(--space-md);
+      display: flex;
+      gap: var(--space-sm);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Result Screen */
+    .result-screen {
+      padding: var(--space-lg);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    .result-image {
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: var(--space-lg);
+      max-height: 400px;
+      border: 2px solid var(--border-color);
+    }
+    
+    .result-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    
+    .result-title {
+      color: var(--primary-color);
+      margin-bottom: var(--space-sm);
+      font-size: var(--fs-xl);
+    }
+    
+    .result-subtitle {
+      color: var(--text-color-secondary);
+      margin-bottom: var(--space-lg);
+      font-size: var(--fs-md);
+    }
+    
+    .result-section {
+      margin-bottom: var(--space-lg);
+    }
+    
+    .section-label {
+      font-size: var(--fs-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-color-muted);
+      margin-bottom: var(--space-sm);
+      font-weight: 700;
+    }
+    
+    .result-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-color);
+    }
+    
+    .result-list {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .result-list li {
+      display: flex;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-sm);
+      line-height: 1.6;
+      color: var(--text-color-primary);
+    }
+    
+    .result-list .bullet {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--secondary-color);
+      margin-top: 8px;
+      flex-shrink: 0;
+    }
+    
+    .result-list.risks .bullet {
+      background: var(--color-warning);
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: var(--space-sm);
+      margin-top: var(--space-lg);
+    }
+    
+    .grid-footer {
+      text-align: center;
+      padding: var(--space-md);
+    }
+    
+    @media (max-width: 768px) {
+      .images-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-sm);
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+      }
+      
+      .overlay-footer {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="visual-test-container">
+    <!-- Screen 1: Introduction -->
+    <section class="screen intro-screen active" id="introScreen">
+      <h1>Визуален тест за<br><span class="subtitle">хранителен психопрофил</span></h1>
+      <p>
+        Този визуален тест е спомагателен в откриването на подсъзнателни хранителни навици, 
+        свързани с конкретни психологически профили.
+      </p>
+      <div class="rules-list">
+        <ol>
+          <li>Разгледай изображенията.</li>
+          <li>Докосни това, което те привлича най-силно (интуитивно).</li>
+          <li>След като се отвори на цял екран потвърди или избери друго.</li>
+        </ol>
+      </div>
+      <button class="button" id="startBtn">Започни</button>
+      <a href="code.html" class="button-secondary" style="display: inline-block; margin-top: var(--space-sm); text-decoration: none;">
+        <i class="bi bi-arrow-left"></i> Назад към профила
+      </a>
+    </section>
+
+    <!-- Screen 2: Image Grid -->
+    <section class="screen grid-screen" id="gridScreen">
+      <div class="grid-header">
+        <h2>Избери картината, която най-силно резонира с теб</h2>
+      </div>
+      <div class="images-grid" id="imagesGrid"></div>
+      <div class="grid-footer">
+        <button class="button-secondary" id="backToIntroBtn">
+          <i class="bi bi-arrow-left"></i> Назад
+        </button>
+      </div>
+    </section>
+
+    <!-- Fullscreen Preview Overlay -->
+    <div class="overlay" id="overlay">
+      <div class="overlay-header">
+        <div class="overlay-title">Преглед на изображение</div>
+        <button class="overlay-close" id="overlayClose">✕</button>
+      </div>
+      <div class="overlay-body">
+        <div class="overlay-image-wrapper">
+          <img id="overlayImage" alt="Преглед" />
+        </div>
+      </div>
+      <div class="overlay-footer">
+        <button class="button-secondary" id="overlayBack" style="flex: 1;">Назад</button>
+        <button class="button" id="overlaySelect" style="flex: 1;">Избирам това</button>
+      </div>
+    </div>
+
+    <!-- Screen 3: Result -->
+    <section class="screen result-screen" id="resultScreen">
+      <div id="resultContent"></div>
+      <div class="action-buttons">
+        <button class="button-secondary" id="againBtn" style="flex: 1;">Друг избор</button>
+        <button class="button-secondary" id="toGridBtn" style="flex: 1;">Към изображенията</button>
+        <button class="button" id="saveResultBtn" style="flex: 1;">
+          <i class="bi bi-check-circle"></i> Запази резултата
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { parseJsonSafe } from './utils/parseJsonSafe.js';
+    
+    const IMG_EXT = "jpg";
+    const BASE_PATH = "./psy/";
+    
+    const profiles = {
+      "01": {
+        name: "Рестриктивно-перфекционистичен профил",
+        short: "Контрол, правила, страх от грешка.",
+        psycho: [
+          "Перфекционизъм и висок самоконтрол, често съчетани с тревожност при несигурност.",
+          "Силен вътрешен критик: храненето се преживява като тест за „стойност" и дисциплина.",
+          "Предпочитание към числови опори (калории, грамове, правила), за да се намали неопределеността."
+        ],
+        habits: [
+          "Строги режими, фиксирани часови прозорци, изключване на „забранени" храни.",
+          "Претегляне/броене; избор на храни по „правилност", не по глад/ситост.",
+          "Риск от епизоди на преяждане след дълги рестрикции (често вечер/насаме)."
+        ],
+        risks: [
+          "Хронично нисък прием на енергия → метаболитен и хормонален стрес.",
+          "Ескалация към рестриктивно хранително разстройство/орторексия.",
+          "Социално избягване (рестрикция на ситуации, където храната не е контролируема)."
+        ]
+      },
+      "02": {
+        name: "Емоционално-регулаторен профил",
+        short: "Храната като бърз регулатор на напрежение.",
+        psycho: [
+          "Повишена емоционална реактивност; трудност да се „носи" напрежение без външен регулатор.",
+          "Склонност към тъга/самота/тревожност и търсене на утеха през сетивен стимул.",
+          "Често несигурна привързаност: нужда от близост + страх от отхвърляне."
+        ],
+        habits: [
+          "Ядене при стрес, празнота, скука, самота – независимо от физически глад.",
+          "Комфортни храни: сладко, мазно, тестено; вечерно/нощно хранене.",
+          "Цикъл: облекчение → вина → повторение."
+        ],
+        risks: [
+          "Постепенно покачване на тегло и метаболитен риск при хронично преяждане.",
+          "Подсилване на депресивни симптоми чрез вина/самонаказание.",
+          "Зависим модел „емоция → храна" с ниска устойчивост на стрес без храна."
+        ]
+      },
+      "03": {
+        name: "Стимулно-импулсивен профил",
+        short: "Стимул и моментна награда доминират избора.",
+        psycho: [
+          "Високо търсене на новост и сетивна интензивност; ниска толерантност към скука.",
+          "Импулсивност: кратка пауза между желание и действие.",
+          "По-слабо планиране и самонаблюдение в микрорешенията (ден за ден)."
+        ],
+        habits: [
+          "Чести закуски „между другото", трудно спиране след „само още малко".",
+          "Теглене към силни вкусове/текстури: много сладко, солено, хрупкаво, ултра-преработено.",
+          "Ядене при стимул (вижда/мирише/има наоколо), не при физиологичен глад."
+        ],
+        risks: [
+          "Натрупване на калории без усещане за „истинско хранене".",
+          "Привикване: нужен е по-силен стимул за същата награда.",
+          "Генерализиране на модела към други награди (алкохол, никотин, игри)."
+        ]
+      },
+      "04": {
+        name: "Хаотичен / дисоциативен профил",
+        short: "Слаб контакт с телесни сигнали и рутина.",
+        psycho: [
+          "Висока когнитивна ангажираност („живот в главата") и ниска интероцепция (прочит на глад/ситост).",
+          "Разпиляност и трудност в дневна организация; рутина се разпада при стрес/работа.",
+          "Избягване на напрежение чрез екран/работа/потапяне, вместо телесна регулация."
+        ],
+        habits: [
+          "Пропускане на хранения → рязко преяждане по-късно.",
+          "Ядене на крак/пред екран, без реален вкус и памет за приема.",
+          "Непостоянни часове и избор на „първото налично"."
+        ],
+        risks: [
+          "Метаболитен стрес от големи амплитуди в енергийния прием.",
+          "Стомашно-чревни оплаквания (рефлукс, дискомфорт) при късни и големи порции.",
+          "Хронична умора и „мозъчна мъгла" от нестабилна горивна линия."
+        ]
+      },
+      "05": {
+        name: "Цикличен „диета – срив" профил",
+        short: "Контрол и разпад се редуват циклично.",
+        psycho: [
+          "Колеблива самооценка: „контрол = стойност", „отклонение = провал".",
+          "Силен срам около тялото/храната; история на критика или засрамване често е фактор.",
+          "Мислене „всичко или нищо" – малко отклонение отключва „щом така, до край"."
+        ],
+        habits: [
+          "Фази на крайна рестрикция → фази на неконтролирано преяждане.",
+          "Компенсации: глад, прекомерни тренировки, „прочистване", крайни правила на следващия ден.",
+          "Чести епизоди на „тайно" хранене и силна вина след това."
+        ],
+        risks: [
+          "Риск от булимия/компулсивно преяждане (спектър).",
+          "Йо-йо ефект и нарушена метаболитна адаптация към диети.",
+          "Укрепване на идентичност „аз съм неуправляем" → още по-силен контрол."
+        ]
+      },
+      "06": {
+        name: "Социално-зависим / конформен профил",
+        short: "Храненето се води от принадлежност и избягване на конфликт.",
+        psycho: [
+          "Висока нужда от одобрение и хармония; ниска склонност към отказ.",
+          "Граници се размиват в група; решенията се вземат „по социален сценарий".",
+          "Самооценка, зависеща от реакцията на другите."
+        ],
+        habits: [
+          "Стабилен режим сам, но силно „дерейлиране" при срещи, гости, празници.",
+          "Ядене „за компания", трудно отказване на храна/алкохол, когато се предлага.",
+          "Порциите се напасват към групата, не към тялото."
+        ],
+        risks: [
+          "Наднормено тегло, идващо основно от социални ситуации.",
+          "Загуба на автономност и слаб вътрешен „стоп" в групов контекст.",
+          "Повтаряне на същите модели при всяко събитие → кумулативен ефект."
+        ]
+      },
+      "07": {
+        name: "Орторекичен / здравно-тревожен профил",
+        short: "„Чистота" и сигурност доминират избора на храна.",
+        psycho: [
+          "Здравето се преживява като крехко; силна нужда да се минимизира риск чрез контрол.",
+          "Натрапливи мисли за съставки, „токсини", „нечисто"; търсене на абсолютна сигурност.",
+          "Самооценка, вързана с „перфектна грижа" и дисциплина."
+        ],
+        habits: [
+          "Изключване на групи храни без медицинска необходимост; свръх-четене на етикети.",
+          "Избягване на хранене навън поради „неизвестни" съставки/масла/начин на готвене.",
+          "Ритуализация: само определени марки, начини на приготвяне, часове."
+        ],
+        risks: [
+          "Недостиг на нутриенти и енергия поради прекомерни ограничения.",
+          "Социална изолация и тревожност около всяко „чуждо" хранене.",
+          "Ескалация към клинична орторексия/рестриктивно разстройство."
+        ]
+      },
+      "08": {
+        name: "Циркадно-разсинхронизиран / нощен профил",
+        short: "Денем минимално, вечер/нощем наваксване.",
+        psycho: [
+          "Приоритет на работа/задачи пред физиологията; „ще ям по-късно" като навик.",
+          "Често късен хронотип или режим, който измества апетита към вечерта.",
+          "Нощта се преживява като „време за мен" → храната става ритуал за отпускане."
+        ],
+        habits: [
+          "Прескачане/минимизиране на дневни хранения → големи порции късно.",
+          "Хранене пред екран непосредствено преди сън.",
+          "Комбиниране на храна с кофеин/алкохол вечер при някои хора."
+        ],
+        risks: [
+          "Повишен риск от инсулинова резистентност и метаболитен синдром при късни калории.",
+          "Нарушен сън (качество/латентност) и хронична умора.",
+          "Трудно редуциране на тегло въпреки „малко ядене през деня"."
+        ]
+      }
+    };
+
+    // UI Elements
+    const introScreen = document.getElementById('introScreen');
+    const gridScreen = document.getElementById('gridScreen');
+    const resultScreen = document.getElementById('resultScreen');
+    const imagesGrid = document.getElementById('imagesGrid');
+    const overlay = document.getElementById('overlay');
+    const overlayImage = document.getElementById('overlayImage');
+    const resultContent = document.getElementById('resultContent');
+    
+    let pendingId = null;
+    let pendingSrc = null;
+    let selectedProfile = null;
+
+    function showScreen(screen) {
+      [introScreen, gridScreen, resultScreen].forEach(s => s.classList.remove('active'));
+      screen.classList.add('active');
+    }
+
+    // Build image grid
+    const imageIds = ["01", "02", "03", "04", "05", "06", "07", "08"];
+    imageIds.forEach(id => {
+      const card = document.createElement('div');
+      card.className = 'image-card';
+      card.dataset.id = id;
+      
+      const img = document.createElement('img');
+      img.src = `${BASE_PATH}${id}.${IMG_EXT}`;
+      img.alt = `Изображение ${id}`;
+      
+      card.appendChild(img);
+      card.addEventListener('click', () => {
+        pendingId = id;
+        pendingSrc = img.src;
+        overlayImage.src = img.src;
+        openOverlay();
+      });
+      
+      imagesGrid.appendChild(card);
+    });
+
+    function openOverlay() {
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeOverlay() {
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    function renderResult(id, src) {
+      const profile = profiles[id];
+      if (!profile) {
+        resultContent.innerHTML = `<div class="error-message">Грешка: липсва профил за ${id}.</div>`;
+        return;
+      }
+
+      selectedProfile = {
+        id: id,
+        name: profile.name,
+        short: profile.short,
+        timestamp: new Date().toISOString()
+      };
+
+      resultContent.innerHTML = `
+        <div class="result-image">
+          <img src="${src}" alt="Избрано изображение ${id}">
+        </div>
+
+        <h2 class="result-title">${profile.name}</h2>
+        <p class="result-subtitle">${profile.short}</p>
+
+        <div class="result-section">
+          <div class="section-label">Психопрофил</div>
+          <div class="result-card">
+            <ul class="result-list">
+              ${profile.psycho.map(item => `
+                <li>
+                  <span class="bullet"></span>
+                  <span>${item}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        </div>
+
+        <div class="result-section">
+          <div class="section-label">Рискови хранителни навици</div>
+          <div class="result-card">
+            <ul class="result-list">
+              ${profile.habits.map(item => `
+                <li>
+                  <span class="bullet"></span>
+                  <span>${item}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        </div>
+
+        <div class="result-section">
+          <div class="section-label">Потенциални рискове</div>
+          <div class="result-card">
+            <ul class="result-list risks">
+              ${profile.risks.map(item => `
+                <li>
+                  <span class="bullet"></span>
+                  <span>${item}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+
+    async function saveResult() {
+      if (!selectedProfile) {
+        alert('Моля, изберете изображение първо.');
+        return;
+      }
+
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          alert('Не сте влезли в системата.');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        // Save to localStorage temporarily
+        const existingData = parseJsonSafe(localStorage.getItem('psychTests'), {});
+        existingData.visualTest = selectedProfile;
+        localStorage.setItem('psychTests', JSON.stringify(existingData));
+
+        alert('Резултатът е успешно запазен!');
+        window.location.href = 'code.html';
+      } catch (error) {
+        console.error('Error saving result:', error);
+        alert('Възникна грешка при запазване на резултата.');
+      }
+    }
+
+    // Event listeners
+    document.getElementById('startBtn').addEventListener('click', () => showScreen(gridScreen));
+    document.getElementById('backToIntroBtn').addEventListener('click', () => showScreen(introScreen));
+    document.getElementById('overlayClose').addEventListener('click', closeOverlay);
+    document.getElementById('overlayBack').addEventListener('click', closeOverlay);
+    document.getElementById('overlaySelect').addEventListener('click', () => {
+      if (pendingId) {
+        closeOverlay();
+        renderResult(pendingId, pendingSrc);
+        showScreen(resultScreen);
+      }
+    });
+    document.getElementById('againBtn').addEventListener('click', () => showScreen(gridScreen));
+    document.getElementById('toGridBtn').addEventListener('click', () => showScreen(gridScreen));
+    document.getElementById('saveResultBtn').addEventListener('click', saveResult);
+
+    // Close overlay on outside click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeOverlay();
+    });
+  </script>
+</body>
+</html>
