@@ -1190,6 +1190,8 @@
           psychTests = JSON.parse(psychTestsStr);
         } catch (error) {
           console.error('Error parsing psychTests from localStorage:', error);
+          // Clear corrupted data
+          localStorage.removeItem('psychTests');
           return;
         }
 
