@@ -1301,6 +1301,8 @@ export default {
                 responseBody = await handleUploadIrisDiag(request, env);
             } else if (method === 'GET' && path === '/api/getProfile') {
                 responseBody = await handleGetProfileRequest(request, env);
+            } else if (method === 'GET' && path === '/api/getPsychTests') {
+                responseBody = await handleGetPsychTestsRequest(request, env);
             } else if (method === 'POST' && path === '/api/updateProfile') {
                 responseBody = await handleUpdateProfileRequest(request, env);
             } else if (method === 'POST' && path === '/api/savePsychTests') {
@@ -2800,8 +2802,39 @@ async function handleSavePsychTestsRequest(request, env) {
             };
         }
 
+        // Запазваме суровите резултати за директно извличане в клиентския профил
+        const psychTestsToStore = {};
+        const normalizedVisualTimestamp = visualTest ? (visualTest.timestamp || timestamp) : null;
+        const normalizedPersonalityTimestamp = personalityTest ? (personalityTest.timestamp || timestamp) : null;
+
+        if (visualTest) {
+            psychTestsToStore.visualTest = {
+                ...visualTest,
+                timestamp: normalizedVisualTimestamp
+            };
+        }
+        if (personalityTest) {
+            psychTestsToStore.personalityTest = {
+                ...personalityTest,
+                timestamp: normalizedPersonalityTimestamp
+            };
+        }
+
+        const timestampCandidates = [
+            normalizedVisualTimestamp ? { value: normalizedVisualTimestamp, time: new Date(normalizedVisualTimestamp).getTime() } : null,
+            normalizedPersonalityTimestamp ? { value: normalizedPersonalityTimestamp, time: new Date(normalizedPersonalityTimestamp).getTime() } : null
+        ].filter(Boolean);
+
+        if (timestampCandidates.length > 0) {
+            const latestEntry = timestampCandidates.reduce((acc, entry) => entry.time > acc.time ? entry : acc);
+            psychTestsToStore.lastUpdated = latestEntry.value;
+        } else {
+            psychTestsToStore.lastUpdated = timestamp;
+        }
+
         // Запазване на актуализираните данни
         await env.USER_METADATA_KV.put(analysisKey, JSON.stringify(analysis));
+        await env.USER_METADATA_KV.put(`${userId}_psych_tests`, JSON.stringify(psychTestsToStore));
 
         // Проверка дали вече има генериран план
         const planStatus = await env.USER_METADATA_KV.get(`${userId}_plan_status`);
@@ -2822,7 +2855,7 @@ async function handleSavePsychTestsRequest(request, env) {
                 visualTestSaved: !!visualTest,
                 personalityTestSaved: !!personalityTest,
                 shouldRegeneratePlan,
-                timestamp
+                timestamp: psychTestsToStore.lastUpdated || timestamp
             }
         };
     } catch (error) {
@@ -2835,6 +2868,65 @@ async function handleSavePsychTestsRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleSavePsychTestsRequest -------------
+
+// ------------- START FUNCTION: handleGetPsychTestsRequest -------------
+/**
+ * Връща последно запазените психологически тестове за потребителя.
+ * Пада обратно към analysis профила, ако липсва директен запис.
+ * @param {Request} request
+ * @param {Object} env
+ * @returns {Promise<Object>}
+ */
+async function handleGetPsychTestsRequest(request, env) {
+    try {
+        const url = new URL(request.url);
+        const userId = url.searchParams.get("userId");
+        if (!userId) return { success: false, message: "Липсва ID на потребител.", statusHint: 400 };
+
+        const storageKey = `${userId}_psych_tests`;
+        const storedStr = await env.USER_METADATA_KV.get(storageKey);
+        let psychTests = storedStr ? safeParseJson(storedStr, null) : null;
+
+        // Fallback към analysis данните (поддържа по-стари записи)
+        if (!psychTests || (!psychTests.visualTest && !psychTests.personalityTest)) {
+            const analysisStr = await env.USER_METADATA_KV.get(`${userId}_analysis`);
+            const analysis = analysisStr ? safeParseJson(analysisStr, {}) : {};
+            const fallback = {};
+
+            if (analysis.visualTestProfile) {
+                fallback.visualTest = {
+                    id: analysis.visualTestProfile.profileId,
+                    name: analysis.visualTestProfile.profileName,
+                    short: analysis.visualTestProfile.profileShort,
+                    timestamp: analysis.visualTestProfile.timestamp
+                };
+            }
+
+            if (analysis.personalityTestProfile) {
+                fallback.personalityTest = {
+                    typeCode: analysis.personalityTestProfile.typeCode,
+                    scores: analysis.personalityTestProfile.scores,
+                    riskFlags: analysis.personalityTestProfile.riskFlags,
+                    timestamp: analysis.personalityTestProfile.timestamp
+                };
+            }
+
+            if (Object.keys(fallback).length > 0) {
+                psychTests = { ...fallback };
+                const latestTs = fallback.personalityTest?.timestamp || fallback.visualTest?.timestamp;
+                if (latestTs) {
+                    psychTests.lastUpdated = latestTs;
+                }
+            }
+        }
+
+        return { success: true, data: psychTests || null };
+    } catch (error) {
+        console.error(`Error in handleGetPsychTestsRequest: ${error.message}\n${error.stack}`);
+        return { success: false, message: "Грешка при зареждане на резултатите от тестовете.", statusHint: 500 };
+    }
+}
+// ------------- END FUNCTION: handleGetPsychTestsRequest -------------
 
 // ------------- START FUNCTION: validatePlanPrerequisites -------------
 async function validatePlanPrerequisites(env, userId) {
@@ -9287,4 +9379,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callModelWithTimeout, setCallModelImplementation, callGeminiAPI, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleProposePlanChangeRequest, handleApprovePlanChangeRequest, handleGetPendingPlanChangesRequest, handleRejectPlanChangeRequest, handleNutrientLookupRequest, applyPlanChanges, parsePlanModificationRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary, AI_CALL_TIMEOUT_MS, DEFAULT_PLAN_CALL_TIMEOUT_MS, resolvePlanCallTimeoutMs };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleGetPsychTestsRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleSavePsychTestsRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callModelWithTimeout, setCallModelImplementation, callGeminiAPI, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleProposePlanChangeRequest, handleApprovePlanChangeRequest, handleGetPendingPlanChangesRequest, handleRejectPlanChangeRequest, handleNutrientLookupRequest, applyPlanChanges, parsePlanModificationRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary, AI_CALL_TIMEOUT_MS, DEFAULT_PLAN_CALL_TIMEOUT_MS, resolvePlanCallTimeoutMs };

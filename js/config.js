@@ -70,11 +70,12 @@ export const apiEndpoints = {
     setMaintenanceMode: `${workerBaseUrl}/api/setMaintenanceMode`,
     proposePlanChange: `${workerBaseUrl}/api/proposePlanChange`,
     approvePlanChange: `${workerBaseUrl}/api/approvePlanChange`,
-    getPendingPlanChanges: `${workerBaseUrl}/api/getPendingPlanChanges`,
-    rejectPlanChange: `${workerBaseUrl}/api/rejectPlanChange`,
-    savePsychTests: `${workerBaseUrl}/api/savePsychTests`,
-    nutrientLookup: `${workerBaseUrl}/nutrient-lookup`
-};
+     getPendingPlanChanges: `${workerBaseUrl}/api/getPendingPlanChanges`,
+     rejectPlanChange: `${workerBaseUrl}/api/rejectPlanChange`,
+     savePsychTests: `${workerBaseUrl}/api/savePsychTests`,
+    getPsychTests: `${workerBaseUrl}/api/getPsychTests`,
+     nutrientLookup: `${workerBaseUrl}/nutrient-lookup`
+ };
 
 // Cloudflare Account ID за използване в чат асистента
 export const cloudflareAccountId = window.CF_ACCOUNT_ID || 'c2015f4060e04bc3c414f78a9946668e';

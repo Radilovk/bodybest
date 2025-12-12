@@ -1186,12 +1186,30 @@
     <script type="module">
       import { loadPartial } from './js/partialLoader.js';
       import { initializeSelectors } from './js/uiElements.js';
-      import { syncPsychTestsToBackend } from './js/psychTestsIntegration.js';
+      import { syncPsychTestsToBackend, fetchPsychTestsFromBackend } from './js/psychTestsIntegration.js';
       import { apiEndpoints } from './js/config.js';
       
       loadPartial('planModChatModal.html', 'planModChatModalContainer').then(() => {
         initializeSelectors();
       });
+
+      // Зарежда съхранените психотестове от backend и ги пази локално
+      async function hydratePsychTestsFromBackend(userId) {
+        if (!userId) return false;
+        try {
+          const data = await fetchPsychTestsFromBackend(userId);
+          if (data && (data.visualTest || data.personalityTest)) {
+            localStorage.setItem('psychTests', JSON.stringify(data));
+            if (data.lastUpdated) {
+              localStorage.setItem('psychTestsLastSync', data.lastUpdated);
+            }
+            return true;
+          }
+        } catch (error) {
+          console.error('Failed to load psych tests from backend:', error);
+        }
+        return false;
+      }
 
       // Sync psych tests to backend on page load
       async function syncPsychTestsIfNeeded() {
@@ -1203,7 +1221,14 @@
 
         // Check if already synced
         const lastSyncStr = localStorage.getItem('psychTestsLastSync');
-        const psychTests = JSON.parse(psychTestsStr);
+        let psychTests;
+        try {
+          psychTests = JSON.parse(psychTestsStr);
+        } catch (error) {
+          console.error('Failed to parse psychTests from localStorage:', error);
+          localStorage.removeItem('psychTests');
+          return;
+        }
         
         // Get latest timestamp from tests
         const latestTestTime = Math.max(
@@ -1257,6 +1282,19 @@
         const detailsContainer = document.getElementById('psychTestDetails');
         
         if (!psychTests || (!psychTests.visualTest && !psychTests.personalityTest)) {
+          resultsContainer.style.display = 'block';
+          if (summaryContainer) {
+            summaryContainer.innerHTML = '<span class="placeholder">Няма запазени резултати. Завършете тестовете и ще ги синхронизираме автоматично.</span>';
+          }
+          if (regenerateBtn) {
+            regenerateBtn.style.display = 'none';
+          }
+          if (detailsCard) {
+            detailsCard.style.display = 'none';
+          }
+          if (detailsContainer) {
+            detailsContainer.innerHTML = '';
+          }
           return;
         }
 
@@ -1461,17 +1499,23 @@
         });
       }
 
+      async function initPsychTestsSection() {
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          await hydratePsychTestsFromBackend(userId);
+          await syncPsychTestsIfNeeded();
+        }
+        displayPsychTestResults();
+        handlePlanRegeneration();
+      }
+
       // Run on page load
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-          displayPsychTestResults();
-          syncPsychTestsIfNeeded();
-          handlePlanRegeneration();
+          initPsychTestsSection();
         });
       } else {
-        displayPsychTestResults();
-        syncPsychTestsIfNeeded();
-        handlePlanRegeneration();
+        initPsychTestsSection();
       }
     </script>
     <script type="module" src="js/app.js" defer></script>

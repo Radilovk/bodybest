@@ -46,6 +46,31 @@ export async function savePsychTestsToBackend({ userId, visualTest, personalityT
 }
 
 /**
+ * Извлича последно запазените психологически тестове от backend
+ * @param {string} userId
+ * @returns {Promise<Object|null>}
+ */
+export async function fetchPsychTestsFromBackend(userId) {
+  if (!userId) {
+    throw new Error('userId е задължително');
+  }
+
+  try {
+    const response = await fetch(`${apiEndpoints.getPsychTests}?userId=${encodeURIComponent(userId)}`);
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Грешка при зареждане на резултатите');
+    }
+
+    return data.data || null;
+  } catch (error) {
+    console.error('Error fetching psych tests from backend:', error);
+    throw error;
+  }
+}
+
+/**
  * Зарежда резултатите от психотестовете от localStorage
  * @returns {Object|null} Резултати от тестовете или null
  */

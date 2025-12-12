@@ -663,6 +663,7 @@
             if (backendResult.data?.shouldRegeneratePlan) {
               message += '\n\nПрепоръчваме регенериране на вашия хранителен план, за да отразите новата психологическа информация.';
             }
+            localStorage.setItem('psychTestsLastSync', window.personalityTestResults.timestamp || new Date().toISOString());
             alert(message);
             window.location.href = 'code.html';
           } else {
