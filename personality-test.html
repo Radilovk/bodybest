@@ -361,8 +361,6 @@
   </div>
 
   <script type="module">
-    import { parseJsonSafe } from './utils/parseJsonSafe.js';
-
     let questionsData = [];
     let scoringKey = {};
     let answers = {};
@@ -646,7 +644,8 @@
         }
 
         // Save to localStorage temporarily
-        const existingData = parseJsonSafe(localStorage.getItem('psychTests'), {});
+        const existingDataStr = localStorage.getItem('psychTests');
+        const existingData = existingDataStr ? JSON.parse(existingDataStr) : {};
         existingData.personalityTest = window.personalityTestResults;
         localStorage.setItem('psychTests', JSON.stringify(existingData));
 

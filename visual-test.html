@@ -354,7 +354,6 @@
   </div>
 
   <script type="module">
-    import { parseJsonSafe } from './utils/parseJsonSafe.js';
     import { profiles } from './js/visualTestProfiles.js';
     
     const IMG_EXT = "jpg";
@@ -491,7 +490,8 @@
         }
 
         // Save to localStorage temporarily
-        const existingData = parseJsonSafe(localStorage.getItem('psychTests'), {});
+        const existingDataStr = localStorage.getItem('psychTests');
+        const existingData = existingDataStr ? JSON.parse(existingDataStr) : {};
         existingData.visualTest = selectedProfile;
         localStorage.setItem('psychTests', JSON.stringify(existingData));
 
