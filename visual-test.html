@@ -355,6 +355,7 @@
 
   <script type="module">
     import { profiles } from './js/visualTestProfiles.js';
+    import { savePsychTestsToBackend } from './js/psychTestsIntegration.js';
     
     const IMG_EXT = "jpg";
     const BASE_PATH = "./psy/";
@@ -495,8 +496,28 @@
         existingData.visualTest = selectedProfile;
         localStorage.setItem('psychTests', JSON.stringify(existingData));
 
-        alert('Резултатът е успешно запазен!');
-        window.location.href = 'code.html';
+        // Save to backend
+        try {
+          const backendResult = await savePsychTestsToBackend({
+            userId,
+            visualTest: selectedProfile
+          });
+
+          if (backendResult.success) {
+            let message = 'Резултатът е успешно запазен!';
+            if (backendResult.data?.shouldRegeneratePlan) {
+              message += '\n\nПрепоръчваме регенериране на вашия хранителен план, за да отразите новата психологическа информация.';
+            }
+            alert(message);
+            window.location.href = 'code.html';
+          } else {
+            throw new Error(backendResult.message || 'Backend error');
+          }
+        } catch (backendError) {
+          console.warn('Backend save failed, using localStorage only:', backendError);
+          alert('Резултатът е запазен локално. Ще бъде синхронизиран при следващото влизане.');
+          window.location.href = 'code.html';
+        }
       } catch (error) {
         console.error('Error saving result:', error);
         alert('Възникна грешка при запазване на резултата.');

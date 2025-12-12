@@ -1173,10 +1173,51 @@
     <script type="module">
       import { loadPartial } from './js/partialLoader.js';
       import { initializeSelectors } from './js/uiElements.js';
+      import { syncPsychTestsToBackend } from './js/psychTestsIntegration.js';
       
       loadPartial('planModChatModal.html', 'planModChatModalContainer').then(() => {
         initializeSelectors();
       });
+
+      // Sync psych tests to backend on page load
+      async function syncPsychTestsIfNeeded() {
+        const userId = localStorage.getItem('userId');
+        if (!userId) return;
+
+        const psychTestsStr = localStorage.getItem('psychTests');
+        if (!psychTestsStr) return;
+
+        // Check if already synced
+        const lastSyncStr = localStorage.getItem('psychTestsLastSync');
+        const psychTests = JSON.parse(psychTestsStr);
+        
+        // Get latest timestamp from tests
+        const latestTestTime = Math.max(
+          psychTests.visualTest?.timestamp ? new Date(psychTests.visualTest.timestamp).getTime() : 0,
+          psychTests.personalityTest?.timestamp ? new Date(psychTests.personalityTest.timestamp).getTime() : 0
+        );
+
+        const lastSync = lastSyncStr ? new Date(lastSyncStr).getTime() : 0;
+
+        // Sync if tests are newer than last sync
+        if (latestTestTime > lastSync) {
+          try {
+            const result = await syncPsychTestsToBackend(userId);
+            if (result.success) {
+              localStorage.setItem('psychTestsLastSync', new Date().toISOString());
+              console.log('Psych tests synced successfully');
+              
+              // Show notification if plan should be regenerated
+              if (result.shouldRegeneratePlan) {
+                // Could show a toast or notification here
+                console.log('Plan regeneration recommended');
+              }
+            }
+          } catch (error) {
+            console.error('Failed to sync psych tests:', error);
+          }
+        }
+      }
 
       // Display saved psych test results
       function displayPsychTestResults() {
@@ -1218,9 +1259,13 @@
 
       // Run on page load
       if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', displayPsychTestResults);
+        document.addEventListener('DOMContentLoaded', () => {
+          displayPsychTestResults();
+          syncPsychTestsIfNeeded();
+        });
       } else {
         displayPsychTestResults();
+        syncPsychTestsIfNeeded();
       }
     </script>
     <script type="module" src="js/app.js" defer></script>
