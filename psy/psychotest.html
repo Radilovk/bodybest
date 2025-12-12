@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Личностен Психотест | BodyBest</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --panel: #061024;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+      --accent: #22c55e;
+      --accent-hover: #16a34a;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius: 14px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .screen {
+      display: none;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, var(--accent) 0%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    /* Intro Screen */
+    .intro-content {
+      background: var(--panel);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 30px;
+      box-shadow: var(--shadow);
+    }
+
+    .intro-content h2 {
+      font-size: 22px;
+      margin-bottom: 15px;
+      color: var(--accent);
+    }
+
+    .intro-content p {
+      margin-bottom: 15px;
+      color: var(--muted);
+    }
+
+    .intro-content ul {
+      margin: 20px 0 20px 20px;
+      color: var(--text);
+    }
+
+    .intro-content li {
+      margin-bottom: 10px;
+    }
+
+    /* Button Styles */
+    .btn {
+      width: 100%;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #052e1b;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px -2px rgba(34, 197, 94, 0.3);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      margin-top: 10px;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(31, 41, 55, 0.3);
+      color: var(--text);
+    }
+
+    /* Progress Bar */
+    .progress-container {
+      margin-bottom: 30px;
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent) 0%, #10b981 100%);
+      transition: width 0.3s ease;
+      border-radius: 999px;
+    }
+
+    /* Question Card */
+    .question-card {
+      background: var(--panel);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 30px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+
+    .question-number {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .question-text {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option {
+      background: rgba(31, 41, 55, 0.3);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .option:hover {
+      background: rgba(31, 41, 55, 0.5);
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    .option.selected {
+      background: rgba(34, 197, 94, 0.15);
+      border-color: var(--accent);
+    }
+
+    .option-radio {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      flex-shrink: 0;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .option.selected .option-radio {
+      border-color: var(--accent);
+    }
+
+    .option.selected .option-radio::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px;
+      height: 10px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .option-text {
+      flex: 1;
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .legend {
+      font-size: 13px;
+      color: var(--muted);
+      font-style: italic;
+      padding: 12px;
+      background: rgba(156, 163, 175, 0.05);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent);
+    }
+
+    /* Navigation */
+    .navigation {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .navigation .btn {
+      flex: 1;
+    }
+
+    /* Results Screen */
+    .results-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .results-header h2 {
+      font-size: 26px;
+      margin-bottom: 10px;
+      color: var(--accent);
+    }
+
+    .results-header p {
+      color: var(--muted);
+    }
+
+    .dimension-card {
+      background: var(--panel);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .dimension-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .dimension-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .dimension-code {
+      font-size: 20px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 8px;
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--accent);
+    }
+
+    .dimension-description {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .score-bar-container {
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .score-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .score-bar {
+      width: 100%;
+      height: 24px;
+      background: linear-gradient(90deg, #3b82f6 0%, var(--accent) 100%);
+      border-radius: 999px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .score-marker {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 4px;
+      height: 32px;
+      background: white;
+      border-radius: 999px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    .score-value {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .type-code-card {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+      border: 2px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+      margin: 30px 0;
+    }
+
+    .type-code-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .type-code-value {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+    }
+
+    .flags-section {
+      margin: 30px 0;
+    }
+
+    .flags-section h3 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .flag-card {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .flag-card.warning {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .flag-title {
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .flag-description {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* AI Analysis Section */
+    .ai-section {
+      margin: 30px 0;
+    }
+
+    .ai-section h3 {
+      font-size: 20px;
+      margin-bottom: 16px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ai-badge {
+      font-size: 11px;
+      padding: 4px 10px;
+      background: linear-gradient(135deg, var(--accent) 0%, #10b981 100%);
+      color: #052e1b;
+      border-radius: 999px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .ai-content {
+      background: var(--panel);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .ai-subsection {
+      margin-bottom: 24px;
+    }
+
+    .ai-subsection:last-child {
+      margin-bottom: 0;
+    }
+
+    .ai-subsection h4 {
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ai-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .ai-list li {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-left: 8px;
+    }
+
+    .ai-bullet {
+      color: var(--accent);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .ai-text {
+      flex: 1;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      gap: 12px;
+    }
+
+    .loading-spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .container {
+        padding: 16px;
+      }
+
+      .header h1 {
+        font-size: 24px;
+      }
+
+      .question-text {
+        font-size: 18px;
+      }
+
+      .intro-content, .question-card {
+        padding: 20px;
+      }
+
+      .type-code-value {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Intro Screen -->
+    <div id="screenIntro" class="screen active">
+      <div class="header">
+        <h1>Личностен Психопрофил</h1>
+        <p>Кратък тест за личностни характеристики и хранителни навици</p>
+      </div>
+      <div class="intro-content">
+        <h2>Добре дошли!</h2>
+        <p>Този тест съдържа 14 въпроса, които помагат да се оцени личностният ви профил и потенциални връзки с хранителните навици.</p>
+        <ul>
+          <li>Всеки въпрос има три равностойни опции</li>
+          <li>Изберете опцията, която е <strong>най-близка до естествения ви избор</strong> в повечето случаи</li>
+          <li>Няма правилни или грешни отговори</li>
+          <li>Отговаряйте спонтанно, без да мислите прекалено дълго</li>
+          <li>Тестът отнема около 5-7 минути</li>
+        </ul>
+        <button class="btn btn-primary" onclick="startTest()">Започни теста</button>
+        <a href="../index.html" class="btn btn-secondary">Назад към главната страница</a>
+      </div>
+    </div>
+
+    <!-- Questions Screen -->
+    <div id="screenQuestions" class="screen">
+      <div class="header">
+        <h1>Личностен Психопрофил</h1>
+      </div>
+      
+      <div class="progress-container">
+        <div class="progress-info">
+          <span>Въпрос <span id="currentQuestion">1</span> от <span id="totalQuestions">14</span></span>
+          <span id="progressPercent">7%</span>
+        </div>
+        <div class="progress-bar">
+          <div id="progressFill" class="progress-fill" style="width: 7%"></div>
+        </div>
+      </div>
+
+      <div id="questionContainer"></div>
+
+      <div class="navigation">
+        <button class="btn btn-secondary" id="btnPrevious" onclick="previousQuestion()" style="display: none">Назад</button>
+        <button class="btn btn-primary" id="btnNext" onclick="nextQuestion()" disabled>Следващ въпрос</button>
+      </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="screenResults" class="screen">
+      <div class="header">
+        <h1>Вашите Резултати</h1>
+      </div>
+      
+      <div class="results-header">
+        <h2>Личностен профил</h2>
+        <p>Вашите оценки по различните личностни измерения</p>
+      </div>
+
+      <div id="dimensionsContainer"></div>
+
+      <div id="typeCodeContainer"></div>
+
+      <div id="flagsContainer"></div>
+
+      <div class="ai-section">
+        <h3>
+          AI Анализ на хранителни навици
+          <span class="ai-badge">AI Powered</span>
+        </h3>
+        <div id="aiAnalysisContainer" class="ai-content">
+          <div class="loading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Анализиране на резултатите...</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="navigation">
+        <button class="btn btn-secondary" onclick="restartTest()">Започни отново</button>
+        <a href="../index.html" class="btn btn-primary" style="text-decoration: none">Към главната страница</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Test data loaded from JSON files
+    const testData = {
+      "meta": {
+        "id": "bb_optional_personality_v1_1",
+        "title": "Кратък личностен модул (по избор)",
+        "language": "bg",
+        "version": "1.1.0",
+        "questions_count": 14
+      },
+      "items": [
+        {
+          "id": "psy_01",
+          "text": "Когато се заемам с нова цел...?",
+          "type": "radio",
+          "options": [
+            "Правя точен план и стъпки, преди да започна",
+            "Правя обща рамка и прецизирам по пътя",
+            "Започвам веднага и оформям структурата в движение"
+          ],
+          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
+        },
+        {
+          "id": "psy_02",
+          "text": "В свободното си време предпочитам...?",
+          "type": "radio",
+          "options": [
+            "Позната дейност, която вече е доказано приятна",
+            "Нещо ново/непознато, за да пробвам и да науча",
+            "Комбинация: познато + малък елемент на новост"
+          ],
+          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
+        },
+        {
+          "id": "psy_03",
+          "text": "След тежък ден имам нужда от...?",
+          "type": "radio",
+          "options": [
+            "Време насаме и тишина",
+            "Контакт с хора (приятели/екип), разговор, движение",
+            "Малка социалност + после време насаме"
+          ],
+          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
+        },
+        {
+          "id": "psy_04",
+          "text": "При вземане на решение в трудна ситуация...?",
+          "type": "radio",
+          "options": [
+            "Събирам още информация и чак тогава решавам",
+            "Решавам бързо и после коригирам при нужда",
+            "Питам/сверявам с доверен човек и действам"
+          ],
+          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
+        },
+        {
+          "id": "psy_05",
+          "text": "В напрегнат разговор...?",
+          "type": "radio",
+          "options": [
+            "Заявявам директно и ясно мнение на момента",
+            "Изчаквам да спадне напрежението и после обсъждам",
+            "Търся мек подход: контекст, тон, стратегически стъпки"
+          ],
+          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
+        },
+        {
+          "id": "psy_06",
+          "text": "Когато работя под напрежение...?",
+          "type": "radio",
+          "options": [
+            "Фокусирам се и ставам по-ефективен/а",
+            "Ставам по-раздразнителен/а от разсейващи фактори",
+            "Търся опора: рутина, правила, ясни граници"
+          ],
+          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
+        },
+        {
+          "id": "psy_07",
+          "text": "Нуждата ми от подкрепа е...?",
+          "type": "radio",
+          "options": [
+            "Често и на малки стъпки",
+            "Само по ключови етапи/на финала",
+            "По поискване: аз решавам кога да я потърся"
+          ],
+          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
+        },
+        {
+          "id": "psy_08",
+          "text": "В ситуации на риск и печалба...?",
+          "type": "radio",
+          "options": [
+            "Избирам сигурното и предвидимото",
+            "Избирам балансирано: среден риск за средна полза",
+            "Моят принцип е \\\"Всичко или нищо\\\""
+          ],
+          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
+        },
+        {
+          "id": "psy_09",
+          "text": "Когато имам срок...?",
+          "type": "radio",
+          "options": [
+            "Започвам рано и правя по малко, но регулярно",
+            "Започвам по средата и поддържам темпо до финала",
+            "Работя най-добре на финален спринт"
+          ],
+          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
+        },
+        {
+          "id": "psy_10",
+          "text": "При изграждане на нови умения...?",
+          "type": "radio",
+          "options": [
+            "Следвам ясни инструкции и структуриран план",
+            "Пробвам чрез експерименти и откриване",
+            "Опитвам се да съчетая пример/ментор + действие"
+          ],
+          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
+        },
+        {
+          "id": "psy_11",
+          "text": "При избор между печалба и риск...?",
+          "type": "radio",
+          "options": [
+            "Избирам малка, но по-сигурна печалба",
+            "Предпочитам умерен риск, средна печалба",
+            "Моят принцип е всичко или нищо"
+          ],
+          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
+        },
+        {
+          "id": "psy_12",
+          "text": "При малка полза веднага и по-голяма след време...?",
+          "type": "radio",
+          "options": [
+            "Предпочитам малката полза веднага",
+            "Предпочитам по-голямата полза по-късно",
+            "Трябва добре да обмисля ситуацията"
+          ],
+          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
+        },
+        {
+          "id": "psy_13",
+          "text": "За да съм отдаден имам нужда от...?",
+          "type": "radio",
+          "options": [
+            "Сигурност, постоянство, навици",
+            "Честа промяна и разнообразие",
+            "Рутина и нови елементи"
+          ],
+          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
+        },
+        {
+          "id": "psy_14",
+          "text": "Когато възникне силна емоция...?",
+          "type": "radio",
+          "options": [
+            "Изразявам я веднага и директно",
+            "Обработвам я вътрешно и след това действам",
+            "Търся диалог и информация, за да си я подредя"
+          ],
+          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
+        }
+      ]
+    };
+
+    const scoringKey = {
+      "psy_01": [
+        {"C": 2, "O": -1, "E": 0, "A": 0, "N": 0, "I": -1, "R": 0},
+        {"C": 1, "O": 0, "E": 0, "A": 0, "N": 0, "I": 0, "R": 0},
+        {"C": -1, "O": 1, "E": 1, "A": 0, "N": 0, "I": 1, "R": 0}
+      ],
+      "psy_02": [
+        {"C": 0, "O": -1, "E": 0, "A": 0, "N": 0, "I": 0, "R": 0},
+        {"C": 0, "O": 2, "E": 0, "A": 0, "N": 0, "I": 0, "R": 0},
+        {"C": 0, "O": 1, "E": 0, "A": 0, "N": 0, "I": 0, "R": 0}
+      ],
+      "psy_03": [
+        {"C": 0, "O": 0, "E": -2, "A": 0, "N": 0, "I": 0, "R": 0},
+        {"C": 0, "O": 0, "E": 2, "A": 1, "N": 0, "I": 0, "R": 0},
+        {"C": 0, "O": 0, "E": 0, "A": 0, "N": 0, "I": 0, "R": 0}
+      ],
+      "psy_04": [
+        {"C": 1, "O": 1, "E": 0, "A": 0, "N": 0, "I": -1, "R": -1},
+        {"C": 0, "O": 0, "E": 1, "A": -1, "N": 0, "I": 1, "R": 1},
+        {"C": 0, "O": 0, "E": 0, "A": 2, "N": 0, "I": 0, "R": 0}
+      ],
+      "psy_05": [
+        {"C": 0, "O": 0, "E": 1, "A": -1, "N": 1, "I": 0, "R": 0},
+        {"C": 1, "O": 0, "E": -1, "A": 0, "N": 1, "I": -1, "R": 0},
+        {"C": 1, "O": 0, "E": 0, "A": 2, "N": 0, "I": 0, "R": 0}
+      ],
+      "psy_06": [
+        {"C": 2, "O": 0, "E": 0, "A": 0, "N": -1, "I": 0, "R": 0},
+        {"C": -1, "O": 0, "E": 0, "A": -1, "N": 2, "I": 1, "R": 0},
+        {"C": 1, "O": 0, "E": 0, "A": 0, "N": 1, "I": 0, "R": 0}
+      ],
+      "psy_07": [
+        {"C": 0, "O": 0, "E": 0, "A": 1, "N": 1, "I": 0, "R": 0},
+        {"C": 1, "O": 0, "E": 0, "A": 0, "N": 0, "I": 0, "R": 0},
+        {"C": 1, "O": 1, "E": 0, "A": 0, "N": 0, "I": 0, "R": 0}
+      ],
+      "psy_08": [
+        {"C": 0, "O": 0, "E": 0, "A": 0, "N": 0, "I": -1, "R": -2},
+        {"C": 0, "O": 0, "E": 0, "A": 0, "N": 0, "I": 0, "R": 0},
+        {"C": -1, "O": 0, "E": 1, "A": -1, "N": 1, "I": 1, "R": 2}
+      ],
+      "psy_09": [
+        {"C": 2, "O": 0, "E": 0, "A": 0, "N": 0, "I": -1, "R": 0},
+        {"C": 1, "O": 0, "E": 0, "A": 0, "N": 0, "I": 0, "R": 0},
+        {"C": -1, "O": 0, "E": 0, "A": 0, "N": 1, "I": 2, "R": 0}
+      ],
+      "psy_10": [
+        {"C": 2, "O": 0, "E": 0, "A": 0, "N": 0, "I": 0, "R": 0},
+        {"C": 0, "O": 2, "E": 0, "A": 0, "N": 0, "I": 1, "R": 0},
+        {"C": 0, "O": 1, "E": 0, "A": 1, "N": 0, "I": 0, "R": 0}
+      ],
+      "psy_11": [
+        {"E": 0, "C": 0, "O": 0, "A": 0, "N": 0, "I": 0, "R": -2},
+        {"E": 0, "C": 0, "O": 0, "A": 0, "N": 0, "I": 0, "R": 0},
+        {"E": 0, "C": 0, "O": 0, "A": 0, "N": 0, "I": 0, "R": 2}
+      ],
+      "psy_12": [
+        {"C": -1, "O": 0, "E": 0, "A": 0, "N": 0, "I": 2, "R": 0},
+        {"C": 2, "O": 0, "E": 0, "A": 0, "N": 0, "I": -1, "R": 0},
+        {"C": 1, "O": 1, "E": 0, "A": 0, "N": 0, "I": 0, "R": 0}
+      ],
+      "psy_13": [
+        {"C": 2, "O": -1, "E": 0, "A": 0, "N": 0, "I": 0, "R": 0},
+        {"C": -1, "O": 2, "E": 0, "A": 0, "N": 0, "I": 1, "R": 0},
+        {"C": 1, "O": 1, "E": 0, "A": 0, "N": 0, "I": 0, "R": 0}
+      ],
+      "psy_14": [
+        {"C": 0, "O": 0, "E": 1, "A": -1, "N": 1, "I": 1, "R": 0},
+        {"C": 1, "O": 0, "E": -1, "A": 0, "N": -1, "I": -1, "R": 0},
+        {"C": 0, "O": 1, "E": 0, "A": 1, "N": 0, "I": 0, "R": 0}
+      ]
+    };
+
+    const dimensionInfo = {
+      "E": {
+        "name": "Социална енергия",
+        "description": "общителност и активация",
+        "lowLabel": "X (по-затворен)",
+        "highLabel": "E (по-общителен)",
+        "threshold": 60
+      },
+      "C": {
+        "name": "Структура и дисциплина",
+        "description": "организираност и самоконтрол",
+        "lowLabel": "P (по-гъвкав)",
+        "highLabel": "J (по-структуриран)",
+        "threshold": 60
+      },
+      "O": {
+        "name": "Отвореност към новото",
+        "description": "новаторство и любознателност",
+        "lowLabel": "S (по-практичен)",
+        "highLabel": "V (по-новаторски)",
+        "threshold": 60
+      },
+      "A": {
+        "name": "Мекота в контакт",
+        "description": "съгласуваност и кооперативност",
+        "lowLabel": "D (по-директен)",
+        "highLabel": "M (по-мек)",
+        "threshold": 60
+      },
+      "N": {
+        "name": "Емоционална реактивност",
+        "description": "чувствителност към стрес",
+        "lowLabel": "Стабилен",
+        "highLabel": "Реактивен",
+        "threshold": 65
+      },
+      "I": {
+        "name": "Импулсивност",
+        "description": "склонност към моментни действия",
+        "lowLabel": "Планиращ",
+        "highLabel": "Импулсивен",
+        "threshold": 65
+      },
+      "R": {
+        "name": "Рискова ориентация",
+        "description": "толерантност към несигурност",
+        "lowLabel": "Предпазлив",
+        "highLabel": "Рисков",
+        "threshold": 65
+      }
+    };
+
+    // State
+    let currentQuestionIndex = 0;
+    let answers = {};
+    const questions = testData.items;
+
+    // Functions
+    function startTest() {
+      showScreen('screenQuestions');
+      renderQuestion();
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function renderQuestion() {
+      const question = questions[currentQuestionIndex];
+      const container = document.getElementById('questionContainer');
+      
+      const html = `
+        <div class="question-card">
+          <div class="question-number">Въпрос ${currentQuestionIndex + 1}</div>
+          <div class="question-text">${question.text}</div>
+          <div class="options" id="options">
+            ${question.options.map((opt, idx) => `
+              <div class="option" data-index="${idx}" onclick="selectOption(${idx})">
+                <div class="option-radio"></div>
+                <div class="option-text">${opt}</div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="legend">${question.legend}</div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+      
+      // Restore previous answer if exists
+      if (answers[question.id] !== undefined) {
+        selectOption(answers[question.id], false);
+      }
+      
+      updateProgress();
+      updateNavigation();
+    }
+
+    function selectOption(index, enableNext = true) {
+      const options = document.querySelectorAll('.option');
+      options.forEach(opt => opt.classList.remove('selected'));
+      options[index].classList.add('selected');
+      
+      const question = questions[currentQuestionIndex];
+      answers[question.id] = index;
+      
+      if (enableNext) {
+        document.getElementById('btnNext').disabled = false;
+      }
+    }
+
+    function nextQuestion() {
+      if (currentQuestionIndex < questions.length - 1) {
+        currentQuestionIndex++;
+        renderQuestion();
+      } else {
+        calculateAndShowResults();
+      }
+    }
+
+    function previousQuestion() {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        renderQuestion();
+      }
+    }
+
+    function updateProgress() {
+      const current = currentQuestionIndex + 1;
+      const total = questions.length;
+      const percent = Math.round((current / total) * 100);
+      
+      document.getElementById('currentQuestion').textContent = current;
+      document.getElementById('totalQuestions').textContent = total;
+      document.getElementById('progressPercent').textContent = percent + '%';
+      document.getElementById('progressFill').style.width = percent + '%';
+    }
+
+    function updateNavigation() {
+      const btnPrevious = document.getElementById('btnPrevious');
+      const btnNext = document.getElementById('btnNext');
+      
+      btnPrevious.style.display = currentQuestionIndex > 0 ? 'block' : 'none';
+      
+      const question = questions[currentQuestionIndex];
+      const hasAnswer = answers[question.id] !== undefined;
+      btnNext.disabled = !hasAnswer;
+      
+      if (currentQuestionIndex === questions.length - 1) {
+        btnNext.textContent = 'Виж резултатите';
+      } else {
+        btnNext.textContent = 'Следващ въпрос';
+      }
+    }
+
+    function calculateScores() {
+      const rawScores = { E: 0, C: 0, O: 0, A: 0, N: 0, I: 0, R: 0 };
+      const minScores = { E: 0, C: 0, O: 0, A: 0, N: 0, I: 0, R: 0 };
+      const maxScores = { E: 0, C: 0, O: 0, A: 0, N: 0, I: 0, R: 0 };
+      
+      // Calculate raw scores
+      questions.forEach(q => {
+        const answerIndex = answers[q.id];
+        const scoring = scoringKey[q.id][answerIndex];
+        
+        Object.keys(scoring).forEach(dim => {
+          rawScores[dim] += scoring[dim];
+        });
+      });
+      
+      // Calculate min/max possible scores
+      questions.forEach(q => {
+        const scorings = scoringKey[q.id];
+        
+        Object.keys(rawScores).forEach(dim => {
+          const values = scorings.map(s => s[dim]);
+          minScores[dim] += Math.min(...values);
+          maxScores[dim] += Math.max(...values);
+        });
+      });
+      
+      // Normalize to 0-100
+      const normalizedScores = {};
+      Object.keys(rawScores).forEach(dim => {
+        const raw = rawScores[dim];
+        const min = minScores[dim];
+        const max = maxScores[dim];
+        const range = max - min;
+        
+        if (range === 0) {
+          normalizedScores[dim] = 50;
+        } else {
+          normalizedScores[dim] = Math.round(((raw - min) / range) * 100);
+        }
+      });
+      
+      return normalizedScores;
+    }
+
+    function calculateAndShowResults() {
+      const scores = calculateScores();
+      
+      showScreen('screenResults');
+      renderDimensions(scores);
+      renderTypeCode(scores);
+      renderFlags(scores);
+      generateAIAnalysis(scores);
+    }
+
+    function renderDimensions(scores) {
+      const container = document.getElementById('dimensionsContainer');
+      const dimensions = ['E', 'C', 'O', 'A', 'N', 'I', 'R'];
+      
+      const html = dimensions.map(dim => {
+        const info = dimensionInfo[dim];
+        const score = scores[dim];
+        
+        return `
+          <div class="dimension-card">
+            <div class="dimension-header">
+              <div class="dimension-name">${info.name}</div>
+              <div class="dimension-code">${dim}</div>
+            </div>
+            <div class="dimension-description">${info.description}</div>
+            <div class="score-bar-container">
+              <div class="score-bar-labels">
+                <span>${info.lowLabel}</span>
+                <span>${info.highLabel}</span>
+              </div>
+              <div class="score-bar">
+                <div class="score-marker" style="left: ${score}%"></div>
+              </div>
+              <div class="score-value">${score} / 100</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      container.innerHTML = html;
+    }
+
+    function renderTypeCode(scores) {
+      const container = document.getElementById('typeCodeContainer');
+      
+      // Generate 4-axis type code (E-O-A-C)
+      const E_code = scores.E >= dimensionInfo.E.threshold ? 'E' : 'X';
+      const O_code = scores.O >= dimensionInfo.O.threshold ? 'V' : 'S';
+      const A_code = scores.A >= dimensionInfo.A.threshold ? 'M' : 'D';
+      const C_code = scores.C >= dimensionInfo.C.threshold ? 'J' : 'P';
+      
+      const typeCode = `${E_code}-${O_code}-${A_code}-${C_code}`;
+      
+      const html = `
+        <div class="type-code-card">
+          <div class="type-code-label">Вашият комуникационен код</div>
+          <div class="type-code-value">${typeCode}</div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+
+    function renderFlags(scores) {
+      const container = document.getElementById('flagsContainer');
+      const flags = [];
+      
+      if (scores.I >= 65) {
+        flags.push({
+          title: 'Висока импулсивност',
+          description: 'По-силен импулс "сега" - склонност към бързи решения без задълбочен анализ.',
+          type: 'warning'
+        });
+      }
+      
+      if (scores.N >= 65) {
+        flags.push({
+          title: 'Висока емоционална реактивност',
+          description: 'По-висока чувствителност към стрес и емоционални стимули.',
+          type: 'warning'
+        });
+      }
+      
+      if (scores.R >= 65) {
+        flags.push({
+          title: 'Висока склонност към риск',
+          description: 'По-висока толерантност към несигурност и рискови ситуации.',
+          type: 'warning'
+        });
+      }
+      
+      if (flags.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+      
+      const html = `
+        <div class="flags-section">
+          <h3>Области на внимание</h3>
+          ${flags.map(flag => `
+            <div class="flag-card ${flag.type}">
+              <div class="flag-title">${flag.title}</div>
+              <div class="flag-description">${flag.description}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+
+    function generateAIAnalysis(scores) {
+      // Simulate AI processing delay
+      setTimeout(() => {
+        const analysis = analyzeNutritionalRisks(scores);
+        renderAIAnalysis(analysis);
+      }, 1500);
+    }
+
+    function analyzeNutritionalRisks(scores) {
+      const risks = [];
+      const recommendations = [];
+      const strengths = [];
+      
+      // High Conscientiousness (C >= 70) + High Neuroticism (N >= 65)
+      if (scores.C >= 70 && scores.N >= 65) {
+        risks.push({
+          title: 'Рестриктивни тенденции',
+          description: 'Комбинацията от висока дисциплина и емоционална реактивност може да води до твърде строги хранителни режими и перфекционизъм около храната.'
+        });
+        recommendations.push('Практикувайте гъвкавост в храненето - позволете си 10-20% от калориите за храни "за удоволствие"');
+        recommendations.push('Работете с нутриционист за създаване на реалистичен и устойчив план');
+      }
+      
+      // High Neuroticism (N >= 65) + Low Conscientiousness (C < 40)
+      if (scores.N >= 65 && scores.C < 40) {
+        risks.push({
+          title: 'Емоционално хранене',
+          description: 'Високата емоционална реактивност съчетана с по-ниска самодисциплина може да води до използване на храната за регулиране на емоции.'
+        });
+        recommendations.push('Създайте списък с алтернативни начини за справяне със стрес (разходка, дишане, музика)');
+        recommendations.push('Водете дневник на емоциите и храненето за разпознаване на тригери');
+      }
+      
+      // High Impulsivity (I >= 65)
+      if (scores.I >= 65) {
+        risks.push({
+          title: 'Импулсивно хранене',
+          description: 'Склонността към бързи решения може да води до чести закуски, хранене при визуален стимул и трудност да се спре след "още малко".'
+        });
+        recommendations.push('Премахнете видимите изкушения от битовата среда');
+        recommendations.push('Използвайте техниката "10-минутна пауза" преди да вземете решение за храна');
+        recommendations.push('Планирайте хранения и закуски предварително');
+      }
+      
+      // Low Conscientiousness (C < 40) + High Openness (O >= 65)
+      if (scores.C < 40 && scores.O >= 65) {
+        risks.push({
+          title: 'Хаотични хранителни навици',
+          description: 'Предпочитанието към спонтанност и новост може да води до нередовно хранене, пропускане на хранения и непостоянен режим.'
+        });
+        recommendations.push('Създайте минимална рутина - поне 2-3 фиксирани хранения на ден');
+        recommendations.push('Използвайте напомняния/аларми за хранене');
+        recommendations.push('Експериментирайте с нови здравословни рецепти за поддържане на интерес');
+      }
+      
+      // High Risk-seeking (R >= 65) + High Impulsivity (I >= 65)
+      if (scores.R >= 65 && scores.I >= 65) {
+        risks.push({
+          title: 'Екстремни подходи',
+          description: 'Комбинацията от висока толерантност към риск и импулсивност може да води до опити с крайни диети или "всичко или нищо" мислене.'
+        });
+        recommendations.push('Избягвайте крайни и бързи диети - търсете умерени и устойчиви подходи');
+        recommendations.push('Работете с професионалист преди да правите големи промени в храненето');
+      }
+      
+      // Low Extraversion (E < 35)
+      if (scores.E < 35) {
+        risks.push({
+          title: 'Социална изолация и хранене',
+          description: 'По-интровертираният стил може да води до хранене в самота, което понякога затруднява здравословния избор и самоконтрола.'
+        });
+        recommendations.push('Създайте структурирана хранителна среда и у дома');
+        recommendations.push('Помислете за подкрепяща онлайн общност или accountability partner');
+      }
+      
+      // High Extraversion (E >= 70) + Low Agreeableness (A < 40)
+      if (scores.E >= 70 && scores.A < 40) {
+        risks.push({
+          title: 'Прекалено социално хранене',
+          description: 'Високата социална енергия може да води до чести излизания, алкохол и храна в компания, което затруднява контрола.'
+        });
+        recommendations.push('Планирайте предварително какво ще поръчате в ресторант');
+        recommendations.push('Разработете стратегии за социални ситуации (хранене преди излизане, избор на по-здравословни опции)');
+      }
+      
+      // High Agreeableness (A >= 70)
+      if (scores.A >= 70) {
+        risks.push({
+          title: 'Трудност с отказ',
+          description: 'Високата съгласуваност може да прави трудно отказването на предлагана храна или алкохол в социални ситуации.'
+        });
+        recommendations.push('Практикувайте учтиви начини за отказ ("Благодаря, но съм сит/а")');
+        recommendations.push('Споделете целите си с близки хора за подкрепа');
+      }
+      
+      // Low Openness (O < 35) + High Conscientiousness (C >= 70)
+      if (scores.O < 35 && scores.C >= 70) {
+        risks.push({
+          title: 'Твърде ограничаващ режим',
+          description: 'Предпочитанието към познато и рутина може да води до прекалено ограничен набор от храни и монотонност.'
+        });
+        recommendations.push('Постепенно добавяйте нови здравословни храни към рутината');
+        recommendations.push('Разнообразието е важно за дългосрочна устойчивост и хранителен баланс');
+      }
+      
+      // Identify strengths
+      if (scores.C >= 60) {
+        strengths.push('Доброто ниво на самодисциплина е силен фактор за успех в промяна на навици');
+      }
+      
+      if (scores.O >= 60) {
+        strengths.push('Отвореността към ново улеснява експериментирането със здравословни рецепти и подходи');
+      }
+      
+      if (scores.E >= 50 && scores.E <= 70) {
+        strengths.push('Балансираната социална енергия помага за поддържане на здрави социални връзки без прекомерно социално хранене');
+      }
+      
+      if (scores.N < 50) {
+        strengths.push('По-ниската емоционална реактивност намалява риска от емоционално хранене');
+      }
+      
+      if (scores.I < 50) {
+        strengths.push('По-ниската импулсивност улеснява планирането и контрола върху хранителните избори');
+      }
+      
+      if (scores.R < 50) {
+        strengths.push('Предпазливият подход към риск помага за избягване на крайни и потенциално вредни диетични експерименти');
+      }
+      
+      // If no specific risks identified
+      if (risks.length === 0) {
+        risks.push({
+          title: 'Балансиран профил',
+          description: 'Вашият личностен профил не показва ясно изразени области на риск във връзка с хранителните навици. Това е добра изходна позиция.'
+        });
+        recommendations.push('Поддържайте осъзнато хранене и редовен режим');
+        recommendations.push('Следете за промени в стреса или емоционалното състояние, които могат да повлияят храненето');
+      }
+      
+      return { risks, recommendations, strengths };
+    }
+
+    function renderAIAnalysis(analysis) {
+      const container = document.getElementById('aiAnalysisContainer');
+      
+      let html = '';
+      
+      // Strengths
+      if (analysis.strengths.length > 0) {
+        html += `
+          <div class="ai-subsection">
+            <h4>✓ Силни страни на вашия профил</h4>
+            <ul class="ai-list">
+              ${analysis.strengths.map(s => `
+                <li>
+                  <span class="ai-bullet">•</span>
+                  <span class="ai-text">${s}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        `;
+      }
+      
+      // Risks
+      html += `
+        <div class="ai-subsection">
+          <h4>⚠ Потенциални рискови области</h4>
+          ${analysis.risks.map(risk => `
+            <div style="margin-bottom: 16px;">
+              <div style="font-weight: 700; color: var(--text); margin-bottom: 4px;">${risk.title}</div>
+              <div class="ai-text">${risk.description}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      
+      // Recommendations
+      html += `
+        <div class="ai-subsection">
+          <h4>💡 Препоръки за действие</h4>
+          <ul class="ai-list">
+            ${analysis.recommendations.map(rec => `
+              <li>
+                <span class="ai-bullet">→</span>
+                <span class="ai-text">${rec}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      `;
+      
+      // General note
+      html += `
+        <div class="ai-subsection">
+          <div class="ai-text" style="font-style: italic; padding-top: 12px; border-top: 1px solid var(--border);">
+            <strong>Забележка:</strong> Този анализ е генериран на база научни изследвания за връзката между личностни черти и хранителни навици. 
+            Той не заменя консултация с квалифициран специалист. За индивидуален план консултирайте се с лицензиран нутриционист или психолог.
+          </div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+
+    function restartTest() {
+      currentQuestionIndex = 0;
+      answers = {};
+      showScreen('screenIntro');
+    }
+
+    // Initialize
+    document.getElementById('totalQuestions').textContent = questions.length;
+  </script>
+</body>
+</html>
