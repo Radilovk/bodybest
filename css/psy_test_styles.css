@@ -410,7 +410,40 @@ ul.clean li {
   border-color: var(--psy-accent);
 }
 
-/* Success indicator */
+.btnSave {
+  background: var(--psy-accent);
+  color: var(--text-color-on-secondary);
+  border-color: var(--psy-accent);
+}
+
+.btnSave:hover {
+  opacity: 0.9;
+  box-shadow: var(--shadow-md);
+}
+
+/* Save status messages */
+.save-status {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--psy-radius);
+  text-align: center;
+  font-weight: 600;
+  animation: slideIn 0.3s ease;
+}
+
+.save-status.success {
+  background: var(--color-success-bg);
+  border: 2px solid var(--color-success);
+  color: var(--color-success);
+}
+
+.save-status.error {
+  background: var(--color-danger-bg);
+  border: 2px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* Success indicator (deprecated - use save-status instead) */
 .success-message {
   background: var(--color-success-bg);
   border: 2px solid var(--color-success);

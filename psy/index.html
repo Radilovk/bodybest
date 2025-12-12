@@ -71,9 +71,9 @@
   <!-- Screen 3 -->
   <section class="screen" id="s3">
     <div id="result"></div>
-    <div id="saveStatus" style="display:none;"></div>
+    <div id="saveStatus" class="save-status" style="display:none;"></div>
     <div class="actions">
-      <button class="btnSmall" id="saveResult" style="background: var(--psy-accent); color: var(--text-color-on-secondary); border-color: var(--psy-accent);">Запази резултата</button>
+      <button class="btnSmall btnSave" id="saveResult">Запази резултата</button>
       <button class="btnSmall" id="again">Друг избор</button>
     </div>
   </section>
@@ -399,7 +399,8 @@
   });
 
   function showSaveStatus(message, type){
-    saveStatus.innerHTML = `<div class="success-message" style="${type === 'error' ? 'background: var(--color-danger-bg); border-color: var(--color-danger); color: var(--color-danger);' : ''}">${message}</div>`;
+    saveStatus.textContent = message;
+    saveStatus.className = type === 'error' ? 'save-status error' : 'save-status success';
     saveStatus.style.display = 'block';
   }
 </script>
