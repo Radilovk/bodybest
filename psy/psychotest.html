@@ -6,17 +6,20 @@
   <title>Личностен Психотест | BodyBest</title>
   <style>
     :root {
-      --bg: #020617;
-      --panel: #061024;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --border: #1f2937;
-      --accent: #22c55e;
-      --accent-hover: #16a34a;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --radius: 14px;
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      --bg: #f8f9fb;
+      --panel: #ffffff;
+      --text: #2d3748;
+      --muted: #718096;
+      --border: #e2e8f0;
+      --accent: #4c9adb;
+      --accent-hover: #3182ce;
+      --accent-light: #ebf5ff;
+      --warning: #ed8936;
+      --danger: #e53e3e;
+      --success: #38a169;
+      --radius: 12px;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     * {
@@ -28,7 +31,7 @@
     body {
       min-height: 100vh;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
       color: var(--text);
       line-height: 1.6;
     }
@@ -64,10 +67,8 @@
     .header h1 {
       font-size: 28px;
       margin-bottom: 10px;
-      background: linear-gradient(135deg, var(--accent) 0%, #10b981 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--accent);
+      font-weight: 600;
     }
 
     .header p {
@@ -82,6 +83,11 @@
       border: 1px solid var(--border);
       padding: 30px;
       box-shadow: var(--shadow);
+      transition: box-shadow 0.3s ease;
+    }
+
+    .intro-content:hover {
+      box-shadow: var(--shadow-hover);
     }
 
     .intro-content h2 {
@@ -121,25 +127,26 @@
 
     .btn-primary {
       background: var(--accent);
-      color: #052e1b;
+      color: white;
     }
 
     .btn-primary:hover {
       background: var(--accent-hover);
       transform: translateY(-2px);
-      box-shadow: 0 6px 12px -2px rgba(34, 197, 94, 0.3);
+      box-shadow: 0 6px 12px -2px rgba(76, 154, 219, 0.4);
     }
 
     .btn-secondary {
-      background: transparent;
-      color: var(--muted);
+      background: white;
+      color: var(--text);
       border: 1px solid var(--border);
       margin-top: 10px;
     }
 
     .btn-secondary:hover {
-      background: rgba(31, 41, 55, 0.3);
-      color: var(--text);
+      background: var(--bg);
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
     /* Progress Bar */
@@ -165,7 +172,7 @@
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--accent) 0%, #10b981 100%);
+      background: linear-gradient(90deg, var(--accent) 0%, #667eea 100%);
       transition: width 0.3s ease;
       border-radius: 999px;
     }
@@ -204,7 +211,7 @@
     }
 
     .option {
-      background: rgba(31, 41, 55, 0.3);
+      background: white;
       border: 2px solid var(--border);
       border-radius: var(--radius);
       padding: 16px;
@@ -216,13 +223,15 @@
     }
 
     .option:hover {
-      background: rgba(31, 41, 55, 0.5);
-      border-color: rgba(34, 197, 94, 0.3);
+      background: var(--accent-light);
+      border-color: var(--accent);
+      transform: translateX(4px);
     }
 
     .option.selected {
-      background: rgba(34, 197, 94, 0.15);
+      background: var(--accent-light);
       border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(76, 154, 219, 0.1);
     }
 
     .option-radio {
@@ -262,7 +271,7 @@
       color: var(--muted);
       font-style: italic;
       padding: 12px;
-      background: rgba(156, 163, 175, 0.05);
+      background: var(--accent-light);
       border-radius: 8px;
       border-left: 3px solid var(--accent);
     }
@@ -321,7 +330,7 @@
       font-weight: 800;
       padding: 4px 12px;
       border-radius: 8px;
-      background: rgba(34, 197, 94, 0.15);
+      background: var(--accent-light);
       color: var(--accent);
     }
 
@@ -347,10 +356,11 @@
     .score-bar {
       width: 100%;
       height: 24px;
-      background: linear-gradient(90deg, #3b82f6 0%, var(--accent) 100%);
+      background: linear-gradient(90deg, #667eea 0%, var(--accent) 100%);
       border-radius: 999px;
       position: relative;
       overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
     }
 
     .score-marker {
@@ -372,12 +382,13 @@
     }
 
     .type-code-card {
-      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+      background: linear-gradient(135deg, var(--accent-light) 0%, #e0f2fe 100%);
       border: 2px solid var(--accent);
       border-radius: var(--radius);
       padding: 24px;
       text-align: center;
       margin: 30px 0;
+      box-shadow: var(--shadow);
     }
 
     .type-code-label {
@@ -406,16 +417,16 @@
     }
 
     .flag-card {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      background: #fff5f5;
+      border: 1px solid #feb2b2;
       border-radius: var(--radius);
       padding: 16px;
       margin-bottom: 12px;
     }
 
     .flag-card.warning {
-      background: rgba(245, 158, 11, 0.1);
-      border-color: rgba(245, 158, 11, 0.3);
+      background: #fffaf0;
+      border-color: #fbd38d;
     }
 
     .flag-title {
@@ -446,8 +457,8 @@
     .ai-badge {
       font-size: 11px;
       padding: 4px 10px;
-      background: linear-gradient(135deg, var(--accent) 0%, #10b981 100%);
-      color: #052e1b;
+      background: linear-gradient(135deg, var(--accent) 0%, #667eea 100%);
+      color: white;
       border-radius: 999px;
       font-weight: 700;
       text-transform: uppercase;
@@ -563,13 +574,13 @@
       </div>
       <div class="intro-content">
         <h2>Добре дошли!</h2>
-        <p>Този тест съдържа 14 въпроса, които помагат да се оцени личностният ви профил и потенциални връзки с хранителните навици.</p>
+        <p>Този тест съдържа 13 въпроса, които помагат да се оцени личностният ви профил и потенциални връзки с хранителните навици.</p>
         <ul>
           <li>Всеки въпрос има три равностойни опции</li>
           <li>Изберете опцията, която е <strong>най-близка до естествения ви избор</strong> в повечето случаи</li>
           <li>Няма правилни или грешни отговори</li>
           <li>Отговаряйте спонтанно, без да мислите прекалено дълго</li>
-          <li>Тестът отнема около 5-7 минути</li>
+          <li>Тестът отнема около 4-6 минути</li>
         </ul>
         <button class="btn btn-primary" onclick="startTest()">Започни теста</button>
         <a href="../index.html" class="btn btn-secondary">Назад към главната страница</a>
@@ -584,11 +595,11 @@
       
       <div class="progress-container">
         <div class="progress-info">
-          <span>Въпрос <span id="currentQuestion">1</span> от <span id="totalQuestions">14</span></span>
-          <span id="progressPercent">7%</span>
+          <span>Въпрос <span id="currentQuestion">1</span> от <span id="totalQuestions">13</span></span>
+          <span id="progressPercent">8%</span>
         </div>
         <div class="progress-bar">
-          <div id="progressFill" class="progress-fill" style="width: 7%"></div>
+          <div id="progressFill" class="progress-fill" style="width: 8%"></div>
         </div>
       </div>
 
@@ -645,7 +656,7 @@
         "title": "Кратък личностен модул (по избор)",
         "language": "bg",
         "version": "1.1.0",
-        "questions_count": 14
+        "questions_count": 13
       },
       "items": [
         {
@@ -759,17 +770,6 @@
           "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
         },
         {
-          "id": "psy_11",
-          "text": "При избор между печалба и риск...?",
-          "type": "radio",
-          "options": [
-            "Избирам малка, но по-сигурна печалба",
-            "Предпочитам умерен риск, средна печалба",
-            "Моят принцип е всичко или нищо"
-          ],
-          "legend": "Изберете една опция — най-близката до естествения ви избор в повечето случаи (последните шест месеца)."
-        },
-        {
           "id": "psy_12",
           "text": "При малка полза веднага и по-голяма след време...?",
           "type": "radio",
@@ -855,11 +855,6 @@
         {"C": 2, "O": 0, "E": 0, "A": 0, "N": 0, "I": 0, "R": 0},
         {"C": 0, "O": 2, "E": 0, "A": 0, "N": 0, "I": 1, "R": 0},
         {"C": 0, "O": 1, "E": 0, "A": 1, "N": 0, "I": 0, "R": 0}
-      ],
-      "psy_11": [
-        {"E": 0, "C": 0, "O": 0, "A": 0, "N": 0, "I": 0, "R": -2},
-        {"E": 0, "C": 0, "O": 0, "A": 0, "N": 0, "I": 0, "R": 0},
-        {"E": 0, "C": 0, "O": 0, "A": 0, "N": 0, "I": 0, "R": 2}
       ],
       "psy_12": [
         {"C": -1, "O": 0, "E": 0, "A": 0, "N": 0, "I": 2, "R": 0},
