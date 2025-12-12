@@ -533,6 +533,47 @@ loglevel=error
 
 ---
 
+### Psychology Tests (`psy/`)
+
+#### `psy/psychotest.html`
+**Standalone Personality Psychotest**
+
+**Features:**
+- 14-question personality assessment
+- 7 dimensions: E, C, O, A, N, I, R (Big Five + extras)
+- Scoring algorithm with normalization (0-100 scale)
+- Type code generation (e.g., X-S-D-J)
+- AI-powered dietary habits analysis
+- Risk identification based on personality traits
+- Personalized recommendations
+
+**Tech:**
+- Single HTML file with embedded CSS and JavaScript
+- No external dependencies
+- Responsive design
+- Offline-capable
+
+**Usage:**
+```html
+<a href="psy/psychotest.html">Личностен тест</a>
+```
+
+#### `psy/index.html`
+**Visual Nutrition Psychology Test**
+
+**Features:**
+- Image-based intuitive selection
+- 8 psychological profiles
+- Fullscreen image preview
+- Connection between visual preference and eating habits
+
+#### Data Files:
+- `bb_optional_personality_v1_1.json` - Questions
+- `bb_optional_personality_key_v1_1.json` - Scoring key
+- `README.md` - Detailed documentation
+
+---
+
 #### `read.html`
 **Reading page (legacy?)**
 
