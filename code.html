@@ -638,13 +638,45 @@
             </div>
             <div class="card" style="margin-top: var(--space-lg)">
               <h3><i class="bi bi-gear"></i> Инструменти за Индивидуализация</h3>
-              <button
-                id="planModificationBtn"
-                class="button-secondary"
-                style="width: 100%"
+              <p style="color: var(--text-color-secondary); font-size: var(--fs-sm); margin-bottom: var(--space-md);">
+                Изпълнете психологическите тестове за по-добро разбиране на вашия хранителен профил.
+              </p>
+              <a 
+                href="visual-test.html" 
+                class="button-secondary" 
+                style="width: 100%; display: block; text-align: center; text-decoration: none; margin-bottom: var(--space-sm);"
               >
-                Въведи промени
-              </button>
+                <i class="bi bi-image"></i> Визуален тест
+              </a>
+              <a 
+                href="personality-test.html" 
+                class="button-secondary" 
+                style="width: 100%; display: block; text-align: center; text-decoration: none;"
+              >
+                <i class="bi bi-person-check"></i> Личностен тест
+              </a>
+              <div id="psychTestResults" style="margin-top: var(--space-md); display: none;">
+                <div style="background: var(--color-success-bg); padding: var(--space-sm); border-radius: var(--radius-md); border-left: 4px solid var(--color-success);">
+                  <p style="margin: 0; color: var(--text-color-primary); font-size: var(--fs-sm);">
+                    <i class="bi bi-check-circle-fill" style="color: var(--color-success);"></i>
+                    <strong>Резултатите са запазени!</strong>
+                  </p>
+                  <div id="psychTestSummary" style="margin-top: var(--space-xs); font-size: var(--fs-xs); color: var(--text-color-secondary);"></div>
+                  <button 
+                    id="regeneratePlanBtn" 
+                    class="button" 
+                    style="width: 100%; margin-top: var(--space-sm); display: none;"
+                  >
+                    <i class="bi bi-arrow-clockwise"></i> Регенерирай План с Нови Данни
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Detailed Psych Test Results Card -->
+            <div class="card" id="psychTestDetailsCard" style="margin-top: var(--space-lg); display: none;">
+              <h3><i class="bi bi-clipboard-data"></i> Детайлни Резултати от Тестовете</h3>
+              <div id="psychTestDetails"></div>
             </div>
             <div class="card" style="margin-top: var(--space-lg)">
               <a href="profile-edit.html" class="button" style="width: 100%"
@@ -1154,9 +1186,293 @@
     <script type="module">
       import { loadPartial } from './js/partialLoader.js';
       import { initializeSelectors } from './js/uiElements.js';
+      import { syncPsychTestsToBackend } from './js/psychTestsIntegration.js';
+      import { apiEndpoints } from './js/config.js';
+      
       loadPartial('planModChatModal.html', 'planModChatModalContainer').then(() => {
         initializeSelectors();
       });
+
+      // Sync psych tests to backend on page load
+      async function syncPsychTestsIfNeeded() {
+        const userId = localStorage.getItem('userId');
+        if (!userId) return;
+
+        const psychTestsStr = localStorage.getItem('psychTests');
+        if (!psychTestsStr) return;
+
+        // Check if already synced
+        const lastSyncStr = localStorage.getItem('psychTestsLastSync');
+        const psychTests = JSON.parse(psychTestsStr);
+        
+        // Get latest timestamp from tests
+        const latestTestTime = Math.max(
+          psychTests.visualTest?.timestamp ? new Date(psychTests.visualTest.timestamp).getTime() : 0,
+          psychTests.personalityTest?.timestamp ? new Date(psychTests.personalityTest.timestamp).getTime() : 0
+        );
+
+        const lastSync = lastSyncStr ? new Date(lastSyncStr).getTime() : 0;
+
+        // Sync if tests are newer than last sync
+        if (latestTestTime > lastSync) {
+          try {
+            const result = await syncPsychTestsToBackend(userId);
+            if (result.success) {
+              localStorage.setItem('psychTestsLastSync', new Date().toISOString());
+              console.log('Psych tests synced successfully');
+              
+              // Show notification if plan should be regenerated
+              if (result.shouldRegeneratePlan) {
+                // Could show a toast or notification here
+                console.log('Plan regeneration recommended');
+              }
+            }
+          } catch (error) {
+            console.error('Failed to sync psych tests:', error);
+          }
+        }
+      }
+
+      // Display saved psych test results
+      function displayPsychTestResults() {
+        const psychTestsStr = localStorage.getItem('psychTests');
+        if (!psychTestsStr) {
+          return;
+        }
+
+        let psychTests;
+        try {
+          psychTests = JSON.parse(psychTestsStr);
+        } catch (error) {
+          console.error('Error parsing psychTests from localStorage:', error);
+          // Clear corrupted data
+          localStorage.removeItem('psychTests');
+          return;
+        }
+
+        const resultsContainer = document.getElementById('psychTestResults');
+        const summaryContainer = document.getElementById('psychTestSummary');
+        const regenerateBtn = document.getElementById('regeneratePlanBtn');
+        const detailsCard = document.getElementById('psychTestDetailsCard');
+        const detailsContainer = document.getElementById('psychTestDetails');
+        
+        if (!psychTests || (!psychTests.visualTest && !psychTests.personalityTest)) {
+          return;
+        }
+
+        // Show results container
+        resultsContainer.style.display = 'block';
+        
+        // Build summary
+        let summary = '';
+        if (psychTests.visualTest) {
+          summary += `Визуален тест: ${psychTests.visualTest.name}<br>`;
+        }
+        if (psychTests.personalityTest) {
+          summary += `Личностен тест: ${psychTests.personalityTest.typeCode}`;
+        }
+        summaryContainer.innerHTML = summary;
+
+        // Show regenerate button if tests are completed
+        if (regenerateBtn && (psychTests.visualTest || psychTests.personalityTest)) {
+          regenerateBtn.style.display = 'block';
+        }
+
+        // Build detailed results
+        displayDetailedPsychTestResults(psychTests, detailsCard, detailsContainer);
+      }
+
+      // Display detailed psych test results with correlation to profile data
+      async function displayDetailedPsychTestResults(psychTests, detailsCard, detailsContainer) {
+        if (!psychTests || (!psychTests.visualTest && !psychTests.personalityTest)) {
+          return;
+        }
+
+        detailsCard.style.display = 'block';
+        let html = '';
+
+        // Visual Test Details
+        if (psychTests.visualTest) {
+          const vt = psychTests.visualTest;
+          html += `
+            <div style="margin-bottom: var(--space-lg); padding: var(--space-md); background: var(--color-bg-secondary); border-radius: var(--radius-md);">
+              <h4 style="margin-top: 0; color: var(--color-primary);">
+                <i class="bi bi-image"></i> ${vt.name}
+              </h4>
+              <p style="font-style: italic; color: var(--text-color-secondary); margin-bottom: var(--space-md);">
+                ${vt.short || ''}
+              </p>
+              ${vt.timestamp ? `<p style="font-size: var(--fs-xs); color: var(--text-color-tertiary); margin: 0;">
+                Завършен на: ${new Date(vt.timestamp).toLocaleDateString('bg-BG', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </p>` : ''}
+            </div>
+          `;
+        }
+
+        // Personality Test Details
+        if (psychTests.personalityTest) {
+          const pt = psychTests.personalityTest;
+          html += `
+            <div style="margin-bottom: var(--space-lg); padding: var(--space-md); background: var(--color-bg-secondary); border-radius: var(--radius-md);">
+              <h4 style="margin-top: 0; color: var(--color-primary);">
+                <i class="bi bi-person-check"></i> Личностен профил: ${pt.typeCode}
+              </h4>
+          `;
+
+          // Scores display
+          if (pt.scores) {
+            html += `<div style="margin-top: var(--space-md);">
+              <h5 style="font-size: var(--fs-base); margin-bottom: var(--space-sm);">Измерения:</h5>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-sm);">
+            `;
+            
+            const dimensionNames = {
+              'E': 'Екстраверсия',
+              'C': 'Съвестност',
+              'O': 'Откритост',
+              'A': 'Доброжелателност',
+              'N': 'Невротизъм',
+              'I': 'Импулсивност',
+              'R': 'Рестриктивност'
+            };
+
+            for (const [dim, score] of Object.entries(pt.scores)) {
+              const percentage = score;
+              const barColor = percentage > 60 ? 'var(--color-primary)' : 
+                               percentage > 40 ? 'var(--color-warning)' : 'var(--color-secondary)';
+              
+              html += `
+                <div style="padding: var(--space-xs); background: var(--color-bg-primary); border-radius: var(--radius-sm);">
+                  <div style="font-size: var(--fs-sm); font-weight: 600; margin-bottom: 2px;">${dim}</div>
+                  <div style="font-size: var(--fs-xs); color: var(--text-color-secondary); margin-bottom: 4px;">
+                    ${dimensionNames[dim] || dim}
+                  </div>
+                  <div style="width: 100%; height: 6px; background: var(--color-bg-tertiary); border-radius: 3px; overflow: hidden;">
+                    <div style="width: ${percentage}%; height: 100%; background: ${barColor}; transition: width 0.3s ease;"></div>
+                  </div>
+                  <div style="font-size: var(--fs-xs); color: var(--text-color-tertiary); margin-top: 2px;">
+                    ${score}%
+                  </div>
+                </div>
+              `;
+            }
+            html += `</div></div>`;
+          }
+
+          // Risk flags
+          if (pt.riskFlags && pt.riskFlags.length > 0) {
+            html += `
+              <div style="margin-top: var(--space-md); padding: var(--space-sm); background: var(--color-warning-bg); border-left: 4px solid var(--color-warning); border-radius: var(--radius-sm);">
+                <h5 style="font-size: var(--fs-base); margin: 0 0 var(--space-xs) 0; color: var(--color-warning);">
+                  <i class="bi bi-exclamation-triangle"></i> Рискови фактори:
+                </h5>
+                <ul style="margin: 0; padding-left: var(--space-md); font-size: var(--fs-sm);">
+                  ${pt.riskFlags.map(flag => `<li>${flag}</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+
+          if (pt.timestamp) {
+            html += `
+              <p style="font-size: var(--fs-xs); color: var(--text-color-tertiary); margin: var(--space-sm) 0 0 0;">
+                Завършен на: ${new Date(pt.timestamp).toLocaleDateString('bg-BG', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </p>
+            `;
+          }
+          html += `</div>`;
+        }
+
+        // Correlation with existing profile data
+        html += `
+          <div style="padding: var(--space-md); background: var(--color-info-bg); border-radius: var(--radius-md); border-left: 4px solid var(--color-info);">
+            <h5 style="margin-top: 0; color: var(--color-info);">
+              <i class="bi bi-info-circle"></i> Как това влияе на вашия план:
+            </h5>
+            <p style="font-size: var(--fs-sm); margin: 0;">
+              Психологическият ви профил ще бъде включен при следващото генериране на хранителен план. 
+              AI моделът ще адаптира препоръките според вашите емоционални нужди, личностни характеристики и потенциални рискове.
+            </p>
+          </div>
+        `;
+
+        detailsContainer.innerHTML = html;
+      }
+
+      // Handle plan regeneration button
+      async function handlePlanRegeneration() {
+        const regenerateBtn = document.getElementById('regeneratePlanBtn');
+        if (!regenerateBtn) return;
+
+        regenerateBtn.addEventListener('click', async () => {
+          const userId = localStorage.getItem('userId');
+          if (!userId) {
+            alert('Не сте влезли в системата.');
+            return;
+          }
+
+          if (!confirm('Искате ли да регенерирате хранителния си план с новите психологически данни? Това може да отнеме няколко минути.')) {
+            return;
+          }
+
+          regenerateBtn.disabled = true;
+          regenerateBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Регенериране...';
+
+          try {
+            const response = await fetch(apiEndpoints.regeneratePlan, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ userId })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+              alert('Планът започва да се регенерира! Ще получите известие когато е готов.');
+              regenerateBtn.innerHTML = '<i class="bi bi-check-circle"></i> Регенериране започна';
+              
+              // Reload page after a short delay to show updated status
+              setTimeout(() => {
+                window.location.reload();
+              }, 2000);
+            } else {
+              throw new Error(result.message || 'Грешка при регенериране');
+            }
+          } catch (error) {
+            console.error('Error regenerating plan:', error);
+            alert('Възникна грешка при регенериране на плана: ' + error.message);
+            regenerateBtn.disabled = false;
+            regenerateBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Регенерирай План с Нови Данни';
+          }
+        });
+      }
+
+      // Run on page load
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          displayPsychTestResults();
+          syncPsychTestsIfNeeded();
+          handlePlanRegeneration();
+        });
+      } else {
+        displayPsychTestResults();
+        syncPsychTestsIfNeeded();
+        handlePlanRegeneration();
+      }
     </script>
     <script type="module" src="js/app.js" defer></script>
     <script type="module" src="js/planModChat.js" defer></script>

@@ -1303,6 +1303,8 @@ export default {
                 responseBody = await handleGetProfileRequest(request, env);
             } else if (method === 'POST' && path === '/api/updateProfile') {
                 responseBody = await handleUpdateProfileRequest(request, env);
+            } else if (method === 'POST' && path === '/api/savePsychTests') {
+                responseBody = await handleSavePsychTestsRequest(request, env);
             } else if (method === 'POST' && path === '/api/updatePlanData') {
                 responseBody = await handleUpdatePlanRequest(request, env);
             } else if (method === 'POST' && path === '/api/requestPasswordReset') {
@@ -2734,6 +2736,105 @@ async function handleUpdateProfileRequest(request, env) {
 }
 }
 // ------------- END FUNCTION: handleUpdateProfileRequest -------------
+
+// ------------- START FUNCTION: handleSavePsychTestsRequest -------------
+/**
+ * Запазва резултатите от психологическите тестове (визуален и личностен)
+ * и актуализира analysis данните на потребителя.
+ * @param {Request} request
+ * @param {Object} env
+ * @returns {Promise<Object>}
+ */
+async function handleSavePsychTestsRequest(request, env) {
+    try {
+        const data = await request.json();
+        const userId = data.userId;
+        
+        if (!userId) {
+            return { success: false, message: "Липсва ID на потребител.", statusHint: 400 };
+        }
+
+        const { visualTest, personalityTest } = data;
+
+        if (!visualTest && !personalityTest) {
+            return { success: false, message: "Липсват данни за тестове.", statusHint: 400 };
+        }
+
+        // Валидация на данните
+        if (visualTest) {
+            if (!visualTest.id || !visualTest.name) {
+                return { success: false, message: "Невалидни данни за визуален тест.", statusHint: 400 };
+            }
+        }
+
+        if (personalityTest) {
+            if (!personalityTest.typeCode || !personalityTest.scores) {
+                return { success: false, message: "Невалидни данни за личностен тест.", statusHint: 400 };
+            }
+        }
+
+        // Зареждане на съществуващи analysis данни
+        const analysisKey = `${userId}_analysis`;
+        const existingAnalysisStr = await env.USER_METADATA_KV.get(analysisKey);
+        const analysis = existingAnalysisStr ? safeParseJson(existingAnalysisStr, {}) : {};
+
+        // Добавяне на timestamp
+        const timestamp = new Date().toISOString();
+
+        // Актуализиране на analysis данните с резултатите от тестовете
+        if (visualTest) {
+            analysis.visualTestProfile = {
+                profileId: visualTest.id,
+                profileName: visualTest.name,
+                profileShort: visualTest.short,
+                timestamp: visualTest.timestamp || timestamp
+            };
+        }
+
+        if (personalityTest) {
+            analysis.personalityTestProfile = {
+                typeCode: personalityTest.typeCode,
+                scores: personalityTest.scores,
+                riskFlags: personalityTest.riskFlags || [],
+                timestamp: personalityTest.timestamp || timestamp
+            };
+        }
+
+        // Запазване на актуализираните данни
+        await env.USER_METADATA_KV.put(analysisKey, JSON.stringify(analysis));
+
+        // Проверка дали вече има генериран план
+        const planStatus = await env.USER_METADATA_KV.get(`${userId}_plan_status`);
+        const hasPlan = planStatus && planStatus !== 'error' && planStatus !== 'pending';
+
+        // Флаг за регенериране на плана
+        let shouldRegeneratePlan = false;
+        if (hasPlan) {
+            // Ако има plan, маркираме че трябва да се регенерира
+            await env.USER_METADATA_KV.put(`${userId}_psych_tests_updated`, timestamp);
+            shouldRegeneratePlan = true;
+        }
+
+        return {
+            success: true,
+            message: "Резултатите от тестовете са запазени успешно.",
+            data: {
+                visualTestSaved: !!visualTest,
+                personalityTestSaved: !!personalityTest,
+                shouldRegeneratePlan,
+                timestamp
+            }
+        };
+    } catch (error) {
+        console.error(`Error in handleSavePsychTestsRequest: ${error.message}\n${error.stack}`);
+        return {
+            success: false,
+            message: "Грешка при запазване на резултатите от тестовете.",
+            statusHint: 500
+        };
+    }
+}
+// ------------- END FUNCTION: handleSavePsychTestsRequest -------------
 
 // ------------- START FUNCTION: validatePlanPrerequisites -------------
 async function validatePlanPrerequisites(env, userId) {
@@ -5353,6 +5454,8 @@ async function processSingleUserPlan(userId, env) {
         const defaultPsychoConceptsText = 'Няма налични насоки за психопрофил';
         let psychoProfileText = defaultPsychoProfileText;
         let psychoConceptsText = defaultPsychoConceptsText;
+        let visualTestInfo = '';
+        let personalityTestInfo = '';
         try {
             const { raw: psychoAnalysisRaw, parsed: psychoAnalysisParsed } = await getKvParsed(
                 `${userId}_analysis`,
@@ -5367,6 +5470,30 @@ async function processSingleUserPlan(userId, env) {
                 }
                 if (psychoData.concepts && psychoData.concepts.length > 0) {
                     psychoConceptsText = psychoData.concepts.join(', ');
+                }
+                
+                // Добавяне на информация от визуалния тест
+                if (psychoSource.visualTestProfile) {
+                    const vt = psychoSource.visualTestProfile;
+                    visualTestInfo = `Визуален тест: ${vt.profileName} (ID: ${vt.profileId})`;
+                    if (vt.profileShort) {
+                        visualTestInfo += ` - ${vt.profileShort}`;
+                    }
+                }
+                
+                // Добавяне на информация от личностния тест
+                if (psychoSource.personalityTestProfile) {
+                    const pt = psychoSource.personalityTestProfile;
+                    personalityTestInfo = `Личностен профил: ${pt.typeCode}`;
+                    if (pt.scores) {
+                        const scoreEntries = Object.entries(pt.scores)
+                            .map(([dim, score]) => `${dim}: ${score}`)
+                            .join(', ');
+                        personalityTestInfo += ` (Скорове: ${scoreEntries})`;
+                    }
+                    if (pt.riskFlags && pt.riskFlags.length > 0) {
+                        personalityTestInfo += ` | Рискови фактори: ${pt.riskFlags.join('; ')}`;
+                    }
                 }
             }
         } catch (psychoErr) {
@@ -5589,7 +5716,9 @@ async function processSingleUserPlan(userId, env) {
         Object.assign(replacements, targetReplacements, {
             '%%USER_ANSWERS_JSON%%': userAnswersJson,
             '%%DOMINANT_PSYCHO_PROFILE%%': psychoProfileText,
-            '%%PSYCHO_PROFILE_CONCEPTS%%': psychoConceptsText
+            '%%PSYCHO_PROFILE_CONCEPTS%%': psychoConceptsText,
+            '%%VISUAL_TEST_PROFILE%%': visualTestInfo || 'Няма визуален тест',
+            '%%PERSONALITY_TEST_PROFILE%%': personalityTestInfo || 'Няма личностен тест'
         });
         const targetPlaceholderDefaults = {};
         for (const placeholders of Object.values(TARGET_MACRO_PLACEHOLDERS)) {
@@ -5602,7 +5731,9 @@ async function processSingleUserPlan(userId, env) {
             ...targetPlaceholderDefaults,
             '%%USER_ANSWERS_JSON%%': '{}',
             '%%DOMINANT_PSYCHO_PROFILE%%': defaultPsychoProfileText,
-            '%%PSYCHO_PROFILE_CONCEPTS%%': defaultPsychoConceptsText
+            '%%PSYCHO_PROFILE_CONCEPTS%%': defaultPsychoConceptsText,
+            '%%VISUAL_TEST_PROFILE%%': 'Няма визуален тест',
+            '%%PERSONALITY_TEST_PROFILE%%': 'Няма личностен тест'
         };
         const criticalMarkers = new Set([
             ...Object.values(TARGET_MACRO_PLACEHOLDERS).flatMap((placeholders) =>
@@ -5610,7 +5741,9 @@ async function processSingleUserPlan(userId, env) {
             ),
             '%%USER_ANSWERS_JSON%%',
             '%%DOMINANT_PSYCHO_PROFILE%%',
-            '%%PSYCHO_PROFILE_CONCEPTS%%'
+            '%%PSYCHO_PROFILE_CONCEPTS%%',
+            '%%VISUAL_TEST_PROFILE%%',
+            '%%PERSONALITY_TEST_PROFILE%%'
         ]);
         for (const [marker, fallbackValue] of Object.entries(criticalDefaults)) {
             const value = replacements[marker];
