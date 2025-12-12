@@ -72,6 +72,7 @@ export const apiEndpoints = {
     approvePlanChange: `${workerBaseUrl}/api/approvePlanChange`,
     getPendingPlanChanges: `${workerBaseUrl}/api/getPendingPlanChanges`,
     rejectPlanChange: `${workerBaseUrl}/api/rejectPlanChange`,
+    savePsychTests: `${workerBaseUrl}/api/savePsychTests`,
     nutrientLookup: `${workerBaseUrl}/nutrient-lookup`
 };
 

@@ -20,7 +20,7 @@ export async function savePsychTestsToBackend({ userId, visualTest, personalityT
       throw new Error('Трябва да има поне един тест резултат');
     }
 
-    const response = await fetch(`${apiEndpoints.base}/api/savePsychTests`, {
+    const response = await fetch(apiEndpoints.savePsychTests, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
