@@ -383,11 +383,24 @@
       try {
         const [questionsResponse, keyResponse] = await Promise.all([
           fetch('./psy/bb_optional_personality_v1_1.json'),
-          fetch('./psy/bb_optional_personality_key_v1_1.json to psykey.json')
+          fetch('./psy/bb_optional_personality_key_v1_1.json')
         ]);
+
+        if (!questionsResponse.ok || !keyResponse.ok) {
+          throw new Error('Failed to load test files');
+        }
 
         const questionsJson = await questionsResponse.json();
         const keyJson = await keyResponse.json();
+
+        // Validate data structure
+        if (!questionsJson.items || !Array.isArray(questionsJson.items)) {
+          throw new Error('Invalid questions data structure');
+        }
+
+        if (!keyJson.scoring_key) {
+          throw new Error('Invalid scoring key data structure');
+        }
 
         // Filter out section headers, keep only questions
         questionsData = questionsJson.items.filter(item => item.type === 'radio');
