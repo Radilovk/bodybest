@@ -78,8 +78,10 @@
     </div>
   </section>
 
-<script>
+<script type="module">
   // ---------------- CONFIG ----------------
+  import { savePsychTestsToBackend } from '../js/psychTestsIntegration.js';
+  
   const IMG_EXT = "jpg"; // смени на "png" ако трябва
 
   const profiles = {
@@ -328,7 +330,7 @@
 
     // Store current result for saving
     currentTestResult = {
-      profileId: id,
+      id: id,  // Backend expects 'id' not 'profileId'
       name: p.name,
       short: p.short,
       psycho: p.psycho,
@@ -368,7 +370,7 @@
     `;
   }
 
-  // Save result to localStorage
+  // Save result to localStorage and backend
   document.getElementById("saveResult").addEventListener("click", async ()=>{
     if(!currentTestResult){
       showSaveStatus('Няма резултат за запазване', 'error');
@@ -376,22 +378,52 @@
     }
 
     try {
+      // Get userId
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        showSaveStatus('Не сте влезли в системата.', 'error');
+        setTimeout(() => {
+          window.location.href = '../login.html';
+        }, 2000);
+        return;
+      }
+
       // Get existing psychTests data from localStorage
       const existingDataStr = localStorage.getItem('psychTests');
       const existingData = existingDataStr ? JSON.parse(existingDataStr) : {};
       
-      // Add visual test result
+      // Add visual test result (temporary localStorage save)
       existingData.visualTest = currentTestResult;
-      
-      // Save to localStorage
       localStorage.setItem('psychTests', JSON.stringify(existingData));
       
-      showSaveStatus('✓ Резултатът е успешно запазен! Може да се върнете към главното табло.', 'success');
-      
-      // Optional: Redirect after a delay
-      setTimeout(() => {
-        window.location.href = '../code.html';
-      }, 2000);
+      // Save to backend KV storage
+      try {
+        const backendResult = await savePsychTestsToBackend({
+          userId,
+          visualTest: currentTestResult
+        });
+
+        if (backendResult.success) {
+          let message = '✓ Резултатът е успешно запазен!';
+          if (backendResult.data?.shouldRegeneratePlan) {
+            message += ' Препоръчваме регенериране на вашия хранителен план.';
+          }
+          showSaveStatus(message, 'success');
+          
+          setTimeout(() => {
+            window.location.href = '../code.html';
+          }, 2000);
+        } else {
+          throw new Error(backendResult.message || 'Backend error');
+        }
+      } catch (backendError) {
+        console.warn('Backend save failed, using localStorage only:', backendError);
+        showSaveStatus('Резултатът е запазен локално. Ще бъде синхронизиран при следващото влизане.', 'success');
+        
+        setTimeout(() => {
+          window.location.href = '../code.html';
+        }, 2000);
+      }
     } catch (error) {
       console.error('Error saving visual test result:', error);
       showSaveStatus('Грешка при запазване на резултата', 'error');
