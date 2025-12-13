@@ -6677,6 +6677,31 @@ async function assembleChatContext(
     const currWeight = safeParseFloat(safeGet(status, 'weight', null), null);
     const currW = currWeight !== null ? `${currWeight.toFixed(1)} кг` : 'N/A';
 
+    // Load psychTests data
+    const psychTestsStr = await env.USER_METADATA_KV.get(`${userId}_psych_tests`);
+    const psychTests = psychTestsStr ? safeParseJson(psychTestsStr, null) : null;
+    
+    // Build psychProfile summary for chat context
+    let psychProfileSummary = null;
+    if (psychTests && (psychTests.visualTest || psychTests.personalityTest)) {
+        psychProfileSummary = {};
+        
+        if (psychTests.visualTest) {
+            psychProfileSummary.visualTest = {
+                profile: psychTests.visualTest.name || 'N/A',
+                mainRisks: (psychTests.visualTest.mainRisks || []).slice(0, 2).join('; ') || 'N/A'
+            };
+        }
+        
+        if (psychTests.personalityTest) {
+            psychProfileSummary.personalityTest = {
+                typeCode: psychTests.personalityTest.typeCode || 'N/A',
+                mainRisks: (psychTests.personalityTest.mainRisks || []).slice(0, 2).join('; ') || 'N/A',
+                topRecommendations: (psychTests.personalityTest.topRecommendations || []).slice(0, 2).join('; ') || 'N/A'
+            };
+        }
+    }
+
     return {
         version: CHAT_CONTEXT_VERSION,
         ttlMs: CHAT_CONTEXT_TTL_MS,
@@ -6687,7 +6712,8 @@ async function assembleChatContext(
             name: safeGet(answers, 'name', 'Потребител'),
             goal: safeGet(answers, 'goal', 'N/A'),
             conditions: userConditions,
-            preferences: userPreferences
+            preferences: userPreferences,
+            psychProfile: psychProfileSummary
         },
         plan: {
             summary: safeGet(plan, 'profileSummary', 'Персонализиран хранителен подход'),
