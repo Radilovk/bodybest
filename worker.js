@@ -2739,6 +2739,46 @@ async function handleUpdateProfileRequest(request, env) {
 }
 // ------------- END FUNCTION: handleUpdateProfileRequest -------------
 
+// ------------- START HELPER: createPsychoTestsProfileData -------------
+/**
+ * Създава компактна структура от психо тест данни за включване във final_plan.
+ * Запазва само основните параметри за минимален размер.
+ * @param {Object|null} visualTest - Визуален тест данни
+ * @param {Object|null} personalityTest - Личностен тест данни
+ * @param {Object} timestamps - Обект с timestamps { normalizedVisualTimestamp, normalizedPersonalityTimestamp, timestamp }
+ * @returns {Object} Компактен психо профил обект
+ */
+function createPsychoTestsProfileData(visualTest, personalityTest, timestamps) {
+    const { normalizedVisualTimestamp, normalizedPersonalityTimestamp, timestamp } = timestamps;
+    
+    const psychoTestsData = {
+        lastUpdated: normalizedPersonalityTimestamp || normalizedVisualTimestamp || timestamp
+    };
+    
+    // Добавяме визуален тест (само основните полета)
+    if (visualTest) {
+        psychoTestsData.visualTest = {
+            profileId: visualTest.id,
+            profileName: visualTest.name,
+            profileShort: visualTest.short || '',
+            timestamp: normalizedVisualTimestamp
+        };
+    }
+    
+    // Добавяме личностен тест (само основните полета)
+    if (personalityTest) {
+        psychoTestsData.personalityTest = {
+            typeCode: personalityTest.typeCode,
+            scores: personalityTest.scores,
+            riskFlags: personalityTest.riskFlags || [],
+            timestamp: normalizedPersonalityTimestamp
+        };
+    }
+    
+    return psychoTestsData;
+}
+// ------------- END HELPER: createPsychoTestsProfileData -------------
+
 // ------------- START FUNCTION: handleSavePsychTestsRequest -------------
 /**
  * Запазва резултатите от психологическите тестове (визуален и личностен)
@@ -2852,29 +2892,11 @@ async function handleSavePsychTestsRequest(request, env) {
                     
                     if (finalPlan && typeof finalPlan === 'object') {
                         // Създаваме компактен обект само с ключовите параметри
-                        const psychoTestsData = {
-                            lastUpdated: psychTestsToStore.lastUpdated || timestamp
-                        };
-                        
-                        // Добавяме визуален тест (само основните полета)
-                        if (visualTest) {
-                            psychoTestsData.visualTest = {
-                                profileId: visualTest.id,
-                                profileName: visualTest.name,
-                                profileShort: visualTest.short || '',
-                                timestamp: normalizedVisualTimestamp
-                            };
-                        }
-                        
-                        // Добавяме личностен тест (само основните полета)
-                        if (personalityTest) {
-                            psychoTestsData.personalityTest = {
-                                typeCode: personalityTest.typeCode,
-                                scores: personalityTest.scores,
-                                riskFlags: personalityTest.riskFlags || [],
-                                timestamp: normalizedPersonalityTimestamp
-                            };
-                        }
+                        const psychoTestsData = createPsychoTestsProfileData(
+                            visualTest, 
+                            personalityTest, 
+                            { normalizedVisualTimestamp, normalizedPersonalityTimestamp, timestamp }
+                        );
                         
                         // Актуализираме final_plan с психо профил данните
                         finalPlan.psychoTestsProfile = psychoTestsData;
@@ -2883,16 +2905,18 @@ async function handleSavePsychTestsRequest(request, env) {
                         await env.USER_METADATA_KV.put(finalPlanKey, JSON.stringify(finalPlan));
                         addedToFinalPlan = true;
                         
-                        console.log(`SAVE_PSYCH_TESTS (${userId}): Психо профил данни добавени към final_plan успешно.`);
+                        console.log(`SAVE_PSYCH_TESTS (${userId}): Psycho profile data added to final_plan successfully.`);
                     }
                 }
             } catch (finalPlanError) {
-                console.error(`SAVE_PSYCH_TESTS (${userId}): Грешка при актуализиране на final_plan: ${finalPlanError.message}`);
+                console.error(`SAVE_PSYCH_TESTS (${userId}): Error updating final_plan: ${finalPlanError.message}`);
                 // Продължаваме - грешката при актуализиране на final_plan не трябва да провали цялата операция
             }
         }
 
         // Флаг за регенериране на плана
+        // Препоръчваме регенериране само ако има план, но не успяхме да добавим данните към него
+        // Ако данните са добавени успешно, не е нужно регенериране
         let shouldRegeneratePlan = false;
         if (hasPlan && !addedToFinalPlan) {
             // Ако има план, но не успяхме да добавим данните, маркираме че трябва да се регенерира
@@ -6000,34 +6024,23 @@ async function processSingleUserPlan(userId, env) {
                 if (psychTestsStr) {
                     const psychTests = safeParseJson(psychTestsStr, null);
                     if (psychTests && (psychTests.visualTest || psychTests.personalityTest)) {
-                        const psychoTestsData = {
-                            lastUpdated: psychTests.lastUpdated || planBuilder.generationMetadata.timestamp
-                        };
-                        
-                        if (psychTests.visualTest) {
-                            psychoTestsData.visualTest = {
-                                profileId: psychTests.visualTest.id,
-                                profileName: psychTests.visualTest.name,
-                                profileShort: psychTests.visualTest.short || '',
-                                timestamp: psychTests.visualTest.timestamp
-                            };
-                        }
-                        
-                        if (psychTests.personalityTest) {
-                            psychoTestsData.personalityTest = {
-                                typeCode: psychTests.personalityTest.typeCode,
-                                scores: psychTests.personalityTest.scores,
-                                riskFlags: psychTests.personalityTest.riskFlags || [],
-                                timestamp: psychTests.personalityTest.timestamp
-                            };
-                        }
+                        // Използваме helper функцията за създаване на компактните данни
+                        const psychoTestsData = createPsychoTestsProfileData(
+                            psychTests.visualTest,
+                            psychTests.personalityTest,
+                            {
+                                normalizedVisualTimestamp: psychTests.visualTest?.timestamp,
+                                normalizedPersonalityTimestamp: psychTests.personalityTest?.timestamp,
+                                timestamp: psychTests.lastUpdated || planBuilder.generationMetadata.timestamp
+                            }
+                        );
                         
                         planBuilder.psychoTestsProfile = psychoTestsData;
-                        await addLog('Психо профил данни добавени към плана');
+                        await addLog('Psycho profile data added to plan');
                     }
                 }
             } catch (psychoErr) {
-                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Не успя добавянето на психо профил към плана - ${psychoErr.message}`);
+                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Failed to add psycho profile to plan - ${psychoErr.message}`);
                 // Не прекъсваме процеса при грешка - психо профилът не е критичен
             }
             
