@@ -1215,8 +1215,13 @@
       renderFlags(scores);
       const analysis = analyzeNutritionalRisks(scores);
       
-      // Запазване на резултатите
-      await saveResults(scores, analysis);
+      // Запазване на резултатите с error handling
+      try {
+        await saveResults(scores, analysis);
+      } catch (error) {
+        console.error('Грешка при запазване на резултатите:', error);
+        // Продължаваме показването на резултатите дори ако запазването е неуспешно
+      }
       
       // Показване на AI анализа
       setTimeout(() => {
@@ -1359,7 +1364,7 @@
         existingData.personalityTest = personalityTest;
         localStorage.setItem('psychTests', JSON.stringify(existingData));
         
-        // Запазване в backend
+        // API configuration (shared logic with psy/index.html)
         const userId = localStorage.getItem('userId');
         if (userId) {
           const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
