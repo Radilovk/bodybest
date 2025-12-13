@@ -3113,7 +3113,17 @@ async function handleRegeneratePlanRequest(request, env, ctx, planProcessor = pr
         return { success: true, message: 'Генерирането на нов план завърши.' };
     } catch (error) {
         console.error(`Error in handleRegeneratePlanRequest: ${error.message}\n${error.stack}`);
-        return { success: false, message: 'Грешка при генериране на плана.', statusHint: 500, userId: body?.userId || 'unknown_user' };
+        const userId = body?.userId || 'unknown_user';
+        // Set plan status to error to prevent stuck in 'processing' state
+        if (userId !== 'unknown_user') {
+            try {
+                await setPlanStatus(userId, 'error', env);
+                await env.USER_METADATA_KV.put(`${userId}_processing_error`, `Грешка при генериране на плана: ${error.message}`);
+            } catch (statusError) {
+                console.error(`Failed to set error status for ${userId}:`, statusError);
+            }
+        }
+        return { success: false, message: 'Грешка при генериране на плана.', statusHint: 500, userId };
     }
 }
 // ------------- END FUNCTION: handleRegeneratePlanRequest -------------
@@ -6615,7 +6625,7 @@ function isChatContextFresh(context) {
  * @property {string} updatedAt
  * @property {string} planStatus
  * @property {string} planTimestamp
- * @property {{name: string, goal: string, conditions: string, preferences: string}} user
+ * @property {{name: string, goal: string, conditions: string, preferences: string, psychProfile: Object|null}} user
  * @property {{
  *   summary: string,
  *   macrosString: string,
