@@ -6677,9 +6677,15 @@ async function assembleChatContext(
     const currWeight = safeParseFloat(safeGet(status, 'weight', null), null);
     const currW = currWeight !== null ? `${currWeight.toFixed(1)} кг` : 'N/A';
 
-    // Load psychTests data
-    const psychTestsStr = await env.USER_METADATA_KV.get(`${userId}_psych_tests`);
-    const psychTests = psychTestsStr ? safeParseJson(psychTestsStr, null) : null;
+    // Load psychTests data with error handling
+    let psychTests = null;
+    try {
+        const psychTestsStr = await env.USER_METADATA_KV.get(`${userId}_psych_tests`);
+        psychTests = psychTestsStr ? safeParseJson(psychTestsStr, null) : null;
+    } catch (kvErr) {
+        console.warn(`CHAT_CONTEXT_WARN (${userId}): неуспешно зареждане на psychTests - ${kvErr.message}`);
+        psychTests = null;
+    }
     
     // Build psychProfile summary for chat context
     let psychProfileSummary = null;
