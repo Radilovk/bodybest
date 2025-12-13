@@ -693,6 +693,11 @@
   </style>
 </head>
 <body id="body">
+  <!-- Back to Profile Button -->
+  <a href="../code.html#profile-tab" class="back-btn" title="Назад към профила" style="position: fixed; top: var(--space-md); left: var(--space-md); width: 44px; height: 44px; border-radius: var(--radius-round); background: var(--card-bg); border: 2px solid var(--border-color); color: var(--text-color-primary); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); transition: all 0.3s ease; z-index: 1001; text-decoration: none;">
+    <span style="font-size: 20px;">←</span>
+  </a>
+
   <!-- Theme Toggle Button -->
   <button class="theme-toggle" id="themeToggle" aria-label="Смени темата">
     <span id="themeIcon">🌙</span>
@@ -716,7 +721,7 @@
           <li>Тестът отнема около 4-6 минути</li>
         </ul>
         <button class="btn btn-primary" onclick="startTest()">Започни теста</button>
-        <a href="../index.html" class="btn btn-secondary">Назад към главната страница</a>
+        <a href="../code.html#profile-tab" class="btn btn-secondary" style="display: inline-block; text-align: center; text-decoration: none; margin-top: var(--space-sm);">Назад към профила</a>
       </div>
     </div>
 

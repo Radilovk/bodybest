@@ -2,32 +2,19 @@
 <html lang="bg">
 <head>
   <meta charset="utf-8" />
-  <title>Психология на храненето</title>
+  <title>Визуален Тест | BodyBest</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base_styles.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
   <style>
-    :root{
-      /* Светла, спокойна палитра */
-      --bg: #fdfcf8;         /* Цвят на яйчена черупка/хартия */
-      --card-bg: #ffffff;
-      --text-main: #2d3748;  /* Тъмно сиво, не черно */
-      --text-muted: #718096;
-      --accent: #4d8b80;     /* Sage Green / Меко зелено */
-      --accent-dark: #3a6b62;
-      --border: #e2e8f0;
-      --shadow: 0 4px 20px rgba(0,0,0,0.06);
-      --radius: 20px;
-    }
     *{box-sizing:border-box;margin:0;padding:0; -webkit-tap-highlight-color: transparent;}
     
     body{
       min-height:100vh;
-      font-family: 'Inter', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text-main);
-      padding-bottom: 40px; /* Safe area */
+      font-family: var(--font-primary);
+      background: var(--bg-gradient);
+      color: var(--text-color-primary);
+      padding-bottom: 40px;
     }
 
     /* Анимации */
@@ -36,6 +23,38 @@
 
     .screen{display:none; min-height:100vh; padding:24px 20px; max-width: 600px; margin: 0 auto;}
     .screen.active{display:flex; flex-direction:column;}
+
+    /* Back button */
+    .back-btn {
+      position: fixed;
+      top: var(--space-md);
+      left: var(--space-md);
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-round);
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      color: var(--text-color-primary);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-md);
+      transition: all 0.3s ease;
+      z-index: 1000;
+      text-decoration: none;
+    }
+    .back-btn:hover {
+      transform: scale(1.05);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary-color);
+      background: var(--primary-color);
+      color: white;
+    }
+    .back-btn:active {
+      transform: scale(0.95);
+    }
 
     /* --------- Screen 1: Intro --------- */
     .intro{justify-content:center; text-align:center; gap:20px;}
@@ -46,25 +65,25 @@
       font-size: 26px; 
       font-weight: 800; 
       line-height: 1.2; 
-      color: var(--text-main);
+      color: var(--text-color-primary);
     }
-    .title span{ color: var(--accent); }
+    .title span{ color: var(--primary-color); }
     .p{
       font-size: 16px; 
       line-height: 1.6; 
-      color: var(--text-muted);
+      color: var(--text-color-secondary);
     }
     .rules-card {
       background: var(--card-bg);
-      border-radius: var(--radius);
+      border-radius: var(--radius-lg);
       padding: 20px;
-      box-shadow: var(--shadow);
+      box-shadow: var(--shadow-md);
       text-align: left;
       margin: 10px 0 20px;
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-color-soft);
     }
-    .rules-card h3 { font-size: 14px; text-transform: uppercase; color: var(--accent); letter-spacing: 1px; margin-bottom: 10px; }
-    .rules{ padding-left: 20px; color: var(--text-main); font-size: 15px; line-height: 1.6; }
+    .rules-card h3 { font-size: 14px; text-transform: uppercase; color: var(--primary-color); letter-spacing: 1px; margin-bottom: 10px; }
+    .rules{ padding-left: 20px; color: var(--text-color-primary); font-size: 15px; line-height: 1.6; }
     .rules li { margin-bottom: 8px; }
 
     .btn{
@@ -72,24 +91,33 @@
       border:none;
       border-radius: 99px;
       padding: 18px;
-      background: var(--accent);
+      background: var(--primary-color);
       color: #fff;
       font-weight: 600;
       font-size: 16px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(77, 139, 128, 0.3);
-      transition: transform 0.1s;
+      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+      transition: all 0.2s ease;
     }
-    .btn:active { transform: scale(0.98); background: var(--accent-dark); }
+    .btn:hover {
+      background: color-mix(in srgb, var(--primary-color) 85%, black);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.4);
+    }
+    .btn:active { transform: scale(0.98); }
     
     .btnGhost{
       display: block;
       text-align: center;
       margin-top: 15px;
-      color: var(--text-muted);
+      color: var(--text-color-secondary);
       text-decoration: none;
       font-size: 14px;
       font-weight: 500;
+      transition: color 0.2s;
+    }
+    .btnGhost:hover {
+      color: var(--primary-color);
     }
 
     /* --------- Screen 2: Grid --------- */
@@ -98,7 +126,7 @@
       font-weight: 600; 
       text-align: center; 
       margin-bottom: 20px;
-      color: var(--text-main);
+      color: var(--text-color-primary);
     }
     .grid{
       flex:1;
@@ -109,16 +137,21 @@
     }
     .thumb{
       position: relative;
-      border-radius: var(--radius);
+      border-radius: var(--radius-lg);
       overflow: hidden;
       background: var(--card-bg);
-      border: none;
-      box-shadow: var(--shadow);
+      border: 2px solid var(--border-color-soft);
+      box-shadow: var(--shadow-md);
       cursor: pointer;
-      transition: transform 0.2s;
+      transition: all 0.2s ease;
       aspect-ratio: 1/1;
     }
-    .thumb:active { transform: scale(0.96); }
+    .thumb:hover {
+      border-color: var(--secondary-color);
+      transform: scale(1.02);
+      box-shadow: var(--shadow-lg);
+    }
+    .thumb:active { transform: scale(0.98); }
     .thumb img{
       width: 100%;
       height: 100%;
@@ -129,7 +162,7 @@
     /* --------- Fullscreen Overlay --------- */
     .overlay{
       position: fixed; inset: 0; z-index: 100;
-      background: rgba(255,255,255,0.95);
+      background: rgba(var(--surface-background-rgb), 0.98);
       backdrop-filter: blur(8px);
       display: none;
       flex-direction: column;
@@ -139,9 +172,18 @@
     
     .ovTop{ padding: 20px; display: flex; justify-content: flex-end; }
     .ovClose{
-      background: #f1f5f9; border: none; color: var(--text-main);
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      color: var(--text-color-primary);
       width: 44px; height: 44px; border-radius: 50%;
       font-size: 20px; cursor: pointer; display: grid; place-items: center;
+      transition: all 0.2s ease;
+    }
+    .ovClose:hover {
+      background: var(--color-danger);
+      border-color: var(--color-danger);
+      color: white;
+      transform: scale(1.05);
     }
 
     .ovBody{
@@ -211,6 +253,10 @@
   </style>
 </head>
 <body>
+  <!-- Back to Profile Button -->
+  <a href="../code.html#profile-tab" class="back-btn" title="Назад към профила">
+    <i class="bi bi-arrow-left"></i>
+  </a>
 
   <!-- Screen 1: Intro -->
   <section class="screen intro active" id="s1">
@@ -231,7 +277,7 @@
       </div>
 
       <button class="btn" id="start">Започни теста</button>
-      <a class="btnGhost" href="#">Научи повече за метода</a>
+      <a class="btnGhost" href="about.html">Научи повече за метода</a>
     </div>
   </section>
 
