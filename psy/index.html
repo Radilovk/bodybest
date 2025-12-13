@@ -505,10 +505,11 @@
     if(e.target === overlay || e.target.classList.contains('ovTop')) closeOverlay();
   });
 
-  ovSelect.addEventListener("click", ()=>{
+  ovSelect.addEventListener("click", async ()=>{
     if(!pendingId) return;
     closeOverlay();
     renderResult(pendingId, pendingSrc);
+    await saveVisualTestResult(pendingId);
     show(s3);
   });
 
@@ -550,7 +551,98 @@
       <div class="card" style="border-color: #fbd38d;">
         ${makeList(p.risks, true)}
       </div>
+      
+      <div id="saveStatusMessage" style="margin-top: 20px;"></div>
     `;
+  }
+  
+  // Запазване на резултата от визуалния тест
+  async function saveVisualTestResult(profileId) {
+    try {
+      const profile = profiles[profileId];
+      if (!profile) return;
+      
+      const timestamp = new Date().toISOString();
+      
+      // Съкратена версия - само есенциалната информация
+      const visualTest = {
+        id: profileId,
+        name: profile.name,
+        short: profile.short,
+        mainPsycho: profile.psycho.slice(0, 2), // Първите 2 психо характеристики
+        mainHabits: profile.habits.slice(0, 2), // Първите 2 навика
+        mainRisks: profile.risks.slice(0, 2), // Първите 2 риска
+        timestamp: timestamp
+      };
+      
+      // Запазване в localStorage
+      const existingData = JSON.parse(localStorage.getItem('psychTests') || '{}');
+      existingData.visualTest = visualTest;
+      localStorage.setItem('psychTests', JSON.stringify(existingData));
+      
+      // API configuration (shared logic with psy/psychotest.html)
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+          ? 'http://localhost:8787'
+          : 'https://bodybest-backend.radilovka88.workers.dev';
+        
+        const response = await fetch(`${API_BASE}/api/savePsychTests`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: userId,
+            visualTest: visualTest
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log('Резултатите са запазени успешно в backend');
+          localStorage.setItem('psychTestsLastSync', timestamp);
+          showSaveStatus(true);
+        } else {
+          console.warn('Грешка при запазване в backend:', result.message);
+          showSaveStatus(false);
+        }
+      } else {
+        console.log('Няма userId - резултатите са запазени само локално');
+        showSaveStatus(false);
+      }
+    } catch (error) {
+      console.error('Грешка при запазване на резултатите:', error);
+      showSaveStatus(false);
+    }
+  }
+  
+  function showSaveStatus(success) {
+    const messageDiv = document.getElementById('saveStatusMessage');
+    if (!messageDiv) return;
+    
+    if (success) {
+      messageDiv.innerHTML = `
+        <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 16px; padding: 20px; text-align: center;">
+          <div style="font-size: 20px; margin-bottom: 5px;">✓</div>
+          <div style="font-weight: 700; color: #155724; margin-bottom: 5px;">Резултатите са запазени!</div>
+          <div style="font-size: 14px; color: #155724;">
+            Можете да видите вашия психопрофил в секция "Профил" в главното табло.
+          </div>
+        </div>
+      `;
+    } else {
+      messageDiv.innerHTML = `
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 16px; padding: 20px; text-align: center;">
+          <div style="font-size: 20px; margin-bottom: 5px;">⚠</div>
+          <div style="font-weight: 700; color: #856404; margin-bottom: 5px;">Резултатите са запазени локално</div>
+          <div style="font-size: 14px; color: #856404;">
+            Влезте в профила си, за да синхронизирате резултатите с вашия акаунт.
+          </div>
+        </div>
+      `;
+    }
   }
 </script>
 </body>
