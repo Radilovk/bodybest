@@ -1239,7 +1239,7 @@
 
       // Sync psych tests to backend on page load
       async function syncPsychTestsIfNeeded() {
-        const userId = localStorage.getItem('userId');
+        const userId = sessionStorage.getItem('userId');
         if (!userId) return;
 
         const psychTestsStr = localStorage.getItem('psychTests');
@@ -1552,7 +1552,7 @@
         if (!regenerateBtn) return;
 
         regenerateBtn.addEventListener('click', async () => {
-          const userId = localStorage.getItem('userId');
+          const userId = sessionStorage.getItem('userId');
           if (!userId) {
             alert('Не сте влезли в системата.');
             return;
@@ -1597,7 +1597,7 @@
       }
 
       async function initPsychTestsSection() {
-        const userId = localStorage.getItem('userId');
+        const userId = sessionStorage.getItem('userId');
         if (userId) {
           await hydratePsychTestsFromBackend(userId);
           await syncPsychTestsIfNeeded();
