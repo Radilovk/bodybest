@@ -6615,7 +6615,7 @@ function isChatContextFresh(context) {
  * @property {string} updatedAt
  * @property {string} planStatus
  * @property {string} planTimestamp
- * @property {{name: string, goal: string, conditions: string, preferences: string}} user
+ * @property {{name: string, goal: string, conditions: string, preferences: string, psychProfile: Object|null}} user
  * @property {{
  *   summary: string,
  *   macrosString: string,
