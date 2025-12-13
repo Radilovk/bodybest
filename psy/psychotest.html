@@ -1206,14 +1206,22 @@
       return normalizedScores;
     }
 
-    function calculateAndShowResults() {
+    async function calculateAndShowResults() {
       const scores = calculateScores();
       
       showScreen('screenResults');
       renderDimensions(scores);
       renderTypeCode(scores);
       renderFlags(scores);
-      generateAIAnalysis(scores);
+      const analysis = analyzeNutritionalRisks(scores);
+      
+      // Запазване на резултатите
+      await saveResults(scores, analysis);
+      
+      // Показване на AI анализа
+      setTimeout(() => {
+        renderAIAnalysis(analysis);
+      }, 1500);
     }
 
     function renderDimensions(scores) {
@@ -1317,12 +1325,116 @@
       container.innerHTML = html;
     }
 
-    function generateAIAnalysis(scores) {
-      // Simulate AI processing delay
-      setTimeout(() => {
-        const analysis = analyzeNutritionalRisks(scores);
-        renderAIAnalysis(analysis);
-      }, 1500);
+    // Запазване на резултатите в localStorage и backend
+    async function saveResults(scores, analysis) {
+      try {
+        const timestamp = new Date().toISOString();
+        
+        // Генериране на type code
+        const E_code = scores.E >= dimensionInfo.E.threshold ? 'E' : 'X';
+        const O_code = scores.O >= dimensionInfo.O.threshold ? 'V' : 'S';
+        const A_code = scores.A >= dimensionInfo.A.threshold ? 'M' : 'D';
+        const C_code = scores.C >= dimensionInfo.C.threshold ? 'J' : 'P';
+        const typeCode = `${E_code}-${O_code}-${A_code}-${C_code}`;
+        
+        // Събиране на risk flags
+        const riskFlags = [];
+        if (scores.I >= 65) riskFlags.push('Висока импулсивност');
+        if (scores.N >= 65) riskFlags.push('Висока емоционална реактивност');
+        if (scores.R >= 65) riskFlags.push('Висока склонност към риск');
+        
+        // Съкратени резултати - само есенциалната информация
+        const personalityTest = {
+          typeCode: typeCode,
+          scores: scores,
+          riskFlags: riskFlags,
+          strengths: analysis.strengths || [],
+          mainRisks: analysis.risks.slice(0, 2).map(r => r.title), // Само първите 2 рискови области
+          topRecommendations: analysis.recommendations.slice(0, 3), // Само топ 3 препоръки
+          timestamp: timestamp
+        };
+        
+        // Запазване в localStorage
+        const existingData = JSON.parse(localStorage.getItem('psychTests') || '{}');
+        existingData.personalityTest = personalityTest;
+        localStorage.setItem('psychTests', JSON.stringify(existingData));
+        
+        // Запазване в backend
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:8787'
+            : 'https://bodybest-backend.radilovka88.workers.dev';
+          
+          const response = await fetch(`${API_BASE}/api/savePsychTests`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              userId: userId,
+              personalityTest: personalityTest
+            })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            console.log('Резултатите са запазени успешно в backend');
+            localStorage.setItem('psychTestsLastSync', timestamp);
+            
+            // Показване на success съобщение
+            showSaveSuccessMessage();
+          } else {
+            console.warn('Грешка при запазване в backend:', result.message);
+            // Запазваме локално, дори ако backend е недостъпен
+            showSaveWarningMessage();
+          }
+        } else {
+          console.log('Няма userId - резултатите са запазени само локално');
+          showSaveWarningMessage();
+        }
+      } catch (error) {
+        console.error('Грешка при запазване на резултатите:', error);
+        // При грешка поне запазваме локално
+        showSaveWarningMessage();
+      }
+    }
+    
+    function showSaveSuccessMessage() {
+      const container = document.getElementById('aiAnalysisContainer');
+      container.insertAdjacentHTML('afterbegin', `
+        <div style="background: color-mix(in srgb, var(--primary-color) 15%, var(--card-bg)); 
+                    border-left: 4px solid var(--primary-color); 
+                    padding: var(--space-md); 
+                    border-radius: var(--radius-md); 
+                    margin-bottom: var(--space-md);">
+          <p style="margin: 0; color: var(--text-color-primary); font-weight: 600;">
+            ✓ Резултатите са запазени успешно!
+          </p>
+          <p style="margin: var(--space-xs) 0 0 0; font-size: var(--fs-sm); color: var(--text-color-secondary);">
+            Можете да видите вашия психопрофил в секция "Профил" в главното табло.
+          </p>
+        </div>
+      `);
+    }
+    
+    function showSaveWarningMessage() {
+      const container = document.getElementById('aiAnalysisContainer');
+      container.insertAdjacentHTML('afterbegin', `
+        <div style="background: color-mix(in srgb, var(--accent-color) 10%, var(--card-bg)); 
+                    border-left: 4px solid var(--accent-color); 
+                    padding: var(--space-md); 
+                    border-radius: var(--radius-md); 
+                    margin-bottom: var(--space-md);">
+          <p style="margin: 0; color: var(--text-color-primary); font-weight: 600;">
+            ⚠ Резултатите са запазени локално
+          </p>
+          <p style="margin: var(--space-xs) 0 0 0; font-size: var(--fs-sm); color: var(--text-color-secondary);">
+            Влезте в профила си, за да синхронизирате резултатите с вашия акаунт.
+          </p>
+        </div>
+      `);
     }
 
     function simplifyText(text, maxSentences = 2) {
