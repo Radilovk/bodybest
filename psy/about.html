@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <title>About — Визуален тест за хранителен психопрофил</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#020617;
+      --panel:#061024;
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --border:#1f2937;
+      --accent:#22c55e;
+      --radius:16px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      min-height:100vh;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:radial-gradient(1200px 600px at 10% -10%, rgba(34,197,94,.14), transparent 60%),
+                 radial-gradient(900px 500px at 110% 10%, rgba(56,189,248,.12), transparent 60%),
+                 var(--bg);
+      color:var(--text);
+    }
+    .wrap{
+      max-width:920px;
+      margin:0 auto;
+      padding:18px 14px 28px;
+    }
+    .hero{
+      border:1px solid rgba(31,41,55,.9);
+      background:linear-gradient(180deg, rgba(6,16,36,.75), rgba(2,6,23,.6));
+      border-radius:22px;
+      padding:16px;
+      box-shadow:0 12px 40px rgba(0,0,0,.35);
+    }
+    .kicker{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(31,41,55,.85);
+      background:rgba(6,16,36,.55);
+      color:var(--muted);
+      font-size:12px;
+      letter-spacing:.02em;
+    }
+    .dot{
+      width:8px;height:8px;border-radius:999px;background:var(--accent);
+      box-shadow:0 0 0 3px rgba(34,197,94,.18);
+    }
+    h1{
+      margin-top:12px;
+      font-size:22px;
+      line-height:1.2;
+    }
+    h1 span{color:var(--accent)}
+    .sub{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.6;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+      margin-top:14px;
+    }
+    @media (min-width:760px){
+      .grid{grid-template-columns:1fr 1fr}
+    }
+    .card{
+      border:1px solid rgba(31,41,55,.85);
+      background:rgba(6,16,36,.45);
+      border-radius:var(--radius);
+      padding:14px;
+    }
+    h2{
+      font-size:14px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin-bottom:10px;
+    }
+    p{
+      color:var(--text);
+      font-size:14px;
+      line-height:1.65;
+      margin-bottom:10px;
+    }
+    ul{
+      list-style:none;
+      padding-left:0;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    li{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      color:var(--text);
+      font-size:14px;
+      line-height:1.55;
+    }
+    .b{
+      width:7px;height:7px;border-radius:999px;background:var(--accent);
+      margin-top:8px; flex:0 0 auto;
+    }
+    .muted{color:var(--muted)}
+    .footer{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .pill{
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid rgba(31,41,55,.85);
+      background:rgba(6,16,36,.55);
+      color:var(--muted);
+      font-size:13px;
+    }
+    .note{
+      margin-top:12px;
+      border-radius:var(--radius);
+      border:1px dashed rgba(31,41,55,.9);
+      padding:12px;
+      background:rgba(2,6,23,.35);
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.55;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div class="kicker"><span class="dot"></span> About / Психологическа рамка</div>
+      <h1>Визуален тест за <span>хранителен психопрофил</span></h1>
+      <div class="sub">
+        Целта е бързо ориентиране към доминиращ регулаторен стил около храната
+        (контрол, импулсивност, емоционална регулация, рутина, социално влияние),
+        използвайки избор на абстрактен визуален стимул като вход към структурирано интервю.
+      </div>
+
+      <div class="grid">
+        <section class="card">
+          <h2>Какво измерва</h2>
+          <p>
+            Тестът улавя предпочитание към визуални характеристики (структура, хаос, интензивност,
+            мекота, двусмисленост), които често са поведенчески аналог на начина, по който човек:
+            (1) регулира напрежение, (2) търси награда, (3) поддържа граници и рутина,
+            (4) се влияе от социален контекст.
+          </p>
+          <ul>
+            <li><span class="b"></span><span><b>Нужда от структура</b> ↔ склонност към правила, рестрикция, контрол.</span></li>
+            <li><span class="b"></span><span><b>Търсене на стимул</b> ↔ импулсивно хранене, „междинни“ закуски, ултра-вкусни храни.</span></li>
+            <li><span class="b"></span><span><b>Регулация на афект</b> ↔ comfort eating при стрес/самота/напрежение.</span></li>
+            <li><span class="b"></span><span><b>Рутина и интероцепция</b> ↔ стабилен ритъм vs. хаотично хранене и „забравяне“.</span></li>
+            <li><span class="b"></span><span><b>Социално влияние</b> ↔ хранене „за компания“ и трудност за отказ.</span></li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h2>Защо визуален избор</h2>
+          <p>
+            Абстрактните изображения работят като „неутрален носител“:
+            не съдържат директни хранителни подсказки, но имат ясни параметри на форма,
+            контраст, ритъм, симетрия, сложност и емоционален тон. Изборът обикновено се прави
+            бързо и интуитивно, което го прави подходящ за регистриране на предпочитан стил на
+            саморегулация, а не на рационална декларация.
+          </p>
+          <ul>
+            <li><span class="b"></span><span><b>Афективна конгруентност:</b> хората предпочитат тон и „температура“ на образа, които съвпадат с вътрешния им афект или търсения баланс.</span></li>
+            <li><span class="b"></span><span><b>Толеранс към двусмисленост:</b> някои профили избират ясна геометрия, други — разлята, „неопределена“ форма.</span></li>
+            <li><span class="b"></span><span><b>Чувствителност към награда:</b> интензивните, контрастни и динамични композиции често привличат търсещите стимул и новост.</span></li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h2>Как се използва клинично</h2>
+          <p>
+            Резултатът се третира като <b>работна хипотеза</b> и се проверява с кратки
+            уточняващи въпроси и поведенчески примери. Тестът е инструмент за ускоряване на
+            формулирането и за насочване на разговора към механизма, а не към морални оценки.
+          </p>
+          <ul>
+            <li><span class="b"></span><span><b>Стъпка 1:</b> избор на изображение.</span></li>
+            <li><span class="b"></span><span><b>Стъпка 2:</b> формулиране на профил като регулаторен стил (напр. контрол/афект/стимул/хаос/социалност).</span></li>
+            <li><span class="b"></span><span><b>Стъпка 3:</b> 2–4 проверяващи въпроса (с примери от последната седмица).</span></li>
+            <li><span class="b"></span><span><b>Стъпка 4:</b> свързване с рискови навици и конкретни интервенции (рутина, пауза, заместваща регулация, граници).</span></li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h2>Ограничения и контрол</h2>
+          <p>
+            Изборът може да се влияе от моментно настроение, умора, културни/дизайнерски предпочитания
+            и условия на дисплея. Затова форматът е замислен да минимизира изкривяванията:
+            всички изображения са на един екран, без време за „анализ“, а потвърждението се прави след
+            преглед на цял екран.
+          </p>
+          <ul>
+            <li><span class="b"></span><span>При повторно попълване се търси стабилност на избора, а при разминаване се изследват състоянието и контекстът.</span></li>
+            <li><span class="b"></span><span>Резултатът не замества клинично интервю и не е диагностичен етикет.</span></li>
+            <li><span class="b"></span><span>Най-полезен е като вход към механизъм: „какво регулира храната при този човек“.</span></li>
+          </ul>
+        </section>
+      </div>
+
+      <div class="footer">
+        <div class="pill">Функция: бърз скрийнинг + насочване на интервю</div>
+        <div class="pill">Фокус: механизъм → навик → риск</div>
+        <div class="pill">Форма: визуален избор + проверяващи въпроси</div>
+      </div>
+
+      <div class="note">
+        Препоръчителна практика: след резултата покажи 3–5 кратки въпроса за потвърждение
+        (емоционално хранене, импулсивни закуски, рутина/пропускане, социални отклонения, рестрикция)
+        и изведи „съвпадение“ между визуалния профил и самонаблюдението на клиента.
+      </div>
+    </section>
+  </main>
+</body>
+</html>
