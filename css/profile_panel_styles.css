@@ -29,3 +29,120 @@
 }
 #profileConsiderations .note-base { margin-top: var(--space-sm); }
 #profileConsiderations ul { padding-left: var(--space-md); list-style: disc; margin-top: var(--space-xs); }
+
+/* --- Psych Test Cards Grid --- */
+.psych-tests-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+.psych-test-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--surface-background);
+  border: 2px solid var(--border-color-soft);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: var(--text-color-primary);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.psych-test-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.3s ease;
+}
+
+.psych-test-card:hover {
+  border-color: var(--secondary-color);
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+}
+
+.psych-test-card:hover::before {
+  transform: scaleY(1);
+}
+
+.psych-test-card:active {
+  transform: translateX(2px) scale(0.98);
+}
+
+.psych-test-icon {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 28px;
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.2);
+  transition: all 0.3s ease;
+}
+
+.psych-test-card:hover .psych-test-icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.3);
+}
+
+.psych-test-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.psych-test-content h4 {
+  margin: 0 0 var(--space-xs) 0;
+  font-size: var(--fs-base);
+  font-weight: 700;
+  color: var(--text-color-primary);
+}
+
+.psych-test-content p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-color-secondary);
+  line-height: 1.4;
+}
+
+.psych-test-arrow {
+  flex-shrink: 0;
+  font-size: 20px;
+  color: var(--secondary-color);
+  transition: transform 0.3s ease;
+}
+
+.psych-test-card:hover .psych-test-arrow {
+  transform: translateX(4px);
+}
+
+/* Dark theme adjustments */
+body.dark-theme .psych-test-card {
+  background: rgba(var(--card-bg-rgb), 0.6);
+}
+
+body.dark-theme .psych-test-card:hover {
+  background: rgba(var(--card-bg-rgb), 0.8);
+}
+
+/* Vivid theme adjustments */
+body.vivid-theme .psych-test-icon {
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4);
+}
+
+body.vivid-theme .psych-test-card:hover .psych-test-icon {
+  box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.5);
+}
