@@ -2879,7 +2879,14 @@ async function handleSavePsychTestsRequest(request, env) {
         const answersKey = `${userId}_initial_answers`;
         const answersStr = await env.USER_METADATA_KV.get(answersKey);
         const answers = answersStr ? safeParseJson(answersStr, {}) : {};
-        answers.psychTests = psychTestsToStore;
+        
+        // Merge existing psychTests with new data to preserve both visual and personality tests
+        const existingPsychTests = answers.psychTests || {};
+        answers.psychTests = {
+            visualTest: psychTestsToStore.visualTest || existingPsychTests.visualTest,
+            personalityTest: psychTestsToStore.personalityTest || existingPsychTests.personalityTest,
+            lastUpdated: psychTestsToStore.lastUpdated
+        };
         await env.USER_METADATA_KV.put(answersKey, JSON.stringify(answers));
 
         // Проверка дали вече има генериран план
@@ -6029,7 +6036,7 @@ async function processSingleUserPlan(userId, env) {
             // Добавяне на психо профил данни от initial_answers към плана (ако има налични)
             try {
                 // Четем psychTests от initial_answers
-                const psychTests = initialAnswers?.psychTests || null;
+                const psychTests = initialAnswers?.psychTests;
                 if (psychTests && (psychTests.visualTest || psychTests.personalityTest)) {
                     // Използваме helper функцията за създаване на компактните данни
                     const psychoTestsData = createPsychoTestsProfileData(
