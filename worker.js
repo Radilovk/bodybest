@@ -2842,7 +2842,7 @@ async function handleSavePsychTestsRequest(request, env) {
             };
         }
 
-        // Запазваме суровите резултати за директно извличане в клиентския профил
+        // Запазваме суровите резултати в initial_answers вместо отделен запис
         const psychTestsToStore = {};
         const normalizedVisualTimestamp = visualTest ? (visualTest.timestamp || timestamp) : null;
         const normalizedPersonalityTimestamp = personalityTest ? (personalityTest.timestamp || timestamp) : null;
@@ -2874,7 +2874,20 @@ async function handleSavePsychTestsRequest(request, env) {
 
         // Запазване на актуализираните данни
         await env.USER_METADATA_KV.put(analysisKey, JSON.stringify(analysis));
-        await env.USER_METADATA_KV.put(`${userId}_psych_tests`, JSON.stringify(psychTestsToStore));
+        
+        // Зареждаме initial_answers и добавяме psychTests там
+        const answersKey = `${userId}_initial_answers`;
+        const answersStr = await env.USER_METADATA_KV.get(answersKey);
+        const answers = answersStr ? safeParseJson(answersStr, {}) : {};
+        
+        // Merge existing psychTests with new data to preserve both visual and personality tests
+        const existingPsychTests = answers.psychTests || {};
+        answers.psychTests = {
+            visualTest: psychTestsToStore.visualTest || existingPsychTests.visualTest,
+            personalityTest: psychTestsToStore.personalityTest || existingPsychTests.personalityTest,
+            lastUpdated: psychTestsToStore.lastUpdated
+        };
+        await env.USER_METADATA_KV.put(answersKey, JSON.stringify(answers));
 
         // Проверка дали вече има генериран план
         const planStatus = await env.USER_METADATA_KV.get(`${userId}_plan_status`);
@@ -2960,9 +2973,11 @@ async function handleGetPsychTestsRequest(request, env) {
         const userId = url.searchParams.get("userId");
         if (!userId) return { success: false, message: "Липсва ID на потребител.", statusHint: 400 };
 
-        const storageKey = `${userId}_psych_tests`;
-        const storedStr = await env.USER_METADATA_KV.get(storageKey);
-        let psychTests = storedStr ? safeParseJson(storedStr, null) : null;
+        // Четем от initial_answers
+        const answersKey = `${userId}_initial_answers`;
+        const answersStr = await env.USER_METADATA_KV.get(answersKey);
+        const answers = answersStr ? safeParseJson(answersStr, {}) : {};
+        let psychTests = answers.psychTests || null;
 
         // Fallback към analysis данните (поддържа по-стари записи)
         if (!psychTests || (!psychTests.visualTest && !psychTests.personalityTest)) {
@@ -6018,26 +6033,24 @@ async function processSingleUserPlan(userId, env) {
             await addLog('Запис на генерирания план', { checkpoint: true, reason: 'save' });
             planBuilder.generationMetadata.timestamp = planBuilder.generationMetadata.timestamp || new Date().toISOString();
             
-            // Добавяне на психо профил данни към плана (ако има налични)
+            // Добавяне на психо профил данни от initial_answers към плана (ако има налични)
             try {
-                const psychTestsStr = await env.USER_METADATA_KV.get(`${userId}_psych_tests`);
-                if (psychTestsStr) {
-                    const psychTests = safeParseJson(psychTestsStr, null);
-                    if (psychTests && (psychTests.visualTest || psychTests.personalityTest)) {
-                        // Използваме helper функцията за създаване на компактните данни
-                        const psychoTestsData = createPsychoTestsProfileData(
-                            psychTests.visualTest,
-                            psychTests.personalityTest,
-                            {
-                                normalizedVisualTimestamp: psychTests.visualTest?.timestamp,
-                                normalizedPersonalityTimestamp: psychTests.personalityTest?.timestamp,
-                                timestamp: psychTests.lastUpdated || planBuilder.generationMetadata.timestamp
-                            }
-                        );
-                        
-                        planBuilder.psychoTestsProfile = psychoTestsData;
-                        await addLog('Психо профил данни добавени към плана');
-                    }
+                // Четем psychTests от initial_answers
+                const psychTests = initialAnswers?.psychTests;
+                if (psychTests && (psychTests.visualTest || psychTests.personalityTest)) {
+                    // Използваме helper функцията за създаване на компактните данни
+                    const psychoTestsData = createPsychoTestsProfileData(
+                        psychTests.visualTest,
+                        psychTests.personalityTest,
+                        {
+                            normalizedVisualTimestamp: psychTests.visualTest?.timestamp,
+                            normalizedPersonalityTimestamp: psychTests.personalityTest?.timestamp,
+                            timestamp: psychTests.lastUpdated || planBuilder.generationMetadata.timestamp
+                        }
+                    );
+                    
+                    planBuilder.psychoTestsProfile = psychoTestsData;
+                    await addLog('Психо профил данни добавени към плана');
                 }
             } catch (psychoErr) {
                 console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Не успя добавянето на психо профил към плана - ${psychoErr.message}`);
@@ -6677,6 +6690,9 @@ async function assembleChatContext(
     const currWeight = safeParseFloat(safeGet(status, 'weight', null), null);
     const currW = currWeight !== null ? `${currWeight.toFixed(1)} кг` : 'N/A';
 
+    // Extract psychProfile from plan if available (already stored in final_plan)
+    const psychProfileSummary = safeGet(plan, 'psychoTestsProfile', null);
+
     return {
         version: CHAT_CONTEXT_VERSION,
         ttlMs: CHAT_CONTEXT_TTL_MS,
@@ -6687,7 +6703,8 @@ async function assembleChatContext(
             name: safeGet(answers, 'name', 'Потребител'),
             goal: safeGet(answers, 'goal', 'N/A'),
             conditions: userConditions,
-            preferences: userPreferences
+            preferences: userPreferences,
+            psychProfile: psychProfileSummary
         },
         plan: {
             summary: safeGet(plan, 'profileSummary', 'Персонализиран хранителен подход'),

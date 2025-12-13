@@ -1287,7 +1287,30 @@
       // Display saved psych test results
       function displayPsychTestResults() {
         const psychTestsStr = localStorage.getItem('psychTests');
+        
+        const resultsContainer = document.getElementById('psychTestResults');
+        const summaryContainer = document.getElementById('psychTestSummary');
+        const regenerateBtn = document.getElementById('regeneratePlanBtn');
+        const detailsCard = document.getElementById('psychTestDetailsCard');
+        const detailsContainer = document.getElementById('psychTestDetailsContent');
+        
         if (!psychTestsStr) {
+          // Show placeholder message when no tests are completed
+          if (resultsContainer) {
+            resultsContainer.style.display = 'block';
+          }
+          if (summaryContainer) {
+            summaryContainer.innerHTML = '<span style="color: var(--text-color-muted);">Няма запазени резултати. Завършете тестовете и ще ги синхронизираме автоматично.</span>';
+          }
+          if (regenerateBtn) {
+            regenerateBtn.style.display = 'none';
+          }
+          if (detailsCard) {
+            detailsCard.style.display = 'none';
+          }
+          if (detailsContainer) {
+            detailsContainer.innerHTML = '';
+          }
           return;
         }
 
@@ -1298,19 +1321,20 @@
           console.error('Error parsing psychTests from localStorage:', error);
           // Clear corrupted data
           localStorage.removeItem('psychTests');
+          // Show error message
+          if (resultsContainer) {
+            resultsContainer.style.display = 'block';
+          }
+          if (summaryContainer) {
+            summaryContainer.innerHTML = '<span style="color: var(--color-danger);">Грешка при зареждане на резултатите. Моля, попълнете тестовете отново.</span>';
+          }
           return;
         }
-
-        const resultsContainer = document.getElementById('psychTestResults');
-        const summaryContainer = document.getElementById('psychTestSummary');
-        const regenerateBtn = document.getElementById('regeneratePlanBtn');
-        const detailsCard = document.getElementById('psychTestDetailsCard');
-        const detailsContainer = document.getElementById('psychTestDetailsContent');
         
         if (!psychTests || (!psychTests.visualTest && !psychTests.personalityTest)) {
           resultsContainer.style.display = 'block';
           if (summaryContainer) {
-            summaryContainer.innerHTML = '<span class="placeholder">Няма запазени резултати. Завършете тестовете и ще ги синхронизираме автоматично.</span>';
+            summaryContainer.innerHTML = '<span style="color: var(--text-color-muted);">Няма запазени резултати. Завършете тестовете и ще ги синхронизираме автоматично.</span>';
           }
           if (regenerateBtn) {
             regenerateBtn.style.display = 'none';

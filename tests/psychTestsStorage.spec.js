@@ -29,7 +29,12 @@ describe('psych tests storage', () => {
 
     const saveRes = await handleSavePsychTestsRequest(makePostRequest(payload), env);
     expect(saveRes.success).toBe(true);
-    expect(store['u1_psych_tests']).toBeDefined();
+    
+    // Проверка че данните са в initial_answers
+    expect(store['u1_initial_answers']).toBeDefined();
+    const answers = JSON.parse(store['u1_initial_answers']);
+    expect(answers.psychTests).toBeDefined();
+    expect(answers.psychTests.visualTest.name).toBe('Тест профил');
 
     const getRes = await handleGetPsychTestsRequest({ url: 'https://example.com/api/getPsychTests?userId=u1' }, env);
     expect(getRes.success).toBe(true);
@@ -139,7 +144,11 @@ describe('psych tests storage', () => {
     expect(saveRes.success).toBe(true);
     expect(saveRes.data.addedToFinalPlan).toBe(false);
     expect(saveRes.data.shouldRegeneratePlan).toBe(true);
-    expect(store['u4_psych_tests_updated']).toBeDefined();
+    
+    // Проверка че данните са в initial_answers
+    expect(store['u4_initial_answers']).toBeDefined();
+    const answers = JSON.parse(store['u4_initial_answers']);
+    expect(answers.psychTests).toBeDefined();
   });
 });
 
