@@ -2905,11 +2905,11 @@ async function handleSavePsychTestsRequest(request, env) {
                         await env.USER_METADATA_KV.put(finalPlanKey, JSON.stringify(finalPlan));
                         addedToFinalPlan = true;
                         
-                        console.log(`SAVE_PSYCH_TESTS (${userId}): Psycho profile data added to final_plan successfully.`);
+                        console.log(`SAVE_PSYCH_TESTS (${userId}): Психо профил данни добавени към final_plan успешно.`);
                     }
                 }
             } catch (finalPlanError) {
-                console.error(`SAVE_PSYCH_TESTS (${userId}): Error updating final_plan: ${finalPlanError.message}`);
+                console.error(`SAVE_PSYCH_TESTS (${userId}): Грешка при актуализиране на final_plan: ${finalPlanError.message}`);
                 // Продължаваме - грешката при актуализиране на final_plan не трябва да провали цялата операция
             }
         }
@@ -6036,11 +6036,11 @@ async function processSingleUserPlan(userId, env) {
                         );
                         
                         planBuilder.psychoTestsProfile = psychoTestsData;
-                        await addLog('Psycho profile data added to plan');
+                        await addLog('Психо профил данни добавени към плана');
                     }
                 }
             } catch (psychoErr) {
-                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Failed to add psycho profile to plan - ${psychoErr.message}`);
+                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Не успя добавянето на психо профил към плана - ${psychoErr.message}`);
                 // Не прекъсваме процеса при грешка - психо профилът не е критичен
             }
             
