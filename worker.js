@@ -2840,10 +2840,62 @@ async function handleSavePsychTestsRequest(request, env) {
         const planStatus = await env.USER_METADATA_KV.get(`${userId}_plan_status`);
         const hasPlan = planStatus && planStatus !== 'error' && planStatus !== 'pending';
 
+        // Автоматично запазване на резултатите във final_plan (ако планът съществува)
+        let addedToFinalPlan = false;
+        if (hasPlan) {
+            try {
+                const finalPlanKey = `${userId}_final_plan`;
+                const finalPlanStr = await env.USER_METADATA_KV.get(finalPlanKey);
+                
+                if (finalPlanStr) {
+                    const finalPlan = safeParseJson(finalPlanStr, null);
+                    
+                    if (finalPlan && typeof finalPlan === 'object') {
+                        // Създаваме компактен обект само с ключовите параметри
+                        const psychoTestsData = {
+                            lastUpdated: psychTestsToStore.lastUpdated || timestamp
+                        };
+                        
+                        // Добавяме визуален тест (само основните полета)
+                        if (visualTest) {
+                            psychoTestsData.visualTest = {
+                                profileId: visualTest.id,
+                                profileName: visualTest.name,
+                                profileShort: visualTest.short || '',
+                                timestamp: normalizedVisualTimestamp
+                            };
+                        }
+                        
+                        // Добавяме личностен тест (само основните полета)
+                        if (personalityTest) {
+                            psychoTestsData.personalityTest = {
+                                typeCode: personalityTest.typeCode,
+                                scores: personalityTest.scores,
+                                riskFlags: personalityTest.riskFlags || [],
+                                timestamp: normalizedPersonalityTimestamp
+                            };
+                        }
+                        
+                        // Актуализираме final_plan с психо профил данните
+                        finalPlan.psychoTestsProfile = psychoTestsData;
+                        
+                        // Запазваме актуализирания план
+                        await env.USER_METADATA_KV.put(finalPlanKey, JSON.stringify(finalPlan));
+                        addedToFinalPlan = true;
+                        
+                        console.log(`SAVE_PSYCH_TESTS (${userId}): Психо профил данни добавени към final_plan успешно.`);
+                    }
+                }
+            } catch (finalPlanError) {
+                console.error(`SAVE_PSYCH_TESTS (${userId}): Грешка при актуализиране на final_plan: ${finalPlanError.message}`);
+                // Продължаваме - грешката при актуализиране на final_plan не трябва да провали цялата операция
+            }
+        }
+
         // Флаг за регенериране на плана
         let shouldRegeneratePlan = false;
-        if (hasPlan) {
-            // Ако има plan, маркираме че трябва да се регенерира
+        if (hasPlan && !addedToFinalPlan) {
+            // Ако има план, но не успяхме да добавим данните, маркираме че трябва да се регенерира
             await env.USER_METADATA_KV.put(`${userId}_psych_tests_updated`, timestamp);
             shouldRegeneratePlan = true;
         }
@@ -2854,6 +2906,7 @@ async function handleSavePsychTestsRequest(request, env) {
             data: {
                 visualTestSaved: !!visualTest,
                 personalityTestSaved: !!personalityTest,
+                addedToFinalPlan,
                 shouldRegeneratePlan,
                 timestamp: psychTestsToStore.lastUpdated || timestamp
             }
@@ -5940,6 +5993,44 @@ async function processSingleUserPlan(userId, env) {
             // Assembling and saving final plan
             await addLog('Запис на генерирания план', { checkpoint: true, reason: 'save' });
             planBuilder.generationMetadata.timestamp = planBuilder.generationMetadata.timestamp || new Date().toISOString();
+            
+            // Добавяне на психо профил данни към плана (ако има налични)
+            try {
+                const psychTestsStr = await env.USER_METADATA_KV.get(`${userId}_psych_tests`);
+                if (psychTestsStr) {
+                    const psychTests = safeParseJson(psychTestsStr, null);
+                    if (psychTests && (psychTests.visualTest || psychTests.personalityTest)) {
+                        const psychoTestsData = {
+                            lastUpdated: psychTests.lastUpdated || planBuilder.generationMetadata.timestamp
+                        };
+                        
+                        if (psychTests.visualTest) {
+                            psychoTestsData.visualTest = {
+                                profileId: psychTests.visualTest.id,
+                                profileName: psychTests.visualTest.name,
+                                profileShort: psychTests.visualTest.short || '',
+                                timestamp: psychTests.visualTest.timestamp
+                            };
+                        }
+                        
+                        if (psychTests.personalityTest) {
+                            psychoTestsData.personalityTest = {
+                                typeCode: psychTests.personalityTest.typeCode,
+                                scores: psychTests.personalityTest.scores,
+                                riskFlags: psychTests.personalityTest.riskFlags || [],
+                                timestamp: psychTests.personalityTest.timestamp
+                            };
+                        }
+                        
+                        planBuilder.psychoTestsProfile = psychoTestsData;
+                        await addLog('Психо профил данни добавени към плана');
+                    }
+                }
+            } catch (psychoErr) {
+                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Не успя добавянето на психо профил към плана - ${psychoErr.message}`);
+                // Не прекъсваме процеса при грешка - психо профилът не е критичен
+            }
+            
             const finalPlanString = JSON.stringify(planBuilder, null, 2);
             await env.USER_METADATA_KV.put(`${userId}_final_plan`, finalPlanString);
 
