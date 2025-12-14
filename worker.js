@@ -2744,12 +2744,13 @@ async function handleUpdateProfileRequest(request, env) {
 
 // ------------- START HELPER: createPsychoTestsProfileData -------------
 /**
- * Създава компактна структура от психо тест данни за включване във final_plan.
- * Запазва само основните параметри за минимален размер.
- * @param {Object|null} visualTest - Визуален тест данни
- * @param {Object|null} personalityTest - Личностен тест данни
+ * Създава съдържателна структура от психо тест данни за включване във final_plan.
+ * Включва основните параметри и обобщена интерпретация (психологически характеристики,
+ * хранителни навици, рискови области, силни страни и препоръки).
+ * @param {Object|null} visualTest - Визуален тест данни (id, name, short, mainPsycho, mainHabits, mainRisks)
+ * @param {Object|null} personalityTest - Личностен тест данни (typeCode, scores, riskFlags, strengths, mainRisks, topRecommendations)
  * @param {Object} timestamps - Обект с timestamps { normalizedVisualTimestamp, normalizedPersonalityTimestamp, timestamp }
- * @returns {Object} Компактен психо профил обект
+ * @returns {Object} Съдържателен психо профил обект
  */
 function createPsychoTestsProfileData(visualTest, personalityTest, timestamps) {
     const { normalizedVisualTimestamp, normalizedPersonalityTimestamp, timestamp } = timestamps;
@@ -2758,22 +2759,30 @@ function createPsychoTestsProfileData(visualTest, personalityTest, timestamps) {
         lastUpdated: normalizedPersonalityTimestamp || normalizedVisualTimestamp || timestamp
     };
     
-    // Добавяме визуален тест (само основните полета)
+    // Добавяме визуален тест с пълна съдържателна информация
     if (visualTest) {
         psychoTestsData.visualTest = {
             profileId: visualTest.id,
             profileName: visualTest.name,
             profileShort: visualTest.short || '',
+            // Добавяме съдържателна информация за по-добра интерпретация
+            mainPsycho: visualTest.mainPsycho || [],      // Психологически характеристики
+            mainHabits: visualTest.mainHabits || [],      // Хранителни навици
+            mainRisks: visualTest.mainRisks || [],        // Рискови области
             timestamp: normalizedVisualTimestamp
         };
     }
     
-    // Добавяме личностен тест (само основните полета)
+    // Добавяме личностен тест с пълна съдържателна информация
     if (personalityTest) {
         psychoTestsData.personalityTest = {
             typeCode: personalityTest.typeCode,
             scores: personalityTest.scores,
             riskFlags: personalityTest.riskFlags || [],
+            // Добавяме съдържателна информация за по-добра интерпретация
+            strengths: personalityTest.strengths || [],              // Силни страни
+            mainRisks: personalityTest.mainRisks || [],              // Рискови области
+            topRecommendations: personalityTest.topRecommendations || [], // Препоръки
             timestamp: normalizedPersonalityTimestamp
         };
     }
@@ -9591,4 +9600,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleGetPsychTestsRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleSavePsychTestsRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callModelWithTimeout, setCallModelImplementation, callGeminiAPI, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleProposePlanChangeRequest, handleApprovePlanChangeRequest, handleGetPendingPlanChangesRequest, handleRejectPlanChangeRequest, handleNutrientLookupRequest, applyPlanChanges, parsePlanModificationRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary, AI_CALL_TIMEOUT_MS, DEFAULT_PLAN_CALL_TIMEOUT_MS, resolvePlanCallTimeoutMs };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleGetPsychTestsRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleSavePsychTestsRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callModelWithTimeout, setCallModelImplementation, callGeminiAPI, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleProposePlanChangeRequest, handleApprovePlanChangeRequest, handleGetPendingPlanChangesRequest, handleRejectPlanChangeRequest, handleNutrientLookupRequest, applyPlanChanges, parsePlanModificationRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary, createPsychoTestsProfileData, AI_CALL_TIMEOUT_MS, DEFAULT_PLAN_CALL_TIMEOUT_MS, resolvePlanCallTimeoutMs };
