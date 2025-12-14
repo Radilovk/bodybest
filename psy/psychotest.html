@@ -1399,11 +1399,22 @@
         localStorage.setItem('psychTests', JSON.stringify(existingData));
         console.log('[PERSONALITY TEST] Резултатите са запазени в localStorage:', personalityTest);
         
+        // Проверка дали теста е стартиран от профила
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromProfile = urlParams.get('from') === 'profile';
+        
         // Проверка за userId
         const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
+        
         if (!userId) {
-          console.warn('[PERSONALITY TEST] Няма userId - пропуска се backend запазване');
-          showSaveMessage('warning', 'Резултатите са запазени локално. Влезте в профила си за синхронизация с вашия акаунт.');
+          console.warn('[PERSONALITY TEST] Няма userId - показва се съобщение за регистрация');
+          if (fromProfile) {
+            // Ако теста е стартиран от профила, но няма userId - нещо не е наред
+            showSaveMessage('error', 'Грешка: Не сте влезли в системата. Моля рефрешнете страницата и опитайте отново.');
+          } else {
+            // Ако теста е стартиран директно - показваме съобщение за регистрация
+            showSaveMessage('warning', 'За да запазите резултатите в профила си, моля първо <a href="../login.html" style="color: inherit; text-decoration: underline;">влезте в акаунта си</a> или <a href="../index.html#register" style="color: inherit; text-decoration: underline;">се регистрирайте</a>. Резултатите са запазени локално в браузъра.');
+          }
           return;
         }
         
@@ -1434,7 +1445,7 @@
         if (result.success) {
           console.log('[PERSONALITY TEST] ✓ Успешно запазване в backend');
           localStorage.setItem('psychTestsLastSync', timestamp);
-          showSaveMessage('success', 'Резултатите са запазени успешно! Можете да ги видите в секция "Профил".');
+          showSaveMessage('success', 'Резултатите са запазени успешно в профила ви! <a href="../code.html#profile-tab" style="color: inherit; text-decoration: underline;">Вижте профила си тук</a>.');
         } else {
           console.error('[PERSONALITY TEST] Backend грешка:', result.message);
           showSaveMessage('warning', `Резултатите са запазени локално. Backend грешка: ${result.message || 'неизвестна грешка'}`);
