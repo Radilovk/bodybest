@@ -2745,11 +2745,11 @@ async function handleUpdateProfileRequest(request, env) {
 // ------------- START HELPER: createPsychoTestsProfileData -------------
 /**
  * Създава компактна структура от психо тест данни за включване във final_plan.
- * Запазва само основните параметри за минимален размер.
+ * Запазва съдържателна информация за AI анализ и препоръки.
  * @param {Object|null} visualTest - Визуален тест данни
  * @param {Object|null} personalityTest - Личностен тест данни
  * @param {Object} timestamps - Обект с timestamps { normalizedVisualTimestamp, normalizedPersonalityTimestamp, timestamp }
- * @returns {Object} Компактен психо профил обект
+ * @returns {Object} Обогатен психо профил обект
  */
 function createPsychoTestsProfileData(visualTest, personalityTest, timestamps) {
     const { normalizedVisualTimestamp, normalizedPersonalityTimestamp, timestamp } = timestamps;
@@ -2758,22 +2758,28 @@ function createPsychoTestsProfileData(visualTest, personalityTest, timestamps) {
         lastUpdated: normalizedPersonalityTimestamp || normalizedVisualTimestamp || timestamp
     };
     
-    // Добавяме визуален тест (само основните полета)
+    // Добавяме визуален тест със съдържателна информация
     if (visualTest) {
         psychoTestsData.visualTest = {
             profileId: visualTest.id,
             profileName: visualTest.name,
             profileShort: visualTest.short || '',
+            mainPsycho: visualTest.mainPsycho || [],
+            mainHabits: visualTest.mainHabits || [],
+            mainRisks: visualTest.mainRisks || [],
             timestamp: normalizedVisualTimestamp
         };
     }
     
-    // Добавяме личностен тест (само основните полета)
+    // Добавяме личностен тест със съдържателна информация
     if (personalityTest) {
         psychoTestsData.personalityTest = {
             typeCode: personalityTest.typeCode,
             scores: personalityTest.scores,
             riskFlags: personalityTest.riskFlags || [],
+            strengths: personalityTest.strengths || [],
+            mainRisks: personalityTest.mainRisks || [],
+            topRecommendations: personalityTest.topRecommendations || [],
             timestamp: normalizedPersonalityTimestamp
         };
     }
@@ -5654,42 +5660,111 @@ async function processSingleUserPlan(userId, env) {
         let visualTestInfo = '';
         let personalityTestInfo = '';
         try {
-            const { raw: psychoAnalysisRaw, parsed: psychoAnalysisParsed } = await getKvParsed(
-                `${userId}_analysis`,
-                (value) => parsePossiblyStringifiedJson(value),
-                null
-            );
-            const psychoSource = psychoAnalysisParsed ?? psychoAnalysisRaw;
-            if (psychoSource) {
-                const psychoData = extractPsychoProfileTexts(psychoSource);
-                if (psychoData.dominant) {
-                    psychoProfileText = psychoData.dominant;
-                }
-                if (psychoData.concepts && psychoData.concepts.length > 0) {
-                    psychoConceptsText = psychoData.concepts.join(', ');
-                }
-                
-                // Добавяне на информация от визуалния тест
-                if (psychoSource.visualTestProfile) {
-                    const vt = psychoSource.visualTestProfile;
-                    visualTestInfo = `Визуален тест: ${vt.profileName} (ID: ${vt.profileId})`;
-                    if (vt.profileShort) {
-                        visualTestInfo += ` - ${vt.profileShort}`;
+            // Първо се опитваме да вземем обогатените данни от initial_answers.psychTests
+            let psychTestsData = null;
+            if (initialAnswers && initialAnswers.psychTests) {
+                psychTestsData = initialAnswers.psychTests;
+            }
+            
+            // Ако имаме обогатени данни от psychTests, използваме тях (приоритет)
+            if (psychTestsData && (psychTestsData.visualTest || psychTestsData.personalityTest)) {
+                // Форматиране на визуален тест с обогатени данни
+                if (psychTestsData.visualTest) {
+                    const vt = psychTestsData.visualTest;
+                    const name = vt.name || vt.profileName || 'Неизвестен профил';
+                    const profileId = vt.id || vt.profileId || 'N/A';
+                    visualTestInfo = `Визуален тест: ${name} (ID: ${profileId})`;
+                    
+                    const short = vt.short || vt.profileShort;
+                    if (short) {
+                        visualTestInfo += `\nОписание: ${short}`;
+                    }
+                    
+                    // Добавяне на mainPsycho характеристики
+                    if (vt.mainPsycho && Array.isArray(vt.mainPsycho) && vt.mainPsycho.length > 0) {
+                        visualTestInfo += `\nПсихологически характеристики: ${vt.mainPsycho.join('; ')}`;
+                    }
+                    
+                    // Добавяне на mainHabits
+                    if (vt.mainHabits && Array.isArray(vt.mainHabits) && vt.mainHabits.length > 0) {
+                        visualTestInfo += `\nХранителни навици: ${vt.mainHabits.join('; ')}`;
+                    }
+                    
+                    // Добавяне на mainRisks
+                    if (vt.mainRisks && Array.isArray(vt.mainRisks) && vt.mainRisks.length > 0) {
+                        visualTestInfo += `\nПотенциални рискове: ${vt.mainRisks.join('; ')}`;
                     }
                 }
                 
-                // Добавяне на информация от личностния тест
-                if (psychoSource.personalityTestProfile) {
-                    const pt = psychoSource.personalityTestProfile;
-                    personalityTestInfo = `Личностен профил: ${pt.typeCode}`;
+                // Форматиране на личностен тест с обогатени данни
+                if (psychTestsData.personalityTest) {
+                    const pt = psychTestsData.personalityTest;
+                    personalityTestInfo = `Личностен профил: ${pt.typeCode || 'N/A'}`;
+                    
                     if (pt.scores) {
                         const scoreEntries = Object.entries(pt.scores)
-                            .map(([dim, score]) => `${dim}: ${score}`)
+                            .map(([dim, score]) => `${dim}: ${typeof score === 'number' ? score.toFixed(1) : score}`)
                             .join(', ');
-                        personalityTestInfo += ` (Скорове: ${scoreEntries})`;
+                        personalityTestInfo += `\nРезултати: ${scoreEntries}`;
                     }
-                    if (pt.riskFlags && pt.riskFlags.length > 0) {
-                        personalityTestInfo += ` | Рискови фактори: ${pt.riskFlags.join('; ')}`;
+                    
+                    if (pt.strengths && Array.isArray(pt.strengths) && pt.strengths.length > 0) {
+                        personalityTestInfo += `\nСилни страни: ${pt.strengths.join('; ')}`;
+                    }
+                    
+                    if (pt.mainRisks && Array.isArray(pt.mainRisks) && pt.mainRisks.length > 0) {
+                        personalityTestInfo += `\nОсновни рискове: ${pt.mainRisks.join('; ')}`;
+                    }
+                    
+                    if (pt.riskFlags && Array.isArray(pt.riskFlags) && pt.riskFlags.length > 0) {
+                        personalityTestInfo += `\nРискови флагове: ${pt.riskFlags.join('; ')}`;
+                    }
+                    
+                    if (pt.topRecommendations && Array.isArray(pt.topRecommendations) && pt.topRecommendations.length > 0) {
+                        personalityTestInfo += `\nПрепоръки: ${pt.topRecommendations.join('; ')}`;
+                    }
+                }
+            }
+            
+            // Fallback към _analysis данните (по-стар формат или липсващи psychTests)
+            if (!visualTestInfo && !personalityTestInfo) {
+                const { raw: psychoAnalysisRaw, parsed: psychoAnalysisParsed } = await getKvParsed(
+                    `${userId}_analysis`,
+                    (value) => parsePossiblyStringifiedJson(value),
+                    null
+                );
+                const psychoSource = psychoAnalysisParsed ?? psychoAnalysisRaw;
+                if (psychoSource) {
+                    const psychoData = extractPsychoProfileTexts(psychoSource);
+                    if (psychoData.dominant) {
+                        psychoProfileText = psychoData.dominant;
+                    }
+                    if (psychoData.concepts && psychoData.concepts.length > 0) {
+                        psychoConceptsText = psychoData.concepts.join(', ');
+                    }
+                    
+                    // Добавяне на информация от визуалния тест (legacy format)
+                    if (psychoSource.visualTestProfile) {
+                        const vt = psychoSource.visualTestProfile;
+                        visualTestInfo = `Визуален тест: ${vt.profileName} (ID: ${vt.profileId})`;
+                        if (vt.profileShort) {
+                            visualTestInfo += ` - ${vt.profileShort}`;
+                        }
+                    }
+                    
+                    // Добавяне на информация от личностния тест (legacy format)
+                    if (psychoSource.personalityTestProfile) {
+                        const pt = psychoSource.personalityTestProfile;
+                        personalityTestInfo = `Личностен профил: ${pt.typeCode}`;
+                        if (pt.scores) {
+                            const scoreEntries = Object.entries(pt.scores)
+                                .map(([dim, score]) => `${dim}: ${score}`)
+                                .join(', ');
+                            personalityTestInfo += ` (Скорове: ${scoreEntries})`;
+                        }
+                        if (pt.riskFlags && pt.riskFlags.length > 0) {
+                            personalityTestInfo += ` | Рискови фактори: ${pt.riskFlags.join('; ')}`;
+                        }
                     }
                 }
             }
@@ -6489,15 +6564,18 @@ async function fetchRecentLogEntries(userId, env, limit = 3) {
  * Форматира психологическия профил за включване в AI промпт
  * @param {Object} psychProfile - Обект съдържащ резултати от психологическите тестове
  * @param {Object} [psychProfile.visualTest] - Резултати от визуалния тест
- * @param {string} [psychProfile.visualTest.name] - Име на профила
- * @param {string} [psychProfile.visualTest.short] - Кратко описание
- * @param {Array<string>} [psychProfile.visualTest.psycho] - Психологически характеристики
- * @param {Array<string>} [psychProfile.visualTest.habits] - Хранителни навици
- * @param {Array<string>} [psychProfile.visualTest.risks] - Потенциални рискове
+ * @param {string} [psychProfile.visualTest.profileName] - Име на профила
+ * @param {string} [psychProfile.visualTest.profileShort] - Кратко описание
+ * @param {Array<string>} [psychProfile.visualTest.mainPsycho] - Ключови психологически характеристики
+ * @param {Array<string>} [psychProfile.visualTest.mainHabits] - Ключови хранителни навици
+ * @param {Array<string>} [psychProfile.visualTest.mainRisks] - Ключови потенциални рискове
  * @param {Object} [psychProfile.personalityTest] - Резултати от личностния тест
  * @param {string} [psychProfile.personalityTest.typeCode] - Код на типа личност
  * @param {Object} [psychProfile.personalityTest.scores] - Резултати от теста
- * @param {Array<string>} [psychProfile.personalityTest.riskFlags] - Важни забележки
+ * @param {Array<string>} [psychProfile.personalityTest.riskFlags] - Рискови флагове
+ * @param {Array<string>} [psychProfile.personalityTest.strengths] - Силни страни
+ * @param {Array<string>} [psychProfile.personalityTest.mainRisks] - Основни рискове
+ * @param {Array<string>} [psychProfile.personalityTest.topRecommendations] - Топ препоръки
  * @returns {string} Форматиран текст за включване в промпт
  */
 function formatPsychProfileForPrompt(psychProfile) {
@@ -6511,37 +6589,69 @@ function formatPsychProfileForPrompt(psychProfile) {
     // Visual test data
     if (psychProfile.visualTest) {
         const vt = psychProfile.visualTest;
-        text += `\nВизуален тест: ${vt.name || 'N/A'}\n`;
+        const name = vt.profileName || vt.name || 'N/A';
+        const short = vt.profileShort || vt.short || '';
+        
+        text += `\n=== ВИЗУАЛЕН ТЕСТ ===\n`;
+        text += `Профил: ${name}\n`;
         hasData = true;
-        if (vt.short) text += `Кратко описание: ${vt.short}\n`;
-        if (vt.psycho && Array.isArray(vt.psycho) && vt.psycho.length > 0) {
-            text += 'Психологически характеристики:\n';
-            vt.psycho.forEach(p => text += `- ${p}\n`);
+        
+        if (short) {
+            text += `Описание: ${short}\n`;
         }
-        if (vt.habits && Array.isArray(vt.habits) && vt.habits.length > 0) {
-            text += 'Хранителни навици:\n';
-            vt.habits.forEach(h => text += `- ${h}\n`);
+        
+        // Поддръжка за legacy формат (psycho, habits, risks) и нов формат (mainPsycho, mainHabits, mainRisks)
+        const psychoArr = vt.mainPsycho || vt.psycho;
+        if (psychoArr && Array.isArray(psychoArr) && psychoArr.length > 0) {
+            text += '\nПсихологически характеристики:\n';
+            psychoArr.forEach(p => text += `• ${p}\n`);
         }
-        if (vt.risks && Array.isArray(vt.risks) && vt.risks.length > 0) {
-            text += 'Рискове:\n';
-            vt.risks.forEach(r => text += `- ${r}\n`);
+        
+        const habitsArr = vt.mainHabits || vt.habits;
+        if (habitsArr && Array.isArray(habitsArr) && habitsArr.length > 0) {
+            text += '\nХранителни навици:\n';
+            habitsArr.forEach(h => text += `• ${h}\n`);
+        }
+        
+        const risksArr = vt.mainRisks || vt.risks;
+        if (risksArr && Array.isArray(risksArr) && risksArr.length > 0) {
+            text += '\nПотенциални рискове:\n';
+            risksArr.forEach(r => text += `• ${r}\n`);
         }
     }
     
     // Personality test data
     if (psychProfile.personalityTest) {
         const pt = psychProfile.personalityTest;
-        text += `\nЛичностен тест: ${pt.typeCode || 'N/A'}\n`;
+        text += `\n=== ЛИЧНОСТЕН ТЕСТ ===\n`;
+        text += `Тип: ${pt.typeCode || 'N/A'}\n`;
         hasData = true;
+        
         if (pt.scores && typeof pt.scores === 'object') {
-            text += 'Резултати:\n';
+            text += '\nРезултати (скала 0-100):\n';
             Object.entries(pt.scores).forEach(([key, value]) => {
-                text += `- ${key}: ${typeof value === 'number' ? value.toFixed(1) : value}\n`;
+                text += `• ${key}: ${typeof value === 'number' ? value.toFixed(1) : value}\n`;
             });
         }
+        
+        if (pt.strengths && Array.isArray(pt.strengths) && pt.strengths.length > 0) {
+            text += '\nСилни страни:\n';
+            pt.strengths.forEach(strength => text += `• ${strength}\n`);
+        }
+        
+        if (pt.mainRisks && Array.isArray(pt.mainRisks) && pt.mainRisks.length > 0) {
+            text += '\nОсновни рискови области:\n';
+            pt.mainRisks.forEach(risk => text += `• ${risk}\n`);
+        }
+        
         if (pt.riskFlags && Array.isArray(pt.riskFlags) && pt.riskFlags.length > 0) {
-            text += 'Важни забележки:\n';
-            pt.riskFlags.forEach(flag => text += `- ${flag}\n`);
+            text += '\nВажни флагове:\n';
+            pt.riskFlags.forEach(flag => text += `• ${flag}\n`);
+        }
+        
+        if (pt.topRecommendations && Array.isArray(pt.topRecommendations) && pt.topRecommendations.length > 0) {
+            text += '\nКлючови препоръки:\n';
+            pt.topRecommendations.forEach(rec => text += `• ${rec}\n`);
         }
     }
     
@@ -6549,7 +6659,7 @@ function formatPsychProfileForPrompt(psychProfile) {
         return NO_PSYCH_PROFILE_MESSAGE;
     }
     
-    return 'ПСИХОЛОГИЧЕСКИ ПРОФИЛ:\n' + text;
+    return '=== ПСИХОЛОГИЧЕСКИ ПРОФИЛ ===\n' + text;
 }
 
 function createPromptDataFromContext(context) {
