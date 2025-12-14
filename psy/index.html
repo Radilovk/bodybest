@@ -351,6 +351,7 @@
   <section class="screen" id="s3">
     <div id="result" class="fade-in"></div>
     <div class="actions">
+      <button class="btn" id="saveResultBtn" style="display: none;">Запази резултата</button>
       <button class="btn" id="again">Направи теста отново</button>
       <button class="btnSmall" id="toGrid">Виж всички картинки</button>
     </div>
@@ -542,8 +543,33 @@
 
   document.getElementById("start").addEventListener("click", ()=>show(s2));
   document.getElementById("backToIntro").addEventListener("click", ()=>show(s1));
-  document.getElementById("again").addEventListener("click", ()=>show(s2));
+  document.getElementById("again").addEventListener("click", ()=>{
+    // Скриваме бутона "Запази" при повторен опит
+    const saveBtn = document.getElementById('saveResultBtn');
+    if (saveBtn) {
+      saveBtn.style.display = 'none';
+    }
+    show(s2);
+  });
   document.getElementById("toGrid").addEventListener("click", ()=>show(s2));
+  
+  // Събитие за бутона "Запази резултата"
+  document.getElementById("saveResultBtn").addEventListener("click", async ()=>{
+    if(!pendingId) return;
+    const saveBtn = document.getElementById('saveResultBtn');
+    const originalText = saveBtn.textContent;
+    
+    // Показваме индикация за зареждане
+    saveBtn.textContent = 'Запазване...';
+    saveBtn.disabled = true;
+    
+    try {
+      await saveVisualTestResult(pendingId);
+    } finally {
+      saveBtn.textContent = originalText;
+      saveBtn.disabled = false;
+    }
+  });
 
   // Build grid
   const ids = ["01","02","03","04","05","06","07","08"];
@@ -592,17 +618,22 @@
     if(e.target === overlay || e.target.classList.contains('ovTop')) closeOverlay();
   });
 
-  ovSelect.addEventListener("click", async ()=>{
+  ovSelect.addEventListener("click", ()=>{
     if(!pendingId) return;
     closeOverlay();
     renderResult(pendingId, pendingSrc);
-    await saveVisualTestResult(pendingId);
     show(s3);
   });
 
   function renderResult(id, src){
     const p = profiles[id];
     if(!p) return;
+
+    // Показваме бутона "Запази"
+    const saveBtn = document.getElementById('saveResultBtn');
+    if (saveBtn) {
+      saveBtn.style.display = 'block';
+    }
 
     // Helper for lists
     const makeList = (items, isRisk) => `
@@ -708,6 +739,12 @@
   function showSaveStatus(success) {
     const messageDiv = document.getElementById('saveStatusMessage');
     if (!messageDiv) return;
+    
+    // Скриваме бутона "Запази" след успешно запазване
+    const saveBtn = document.getElementById('saveResultBtn');
+    if (saveBtn && success) {
+      saveBtn.style.display = 'none';
+    }
     
     if (success) {
       messageDiv.innerHTML = `
