@@ -6483,6 +6483,21 @@ async function fetchRecentLogEntries(userId, env, limit = 3) {
     return entries;
 }
 
+/**
+ * Форматира психологическия профил за включване в AI промпт
+ * @param {Object} psychProfile - Обект съдържащ резултати от психологическите тестове
+ * @param {Object} [psychProfile.visualTest] - Резултати от визуалния тест
+ * @param {string} [psychProfile.visualTest.name] - Име на профила
+ * @param {string} [psychProfile.visualTest.short] - Кратко описание
+ * @param {Array<string>} [psychProfile.visualTest.psycho] - Психологически характеристики
+ * @param {Array<string>} [psychProfile.visualTest.habits] - Хранителни навици
+ * @param {Array<string>} [psychProfile.visualTest.risks] - Потенциални рискове
+ * @param {Object} [psychProfile.personalityTest] - Резултати от личностния тест
+ * @param {string} [psychProfile.personalityTest.typeCode] - Код на типа личност
+ * @param {Object} [psychProfile.personalityTest.scores] - Резултати от теста
+ * @param {Array<string>} [psychProfile.personalityTest.riskFlags] - Важни забележки
+ * @returns {string} Форматиран текст за включване в промпт
+ */
 function formatPsychProfileForPrompt(psychProfile) {
     if (!psychProfile || typeof psychProfile !== 'object') {
         return 'Няма данни от психологически тестове.';

@@ -917,7 +917,14 @@ function displayPsychTestResults() {
         const psychTestsStr = localStorage.getItem('psychTests');
         if (!psychTestsStr) return;
         
-        const psychTests = JSON.parse(psychTestsStr);
+        let psychTests;
+        try {
+            psychTests = JSON.parse(psychTestsStr);
+        } catch (parseError) {
+            console.error('Failed to parse psychTests from localStorage:', parseError);
+            return;
+        }
+        
         const hasVisualTest = psychTests.visualTest && Object.keys(psychTests.visualTest).length > 0;
         const hasPersonalityTest = psychTests.personalityTest && Object.keys(psychTests.personalityTest).length > 0;
         
@@ -977,7 +984,7 @@ function displayPsychTestResults() {
                                 </div>
                             ` : ''}
                             <p style="margin-top: var(--space-sm); font-size: var(--fs-xs); color: var(--text-color-secondary);">
-                                <i class="bi bi-calendar"></i> ${new Date(vt.timestamp).toLocaleDateString('bg-BG')}
+                                <i class="bi bi-calendar"></i> ${vt.timestamp ? new Date(vt.timestamp).toLocaleDateString('bg-BG', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Дата неизвестна'}
                             </p>
                         </div>
                     </div>
@@ -1015,7 +1022,7 @@ function displayPsychTestResults() {
                                 </div>
                             ` : ''}
                             <p style="margin-top: var(--space-sm); font-size: var(--fs-xs); color: var(--text-color-secondary);">
-                                <i class="bi bi-calendar"></i> ${new Date(pt.timestamp).toLocaleDateString('bg-BG')}
+                                <i class="bi bi-calendar"></i> ${pt.timestamp ? new Date(pt.timestamp).toLocaleDateString('bg-BG', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Дата неизвестна'}
                             </p>
                         </div>
                     </div>
