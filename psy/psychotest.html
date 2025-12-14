@@ -1382,14 +1382,21 @@
         if (scores.N >= 65) riskFlags.push('Висока емоционална реактивност');
         if (scores.R >= 65) riskFlags.push('Висока склонност към риск');
         
-        // Съкратени резултати - само есенциалната информация
+        // Обогатени резултати със съдържателна информация за AI анализ
         const personalityTest = {
           typeCode: typeCode,
           scores: scores,
           riskFlags: riskFlags,
           strengths: analysis.strengths || [],
-          mainRisks: analysis.risks.slice(0, 2).map(r => r.title), // Само първите 2 рискови области
-          topRecommendations: analysis.recommendations.slice(0, 3), // Само топ 3 препоръки
+          // Запазваме пълните рискове с детайли за по-задълбочен анализ
+          mainRisks: analysis.risks ? analysis.risks.map(r => ({
+            title: r.title,
+            description: r.description
+          })) : [],
+          // Запазваме всички препоръки за по-добро планиране
+          topRecommendations: analysis.recommendations || [],
+          // Добавяме обобщение за бърз преглед
+          summary: `Личностен тип ${typeCode} с ${riskFlags.length > 0 ? 'рискови фактори' : 'балансиран профил'}`,
           timestamp: timestamp
         };
         

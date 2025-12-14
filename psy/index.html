@@ -693,14 +693,17 @@
       
       const timestamp = new Date().toISOString();
       
-      // Съкратена версия - само есенциалната информация
+      // Обогатена версия със съдържателна информация за AI анализ
       const visualTest = {
         id: profileId,
         name: profile.name,
         short: profile.short,
-        mainPsycho: profile.psycho.slice(0, 2), // Първите 2 психо характеристики
-        mainHabits: profile.habits.slice(0, 2), // Първите 2 навика
-        mainRisks: profile.risks.slice(0, 2), // Първите 2 риска
+        // Запазваме пълните масиви за по-задълбочен анализ
+        mainPsycho: profile.psycho || [], // Всички психологически характеристики
+        mainHabits: profile.habits || [], // Всички навици
+        mainRisks: profile.risks || [], // Всички рискове
+        // Добавяме обобщение за бърз преглед
+        summary: `${profile.name} - ${profile.short}`,
         timestamp: timestamp
       };
       
