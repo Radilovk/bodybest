@@ -105,6 +105,8 @@ const NUMERIC_VALUE_REGEX = /-?\d+(?:[.,]\d+)?/;
 
 const TARGET_MACRO_REQUIREMENTS_KEY_SUFFIX = '_target_macro_requirements';
 
+const NO_PSYCH_PROFILE_MESSAGE = 'Няма данни от психологически тестове.';
+
 const parseNumber = (value) => {
   if (typeof value === 'number') {
     return Number.isFinite(value) ? value : null;
@@ -2534,7 +2536,7 @@ async function handleChatRequest(request, env) {
             '%%USER_GOAL%%': promptData.userGoal,
             '%%USER_CONDITIONS%%': promptData.userConditions,
             '%%USER_PREFERENCES%%': promptData.userPreferences,
-            '%%PSYCH_PROFILE%%': promptData.psychProfile || 'Няма данни от психологически тестове.',
+            '%%PSYCH_PROFILE%%': promptData.psychProfile || NO_PSYCH_PROFILE_MESSAGE,
             '%%INITIAL_CALORIES_MACROS%%': promptData.initCalMac,
             '%%PLAN_APPROACH_SUMMARY%%': promptData.planSum,
             '%%ALLOWED_FOODS_SUMMARY%%': promptData.allowedF,
@@ -6500,7 +6502,7 @@ async function fetchRecentLogEntries(userId, env, limit = 3) {
  */
 function formatPsychProfileForPrompt(psychProfile) {
     if (!psychProfile || typeof psychProfile !== 'object') {
-        return 'Няма данни от психологически тестове.';
+        return NO_PSYCH_PROFILE_MESSAGE;
     }
     
     let text = '';
@@ -6544,7 +6546,7 @@ function formatPsychProfileForPrompt(psychProfile) {
     }
     
     if (!hasData) {
-        return 'Няма данни от психологически тестове.';
+        return NO_PSYCH_PROFILE_MESSAGE;
     }
     
     return 'ПСИХОЛОГИЧЕСКИ ПРОФИЛ:\n' + text;
@@ -6557,7 +6559,7 @@ function createPromptDataFromContext(context) {
     const todayKey = CHAT_CONTEXT_MENU_KEYS[new Date().getDay()];
     const menuSummary = safeGet(context, ['plan', 'menuSummaryByDay'], {});
     const psychProfile = safeGet(context, ['user', 'psychProfile'], null);
-    let psychProfileText = 'Няма данни от психологически тестове.';
+    let psychProfileText = NO_PSYCH_PROFILE_MESSAGE;
     if (psychProfile) {
         psychProfileText = formatPsychProfileForPrompt(psychProfile);
     }
@@ -6629,7 +6631,7 @@ function buildPromptDataFromRaw(initialAnswers, finalPlan, currentStatus, logEnt
     
     // Extract psychProfile from finalPlan if available
     const psychProfileData = safeGet(finalPlan, 'psychoTestsProfile', null);
-    const psychProfileText = psychProfileData ? formatPsychProfileForPrompt(psychProfileData) : 'Няма данни от психологически тестове.';
+    const psychProfileText = psychProfileData ? formatPsychProfileForPrompt(psychProfileData) : NO_PSYCH_PROFILE_MESSAGE;
 
     return {
         userName,
