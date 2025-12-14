@@ -2,7 +2,7 @@
 export const getApiBase = () => {
   return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8787'
-    : 'https://bodybest-backend.radilovka88.workers.dev';
+    : 'https://openapichatbot.radilov-k.workers.dev';
 };
 
 export const API_ENDPOINTS = {
