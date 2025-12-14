@@ -6503,12 +6503,14 @@ function formatPsychProfileForPrompt(psychProfile) {
         return 'Няма данни от психологически тестове.';
     }
     
-    let text = 'ПСИХОЛОГИЧЕСКИ ПРОФИЛ:\n';
+    let text = '';
+    let hasData = false;
     
     // Visual test data
     if (psychProfile.visualTest) {
         const vt = psychProfile.visualTest;
         text += `\nВизуален тест: ${vt.name || 'N/A'}\n`;
+        hasData = true;
         if (vt.short) text += `Кратко описание: ${vt.short}\n`;
         if (vt.psycho && Array.isArray(vt.psycho) && vt.psycho.length > 0) {
             text += 'Психологически характеристики:\n';
@@ -6528,6 +6530,7 @@ function formatPsychProfileForPrompt(psychProfile) {
     if (psychProfile.personalityTest) {
         const pt = psychProfile.personalityTest;
         text += `\nЛичностен тест: ${pt.typeCode || 'N/A'}\n`;
+        hasData = true;
         if (pt.scores && typeof pt.scores === 'object') {
             text += 'Резултати:\n';
             Object.entries(pt.scores).forEach(([key, value]) => {
@@ -6540,7 +6543,11 @@ function formatPsychProfileForPrompt(psychProfile) {
         }
     }
     
-    return text || 'Няма данни от психологически тестове.';
+    if (!hasData) {
+        return 'Няма данни от психологически тестове.';
+    }
+    
+    return 'ПСИХОЛОГИЧЕСКИ ПРОФИЛ:\n' + text;
 }
 
 function createPromptDataFromContext(context) {

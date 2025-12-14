@@ -946,10 +946,10 @@ function displayPsychTestResults() {
             
             let summaryText = '';
             if (hasVisualTest) {
-                summaryText += `<div style="margin-top: var(--space-xs);">📸 Визуален тест: <strong>${escapeHtml(psychTests.visualTest.name || 'Завършен')}</strong></div>`;
+                summaryText += `<div style="margin-top: var(--space-xs);"><i class="bi bi-image"></i> Визуален тест: <strong>${escapeHtml(psychTests.visualTest.name || 'Завършен')}</strong></div>`;
             }
             if (hasPersonalityTest) {
-                summaryText += `<div style="margin-top: var(--space-xs);">🧠 Личностен тест: <strong>${escapeHtml(psychTests.personalityTest.typeCode || 'Завършен')}</strong></div>`;
+                summaryText += `<div style="margin-top: var(--space-xs);"><i class="bi bi-person-check"></i> Личностен тест: <strong>${escapeHtml(psychTests.personalityTest.typeCode || 'Завършен')}</strong></div>`;
             }
             
             psychTestSummary.innerHTML = summaryText;
@@ -1038,15 +1038,20 @@ function displayPsychTestResults() {
             
             psychTestDetailsContent.innerHTML = detailsHtml;
             
-            // Setup accordion behavior
+            // Setup accordion behavior (remove existing listener first to avoid duplicates)
             const header = document.getElementById('psychTestDetailsHeader');
             if (header) {
-                header.addEventListener('click', function() {
+                // Clone and replace to remove all existing event listeners
+                const newHeader = header.cloneNode(true);
+                header.parentNode.replaceChild(newHeader, header);
+                
+                // Add the event listener to the new element
+                newHeader.addEventListener('click', function() {
                     const content = psychTestDetailsContent;
-                    const arrow = header.querySelector('.arrow');
-                    const isExpanded = header.getAttribute('aria-expanded') === 'true';
+                    const arrow = newHeader.querySelector('.arrow');
+                    const isExpanded = newHeader.getAttribute('aria-expanded') === 'true';
                     
-                    header.setAttribute('aria-expanded', !isExpanded);
+                    newHeader.setAttribute('aria-expanded', !isExpanded);
                     content.style.display = isExpanded ? 'none' : 'block';
                     if (arrow) {
                         arrow.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
