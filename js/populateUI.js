@@ -912,6 +912,13 @@ function populateProfileTab(userName, initialData, currentStatus, initialAnswers
     displayPsychTestResults();
 }
 
+function formatTestDate(timestamp) {
+    if (!timestamp) return 'Дата неизвестна';
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return 'Дата неизвестна';
+    return date.toLocaleDateString('bg-BG', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
 function displayPsychTestResults() {
     try {
         const psychTestsStr = localStorage.getItem('psychTests');
@@ -984,7 +991,7 @@ function displayPsychTestResults() {
                                 </div>
                             ` : ''}
                             <p style="margin-top: var(--space-sm); font-size: var(--fs-xs); color: var(--text-color-secondary);">
-                                <i class="bi bi-calendar"></i> ${vt.timestamp ? new Date(vt.timestamp).toLocaleDateString('bg-BG', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Дата неизвестна'}
+                                <i class="bi bi-calendar"></i> ${formatTestDate(vt.timestamp)}
                             </p>
                         </div>
                     </div>
@@ -1022,7 +1029,7 @@ function displayPsychTestResults() {
                                 </div>
                             ` : ''}
                             <p style="margin-top: var(--space-sm); font-size: var(--fs-xs); color: var(--text-color-secondary);">
-                                <i class="bi bi-calendar"></i> ${pt.timestamp ? new Date(pt.timestamp).toLocaleDateString('bg-BG', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Дата неизвестна'}
+                                <i class="bi bi-calendar"></i> ${formatTestDate(pt.timestamp)}
                             </p>
                         </div>
                     </div>
