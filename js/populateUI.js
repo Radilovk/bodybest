@@ -907,6 +907,171 @@ function populateProfileTab(userName, initialData, currentStatus, initialAnswers
         }
         if (!hasConsiderations) considerationsDiv.innerHTML = '<p class="placeholder">Няма посочени специфични съображения от въпросника.</p>';
     }
+    
+    // Display psycho test results if available (pass initialAnswers to get from KV data)
+    displayPsychTestResults(initialAnswers);
+}
+
+// Flag to track if accordion event listener is attached
+let psychTestAccordionListenerAttached = false;
+
+function handlePsychTestAccordionClick() {
+    const content = document.getElementById('psychTestDetailsContent');
+    const header = document.getElementById('psychTestDetailsHeader');
+    const arrow = header?.querySelector('.arrow');
+    const isExpanded = header?.getAttribute('aria-expanded') === 'true';
+    
+    if (header) {
+        header.setAttribute('aria-expanded', !isExpanded);
+    }
+    if (content) {
+        content.style.display = isExpanded ? 'none' : 'block';
+    }
+    if (arrow) {
+        arrow.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
+    }
+}
+
+function formatTestDate(timestamp) {
+    if (!timestamp) return 'Дата неизвестна';
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return 'Дата неизвестна';
+    return date.toLocaleDateString('bg-BG', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function displayPsychTestResults(initialAnswers) {
+    try {
+        // Get psychTests from initialAnswers (KV data), not from localStorage
+        const psychTests = safeGet(initialAnswers, 'psychTests', null);
+        
+        if (!psychTests) {
+            // Cache in localStorage for offline access
+            return;
+        }
+        
+        // Cache in localStorage for offline access
+        try {
+            localStorage.setItem('psychTests', JSON.stringify(psychTests));
+        } catch (storageError) {
+            console.warn('Failed to cache psychTests in localStorage:', storageError);
+        }
+        
+        const hasVisualTest = psychTests.visualTest && Object.keys(psychTests.visualTest).length > 0;
+        const hasPersonalityTest = psychTests.personalityTest && Object.keys(psychTests.personalityTest).length > 0;
+        
+        if (!hasVisualTest && !hasPersonalityTest) return;
+        
+        // Show the summary section
+        const psychTestResults = document.getElementById('psychTestResults');
+        const psychTestSummary = document.getElementById('psychTestSummary');
+        
+        if (psychTestResults && psychTestSummary) {
+            psychTestResults.style.display = 'block';
+            
+            let summaryText = '';
+            if (hasVisualTest) {
+                summaryText += `<div style="margin-top: var(--space-xs);"><i class="bi bi-image"></i> Визуален тест: <strong>${escapeHtml(psychTests.visualTest.name || 'Завършен')}</strong></div>`;
+            }
+            if (hasPersonalityTest) {
+                summaryText += `<div style="margin-top: var(--space-xs);"><i class="bi bi-person-check"></i> Личностен тест: <strong>${escapeHtml(psychTests.personalityTest.typeCode || 'Завършен')}</strong></div>`;
+            }
+            
+            psychTestSummary.innerHTML = summaryText;
+        }
+        
+        // Show detailed results section
+        const psychTestDetailsCard = document.getElementById('psychTestDetailsCard');
+        const psychTestDetailsContent = document.getElementById('psychTestDetailsContent');
+        
+        if (psychTestDetailsCard && psychTestDetailsContent) {
+            psychTestDetailsCard.style.display = 'block';
+            
+            let detailsHtml = '';
+            
+            if (hasVisualTest) {
+                const vt = psychTests.visualTest;
+                detailsHtml += `
+                    <div style="margin-bottom: var(--space-lg);">
+                        <h4 style="color: var(--primary-color); margin-bottom: var(--space-sm);">
+                            <i class="bi bi-image"></i> Визуален тест
+                        </h4>
+                        <div style="background: var(--surface-background); padding: var(--space-md); border-radius: var(--radius-md); border-left: 4px solid var(--primary-color);">
+                            <p style="margin-bottom: var(--space-sm);"><strong>Профил:</strong> ${escapeHtml(vt.name || 'N/A')}</p>
+                            <p style="margin-bottom: var(--space-sm); color: var(--text-color-secondary);">${escapeHtml(vt.short || '')}</p>
+                            ${vt.psycho && Array.isArray(vt.psycho) ? `
+                                <div style="margin-top: var(--space-md);">
+                                    <strong>Психологически характеристики:</strong>
+                                    <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                                        ${vt.psycho.map(p => `<li style="margin-bottom: var(--space-xs);">${escapeHtml(p)}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                            ${vt.habits && Array.isArray(vt.habits) ? `
+                                <div style="margin-top: var(--space-md);">
+                                    <strong>Хранителни навици:</strong>
+                                    <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                                        ${vt.habits.map(h => `<li style="margin-bottom: var(--space-xs);">${escapeHtml(h)}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                            <p style="margin-top: var(--space-sm); font-size: var(--fs-xs); color: var(--text-color-secondary);">
+                                <i class="bi bi-calendar"></i> ${formatTestDate(vt.timestamp)}
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (hasPersonalityTest) {
+                const pt = psychTests.personalityTest;
+                detailsHtml += `
+                    <div style="margin-bottom: var(--space-lg);">
+                        <h4 style="color: var(--secondary-color); margin-bottom: var(--space-sm);">
+                            <i class="bi bi-person-check"></i> Личностен тест
+                        </h4>
+                        <div style="background: var(--surface-background); padding: var(--space-md); border-radius: var(--radius-md); border-left: 4px solid var(--secondary-color);">
+                            <p style="margin-bottom: var(--space-sm);"><strong>Тип код:</strong> ${escapeHtml(pt.typeCode || 'N/A')}</p>
+                            ${pt.scores && typeof pt.scores === 'object' ? `
+                                <div style="margin-top: var(--space-md);">
+                                    <strong>Резултати:</strong>
+                                    <div style="margin-top: var(--space-xs);">
+                                        ${Object.entries(pt.scores).map(([key, value]) => `
+                                            <div style="margin-bottom: var(--space-xs);">
+                                                <span style="display: inline-block; min-width: 120px;">${escapeHtml(key)}:</span>
+                                                <span style="font-weight: 600;">${typeof value === 'number' ? value.toFixed(1) : escapeHtml(String(value))}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${pt.riskFlags && Array.isArray(pt.riskFlags) && pt.riskFlags.length > 0 ? `
+                                <div style="margin-top: var(--space-md); background: var(--color-warning-bg); padding: var(--space-sm); border-radius: var(--radius-md);">
+                                    <strong style="color: var(--color-warning);"><i class="bi bi-exclamation-triangle"></i> Важни забележки:</strong>
+                                    <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                                        ${pt.riskFlags.map(flag => `<li style="margin-bottom: var(--space-xs); color: var(--text-color-primary);">${escapeHtml(flag)}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                            <p style="margin-top: var(--space-sm); font-size: var(--fs-xs); color: var(--text-color-secondary);">
+                                <i class="bi bi-calendar"></i> ${formatTestDate(pt.timestamp)}
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            psychTestDetailsContent.innerHTML = detailsHtml;
+            
+            // Setup accordion behavior (use flag to prevent duplicate listeners)
+            const header = document.getElementById('psychTestDetailsHeader');
+            if (header && !psychTestAccordionListenerAttached) {
+                header.addEventListener('click', handlePsychTestAccordionClick);
+                psychTestAccordionListenerAttached = true;
+            }
+        }
+    } catch (error) {
+        console.error('Error displaying psych test results:', error);
+    }
 }
 
 function populateWeekPlanTab(week1Menu) {

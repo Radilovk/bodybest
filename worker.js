@@ -105,6 +105,8 @@ const NUMERIC_VALUE_REGEX = /-?\d+(?:[.,]\d+)?/;
 
 const TARGET_MACRO_REQUIREMENTS_KEY_SUFFIX = '_target_macro_requirements';
 
+const NO_PSYCH_PROFILE_MESSAGE = 'Няма данни от психологически тестове.';
+
 const parseNumber = (value) => {
   if (typeof value === 'number') {
     return Number.isFinite(value) ? value : null;
@@ -2534,6 +2536,7 @@ async function handleChatRequest(request, env) {
             '%%USER_GOAL%%': promptData.userGoal,
             '%%USER_CONDITIONS%%': promptData.userConditions,
             '%%USER_PREFERENCES%%': promptData.userPreferences,
+            '%%PSYCH_PROFILE%%': promptData.psychProfile || NO_PSYCH_PROFILE_MESSAGE,
             '%%INITIAL_CALORIES_MACROS%%': promptData.initCalMac,
             '%%PLAN_APPROACH_SUMMARY%%': promptData.planSum,
             '%%ALLOWED_FOODS_SUMMARY%%': promptData.allowedF,
@@ -6482,17 +6485,90 @@ async function fetchRecentLogEntries(userId, env, limit = 3) {
     return entries;
 }
 
+/**
+ * Форматира психологическия профил за включване в AI промпт
+ * @param {Object} psychProfile - Обект съдържащ резултати от психологическите тестове
+ * @param {Object} [psychProfile.visualTest] - Резултати от визуалния тест
+ * @param {string} [psychProfile.visualTest.name] - Име на профила
+ * @param {string} [psychProfile.visualTest.short] - Кратко описание
+ * @param {Array<string>} [psychProfile.visualTest.psycho] - Психологически характеристики
+ * @param {Array<string>} [psychProfile.visualTest.habits] - Хранителни навици
+ * @param {Array<string>} [psychProfile.visualTest.risks] - Потенциални рискове
+ * @param {Object} [psychProfile.personalityTest] - Резултати от личностния тест
+ * @param {string} [psychProfile.personalityTest.typeCode] - Код на типа личност
+ * @param {Object} [psychProfile.personalityTest.scores] - Резултати от теста
+ * @param {Array<string>} [psychProfile.personalityTest.riskFlags] - Важни забележки
+ * @returns {string} Форматиран текст за включване в промпт
+ */
+function formatPsychProfileForPrompt(psychProfile) {
+    if (!psychProfile || typeof psychProfile !== 'object') {
+        return NO_PSYCH_PROFILE_MESSAGE;
+    }
+    
+    let text = '';
+    let hasData = false;
+    
+    // Visual test data
+    if (psychProfile.visualTest) {
+        const vt = psychProfile.visualTest;
+        text += `\nВизуален тест: ${vt.name || 'N/A'}\n`;
+        hasData = true;
+        if (vt.short) text += `Кратко описание: ${vt.short}\n`;
+        if (vt.psycho && Array.isArray(vt.psycho) && vt.psycho.length > 0) {
+            text += 'Психологически характеристики:\n';
+            vt.psycho.forEach(p => text += `- ${p}\n`);
+        }
+        if (vt.habits && Array.isArray(vt.habits) && vt.habits.length > 0) {
+            text += 'Хранителни навици:\n';
+            vt.habits.forEach(h => text += `- ${h}\n`);
+        }
+        if (vt.risks && Array.isArray(vt.risks) && vt.risks.length > 0) {
+            text += 'Рискове:\n';
+            vt.risks.forEach(r => text += `- ${r}\n`);
+        }
+    }
+    
+    // Personality test data
+    if (psychProfile.personalityTest) {
+        const pt = psychProfile.personalityTest;
+        text += `\nЛичностен тест: ${pt.typeCode || 'N/A'}\n`;
+        hasData = true;
+        if (pt.scores && typeof pt.scores === 'object') {
+            text += 'Резултати:\n';
+            Object.entries(pt.scores).forEach(([key, value]) => {
+                text += `- ${key}: ${typeof value === 'number' ? value.toFixed(1) : value}\n`;
+            });
+        }
+        if (pt.riskFlags && Array.isArray(pt.riskFlags) && pt.riskFlags.length > 0) {
+            text += 'Важни забележки:\n';
+            pt.riskFlags.forEach(flag => text += `- ${flag}\n`);
+        }
+    }
+    
+    if (!hasData) {
+        return NO_PSYCH_PROFILE_MESSAGE;
+    }
+    
+    return 'ПСИХОЛОГИЧЕСКИ ПРОФИЛ:\n' + text;
+}
+
 function createPromptDataFromContext(context) {
     if (!context) {
         return null;
     }
     const todayKey = CHAT_CONTEXT_MENU_KEYS[new Date().getDay()];
     const menuSummary = safeGet(context, ['plan', 'menuSummaryByDay'], {});
+    const psychProfile = safeGet(context, ['user', 'psychProfile'], null);
+    let psychProfileText = NO_PSYCH_PROFILE_MESSAGE;
+    if (psychProfile) {
+        psychProfileText = formatPsychProfileForPrompt(psychProfile);
+    }
     return {
         userName: safeGet(context, ['user', 'name'], 'Потребител'),
         userGoal: safeGet(context, ['user', 'goal'], 'N/A'),
         userConditions: safeGet(context, ['user', 'conditions'], 'Няма специфични'),
         userPreferences: safeGet(context, ['user', 'preferences'], 'N/A'),
+        psychProfile: psychProfileText,
         initCalMac: safeGet(context, ['plan', 'macrosString'], 'N/A'),
         planSum: safeGet(context, ['plan', 'summary'], 'Персонализиран хранителен подход'),
         allowedF: safeGet(context, ['plan', 'allowedFoodsSummary'], ''),
@@ -6552,12 +6628,17 @@ function buildPromptDataFromRaw(initialAnswers, finalPlan, currentStatus, logEnt
     const currWeight = safeParseFloat(safeGet(currentStatus, 'weight', null), null);
     const currW = currWeight !== null ? `${currWeight.toFixed(1)} кг` : 'N/A';
     const logMetrics = computeLogMetrics(logEntries, getLocalDate());
+    
+    // Extract psychProfile from finalPlan if available
+    const psychProfileData = safeGet(finalPlan, 'psychoTestsProfile', null);
+    const psychProfileText = psychProfileData ? formatPsychProfileForPrompt(psychProfileData) : NO_PSYCH_PROFILE_MESSAGE;
 
     return {
         userName,
         userGoal,
         userConditions,
         userPreferences,
+        psychProfile: psychProfileText,
         initCalMac,
         planSum,
         allowedF,
