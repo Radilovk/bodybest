@@ -5663,42 +5663,95 @@ async function processSingleUserPlan(userId, env) {
         let visualTestInfo = '';
         let personalityTestInfo = '';
         try {
-            const { raw: psychoAnalysisRaw, parsed: psychoAnalysisParsed } = await getKvParsed(
-                `${userId}_analysis`,
-                (value) => parsePossiblyStringifiedJson(value),
-                null
-            );
-            const psychoSource = psychoAnalysisParsed ?? psychoAnalysisRaw;
-            if (psychoSource) {
-                const psychoData = extractPsychoProfileTexts(psychoSource);
-                if (psychoData.dominant) {
-                    psychoProfileText = psychoData.dominant;
-                }
-                if (psychoData.concepts && psychoData.concepts.length > 0) {
-                    psychoConceptsText = psychoData.concepts.join(', ');
-                }
+            // Първо проверяваме дали има данни в initial_answers.psychTests (нова структура с пълна информация)
+            const psychTests = initialAnswers?.psychTests;
+            let useInitialAnswersPsychTests = false;
+            
+            if (psychTests && (psychTests.visualTest || psychTests.personalityTest)) {
+                useInitialAnswersPsychTests = true;
                 
-                // Добавяне на информация от визуалния тест
-                if (psychoSource.visualTestProfile) {
-                    const vt = psychoSource.visualTestProfile;
-                    visualTestInfo = `Визуален тест: ${vt.profileName} (ID: ${vt.profileId})`;
-                    if (vt.profileShort) {
-                        visualTestInfo += ` - ${vt.profileShort}`;
+                // Визуален тест от initial_answers - пълна информация
+                if (psychTests.visualTest) {
+                    const vt = psychTests.visualTest;
+                    visualTestInfo = `Визуален тест: ${vt.name} (ID: ${vt.id})`;
+                    if (vt.short) {
+                        visualTestInfo += ` - ${vt.short}`;
+                    }
+                    if (vt.mainPsycho && vt.mainPsycho.length > 0) {
+                        visualTestInfo += `\nПсихологически характеристики: ${vt.mainPsycho.join(', ')}`;
+                    }
+                    if (vt.mainHabits && vt.mainHabits.length > 0) {
+                        visualTestInfo += `\nХранителни навици: ${vt.mainHabits.join(', ')}`;
+                    }
+                    if (vt.mainRisks && vt.mainRisks.length > 0) {
+                        visualTestInfo += `\nРискови области: ${vt.mainRisks.join(', ')}`;
                     }
                 }
                 
-                // Добавяне на информация от личностния тест
-                if (psychoSource.personalityTestProfile) {
-                    const pt = psychoSource.personalityTestProfile;
+                // Личностен тест от initial_answers - пълна информация
+                if (psychTests.personalityTest) {
+                    const pt = psychTests.personalityTest;
                     personalityTestInfo = `Личностен профил: ${pt.typeCode}`;
                     if (pt.scores) {
                         const scoreEntries = Object.entries(pt.scores)
                             .map(([dim, score]) => `${dim}: ${score}`)
                             .join(', ');
-                        personalityTestInfo += ` (Скорове: ${scoreEntries})`;
+                        personalityTestInfo += `\nСкорове: ${scoreEntries}`;
                     }
                     if (pt.riskFlags && pt.riskFlags.length > 0) {
-                        personalityTestInfo += ` | Рискови фактори: ${pt.riskFlags.join('; ')}`;
+                        personalityTestInfo += `\nРискови флагове: ${pt.riskFlags.join('; ')}`;
+                    }
+                    if (pt.strengths && pt.strengths.length > 0) {
+                        personalityTestInfo += `\nСилни страни: ${pt.strengths.join(', ')}`;
+                    }
+                    if (pt.mainRisks && pt.mainRisks.length > 0) {
+                        personalityTestInfo += `\nОсновни рискови области: ${pt.mainRisks.join(', ')}`;
+                    }
+                    if (pt.topRecommendations && pt.topRecommendations.length > 0) {
+                        personalityTestInfo += `\nТоп препоръки: ${pt.topRecommendations.join('; ')}`;
+                    }
+                }
+            }
+            
+            // Fallback към analysis данните (стара структура или липсващи данни в initial_answers)
+            if (!useInitialAnswersPsychTests) {
+                const { raw: psychoAnalysisRaw, parsed: psychoAnalysisParsed } = await getKvParsed(
+                    `${userId}_analysis`,
+                    (value) => parsePossiblyStringifiedJson(value),
+                    null
+                );
+                const psychoSource = psychoAnalysisParsed ?? psychoAnalysisRaw;
+                if (psychoSource) {
+                    const psychoData = extractPsychoProfileTexts(psychoSource);
+                    if (psychoData.dominant) {
+                        psychoProfileText = psychoData.dominant;
+                    }
+                    if (psychoData.concepts && psychoData.concepts.length > 0) {
+                        psychoConceptsText = psychoData.concepts.join(', ');
+                    }
+                    
+                    // Добавяне на информация от визуалния тест (стара структура)
+                    if (psychoSource.visualTestProfile) {
+                        const vt = psychoSource.visualTestProfile;
+                        visualTestInfo = `Визуален тест: ${vt.profileName} (ID: ${vt.profileId})`;
+                        if (vt.profileShort) {
+                            visualTestInfo += ` - ${vt.profileShort}`;
+                        }
+                    }
+                    
+                    // Добавяне на информация от личностния тест (стара структура)
+                    if (psychoSource.personalityTestProfile) {
+                        const pt = psychoSource.personalityTestProfile;
+                        personalityTestInfo = `Личностен профил: ${pt.typeCode}`;
+                        if (pt.scores) {
+                            const scoreEntries = Object.entries(pt.scores)
+                                .map(([dim, score]) => `${dim}: ${score}`)
+                                .join(', ');
+                            personalityTestInfo += ` (Скорове: ${scoreEntries})`;
+                        }
+                        if (pt.riskFlags && pt.riskFlags.length > 0) {
+                            personalityTestInfo += ` | Рискови фактори: ${pt.riskFlags.join('; ')}`;
+                        }
                     }
                 }
             }
