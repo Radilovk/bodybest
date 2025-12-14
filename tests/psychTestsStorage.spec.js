@@ -3,7 +3,7 @@
  */
 
 import { jest } from '@jest/globals';
-import { handleSavePsychTestsRequest, handleGetPsychTestsRequest, processSingleUserPlan } from '../worker.js';
+import { handleSavePsychTestsRequest, handleGetPsychTestsRequest } from '../worker.js';
 
 const makePostRequest = (body) => ({
   json: async () => body,
@@ -209,15 +209,6 @@ describe('psych tests storage', () => {
 
     const store = {
       'u5_initial_answers': JSON.stringify(initialAnswers)
-    };
-
-    const env = {
-      USER_METADATA_KV: {
-        get: jest.fn(async (key) => store[key] || null),
-        put: jest.fn(async (key, value) => {
-          store[key] = value;
-        })
-      }
     };
 
     // Симулираме запазване на психо тестове след което те трябва да се добавят при регенериране
