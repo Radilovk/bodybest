@@ -1235,11 +1235,15 @@
       const saveBtn = document.getElementById('saveResultBtn');
       if (saveBtn) {
         saveBtn.style.display = 'block';
+        // Премахваме предишни event listeners (ако има) и добавяме нов
+        const newSaveBtn = saveBtn.cloneNode(true);
+        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+        
         // Добавяме event listener за запазване
-        saveBtn.onclick = async function() {
-          const originalText = saveBtn.textContent;
-          saveBtn.textContent = 'Запазване...';
-          saveBtn.disabled = true;
+        newSaveBtn.onclick = async function() {
+          const originalText = newSaveBtn.textContent;
+          newSaveBtn.textContent = 'Запазване...';
+          newSaveBtn.disabled = true;
           
           try {
             await saveResults(scores, analysis);
@@ -1247,8 +1251,8 @@
             console.error('Грешка при запазване на резултатите:', error);
             showSaveWarningMessage();
           } finally {
-            saveBtn.textContent = originalText;
-            saveBtn.disabled = false;
+            newSaveBtn.textContent = originalText;
+            newSaveBtn.disabled = false;
           }
         };
       }

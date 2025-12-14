@@ -555,7 +555,13 @@
   
   // Събитие за бутона "Запази резултата"
   document.getElementById("saveResultBtn").addEventListener("click", async ()=>{
-    if(!pendingId) return;
+    // Валидация на pendingId
+    if(!pendingId || !profiles[pendingId]) {
+      console.error('Invalid profile ID:', pendingId);
+      alert('Грешка: Невалиден профил. Моля опитайте отново.');
+      return;
+    }
+    
     const saveBtn = document.getElementById('saveResultBtn');
     const originalText = saveBtn.textContent;
     
@@ -618,6 +624,8 @@
     if(e.target === overlay || e.target.classList.contains('ovTop')) closeOverlay();
   });
 
+  // Избор на изображение - показваме резултатите без автоматично запазване
+  // Запазването се случва само при натискане на бутона "Запази резултата"
   ovSelect.addEventListener("click", ()=>{
     if(!pendingId) return;
     closeOverlay();
