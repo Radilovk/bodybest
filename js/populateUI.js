@@ -912,6 +912,26 @@ function populateProfileTab(userName, initialData, currentStatus, initialAnswers
     displayPsychTestResults();
 }
 
+// Flag to track if accordion event listener is attached
+let psychTestAccordionListenerAttached = false;
+
+function handlePsychTestAccordionClick() {
+    const content = document.getElementById('psychTestDetailsContent');
+    const header = document.getElementById('psychTestDetailsHeader');
+    const arrow = header?.querySelector('.arrow');
+    const isExpanded = header?.getAttribute('aria-expanded') === 'true';
+    
+    if (header) {
+        header.setAttribute('aria-expanded', !isExpanded);
+    }
+    if (content) {
+        content.style.display = isExpanded ? 'none' : 'block';
+    }
+    if (arrow) {
+        arrow.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
+    }
+}
+
 function formatTestDate(timestamp) {
     if (!timestamp) return 'Дата неизвестна';
     const date = new Date(timestamp);
@@ -1022,7 +1042,7 @@ function displayPsychTestResults() {
                             ` : ''}
                             ${pt.riskFlags && Array.isArray(pt.riskFlags) && pt.riskFlags.length > 0 ? `
                                 <div style="margin-top: var(--space-md); background: var(--color-warning-bg); padding: var(--space-sm); border-radius: var(--radius-md);">
-                                    <strong style="color: var(--color-warning);">⚠️ Важни забележки:</strong>
+                                    <strong style="color: var(--color-warning);"><i class="bi bi-exclamation-triangle"></i> Важни забележки:</strong>
                                     <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
                                         ${pt.riskFlags.map(flag => `<li style="margin-bottom: var(--space-xs); color: var(--text-color-primary);">${escapeHtml(flag)}</li>`).join('')}
                                     </ul>
@@ -1038,25 +1058,11 @@ function displayPsychTestResults() {
             
             psychTestDetailsContent.innerHTML = detailsHtml;
             
-            // Setup accordion behavior (remove existing listener first to avoid duplicates)
+            // Setup accordion behavior (use flag to prevent duplicate listeners)
             const header = document.getElementById('psychTestDetailsHeader');
-            if (header) {
-                // Clone and replace to remove all existing event listeners
-                const newHeader = header.cloneNode(true);
-                header.parentNode.replaceChild(newHeader, header);
-                
-                // Add the event listener to the new element
-                newHeader.addEventListener('click', function() {
-                    const content = psychTestDetailsContent;
-                    const arrow = newHeader.querySelector('.arrow');
-                    const isExpanded = newHeader.getAttribute('aria-expanded') === 'true';
-                    
-                    newHeader.setAttribute('aria-expanded', !isExpanded);
-                    content.style.display = isExpanded ? 'none' : 'block';
-                    if (arrow) {
-                        arrow.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
-                    }
-                });
+            if (header && !psychTestAccordionListenerAttached) {
+                header.addEventListener('click', handlePsychTestAccordionClick);
+                psychTestAccordionListenerAttached = true;
             }
         }
     } catch (error) {
