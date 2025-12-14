@@ -558,7 +558,7 @@
     // Валидация на pendingId
     if(!pendingId || !profiles[pendingId]) {
       console.error('Invalid profile ID:', pendingId);
-      alert('Грешка: Невалиден профил. Моля опитайте отново.');
+      showSaveStatus('error', 'Грешка: Невалиден профил. Моля опитайте отново теста.');
       return;
     }
     
