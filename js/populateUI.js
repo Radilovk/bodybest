@@ -908,8 +908,8 @@ function populateProfileTab(userName, initialData, currentStatus, initialAnswers
         if (!hasConsiderations) considerationsDiv.innerHTML = '<p class="placeholder">Няма посочени специфични съображения от въпросника.</p>';
     }
     
-    // Display psycho test results if available
-    displayPsychTestResults();
+    // Display psycho test results if available (pass initialAnswers to get from KV data)
+    displayPsychTestResults(initialAnswers);
 }
 
 // Flag to track if accordion event listener is attached
@@ -939,17 +939,21 @@ function formatTestDate(timestamp) {
     return date.toLocaleDateString('bg-BG', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-function displayPsychTestResults() {
+function displayPsychTestResults(initialAnswers) {
     try {
-        const psychTestsStr = localStorage.getItem('psychTests');
-        if (!psychTestsStr) return;
+        // Get psychTests from initialAnswers (KV data), not from localStorage
+        const psychTests = safeGet(initialAnswers, 'psychTests', null);
         
-        let psychTests;
-        try {
-            psychTests = JSON.parse(psychTestsStr);
-        } catch (parseError) {
-            console.error('Failed to parse psychTests from localStorage:', parseError);
+        if (!psychTests) {
+            // Cache in localStorage for offline access
             return;
+        }
+        
+        // Cache in localStorage for offline access
+        try {
+            localStorage.setItem('psychTests', JSON.stringify(psychTests));
+        } catch (storageError) {
+            console.warn('Failed to cache psychTests in localStorage:', storageError);
         }
         
         const hasVisualTest = psychTests.visualTest && Object.keys(psychTests.visualTest).length > 0;
