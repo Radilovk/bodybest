@@ -351,6 +351,7 @@
   <section class="screen" id="s3">
     <div id="result" class="fade-in"></div>
     <div class="actions">
+      <button class="btn" id="saveResultBtn" style="display: none;">Запази резултата</button>
       <button class="btn" id="again">Направи теста отново</button>
       <button class="btnSmall" id="toGrid">Виж всички картинки</button>
     </div>
@@ -542,8 +543,39 @@
 
   document.getElementById("start").addEventListener("click", ()=>show(s2));
   document.getElementById("backToIntro").addEventListener("click", ()=>show(s1));
-  document.getElementById("again").addEventListener("click", ()=>show(s2));
+  document.getElementById("again").addEventListener("click", ()=>{
+    // Скриваме бутона "Запази" при повторен опит
+    const saveBtn = document.getElementById('saveResultBtn');
+    if (saveBtn) {
+      saveBtn.style.display = 'none';
+    }
+    show(s2);
+  });
   document.getElementById("toGrid").addEventListener("click", ()=>show(s2));
+  
+  // Събитие за бутона "Запази резултата"
+  document.getElementById("saveResultBtn").addEventListener("click", async ()=>{
+    // Валидация на pendingId
+    if(!pendingId || !profiles[pendingId]) {
+      console.error('Invalid profile ID:', pendingId);
+      showSaveStatus('error', 'Грешка: Невалиден профил. Моля опитайте отново теста.');
+      return;
+    }
+    
+    const saveBtn = document.getElementById('saveResultBtn');
+    const originalText = saveBtn.textContent;
+    
+    // Показваме индикация за зареждане
+    saveBtn.textContent = 'Запазване...';
+    saveBtn.disabled = true;
+    
+    try {
+      await saveVisualTestResult(pendingId);
+    } finally {
+      saveBtn.textContent = originalText;
+      saveBtn.disabled = false;
+    }
+  });
 
   // Build grid
   const ids = ["01","02","03","04","05","06","07","08"];
@@ -592,17 +624,24 @@
     if(e.target === overlay || e.target.classList.contains('ovTop')) closeOverlay();
   });
 
-  ovSelect.addEventListener("click", async ()=>{
+  // Избор на изображение - показваме резултатите без автоматично запазване
+  // Запазването се случва само при натискане на бутона "Запази резултата"
+  ovSelect.addEventListener("click", ()=>{
     if(!pendingId) return;
     closeOverlay();
     renderResult(pendingId, pendingSrc);
-    await saveVisualTestResult(pendingId);
     show(s3);
   });
 
   function renderResult(id, src){
     const p = profiles[id];
     if(!p) return;
+
+    // Показваме бутона "Запази"
+    const saveBtn = document.getElementById('saveResultBtn');
+    if (saveBtn) {
+      saveBtn.style.display = 'block';
+    }
 
     // Helper for lists
     const makeList = (items, isRisk) => `
@@ -647,7 +686,10 @@
   async function saveVisualTestResult(profileId) {
     try {
       const profile = profiles[profileId];
-      if (!profile) return;
+      if (!profile) {
+        showSaveStatus('error', 'Грешка при зареждане на профила');
+        return;
+      }
       
       const timestamp = new Date().toISOString();
       
@@ -662,74 +704,110 @@
         timestamp: timestamp
       };
       
-      // Запазване в localStorage
+      // Запазване в localStorage (винаги)
       const existingData = JSON.parse(localStorage.getItem('psychTests') || '{}');
       existingData.visualTest = visualTest;
       localStorage.setItem('psychTests', JSON.stringify(existingData));
+      console.log('[VISUAL TEST] Резултатите са запазени в localStorage:', visualTest);
       
-      // API configuration (shared logic with psy/psychotest.html)
+      // Проверка дали теста е стартиран от профила
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromProfile = urlParams.get('from') === 'profile';
+      
+      // Проверка за userId
       const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
-      if (userId) {
-        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-          ? 'http://localhost:8787'
-          : 'https://bodybest-backend.radilovka88.workers.dev';
-        
-        const response = await fetch(`${API_BASE}/api/savePsychTests`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            userId: userId,
-            visualTest: visualTest
-          })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          console.log('Резултатите са запазени успешно в backend');
-          localStorage.setItem('psychTestsLastSync', timestamp);
-          showSaveStatus(true);
+      
+      if (!userId) {
+        console.warn('[VISUAL TEST] Няма userId - показва се съобщение за регистрация');
+        if (fromProfile) {
+          // Ако теста е стартиран от профила, но няма userId - нещо не е наред
+          showSaveStatus('error', 'Грешка: Не сте влезли в системата. Моля рефрешнете страницата и опитайте отново.');
         } else {
-          console.warn('Грешка при запазване в backend:', result.message);
-          showSaveStatus(false);
+          // Ако теста е стартиран директно - показваме съобщение за регистрация
+          showSaveStatus('warning', 'За да запазите резултатите в профила си, моля първо <a href="../login.html" style="color: inherit; text-decoration: underline;">влезте в акаунта си</a> или <a href="../index.html#register" style="color: inherit; text-decoration: underline;">се регистрирайте</a>. Резултатите са запазени локално в браузъра.');
         }
+        return;
+      }
+      
+      // Опит за backend запазване
+      console.log('[VISUAL TEST] Опит за backend запазване за userId:', userId);
+      const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:8787'
+        : 'https://bodybest-backend.radilovka88.workers.dev';
+      
+      const response = await fetch(`${API_BASE}/api/savePsychTests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: userId,
+          visualTest: visualTest
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log('[VISUAL TEST] Backend отговор:', result);
+      
+      if (result.success) {
+        console.log('[VISUAL TEST] ✓ Успешно запазване в backend');
+        localStorage.setItem('psychTestsLastSync', timestamp);
+        showSaveStatus('success', 'Резултатите са запазени успешно в профила ви! <a href="../code.html#profile-tab" style="color: inherit; text-decoration: underline;">Вижте профила си тук</a>.');
       } else {
-        console.log('Няма userId - резултатите са запазени само локално');
-        showSaveStatus(false);
+        console.error('[VISUAL TEST] Backend грешка:', result.message);
+        showSaveStatus('warning', `Резултатите са запазени локално. Backend грешка: ${result.message || 'неизвестна грешка'}`);
       }
     } catch (error) {
-      console.error('Грешка при запазване на резултатите:', error);
-      showSaveStatus(false);
+      console.error('[VISUAL TEST] Грешка при запазване:', error);
+      showSaveStatus('error', `Грешка при запазване: ${error.message}. Резултатите са запазени локално.`);
     }
   }
   
-  function showSaveStatus(success) {
+  function showSaveStatus(status, message) {
     const messageDiv = document.getElementById('saveStatusMessage');
     if (!messageDiv) return;
     
-    if (success) {
-      messageDiv.innerHTML = `
-        <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 16px; padding: 20px; text-align: center;">
-          <div style="font-size: 20px; margin-bottom: 5px;">✓</div>
-          <div style="font-weight: 700; color: #155724; margin-bottom: 5px;">Резултатите са запазени!</div>
-          <div style="font-size: 14px; color: #155724;">
-            Можете да видите вашия психопрофил в секция "Профил" в главното табло.
-          </div>
-        </div>
-      `;
-    } else {
-      messageDiv.innerHTML = `
-        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 16px; padding: 20px; text-align: center;">
-          <div style="font-size: 20px; margin-bottom: 5px;">⚠</div>
-          <div style="font-weight: 700; color: #856404; margin-bottom: 5px;">Резултатите са запазени локално</div>
-          <div style="font-size: 14px; color: #856404;">
-            Влезте в профила си, за да синхронизирате резултатите с вашия акаунт.
-          </div>
-        </div>
-      `;
+    // Скриваме бутона "Запази" само при успешно запазване
+    const saveBtn = document.getElementById('saveResultBtn');
+    if (saveBtn && status === 'success') {
+      saveBtn.style.display = 'none';
     }
+    
+    let bgColor, borderColor, iconColor, icon, textColor;
+    
+    if (status === 'success') {
+      bgColor = '#d4edda';
+      borderColor = '#c3e6cb';
+      textColor = '#155724';
+      icon = '✓';
+      iconColor = '#28a745';
+    } else if (status === 'warning') {
+      bgColor = '#fff3cd';
+      borderColor = '#ffeaa7';
+      textColor = '#856404';
+      icon = '⚠';
+      iconColor = '#ffc107';
+    } else { // error
+      bgColor = '#f8d7da';
+      borderColor = '#f5c6cb';
+      textColor = '#721c24';
+      icon = '✕';
+      iconColor = '#dc3545';
+    }
+    
+    messageDiv.innerHTML = `
+      <div style="background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 16px; padding: 20px; text-align: center;">
+        <div style="font-size: 20px; margin-bottom: 10px; color: ${iconColor};">${icon}</div>
+        <div style="font-weight: 700; color: ${textColor}; margin-bottom: ${message ? '10px' : '0'}; font-size: 16px;">
+          ${status === 'success' ? 'Успешно запазване!' : status === 'warning' ? 'Частично запазване' : 'Грешка при запазване'}
+        </div>
+        ${message ? `<div style="font-size: 14px; color: ${textColor}; line-height: 1.5;">${message}</div>` : ''}
+      </div>
+    `;
   }
 </script>
 </body>

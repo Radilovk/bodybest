@@ -786,8 +786,11 @@
           </div>
         </div>
       </div>
+      
+      <div id="saveStatusMessage" style="margin-top: 20px;"></div>
 
       <div class="navigation">
+        <button id="saveResultBtn" class="btn btn-primary" style="display: none;">Запази резултата</button>
         <button class="btn btn-secondary" onclick="restartTest()">Започни отново</button>
         <a href="../code.html#profile-tab" class="btn btn-primary" style="text-decoration: none">Назад към профила</a>
       </div>
@@ -1228,12 +1231,30 @@
       renderFlags(scores);
       const analysis = analyzeNutritionalRisks(scores);
       
-      // Запазване на резултатите с error handling
-      try {
-        await saveResults(scores, analysis);
-      } catch (error) {
-        console.error('Грешка при запазване на резултатите:', error);
-        // Продължаваме показването на резултатите дори ако запазването е неуспешно
+      // Показваме бутона "Запази"
+      const saveBtn = document.getElementById('saveResultBtn');
+      if (saveBtn) {
+        saveBtn.style.display = 'block';
+        // Премахваме предишни event listeners (ако има) и добавяме нов
+        const newSaveBtn = saveBtn.cloneNode(true);
+        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+        
+        // Добавяме event listener за запазване
+        newSaveBtn.onclick = async function() {
+          const originalText = newSaveBtn.textContent;
+          newSaveBtn.textContent = 'Запазване...';
+          newSaveBtn.disabled = true;
+          
+          try {
+            await saveResults(scores, analysis);
+          } catch (error) {
+            console.error('Грешка при запазване на резултатите:', error);
+            showSaveMessage('error', `Грешка: ${error.message}. Резултатите са запазени локално.`);
+          } finally {
+            newSaveBtn.textContent = originalText;
+            newSaveBtn.disabled = false;
+          }
+        };
       }
       
       // Показване на AI анализа
@@ -1372,87 +1393,112 @@
           timestamp: timestamp
         };
         
-        // Запазване в localStorage
+        // Запазване в localStorage (винаги)
         const existingData = JSON.parse(localStorage.getItem('psychTests') || '{}');
         existingData.personalityTest = personalityTest;
         localStorage.setItem('psychTests', JSON.stringify(existingData));
+        console.log('[PERSONALITY TEST] Резултатите са запазени в localStorage:', personalityTest);
         
-        // API configuration (shared logic with psy/index.html)
+        // Проверка дали теста е стартиран от профила
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromProfile = urlParams.get('from') === 'profile';
+        
+        // Проверка за userId
         const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
-        if (userId) {
-          const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:8787'
-            : 'https://bodybest-backend.radilovka88.workers.dev';
-          
-          const response = await fetch(`${API_BASE}/api/savePsychTests`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              userId: userId,
-              personalityTest: personalityTest
-            })
-          });
-          
-          const result = await response.json();
-          
-          if (result.success) {
-            console.log('Резултатите са запазени успешно в backend');
-            localStorage.setItem('psychTestsLastSync', timestamp);
-            
-            // Показване на success съобщение
-            showSaveSuccessMessage();
+        
+        if (!userId) {
+          console.warn('[PERSONALITY TEST] Няма userId - показва се съобщение за регистрация');
+          if (fromProfile) {
+            // Ако теста е стартиран от профила, но няма userId - нещо не е наред
+            showSaveMessage('error', 'Грешка: Не сте влезли в системата. Моля рефрешнете страницата и опитайте отново.');
           } else {
-            console.warn('Грешка при запазване в backend:', result.message);
-            // Запазваме локално, дори ако backend е недостъпен
-            showSaveWarningMessage();
+            // Ако теста е стартиран директно - показваме съобщение за регистрация
+            showSaveMessage('warning', 'За да запазите резултатите в профила си, моля първо <a href="../login.html" style="color: inherit; text-decoration: underline;">влезте в акаунта си</a> или <a href="../index.html#register" style="color: inherit; text-decoration: underline;">се регистрирайте</a>. Резултатите са запазени локално в браузъра.');
           }
+          return;
+        }
+        
+        // Опит за backend запазване
+        console.log('[PERSONALITY TEST] Опит за backend запазване за userId:', userId);
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+          ? 'http://localhost:8787'
+          : 'https://bodybest-backend.radilovka88.workers.dev';
+        
+        const response = await fetch(`${API_BASE}/api/savePsychTests`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: userId,
+            personalityTest: personalityTest
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('[PERSONALITY TEST] Backend отговор:', result);
+        
+        if (result.success) {
+          console.log('[PERSONALITY TEST] ✓ Успешно запазване в backend');
+          localStorage.setItem('psychTestsLastSync', timestamp);
+          showSaveMessage('success', 'Резултатите са запазени успешно в профила ви! <a href="../code.html#profile-tab" style="color: inherit; text-decoration: underline;">Вижте профила си тук</a>.');
         } else {
-          console.log('Няма userId - резултатите са запазени само локално');
-          showSaveWarningMessage();
+          console.error('[PERSONALITY TEST] Backend грешка:', result.message);
+          showSaveMessage('warning', `Резултатите са запазени локално. Backend грешка: ${result.message || 'неизвестна грешка'}`);
         }
       } catch (error) {
-        console.error('Грешка при запазване на резултатите:', error);
-        // При грешка поне запазваме локално
-        showSaveWarningMessage();
+        console.error('[PERSONALITY TEST] Грешка при запазване:', error);
+        showSaveMessage('error', `Грешка при запазване: ${error.message}. Резултатите са запазени локално.`);
       }
     }
     
-    function showSaveSuccessMessage() {
-      const container = document.getElementById('aiAnalysisContainer');
-      container.insertAdjacentHTML('afterbegin', `
-        <div style="background: color-mix(in srgb, var(--primary-color) 15%, var(--card-bg)); 
-                    border-left: 4px solid var(--primary-color); 
+    function showSaveMessage(status, message) {
+      // Скриваме бутона "Запази" само при успешно запазване
+      const saveBtn = document.getElementById('saveResultBtn');
+      if (saveBtn && status === 'success') {
+        saveBtn.style.display = 'none';
+      }
+      
+      const messageDiv = document.getElementById('saveStatusMessage');
+      if (!messageDiv) return;
+      
+      let bgColor, borderColor, iconColor, icon, textColor;
+      
+      if (status === 'success') {
+        bgColor = 'color-mix(in srgb, var(--primary-color) 15%, var(--card-bg))';
+        borderColor = 'var(--primary-color)';
+        textColor = 'var(--text-color-primary)';
+        icon = '✓';
+        iconColor = 'var(--primary-color)';
+      } else if (status === 'warning') {
+        bgColor = 'color-mix(in srgb, var(--accent-color) 10%, var(--card-bg))';
+        borderColor = 'var(--accent-color)';
+        textColor = 'var(--text-color-primary)';
+        icon = '⚠';
+        iconColor = 'var(--accent-color)';
+      } else { // error
+        bgColor = 'color-mix(in srgb, var(--color-danger) 15%, var(--card-bg))';
+        borderColor = 'var(--color-danger)';
+        textColor = 'var(--text-color-primary)';
+        icon = '✕';
+        iconColor = 'var(--color-danger)';
+      }
+      
+      messageDiv.innerHTML = `
+        <div style="background: ${bgColor}; 
+                    border-left: 4px solid ${borderColor}; 
                     padding: var(--space-md); 
-                    border-radius: var(--radius-md); 
-                    margin-bottom: var(--space-md);">
-          <p style="margin: 0; color: var(--text-color-primary); font-weight: 600;">
-            ✓ Резултатите са запазени успешно!
+                    border-radius: var(--radius-md);">
+          <p style="margin: 0; color: ${iconColor}; font-weight: 700; font-size: var(--fs-base);">
+            ${icon} ${status === 'success' ? 'Успешно запазване!' : status === 'warning' ? 'Частично запазване' : 'Грешка при запазване'}
           </p>
-          <p style="margin: var(--space-xs) 0 0 0; font-size: var(--fs-sm); color: var(--text-color-secondary);">
-            Можете да видите вашия психопрофил в секция "Профил" в главното табло.
-          </p>
+          ${message ? `<p style="margin: var(--space-xs) 0 0 0; font-size: var(--fs-sm); color: var(--text-color-secondary); line-height: 1.5;">${message}</p>` : ''}
         </div>
-      `);
-    }
-    
-    function showSaveWarningMessage() {
-      const container = document.getElementById('aiAnalysisContainer');
-      container.insertAdjacentHTML('afterbegin', `
-        <div style="background: color-mix(in srgb, var(--accent-color) 10%, var(--card-bg)); 
-                    border-left: 4px solid var(--accent-color); 
-                    padding: var(--space-md); 
-                    border-radius: var(--radius-md); 
-                    margin-bottom: var(--space-md);">
-          <p style="margin: 0; color: var(--text-color-primary); font-weight: 600;">
-            ⚠ Резултатите са запазени локално
-          </p>
-          <p style="margin: var(--space-xs) 0 0 0; font-size: var(--fs-sm); color: var(--text-color-secondary);">
-            Влезте в профила си, за да синхронизирате резултатите с вашия акаунт.
-          </p>
-        </div>
-      `);
+      `;
     }
 
     function simplifyText(text, maxSentences = 2) {
@@ -1807,6 +1853,17 @@
     function restartTest() {
       currentQuestionIndex = 0;
       answers = {};
+      
+      // Скриваме бутона "Запази" и съобщенията
+      const saveBtn = document.getElementById('saveResultBtn');
+      if (saveBtn) {
+        saveBtn.style.display = 'none';
+      }
+      const messageDiv = document.getElementById('saveStatusMessage');
+      if (messageDiv) {
+        messageDiv.innerHTML = '';
+      }
+      
       showScreen('screenIntro');
     }
 
