@@ -6613,11 +6613,16 @@ async function fetchRecentLogEntries(userId, env, limit = 3) {
  * Форматира психологическия профил за включване в AI промпт
  * @param {Object} psychProfile - Обект съдържащ резултати от психологическите тестове
  * @param {Object} [psychProfile.visualTest] - Резултати от визуалния тест
- * @param {string} [psychProfile.visualTest.profileName] - Име на профила
- * @param {string} [psychProfile.visualTest.profileShort] - Кратко описание
- * @param {Array<string>} [psychProfile.visualTest.mainPsycho] - Ключови психологически характеристики
- * @param {Array<string>} [psychProfile.visualTest.mainHabits] - Ключови хранителни навици
- * @param {Array<string>} [psychProfile.visualTest.mainRisks] - Ключови потенциални рискове
+ * @param {string} [psychProfile.visualTest.profileName] - Име на профила (нов формат)
+ * @param {string} [psychProfile.visualTest.name] - Име на профила (legacy формат)
+ * @param {string} [psychProfile.visualTest.profileShort] - Кратко описание (нов формат)
+ * @param {string} [psychProfile.visualTest.short] - Кратко описание (legacy формат)
+ * @param {Array<string>} [psychProfile.visualTest.mainPsycho] - Ключови психологически характеристики (нов формат)
+ * @param {Array<string>} [psychProfile.visualTest.psycho] - Ключови психологически характеристики (legacy формат)
+ * @param {Array<string>} [psychProfile.visualTest.mainHabits] - Ключови хранителни навици (нов формат)
+ * @param {Array<string>} [psychProfile.visualTest.habits] - Ключови хранителни навици (legacy формат)
+ * @param {Array<string>} [psychProfile.visualTest.mainRisks] - Ключови потенциални рискове (нов формат)
+ * @param {Array<string>} [psychProfile.visualTest.risks] - Ключови потенциални рискове (legacy формат)
  * @param {Object} [psychProfile.personalityTest] - Резултати от личностния тест
  * @param {string} [psychProfile.personalityTest.typeCode] - Код на типа личност
  * @param {Object} [psychProfile.personalityTest.scores] - Резултати от теста
