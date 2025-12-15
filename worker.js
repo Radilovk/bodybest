@@ -2491,6 +2491,39 @@ async function handleChatRequest(request, env) {
             console.error(`CHAT_REQUEST_ERROR (${userId}): Missing prompt data after context resolution.`);
             return { success: false, message: 'Грешка при зареждане на данни за чат асистента.', statusHint: 500 };
         }
+        
+        // Extract communication style from psy advice based on personality type
+        let psyCommunicationStyle = 'Стандартен комуникационен стил';
+        try {
+            const psyAdviceContent = await env.RESOURCES_KV.get('psy_advice');
+            if (psyAdviceContent) {
+                // Try to get personality type from psychTests
+                const psychTestsStr = await env.USER_METADATA_KV.get(`${userId}_psychTests`);
+                let personalityTypeCode = null;
+                if (psychTestsStr) {
+                    const psychTestsData = safeParseJson(psychTestsStr, null);
+                    personalityTypeCode = psychTestsData?.personalityTest?.typeCode;
+                }
+                
+                // Fallback to _analysis
+                if (!personalityTypeCode) {
+                    const analysisStr = await env.USER_METADATA_KV.get(`${userId}_analysis`);
+                    if (analysisStr) {
+                        const analysisData = safeParseJson(analysisStr, null);
+                        personalityTypeCode = analysisData?.personalityTestProfile?.typeCode;
+                    }
+                }
+                
+                if (personalityTypeCode) {
+                    const advice = extractPsyAdviceForType(psyAdviceContent, personalityTypeCode);
+                    if (advice && advice.communication) {
+                        psyCommunicationStyle = advice.communication;
+                    }
+                }
+            }
+        } catch (err) {
+            console.warn(`CHAT_WARN (${userId}): Не може да се зареди комуникационен стил - ${err.message}`);
+        }
 
         let storedChatHistory = safeParseJson(storedChatHistoryStr, []);
         if (source === 'planModChat' && Array.isArray(history)) {
@@ -2537,6 +2570,7 @@ async function handleChatRequest(request, env) {
             '%%USER_CONDITIONS%%': promptData.userConditions,
             '%%USER_PREFERENCES%%': promptData.userPreferences,
             '%%PSYCH_PROFILE%%': promptData.psychProfile || NO_PSYCH_PROFILE_MESSAGE,
+            '%%PSY_COMMUNICATION_STYLE%%': psyCommunicationStyle,
             '%%INITIAL_CALORIES_MACROS%%': promptData.initCalMac,
             '%%PLAN_APPROACH_SUMMARY%%': promptData.planSum,
             '%%ALLOWED_FOODS_SUMMARY%%': promptData.allowedF,
@@ -5820,10 +5854,36 @@ async function processSingleUserPlan(userId, env) {
         } catch (psychoErr) {
             console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Грешка при зареждане на психопрофил - ${psychoErr.message}`);
         }
+        
+        // Extract personality type code for psy advice matching
+        let personalityTypeCode = null;
+        try {
+            const { parsed: psychTestsData } = await getKvParsed(
+                `${userId}_psychTests`,
+                (value) => parsePossiblyStringifiedJson(value),
+                null
+            );
+            if (psychTestsData?.personalityTest?.typeCode) {
+                personalityTypeCode = psychTestsData.personalityTest.typeCode;
+            } else {
+                // Fallback to _analysis data
+                const { parsed: psychoAnalysisParsed } = await getKvParsed(
+                    `${userId}_analysis`,
+                    (value) => parsePossiblyStringifiedJson(value),
+                    null
+                );
+                if (psychoAnalysisParsed?.personalityTestProfile?.typeCode) {
+                    personalityTypeCode = psychoAnalysisParsed.personalityTestProfile.typeCode;
+                }
+            }
+        } catch (err) {
+            console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Не може да се извлече личностен тип код - ${err.message}`);
+        }
+        
         // Processing plan for user
         await addLog('Подготовка на модела');
         let planBuilder = createEmptyPlanBuilder();
-        const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, openaiApiKey, planModelName, unifiedPromptTemplate ] = await Promise.all([
+        const [ questionsJsonString, baseDietModelContent, allowedMealCombinationsContent, eatingPsychologyContent, recipeDataStr, geminiApiKey, openaiApiKey, planModelName, unifiedPromptTemplate, psyAdviceContent ] = await Promise.all([
             env.RESOURCES_KV.get('question_definitions'),
             env.RESOURCES_KV.get('base_diet_model'),
             env.RESOURCES_KV.get('allowed_meal_combinations'),
@@ -5832,7 +5892,8 @@ async function processSingleUserPlan(userId, env) {
             env[GEMINI_API_KEY_SECRET_NAME],
             env[OPENAI_API_KEY_SECRET_NAME],
             env.RESOURCES_KV.get('model_plan_generation'),
-            env.RESOURCES_KV.get('prompt_unified_plan_generation_v2')
+            env.RESOURCES_KV.get('prompt_unified_plan_generation_v2'),
+            env.RESOURCES_KV.get('psy_advice')
         ]);
         // Опционално: чакаща модификация на плана
         let pendingPlanModText = '';
@@ -6034,12 +6095,29 @@ async function processSingleUserPlan(userId, env) {
             '%%AVG_MOOD_LAST_7_DAYS%%': avgMood !== 'N/A' ? `${avgMood}/5` : 'N/A',
             '%%AVG_ENERGY_LAST_7_DAYS%%': avgEnergy !== 'N/A' ? `${avgEnergy}/5` : 'N/A'
         };
+        
+        // Extract and format psy advice based on personality type
+        let psyDietaryAdvice = '';
+        let psyCommunicationStyle = '';
+        if (personalityTypeCode && psyAdviceContent) {
+            const advice = extractPsyAdviceForType(psyAdviceContent, personalityTypeCode);
+            if (advice) {
+                psyDietaryAdvice = formatPsyAdviceForPrompt(advice, personalityTypeCode);
+                psyCommunicationStyle = advice.communication || '';
+                console.log(`PROCESS_USER_PLAN_INFO (${userId}): Приложени специфични съвети за профил ${personalityTypeCode}`);
+            } else {
+                console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Не са намерени съвети в psy_advice за профил ${personalityTypeCode}`);
+            }
+        }
+        
         Object.assign(replacements, targetReplacements, {
             '%%USER_ANSWERS_JSON%%': userAnswersJson,
             '%%DOMINANT_PSYCHO_PROFILE%%': psychoProfileText,
             '%%PSYCHO_PROFILE_CONCEPTS%%': psychoConceptsText,
             '%%VISUAL_TEST_PROFILE%%': visualTestInfo || 'Няма визуален тест',
-            '%%PERSONALITY_TEST_PROFILE%%': personalityTestInfo || 'Няма личностен тест'
+            '%%PERSONALITY_TEST_PROFILE%%': personalityTestInfo || 'Няма личностен тест',
+            '%%PSY_DIETARY_ADVICE%%': psyDietaryAdvice || 'Няма специфични хранителни съвети за този профил',
+            '%%PSY_COMMUNICATION_STYLE%%': psyCommunicationStyle || 'Стандартен комуникационен стил'
         });
         const targetPlaceholderDefaults = {};
         for (const placeholders of Object.values(TARGET_MACRO_PLACEHOLDERS)) {
@@ -6714,6 +6792,122 @@ function formatPsychProfileForPrompt(psychProfile) {
     }
     
     return '=== ПСИХОЛОГИЧЕСКИ ПРОФИЛ ===\n' + text;
+}
+
+/**
+ * Извлича хранителни съвети и комуникационни насоки от psyadvice.txt базирани на типа личност.
+ * @param {string} psyAdviceContent - Съдържанието на psyadvice.txt файла
+ * @param {string} personalityTypeCode - Кодът на личностния тип (напр. "X-S-D-P", "E-V-M-J")
+ * @returns {{dietary: string, communication: string, risks: string} | null} - Обект с хранителни съвети, комуникация и рискове
+ */
+function extractPsyAdviceForType(psyAdviceContent, personalityTypeCode) {
+    if (!psyAdviceContent || !personalityTypeCode) {
+        return null;
+    }
+    
+    // Нормализиране на типа (премахване на whitespace, uppercase)
+    const normalizedType = personalityTypeCode.trim().toUpperCase();
+    
+    // Разделяне на съдържанието на блокове по профили
+    const lines = psyAdviceContent.split('\n');
+    let currentProfile = null;
+    let inRisks = false;
+    let inDirection = false;
+    let inCommunication = false;
+    
+    const profileData = {
+        risks: [],
+        direction: [],
+        communication: []
+    };
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // Проверка дали е нов профил
+        if (line && !line.includes(':') && !line.includes('–') && line.length < 15) {
+            const potentialType = line.replace(/\s+/g, '-').toUpperCase();
+            if (potentialType === normalizedType) {
+                currentProfile = normalizedType;
+                inRisks = false;
+                inDirection = false;
+                inCommunication = false;
+                continue;
+            } else if (currentProfile && potentialType.match(/^[EX]-[SV]-[DM]-[PJ]$/)) {
+                // Нов профил започнал, край на текущия
+                break;
+            }
+        }
+        
+        if (!currentProfile) continue;
+        
+        // Проверка за секции
+        if (line.includes('Хранене') && line.includes('риск')) {
+            inRisks = true;
+            inDirection = false;
+            inCommunication = false;
+            continue;
+        } else if (line === 'Насока:') {
+            inRisks = false;
+            inDirection = true;
+            inCommunication = false;
+            continue;
+        } else if (line === 'Комуникация:') {
+            inRisks = false;
+            inDirection = false;
+            inCommunication = true;
+            continue;
+        }
+        
+        // Добавяне на съдържание към съответната секция
+        if (line && currentProfile === normalizedType) {
+            if (inRisks && !line.includes(':')) {
+                profileData.risks.push(line);
+            } else if (inDirection && !line.includes(':')) {
+                profileData.direction.push(line);
+            } else if (inCommunication && !line.includes(':')) {
+                profileData.communication.push(line);
+            }
+        }
+    }
+    
+    if (profileData.risks.length === 0 && profileData.direction.length === 0 && profileData.communication.length === 0) {
+        return null;
+    }
+    
+    return {
+        risks: profileData.risks.join('\n'),
+        dietary: profileData.direction.join('\n'),
+        communication: profileData.communication.join('\n')
+    };
+}
+
+/**
+ * Форматира съветите от psyadvice за включване в AI prompt.
+ * @param {Object} advice - Обект със съвети от extractPsyAdviceForType
+ * @param {string} personalityTypeCode - Кодът на личностния тип
+ * @returns {string} - Форматиран текст за prompt
+ */
+function formatPsyAdviceForPrompt(advice, personalityTypeCode) {
+    if (!advice) {
+        return '';
+    }
+    
+    let text = `\n=== СПЕЦИФИЧНИ ХРАНИТЕЛНИ НАСОКИ ЗА ПРОФИЛ ${personalityTypeCode} ===\n`;
+    
+    if (advice.risks) {
+        text += '\n🔴 ХРАНИТЕЛНИ РИСКОВЕ:\n' + advice.risks + '\n';
+    }
+    
+    if (advice.dietary) {
+        text += '\n✅ ПРЕПОРЪЧИТЕЛНА НАСОКА:\n' + advice.dietary + '\n';
+    }
+    
+    if (advice.communication) {
+        text += '\n💬 КОМУНИКАЦИОНЕН СТИЛ:\n' + advice.communication + '\n';
+    }
+    
+    return text;
 }
 
 function createPromptDataFromContext(context) {
