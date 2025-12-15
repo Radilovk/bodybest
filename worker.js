@@ -6805,6 +6805,9 @@ function extractPsyAdviceForType(psyAdviceContent, personalityTypeCode) {
         return null;
     }
     
+    // Константи за парсване на формата
+    const MAX_PROFILE_CODE_LENGTH = 15; // Максимална дължина на кода на личностния тип
+    
     // Нормализиране на типа (премахване на whitespace, uppercase)
     const normalizedType = personalityTypeCode.trim().toUpperCase();
     
@@ -6824,8 +6827,8 @@ function extractPsyAdviceForType(psyAdviceContent, personalityTypeCode) {
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         
-        // Проверка дали е нов профил
-        if (line && !line.includes(':') && !line.includes('–') && line.length < 15) {
+        // Проверка дали е нов профил (кратки редове без специални символи са кодове на профили)
+        if (line && !line.includes(':') && !line.includes('–') && line.length < MAX_PROFILE_CODE_LENGTH) {
             const potentialType = line.replace(/\s+/g, '-').toUpperCase();
             if (potentialType === normalizedType) {
                 currentProfile = normalizedType;
