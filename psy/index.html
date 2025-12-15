@@ -824,6 +824,10 @@
         console.log('[VISUAL TEST] ✓ Успешно запазване в backend');
         localStorage.setItem('psychTestsLastSync', timestamp);
         
+        // Проверка дали теста е стартиран от профила
+        const fromProfile = urlParams.get('from') === 'profile';
+        
+        // Показваме съобщение за успешно запазване
         // Проверка дали се препоръчва регенериране на плана
         if (result.data && result.data.shouldRegeneratePlan) {
           const reason = result.data.regenerationReason || 'Препоръчваме регенериране на плана за пълна интеграция на психопрофила.';
@@ -837,9 +841,28 @@
                 </a>
               </div>
             </div>
+            <div style="margin-top: 12px; font-size: 14px; color: var(--text-color-muted);">
+              Страницата ще се затвори автоматично след 3 секунди...
+            </div>
           `);
         } else {
-          showSaveStatus('success', 'Резултатите са запазени успешно в профила ви! <a href="../code.html#profile-tab" style="color: inherit; text-decoration: underline;" onclick="sessionStorage.setItem(\'openPsychTestDetails\', \'true\');">Вижте профила си тук</a>.');
+          showSaveStatus('success', `
+            Резултатите са запазени успешно в профила ви! 
+            <a href="../code.html#profile-tab" style="color: inherit; text-decoration: underline;" onclick="sessionStorage.setItem('openPsychTestDetails', 'true');">Вижте профила си тук</a>.
+            <div style="margin-top: 12px; font-size: 14px; color: var(--text-color-muted);">
+              Страницата ще се затвори автоматично след 3 секунди...
+            </div>
+          `);
+        }
+        
+        // Затваряме страницата след 3 секунди и връщаме потребителя на профил таба
+        if (fromProfile) {
+          setTimeout(() => {
+            // Задаваме флаг да се отвори детайлния контейнер
+            sessionStorage.setItem('openPsychTestDetails', 'true');
+            // Затваряме страницата и връщаме потребителя на code.html#profile-tab
+            window.location.href = '../code.html?fromTest=true#profile-tab';
+          }, 3000);
         }
       } else {
         console.error('[VISUAL TEST] Backend грешка:', result.message);

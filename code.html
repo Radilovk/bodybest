@@ -1392,13 +1392,28 @@
               </p>
           `;
           
-          // Показване на съкратените характеристики
+          // Показване на пълните резултати както в самия тест
           if (vt.mainPsycho && vt.mainPsycho.length > 0) {
             html += `
-              <div style="margin-bottom: var(--space-sm);">
-                <h5 style="font-size: var(--fs-sm); margin-bottom: var(--space-xs); color: var(--text-color-primary);">Ключови характеристики:</h5>
-                <ul style="margin: 0; padding-left: var(--space-md); font-size: var(--fs-sm); color: var(--text-color-secondary);">
-                  ${vt.mainPsycho.map(item => `<li>${item}</li>`).join('')}
+              <div style="margin-bottom: var(--space-md);">
+                <h5 style="font-size: var(--fs-base); margin-bottom: var(--space-sm); color: var(--text-color-primary); font-weight: 600;">
+                  Профил и рискови хранителни навици
+                </h5>
+                <ul style="margin: 0; padding-left: var(--space-md); font-size: var(--fs-sm); color: var(--text-color-secondary); line-height: 1.6;">
+                  ${vt.mainPsycho.map(item => `<li style="margin-bottom: var(--space-xs);">${item}</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+          
+          if (vt.mainHabits && vt.mainHabits.length > 0) {
+            html += `
+              <div style="margin-bottom: var(--space-md); padding: var(--space-sm); background: var(--color-warning-bg); border-left: 3px solid var(--color-warning); border-radius: var(--radius-sm);">
+                <h5 style="font-size: var(--fs-base); margin: 0 0 var(--space-sm) 0; color: var(--color-warning); font-weight: 600;">
+                  <i class="bi bi-exclamation-triangle"></i> Потенциални вредни последствия
+                </h5>
+                <ul style="margin: 0; padding-left: var(--space-md); font-size: var(--fs-sm); line-height: 1.6;">
+                  ${vt.mainHabits.map(habit => `<li style="margin-bottom: var(--space-xs);">${habit}</li>`).join('')}
                 </ul>
               </div>
             `;
@@ -1406,12 +1421,25 @@
           
           if (vt.mainRisks && vt.mainRisks.length > 0) {
             html += `
-              <div style="margin-bottom: var(--space-sm); padding: var(--space-sm); background: var(--color-warning-bg); border-left: 3px solid var(--color-warning); border-radius: var(--radius-sm);">
-                <h5 style="font-size: var(--fs-sm); margin: 0 0 var(--space-xs) 0; color: var(--color-warning);">
-                  <i class="bi bi-exclamation-triangle"></i> Области на внимание:
+              <div style="margin-bottom: var(--space-md); padding: var(--space-sm); background: var(--color-info-bg); border-left: 3px solid var(--color-info); border-radius: var(--radius-sm);">
+                <h5 style="font-size: var(--fs-base); margin: 0 0 var(--space-sm) 0; color: var(--color-info); font-weight: 600;">
+                  <i class="bi bi-lightbulb"></i> Препоръки за хранене
                 </h5>
-                <ul style="margin: 0; padding-left: var(--space-md); font-size: var(--fs-sm);">
-                  ${vt.mainRisks.map(risk => `<li>${risk}</li>`).join('')}
+                <ul style="margin: 0; padding-left: var(--space-md); font-size: var(--fs-sm); line-height: 1.6;">
+                  ${vt.mainRisks.map(risk => `<li style="margin-bottom: var(--space-xs);">${risk}</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+          
+          if (vt.mainMind && vt.mainMind.length > 0) {
+            html += `
+              <div style="margin-bottom: var(--space-md); padding: var(--space-sm); background: var(--color-success-bg); border-left: 3px solid var(--color-success); border-radius: var(--radius-sm);">
+                <h5 style="font-size: var(--fs-base); margin: 0 0 var(--space-sm) 0; color: var(--color-success); font-weight: 600;">
+                  <i class="bi bi-brain"></i> Психологически препоръки
+                </h5>
+                <ul style="margin: 0; padding-left: var(--space-md); font-size: var(--fs-sm); line-height: 1.6;">
+                  ${vt.mainMind.map(mind => `<li style="margin-bottom: var(--space-xs);">${mind}</li>`).join('')}
                 </ul>
               </div>
             `;
@@ -1430,6 +1458,13 @@
           }
           
           html += `</div>`;
+        }
+
+        // Visual separator between tests
+        if (psychTests.visualTest && psychTests.personalityTest) {
+          html += `
+            <div style="height: 2px; background: linear-gradient(to right, transparent, var(--primary-color), transparent); margin: var(--space-lg) 0; opacity: 0.3;"></div>
+          `;
         }
 
         // Personality Test Details
@@ -1680,42 +1715,48 @@
           }, 500);
         }
 
-        // Toggle accordion on click
-        accordionHeader.addEventListener('click', () => {
-          const isOpen = accordionHeader.classList.contains('open');
+        // Only add event listener if not already added
+        if (!accordionHeader.dataset.listenerAttached) {
+          accordionHeader.dataset.listenerAttached = 'true';
           
-          if (isOpen) {
-            accordionHeader.classList.remove('open');
-            accordionHeader.setAttribute('aria-expanded', 'false');
-            accordionContent.classList.remove('open-active');
-          } else {
-            accordionHeader.classList.add('open');
-            accordionHeader.setAttribute('aria-expanded', 'true');
-            accordionContent.classList.add('open-active');
-          }
-        });
+          // Toggle accordion on click
+          accordionHeader.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent event from bubbling to document
+            const isOpen = accordionHeader.classList.contains('open');
+            
+            if (isOpen) {
+              accordionHeader.classList.remove('open');
+              accordionHeader.setAttribute('aria-expanded', 'false');
+              accordionContent.classList.remove('open-active');
+            } else {
+              accordionHeader.classList.add('open');
+              accordionHeader.setAttribute('aria-expanded', 'true');
+              accordionContent.classList.add('open-active');
+            }
+          });
 
-        // Close accordion when clicking outside
-        document.addEventListener('click', (e) => {
-          const detailsCard = document.getElementById('psychTestDetailsCard');
-          if (detailsCard && !detailsCard.contains(e.target) && accordionHeader.classList.contains('open')) {
-            accordionHeader.classList.remove('open');
-            accordionHeader.setAttribute('aria-expanded', 'false');
-            accordionContent.classList.remove('open-active');
-          }
-        });
-
-        // Close accordion when switching tabs
-        const tabButtons = document.querySelectorAll('.tab-btn');
-        tabButtons.forEach(btn => {
-          btn.addEventListener('click', () => {
-            if (accordionHeader.classList.contains('open')) {
+          // Close accordion when clicking outside
+          document.addEventListener('click', (e) => {
+            const detailsCard = document.getElementById('psychTestDetailsCard');
+            if (detailsCard && !detailsCard.contains(e.target) && accordionHeader.classList.contains('open')) {
               accordionHeader.classList.remove('open');
               accordionHeader.setAttribute('aria-expanded', 'false');
               accordionContent.classList.remove('open-active');
             }
           });
-        });
+
+          // Close accordion when switching tabs
+          const tabButtons = document.querySelectorAll('.tab-btn');
+          tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+              if (accordionHeader.classList.contains('open')) {
+                accordionHeader.classList.remove('open');
+                accordionHeader.setAttribute('aria-expanded', 'false');
+                accordionContent.classList.remove('open-active');
+              }
+            });
+          });
+        }
       }
 
       // Run on page load
