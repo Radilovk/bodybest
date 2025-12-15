@@ -2939,13 +2939,31 @@ async function handleSavePsychTestsRequest(request, env) {
         }
 
         // Флаг за регенериране на плана
-        // Препоръчваме регенериране само ако има план, но не успяхме да добавим данните към него
-        // Ако данните са добавени успешно, не е нужно регенериране
+        // Когато потребителят попълни психотестове, препоръчваме регенериране на плана
+        // за да се интегрират психопрофил данните в препоръките и менюто
         let shouldRegeneratePlan = false;
-        if (hasPlan && !addedToFinalPlan) {
-            // Ако има план, но не успяхме да добавим данните, маркираме че трябва да се регенерира
-            await env.USER_METADATA_KV.put(`${userId}_psych_tests_updated`, timestamp);
-            shouldRegeneratePlan = true;
+        let regenerationReason = '';
+        
+        if (hasPlan) {
+            if (addedToFinalPlan) {
+                // Данните са добавени успешно към съществуващия план
+                // Но за пълна интеграция в AI препоръките се препоръчва регенериране
+                shouldRegeneratePlan = true;
+                regenerationReason = 'Психопрофилът е добавен към плана. Препоръчваме регенериране за пълна интеграция на препоръките.';
+                await env.USER_METADATA_KV.put(`${userId}_psycho_regeneration_pending`, JSON.stringify({
+                    reason: regenerationReason,
+                    timestamp: timestamp,
+                    visualTestAdded: !!visualTest,
+                    personalityTestAdded: !!personalityTest
+                }));
+                console.log(`SAVE_PSYCH_TESTS (${userId}): Маркиран за препоръчано регенериране на плана.`);
+            } else {
+                // Ако има план, но не успяхме да добавим данните, задължително трябва регенериране
+                shouldRegeneratePlan = true;
+                regenerationReason = 'Необходимо е регенериране на плана за добавяне на психопрофила.';
+                await env.USER_METADATA_KV.put(`${userId}_psych_tests_updated`, timestamp);
+                console.warn(`SAVE_PSYCH_TESTS (${userId}): Не успя добавянето към final_plan - необходимо регенериране.`);
+            }
         }
 
         return {
@@ -2956,6 +2974,7 @@ async function handleSavePsychTestsRequest(request, env) {
                 personalityTestSaved: !!personalityTest,
                 addedToFinalPlan,
                 shouldRegeneratePlan,
+                regenerationReason,
                 timestamp: psychTestsToStore.lastUpdated || timestamp
             }
         };
