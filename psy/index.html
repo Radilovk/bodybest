@@ -295,7 +295,7 @@
 </head>
 <body>
   <!-- Back to Profile Button -->
-  <a href="../code.html#profile-tab" class="back-btn" title="Назад към профила">
+  <a href="../code.html#profile-tab" class="back-btn" title="Назад към профила" onclick="sessionStorage.setItem('openPsychTestDetails', 'true');">
     <i class="bi bi-arrow-left"></i>
   </a>
 
@@ -609,6 +609,9 @@
   
   // Събитие за бутона "Запази резултата"
   document.getElementById("saveResultBtn").addEventListener("click", async ()=>{
+    // Set flag to keep accordion open when returning to profile
+    sessionStorage.setItem('openPsychTestDetails', 'true');
+    
     // Валидация на pendingId
     if(!pendingId || !profiles[pendingId]) {
       console.error('Invalid profile ID:', pendingId);
@@ -829,14 +832,14 @@
             <div style="background: rgba(255, 193, 7, 0.1); padding: 12px; border-radius: 8px; margin: 12px 0; border-left: 3px solid #ffc107;">
               <strong>💡 Препоръка:</strong> ${reason}
               <div style="margin-top: 8px;">
-                <a href="../code.html#profile-tab" style="color: #22c55e; text-decoration: underline; font-weight: 600;">
+                <a href="../code.html#profile-tab" style="color: #22c55e; text-decoration: underline; font-weight: 600;" onclick="sessionStorage.setItem('openPsychTestDetails', 'true');">
                   Отидете в профила → Регенерирайте плана
                 </a>
               </div>
             </div>
           `);
         } else {
-          showSaveStatus('success', 'Резултатите са запазени успешно в профила ви! <a href="../code.html#profile-tab" style="color: inherit; text-decoration: underline;">Вижте профила си тук</a>.');
+          showSaveStatus('success', 'Резултатите са запазени успешно в профила ви! <a href="../code.html#profile-tab" style="color: inherit; text-decoration: underline;" onclick="sessionStorage.setItem(\'openPsychTestDetails\', \'true\');">Вижте профила си тук</a>.');
         }
       } else {
         console.error('[VISUAL TEST] Backend грешка:', result.message);
