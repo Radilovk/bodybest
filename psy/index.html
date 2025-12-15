@@ -702,8 +702,8 @@
         mainPsycho: profile.psycho || [], // Всички психологически характеристики
         mainHabits: profile.habits || [], // Всички навици
         mainRisks: profile.risks || [], // Всички рискове
-        // Добавяме обобщение за бърз преглед
-        summary: `${profile.name} - ${profile.short}`,
+        // Добавяме обобщение за бърз преглед (handle empty short gracefully)
+        summary: profile.short ? `${profile.name} - ${profile.short}` : profile.name,
         timestamp: timestamp
       };
       

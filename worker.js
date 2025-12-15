@@ -2764,7 +2764,7 @@ function createPsychoTestsProfileData(visualTest, personalityTest, timestamps) {
             profileId: visualTest.id,
             profileName: visualTest.name,
             profileShort: visualTest.short || '',
-            summary: visualTest.summary || `${visualTest.name} - ${visualTest.short || ''}`,
+            summary: visualTest.summary || (visualTest.short ? `${visualTest.name} - ${visualTest.short}` : visualTest.name),
             mainPsycho: visualTest.mainPsycho || [],
             mainHabits: visualTest.mainHabits || [],
             mainRisks: visualTest.mainRisks || [],
@@ -2777,7 +2777,7 @@ function createPsychoTestsProfileData(visualTest, personalityTest, timestamps) {
         psychoTestsData.personalityTest = {
             typeCode: personalityTest.typeCode,
             scores: personalityTest.scores,
-            summary: personalityTest.summary || `Личностен тип ${personalityTest.typeCode}`,
+            summary: personalityTest.summary || (personalityTest.typeCode ? `Личностен тип ${personalityTest.typeCode}` : 'Личностен профил'),
             riskFlags: personalityTest.riskFlags || [],
             strengths: personalityTest.strengths || [],
             mainRisks: personalityTest.mainRisks || [],
