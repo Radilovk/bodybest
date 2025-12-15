@@ -76,7 +76,7 @@ describe('psych tests storage', () => {
     expect(res.data.lastUpdated).toBe('2025-02-02T00:00:00Z');
   });
 
-  test('автоматично добавя психо тест данни към final_plan', async () => {
+  test('автоматично добавя психо тест данни към final_plan и препоръчва регенериране', async () => {
     const existingPlan = {
       profileSummary: 'Съществуващ план',
       caloriesMacros: { calories: 2000 },
@@ -107,7 +107,9 @@ describe('psych tests storage', () => {
     const saveRes = await handleSavePsychTestsRequest(makePostRequest(payload), env);
     expect(saveRes.success).toBe(true);
     expect(saveRes.data.addedToFinalPlan).toBe(true);
-    expect(saveRes.data.shouldRegeneratePlan).toBe(false);
+    // След промените, винаги препоръчваме регенериране за пълна интеграция
+    expect(saveRes.data.shouldRegeneratePlan).toBe(true);
+    expect(saveRes.data.regenerationReason).toContain('Психопрофилът е добавен към плана');
 
     // Проверка, че final_plan е актуализиран
     const updatedPlan = JSON.parse(store['u3_final_plan']);
@@ -118,6 +120,12 @@ describe('psych tests storage', () => {
     expect(updatedPlan.psychoTestsProfile.personalityTest.scores.E).toBe(75);
     expect(updatedPlan.psychoTestsProfile.personalityTest.riskFlags).toEqual(['perfectionism']);
     expect(updatedPlan.psychoTestsProfile.lastUpdated).toBeDefined();
+    
+    // Проверка, че е създаден флаг за препоръчано регенериране
+    expect(store['u3_psycho_regeneration_pending']).toBeDefined();
+    const regenFlag = JSON.parse(store['u3_psycho_regeneration_pending']);
+    expect(regenFlag.visualTestAdded).toBe(true);
+    expect(regenFlag.personalityTestAdded).toBe(true);
   });
 
   test('препоръчва регенериране на план когато няма final_plan', async () => {

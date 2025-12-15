@@ -1382,14 +1382,21 @@
         if (scores.N >= 65) riskFlags.push('Висока емоционална реактивност');
         if (scores.R >= 65) riskFlags.push('Висока склонност към риск');
         
-        // Съкратени резултати - само есенциалната информация
+        // Обогатени резултати със съдържателна информация за AI анализ
         const personalityTest = {
           typeCode: typeCode,
           scores: scores,
           riskFlags: riskFlags,
           strengths: analysis.strengths || [],
-          mainRisks: analysis.risks.slice(0, 2).map(r => r.title), // Само първите 2 рискови области
-          topRecommendations: analysis.recommendations.slice(0, 3), // Само топ 3 препоръки
+          // Запазваме пълните рискове с детайли за по-задълбочен анализ
+          mainRisks: analysis.risks ? analysis.risks.map(r => ({
+            title: r.title,
+            description: r.description
+          })) : [],
+          // Запазваме всички препоръки за по-добро планиране
+          topRecommendations: analysis.recommendations || [],
+          // Добавяме обобщение за бърз преглед (handle missing typeCode gracefully)
+          summary: typeCode ? `Личностен тип ${typeCode} с ${riskFlags.length > 0 ? 'рискови фактори' : 'балансиран профил'}` : 'Личностен профил',
           timestamp: timestamp
         };
         
@@ -1445,7 +1452,24 @@
         if (result.success) {
           console.log('[PERSONALITY TEST] ✓ Успешно запазване в backend');
           localStorage.setItem('psychTestsLastSync', timestamp);
-          showSaveMessage('success', 'Резултатите са запазени успешно в профила ви! <a href="../code.html#profile-tab" style="color: inherit; text-decoration: underline;">Вижте профила си тук</a>.');
+          
+          // Проверка дали се препоръчва регенериране на плана
+          if (result.data && result.data.shouldRegeneratePlan) {
+            const reason = result.data.regenerationReason || 'Препоръчваме регенериране на плана за пълна интеграция на личностния профил.';
+            showSaveMessage('success', `
+              <div style="margin-bottom: 12px;">✓ Резултатите са запазени успешно в профила ви!</div>
+              <div style="background: rgba(255, 193, 7, 0.1); padding: 12px; border-radius: 8px; margin: 12px 0; border-left: 3px solid #ffc107;">
+                <strong>💡 Препоръка:</strong> ${reason}
+                <div style="margin-top: 8px;">
+                  <a href="../code.html#profile-tab" style="color: #22c55e; text-decoration: underline; font-weight: 600;">
+                    Отидете в профила → Регенерирайте плана
+                  </a>
+                </div>
+              </div>
+            `);
+          } else {
+            showSaveMessage('success', 'Резултатите са запазени успешно в профила ви! <a href="../code.html#profile-tab" style="color: inherit; text-decoration: underline;">Вижте профила си тук</a>.');
+          }
         } else {
           console.error('[PERSONALITY TEST] Backend грешка:', result.message);
           showSaveMessage('warning', `Резултатите са запазени локално. Backend грешка: ${result.message || 'неизвестна грешка'}`);

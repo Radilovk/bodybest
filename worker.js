@@ -2764,6 +2764,7 @@ function createPsychoTestsProfileData(visualTest, personalityTest, timestamps) {
             profileId: visualTest.id,
             profileName: visualTest.name,
             profileShort: visualTest.short || '',
+            summary: visualTest.summary || (visualTest.short ? `${visualTest.name} - ${visualTest.short}` : visualTest.name),
             mainPsycho: visualTest.mainPsycho || [],
             mainHabits: visualTest.mainHabits || [],
             mainRisks: visualTest.mainRisks || [],
@@ -2776,6 +2777,7 @@ function createPsychoTestsProfileData(visualTest, personalityTest, timestamps) {
         psychoTestsData.personalityTest = {
             typeCode: personalityTest.typeCode,
             scores: personalityTest.scores,
+            summary: personalityTest.summary || (personalityTest.typeCode ? `Личностен тип ${personalityTest.typeCode}` : 'Личностен профил'),
             riskFlags: personalityTest.riskFlags || [],
             strengths: personalityTest.strengths || [],
             mainRisks: personalityTest.mainRisks || [],
@@ -2937,13 +2939,31 @@ async function handleSavePsychTestsRequest(request, env) {
         }
 
         // Флаг за регенериране на плана
-        // Препоръчваме регенериране само ако има план, но не успяхме да добавим данните към него
-        // Ако данните са добавени успешно, не е нужно регенериране
+        // Когато потребителят попълни психотестове, препоръчваме регенериране на плана
+        // за да се интегрират психопрофил данните в препоръките и менюто
         let shouldRegeneratePlan = false;
-        if (hasPlan && !addedToFinalPlan) {
-            // Ако има план, но не успяхме да добавим данните, маркираме че трябва да се регенерира
-            await env.USER_METADATA_KV.put(`${userId}_psych_tests_updated`, timestamp);
-            shouldRegeneratePlan = true;
+        let regenerationReason = '';
+        
+        if (hasPlan) {
+            if (addedToFinalPlan) {
+                // Данните са добавени успешно към съществуващия план
+                // Но за пълна интеграция в AI препоръките се препоръчва регенериране
+                shouldRegeneratePlan = true;
+                regenerationReason = 'Психопрофилът е добавен към плана. Препоръчваме регенериране за пълна интеграция на препоръките.';
+                await env.USER_METADATA_KV.put(`${userId}_psycho_regeneration_pending`, JSON.stringify({
+                    reason: regenerationReason,
+                    timestamp: timestamp,
+                    visualTestAdded: !!visualTest,
+                    personalityTestAdded: !!personalityTest
+                }));
+                console.log(`SAVE_PSYCH_TESTS (${userId}): Маркиран за препоръчано регенериране на плана.`);
+            } else {
+                // Ако има план, но не успяхме да добавим данните, задължително трябва регенериране
+                shouldRegeneratePlan = true;
+                regenerationReason = 'Необходимо е регенериране на плана за добавяне на психопрофила.';
+                await env.USER_METADATA_KV.put(`${userId}_psych_tests_updated`, timestamp);
+                console.warn(`SAVE_PSYCH_TESTS (${userId}): Не успя добавянето към final_plan - необходимо регенериране.`);
+            }
         }
 
         return {
@@ -2954,6 +2974,7 @@ async function handleSavePsychTestsRequest(request, env) {
                 personalityTestSaved: !!personalityTest,
                 addedToFinalPlan,
                 shouldRegeneratePlan,
+                regenerationReason,
                 timestamp: psychTestsToStore.lastUpdated || timestamp
             }
         };
@@ -5680,19 +5701,28 @@ async function processSingleUserPlan(userId, env) {
                         visualTestInfo += `\nОписание: ${short}`;
                     }
                     
-                    // Добавяне на mainPsycho характеристики
+                    // Добавяне на mainPsycho характеристики (с подробности)
                     if (vt.mainPsycho && Array.isArray(vt.mainPsycho) && vt.mainPsycho.length > 0) {
-                        visualTestInfo += `\nПсихологически характеристики: ${vt.mainPsycho.join('; ')}`;
+                        visualTestInfo += `\n\nПсихологически характеристики:`;
+                        vt.mainPsycho.forEach((item, idx) => {
+                            visualTestInfo += `\n  ${idx + 1}. ${item}`;
+                        });
                     }
                     
-                    // Добавяне на mainHabits
+                    // Добавяне на mainHabits (с подробности)
                     if (vt.mainHabits && Array.isArray(vt.mainHabits) && vt.mainHabits.length > 0) {
-                        visualTestInfo += `\nХранителни навици: ${vt.mainHabits.join('; ')}`;
+                        visualTestInfo += `\n\nХранителни навици:`;
+                        vt.mainHabits.forEach((item, idx) => {
+                            visualTestInfo += `\n  ${idx + 1}. ${item}`;
+                        });
                     }
                     
-                    // Добавяне на mainRisks
+                    // Добавяне на mainRisks (с подробности)
                     if (vt.mainRisks && Array.isArray(vt.mainRisks) && vt.mainRisks.length > 0) {
-                        visualTestInfo += `\nПотенциални рискове: ${vt.mainRisks.join('; ')}`;
+                        visualTestInfo += `\n\nПотенциални рискове:`;
+                        vt.mainRisks.forEach((item, idx) => {
+                            visualTestInfo += `\n  ${idx + 1}. ${item}`;
+                        });
                     }
                 }
                 
@@ -5709,11 +5739,27 @@ async function processSingleUserPlan(userId, env) {
                     }
                     
                     if (pt.strengths && Array.isArray(pt.strengths) && pt.strengths.length > 0) {
-                        personalityTestInfo += `\nСилни страни: ${pt.strengths.join('; ')}`;
+                        personalityTestInfo += `\n\nСилни страни:`;
+                        pt.strengths.forEach((item, idx) => {
+                            personalityTestInfo += `\n  ${idx + 1}. ${item}`;
+                        });
                     }
                     
+                    // Обработка на mainRisks - може да е масив от стрингове или обекти
                     if (pt.mainRisks && Array.isArray(pt.mainRisks) && pt.mainRisks.length > 0) {
-                        personalityTestInfo += `\nОсновни рискове: ${pt.mainRisks.join('; ')}`;
+                        personalityTestInfo += `\n\nОсновни рискове:`;
+                        pt.mainRisks.forEach((risk, idx) => {
+                            if (typeof risk === 'object' && risk.title) {
+                                // Нов формат с обекти { title, description }
+                                personalityTestInfo += `\n  ${idx + 1}. ${risk.title}`;
+                                if (risk.description) {
+                                    personalityTestInfo += ` - ${risk.description}`;
+                                }
+                            } else {
+                                // Стар формат - само стринг
+                                personalityTestInfo += `\n  ${idx + 1}. ${risk}`;
+                            }
+                        });
                     }
                     
                     if (pt.riskFlags && Array.isArray(pt.riskFlags) && pt.riskFlags.length > 0) {
@@ -5721,7 +5767,10 @@ async function processSingleUserPlan(userId, env) {
                     }
                     
                     if (pt.topRecommendations && Array.isArray(pt.topRecommendations) && pt.topRecommendations.length > 0) {
-                        personalityTestInfo += `\nПрепоръки: ${pt.topRecommendations.join('; ')}`;
+                        personalityTestInfo += `\n\nПрепоръки:`;
+                        pt.topRecommendations.forEach((rec, idx) => {
+                            personalityTestInfo += `\n  ${idx + 1}. ${rec}`;
+                        });
                     }
                 }
             }

@@ -693,14 +693,17 @@
       
       const timestamp = new Date().toISOString();
       
-      // Съкратена версия - само есенциалната информация
+      // Обогатена версия със съдържателна информация за AI анализ
       const visualTest = {
         id: profileId,
         name: profile.name,
         short: profile.short,
-        mainPsycho: profile.psycho.slice(0, 2), // Първите 2 психо характеристики
-        mainHabits: profile.habits.slice(0, 2), // Първите 2 навика
-        mainRisks: profile.risks.slice(0, 2), // Първите 2 риска
+        // Запазваме пълните масиви за по-задълбочен анализ
+        mainPsycho: profile.psycho || [], // Всички психологически характеристики
+        mainHabits: profile.habits || [], // Всички навици
+        mainRisks: profile.risks || [], // Всички рискове
+        // Добавяме обобщение за бърз преглед (handle empty short gracefully)
+        summary: profile.short ? `${profile.name} - ${profile.short}` : profile.name,
         timestamp: timestamp
       };
       
@@ -756,7 +759,24 @@
       if (result.success) {
         console.log('[VISUAL TEST] ✓ Успешно запазване в backend');
         localStorage.setItem('psychTestsLastSync', timestamp);
-        showSaveStatus('success', 'Резултатите са запазени успешно в профила ви! <a href="../code.html#profile-tab" style="color: inherit; text-decoration: underline;">Вижте профила си тук</a>.');
+        
+        // Проверка дали се препоръчва регенериране на плана
+        if (result.data && result.data.shouldRegeneratePlan) {
+          const reason = result.data.regenerationReason || 'Препоръчваме регенериране на плана за пълна интеграция на психопрофила.';
+          showSaveStatus('success', `
+            <div style="margin-bottom: 12px;">✓ Резултатите са запазени успешно в профила ви!</div>
+            <div style="background: rgba(255, 193, 7, 0.1); padding: 12px; border-radius: 8px; margin: 12px 0; border-left: 3px solid #ffc107;">
+              <strong>💡 Препоръка:</strong> ${reason}
+              <div style="margin-top: 8px;">
+                <a href="../code.html#profile-tab" style="color: #22c55e; text-decoration: underline; font-weight: 600;">
+                  Отидете в профила → Регенерирайте плана
+                </a>
+              </div>
+            </div>
+          `);
+        } else {
+          showSaveStatus('success', 'Резултатите са запазени успешно в профила ви! <a href="../code.html#profile-tab" style="color: inherit; text-decoration: underline;">Вижте профила си тук</a>.');
+        }
       } else {
         console.error('[VISUAL TEST] Backend грешка:', result.message);
         showSaveStatus('warning', `Резултатите са запазени локално. Backend грешка: ${result.message || 'неизвестна грешка'}`);
