@@ -6798,7 +6798,7 @@ function formatPsychProfileForPrompt(psychProfile) {
  * Извлича хранителни съвети и комуникационни насоки от psyadvice.txt базирани на типа личност.
  * @param {string} psyAdviceContent - Съдържанието на psyadvice.txt файла
  * @param {string} personalityTypeCode - Кодът на личностния тип (напр. "X-S-D-P", "E-V-M-J")
- * @returns {{dietary: string, communication: string, risks: string} | null} - Обект с хранителни съвети, комуникация и рискове
+ * @returns {{risks: string, dietary: string, communication: string} | null} - Обект с хранителни съвети, комуникация и рискове
  */
 function extractPsyAdviceForType(psyAdviceContent, personalityTypeCode) {
     if (!psyAdviceContent || !personalityTypeCode) {
