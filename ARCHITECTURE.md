@@ -370,6 +370,11 @@ async function callOpenAI(messages, options, env) { ... }
 async function callGemini(messages, options, env) { ... }
 async function callCloudflareAI(model, messages, env) { ... }
 
+// 4a. Psychological Profiling
+function extractPsyAdviceForType(psyAdviceContent, personalityTypeCode) { ... }
+function formatPsyAdviceForPrompt(advice, personalityTypeCode) { ... }
+function formatPsychProfileForPrompt(psychProfile) { ... }
+
 // 5. Plan Generation
 async function generateInitialPlan(userId, analysis, env) { ... }
 async function modifyPlan(userId, userMessage, env) { ... }
@@ -534,11 +539,22 @@ send_contact_email          # "1"
 allowed_meal_combinations   # JSON array
 base_diet_model            # JSON object
 eating_psychology          # Text
+psy_advice                 # Psychological dietary advice per personality type
 question_definitions       # JSON array
 recipe_data               # JSON array
 product_macros            # JSON object
 nutrient_overrides        # JSON object
 ```
+
+**Психологическа персонализация:**
+- `psy_advice` - Съдържа специфични хранителни насоки и комуникационни стилове за 16 личностни типа (формат: E/X-S/V-D/M-P/J)
+- Всеки профил включва:
+  - Хранителни рискове (напр. пропускане на хранения, емоционално хранене)
+  - Препоръчителна насока за хранене (напр. фиксирани опорни хранения)
+  - Комуникационен стил (напр. кратка, ясна комуникация)
+- Използва се при:
+  - Генериране на персонализирани хранителни планове
+  - Адаптиране на комуникацията в чат асистента
 
 **Синхронизация:** `npm run sync-kv` (от `kv/DIET_RESOURCES/`)
 
