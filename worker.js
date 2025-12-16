@@ -7265,7 +7265,7 @@ async function fetchRecentLogEntries(userId, env, limit = 3) {
  * @param {Array<string>} [psychProfile.personalityTest.topRecommendations] - Топ препоръки
  * @param {Object} [psychProfile.personalityTest.psyadvice] - Данни от psyadvice.txt профила
  * @param {string} [psychProfile.personalityTest.psyadvice.description] - Описание на профила
- * @param {string|Array<string>} [psychProfile.personalityTest.psyadvice.traits] - Ключови характеристики
+ * @param {string} [psychProfile.personalityTest.psyadvice.traits] - Ключови характеристики
  * @param {Array<string>} [psychProfile.personalityTest.psyadvice.eatingRisks] - Рискове при хранене
  * @param {Array<string>} [psychProfile.personalityTest.psyadvice.directions] - Насоки за хранене
  * @param {Array<string>} [psychProfile.personalityTest.psyadvice.communication] - Комуникационен стил
