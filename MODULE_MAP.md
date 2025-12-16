@@ -468,21 +468,6 @@ calculateBodyFat(measurements)           // Body fat %
 
 ---
 
-### `js/planProposalManager.js`
-**Отговорност:** Proposal система за промени в план
-
-**Експорти:**
-```javascript
-class PlanProposalManager {
-  createProposal(changes)
-  approveProposal(proposalId)
-  rejectProposal(proposalId)
-  listProposals()
-}
-```
-
----
-
 ## UI Components
 
 ### `js/uiHandlers.js`
@@ -1198,16 +1183,6 @@ importProfile(json, name)                // Import JSON
 **Експорти:**
 ```javascript
 exampleUsage()                           // Показва примери
-```
-
----
-
-### `js/planProposalIntegration.js`
-**Отговорност:** Plan proposal интеграция
-
-**Експорти:**
-```javascript
-setupProposalIntegration()               // Setup UI
 ```
 
 ---

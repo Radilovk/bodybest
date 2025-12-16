@@ -607,8 +607,6 @@ js/
 │   ├── planEditor.js
 │   ├── planModChat.js
 │   ├── planRegenerator.js
-│   ├── planProposalManager.js
-│   ├── planProposalIntegration.js
 │   └── metricUtils.js
 │
 ├── 🎨 UI Components
@@ -797,7 +795,6 @@ docs/
 ├── 🤖 AI & Plans
 │   ├── AI_PLAN_MODIFICATION_BG.md      # Plan modification logic
 │   ├── ANALYTICS_FORMULAS_BG.md        # Analytics formulas
-│   ├── PLAN_PROPOSAL_OPTIMIZATION_BG.md
 │   ├── QUESTIONNAIRE_ANALYSIS_CORRELATION.md
 │   └── OPTIMIZATIONS.md
 │

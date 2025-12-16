@@ -68,11 +68,7 @@ export const apiEndpoints = {
     getInitialAnalysis: `${workerBaseUrl}/api/getInitialAnalysis`,
     getMaintenanceMode: `${workerBaseUrl}/api/getMaintenanceMode`,
     setMaintenanceMode: `${workerBaseUrl}/api/setMaintenanceMode`,
-    proposePlanChange: `${workerBaseUrl}/api/proposePlanChange`,
-    approvePlanChange: `${workerBaseUrl}/api/approvePlanChange`,
-     getPendingPlanChanges: `${workerBaseUrl}/api/getPendingPlanChanges`,
-     rejectPlanChange: `${workerBaseUrl}/api/rejectPlanChange`,
-     savePsychTests: `${workerBaseUrl}/api/savePsychTests`,
+    savePsychTests: `${workerBaseUrl}/api/savePsychTests`,
     getPsychTests: `${workerBaseUrl}/api/getPsychTests`,
      nutrientLookup: `${workerBaseUrl}/nutrient-lookup`
  };
