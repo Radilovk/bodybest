@@ -1309,6 +1309,8 @@ export default {
                 responseBody = await handleUpdateProfileRequest(request, env);
             } else if (method === 'POST' && path === '/api/savePsychTests') {
                 responseBody = await handleSavePsychTestsRequest(request, env);
+            } else if (method === 'POST' && path === '/api/applyPsychometricAdaptation') {
+                responseBody = await handleApplyPsychometricAdaptationRequest(request, env);
             } else if (method === 'POST' && path === '/api/updatePlanData') {
                 responseBody = await handleUpdatePlanRequest(request, env);
             } else if (method === 'POST' && path === '/api/requestPasswordReset') {
@@ -3380,17 +3382,8 @@ async function handleSavePsychTestsRequest(request, env) {
                         // Актуализираме final_plan с психо профил данните
                         finalPlan.psychoTestsProfile = psychoTestsData;
                         
-                        // v2.0: Generate adapted guidance based on psycho-profile and correlation
-                        try {
-                            const adaptedGuidance = generateAdaptedGuidance(psychoTestsData, initialAnswers);
-                            if (adaptedGuidance) {
-                                finalPlan.adaptedGuidance = adaptedGuidance;
-                                console.log(`SAVE_PSYCH_TESTS (${userId}): Adapted guidance добавен. Mode: ${adaptedGuidance.communicationMode || 'N/A'}, Concordance: ${adaptedGuidance.concordanceLevel}`);
-                            }
-                        } catch (adaptedGuidanceError) {
-                            console.error(`SAVE_PSYCH_TESTS (${userId}): Грешка при генериране на adapted guidance: ${adaptedGuidanceError.message}`);
-                            // Не провалям операцията ако adapted guidance не се генерира
-                        }
+                        // v2.0: Adapted guidance ще се генерира отделно чрез /api/applyPsychometricAdaptation
+                        // за да не претоварваме основния план с допълнителен анализ
                         
                         // Запазваме актуализирания план
                         await env.USER_METADATA_KV.put(finalPlanKey, JSON.stringify(finalPlan));
@@ -3455,6 +3448,144 @@ async function handleSavePsychTestsRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleSavePsychTestsRequest -------------
+
+// ------------- START FUNCTION: handleApplyPsychometricAdaptationRequest -------------
+/**
+ * Прилага психометрична адаптация към съществуващ план.
+ * Този endpoint се извиква СЛЕД като вече има създаден план и психо-тестове.
+ * Генерира adapted guidance базирано на корелация между въпросник и психо-профил.
+ * 
+ * v2.0: Отделен процес за психометрична адаптация за да не претоварваме основния AI анализ
+ * 
+ * @param {Request} request
+ * @param {Object} env
+ * @returns {Promise<Object>}
+ */
+async function handleApplyPsychometricAdaptationRequest(request, env) {
+    try {
+        const body = await request.json();
+        const { userId } = body;
+        
+        if (!userId) {
+            return { 
+                success: false, 
+                message: 'userId е задължителен параметър', 
+                statusHint: 400 
+            };
+        }
+        
+        console.log(`APPLY_PSYCHOMETRIC_ADAPTATION (${userId}): Започва процес на адаптация`);
+        
+        // 1. Проверка за съществуващ план
+        const finalPlanKey = `${userId}_final_plan`;
+        const finalPlanStr = await env.USER_METADATA_KV.get(finalPlanKey);
+        
+        if (!finalPlanStr) {
+            return {
+                success: false,
+                message: 'Не е намерен съществуващ план. Моля първо създайте план.',
+                statusHint: 404
+            };
+        }
+        
+        const finalPlan = safeParseJson(finalPlanStr, null);
+        if (!finalPlan || typeof finalPlan !== 'object') {
+            return {
+                success: false,
+                message: 'Грешка при четене на плана.',
+                statusHint: 500
+            };
+        }
+        
+        // 2. Проверка за психо-тестове
+        const psychoTestsData = finalPlan.psychoTestsProfile;
+        
+        if (!psychoTestsData || !psychoTestsData.personalityTest) {
+            return {
+                success: false,
+                message: 'Няма налични психологически тестове. Моля попълнете психо-тестовете преди адаптация.',
+                statusHint: 400
+            };
+        }
+        
+        // 3. Вземане на initial_answers
+        const initialAnswersKey = `${userId}_initial_answers`;
+        const initialAnswersStr = await env.USER_METADATA_KV.get(initialAnswersKey);
+        
+        if (!initialAnswersStr) {
+            return {
+                success: false,
+                message: 'Липсва въпросник. Не може да се изчисли корелация.',
+                statusHint: 400
+            };
+        }
+        
+        const initialAnswers = safeParseJson(initialAnswersStr, {});
+        
+        // 4. Генериране на adapted guidance
+        console.log(`APPLY_PSYCHOMETRIC_ADAPTATION (${userId}): Генериране на adapted guidance`);
+        
+        let adaptedGuidance = null;
+        try {
+            adaptedGuidance = generateAdaptedGuidance(psychoTestsData, initialAnswers);
+        } catch (guidanceError) {
+            console.error(`APPLY_PSYCHOMETRIC_ADAPTATION (${userId}): Грешка при генериране: ${guidanceError.message}`);
+            return {
+                success: false,
+                message: `Грешка при генериране на адаптация: ${guidanceError.message}`,
+                statusHint: 500
+            };
+        }
+        
+        if (!adaptedGuidance) {
+            return {
+                success: false,
+                message: 'Не успя генериране на adapted guidance.',
+                statusHint: 500
+            };
+        }
+        
+        // 5. Запазване на adapted guidance в плана
+        finalPlan.adaptedGuidance = adaptedGuidance;
+        
+        // Добавяме timestamp на адаптацията
+        if (!finalPlan.adaptationMetadata) {
+            finalPlan.adaptationMetadata = {};
+        }
+        finalPlan.adaptationMetadata.lastAdapted = new Date().toISOString();
+        finalPlan.adaptationMetadata.concordanceLevel = adaptedGuidance.concordanceLevel;
+        finalPlan.adaptationMetadata.communicationMode = adaptedGuidance.communicationMode;
+        
+        await env.USER_METADATA_KV.put(finalPlanKey, JSON.stringify(finalPlan));
+        
+        console.log(`APPLY_PSYCHOMETRIC_ADAPTATION (${userId}): Успешна адаптация. Mode: ${adaptedGuidance.communicationMode}, Concordance: ${adaptedGuidance.concordanceLevel}`);
+        
+        // 6. Изтриване на pending флага ако съществува
+        await env.USER_METADATA_KV.delete(`${userId}_psycho_regeneration_pending`);
+        
+        return {
+            success: true,
+            message: 'Психометричната адаптация е приложена успешно.',
+            data: {
+                concordanceLevel: adaptedGuidance.concordanceLevel,
+                correlationScore: adaptedGuidance.correlationScore,
+                communicationMode: adaptedGuidance.communicationMode,
+                adaptationLevel: adaptedGuidance.adaptationLevel,
+                riskAreas: adaptedGuidance.riskAreas || [],
+                reason: adaptedGuidance.reason
+            }
+        };
+        
+    } catch (error) {
+        console.error(`Error in handleApplyPsychometricAdaptationRequest: ${error.message}\n${error.stack}`);
+        return {
+            success: false,
+            message: `Грешка при прилагане на адаптация: ${error.message}`,
+            statusHint: 500
+        };
+    }
+}
+// ------------- END FUNCTION: handleApplyPsychometricAdaptationRequest -------------
 
 // ------------- START FUNCTION: handleGetPsychTestsRequest -------------
 /**
@@ -6656,17 +6787,8 @@ async function processSingleUserPlan(userId, env) {
                     planBuilder.psychoTestsProfile = psychoTestsData;
                     await addLog('Психо профил данни добавени към плана');
                     
-                    // v2.0: Generate adapted guidance based on psycho-profile
-                    try {
-                        const adaptedGuidance = generateAdaptedGuidance(psychoTestsData, answersParsed);
-                        if (adaptedGuidance) {
-                            planBuilder.adaptedGuidance = adaptedGuidance;
-                            await addLog(`Adapted guidance генериран: ${adaptedGuidance.communicationMode || 'N/A'} (${adaptedGuidance.concordanceLevel})`);
-                        }
-                    } catch (adaptedErr) {
-                        console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Грешка при генериране на adapted guidance - ${adaptedErr.message}`);
-                        // Не прекъсваме процеса
-                    }
+                    // v2.0: Adapted guidance ще се генерира отделно чрез /api/applyPsychometricAdaptation
+                    // за да не претоварваме основния AI анализ при генериране на плана
                 }
             } catch (psychoErr) {
                 console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Не успя добавянето на психо профил към плана - ${psychoErr.message}`);
