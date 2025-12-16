@@ -118,10 +118,14 @@ README.md
 ### Psychological Tests & Personalization ⭐ NEW
 | Документ | Описание |
 |----------|----------|
-| **[docs/PSYCHOMETRIC_PLAN_ADAPTATION_PROPOSAL_BG.md](./docs/PSYCHOMETRIC_PLAN_ADAPTATION_PROPOSAL_BG.md)** | 🎯 **ГЛАВЕН ДОКУМЕНТ** - Пълно предложение за адаптация на final_plan базирана на психометрични тестове |
-| [docs/PSYCHOMETRIC_QUICK_REFERENCE_BG.md](./docs/PSYCHOMETRIC_QUICK_REFERENCE_BG.md) | Бърз справочник за разработчици - 16 типа, корелации, примери |
+| **[docs/PSYCHOMETRIC_PLAN_ADAPTATION_PROPOSAL_BG.md](./docs/PSYCHOMETRIC_PLAN_ADAPTATION_PROPOSAL_BG.md)** | 🎯 **ГЛАВЕН ДОКУМЕНТ** - Пълно предложение v2.0 за адаптация на final_plan (1233 реда) |
+| **[docs/PSYCHOMETRIC_IMPLEMENTATION_GUIDE_BG.md](./docs/PSYCHOMETRIC_IMPLEMENTATION_GUIDE_BG.md)** | ⚙️ **IMPLEMENTATION GUIDE** - Ръководство за имплементация с функции, тестване, troubleshooting (526 реда) |
+| [docs/PSYCHOMETRIC_QUICK_REFERENCE_BG.md](./docs/PSYCHOMETRIC_QUICK_REFERENCE_BG.md) | Бърз справочник за разработчици - 8 режима, корелации, примери (315 реда) |
+| [docs/PSYCHOMETRIC_IMPLEMENTATION_SUMMARY_BG.md](./docs/PSYCHOMETRIC_IMPLEMENTATION_SUMMARY_BG.md) | Executive summary с очаквани ползи (354 реда) |
 | [docs/psycho_tests_to_final_plan.md](./docs/psycho_tests_to_final_plan.md) | Автоматично запазване на психопрофил във final_plan |
 | [docs/PSYCHO_TEST_IMPROVEMENTS.md](./docs/PSYCHO_TEST_IMPROVEMENTS.md) | Подобрения на психологическите тестове |
+
+**Общо психометрична документация**: ~2,900 реда
 
 ### Examples & References
 | Документ | Описание |
