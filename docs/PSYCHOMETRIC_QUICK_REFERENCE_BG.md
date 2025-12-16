@@ -1,172 +1,137 @@
 # Бърз справочник: Психометрична адаптация на плана
 
+> **v2.0 REVISED** - Адресирани рискове, опростена сложност  
 > **Кратко ръководство** за разработчици, работещи с психометричната адаптация на `final_plan`
+
+---
+
+## ⚠️ Важни промени в v2.0
+
+1. **16 типа → 8 режима**: Опростена поддръжка
+2. **Concordance-базирана логика**: high/medium/low → различни действия
+3. **Приоритети**: Тестове влияят на КАК, НЕ на КАКВО (калории/макроси)
+4. **Минимален вход**: Само ключове към AI, не дълги текстове
+5. **Управление на рискове**: Concrete митигации
 
 ---
 
 ## 📋 Основни концепции
 
-### Тегла на тестовете
+### Приоритети (1 → 2 → 3)
 
 ```
-Личностен тест:  70%  ← По-обективен, структуриран
-Визуален тест:   30%  ← По-субективен, качествен
+1️⃣ БАЗА (КАКВО) ← initial_answers
+   └─ Калории, макроси, цел, медицински ограничения
+   
+2️⃣ СТИЛ (КАК) ← Психо-тестове
+   └─ Комуникация, структура, гъвкавост
+   
+3️⃣ ПРЕДПАЗИТЕЛИ ← Correlation
+   └─ Risk areas, coping strategies
 ```
 
-### 4-буквен личностен код
+### Concordance Levels
 
 ```
-[X/E] - [S/V] - [D/M] - [P/J]
-  ↓       ↓       ↓       ↓
-Енергия Ново-  Контакт Структура
-        торство
+≥ 0.75  →  "high"     → FULL adaptation ✅
+≥ 0.55  →  "medium"   → COMMUNICATION only ⚠️
+< 0.55  →  "low"      → NO adaptation + 7-day observation ❌
 ```
 
-**Пример**: `E-V-M-J` = Екстровертен, Новаторски, Мек, Структуриран
+### Тегла (САМО при high concordance)
 
----
-
-## 🎯 16-те личностни типа (кратък преглед)
-
-### Интровертни (X-...)
-
-| Код | Тип | Риск | Комуникация |
-|-----|-----|------|-------------|
-| X-S-D-P | Самостоятелен | Пропуска хранения | Кратка, ясна |
-| X-S-D-J | Контролиран | Прекалена строгост | Логична |
-| X-S-M-P | Адаптивен | Хранене по средата | Мека |
-| X-S-M-J | Търсещ сигурност | Страх от промяна | Спокойна |
-| X-V-D-P | Креативен | Резки смени | Директна |
-| X-V-D-J | Стратег | Без удоволствие | Равностойна |
-| X-V-M-P | Чувствителен | Емоционално хранене | Подкрепяща |
-| X-V-M-J | Дълбоко мислещ | Свръхобмисляне | Ясна |
-
-### Екстровертни (E-...)
-
-| Код | Тип | Риск | Комуникация |
-|-----|-----|------|-------------|
-| E-S-D-P | Действащ | Бързо хранене | Енергична |
-| E-S-D-J | Лидер | Режим=дисциплина | Целенасочена |
-| E-S-M-P | Социален | Храни се за компания | Топла |
-| E-S-M-J | Грижовен | Други > себе си | Признателна |
-| E-V-D-P | Енергичен | Крайности | Мотивираща |
-| E-V-D-J | Визионер | Храна=гориво | Стратегическа |
-| E-V-M-P | Емоционален | Хаотичен режим | Емпатична |
-| E-V-M-J | Балансиран | Пренатоварване | Партньорска |
-
----
-
-## 🔗 Корелационни полета
-
-### E (Екстраверсия)
-```javascript
-chronotype: "Сутрешен" → E↑
-stressLevel: "Високо" → E↓
-comparisson: "Често" → E↑
 ```
-
-### C (Структура)
-```javascript
-sleepHours: "7-8" → C↑
-overeatingFrequency: "Рядко" → C↑
-nighteat: "не закусвам" → C↓
-```
-
-### N (Емоционална реактивност)
-```javascript
-stressLevel: "Високо" → N↑
-foodTriggers: ["Напрежение", "Тъга"] → N↑
-overeatingFrequency: "Често" → N↑
-```
-
-### I (Импулсивност)
-```javascript
-overeatingFrequency: "Често" → I↑
-foodCravings: "Да" → I↑
-nighteat: "хапва на крак" → I↑
+High (≥0.75):    70% personality + 30% visual
+Medium (0.55-0.74): 100% personality, 0% visual
+Low (<0.55):      NO psycho-tests
 ```
 
 ---
 
-## 📊 Concordance Levels
+## 🎯 8 комуникационни режима (не 16 типа)
+
+### Групиране
 
 ```
-≥ 0.75  →  "high"     Висока съгласуваност ✅
-≥ 0.55  →  "medium"   Умерена съгласуваност ⚠️
-< 0.55  →  "low"      Ниска съгласуваност ❌
+4 Communication Styles × 2 Structure Needs = 8 Modes
 ```
 
-**High**: Пълно доверие в оценката  
-**Medium**: Валидна, с малки несъответствия  
-**Low**: Нужна ревизия, възможни противоречия
+| Режим | Включва типове | Тон | Структура |
+|-------|----------------|-----|-----------|
+| **DIRECT_STRUCTURED** | X-S-D-J, E-S-D-J | Directive | High |
+| **DIRECT_FLEXIBLE** | X-S-D-P, E-S-D-P | Directive | Low |
+| **SUPPORTIVE_STRUCTURED** | X-S-M-J, E-S-M-J | Gentle | High |
+| **SUPPORTIVE_FLEXIBLE** | X-S-M-P, E-S-M-P | Gentle | Low |
+| **STRATEGIC_STRUCTURED** | X-V-D-J, E-V-D-J | Analytical | High |
+| **STRATEGIC_FLEXIBLE** | X-V-D-P | Analytical | Low |
+| **EMPATHETIC_STRUCTURED** | X-V-M-J, E-V-M-J | Understanding | High |
+| **EMPATHETIC_FLEXIBLE** | X-V-M-P, E-V-M-P | Understanding | Low |
+
+### Бърза reference таблица
+
+| Режим | Дължина | Честота | Risk Areas | Coping |
+|-------|---------|---------|------------|--------|
+| DIRECT_STRUCTURED | Short | Moderate | over_control | planned_flexibility |
+| DIRECT_FLEXIBLE | Short | Low | meal_skipping | anchor_meals |
+| SUPPORTIVE_STRUCTURED | Medium | High | fear_of_change | gradual_changes |
+| SUPPORTIVE_FLEXIBLE | Medium | High | external_eating | saying_no |
+| STRATEGIC_STRUCTURED | Long | Low | over_optimization | pleasure_integration |
+| STRATEGIC_FLEXIBLE | Medium | Low | diet_hopping | time_boxed_trials |
+| EMPATHETIC_STRUCTURED | Medium | Moderate | overthinking | simplification |
+| EMPATHETIC_FLEXIBLE | Medium | High | emotional_eating | emotion_work |
 
 ---
 
-## 🏗️ Структура на Composite Profile
+## 🏗️ Структура на adaptedGuidance - ОПРОСТЕНА
 
-```javascript
-{
-  personalityType: "X-S-D-P",       // 4-буквен код
-  visualType: "01",                  // 01-08
-  correlationScore: 0.78,            // 0-1
-  concordanceLevel: "high",          // high/medium/low
-  
-  dimensions: { E: 45, C: 72, ... }, // 7 измерения
-  
-  strengths: [...],                  // 70% personality + 30% visual
-  risks: [...],                      // Weighted merge
-  recommendations: [...],            // Weighted merge
-  
-  conflicts: [],                     // Само ако има несъответствия
-  timestamp: "2024-12-16T10:00:00Z"
-}
-```
-
----
-
-## 🎨 Адаптация на final_plan
-
-### Нова секция: `adaptedGuidance`
+### При high concordance (≥0.75)
 
 ```json
 {
   "adaptedGuidance": {
-    "personalityType": "X-S-D-P",
-    "communicationStyle": {
-      "tone": "direct_concise",
-      "complexity": "simple",
-      "encouragementType": "action_focused"
+    "concordanceLevel": "high",
+    "adaptationLevel": "full",
+    "communicationMode": "DIRECT_STRUCTURED",
+    "keys": {
+      "tone": "directive",
+      "length": "short",
+      "frequency": "moderate",
+      "structure": "high",
+      "flexibility": "low"
     },
-    "mealStructureAdaptations": {
-      "flexibility": "low",
-      "planningDetail": "high",
-      "varietyLevel": "low"
-    },
-    "psychologicalSupport": {
-      "primaryFocus": "habit_formation",
-      "riskAreas": ["meal_skipping", "late_eating"]
+    "riskAreas": ["over_control"],
+    "coping": ["planned_flexibility"]
+  }
+}
+```
+
+### При medium concordance (0.55-0.74)
+
+```json
+{
+  "adaptedGuidance": {
+    "concordanceLevel": "medium",
+    "adaptationLevel": "communication_only",
+    "communicationMode": "SUPPORTIVE_STRUCTURED",
+    "keys": {
+      "tone": "gentle",
+      "length": "medium"
+      // НЕ се подават structure, flexibility
     }
   }
 }
 ```
 
-### Промяна на `psychologicalGuidance`
+### При low concordance (<0.55)
 
-**Преди** (generic):
-```json
-["Поставете си реалистични цели", "Бъдете търпеливи"]
-```
-
-**След** (персонализирани за X-S-D-P):
 ```json
 {
-  "type": "X-S-D-P",
-  "mainMessage": "Фокусирай се на проста рутина.",
-  "keyPrinciples": [
-    "Създай 2-3 фиксирани момента",
-    "Повтарящи се храни",
-    "Без сложни рецепти"
-  ]
+  "adaptedGuidance": {
+    "concordanceLevel": "low",
+    "adaptationLevel": "none",
+    "observationMode": true,
+    "observationDays": 7
+  }
 }
 ```
 
@@ -174,17 +139,22 @@ nighteat: "хапва на крак" → I↑
 
 ## 💬 Комуникационни примери
 
-### X-S-D-P (Директен, кратък)
-> "Забелязах, че не си логнал 2 дни. Логни сега."
+### High concordance - пълна адаптация
 
-### X-V-M-P (Подкрепящ, мек)
-> "Здравей 👋 Виждам, че последните дни са били натоварени. Как се чувстваш?"
+**DIRECT_STRUCTURED**:
+> "Логнах дневните ти хранения. Днес пропусна обяда - нека го добавим сега."
 
-### E-S-D-P (Енергичен, action-focused)
-> "Хей! 💪 Ела да попълним бързо - 5 минути и сме готови!"
+**EMPATHETIC_FLEXIBLE**:
+> "Виждам, че днес е бил труден. Как се чувстваш? Искаш ли да говорим за плана?"
 
-### E-V-M-P (Емпатичен, емоционален)
-> "Разбирам, че понякога е трудно. Нека да направим малка стъпка заедно 💙"
+### Medium concordance - само комуникация
+
+**SUPPORTIVE режим** (БЕЗ структурни промени):
+> "Здравей 👋 Виждам, че храненията са различни от обичайното - това е OK."
+
+### Low concordance - generic
+
+> "Добър ден! Имаш ли въпроси за плана днес?"
 
 ---
 
@@ -199,6 +169,7 @@ Response: {
   success: true,
   data: {
     compositeProfile: {...},
+    concordanceLevel: "high|medium|low",
     shouldRegeneratePlan: true
   }
 }
@@ -213,27 +184,47 @@ Response: {
 
 ---
 
-## 📈 Имплементация (фази)
+## 📈 Decision Tree
 
-### Фаза 1: Корелационен анализ (2-3 седмици)
-- [ ] `calculateCorrelationScore()`
-- [ ] `generateCompositeProfile()`
-- [ ] Unit тестове
+```
+calculateCorrelationScore()
+   ↓
+   ├─ score >= 0.75? → HIGH
+   │   └─→ Apply full adaptation (8 modes + structure)
+   │
+   ├─ score >= 0.55? → MEDIUM
+   │   └─→ Apply communication only (8 modes, NO structure)
+   │
+   └─ score < 0.55? → LOW
+       └─→ NO adaptation (generic + 7-day observation)
+```
 
-### Фаза 2: Адаптация на final_plan (2-3 седмици)
-- [ ] Добавяне на `adaptedGuidance`
-- [ ] Персонализиране на `psychologicalGuidance`
-- [ ] Integration тестове
+---
 
-### Фаза 3: AI комуникация (2-3 седмици)
-- [ ] Chat bot адаптация
-- [ ] Notifications персонализация
-- [ ] A/B тестване
+## ⚠️ Важни правила
 
-### Фаза 4: Мониторинг (continuous)
-- [ ] Analytics
-- [ ] Feedback loop
-- [ ] Оптимизация
+### Правило 1: Приоритети
+```
+initial_answers (база) > психо-тестове (стил)
+```
+
+### Правило 2: При конфликт
+```
+НЕ сменяй целта, смени формата на изпълнение
+```
+
+### Правило 3: Immutable полета
+```
+caloriesMacros   ← НЕ СЕ ПРОМЕНЯ
+goal             ← НЕ СЕ ПРОМЕНЯ
+medicalConditions ← НЕ СЕ ПРОМЕНЯ
+```
+
+### Правило 4: AI вход
+```
+✅ Подавай: ключове (tone, structure, flexibility)
+❌ НЕ подавай: дълги текстове, параграфи
+```
 
 ---
 
@@ -251,17 +242,61 @@ const correlationScore = calculateCorrelationScore(
   initialAnswers, 
   psychTests.personalityTest
 );
+
+const concordanceLevel = 
+  correlationScore >= 0.75 ? 'high' :
+  correlationScore >= 0.55 ? 'medium' : 'low';
 ```
 
-### 3. Генериране на composite profile
+### 3. Decision point
 ```javascript
-const compositeProfile = await generateCompositeProfile(userId, env);
+if (concordanceLevel === 'low') {
+  // NO adaptation, 7-day observation
+  return { adaptationLevel: 'none', observationMode: true };
+}
+
+if (concordanceLevel === 'medium') {
+  // ONLY communication
+  return {
+    adaptationLevel: 'communication_only',
+    communicationMode: mapToMode(psychTests.personalityTest.typeCode),
+    keys: { tone: '...', length: '...' }
+  };
+}
+
+// HIGH - full adaptation
+return {
+  adaptationLevel: 'full',
+  communicationMode: mapToMode(psychTests.personalityTest.typeCode),
+  keys: { tone: '...', length: '...', structure: '...', flexibility: '...' },
+  riskAreas: [...],
+  coping: [...]
+};
 ```
 
-### 4. Адаптиране на план
+### 4. Mapping 16 типа → 8 режима
 ```javascript
-const adaptedGuidance = generateAdaptedGuidance(compositeProfile);
-finalPlan.adaptedGuidance = adaptedGuidance;
+function mapToMode(typeCode) {
+  // Extract last 2 letters: communication + structure
+  const communication = typeCode[2]; // D or M
+  const structure = typeCode[3];     // J or P
+  
+  // Extract first 2 for additional context
+  const energy = typeCode[0];        // X or E
+  const innovation = typeCode[1];    // S or V
+  
+  // Determine communication style
+  let style;
+  if ((communication === 'D') && (innovation === 'S')) style = 'DIRECT';
+  else if ((communication === 'M') && (innovation === 'S')) style = 'SUPPORTIVE';
+  else if ((communication === 'D') && (innovation === 'V')) style = 'STRATEGIC';
+  else if ((communication === 'M') && (innovation === 'V')) style = 'EMPATHETIC';
+  
+  // Determine structure need
+  const structureNeed = (structure === 'J') ? 'STRUCTURED' : 'FLEXIBLE';
+  
+  return `${style}_${structureNeed}`;
+}
 ```
 
 ---
