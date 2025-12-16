@@ -2785,7 +2785,9 @@ function createPsychoTestsProfileData(visualTest, personalityTest, timestamps) {
             strengths: personalityTest.strengths || [],
             mainRisks: personalityTest.mainRisks || [],
             topRecommendations: personalityTest.topRecommendations || [],
-            timestamp: normalizedPersonalityTimestamp
+            timestamp: normalizedPersonalityTimestamp,
+            // НОВО: Включване на psyadvice данни за AI интеграция
+            psyadvice: personalityTest.psyadvice || null
         };
     }
     
