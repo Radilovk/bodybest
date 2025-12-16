@@ -1,20 +1,125 @@
-# Ръководство за имплементация: Психометрична адаптация v2.0
+# Ръководство за имплементация: Психометрична адаптация v2.1
 
-**Версия**: 2.0.0 - IMPLEMENTED  
+**Версия**: 2.1.0 - REFACTORED  
 **Дата**: 2024-12-16  
-**Статус**: Код интегриран и готов за тестване
+**Статус**: Отделен процес за психометрична адаптация
 
 ---
 
-## Преглед на имплементацията
+## Преглед на имплементацията v2.1
 
-Психометричната адаптация е напълно интегрирана в проекта. Системата автоматично:
+**ВАЖНА ПРОМЯНА:** Психометричната адаптация вече е **отделен процес** от основното генериране на план.
 
-1. Изчислява корелация между въпросник и психо-профил
-2. Определя concordance level (high/medium/low)
-3. Генерира adapted guidance с 8 комуникационни режима
-4. Интегрира guidance в AI чат контекста
-5. Адаптира AI комуникацията според профила
+### Архитектура v2.1
+
+**Предишна архитектура (v2.0):**
+```
+Save Psycho Tests → Generate Adapted Guidance (веднага)
+Generate Plan → Generate Adapted Guidance (веднага)
+```
+❌ Проблем: Претоварва AI анализа с прекалено много данни наведнъж
+
+**Нова архитектура (v2.1):**
+```
+Save Psycho Tests → Запазва само psychoTestsProfile (леко)
+Generate Plan → Генерира само план (леко)
+User triggers adaptation → /api/applyPsychometricAdaptation (фокусирано)
+```
+✅ Решение: Повече, но по-леки и фокусирани AI заявки
+
+### Системата сега:
+
+1. **Запазва** психо-тестове без адаптация
+2. **Генерира** план без адаптация
+3. **Прилага** адаптация отделно при поискване
+4. **Изчислява** корелация между въпросник и психо-профил
+5. **Определя** concordance level (high/medium/low)
+6. **Генерира** adapted guidance с 8 комуникационни режима
+7. **Интегрира** guidance в AI чат контекста
+
+---
+
+## Нов Endpoint: `/api/applyPsychometricAdaptation`
+
+### Описание
+
+Прилага психометрична адаптация към **съществуващ** план. Извиква се СЛЕД като:
+- Има създаден `final_plan`
+- Има попълнени психо-тестове
+- Потребителят иска адаптация на плана
+
+### Request
+
+```http
+POST /api/applyPsychometricAdaptation
+Content-Type: application/json
+
+{
+  "userId": "user123"
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "success": true,
+  "message": "Психометричната адаптация е приложена успешно.",
+  "data": {
+    "concordanceLevel": "high",
+    "correlationScore": 0.82,
+    "communicationMode": "DIRECT_STRUCTURED",
+    "adaptationLevel": "full",
+    "riskAreas": ["over_control", "rigidity", "perfectionism"],
+    "reason": "Висока съгласуваност. Прилага се пълна адаптация."
+  }
+}
+```
+
+### Response (Errors)
+
+```json
+// Липсва план
+{
+  "success": false,
+  "message": "Не е намерен съществуващ план. Моля първо създайте план.",
+  "statusHint": 404
+}
+
+// Липсват психо-тестове
+{
+  "success": false,
+  "message": "Няма налични психологически тестове. Моля попълнете психо-тестовете преди адаптация.",
+  "statusHint": 400
+}
+```
+
+### Поведение
+
+1. ✅ Проверява за съществуващ `final_plan`
+2. ✅ Проверява за `psychoTestsProfile` в плана
+3. ✅ Проверява за `initial_answers` (за корелация)
+4. ✅ Генерира `adaptedGuidance` с `generateAdaptedGuidance()`
+5. ✅ Добавя `adaptationMetadata` към плана
+6. ✅ Изтрива `psycho_regeneration_pending` флаг
+7. ✅ Връща резултат с concordance и communication mode
+
+### Пример за използване
+
+```javascript
+// След като потребителят попълни психо-тестове и има план
+const response = await fetch('/api/applyPsychometricAdaptation', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ userId: 'user123' })
+});
+
+const result = await response.json();
+if (result.success) {
+  console.log('Adaptation applied:', result.data.communicationMode);
+  console.log('Concordance:', result.data.concordanceLevel);
+}
+```
 
 ---
 
@@ -176,53 +281,89 @@ score < 0.55   → "low"
 
 ### 1. handleSavePsychTestsRequest
 
-**Локация:** `worker.js:~3370-3395`
+**Локация:** `worker.js:~3370-3400`
 
-**Какво прави:**
+**Какво прави (v2.1):**
 - Запазва психо-тестове
-- Генерира adapted guidance
-- Добавя към `final_plan.adaptedGuidance`
+- **НЕ** генерира adapted guidance (за да остане леко)
+- Маркира за адаптация
 
 **Код:**
 ```javascript
 const psychoTestsData = createPsychoTestsProfileData(...);
 finalPlan.psychoTestsProfile = psychoTestsData;
 
-// v2.0: Generate adapted guidance
-const adaptedGuidance = generateAdaptedGuidance(psychoTestsData, initialAnswers);
-if (adaptedGuidance) {
-  finalPlan.adaptedGuidance = adaptedGuidance;
-}
+// v2.1: Adapted guidance ще се генерира отделно чрез /api/applyPsychometricAdaptation
+// за да не претоварваме основния план с допълнителен анализ
+
+await env.USER_METADATA_KV.put(finalPlanKey, JSON.stringify(finalPlan));
 ```
 
 ### 2. processSingleUserPlan
 
-**Локация:** `worker.js:~6645-6675`
+**Локация:** `worker.js:~6645-6670`
 
-**Какво прави:**
+**Какво прави (v2.1):**
 - Генерира нов план
 - Добавя психо-тестове към плана
-- Генерира adapted guidance
+- **НЕ** генерира adapted guidance (за да остане леко)
 
 **Код:**
 ```javascript
 const psychoTestsData = createPsychoTestsProfileData(...);
 planBuilder.psychoTestsProfile = psychoTestsData;
 
-// v2.0: Generate adapted guidance
-const adaptedGuidance = generateAdaptedGuidance(psychoTestsData, answersParsed);
-if (adaptedGuidance) {
-  planBuilder.adaptedGuidance = adaptedGuidance;
+// v2.1: Adapted guidance ще се генерира отделно чрез /api/applyPsychometricAdaptation
+// за да не претоварваме основния AI анализ при генериране на плана
+```
+
+### 3. handleApplyPsychometricAdaptationRequest ⭐ NEW
+
+**Локация:** `worker.js:~3452-3580`
+
+**Какво прави (v2.1):**
+- Проверява за съществуващ план
+- Проверява за психо-тестове
+- Генерира adapted guidance
+- Запазва в `final_plan.adaptedGuidance`
+- Добавя `adaptationMetadata`
+
+**Код:**
+```javascript
+async function handleApplyPsychometricAdaptationRequest(request, env) {
+  // 1. Проверка за plan
+  const finalPlan = await env.USER_METADATA_KV.get(`${userId}_final_plan`, 'json');
+  
+  // 2. Проверка за psycho tests
+  const psychoTestsData = finalPlan.psychoTestsProfile;
+  
+  // 3. Вземане на initial_answers
+  const initialAnswers = await env.USER_METADATA_KV.get(`${userId}_initial_answers`, 'json');
+  
+  // 4. Генериране на adapted guidance
+  const adaptedGuidance = generateAdaptedGuidance(psychoTestsData, initialAnswers);
+  
+  // 5. Запазване
+  finalPlan.adaptedGuidance = adaptedGuidance;
+  finalPlan.adaptationMetadata = {
+    lastAdapted: new Date().toISOString(),
+    concordanceLevel: adaptedGuidance.concordanceLevel,
+    communicationMode: adaptedGuidance.communicationMode
+  };
+  
+  await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(finalPlan));
+  
+  return { success: true, data: { ... } };
 }
 ```
 
-### 3. getChatPromptData
+### 4. getChatPromptData
 
 **Локация:** `worker.js:~7270-7290`
 
 **Какво прави:**
 - Извлича данни за AI prompt
-- Добавя adapted guidance към контекста
+- Добавя adapted guidance към контекста (ако съществува)
 
 **Код:**
 ```javascript
@@ -234,12 +375,12 @@ const adaptedGuidanceText = adaptedGuidanceData
 return {
   ...
   psychProfile: psychProfileText,
-  adaptedGuidance: adaptedGuidanceText,  // v2.0: Added
+  adaptedGuidance: adaptedGuidanceText,  // v2.1: Optional, added by separate endpoint
   ...
 };
 ```
 
-### 4. Chat Prompt Template
+### 5. Chat Prompt Template
 
 **Локация:** `kv/DIET_RESOURCES/prompt_chat.txt`
 
@@ -410,7 +551,9 @@ const guidance = generateAdaptedGuidance(psychoTestsData, initialAnswers);
 console.log("Guidance:", JSON.stringify(guidance, null, 2));
 ```
 
-### Integration Testing
+### Integration Testing (v2.1)
+
+**Пълен работен поток:**
 
 1. **Запазване на психо-тестове:**
    ```bash
@@ -418,23 +561,68 @@ console.log("Guidance:", JSON.stringify(guidance, null, 2));
    Body: { userId, visualTest, personalityTest }
    ```
    
-   Проверка: `final_plan.adaptedGuidance` трябва да съществува
+   Проверка: `final_plan.psychoTestsProfile` съществува
+   Проверка: `adaptedGuidance` **НЕ** съществува още
 
-2. **Генериране на план:**
+2. **Генериране на план (ако няма):**
    ```bash
    POST /api/processSingleUserPlan
    Body: { userId }
    ```
    
-   Проверка: Нов план трябва да има `adaptedGuidance`
+   Проверка: Нов план е създаден
+   Проверка: `psychoTestsProfile` е добавен
+   Проверка: `adaptedGuidance` **НЕ** е генериран
 
-3. **AI Chat:**
+3. **Прилагане на психометрична адаптация (v2.1 - NEW):**
+   ```bash
+   POST /api/applyPsychometricAdaptation
+   Body: { userId }
+   ```
+   
+   Очакван резултат:
+   ```json
+   {
+     "success": true,
+     "message": "Психометричната адаптация е приложена успешно.",
+     "data": {
+       "concordanceLevel": "high",
+       "correlationScore": 0.82,
+       "communicationMode": "DIRECT_STRUCTURED",
+       "adaptationLevel": "full",
+       "riskAreas": ["over_control", "rigidity", "perfectionism"]
+     }
+   }
+   ```
+   
+   Проверка: `final_plan.adaptedGuidance` **СЕГА** съществува
+   Проверка: `final_plan.adaptationMetadata` е добавен
+
+4. **AI Chat:**
    ```bash
    POST /api/chat
    Body: { userId, message: "Здравей" }
    ```
    
-   Проверка: AI отговор трябва да отразява комуникационния режим
+   Проверка: AI отговор отразява комуникационния режим
+
+### Тестване на грешки
+
+**Липсва план:**
+```bash
+POST /api/applyPsychometricAdaptation
+Body: { userId: "newUser" }
+
+Response: 404 - "Не е намерен съществуващ план"
+```
+
+**Липсват психо-тестове:**
+```bash
+POST /api/applyPsychometricAdaptation
+Body: { userId: "userWithoutTests" }
+
+Response: 400 - "Няма налични психологически тестове"
+```
 
 ---
 
@@ -499,28 +687,42 @@ console.log('Adapted Guidance:', plan.adaptedGuidance);
 
 ## Следващи стъпки
 
-1. **A/B тестване** - Сравнение с/без адаптация
-2. **Оптимизация на теглата** - Базирано на реални данни
-3. **Разширяване на корелациите** - Добавяне на нови полета
-4. **UI визуализация** - Показване на режима в dashboard
+1. **Frontend интеграция** - Добави бутон за "Прилагане на адаптация"
+2. **A/B тестване** - Сравнение с/без адаптация
+3. **Оптимизация на теглата** - Базирано на реални данни
+4. **Разширяване на корелациите** - Добавяне на нови полета
+5. **UI визуализация** - Показване на режима в dashboard
 
 ---
 
 ## Заключение
 
-Психометричната адаптация е напълно интегрирана и готова за production. Системата автоматично:
+Психометричната адаптация е **отделен процес** (v2.1) и готова за production. 
 
-✅ Изчислява корелация  
-✅ Определя concordance level  
-✅ Генерира adapted guidance  
+### Архитектурни предимства v2.1:
+
+✅ **Леки AI заявки** - Основният план не носи психометричен товар  
+✅ **Фокусирани анализи** - Всяка заявка е оптимизирана за конкретна цел  
+✅ **По-добро използване на ресурси** - Аналитичните модели се използват ефективно  
+✅ **Гъвкавост** - Може да се адаптира съществуващ план без пълно регенериране  
+✅ **Separation of Concerns** - Ясна граница между основен план и адаптации  
+
+### Функционалност:
+
+✅ Изчислява корелация между въпросник и психо-профил  
+✅ Определя concordance level (high/medium/low)  
+✅ Генерира adapted guidance с 8 комуникационни режима  
 ✅ Адаптира AI комуникация  
 ✅ Интегрира психологията на храненето  
+✅ Прилага се отделно чрез `/api/applyPsychometricAdaptation`  
 
-**Статус**: ✅ READY FOR TESTING
+**Статус**: ✅ v2.1 REFACTORED - READY FOR TESTING
 
 ---
 
-**Версия**: 2.0.0  
+**Версия**: 2.1.0  
 **Дата**: 2024-12-16  
 **Автор**: GitHub Copilot  
-**Commits**: 4ee7d37 (implementation)
+**Commits**: 
+- 4ee7d37 (implementation v2.0)
+- 85017be (refactor v2.1 - separation)
