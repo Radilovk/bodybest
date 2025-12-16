@@ -2537,6 +2537,7 @@ async function handleChatRequest(request, env) {
             '%%USER_CONDITIONS%%': promptData.userConditions,
             '%%USER_PREFERENCES%%': promptData.userPreferences,
             '%%PSYCH_PROFILE%%': promptData.psychProfile || NO_PSYCH_PROFILE_MESSAGE,
+            '%%ADAPTED_GUIDANCE%%': promptData.adaptedGuidance || '',  // v2.0: Add adapted guidance
             '%%INITIAL_CALORIES_MACROS%%': promptData.initCalMac,
             '%%PLAN_APPROACH_SUMMARY%%': promptData.planSum,
             '%%ALLOWED_FOODS_SUMMARY%%': promptData.allowedF,
@@ -2790,6 +2791,460 @@ function createPsychoTestsProfileData(visualTest, personalityTest, timestamps) {
 }
 // ------------- END HELPER: createPsychoTestsProfileData -------------
 
+// ------------- START HELPER: Psychometric Adaptation Functions (v2.0) -------------
+
+/**
+ * Maps 16 personality types to 8 communication modes
+ * Based on: Communication Style (4 types) × Structure Need (2 types) = 8 modes
+ * 
+ * @param {string} typeCode - 4-letter personality type code (e.g., "X-S-D-P")
+ * @returns {string} Communication mode (e.g., "DIRECT_FLEXIBLE")
+ */
+function mapPersonalityTypeTo8Modes(typeCode) {
+    if (!typeCode || typeof typeCode !== 'string') {
+        return 'SUPPORTIVE_STRUCTURED'; // Default fallback
+    }
+    
+    const parts = typeCode.split('-');
+    if (parts.length !== 4) {
+        return 'SUPPORTIVE_STRUCTURED'; // Default fallback
+    }
+    
+    const [energy, innovation, contact, structure] = parts;
+    
+    // Determine communication style (4 variants)
+    let style;
+    if (contact === 'D' && innovation === 'S') {
+        style = 'DIRECT';
+    } else if (contact === 'M' && innovation === 'S') {
+        style = 'SUPPORTIVE';
+    } else if (contact === 'D' && innovation === 'V') {
+        style = 'STRATEGIC';
+    } else if (contact === 'M' && innovation === 'V') {
+        style = 'EMPATHETIC';
+    } else {
+        style = 'SUPPORTIVE'; // Default
+    }
+    
+    // Determine structure need (2 variants)
+    const structureNeed = (structure === 'J') ? 'STRUCTURED' : 'FLEXIBLE';
+    
+    return `${style}_${structureNeed}`;
+}
+
+/**
+ * Gets communication mode keys based on the 8-mode system
+ * 
+ * @param {string} communicationMode - One of 8 modes
+ * @returns {Object} Keys for AI prompt (tone, length, frequency, structure, flexibility)
+ */
+function getCommunicationModeKeys(communicationMode) {
+    const modeConfig = {
+        'DIRECT_STRUCTURED': {
+            tone: 'directive',
+            length: 'short',
+            frequency: 'moderate',
+            complexity: 'simple',
+            structure: 'high',
+            flexibility: 'low',
+            variety: 'low'
+        },
+        'DIRECT_FLEXIBLE': {
+            tone: 'directive',
+            length: 'short',
+            frequency: 'low',
+            complexity: 'minimal',
+            structure: 'low',
+            flexibility: 'high',
+            variety: 'low'
+        },
+        'SUPPORTIVE_STRUCTURED': {
+            tone: 'gentle',
+            length: 'medium',
+            frequency: 'high',
+            complexity: 'simple',
+            structure: 'high',
+            flexibility: 'low',
+            variety: 'medium'
+        },
+        'SUPPORTIVE_FLEXIBLE': {
+            tone: 'gentle',
+            length: 'medium',
+            frequency: 'high',
+            complexity: 'simple',
+            structure: 'medium',
+            flexibility: 'high',
+            variety: 'medium'
+        },
+        'STRATEGIC_STRUCTURED': {
+            tone: 'analytical',
+            length: 'long',
+            frequency: 'low',
+            complexity: 'high',
+            structure: 'high',
+            flexibility: 'low',
+            variety: 'medium'
+        },
+        'STRATEGIC_FLEXIBLE': {
+            tone: 'analytical',
+            length: 'medium',
+            frequency: 'low',
+            complexity: 'moderate',
+            structure: 'low',
+            flexibility: 'high',
+            variety: 'high'
+        },
+        'EMPATHETIC_STRUCTURED': {
+            tone: 'understanding',
+            length: 'medium',
+            frequency: 'moderate',
+            complexity: 'moderate',
+            structure: 'high',
+            flexibility: 'medium',
+            variety: 'medium'
+        },
+        'EMPATHETIC_FLEXIBLE': {
+            tone: 'understanding',
+            length: 'medium',
+            frequency: 'high',
+            complexity: 'simple',
+            structure: 'low',
+            flexibility: 'high',
+            variety: 'low'
+        }
+    };
+    
+    return modeConfig[communicationMode] || modeConfig['SUPPORTIVE_STRUCTURED'];
+}
+
+/**
+ * Gets risk areas and coping strategies based on communication mode
+ * 
+ * @param {string} communicationMode - One of 8 modes
+ * @returns {Object} Risk areas and coping strategies
+ */
+function getRiskAreasAndCoping(communicationMode) {
+    const riskConfig = {
+        'DIRECT_STRUCTURED': {
+            riskAreas: ['over_control', 'rigidity', 'perfectionism'],
+            coping: ['planned_flexibility', 'self_compassion', 'progress_not_perfection']
+        },
+        'DIRECT_FLEXIBLE': {
+            riskAreas: ['meal_skipping', 'inconsistency', 'late_eating'],
+            coping: ['anchor_meals', 'habit_stacking', 'simple_routine']
+        },
+        'SUPPORTIVE_STRUCTURED': {
+            riskAreas: ['fear_of_change', 'others_first', 'anxiety'],
+            coping: ['gradual_changes', 'self_care_priority', 'predictable_plan']
+        },
+        'SUPPORTIVE_FLEXIBLE': {
+            riskAreas: ['external_eating', 'boundary_issues', 'social_pressure'],
+            coping: ['personal_plan', 'saying_no', 'advance_decisions']
+        },
+        'STRATEGIC_STRUCTURED': {
+            riskAreas: ['over_optimization', 'food_as_fuel', 'burnout'],
+            coping: ['pleasure_integration', 'recovery_planning', 'long_term_focus']
+        },
+        'STRATEGIC_FLEXIBLE': {
+            riskAreas: ['diet_hopping', 'extreme_experiments', 'inconsistency'],
+            coping: ['one_change_at_time', 'time_boxed_trials', 'data_tracking']
+        },
+        'EMPATHETIC_STRUCTURED': {
+            riskAreas: ['overthinking', 'overcommitment', 'stress'],
+            coping: ['simplification', 'resource_protection', 'clear_priorities']
+        },
+        'EMPATHETIC_FLEXIBLE': {
+            riskAreas: ['emotional_eating', 'chaos', 'mood_dependent'],
+            coping: ['minimal_framework', 'emotion_work', 'stable_anchors']
+        }
+    };
+    
+    return riskConfig[communicationMode] || riskConfig['SUPPORTIVE_STRUCTURED'];
+}
+
+/**
+ * Calculates correlation score between initial_answers and personality profile
+ * Returns a score from 0 to 1 indicating concordance level
+ * 
+ * @param {Object} initialAnswers - User's questionnaire answers
+ * @param {Object} personalityTest - Personality test results with scores
+ * @returns {number} Correlation score (0-1)
+ */
+function calculateCorrelationScore(initialAnswers, personalityTest) {
+    if (!initialAnswers || !personalityTest || !personalityTest.scores) {
+        return 0.5; // Neutral if missing data
+    }
+    
+    const dimensions = personalityTest.scores;
+    let totalPoints = 0;
+    let maxPoints = 0;
+    
+    // Correlation weights per dimension
+    const dimensionWeights = {
+        E: 0.15,  // Extraversion
+        C: 0.25,  // Conscientiousness (most important for eating)
+        O: 0.10,  // Openness
+        A: 0.10,  // Agreeableness
+        N: 0.20,  // Neuroticism (important for eating)
+        I: 0.15,  // Impulsivity (important for eating)
+        R: 0.05   // Risk-taking
+    };
+    
+    // Check correlations for each dimension
+    
+    // E (Extraversion) correlations
+    if (dimensions.E !== undefined) {
+        const weight = dimensionWeights.E;
+        maxPoints += weight;
+        
+        if (initialAnswers.chronotype === 'Сутрешен' && dimensions.E >= 55) {
+            totalPoints += weight;
+        } else if (initialAnswers.chronotype === 'Вечерен' && dimensions.E < 50) {
+            totalPoints += weight * 0.7;
+        }
+        
+        if (initialAnswers.stressLevel === 'Високо' && dimensions.E < 50) {
+            totalPoints += weight * 0.5;
+        } else if (initialAnswers.stressLevel === 'Ниско' && dimensions.E >= 55) {
+            totalPoints += weight * 0.5;
+        }
+    }
+    
+    // C (Conscientiousness) correlations - most important
+    if (dimensions.C !== undefined) {
+        const weight = dimensionWeights.C;
+        maxPoints += weight;
+        
+        if (initialAnswers.sleepHours === '7–8' && dimensions.C >= 60) {
+            totalPoints += weight * 0.4;
+        }
+        
+        if (initialAnswers.sleepInterrupt === 'Не' && dimensions.C >= 60) {
+            totalPoints += weight * 0.3;
+        }
+        
+        const overeating = initialAnswers.overeatingFrequency || '';
+        if ((overeating === 'Рядко' || overeating === 'Никога') && dimensions.C >= 60) {
+            totalPoints += weight * 0.3;
+        } else if ((overeating === 'Често' || overeating === 'Постоянно') && dimensions.C < 50) {
+            totalPoints += weight * 0.3;
+        }
+    }
+    
+    // N (Neuroticism) correlations - important for emotional eating
+    if (dimensions.N !== undefined) {
+        const weight = dimensionWeights.N;
+        maxPoints += weight;
+        
+        if (initialAnswers.stressLevel === 'Високо' && dimensions.N >= 60) {
+            totalPoints += weight * 0.4;
+        }
+        
+        const triggers = initialAnswers.foodTriggers || [];
+        const emotionalTriggers = triggers.includes('Напрежение') || triggers.includes('Тъга');
+        if (emotionalTriggers && dimensions.N >= 60) {
+            totalPoints += weight * 0.3;
+        }
+        
+        const overeating = initialAnswers.overeatingFrequency || '';
+        if ((overeating === 'Често' || overeating === 'Постоянно') && dimensions.N >= 60) {
+            totalPoints += weight * 0.3;
+        }
+    }
+    
+    // I (Impulsivity) correlations
+    if (dimensions.I !== undefined) {
+        const weight = dimensionWeights.I;
+        maxPoints += weight;
+        
+        const overeating = initialAnswers.overeatingFrequency || '';
+        if ((overeating === 'Често' || overeating === 'Постоянно') && dimensions.I >= 60) {
+            totalPoints += weight * 0.5;
+        }
+        
+        if (initialAnswers.foodCravings === 'Да' && dimensions.I >= 60) {
+            totalPoints += weight * 0.5;
+        }
+    }
+    
+    // O (Openness) correlations
+    if (dimensions.O !== undefined) {
+        const weight = dimensionWeights.O;
+        maxPoints += weight;
+        
+        if (initialAnswers.dietHistory === 'Да' && dimensions.O >= 60) {
+            totalPoints += weight * 0.5;
+        }
+        
+        const dietPref = initialAnswers.dietPreference || [];
+        if (Array.isArray(dietPref) && dietPref.length > 1 && dimensions.O >= 60) {
+            totalPoints += weight * 0.5;
+        }
+    }
+    
+    // A (Agreeableness) correlations
+    if (dimensions.A !== undefined) {
+        const weight = dimensionWeights.A;
+        maxPoints += weight;
+        
+        const triggers = initialAnswers.foodTriggers || [];
+        if (triggers.includes('Социални събития') && dimensions.A >= 60) {
+            totalPoints += weight;
+        }
+    }
+    
+    // R (Risk-taking) correlations
+    if (dimensions.R !== undefined) {
+        const weight = dimensionWeights.R;
+        maxPoints += weight;
+        
+        if (initialAnswers.dietHistory === 'Да' && dimensions.R >= 60) {
+            totalPoints += weight * 0.5;
+        }
+        
+        const compensation = initialAnswers.compensationmethod || initialAnswers.compensationMethods || [];
+        if (Array.isArray(compensation) && compensation.includes('Хапчета за отслабване') && dimensions.R >= 60) {
+            totalPoints += weight * 0.5;
+        }
+    }
+    
+    // Calculate final score
+    if (maxPoints === 0) {
+        return 0.5; // Neutral if no correlations found
+    }
+    
+    return totalPoints / maxPoints;
+}
+
+/**
+ * Determines concordance level based on correlation score
+ * 
+ * @param {number} correlationScore - Score from 0 to 1
+ * @returns {string} 'high', 'medium', or 'low'
+ */
+function getConcordanceLevel(correlationScore) {
+    if (correlationScore >= 0.75) return 'high';
+    if (correlationScore >= 0.55) return 'medium';
+    return 'low';
+}
+
+/**
+ * Generates adapted guidance structure for final_plan
+ * Based on psycho-profile and concordance level
+ * 
+ * @param {Object} psychoTestsData - Psycho tests data
+ * @param {Object} initialAnswers - User's initial questionnaire answers
+ * @returns {Object|null} Adapted guidance structure or null
+ */
+function generateAdaptedGuidance(psychoTestsData, initialAnswers) {
+    if (!psychoTestsData || !psychoTestsData.personalityTest) {
+        return null;
+    }
+    
+    const personalityTest = psychoTestsData.personalityTest;
+    const visualTest = psychoTestsData.visualTest;
+    const typeCode = personalityTest.typeCode;
+    
+    if (!typeCode) {
+        return null;
+    }
+    
+    // Calculate correlation and concordance
+    const correlationScore = calculateCorrelationScore(initialAnswers, personalityTest);
+    const concordanceLevel = getConcordanceLevel(correlationScore);
+    
+    // Map to communication mode
+    const communicationMode = mapPersonalityTypeTo8Modes(typeCode);
+    
+    // Base structure
+    const adaptedGuidance = {
+        concordanceLevel: concordanceLevel,
+        correlationScore: Math.round(correlationScore * 100) / 100,
+        personalityType: typeCode,
+        visualType: visualTest ? visualTest.profileId : null
+    };
+    
+    // Adaptation level based on concordance
+    if (concordanceLevel === 'low') {
+        // No adaptation, 7-day observation
+        adaptedGuidance.adaptationLevel = 'none';
+        adaptedGuidance.observationMode = true;
+        adaptedGuidance.observationDays = 7;
+        adaptedGuidance.reason = 'Ниска съгласуваност между тестове и въпросник. Препоръчва се 7-дневно наблюдение.';
+    } else if (concordanceLevel === 'medium') {
+        // Communication only
+        adaptedGuidance.adaptationLevel = 'communication_only';
+        adaptedGuidance.communicationMode = communicationMode;
+        
+        // Only tone and length keys (no structure/flexibility)
+        const modeKeys = getCommunicationModeKeys(communicationMode);
+        adaptedGuidance.keys = {
+            tone: modeKeys.tone,
+            length: modeKeys.length,
+            frequency: modeKeys.frequency
+        };
+        
+        adaptedGuidance.reason = 'Умерена съгласуваност. Адаптира се само комуникационният стил.';
+    } else {
+        // High concordance - full adaptation
+        adaptedGuidance.adaptationLevel = 'full';
+        adaptedGuidance.communicationMode = communicationMode;
+        
+        // Full keys including structure and flexibility
+        adaptedGuidance.keys = getCommunicationModeKeys(communicationMode);
+        
+        // Risk areas and coping strategies
+        const riskData = getRiskAreasAndCoping(communicationMode);
+        adaptedGuidance.riskAreas = riskData.riskAreas;
+        adaptedGuidance.coping = riskData.coping;
+        
+        adaptedGuidance.reason = 'Висока съгласуваност. Прилага се пълна адаптация.';
+    }
+    
+    return adaptedGuidance;
+}
+
+/**
+ * Formats adapted guidance for AI prompt
+ * Returns a concise text suitable for AI context
+ * 
+ * @param {Object} adaptedGuidance - Adapted guidance structure
+ * @returns {string} Formatted text for AI prompt
+ */
+function formatAdaptedGuidanceForPrompt(adaptedGuidance) {
+    if (!adaptedGuidance) {
+        return '';
+    }
+    
+    const { adaptationLevel, concordanceLevel, communicationMode, keys, riskAreas, coping } = adaptedGuidance;
+    
+    if (adaptationLevel === 'none') {
+        return `Психо-профил: Наблюдение (ниска съгласуваност). Използвай generic комуникация.`;
+    }
+    
+    let text = `Комуникационен режим: ${communicationMode}\n`;
+    
+    if (keys) {
+        text += `Тон: ${keys.tone}, Дължина: ${keys.length}`;
+        if (keys.structure) {
+            text += `, Структура: ${keys.structure}, Гъвкавост: ${keys.flexibility}`;
+        }
+        text += '\n';
+    }
+    
+    if (riskAreas && riskAreas.length > 0) {
+        text += `Рискови области: ${riskAreas.join(', ')}\n`;
+    }
+    
+    if (coping && coping.length > 0) {
+        text += `Стратегии: ${coping.join(', ')}`;
+    }
+    
+    return text.trim();
+}
+
+// ------------- END HELPER: Psychometric Adaptation Functions (v2.0) -------------
+
 // ------------- START FUNCTION: handleSavePsychTestsRequest -------------
 /**
  * Запазва резултатите от психологическите тестове (визуален и личностен)
@@ -2924,6 +3379,18 @@ async function handleSavePsychTestsRequest(request, env) {
                         
                         // Актуализираме final_plan с психо профил данните
                         finalPlan.psychoTestsProfile = psychoTestsData;
+                        
+                        // v2.0: Generate adapted guidance based on psycho-profile and correlation
+                        try {
+                            const adaptedGuidance = generateAdaptedGuidance(psychoTestsData, initialAnswers);
+                            if (adaptedGuidance) {
+                                finalPlan.adaptedGuidance = adaptedGuidance;
+                                console.log(`SAVE_PSYCH_TESTS (${userId}): Adapted guidance добавен. Mode: ${adaptedGuidance.communicationMode || 'N/A'}, Concordance: ${adaptedGuidance.concordanceLevel}`);
+                            }
+                        } catch (adaptedGuidanceError) {
+                            console.error(`SAVE_PSYCH_TESTS (${userId}): Грешка при генериране на adapted guidance: ${adaptedGuidanceError.message}`);
+                            // Не провалям операцията ако adapted guidance не се генерира
+                        }
                         
                         // Запазваме актуализирания план
                         await env.USER_METADATA_KV.put(finalPlanKey, JSON.stringify(finalPlan));
@@ -6188,6 +6655,18 @@ async function processSingleUserPlan(userId, env) {
                     
                     planBuilder.psychoTestsProfile = psychoTestsData;
                     await addLog('Психо профил данни добавени към плана');
+                    
+                    // v2.0: Generate adapted guidance based on psycho-profile
+                    try {
+                        const adaptedGuidance = generateAdaptedGuidance(psychoTestsData, answersParsed);
+                        if (adaptedGuidance) {
+                            planBuilder.adaptedGuidance = adaptedGuidance;
+                            await addLog(`Adapted guidance генериран: ${adaptedGuidance.communicationMode || 'N/A'} (${adaptedGuidance.concordanceLevel})`);
+                        }
+                    } catch (adaptedErr) {
+                        console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Грешка при генериране на adapted guidance - ${adaptedErr.message}`);
+                        // Не прекъсваме процеса
+                    }
                 }
             } catch (psychoErr) {
                 console.warn(`PROCESS_USER_PLAN_WARN (${userId}): Не успя добавянето на психо профил към плана - ${psychoErr.message}`);
@@ -6796,6 +7275,10 @@ function buildPromptDataFromRaw(initialAnswers, finalPlan, currentStatus, logEnt
     // Extract psychProfile from finalPlan if available
     const psychProfileData = safeGet(finalPlan, 'psychoTestsProfile', null);
     const psychProfileText = psychProfileData ? formatPsychProfileForPrompt(psychProfileData) : NO_PSYCH_PROFILE_MESSAGE;
+    
+    // v2.0: Extract adapted guidance for AI context
+    const adaptedGuidanceData = safeGet(finalPlan, 'adaptedGuidance', null);
+    const adaptedGuidanceText = adaptedGuidanceData ? formatAdaptedGuidanceForPrompt(adaptedGuidanceData) : '';
 
     return {
         userName,
@@ -6803,6 +7286,7 @@ function buildPromptDataFromRaw(initialAnswers, finalPlan, currentStatus, logEnt
         userConditions,
         userPreferences,
         psychProfile: psychProfileText,
+        adaptedGuidance: adaptedGuidanceText,  // v2.0: Add adapted guidance to context
         initCalMac,
         planSum,
         allowedF,
