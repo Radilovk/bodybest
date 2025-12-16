@@ -115,6 +115,14 @@ README.md
 | [docs/QUESTIONNAIRE_ANALYSIS_CORRELATION.md](./docs/QUESTIONNAIRE_ANALYSIS_CORRELATION.md) | Questionnaire analysis |
 | [docs/PLAN_PROPOSAL_OPTIMIZATION_BG.md](./docs/PLAN_PROPOSAL_OPTIMIZATION_BG.md) | Plan proposal optimization |
 
+### Psychological Tests & Personalization ⭐ NEW
+| Документ | Описание |
+|----------|----------|
+| **[docs/PSYCHOMETRIC_PLAN_ADAPTATION_PROPOSAL_BG.md](./docs/PSYCHOMETRIC_PLAN_ADAPTATION_PROPOSAL_BG.md)** | 🎯 **ГЛАВЕН ДОКУМЕНТ** - Пълно предложение за адаптация на final_plan базирана на психометрични тестове |
+| [docs/PSYCHOMETRIC_QUICK_REFERENCE_BG.md](./docs/PSYCHOMETRIC_QUICK_REFERENCE_BG.md) | Бърз справочник за разработчици - 16 типа, корелации, примери |
+| [docs/psycho_tests_to_final_plan.md](./docs/psycho_tests_to_final_plan.md) | Автоматично запазване на психопрофил във final_plan |
+| [docs/PSYCHO_TEST_IMPROVEMENTS.md](./docs/PSYCHO_TEST_IMPROVEMENTS.md) | Подобрения на психологическите тестове |
+
 ### Examples & References
 | Документ | Описание |
 |----------|----------|
