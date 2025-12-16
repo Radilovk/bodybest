@@ -2785,7 +2785,9 @@ function createPsychoTestsProfileData(visualTest, personalityTest, timestamps) {
             strengths: personalityTest.strengths || [],
             mainRisks: personalityTest.mainRisks || [],
             topRecommendations: personalityTest.topRecommendations || [],
-            timestamp: normalizedPersonalityTimestamp
+            timestamp: normalizedPersonalityTimestamp,
+            // НОВО: Включване на psyadvice данни за AI интеграция
+            psyadvice: personalityTest.psyadvice || null
         };
     }
     
@@ -6370,6 +6372,36 @@ async function processSingleUserPlan(userId, env) {
                             personalityTestInfo += `\n  ${idx + 1}. ${rec}`;
                         });
                     }
+                    
+                    // НОВО: Добавяне на psyadvice данни от psyadvice.txt
+                    if (pt.psyadvice) {
+                        const psy = pt.psyadvice;
+                        personalityTestInfo += `\n\n--- ПСИХОЛОГИЧЕСКИ ПРОФИЛ (psyadvice) ---`;
+                        if (psy.description) {
+                            personalityTestInfo += `\nОписание: ${psy.description}`;
+                        }
+                        if (psy.traits) {
+                            personalityTestInfo += `\nХарактеристики: ${psy.traits}`;
+                        }
+                        if (psy.eatingRisks && Array.isArray(psy.eatingRisks) && psy.eatingRisks.length > 0) {
+                            personalityTestInfo += `\n\nХранене – рискове:`;
+                            psy.eatingRisks.forEach((risk, idx) => {
+                                personalityTestInfo += `\n  ${idx + 1}. ${risk}`;
+                            });
+                        }
+                        if (psy.directions && Array.isArray(psy.directions) && psy.directions.length > 0) {
+                            personalityTestInfo += `\n\nНасоки за хранене:`;
+                            psy.directions.forEach((dir, idx) => {
+                                personalityTestInfo += `\n  ${idx + 1}. ${dir}`;
+                            });
+                        }
+                        if (psy.communication && Array.isArray(psy.communication) && psy.communication.length > 0) {
+                            personalityTestInfo += `\n\nКомуникационен стил:`;
+                            psy.communication.forEach((comm, idx) => {
+                                personalityTestInfo += `\n  ${idx + 1}. ${comm}`;
+                            });
+                        }
+                    }
                 }
             }
             
@@ -7307,6 +7339,35 @@ function formatPsychProfileForPrompt(psychProfile) {
         if (pt.topRecommendations && Array.isArray(pt.topRecommendations) && pt.topRecommendations.length > 0) {
             text += '\nКлючови препоръки:\n';
             pt.topRecommendations.forEach(rec => text += `• ${rec}\n`);
+        }
+        
+        // НОВО: Добавяне на psyadvice данни за AI асистента
+        if (pt.psyadvice) {
+            const psy = pt.psyadvice;
+            text += '\n--- ПРОФИЛ ОТ PSYADVICE ---\n';
+            
+            if (psy.description) {
+                text += `Профил: ${psy.description}\n`;
+            }
+            if (psy.traits) {
+                text += `Характеристики: ${psy.traits}\n`;
+            }
+            
+            if (psy.eatingRisks && Array.isArray(psy.eatingRisks) && psy.eatingRisks.length > 0) {
+                text += '\nХранене – рискове:\n';
+                psy.eatingRisks.forEach(risk => text += `• ${risk}\n`);
+            }
+            
+            if (psy.directions && Array.isArray(psy.directions) && psy.directions.length > 0) {
+                text += '\nНасоки за хранене:\n';
+                psy.directions.forEach(dir => text += `• ${dir}\n`);
+            }
+            
+            // ВАЖНО: Комуникационен стил за AI асистента
+            if (psy.communication && Array.isArray(psy.communication) && psy.communication.length > 0) {
+                text += '\n** КОМУНИКАЦИОНЕН СТИЛ (следвай тези насоки при отговорите си):\n';
+                psy.communication.forEach(comm => text += `• ${comm}\n`);
+            }
         }
     }
     
