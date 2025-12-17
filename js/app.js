@@ -15,7 +15,7 @@ import { debugLog, enableDebug } from './logger.js';
 import { safeParseFloat, escapeHtml, fileToDataURL, normalizeDailyLogs, getLocalDate } from './utils.js';
 import { selectors, initializeSelectors, loadInfoTexts } from './uiElements.js';
 import { getMetricDescription } from './metricUtils.js';
-import { cachedFetch, clearCache } from './requestCache.js';
+import { cachedFetch, clearCache, getDashboardCache, getProfileCache, getAnalyticsCache } from './requestCache.js';
 import {
     initializeTheme,
     loadAndApplyColors,
@@ -270,8 +270,13 @@ export function resetAppState() {
     currentUserId = null;
     fullDashboardData = {};
     chatHistory = [];
-    // ОПТИМИЗАЦИЯ: Изчистваме request кеша при reset на приложението
+    
+    // ОПТИМИЗАЦИЯ: Изчистваме всички кешове при reset на приложението
     clearCache();
+    dashboardCache.clear();
+    profileCache.clear();
+    analyticsCache.clear();
+    
     todaysMealCompletionStatus = {};
     todaysPlanMacros = {
         calories: 0,
@@ -564,6 +569,15 @@ export function updateMacrosAndAnalytics() {
  * Зарежда данни за таблото от бекенда и обновява интерфейса.
  * @returns {Promise<void>}
  */
+// ==========================================================================
+// DASHBOARD DATA LOADING WITH INTELLIGENT CACHING
+// ==========================================================================
+
+// Глобални cache instances за оптимизация на API заявки
+const dashboardCache = getDashboardCache(); // 5 минути TTL
+const profileCache = getProfileCache(); // 5 минути TTL  
+const analyticsCache = getAnalyticsCache(); // 15 минути TTL
+
 export async function loadDashboardData() {
     debugLog("loadDashboardData starting for user:", currentUserId);
     if (!currentUserId) {
@@ -1086,6 +1100,10 @@ export async function autoSaveDailyLog() {
             fullDashboardData.dailyLogs.push({ date: savedDate, data: savedData });
         }
         cacheLastLog({ userId: logPayload.userId, date: savedDate, data: savedData });
+        
+        // ОПТИМИЗАЦИЯ: Инвалидираме analytics cache след log операция
+        analyticsCache.invalidate(currentUserId);
+        clearCache(apiEndpoints.dashboard); // Изчистваме dashboard cache за свежи данни
     } catch (err) {
         console.error('Auto-save failed', err);
     }
@@ -1146,6 +1164,11 @@ export async function handleSaveLog() { // Exported for eventListeners.js
             }
         }
         cacheLastLog({ userId: logPayload.userId, date: result.savedDate, data: result.savedData || logPayload.data });
+        
+        // ОПТИМИЗАЦИЯ: Инвалидираме analytics cache след log операция
+        analyticsCache.invalidate(currentUserId);
+        clearCache(apiEndpoints.dashboard); // Изчистваме dashboard cache за свежи данни
+        
         await refreshAnalytics(true);
         updateAnalyticsSections(fullDashboardData.analytics);
         await populateUI();
