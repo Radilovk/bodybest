@@ -9454,6 +9454,14 @@ async function handleSubmitPlanChangeRequest(request, env) {
         }
 
         // Check for macro gaps but allow partial modifications
+        // Note: We allow partial modifications to improve UX and enable iterative refinement.
+        // Users can describe changes in free text (e.g., "add more protein", "remove dairy")
+        // and the AI may generate partial updates (e.g., only modify some days or some meals).
+        // This is acceptable because:
+        // 1. The plan is still usable - unmodified sections remain intact
+        // 2. Users can make additional modifications to complete the plan
+        // 3. Strict validation was causing false rejections of valid user requests
+        // 4. Gaps are logged for monitoring and future improvements
         const macroGaps = collectPlanMacroGaps(updatedPlanDraft);
         if (macroGaps.hasGaps) {
             const missing = [];
@@ -9464,8 +9472,6 @@ async function handleSubmitPlanChangeRequest(request, env) {
                 missing.push('макроси по ястия');
             }
             console.warn(`PLAN_MOD_WARN (${userId}): Macro gaps detected but allowing modification: ${missing.join('; ')}`);
-            // Don't reject - allow partial modifications for better UX
-            // The plan can be completed in subsequent modifications or regenerations
         }
 
         const validatedPlan = updatedPlanDraft;
