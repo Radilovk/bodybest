@@ -4703,10 +4703,11 @@ async function handlePeekAdminNotificationsRequest(request, env) {
             const userId = client?.userId;
             if (!userId) continue;
 
-            const [queriesStr, repliesStr, feedbackStr] = await Promise.all([
+            const [queriesStr, repliesStr, feedbackStr, planChangeRequestsStr] = await Promise.all([
                 env.USER_METADATA_KV.get(`${userId}_admin_queries`),
                 env.USER_METADATA_KV.get(`${userId}_client_replies`),
-                env.USER_METADATA_KV.get(`${userId}_feedback_messages`)
+                env.USER_METADATA_KV.get(`${userId}_feedback_messages`),
+                env.USER_METADATA_KV.get(`${userId}_plan_change_requests`)
             ]);
 
             const parsedQueries = safeParseJson(queriesStr, []);
@@ -4718,6 +4719,10 @@ async function handlePeekAdminNotificationsRequest(request, env) {
                 .filter(item => item && typeof item === 'object' && !item.read)
                 .map(item => /** @type {NotificationEntry} */ (item));
             const rawFeedback = safeParseJson(feedbackStr, []);
+            const parsedPlanChangeRequests = safeParseJson(planChangeRequestsStr, []);
+            const unreadPlanChangeRequests = (Array.isArray(parsedPlanChangeRequests) ? parsedPlanChangeRequests : [])
+                .filter(item => item && typeof item === 'object' && !item.read && item.status === 'pending')
+                .map(item => ({ ...item, type: 'plan_change_request' }));
 
             let latestFeedbackTs = null;
 
@@ -4743,6 +4748,14 @@ async function handlePeekAdminNotificationsRequest(request, env) {
             const replies = unreadReplies
                 .map(r => normalizeEntry(r))
                 .filter(toEntryWithMessage);
+            const planChangeRequests = unreadPlanChangeRequests
+                .map(pcr => ({
+                    message: pcr.requestText || '',
+                    ts: pcr.timestamp || null,
+                    type: 'plan_change_request',
+                    status: pcr.status || 'pending'
+                }))
+                .filter(pcr => pcr.message);
             const feedback = (Array.isArray(rawFeedback) ? rawFeedback : [])
                 .map(item => {
                     const source = /** @type {NotificationEntry} */ (item ?? {});
@@ -4769,13 +4782,14 @@ async function handlePeekAdminNotificationsRequest(request, env) {
                 })
                 .filter(Boolean);
 
-            if (queries.length === 0 && replies.length === 0 && feedback.length === 0) {
+            if (queries.length === 0 && replies.length === 0 && feedback.length === 0 && planChangeRequests.length === 0) {
                 continue;
             }
 
             const messages = [
                 ...queries.map(q => ({ type: 'query', text: q.message, ts: q.ts ?? null })),
                 ...replies.map(r => ({ type: 'reply', text: r.message, ts: r.ts ?? null })),
+                ...planChangeRequests.map(pcr => ({ type: 'plan_change_request', text: pcr.message, ts: pcr.ts ?? null })),
                 ...feedback.map(f => {
                     const primaryTs = typeof f.ts === 'number' && Number.isFinite(f.ts) ? f.ts : null;
                     const fallbackTs = typeof f.resolvedTs === 'number' && Number.isFinite(f.resolvedTs)
@@ -4800,12 +4814,14 @@ async function handlePeekAdminNotificationsRequest(request, env) {
                 flags: {
                     queries: queries.length > 0,
                     replies: replies.length > 0,
-                    feedback: feedback.length > 0
+                    feedback: feedback.length > 0,
+                    planChangeRequests: planChangeRequests.length > 0
                 },
                 latestFeedbackTs: latestFeedbackTs ? new Date(latestFeedbackTs).toISOString() : null,
                 queries,
                 replies,
                 feedback: normalizedFeedback,
+                planChangeRequests,
                 messages
             });
         }
@@ -9362,10 +9378,16 @@ async function handleUpdateKvRequest(request, env) {
 // ------------- END FUNCTION: handleUpdateKvRequest -------------
 
 // ------------- START FUNCTION: handleSubmitPlanChangeRequest -------------
+/**
+ * Handles plan change requests from clients.
+ * Instead of automatically modifying the plan, this stores the request as a notification
+ * for the administrator to review and manually apply changes.
+ * 
+ * @param {Request} request - Contains userId and requestText
+ * @param {Object} env - Worker environment with KV bindings
+ * @returns {Promise<Object>} Success response confirming the request was submitted
+ */
 async function handleSubmitPlanChangeRequest(request, env) {
-    const BMI_HIGH_RISK = 30;
-    const BMI_LOW_RISK = 18.5;
-    const CAL_DELTA_LIMIT = 0.1;
     let userId; // Declare at function scope for catch block access
     try {
         const requestData = await request.json();
@@ -9380,17 +9402,13 @@ async function handleSubmitPlanChangeRequest(request, env) {
             };
         }
 
-        console.log(`PLAN_MOD_REQUEST (${userId}): Request: "${String(requestText).trim().substring(0, 200)}..."`);
+        console.log(`PLAN_CHANGE_REQUEST (${userId}): Submitting request for admin review: "${String(requestText).trim().substring(0, 200)}..."`);
 
-        const [finalPlanStr, initialAnswersStr, currentStatusStr] = await Promise.all([
-            env.USER_METADATA_KV.get(`${userId}_final_plan`),
-            env.USER_METADATA_KV.get(`${userId}_initial_answers`),
-            env.USER_METADATA_KV.get(`${userId}_current_status`)
-        ]);
-
+        // Check if user has an active plan
+        const finalPlanStr = await env.USER_METADATA_KV.get(`${userId}_final_plan`);
         const finalPlan = safeParseJson(finalPlanStr, null);
         if (!finalPlan) {
-            console.log(`PLAN_MOD_ERROR (${userId}): No plan found`);
+            console.log(`PLAN_CHANGE_ERROR (${userId}): No plan found`);
             return {
                 success: false,
                 message: 'Не е намерен активен план за този потребител.',
@@ -9398,126 +9416,35 @@ async function handleSubmitPlanChangeRequest(request, env) {
             };
         }
 
-        const initialAnswers = safeParseJson(initialAnswersStr, {});
-        const currentStatus = safeParseJson(currentStatusStr, {});
-        const weight = safeParseFloat(currentStatus?.weight, safeParseFloat(initialAnswers?.weight, null));
-        const height = safeParseFloat(initialAnswers?.height, null);
-        const bmi = weight && height ? Number((weight / Math.pow(height / 100, 2)).toFixed(1)) : null;
+        // Get existing plan change requests for this user
+        const existingRequestsStr = await env.USER_METADATA_KV.get(`${userId}_plan_change_requests`);
+        const existingRequests = safeParseJson(existingRequestsStr, []);
 
-        console.log(`PLAN_MOD_PARSE (${userId}): Parsing modification request with AI...`);
-        const parsedChanges = await parsePlanModificationRequest(String(requestText).trim(), userId, env);
-        
-        // Check if AI recommends full plan regeneration
-        if (parsedChanges.requiresFullRegeneration) {
-            console.log(`PLAN_MOD_FULL_REGEN_REQUIRED (${userId}): AI recommends full plan regeneration - ${parsedChanges.reasoning}`);
-            return {
-                success: false,
-                message: `Вашата заявка изисква пълно регенериране на плана, а не частична промяна.\n\nПричина: ${parsedChanges.reasoning}\n\nМоля, използвайте бутона "Регенерирай план" за да създадете напълно нов план съобразен с новите ви цели и предпочитания.`,
-                statusHint: 422,
-                requiresFullRegeneration: true,
-                reasoning: parsedChanges.reasoning
-            };
-        }
-        
-        // Check if any meaningful changes were parsed
-        const changeKeys = Object.keys(parsedChanges).filter(k => !PLAN_MOD_EXCLUDED_RESPONSE_KEYS.includes(k));
-        if (changeKeys.length === 0) {
-            console.warn(`PLAN_MOD_WARN (${userId}): AI returned no structured changes`);
-            return {
-                success: false,
-                message: 'AI-ът не можа да разбере желаната промяна. Моля, опишете по-конкретно какво искате да промените в плана (например: "искам повече протеин", "премахни млечните продукти", "добави повече варианти за закуска").',
-                statusHint: 422
-            };
-        }
-
-        console.log(`PLAN_MOD_APPLY (${userId}): Applying partial changes: ${changeKeys.join(', ')}`);
-        const updatedPlanDraft = await applyPlanChanges(finalPlan, parsedChanges);
-
-        // Check if the plan actually changed
-        const planChanged = JSON.stringify(finalPlan) !== JSON.stringify(updatedPlanDraft);
-        if (!planChanged) {
-            console.warn(`PLAN_MOD_WARN (${userId}): Plan unchanged after applying modifications`);
-            return {
-                success: false,
-                message: 'Промените не бяха приложени, защото не са достатъчно ясни или конфликтират с текущия план. Моля, опишете по-конкретно какво искате да промените.',
-                statusHint: 422
-            };
-        }
-
-        const originalCalories = safeParseFloat(safeGet(finalPlan, 'caloriesMacros.plan.calories', null), null);
-        const updatedCalories = safeParseFloat(safeGet(updatedPlanDraft, 'caloriesMacros.plan.calories', null), null);
-
-        console.log(`PLAN_MOD_VALIDATE (${userId}): Calories change: ${originalCalories} → ${updatedCalories}`);
-
-        if (bmi && originalCalories && updatedCalories) {
-            const delta = (updatedCalories - originalCalories) / originalCalories;
-            if (bmi >= BMI_HIGH_RISK && delta > CAL_DELTA_LIMIT) {
-                console.log(`PLAN_MOD_REJECT (${userId}): Calorie increase too high for BMI ${bmi}`);
-                return {
-                    success: false,
-                    message: 'Заявката повишава калориите над безопасния диапазон спрямо текущия BMI.',
-                    statusHint: 409
-                };
-            }
-            if (bmi <= BMI_LOW_RISK && delta < -CAL_DELTA_LIMIT) {
-                console.log(`PLAN_MOD_REJECT (${userId}): Calorie decrease too high for BMI ${bmi}`);
-                return {
-                    success: false,
-                    message: 'Заявката намалява калориите прекомерно спрямо вашия BMI.',
-                    statusHint: 409
-                };
-            }
-        }
-
-        // Check for macro gaps but allow partial modifications
-        // Note: We allow partial modifications to improve UX and enable iterative refinement.
-        // Users can describe changes in free text (e.g., "add more protein", "remove dairy")
-        // and the AI may generate partial updates (e.g., only modify some days or some meals).
-        // This is acceptable because:
-        // 1. The plan is still usable - unmodified sections remain intact
-        // 2. Users can make additional modifications to complete the plan
-        // 3. Strict validation was causing false rejections of valid user requests
-        // 4. Gaps are logged for monitoring and future improvements
-        const macroGaps = collectPlanMacroGaps(updatedPlanDraft);
-        if (macroGaps.hasGaps) {
-            const missing = [];
-            if (macroGaps.missingCaloriesMacroFields?.length) {
-                missing.push(`макроси: ${macroGaps.missingCaloriesMacroFields.join(', ')}`);
-            }
-            if (macroGaps.missingMealMacros?.length) {
-                missing.push('макроси по ястия');
-            }
-            console.warn(`PLAN_MOD_WARN (${userId}): Macro gaps detected but allowing modification: ${missing.join('; ')}`);
-        }
-
-        const validatedPlan = updatedPlanDraft;
-        validatedPlan.generationMetadata = {
-            ...(validatedPlan.generationMetadata || {}),
-            lastModified: new Date().toISOString(),
-            modifiedBy: 'ai_plan_change_form',
-            modificationRequest: String(requestText).trim().substring(0, PLAN_MOD_REQUEST_MAX_LENGTH) // Store the request for reference
+        // Create new request object
+        const newRequest = {
+            requestText: String(requestText).trim(),
+            timestamp: new Date().toISOString(),
+            status: 'pending', // pending, reviewed, completed, rejected
+            read: false // For admin notification system
         };
 
-        console.log(`PLAN_MOD_SAVE (${userId}): Saving updated plan...`);
-        await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(validatedPlan));
-        await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify({
-            status: 'final',
-            data: validatedPlan.caloriesMacros ? { ...validatedPlan.caloriesMacros } : null
-        }));
+        // Add the new request to the list
+        existingRequests.push(newRequest);
 
-        console.log(`PLAN_MOD_SUCCESS (${userId}): Plan partially modified successfully with ${changeKeys.length} section(s) changed`);
+        // Store the updated requests list
+        await env.USER_METADATA_KV.put(`${userId}_plan_change_requests`, JSON.stringify(existingRequests));
+
+        console.log(`PLAN_CHANGE_SUCCESS (${userId}): Request stored successfully for admin review`);
         return {
             success: true,
-            message: 'Планът е актуализиран успешно! AI-ът направи частични промени в съществуващия ви план, без пълно регенериране. Промените спазват здравословните ограничения и са адаптирани към текущата структура на плана.',
-            bmi,
-            modificationType: 'PARTIAL_MODIFICATION',
-            appliedChanges: changeKeys // Return what was changed so frontend can display it
+            message: 'Вашата заявка за промяна на плана е изпратена успешно! Администраторът ще я прегледа и ще направи необходимите промени. Промените ще бъдат видими след презареждане на страницата.',
+            notificationType: 'PLAN_CHANGE_REQUEST'
         };
     } catch (error) {
-        console.error(`PLAN_MOD_ERROR (${userId}): ${error.message}\n${error.stack}`);
+        console.error(`PLAN_CHANGE_ERROR (${userId}): ${error.message}\n${error.stack}`);
         return {
             success: false,
-            message: 'Грешка при обработка на заявката за промяна на плана.',
+            message: 'Грешка при изпращане на заявката за промяна на плана.',
             statusHint: 500
         };
     }
