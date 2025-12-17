@@ -30,7 +30,8 @@ import {
     clearPlanModChat,
     handlePlanModChatSend,
     handlePlanModChatInputKeypress,
-    handlePlanModModalClose
+    handlePlanModModalClose,
+    openPlanModificationChat
 } from './planModChat.js';
 import { toggleChatWidget, closeChatWidget, clearChat } from './chat.js';
 import * as chatUpload from './chat.js';
@@ -226,6 +227,9 @@ export function setupStaticEventListeners() {
     if (selectors.planModChatClear) selectors.planModChatClear.addEventListener('click', clearPlanModChat);
     if (selectors.planModChatSend) selectors.planModChatSend.addEventListener('click', handlePlanModChatSend);
     if (selectors.planModChatInput) selectors.planModChatInput.addEventListener('keypress', handlePlanModChatInputKeypress);
+    
+    // Бутон за отваряне на модала за заявка за промяна на плана
+    if (selectors.planModificationBtn) selectors.planModificationBtn.addEventListener('click', () => openPlanModificationChat());
 
     if (selectors.feedbackForm) selectors.feedbackForm.addEventListener('submit', handleFeedbackFormSubmit);
 
