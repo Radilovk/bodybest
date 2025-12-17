@@ -10457,9 +10457,14 @@ async function applyPlanChanges(currentPlan, proposedChanges) {
  */
 async function parsePlanModificationRequest(modificationText, userId, env) {
     try {
-        // Get current plan for context
-        const currentPlanStr = await env.USER_METADATA_KV.get(`${userId}_final_plan`);
+        // Get current plan and user data for context
+        const [currentPlanStr, initialAnswersStr] = await Promise.all([
+            env.USER_METADATA_KV.get(`${userId}_final_plan`),
+            env.USER_METADATA_KV.get(`${userId}_initial_answers`)
+        ]);
+        
         const currentPlan = safeParseJson(currentPlanStr, null);
+        const initialAnswers = safeParseJson(initialAnswersStr, {});
         
         if (!currentPlan) {
             console.log(`PLAN_MOD_PARSE_ERROR (${userId}): No current plan found`);
@@ -10468,6 +10473,20 @@ async function parsePlanModificationRequest(modificationText, userId, env) {
                 structuredChanges: {}
             };
         }
+
+        // Extract user-specific parameters for context
+        const userContext = {
+            goal: initialAnswers.goal || 'N/A',
+            allergies: initialAnswers.allergies || 'N/A',
+            intolerances: initialAnswers.intolerances || 'N/A',
+            medicalConditions: initialAnswers.medicalConditions || 'N/A',
+            dietaryPreferences: initialAnswers.dietaryPreferences || 'N/A',
+            activityLevel: initialAnswers.activityLevel || 'N/A',
+            age: initialAnswers.age || 'N/A',
+            weight: initialAnswers.weight || 'N/A',
+            height: initialAnswers.height || 'N/A',
+            gender: initialAnswers.gender || 'N/A'
+        };
 
         // Create comprehensive plan summary for AI analysis
         const planSummary = {
@@ -10494,6 +10513,15 @@ async function parsePlanModificationRequest(modificationText, userId, env) {
         const decisionPrompt = `
 Ти си AI експерт по хранителни планове. Анализирай дали потребителската заявка изисква частична промяна или пълно регенериране на плана.
 
+ИНДИВИДУАЛНИ ПАРАМЕТРИ НА ПОТРЕБИТЕЛЯ:
+Цел: ${userContext.goal}
+Алергии: ${userContext.allergies}
+Непоносимости: ${userContext.intolerances}
+Медицински състояния: ${userContext.medicalConditions}
+Хранителни предпочитания: ${userContext.dietaryPreferences}
+Ниво на активност: ${userContext.activityLevel}
+Възраст: ${userContext.age} години | Тегло: ${userContext.weight} кг | Височина: ${userContext.height} см | Пол: ${userContext.gender}
+
 ТЕКУЩ ПЛАН (ПЪЛНО РЕЗЮМЕ):
 Профилно резюме: ${planSummary.profileSummary}
 Калории: ${planSummary.calories} | Протеин: ${planSummary.protein}г | Въглехидрати: ${planSummary.carbs}г | Мазнини: ${planSummary.fat}г
@@ -10512,6 +10540,12 @@ async function parsePlanModificationRequest(modificationText, userId, env) {
 Анализирай заявката и реши:
 1. PARTIAL_MODIFICATION - ако заявката може да се реализира чрез промяна на конкретни секции (напр. повече протеин, добави/премахни храни, промени някои ястия)
 2. FULL_REGENERATION - само ако заявката изисква ФУНДАМЕНТАЛНА промяна (напр. "промени целия план за напълно различна диета", "направи ми веган план вместо текущия", "преминавам от deficit към bulk - направи нов план")
+
+ВАЖНО: При частични промени ВИНАГИ съобразявай:
+- Алергиите и непоносимостите на потребителя
+- Медицинските състояния и специални нужди
+- Хранителните предпочитания и цели
+- Текущото ниво на активност и физиологични параметри
 
 ПРИОРИТЕТ: Винаги избирай PARTIAL_MODIFICATION освен ако промяната не е наистина фундаментална.
 
@@ -10569,6 +10603,15 @@ async function parsePlanModificationRequest(modificationText, userId, env) {
         const parsePrompt = `
 Ти си AI асистент за хранителни планове. Потребителят иска да промени своя план ЧАСТИЧНО.
 
+ИНДИВИДУАЛНИ ПАРАМЕТРИ НА ПОТРЕБИТЕЛЯ (ЗАДЪЛЖИТЕЛНО ДА СЪОБРАЗИШ):
+Цел: ${userContext.goal}
+Алергии: ${userContext.allergies}
+Непоносимости: ${userContext.intolerances}
+Медицински състояния: ${userContext.medicalConditions}
+Хранителни предпочитания: ${userContext.dietaryPreferences}
+Ниво на активност: ${userContext.activityLevel}
+Възраст: ${userContext.age} години | Тегло: ${userContext.weight} кг | Височина: ${userContext.height} см | Пол: ${userContext.gender}
+
 ТЕКУЩ ПЛАН (РЕЗЮМЕ):
 Калории: ${currentPlan.caloriesMacros?.plan?.calories || 'N/A'}
 Протеин: ${currentPlan.caloriesMacros?.plan?.protein_grams || 'N/A'}г
@@ -10586,6 +10629,13 @@ ${modificationText}
 ТВОЯТА ЗАДАЧА:
 Генерирай КОНКРЕТНИ ЧАСТИЧНИ промени в плана според заявката. ВАЖНО: Генерирай реално съдържание, не само празни структури!
 ФОКУС: Адаптирай съществуващия план, не го преправяй напълно!
+
+КРИТИЧНО ВАЖНО - ВИНАГИ СЪОБРАЗЯВАЙ:
+1. АЛЕРГИИ (${userContext.allergies}) - НЕ включвай алергенни храни в новото меню!
+2. НЕПОНОСИМОСТИ (${userContext.intolerances}) - НЕ включвай непоносими храни!
+3. МЕДИЦИНСКИ СЪСТОЯНИЯ (${userContext.medicalConditions}) - Адаптирай храните според медицинските нужди!
+4. ЦЕЛ (${userContext.goal}) - Съобрази промените с целта на потребителя!
+5. НИВО НА АКТИВНОСТ (${userContext.activityLevel}) - Калориите и макросите трябва да са подходящи!
 
 Примери за правилен отговор:
 
@@ -10612,7 +10662,7 @@ ${modificationText}
   }
 }
 
-2. Ако потребителят иска "без мляко":
+2. Ако потребителят иска "без мляко" (ВАЖНО: Проверявай дали потребителят има алергия към мляко!):
 {
   "allowedForbiddenFoods": {
     "forbidden": ${JSON.stringify([...(currentPlan.allowedForbiddenFoods?.forbidden || []), 'мляко', 'млечни продукти', 'сирене', 'кашкавал', 'извара'])}
@@ -10650,6 +10700,7 @@ ${modificationText}
 - Ястията да са на български език
 - Фокусирай се върху КОНКРЕТНАТА промяна, която потребителят иска
 - Не е нужно да генерираш ВСИЧКИ дни, ако промяната не го изисква
+- ЗАДЪЛЖИТЕЛНО ИЗБЯГВАЙ АЛЕРГЕНИТЕ И НЕПОНОСИМИТЕ ХРАНИ!
 
 Отговори САМО с валиден JSON обект без никакви обяснения:`;
         

@@ -30,7 +30,8 @@ import {
     openPlanModificationChat,
     clearPlanModChat,
     handlePlanModChatSend,
-    handlePlanModChatInputKeypress
+    handlePlanModChatInputKeypress,
+    handlePlanModModalClose
 } from './planModChat.js';
 import { toggleChatWidget, closeChatWidget, clearChat } from './chat.js';
 import * as chatUpload from './chat.js';
@@ -180,6 +181,7 @@ export function setupStaticEventListeners() {
             const modalId = closeBtn.dataset.modalClose;
             closeModal(modalId);
             if (modalId === 'infoModal') acknowledgeAiUpdate();
+            if (modalId === 'planModChatModal') handlePlanModModalClose();
             return;
         }
         if (event.target.classList.contains('modal') && event.target.classList.contains('visible')) {
@@ -188,6 +190,7 @@ export function setupStaticEventListeners() {
             if (modalId === 'planModChatModal') {
                 setChatModelOverride(null);
                 setChatPromptOverride(null);
+                handlePlanModModalClose();
             }
             if (modalId === 'infoModal') acknowledgeAiUpdate();
         }
@@ -201,6 +204,7 @@ export function setupStaticEventListeners() {
                 if (modalId === 'planModChatModal') {
                     setChatModelOverride(null);
                     setChatPromptOverride(null);
+                    handlePlanModModalClose();
                 }
                 if (modalId === 'infoModal') acknowledgeAiUpdate();
             }
@@ -219,6 +223,7 @@ export function setupStaticEventListeners() {
         setChatModelOverride(null);
         setChatPromptOverride(null);
         closeModal('planModChatModal');
+        handlePlanModModalClose();
     });
     if (selectors.planModChatClear) selectors.planModChatClear.addEventListener('click', clearPlanModChat);
     if (selectors.planModChatSend) selectors.planModChatSend.addEventListener('click', handlePlanModChatSend);
