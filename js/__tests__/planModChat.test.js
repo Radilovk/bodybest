@@ -33,7 +33,8 @@ describe('plan modification form (non-chat)', () => {
     }));
     jest.unstable_mockModule('../uiHandlers.js', () => ({
       openModal,
-      showToast
+      showToast,
+      closeModal: jest.fn()
     }));
     jest.unstable_mockModule('../config.js', () => ({
       apiEndpoints: { submitPlanChangeRequest: '/api/submitPlanChangeRequest' }
@@ -41,7 +42,11 @@ describe('plan modification form (non-chat)', () => {
     jest.unstable_mockModule('../app.js', () => ({
       get currentUserId() {
         return mockUserId;
-      }
+      },
+      loadDashboardData: jest.fn().mockResolvedValue()
+    }));
+    jest.unstable_mockModule('../requestCache.js', () => ({
+      clearCache: jest.fn()
     }));
 
     global.fetch = jest.fn().mockResolvedValue({

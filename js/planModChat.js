@@ -1,12 +1,17 @@
 import { selectors } from './uiElements.js';
 import { apiEndpoints } from './config.js';
-import { openModal, showToast } from './uiHandlers.js';
+import { openModal, showToast, closeModal } from './uiHandlers.js';
 import { escapeHtml } from './utils.js';
-import { currentUserId } from './app.js';
+import { currentUserId, loadDashboardData } from './app.js';
+import { clearCache } from './requestCache.js';
 
 export let planModChatHistory = [];
 export let planModChatContext = null;
 let isSending = false;
+
+// Timing constants for UI feedback and data reloading
+const MODAL_CLOSE_DELAY_MS = 1500;
+const DASHBOARD_RELOAD_DELAY_MS = 2000;
 
 const planModificationPrompt = 'Моля, опишете накратко желаните от вас промени в плана.';
 const planModGuidance = [
@@ -96,8 +101,25 @@ async function submitPlanChangeRequest(messageText, userId) {
     if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
     const confirmation = result.message || 'Заявката е приета. Ще актуализираме плана, ако няма здравословен конфликт.';
     displayPlanModChatMessage(confirmation, 'bot');
-    showToast('Заявката е изпратена и ще бъде разгледана.', false);
+    showToast('Заявката е изпратена успешно. Презареждане на плана...', false);
     if (selectors.planModChatInput) selectors.planModChatInput.value = '';
+    
+    // Изчистваме кеша и презареждаме dashboard данните, за да покажем обновения план
+    clearCache(apiEndpoints.dashboard);
+    
+    // Затваряме модала и презареждаме данните последователно
+    await new Promise(resolve => setTimeout(resolve, MODAL_CLOSE_DELAY_MS));
+    closeModal('planModChatModal');
+    
+    // Презареждаме dashboard данните
+    await new Promise(resolve => setTimeout(resolve, DASHBOARD_RELOAD_DELAY_MS - MODAL_CLOSE_DELAY_MS));
+    try {
+      await loadDashboardData();
+      showToast('Планът е актуализиран успешно!', false, 3000);
+    } catch (error) {
+      console.error('Грешка при презареждане на dashboard:', error);
+      showToast('Планът е актуализиран, но има грешка при презареждането. Моля, презаредете страницата.', true, 5000);
+    }
   } catch (e) {
     const errorMsg = `Грешка при изпращане: ${e.message}`;
     displayPlanModChatMessage(errorMsg, 'bot', true);
