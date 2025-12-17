@@ -13,6 +13,18 @@ let isSending = false;
 const MODAL_CLOSE_DELAY_MS = 1500;
 const DASHBOARD_RELOAD_DELAY_MS = 2000;
 
+// Mapping of backend change keys to user-friendly display names
+const CHANGE_DISPLAY_NAMES = {
+  caloriesMacros: 'калории и макроси',
+  week1Menu: 'седмично меню',
+  allowedForbiddenFoods: 'позволени/забранени храни',
+  principlesWeek2_4: 'принципи за седмици 2-4',
+  hydrationCookingSupplements: 'хидратация и добавки',
+  psychologicalGuidance: 'психологическо ръководство',
+  detailedTargets: 'детайлни цели',
+  profileSummary: 'профилно резюме'
+};
+
 const planModificationPrompt = 'Моля, опишете накратко желаните от вас промени в плана.';
 const planModGuidance = [
   'Напишете конкретно коя част от плана искате да се промени (напр. “повече протеин на обяд”).',
@@ -104,14 +116,7 @@ async function submitPlanChangeRequest(messageText, userId) {
     let confirmation = result.message || 'Заявката е приета. Ще актуализираме плана, ако няма здравословен конфликт.';
     if (result.appliedChanges && result.appliedChanges.length > 0) {
       const changesText = result.appliedChanges
-        .map(key => {
-          if (key === 'caloriesMacros') return 'калории и макроси';
-          if (key === 'week1Menu') return 'седмично меню';
-          if (key === 'allowedForbiddenFoods') return 'позволени/забранени храни';
-          if (key === 'principlesWeek2_4') return 'принципи за седмици 2-4';
-          if (key === 'hydrationCookingSupplements') return 'хидратация и добавки';
-          return key;
-        })
+        .map(key => CHANGE_DISPLAY_NAMES[key] || key)
         .join(', ');
       confirmation += `\n\n✅ Променени секции: ${changesText}`;
     }

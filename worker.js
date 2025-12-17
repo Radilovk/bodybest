@@ -1057,6 +1057,14 @@ const USER_ACTIVITY_LOG_LOOKBACK_DAYS = 10;
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS = 7;
 const USER_ACTIVITY_LOG_LIST_LIMIT = 100;
 const RECENT_CHAT_MESSAGES_FOR_PRINCIPLES = 10;
+
+// Plan modification constants
+const PLAN_MOD_REQUEST_MAX_LENGTH = 500; // Maximum length to store in metadata
+const PLAN_MOD_PROTEIN_MULTIPLIER = 1.2; // Multiplier for "more protein" example
+const PLAN_MOD_DEFAULT_PROTEIN_GRAMS = 100; // Default protein baseline for examples
+const PLAN_MOD_AI_TEMPERATURE = 0.7; // Higher temperature for creative meal generation
+const PLAN_MOD_AI_MAX_TOKENS = 4000; // Enough tokens for full meal plans
+
 const callModelRef = { current: null };
 
 async function getMaxChatHistoryMessages(env) {
@@ -9464,7 +9472,7 @@ async function handleSubmitPlanChangeRequest(request, env) {
             ...(validatedPlan.generationMetadata || {}),
             lastModified: new Date().toISOString(),
             modifiedBy: 'ai_plan_change_form',
-            modificationRequest: String(requestText).trim().substring(0, 500) // Store the request for reference
+            modificationRequest: String(requestText).trim().substring(0, PLAN_MOD_REQUEST_MAX_LENGTH) // Store the request for reference
         };
 
         console.log(`PLAN_MOD_SAVE (${userId}): Saving updated plan...`);
@@ -10464,7 +10472,7 @@ ${modificationText}
 {
   "caloriesMacros": {
     "plan": {
-      "protein_grams": ${Math.round((currentPlan.caloriesMacros?.plan?.protein_grams || 100) * 1.2)}
+      "protein_grams": ${Math.round((currentPlan.caloriesMacros?.plan?.protein_grams || PLAN_MOD_DEFAULT_PROTEIN_GRAMS) * PLAN_MOD_PROTEIN_MULTIPLIER)}
     }
   },
   "week1Menu": {
@@ -10530,7 +10538,7 @@ ${modificationText}
             modelName,
             parsePrompt,
             env,
-            { temperature: 0.7, maxTokens: 4000 } // Increased tokens and temperature for more creative generation
+            { temperature: PLAN_MOD_AI_TEMPERATURE, maxTokens: PLAN_MOD_AI_MAX_TOKENS }
         );
 
         console.log(`PLAN_MOD_PARSE_RESPONSE (${userId}): AI response length: ${parsedResponse?.length || 0} chars`);
