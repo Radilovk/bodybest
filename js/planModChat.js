@@ -7,19 +7,6 @@ import { currentUserId } from './app.js';
 export let planModChatHistory = [];
 export let planModChatContext = null;
 let isSending = false;
-let planModificationPending = false; // Flag to track if we need to reload dashboard on modal close
-
-// Mapping of backend change keys to user-friendly display names
-const CHANGE_DISPLAY_NAMES = {
-  caloriesMacros: 'калории и макроси',
-  week1Menu: 'седмично меню',
-  allowedForbiddenFoods: 'позволени/забранени храни',
-  principlesWeek2_4: 'принципи за седмици 2-4',
-  hydrationCookingSupplements: 'хидратация и добавки',
-  psychologicalGuidance: 'психологическо ръководство',
-  detailedTargets: 'детайлни цели',
-  profileSummary: 'профилно резюме'
-};
 
 const planModificationPrompt = 'Моля, опишете накратко желаните от вас промени в плана.';
 const planModGuidance = [
@@ -40,8 +27,7 @@ export function clearPlanModChat() {
  * No longer needs to reload dashboard since changes are made by admin
  */
 export async function handlePlanModModalClose() {
-  // Reset the pending flag if it was set
-  planModificationPending = false;
+  // Modal closed, no action needed
 }
 
 function renderGuidance() {
