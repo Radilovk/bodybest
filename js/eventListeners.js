@@ -27,7 +27,6 @@ import {
     ensureFreshDailyIntake
 } from './app.js';
 import {
-    openPlanModificationChat,
     clearPlanModChat,
     handlePlanModChatSend,
     handlePlanModChatInputKeypress,
@@ -126,7 +125,6 @@ export function setupStaticEventListeners() {
     if (selectors.addNoteBtn) selectors.addNoteBtn.addEventListener('click', toggleDailyNote);
     if (selectors.saveLogBtn) selectors.saveLogBtn.addEventListener('click', handleSaveLog);
     if (selectors.openExtraMealModalBtn) selectors.openExtraMealModalBtn.addEventListener('click', openExtraMealModal);
-    if (selectors.planModificationBtn) selectors.planModificationBtn.addEventListener('click', openPlanModificationChat);
     if (selectors.showIntroVideoBtn) selectors.showIntroVideoBtn.addEventListener('click', openInstructionsModal);
 
     if (selectors.goalCard) selectors.goalCard.addEventListener('click', () => openMainIndexInfo('goalProgress'));
