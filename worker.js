@@ -1064,6 +1064,10 @@ const PLAN_MOD_PROTEIN_MULTIPLIER = 1.2; // Multiplier for "more protein" exampl
 const PLAN_MOD_DEFAULT_PROTEIN_GRAMS = 100; // Default protein baseline for examples
 const PLAN_MOD_AI_TEMPERATURE = 0.7; // Higher temperature for creative meal generation
 const PLAN_MOD_AI_MAX_TOKENS = 4000; // Enough tokens for full meal plans
+const PLAN_MOD_DECISION_TEMPERATURE = 0.3; // Lower temperature for decision-making
+const PLAN_MOD_DECISION_MAX_TOKENS = 500; // Limited tokens for decision response
+const PLAN_MOD_PLAN_SUMMARY_FOOD_LIMIT = 15; // Number of foods to include in plan summary
+const PLAN_MOD_EXCLUDED_RESPONSE_KEYS = ['textDescription', 'requiresFullRegeneration', 'reasoning']; // Keys to exclude from changeKeys
 
 const callModelRef = { current: null };
 
@@ -9403,8 +9407,20 @@ async function handleSubmitPlanChangeRequest(request, env) {
         console.log(`PLAN_MOD_PARSE (${userId}): Parsing modification request with AI...`);
         const parsedChanges = await parsePlanModificationRequest(String(requestText).trim(), userId, env);
         
+        // Check if AI recommends full plan regeneration
+        if (parsedChanges.requiresFullRegeneration) {
+            console.log(`PLAN_MOD_FULL_REGEN_REQUIRED (${userId}): AI recommends full plan regeneration - ${parsedChanges.reasoning}`);
+            return {
+                success: false,
+                message: `Вашата заявка изисква пълно регенериране на плана, а не частична промяна.\n\nПричина: ${parsedChanges.reasoning}\n\nМоля, използвайте бутона "Регенерирай план" за да създадете напълно нов план съобразен с новите ви цели и предпочитания.`,
+                statusHint: 422,
+                requiresFullRegeneration: true,
+                reasoning: parsedChanges.reasoning
+            };
+        }
+        
         // Check if any meaningful changes were parsed
-        const changeKeys = Object.keys(parsedChanges).filter(k => k !== 'textDescription');
+        const changeKeys = Object.keys(parsedChanges).filter(k => !PLAN_MOD_EXCLUDED_RESPONSE_KEYS.includes(k));
         if (changeKeys.length === 0) {
             console.warn(`PLAN_MOD_WARN (${userId}): AI returned no structured changes`);
             return {
@@ -9414,7 +9430,7 @@ async function handleSubmitPlanChangeRequest(request, env) {
             };
         }
 
-        console.log(`PLAN_MOD_APPLY (${userId}): Applying changes: ${changeKeys.join(', ')}`);
+        console.log(`PLAN_MOD_APPLY (${userId}): Applying partial changes: ${changeKeys.join(', ')}`);
         const updatedPlanDraft = await applyPlanChanges(finalPlan, parsedChanges);
 
         // Check if the plan actually changed
@@ -9489,11 +9505,12 @@ async function handleSubmitPlanChangeRequest(request, env) {
             data: validatedPlan.caloriesMacros ? { ...validatedPlan.caloriesMacros } : null
         }));
 
-        console.log(`PLAN_MOD_SUCCESS (${userId}): Plan modified successfully`);
+        console.log(`PLAN_MOD_SUCCESS (${userId}): Plan partially modified successfully with ${changeKeys.length} section(s) changed`);
         return {
             success: true,
-            message: 'Заявката е приета. Планът е коригиран без пълно регенериране, при спазване на здравословните ограничения.',
+            message: 'Планът е актуализиран успешно! AI-ът направи частични промени в съществуващия ви план, без пълно регенериране. Промените спазват здравословните ограничения и са адаптирани към текущата структура на плана.',
             bmi,
+            modificationType: 'PARTIAL_MODIFICATION',
             appliedChanges: changeKeys // Return what was changed so frontend can display it
         };
     } catch (error) {
@@ -10452,9 +10469,105 @@ async function parsePlanModificationRequest(modificationText, userId, env) {
             };
         }
 
+        // Create comprehensive plan summary for AI analysis
+        const planSummary = {
+            profileSummary: currentPlan.profileSummary || 'N/A',
+            calories: currentPlan.caloriesMacros?.plan?.calories || 'N/A',
+            protein: currentPlan.caloriesMacros?.plan?.protein_grams || 'N/A',
+            carbs: currentPlan.caloriesMacros?.plan?.carbs_grams || 'N/A',
+            fat: currentPlan.caloriesMacros?.plan?.fat_grams || 'N/A',
+            allowedFoods: (currentPlan.allowedForbiddenFoods?.allowed || []).slice(0, PLAN_MOD_PLAN_SUMMARY_FOOD_LIMIT).join(', ') || 'N/A',
+            forbiddenFoods: (currentPlan.allowedForbiddenFoods?.forbidden || []).slice(0, PLAN_MOD_PLAN_SUMMARY_FOOD_LIMIT).join(', ') || 'N/A',
+            week1MenuDays: Object.keys(currentPlan.week1Menu || {}).length,
+            sampleMeals: [
+                currentPlan.week1Menu?.monday?.[0]?.name || 'N/A',
+                currentPlan.week1Menu?.monday?.[1]?.name || 'N/A',
+                currentPlan.week1Menu?.tuesday?.[0]?.name || 'N/A'
+            ].filter(m => m !== 'N/A').join(', '),
+            week2_4Principles: currentPlan.principlesWeek2_4 ? 'Присъстват' : 'Липсват',
+            hydrationGuidance: currentPlan.hydrationCookingSupplements ? 'Присъства' : 'Липсва',
+            psychologicalGuidance: currentPlan.psychologicalGuidance ? 'Присъства' : 'Липсва',
+            detailedTargets: currentPlan.detailedTargets ? 'Присъстват' : 'Липсват'
+        };
+
+        // First, ask AI to decide: partial modification or full regeneration
+        const decisionPrompt = `
+Ти си AI експерт по хранителни планове. Анализирай дали потребителската заявка изисква частична промяна или пълно регенериране на плана.
+
+ТЕКУЩ ПЛАН (ПЪЛНО РЕЗЮМЕ):
+Профилно резюме: ${planSummary.profileSummary}
+Калории: ${planSummary.calories} | Протеин: ${planSummary.protein}г | Въглехидрати: ${planSummary.carbs}г | Мазнини: ${planSummary.fat}г
+Позволени храни: ${planSummary.allowedFoods}
+Забранени храни: ${planSummary.forbiddenFoods}
+Седмично меню: ${planSummary.week1MenuDays} дни с примерни ястия: ${planSummary.sampleMeals}
+Принципи седмици 2-4: ${planSummary.week2_4Principles}
+Хидратация и добавки: ${planSummary.hydrationGuidance}
+Психологическо ръководство: ${planSummary.psychologicalGuidance}
+Детайлни цели: ${planSummary.detailedTargets}
+
+ЗАЯВКА ОТ ПОТРЕБИТЕЛЯ:
+"${modificationText}"
+
+ТВОЯТА ЗАДАЧА:
+Анализирай заявката и реши:
+1. PARTIAL_MODIFICATION - ако заявката може да се реализира чрез промяна на конкретни секции (напр. повече протеин, добави/премахни храни, промени някои ястия)
+2. FULL_REGENERATION - само ако заявката изисква ФУНДАМЕНТАЛНА промяна (напр. "промени целия план за напълно различна диета", "направи ми веган план вместо текущия", "преминавам от deficit към bulk - направи нов план")
+
+ПРИОРИТЕТ: Винаги избирай PARTIAL_MODIFICATION освен ако промяната не е наистина фундаментална.
+
+Примери за PARTIAL_MODIFICATION:
+- "Искам повече протеин" → промени caloriesMacros + week1Menu
+- "Премахни млечните продукти" → добави към forbidden + промени week1Menu
+- "Повече разнообразие в менюто" → промени week1Menu
+- "Добави повече зеленчуци" → промени week1Menu
+- "Искам 200 калории повече" → промени caloriesMacros + week1Menu
+
+Примери за FULL_REGENERATION:
+- "Искам напълно различен план, текущият не ми харесва" → пълна промяна
+- "Преминавам от загуба на тегло към набиране на мускулна маса" → промяна на цели
+- "Искам кето диета вместо балансиран план" → промяна на основна стратегия
+- "Целите ми се промениха коренно" → нови цели
+
+Отговори САМО с JSON обект в следния формат:
+{
+  "decision": "PARTIAL_MODIFICATION" или "FULL_REGENERATION",
+  "reasoning": "Кратко обяснение на решението (1-2 изречения)",
+  "affectedSections": ["caloriesMacros", "week1Menu", ...] - само за PARTIAL_MODIFICATION
+}`;
+
+        const modelName = await env.RESOURCES_KV.get('model_plan_generation');
+        
+        console.log(`PLAN_MOD_DECISION (${userId}): Asking AI to decide modification type for: "${modificationText.substring(0, 100)}..."`);
+        
+        // Get AI decision
+        const decisionResponse = await callModelRef.current(
+            modelName,
+            decisionPrompt,
+            env,
+            { temperature: PLAN_MOD_DECISION_TEMPERATURE, maxTokens: PLAN_MOD_DECISION_MAX_TOKENS }
+        );
+
+        const cleanedDecisionJson = cleanGeminiJson(decisionResponse);
+        const decision = safeParseJson(cleanedDecisionJson, { decision: 'PARTIAL_MODIFICATION', reasoning: 'Fallback to partial modification', affectedSections: [] });
+        
+        console.log(`PLAN_MOD_DECISION_RESULT (${userId}): ${decision.decision} - ${decision.reasoning}`);
+
+        // If full regeneration is needed, return special marker
+        if (decision.decision === 'FULL_REGENERATION') {
+            console.log(`PLAN_MOD_FULL_REGEN (${userId}): AI recommends full plan regeneration`);
+            return {
+                textDescription: modificationText,
+                requiresFullRegeneration: true,
+                reasoning: decision.reasoning
+            };
+        }
+
+        // Otherwise, proceed with partial modification
+        console.log(`PLAN_MOD_PARTIAL (${userId}): AI will generate partial modifications for sections: ${(decision.affectedSections || []).join(', ')}`);
+
         // Use AI to generate the modified plan content
         const parsePrompt = `
-Ти си AI асистент за хранителни планове. Потребителят иска да промени своя план.
+Ти си AI асистент за хранителни планове. Потребителят иска да промени своя план ЧАСТИЧНО.
 
 ТЕКУЩ ПЛАН (РЕЗЮМЕ):
 Калории: ${currentPlan.caloriesMacros?.plan?.calories || 'N/A'}
@@ -10471,7 +10584,8 @@ async function parsePlanModificationRequest(modificationText, userId, env) {
 ${modificationText}
 
 ТВОЯТА ЗАДАЧА:
-Генерирай КОНКРЕТНИ промени в плана според заявката. ВАЖНО: Генерирай реално съдържание, не само празни структури!
+Генерирай КОНКРЕТНИ ЧАСТИЧНИ промени в плана според заявката. ВАЖНО: Генерирай реално съдържание, не само празни структури!
+ФОКУС: Адаптирай съществуващия план, не го преправяй напълно!
 
 Примери за правилен отговор:
 
@@ -10538,8 +10652,6 @@ ${modificationText}
 - Не е нужно да генерираш ВСИЧКИ дни, ако промяната не го изисква
 
 Отговори САМО с валиден JSON обект без никакви обяснения:`;
-
-        const modelName = await env.RESOURCES_KV.get('model_plan_generation');
         
         console.log(`PLAN_MOD_PARSE_START (${userId}): Calling AI to parse modification: "${modificationText.substring(0, 100)}..."`);
         

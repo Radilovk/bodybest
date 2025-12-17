@@ -110,15 +110,29 @@ async function submitPlanChangeRequest(messageText, userId) {
       body: JSON.stringify({ userId, requestText: messageText })
     });
     const result = await response.json();
-    if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
+    if (!response.ok || !result.success) {
+      // Check if full regeneration is required
+      if (result.requiresFullRegeneration) {
+        displayPlanModChatMessage(result.message, 'bot');
+        showToast('За тази промяна е необходимо пълно регенериране на плана.', true, 5000);
+        return;
+      }
+      throw new Error(result.message || `HTTP ${response.status}`);
+    }
     
     // Show confirmation with details about what was changed
     let confirmation = result.message || 'Заявката е приета. Ще актуализираме плана, ако няма здравословен конфликт.';
+    
+    // Add modification type info
+    if (result.modificationType === 'PARTIAL_MODIFICATION') {
+      confirmation = '✨ Частична промяна на плана\n\n' + confirmation;
+    }
+    
     if (result.appliedChanges && result.appliedChanges.length > 0) {
       const changesText = result.appliedChanges
         .map(key => CHANGE_DISPLAY_NAMES[key] || key)
         .join(', ');
-      confirmation += `\n\n✅ Променени секции: ${changesText}`;
+      confirmation += `\n\n✅ Променени секции (${result.appliedChanges.length}): ${changesText}`;
     }
     
     displayPlanModChatMessage(confirmation, 'bot');
