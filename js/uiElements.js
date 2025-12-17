@@ -31,6 +31,7 @@ export function initializeSelectors() {
         showIntroVideoBtn: 'showIntroVideoBtn',
         extraMealEntryModal: 'extraMealEntryModal', extraMealFormContainer: 'extraMealFormContainer',
         planModInProgressIcon: 'planModInProgressIcon',
+        planModificationBtn: 'planModificationBtn',
         planModChatModal: 'planModChatModal',
         planModChatMessages: 'planModChatMessages',
         planModChatInput: 'planModChatInput',
@@ -70,6 +71,7 @@ export function initializeSelectors() {
             const optionalOrDynamic = [
                 'menuClose', 'extraMealFormContainer', 'userAllergiesNote', 'userAllergiesList',
                 'feedbackForm', 'tooltipTracker', 'planModInProgressIcon',
+                'planModificationBtn',
                 'planModChatModal', 'planModChatMessages', 'planModChatInput',
                 'planModChatSend', 'planModChatClose', 'planModChatClear',
                 'planModChatTitle', 'planModChatClient',
