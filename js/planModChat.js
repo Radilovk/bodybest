@@ -1,6 +1,6 @@
 import { selectors } from './uiElements.js';
 import { apiEndpoints } from './config.js';
-import { openModal, showToast, closeModal } from './uiHandlers.js';
+import { openModal, showToast } from './uiHandlers.js';
 import { escapeHtml } from './utils.js';
 import { currentUserId, loadDashboardData } from './app.js';
 import { clearCache } from './requestCache.js';
@@ -8,10 +8,7 @@ import { clearCache } from './requestCache.js';
 export let planModChatHistory = [];
 export let planModChatContext = null;
 let isSending = false;
-
-// Timing constants for UI feedback and data reloading
-const MODAL_CLOSE_DELAY_MS = 1500;
-const DASHBOARD_RELOAD_DELAY_MS = 2000;
+let planModificationPending = false; // Flag to track if we need to reload dashboard on modal close
 
 // Mapping of backend change keys to user-friendly display names
 const CHANGE_DISPLAY_NAMES = {
@@ -37,6 +34,25 @@ export function clearPlanModChat() {
   planModChatHistory.length = 0;
   planModChatContext = null;
   if (selectors.planModChatInput) selectors.planModChatInput.value = '';
+}
+
+/**
+ * Проверява дали има pending plan modification и презарежда dashboard данните
+ * Тази функция се извиква при затваряне на planModChatModal
+ */
+export async function handlePlanModModalClose() {
+  if (planModificationPending) {
+    planModificationPending = false;
+    showToast('Презареждане на актуализирания план...', false);
+    
+    try {
+      await loadDashboardData();
+      showToast('Планът е актуализиран успешно! Проверете промените в секция "План".', false, 4000);
+    } catch (error) {
+      console.error('Грешка при презареждане на dashboard:', error);
+      showToast('Планът е актуализиран, но има грешка при презареждането. Моля, презаредете страницата.', true, 5000);
+    }
+  }
 }
 
 function renderGuidance() {
@@ -135,38 +151,36 @@ async function submitPlanChangeRequest(messageText, userId) {
       confirmation += `\n\n✅ Променени секции (${result.appliedChanges.length}): ${changesText}`;
     }
     
-    displayPlanModChatMessage(confirmation, 'bot');
-    showToast('Заявката е изпратена успешно. Презареждане на плана...', false);
-    if (selectors.planModChatInput) selectors.planModChatInput.value = '';
+    // Добавяме инструкция за затваряне на модала
+    confirmation += '\n\n📌 Моля, затворете този прозорец за да видите обновения план.';
     
-    // Изчистваме кеша и презареждаме dashboard данните, за да покажем обновения план
+    displayPlanModChatMessage(confirmation, 'bot');
+    if (selectors.planModChatInput) {
+      selectors.planModChatInput.value = '';
+      selectors.planModChatInput.disabled = true;
+    }
+    if (selectors.planModChatSend) {
+      selectors.planModChatSend.disabled = true;
+    }
+    
+    // Показваме съобщение че трябва да затворят модала
+    showToast('Промените са запазени! Затворете прозореца за да видите актуализирания план.', false, 5000);
+    
+    // Изчистваме кеша незабавно, за да сме сигурни че следващото зареждане ще вземе новите данни
     clearCache(apiEndpoints.dashboard);
     
-    // Затваряме модала и презареждаме данните последователно
-    await new Promise(resolve => setTimeout(resolve, MODAL_CLOSE_DELAY_MS));
-    closeModal('planModChatModal');
+    // Set flag so we reload dashboard when modal closes
+    planModificationPending = true;
     
-    // Презареждаме dashboard данните
-    await new Promise(resolve => setTimeout(resolve, DASHBOARD_RELOAD_DELAY_MS - MODAL_CLOSE_DELAY_MS));
-    try {
-      await loadDashboardData();
-      const successMsg = result.appliedChanges && result.appliedChanges.length > 0
-        ? `Планът е актуализиран успешно! Променени: ${result.appliedChanges.length} секции.`
-        : 'Планът е актуализиран успешно!';
-      showToast(successMsg, false, 3000);
-    } catch (error) {
-      console.error('Грешка при презареждане на dashboard:', error);
-      showToast('Планът е актуализиран, но има грешка при презареждането. Моля, презаредете страницата.', true, 5000);
-    }
+    // НЕ затваряме модала автоматично - потребителят трябва да прочете отговора и да го затвори сам
+    // Когато затвори модала (чрез event listener), данните ще се презаредят автоматично
+    
   } catch (e) {
     const errorMsg = `Грешка при изпращане: ${e.message}`;
     displayPlanModChatMessage(errorMsg, 'bot', true);
     showToast(errorMsg, true);
   } finally {
     displayPlanModChatTypingIndicator(false);
-    selectors.planModChatInput.disabled = false;
-    selectors.planModChatInput.focus();
-    selectors.planModChatSend.disabled = false;
     isSending = false;
   }
 }
@@ -197,7 +211,6 @@ export function handlePlanModChatInputKeypress(e) {
 
 export async function openPlanModificationChat(
   userIdOverride = null,
-  _initialMessage = null,
   context = null,
   clientName = null
 ) {
@@ -215,9 +228,13 @@ export async function openPlanModificationChat(
   renderGuidance();
   displayPlanModChatMessage(planModificationPrompt, 'bot');
   planModChatHistory.push({ text: planModificationPrompt, sender: 'bot', isError: false });
+  
+  // Ensure input and send button are enabled when opening modal
   if (selectors.planModChatInput) {
     selectors.planModChatInput.disabled = false;
     selectors.planModChatInput.focus();
   }
-  if (selectors.planModChatSend) selectors.planModChatSend.disabled = false;
+  if (selectors.planModChatSend) {
+    selectors.planModChatSend.disabled = false;
+  }
 }
