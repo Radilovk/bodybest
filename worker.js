@@ -9362,8 +9362,11 @@ async function handleSubmitPlanChangeRequest(request, env) {
     const BMI_HIGH_RISK = 30;
     const BMI_LOW_RISK = 18.5;
     const CAL_DELTA_LIMIT = 0.1;
+    let userId; // Declare at function scope for catch block access
     try {
-        const { userId, requestText } = await request.json();
+        const requestData = await request.json();
+        userId = requestData.userId;
+        const requestText = requestData.requestText;
 
         if (!userId || !requestText || !String(requestText).trim()) {
             return {
@@ -9450,6 +9453,7 @@ async function handleSubmitPlanChangeRequest(request, env) {
             }
         }
 
+        // Check for macro gaps but allow partial modifications
         const macroGaps = collectPlanMacroGaps(updatedPlanDraft);
         if (macroGaps.hasGaps) {
             const missing = [];
@@ -9459,12 +9463,9 @@ async function handleSubmitPlanChangeRequest(request, env) {
             if (macroGaps.missingMealMacros?.length) {
                 missing.push('макроси по ястия');
             }
-            console.log(`PLAN_MOD_REJECT (${userId}): Macro gaps: ${missing.join('; ')}`);
-            return {
-                success: false,
-                message: `Заявката е твърде неясна и оставя макроси непопълнени (${missing.join('; ') || 'липсващи полета'}). Моля, опишете по-конкретно желаната промяна.`,
-                statusHint: 422
-            };
+            console.warn(`PLAN_MOD_WARN (${userId}): Macro gaps detected but allowing modification: ${missing.join('; ')}`);
+            // Don't reject - allow partial modifications for better UX
+            // The plan can be completed in subsequent modifications or regenerations
         }
 
         const validatedPlan = updatedPlanDraft;
@@ -10523,10 +10524,12 @@ ${modificationText}
 КРИТИЧНО ВАЖНО:
 - Генерирай ПЪЛНИ обекти с реални данни (име, описание, макроси)
 - НЕ връщай празни масиви или обекти без съдържание
-- Генерирай поне 3-4 ястия на ден ако променяш week1Menu
-- Всяко ястие ТРЯБВА да има: name, description, calories, protein, carbs, fat
-- Калориите и макросите трябва да са реалистични
+- Ако променяш week1Menu, можеш да промениш само някои дни (напр. само monday и tuesday)
+- Всяко ястие ТРЯБВА да има: name, description, calories, protein, carbs, fat, fiber_grams
+- Калориите и макросите трябва да са реалистични и ВСИЧКИ полета попълнени
 - Ястията да са на български език
+- Фокусирай се върху КОНКРЕТНАТА промяна, която потребителят иска
+- Не е нужно да генерираш ВСИЧКИ дни, ако промяната не го изисква
 
 Отговори САМО с валиден JSON обект без никакви обяснения:`;
 
