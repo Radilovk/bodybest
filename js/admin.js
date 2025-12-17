@@ -1051,6 +1051,7 @@ async function loadNotifications(options = {}) {
             });
 
             planChangeRequests.forEach(pcr => {
+                // Note: requestText is mapped to message in the backend (handlePeekAdminNotificationsRequest)
                 if (!pcr || !pcr.message) return;
                 const ts = parseTimestamp(pcr.ts ?? pcr.timestamp);
                 items.push({ 

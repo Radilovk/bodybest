@@ -4748,6 +4748,8 @@ async function handlePeekAdminNotificationsRequest(request, env) {
             const replies = unreadReplies
                 .map(r => normalizeEntry(r))
                 .filter(toEntryWithMessage);
+            // Map plan change requests to consistent format with 'message' field
+            // (stored as 'requestText' in KV, but exposed as 'message' for API consistency)
             const planChangeRequests = unreadPlanChangeRequests
                 .map(pcr => ({
                     message: pcr.requestText || '',
