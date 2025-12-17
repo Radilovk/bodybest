@@ -9,6 +9,10 @@ export let planModChatHistory = [];
 export let planModChatContext = null;
 let isSending = false;
 
+// Timing constants for UI feedback and data reloading
+const MODAL_CLOSE_DELAY_MS = 1500;
+const DASHBOARD_RELOAD_DELAY_MS = 2000;
+
 const planModificationPrompt = 'Моля, опишете накратко желаните от вас промени в плана.';
 const planModGuidance = [
   'Напишете конкретно коя част от плана искате да се промени (напр. “повече протеин на обяд”).',
@@ -103,21 +107,19 @@ async function submitPlanChangeRequest(messageText, userId) {
     // Изчистваме кеша и презареждаме dashboard данните, за да покажем обновения план
     clearCache(apiEndpoints.dashboard);
     
-    // Затваряме модала преди да презаредим данните
-    setTimeout(() => {
-      closeModal('planModChatModal');
-    }, 1500);
+    // Затваряме модала и презареждаме данните последователно
+    await new Promise(resolve => setTimeout(resolve, MODAL_CLOSE_DELAY_MS));
+    closeModal('planModChatModal');
     
-    // Презареждаме dashboard данните след кратка пауза
-    setTimeout(async () => {
-      try {
-        await loadDashboardData();
-        showToast('Планът е актуализиран успешно!', false, 3000);
-      } catch (error) {
-        console.error('Грешка при презареждане на dashboard:', error);
-        showToast('Планът е актуализиран, но има грешка при презареждането. Моля, презаредете страницата.', true, 5000);
-      }
-    }, 2000);
+    // Презареждаме dashboard данните
+    await new Promise(resolve => setTimeout(resolve, DASHBOARD_RELOAD_DELAY_MS - MODAL_CLOSE_DELAY_MS));
+    try {
+      await loadDashboardData();
+      showToast('Планът е актуализиран успешно!', false, 3000);
+    } catch (error) {
+      console.error('Грешка при презареждане на dashboard:', error);
+      showToast('Планът е актуализиран, но има грешка при презареждането. Моля, презаредете страницата.', true, 5000);
+    }
   } catch (e) {
     const errorMsg = `Грешка при изпращане: ${e.message}`;
     displayPlanModChatMessage(errorMsg, 'bot', true);
