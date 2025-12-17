@@ -179,6 +179,15 @@ async function submitPlanChangeRequest(messageText, userId) {
     const errorMsg = `Грешка при изпращане: ${e.message}`;
     displayPlanModChatMessage(errorMsg, 'bot', true);
     showToast(errorMsg, true);
+    
+    // Re-enable input controls on error so user can retry
+    if (selectors.planModChatInput) {
+      selectors.planModChatInput.disabled = false;
+      selectors.planModChatInput.focus();
+    }
+    if (selectors.planModChatSend) {
+      selectors.planModChatSend.disabled = false;
+    }
   } finally {
     displayPlanModChatTypingIndicator(false);
     isSending = false;
