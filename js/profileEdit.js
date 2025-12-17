@@ -1,7 +1,7 @@
 import { safeParseFloat, safeGet } from './utils.js';
 import { currentUserId } from './app.js';
 import { apiEndpoints } from './config.js';
-import { cachedFetch } from './requestCache.js';
+import { cachedFetch, clearCache, getProfileCache, getDashboardCache } from './requestCache.js';
 
 // Apply saved theme so the page matches the dashboard
 (function applySavedTheme() {
@@ -60,6 +60,15 @@ if (form) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, userId: currentUserId }),
       });
+      
+      // ОПТИМИЗАЦИЯ: Инвалидираме cache след успешен update
+      const profileCache = getProfileCache();
+      const dashboardCache = getDashboardCache();
+      profileCache.invalidate(currentUserId);
+      dashboardCache.invalidate(currentUserId);
+      clearCache(apiEndpoints.getProfile); // Изчистваме и requestCache
+      clearCache(apiEndpoints.dashboard);
+      
       alert('Профилът е обновен успешно');
       window.location.href = 'code.html';
     } catch (err) {

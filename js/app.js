@@ -270,8 +270,13 @@ export function resetAppState() {
     currentUserId = null;
     fullDashboardData = {};
     chatHistory = [];
-    // ОПТИМИЗАЦИЯ: Изчистваме request кеша при reset на приложението
+    
+    // ОПТИМИЗАЦИЯ: Изчистваме всички кешове при reset на приложението
     clearCache();
+    dashboardCache.clear();
+    profileCache.clear();
+    analyticsCache.clear();
+    
     todaysMealCompletionStatus = {};
     todaysPlanMacros = {
         calories: 0,
@@ -1095,6 +1100,10 @@ export async function autoSaveDailyLog() {
             fullDashboardData.dailyLogs.push({ date: savedDate, data: savedData });
         }
         cacheLastLog({ userId: logPayload.userId, date: savedDate, data: savedData });
+        
+        // ОПТИМИЗАЦИЯ: Инвалидираме analytics cache след log операция
+        analyticsCache.invalidate(currentUserId);
+        clearCache(apiEndpoints.dashboard); // Изчистваме dashboard cache за свежи данни
     } catch (err) {
         console.error('Auto-save failed', err);
     }
@@ -1155,6 +1164,11 @@ export async function handleSaveLog() { // Exported for eventListeners.js
             }
         }
         cacheLastLog({ userId: logPayload.userId, date: result.savedDate, data: result.savedData || logPayload.data });
+        
+        // ОПТИМИЗАЦИЯ: Инвалидираме analytics cache след log операция
+        analyticsCache.invalidate(currentUserId);
+        clearCache(apiEndpoints.dashboard); // Изчистваме dashboard cache за свежи данни
+        
         await refreshAnalytics(true);
         updateAnalyticsSections(fullDashboardData.analytics);
         await populateUI();
