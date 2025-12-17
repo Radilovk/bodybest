@@ -15,7 +15,7 @@ import { debugLog, enableDebug } from './logger.js';
 import { safeParseFloat, escapeHtml, fileToDataURL, normalizeDailyLogs, getLocalDate } from './utils.js';
 import { selectors, initializeSelectors, loadInfoTexts } from './uiElements.js';
 import { getMetricDescription } from './metricUtils.js';
-import { cachedFetch, clearCache } from './requestCache.js';
+import { cachedFetch, clearCache, getDashboardCache, getProfileCache, getAnalyticsCache } from './requestCache.js';
 import {
     initializeTheme,
     loadAndApplyColors,
@@ -564,6 +564,15 @@ export function updateMacrosAndAnalytics() {
  * Зарежда данни за таблото от бекенда и обновява интерфейса.
  * @returns {Promise<void>}
  */
+// ==========================================================================
+// DASHBOARD DATA LOADING WITH INTELLIGENT CACHING
+// ==========================================================================
+
+// Глобални cache instances за оптимизация на API заявки
+const dashboardCache = getDashboardCache(); // 5 минути TTL
+const profileCache = getProfileCache(); // 5 минути TTL  
+const analyticsCache = getAnalyticsCache(); // 15 минути TTL
+
 export async function loadDashboardData() {
     debugLog("loadDashboardData starting for user:", currentUserId);
     if (!currentUserId) {

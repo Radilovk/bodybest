@@ -391,5 +391,13 @@ export function getDashboardCache() {
  * @returns {PersistentCache}
  */
 export function getProfileCache() {
-  return new PersistentCache('bodybest_profile_cache', 600000); // 10 минути TTL
+  return new PersistentCache('bodybest_profile_cache', 300000); // 5 минути TTL
+}
+
+/**
+ * Създава и връща инстанция на PersistentCache за analytics данни
+ * @returns {PersistentCache}
+ */
+export function getAnalyticsCache() {
+  return new PersistentCache('bodybest_analytics_cache', 900000); // 15 минути TTL
 }
