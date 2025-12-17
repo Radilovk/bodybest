@@ -8,33 +8,25 @@
 >
   <div class="modal-content plan-mod-chat-content">
     <div class="plan-mod-chat-header">
-      <h4 id="planModChatTitle"><img src="img/assisticon.png" class="icon assistant-icon" alt="" aria-hidden="true"> Промяна на план <span id="planModChatClient"></span></h4>
-      <div class="chat-actions">
-        <button
-          id="planModChatClear"
-          class="plan-mod-chat-clear"
-          aria-label="Изчисти чата"
-        >
-          <svg class="icon"><use href="#icon-trash"></use></svg>
-        </button>
-        <button
-          id="planModChatClose"
-          class="plan-mod-chat-close"
-          aria-label="Затвори чата"
-        >
-          <svg class="icon"><use href="#icon-close"></use></svg>
-        </button>
-      </div>
+      <h4 id="planModChatTitle"><img src="img/assisticon.png" class="icon assistant-icon" alt="" aria-hidden="true"> Промяна на плана <span id="planModChatClient"></span></h4>
+      <button
+        id="planModChatClose"
+        class="plan-mod-chat-close"
+        aria-label="Затвори формата"
+      >
+        <svg class="icon"><use href="#icon-close"></use></svg>
+      </button>
     </div>
     <div id="planModChatMessages" class="plan-mod-chat-messages"></div>
     <div class="plan-mod-chat-input-area">
+      <label for="planModChatInput" class="sr-only">Описание на промяната</label>
       <textarea
         id="planModChatInput"
-        placeholder="Вашето съобщение..."
-        rows="2"
-        aria-label="Поле за въвеждане на съобщение"
+        placeholder="Опишете желаната промяна..."
+        rows="3"
+        aria-label="Свободен текст за заявка"
       ></textarea>
-      <button id="planModChatSend" aria-label="Изпрати съобщение">
+      <button id="planModChatSend" aria-label="Изпрати заявка">
         <svg class="icon"><use href="#icon-send"></use></svg>
       </button>
     </div>

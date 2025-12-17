@@ -1392,6 +1392,8 @@ export default {
                 responseBody = await handleListUserKvRequest(request, env);
             } else if (method === 'POST' && path === '/api/updateKv') {
                 responseBody = await handleUpdateKvRequest(request, env);
+            } else if (method === 'POST' && path === '/api/submitPlanChangeRequest') {
+                responseBody = await handleSubmitPlanChangeRequest(request, env);
             } else if (method === 'POST' && path === '/api/proposePlanChange') {
                 responseBody = await handleProposePlanChangeRequest(request, env);
             } else if (method === 'POST' && path === '/api/approvePlanChange') {
@@ -2566,43 +2568,10 @@ async function handleChatRequest(request, env) {
         const aiRespRaw = await callModelRef.current(modelToUse, populatedPrompt, env, { temperature: 0.7, maxTokens: 800 });
 
         let respToUser = aiRespRaw.trim();
-        let planModReq = null;
         const sig = '[PLAN_MODIFICATION_REQUEST]';
         const sigIdx = respToUser.lastIndexOf(sig);
         if (sigIdx !== -1) {
-            planModReq = respToUser.substring(sigIdx + sig.length).trim();
             respToUser = respToUser.substring(0, sigIdx).trim();
-            // Plan modification signal detected
-            try {
-                // Parse the AI's plan modification request to extract structured changes
-                const proposedChanges = await parsePlanModificationRequest(planModReq, userId, env);
-                
-                // Create a proposal for user approval
-                const proposalResult = await handleProposePlanChangeRequest(
-                    new Request('http://localhost/api/proposePlanChange', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            userId,
-                            proposedChanges,
-                            reasoning: planModReq,
-                            source: source || 'chat'
-                        })
-                    }),
-                    env
-                );
-                
-                if (proposalResult.success) {
-                    respToUser += `\n\n✅ Предложението за промяна на плана е създадено успешно. Моля, прегледайте го и одобрете или отхвърлете промените. Използвайте бутона "Преглед на предложените промени" за да видите детайлите.`;
-                } else if (proposalResult.statusHint === 409) {
-                    respToUser += `\n\n⚠️ ${proposalResult.message}`;
-                } else {
-                    respToUser += `\n\nЗабележка: Предложението не можа да бъде създадено автоматично. Моля, свържете се с поддръжка ако проблемът продължава.`;
-                }
-                
-            } catch (kvErr) {
-                console.error(`CHAT_ERROR (${userId}): Failed to create plan proposal:`, kvErr);
-                respToUser += `\n\nЗабележка: Възникна грешка при създаване на предложението за промяна на плана.`;
-            }
         }
 
         storedChatHistory.push({ role: 'model', parts: [{ text: respToUser }] });
@@ -9380,6 +9349,112 @@ async function handleUpdateKvRequest(request, env) {
 }
 // ------------- END FUNCTION: handleUpdateKvRequest -------------
 
+// ------------- START FUNCTION: handleSubmitPlanChangeRequest -------------
+async function handleSubmitPlanChangeRequest(request, env) {
+    const BMI_HIGH_RISK = 30;
+    const BMI_LOW_RISK = 18.5;
+    const CAL_DELTA_LIMIT = 0.1;
+    try {
+        const { userId, requestText } = await request.json();
+
+        if (!userId || !requestText || !String(requestText).trim()) {
+            return {
+                success: false,
+                message: 'Моля, въведете описание на желаната промяна.',
+                statusHint: 400
+            };
+        }
+
+        const [finalPlanStr, initialAnswersStr, currentStatusStr] = await Promise.all([
+            env.USER_METADATA_KV.get(`${userId}_final_plan`),
+            env.USER_METADATA_KV.get(`${userId}_initial_answers`),
+            env.USER_METADATA_KV.get(`${userId}_current_status`)
+        ]);
+
+        const finalPlan = safeParseJson(finalPlanStr, null);
+        if (!finalPlan) {
+            return {
+                success: false,
+                message: 'Не е намерен активен план за този потребител.',
+                statusHint: 404
+            };
+        }
+
+        const initialAnswers = safeParseJson(initialAnswersStr, {});
+        const currentStatus = safeParseJson(currentStatusStr, {});
+        const weight = safeParseFloat(currentStatus?.weight, safeParseFloat(initialAnswers?.weight, null));
+        const height = safeParseFloat(initialAnswers?.height, null);
+        const bmi = weight && height ? Number((weight / Math.pow(height / 100, 2)).toFixed(1)) : null;
+
+        const parsedChanges = await parsePlanModificationRequest(String(requestText).trim(), userId, env);
+        const updatedPlanDraft = await applyPlanChanges(finalPlan, parsedChanges);
+
+        const originalCalories = safeParseFloat(safeGet(finalPlan, 'caloriesMacros.plan.calories', null), null);
+        const updatedCalories = safeParseFloat(safeGet(updatedPlanDraft, 'caloriesMacros.plan.calories', null), null);
+
+        if (bmi && originalCalories && updatedCalories) {
+            const delta = (updatedCalories - originalCalories) / originalCalories;
+            if (bmi >= BMI_HIGH_RISK && delta > CAL_DELTA_LIMIT) {
+                return {
+                    success: false,
+                    message: 'Заявката повишава калориите над безопасния диапазон спрямо текущия BMI.',
+                    statusHint: 409
+                };
+            }
+            if (bmi <= BMI_LOW_RISK && delta < -CAL_DELTA_LIMIT) {
+                return {
+                    success: false,
+                    message: 'Заявката намалява калориите прекомерно спрямо вашия BMI.',
+                    statusHint: 409
+                };
+            }
+        }
+
+        const macroGaps = collectPlanMacroGaps(updatedPlanDraft);
+        if (macroGaps.hasGaps) {
+            const missing = [];
+            if (macroGaps.missingCaloriesMacroFields?.length) {
+                missing.push(`макроси: ${macroGaps.missingCaloriesMacroFields.join(', ')}`);
+            }
+            if (macroGaps.missingMealMacros?.length) {
+                missing.push('макроси по ястия');
+            }
+            return {
+                success: false,
+                message: `Заявката е твърде неясна и оставя макроси непопълнени (${missing.join('; ') || 'липсващи полета'}). Моля, опишете по-конкретно желаната промяна.`,
+                statusHint: 422
+            };
+        }
+
+        const validatedPlan = updatedPlanDraft;
+        validatedPlan.generationMetadata = {
+            ...(validatedPlan.generationMetadata || {}),
+            lastModified: new Date().toISOString(),
+            modifiedBy: 'ai_plan_change_form'
+        };
+
+        await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(validatedPlan));
+        await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify({
+            status: 'final',
+            data: validatedPlan.caloriesMacros ? { ...validatedPlan.caloriesMacros } : null
+        }));
+
+        return {
+            success: true,
+            message: 'Заявката е приета. Планът е коригиран без пълно регенериране, при спазване на здравословните ограничения.',
+            bmi
+        };
+    } catch (error) {
+        console.error(`Error in handleSubmitPlanChangeRequest: ${error.message}\n${error.stack}`);
+        return {
+            success: false,
+            message: 'Грешка при обработка на заявката за промяна на плана.',
+            statusHint: 500
+        };
+    }
+}
+// ------------- END FUNCTION: handleSubmitPlanChangeRequest -------------
+
 // ------------- START FUNCTION: handleProposePlanChangeRequest -------------
 /**
  * Handles AI assistant proposals for plan changes.
@@ -10428,4 +10503,4 @@ async function _maybeSendKvListTelemetry(env) {
 }
 // ------------- END BLOCK: kv list telemetry -------------
 // ------------- INSERTION POINT: EndOfFile -------------
-export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleGetPsychTestsRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleSavePsychTestsRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callModelWithTimeout, setCallModelImplementation, callGeminiAPI, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleProposePlanChangeRequest, handleApprovePlanChangeRequest, handleGetPendingPlanChangesRequest, handleRejectPlanChangeRequest, handleNutrientLookupRequest, applyPlanChanges, parsePlanModificationRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary, AI_CALL_TIMEOUT_MS, DEFAULT_PLAN_CALL_TIMEOUT_MS, resolvePlanCallTimeoutMs };
+export { processSingleUserPlan, handleLogExtraMealRequest, handleGetProfileRequest, handleGetPsychTestsRequest, handleUpdateProfileRequest, handleUpdatePlanRequest, handleSavePsychTestsRequest, handleRegeneratePlanRequest, handleCheckPlanPrerequisitesRequest, handleRequestPasswordReset, handlePerformPasswordReset, shouldTriggerAutomatedFeedbackChat, processPendingUserEvents, handleDashboardDataRequest, handleRecordFeedbackChatRequest, handleSubmitFeedbackRequest, handleGetAchievementsRequest, handleGeneratePraiseRequest, handleAnalyzeInitialAnswers, handleGetInitialAnalysisRequest, handleReAnalyzeQuestionnaireRequest, handleAnalysisStatusRequest, createUserEvent, handleUploadTestResult, handleUploadIrisDiag, handleAiHelperRequest, handleAnalyzeImageRequest, handleRunImageModelRequest, handleListClientsRequest, handlePeekAdminNotificationsRequest, handleDeleteClientRequest, handleAddAdminQueryRequest, handleGetAdminQueriesRequest, handleAddClientReplyRequest, handleGetClientRepliesRequest, handleGetFeedbackMessagesRequest, handleGetPlanModificationPrompt, handleGetAiConfig, handleSetAiConfig, handleListAiPresets, handleGetAiPreset, handleSaveAiPreset, handleDeleteAiPreset, handleTestAiModelRequest, handleContactFormRequest, handleGetContactRequestsRequest, handleValidateIndexesRequest, handleSendTestEmailRequest, handleGetMaintenanceMode, handleSetMaintenanceMode, handleRegisterRequest, handleRegisterDemoRequest, handleLoginRequest, handleSubmitQuestionnaire, handleSubmitDemoQuestionnaire, callCfAi, callModel, callModelWithTimeout, setCallModelImplementation, callGeminiAPI, callGeminiVisionAPI, handlePrincipleAdjustment, createFallbackPrincipleSummary, createPlanUpdateSummary, createUserConcernsSummary, evaluatePlanChange, handleChatRequest, populatePrompt, createPraiseReplacements, buildCfImagePayload, sendAnalysisLinkEmail, sendContactEmail, getEmailConfig, getUserLogDates, calculateAnalyticsIndexes, handleListUserKvRequest, rebuildUserKvIndex, handleUpdateKvRequest, handleSubmitPlanChangeRequest, handleProposePlanChangeRequest, handleApprovePlanChangeRequest, handleGetPendingPlanChangesRequest, handleRejectPlanChangeRequest, handleNutrientLookupRequest, applyPlanChanges, parsePlanModificationRequest, handleLogRequest, handlePlanLogRequest, setPlanStatus, resetAiPresetIndexCache, _withKvListCounting, _maybeSendKvListTelemetry, getMaxChatHistoryMessages, summarizeAndTrimChatHistory, getCachedResource, clearResourceCache, buildDeterministicAnalyticsSummary, AI_CALL_TIMEOUT_MS, DEFAULT_PLAN_CALL_TIMEOUT_MS, resolvePlanCallTimeoutMs };

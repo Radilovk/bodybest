@@ -247,7 +247,7 @@ js/
 │   ├── macroUtils.js       # Macro calculations
 │   ├── planGeneration.js   # План генериране
 │   ├── planEditor.js       # Редактиране на план
-│   ├── planModChat.js      # Plan modification chat
+│   ├── planModChat.js      # Plan change form (free-text request)
 │   └── metricUtils.js      # Health metrics
 │
 ├── 🎨 UI Components
@@ -849,24 +849,16 @@ sequenceDiagram
     participant KV as USER_METADATA_KV
     participant AI as AI Model
     
-    U->>F: Натиска "Въведи промени"
-    F->>F: Отваря plan modification modal
-    U->>F: Описва промяна в chat
-    F->>W: POST /api/chat?source=planModChat
-    W->>KV: Създава event_planMod_<userId>
-    W->>KV: Добавя към events_queue
-    W->>F: { success: true }
-    
-    Note over W,KV: Cron job (scheduled)
-    
-    W->>KV: Чете events_queue
-    W->>KV: Зарежда event_planMod_<userId>
-    W->>KV: Зарежда текущ <userId>_final_plan
-    W->>AI: Модифицира план с prompt_plan_modification
-    AI->>W: Modified plan
-    W->>KV: Записва нов <userId>_final_plan
-    W->>KV: Изтрива event_planMod_<userId>
-    W->>KV: Премахва от events_queue
+    U->>F: Натиска "Заяви промяна в плана"
+    F->>F: Отваря форма с насоки
+    U->>F: Въвежда свободен текст
+    F->>W: POST /api/submitPlanChangeRequest
+    W->>KV: Зарежда <userId>_final_plan и initial_answers
+    W->>AI: Парсира заявката в структурирани промени
+    AI->>W: Предлага частични промени
+    W->>W: Валидира спрямо BMI и макроси
+    W->>KV: Записва обновен <userId>_final_plan (без пълна регенерация)
+    W->>F: Потвърждение / или отказ при конфликт
     
     F->>W: Периодично проверява статус
     W->>F: { status: "done", plan }

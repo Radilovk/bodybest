@@ -313,7 +313,7 @@ loglevel=error
 
 **Скриптове:**
 - `planEditor.js`
-- `planModChat.js`
+- `planModChat.js` (форма за заявки за промяна)
 - `planRegenerator.js`
 
 ---

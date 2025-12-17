@@ -50,6 +50,7 @@ export const apiEndpoints = {
     listUserKv: `${workerBaseUrl}/api/listUserKv`,
     updateKv: `${workerBaseUrl}/api/updateKv`,
     getPlanModificationPrompt: `${workerBaseUrl}/api/getPlanModificationPrompt`,
+    submitPlanChangeRequest: `${workerBaseUrl}/api/submitPlanChangeRequest`,
     regeneratePlan: `${workerBaseUrl}/api/regeneratePlan`,
     checkPlanPrerequisites: `${workerBaseUrl}/api/checkPlanPrerequisites`,
     updateStatus: `${workerBaseUrl}/api/updateStatus`,
