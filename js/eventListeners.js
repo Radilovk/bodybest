@@ -229,7 +229,7 @@ export function setupStaticEventListeners() {
     if (selectors.planModChatInput) selectors.planModChatInput.addEventListener('keypress', handlePlanModChatInputKeypress);
     
     // Бутон за отваряне на модала за заявка за промяна на плана
-    if (selectors.planModificationBtn) selectors.planModificationBtn.addEventListener('click', () => openPlanModificationChat());
+    if (selectors.planModificationBtn) selectors.planModificationBtn.addEventListener('click', openPlanModificationChat);
 
     if (selectors.feedbackForm) selectors.feedbackForm.addEventListener('submit', handleFeedbackFormSubmit);
 
