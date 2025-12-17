@@ -2,25 +2,11 @@ import { selectors } from './uiElements.js';
 import { apiEndpoints } from './config.js';
 import { openModal, showToast } from './uiHandlers.js';
 import { escapeHtml } from './utils.js';
-import { currentUserId, loadDashboardData } from './app.js';
-import { clearCache } from './requestCache.js';
+import { currentUserId } from './app.js';
 
 export let planModChatHistory = [];
 export let planModChatContext = null;
 let isSending = false;
-let planModificationPending = false; // Flag to track if we need to reload dashboard on modal close
-
-// Mapping of backend change keys to user-friendly display names
-const CHANGE_DISPLAY_NAMES = {
-  caloriesMacros: 'калории и макроси',
-  week1Menu: 'седмично меню',
-  allowedForbiddenFoods: 'позволени/забранени храни',
-  principlesWeek2_4: 'принципи за седмици 2-4',
-  hydrationCookingSupplements: 'хидратация и добавки',
-  psychologicalGuidance: 'психологическо ръководство',
-  detailedTargets: 'детайлни цели',
-  profileSummary: 'профилно резюме'
-};
 
 const planModificationPrompt = 'Моля, опишете накратко желаните от вас промени в плана.';
 const planModGuidance = [
@@ -37,22 +23,11 @@ export function clearPlanModChat() {
 }
 
 /**
- * Проверява дали има pending plan modification и презарежда dashboard данните
- * Тази функция се извиква при затваряне на planModChatModal
+ * Handles modal close event
+ * No longer needs to reload dashboard since changes are made by admin
  */
 export async function handlePlanModModalClose() {
-  if (planModificationPending) {
-    planModificationPending = false;
-    showToast('Презареждане на актуализирания план...', false);
-    
-    try {
-      await loadDashboardData();
-      showToast('Планът е актуализиран успешно! Проверете промените в секция "План".', false, 4000);
-    } catch (error) {
-      console.error('Грешка при презареждане на dashboard:', error);
-      showToast('Планът е актуализиран, но има грешка при презареждането. Моля, презаредете страницата.', true, 5000);
-    }
-  }
+  // Modal closed, no action needed
 }
 
 function renderGuidance() {
@@ -60,7 +35,7 @@ function renderGuidance() {
   const wrapper = document.createElement('div');
   wrapper.classList.add('plan-mod-guidance');
   const intro = document.createElement('p');
-  intro.textContent = 'Попълнете свободен текст. Заявката ще бъде разгледана и при липса на здравословен конфликт AI ще редактира плана без пълно регенериране.';
+  intro.textContent = 'Попълнете свободен текст. Заявката ще бъде изпратена до администратора за преглед и одобрение.';
   wrapper.appendChild(intro);
 
   const list = document.createElement('ul');
@@ -73,7 +48,7 @@ function renderGuidance() {
 
   const note = document.createElement('p');
   note.classList.add('plan-mod-note');
-  note.textContent = 'Заявките, които противоречат на медицински препоръки или BMI, се коригират или отказват.';
+  note.textContent = 'Администраторът ще прегледа заявката и ще направи промените ръчно, за да гарантира безопасност и съответствие с медицинските препоръки.';
   wrapper.appendChild(note);
 
   selectors.planModChatMessages.innerHTML = '';
@@ -127,32 +102,11 @@ async function submitPlanChangeRequest(messageText, userId) {
     });
     const result = await response.json();
     if (!response.ok || !result.success) {
-      // Check if full regeneration is required
-      if (result.requiresFullRegeneration) {
-        displayPlanModChatMessage(result.message, 'bot');
-        showToast('За тази промяна е необходимо пълно регенериране на плана.', true, 5000);
-        return;
-      }
       throw new Error(result.message || `HTTP ${response.status}`);
     }
     
-    // Show confirmation with details about what was changed
-    let confirmation = result.message || 'Заявката е приета. Ще актуализираме плана, ако няма здравословен конфликт.';
-    
-    // Add modification type info
-    if (result.modificationType === 'PARTIAL_MODIFICATION') {
-      confirmation = '✨ Частична промяна на плана\n\n' + confirmation;
-    }
-    
-    if (result.appliedChanges && result.appliedChanges.length > 0) {
-      const changesText = result.appliedChanges
-        .map(key => CHANGE_DISPLAY_NAMES[key] || key)
-        .join(', ');
-      confirmation += `\n\n✅ Променени секции (${result.appliedChanges.length}): ${changesText}`;
-    }
-    
-    // Добавяме инструкция за затваряне на модала
-    confirmation += '\n\n📌 Моля, затворете този прозорец за да видите обновения план.';
+    // Show confirmation that the request was submitted to admin
+    const confirmation = result.message || 'Вашата заявка за промяна на плана е изпратена успешно! Администраторът ще я прегледа и ще направи необходимите промени.';
     
     displayPlanModChatMessage(confirmation, 'bot');
     if (selectors.planModChatInput) {
@@ -163,17 +117,11 @@ async function submitPlanChangeRequest(messageText, userId) {
       selectors.planModChatSend.disabled = true;
     }
     
-    // Показваме съобщение че трябва да затворят модала
-    showToast('Промените са запазени! Затворете прозореца за да видите актуализирания план.', false, 5000);
+    // Show toast notification
+    showToast('Заявката е изпратена! Администраторът ще я обработи.', false, 4000);
     
-    // Изчистваме кеша незабавно, за да сме сигурни че следващото зареждане ще вземе новите данни
-    clearCache(apiEndpoints.dashboard);
-    
-    // Set flag so we reload dashboard when modal closes
-    planModificationPending = true;
-    
-    // НЕ затваряме модала автоматично - потребителят трябва да прочете отговора и да го затвори сам
-    // Когато затвори модала (чрез event listener), данните ще се презаредят автоматично
+    // No need to reload dashboard or set planModificationPending flag
+    // since changes will only be made by admin, not automatically
     
   } catch (e) {
     const errorMsg = `Грешка при изпращане: ${e.message}`;

@@ -30,7 +30,6 @@ export function initializeSelectors() {
         instructionsModal: 'instructionsModal',
         showIntroVideoBtn: 'showIntroVideoBtn',
         extraMealEntryModal: 'extraMealEntryModal', extraMealFormContainer: 'extraMealFormContainer',
-        planModificationBtn: 'planModificationBtn',
         planModInProgressIcon: 'planModInProgressIcon',
         planModChatModal: 'planModChatModal',
         planModChatMessages: 'planModChatMessages',
@@ -70,7 +69,7 @@ export function initializeSelectors() {
         if (!selectors[key] || (key === 'tabButtons' && selectors[key].length === 0)) {
             const optionalOrDynamic = [
                 'menuClose', 'extraMealFormContainer', 'userAllergiesNote', 'userAllergiesList',
-                'feedbackForm', 'tooltipTracker', 'planModificationBtn', 'planModInProgressIcon',
+                'feedbackForm', 'tooltipTracker', 'planModInProgressIcon',
                 'planModChatModal', 'planModChatMessages', 'planModChatInput',
                 'planModChatSend', 'planModChatClose', 'planModChatClear',
                 'planModChatTitle', 'planModChatClient',

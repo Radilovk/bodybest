@@ -404,8 +404,14 @@ async function checkForNotifications() {
             const queries = Array.isArray(client.queries) ? client.queries : [];
             const replies = Array.isArray(client.replies) ? client.replies : [];
             const feedback = Array.isArray(client.feedback) ? client.feedback : [];
-            const flags = { queries: queries.length > 0, replies: replies.length > 0, feedback: false };
-            let userHasNew = flags.queries || flags.replies;
+            const planChangeRequests = Array.isArray(client.planChangeRequests) ? client.planChangeRequests : [];
+            const flags = { 
+                queries: queries.length > 0, 
+                replies: replies.length > 0, 
+                feedback: false,
+                planChangeRequests: planChangeRequests.length > 0
+            };
+            let userHasNew = flags.queries || flags.replies || flags.planChangeRequests;
 
             for (const fb of feedback) {
                 if (!fb) continue;
@@ -1022,25 +1028,40 @@ async function loadNotifications(options = {}) {
             const queries = Array.isArray(client.queries) ? client.queries : [];
             const replies = Array.isArray(client.replies) ? client.replies : [];
             const feedback = Array.isArray(client.feedback) ? client.feedback : [];
+            const planChangeRequests = Array.isArray(client.planChangeRequests) ? client.planChangeRequests : [];
 
             queries.forEach(q => {
                 if (!q || !q.message) return;
                 const ts = parseTimestamp(q.ts ?? q.timestamp);
-                items.push({ userId: client.userId, name, text: q.message, ts });
+                items.push({ userId: client.userId, name, text: q.message, ts, type: 'query' });
             });
 
             replies.forEach(r => {
                 if (!r || !r.message) return;
                 const ts = parseTimestamp(r.ts ?? r.timestamp);
-                items.push({ userId: client.userId, name, text: r.message, ts });
+                items.push({ userId: client.userId, name, text: r.message, ts, type: 'reply' });
             });
 
             feedback.forEach(fb => {
                 if (!fb || !fb.message) return;
                 const ts = parseTimestamp(fb.timestamp ?? fb.ts);
                 if (ts === 0 || ts > storedTs) {
-                    items.push({ userId: client.userId, name, text: fb.message, ts });
+                    items.push({ userId: client.userId, name, text: fb.message, ts, type: 'feedback' });
                 }
+            });
+
+            planChangeRequests.forEach(pcr => {
+                // Note: requestText is mapped to message in the backend (handlePeekAdminNotificationsRequest)
+                if (!pcr || !pcr.message) return;
+                const ts = parseTimestamp(pcr.ts ?? pcr.timestamp);
+                items.push({ 
+                    userId: client.userId, 
+                    name, 
+                    text: pcr.message, 
+                    ts, 
+                    type: 'plan_change_request',
+                    status: pcr.status || 'pending'
+                });
             });
         }
 
@@ -1056,7 +1077,19 @@ async function loadNotifications(options = {}) {
 
         items.forEach(it => {
             const li = document.createElement('li');
-            li.textContent = `${it.name || it.userId}: ${it.text}`;
+            
+            // Add special styling for plan change requests
+            if (it.type === 'plan_change_request') {
+                li.classList.add('notification-plan-change');
+                const icon = document.createElement('span');
+                icon.textContent = '📝 ';
+                icon.style.marginRight = '5px';
+                li.appendChild(icon);
+            }
+            
+            const textNode = document.createTextNode(`${it.name || it.userId}: ${it.text}`);
+            li.appendChild(textNode);
+            
             li.addEventListener('click', () => showClient(it.userId));
             notificationsList.appendChild(li);
         });
