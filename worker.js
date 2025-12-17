@@ -1057,6 +1057,14 @@ const USER_ACTIVITY_LOG_LOOKBACK_DAYS = 10;
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS = 7;
 const USER_ACTIVITY_LOG_LIST_LIMIT = 100;
 const RECENT_CHAT_MESSAGES_FOR_PRINCIPLES = 10;
+
+// Plan modification constants
+const PLAN_MOD_REQUEST_MAX_LENGTH = 500; // Maximum length to store in metadata
+const PLAN_MOD_PROTEIN_MULTIPLIER = 1.2; // Multiplier for "more protein" example
+const PLAN_MOD_DEFAULT_PROTEIN_GRAMS = 100; // Default protein baseline for examples
+const PLAN_MOD_AI_TEMPERATURE = 0.7; // Higher temperature for creative meal generation
+const PLAN_MOD_AI_MAX_TOKENS = 4000; // Enough tokens for full meal plans
+
 const callModelRef = { current: null };
 
 async function getMaxChatHistoryMessages(env) {
@@ -9365,6 +9373,8 @@ async function handleSubmitPlanChangeRequest(request, env) {
             };
         }
 
+        console.log(`PLAN_MOD_REQUEST (${userId}): Request: "${String(requestText).trim().substring(0, 200)}..."`);
+
         const [finalPlanStr, initialAnswersStr, currentStatusStr] = await Promise.all([
             env.USER_METADATA_KV.get(`${userId}_final_plan`),
             env.USER_METADATA_KV.get(`${userId}_initial_answers`),
@@ -9373,6 +9383,7 @@ async function handleSubmitPlanChangeRequest(request, env) {
 
         const finalPlan = safeParseJson(finalPlanStr, null);
         if (!finalPlan) {
+            console.log(`PLAN_MOD_ERROR (${userId}): No plan found`);
             return {
                 success: false,
                 message: 'Не е намерен активен план за този потребител.',
@@ -9386,15 +9397,43 @@ async function handleSubmitPlanChangeRequest(request, env) {
         const height = safeParseFloat(initialAnswers?.height, null);
         const bmi = weight && height ? Number((weight / Math.pow(height / 100, 2)).toFixed(1)) : null;
 
+        console.log(`PLAN_MOD_PARSE (${userId}): Parsing modification request with AI...`);
         const parsedChanges = await parsePlanModificationRequest(String(requestText).trim(), userId, env);
+        
+        // Check if any meaningful changes were parsed
+        const changeKeys = Object.keys(parsedChanges).filter(k => k !== 'textDescription');
+        if (changeKeys.length === 0) {
+            console.warn(`PLAN_MOD_WARN (${userId}): AI returned no structured changes`);
+            return {
+                success: false,
+                message: 'AI-ът не можа да разбере желаната промяна. Моля, опишете по-конкретно какво искате да промените в плана (например: "искам повече протеин", "премахни млечните продукти", "добави повече варианти за закуска").',
+                statusHint: 422
+            };
+        }
+
+        console.log(`PLAN_MOD_APPLY (${userId}): Applying changes: ${changeKeys.join(', ')}`);
         const updatedPlanDraft = await applyPlanChanges(finalPlan, parsedChanges);
+
+        // Check if the plan actually changed
+        const planChanged = JSON.stringify(finalPlan) !== JSON.stringify(updatedPlanDraft);
+        if (!planChanged) {
+            console.warn(`PLAN_MOD_WARN (${userId}): Plan unchanged after applying modifications`);
+            return {
+                success: false,
+                message: 'Промените не бяха приложени, защото не са достатъчно ясни или конфликтират с текущия план. Моля, опишете по-конкретно какво искате да промените.',
+                statusHint: 422
+            };
+        }
 
         const originalCalories = safeParseFloat(safeGet(finalPlan, 'caloriesMacros.plan.calories', null), null);
         const updatedCalories = safeParseFloat(safeGet(updatedPlanDraft, 'caloriesMacros.plan.calories', null), null);
 
+        console.log(`PLAN_MOD_VALIDATE (${userId}): Calories change: ${originalCalories} → ${updatedCalories}`);
+
         if (bmi && originalCalories && updatedCalories) {
             const delta = (updatedCalories - originalCalories) / originalCalories;
             if (bmi >= BMI_HIGH_RISK && delta > CAL_DELTA_LIMIT) {
+                console.log(`PLAN_MOD_REJECT (${userId}): Calorie increase too high for BMI ${bmi}`);
                 return {
                     success: false,
                     message: 'Заявката повишава калориите над безопасния диапазон спрямо текущия BMI.',
@@ -9402,6 +9441,7 @@ async function handleSubmitPlanChangeRequest(request, env) {
                 };
             }
             if (bmi <= BMI_LOW_RISK && delta < -CAL_DELTA_LIMIT) {
+                console.log(`PLAN_MOD_REJECT (${userId}): Calorie decrease too high for BMI ${bmi}`);
                 return {
                     success: false,
                     message: 'Заявката намалява калориите прекомерно спрямо вашия BMI.',
@@ -9419,6 +9459,7 @@ async function handleSubmitPlanChangeRequest(request, env) {
             if (macroGaps.missingMealMacros?.length) {
                 missing.push('макроси по ястия');
             }
+            console.log(`PLAN_MOD_REJECT (${userId}): Macro gaps: ${missing.join('; ')}`);
             return {
                 success: false,
                 message: `Заявката е твърде неясна и оставя макроси непопълнени (${missing.join('; ') || 'липсващи полета'}). Моля, опишете по-конкретно желаната промяна.`,
@@ -9430,22 +9471,26 @@ async function handleSubmitPlanChangeRequest(request, env) {
         validatedPlan.generationMetadata = {
             ...(validatedPlan.generationMetadata || {}),
             lastModified: new Date().toISOString(),
-            modifiedBy: 'ai_plan_change_form'
+            modifiedBy: 'ai_plan_change_form',
+            modificationRequest: String(requestText).trim().substring(0, PLAN_MOD_REQUEST_MAX_LENGTH) // Store the request for reference
         };
 
+        console.log(`PLAN_MOD_SAVE (${userId}): Saving updated plan...`);
         await env.USER_METADATA_KV.put(`${userId}_final_plan`, JSON.stringify(validatedPlan));
         await env.USER_METADATA_KV.put(`${userId}_analysis_macros`, JSON.stringify({
             status: 'final',
             data: validatedPlan.caloriesMacros ? { ...validatedPlan.caloriesMacros } : null
         }));
 
+        console.log(`PLAN_MOD_SUCCESS (${userId}): Plan modified successfully`);
         return {
             success: true,
             message: 'Заявката е приета. Планът е коригиран без пълно регенериране, при спазване на здравословните ограничения.',
-            bmi
+            bmi,
+            appliedChanges: changeKeys // Return what was changed so frontend can display it
         };
     } catch (error) {
-        console.error(`Error in handleSubmitPlanChangeRequest: ${error.message}\n${error.stack}`);
+        console.error(`PLAN_MOD_ERROR (${userId}): ${error.message}\n${error.stack}`);
         return {
             success: false,
             message: 'Грешка при обработка на заявката за промяна на плана.',
@@ -10393,49 +10438,123 @@ async function parsePlanModificationRequest(modificationText, userId, env) {
         const currentPlan = safeParseJson(currentPlanStr, null);
         
         if (!currentPlan) {
-            // Return a simple text-based change if no plan exists
+            console.log(`PLAN_MOD_PARSE_ERROR (${userId}): No current plan found`);
             return {
                 textDescription: modificationText,
                 structuredChanges: {}
             };
         }
 
-        // Use AI to parse the modification request into structured format
+        // Use AI to generate the modified plan content
         const parsePrompt = `
-Анализирай следната заявка за промяна на хранителен план и извлечи структурирани данни.
+Ти си AI асистент за хранителни планове. Потребителят иска да промени своя план.
 
-ТЕКУЩА СТРУКТУРА НА ПЛАНА:
-${JSON.stringify(currentPlan, null, 2)}
+ТЕКУЩ ПЛАН (РЕЗЮМЕ):
+Калории: ${currentPlan.caloriesMacros?.plan?.calories || 'N/A'}
+Протеин: ${currentPlan.caloriesMacros?.plan?.protein_grams || 'N/A'}г
+Въглехидрати: ${currentPlan.caloriesMacros?.plan?.carbs_grams || 'N/A'}г
+Мазнини: ${currentPlan.caloriesMacros?.plan?.fat_grams || 'N/A'}г
 
-ЗАЯВКА ЗА ПРОМЯНА:
+Позволени храни: ${currentPlan.allowedForbiddenFoods?.allowed?.slice(0, 10).join(', ') || 'N/A'}
+Забранени храни: ${currentPlan.allowedForbiddenFoods?.forbidden?.slice(0, 10).join(', ') || 'N/A'}
+
+Примерно ястие от понеделник: ${currentPlan.week1Menu?.monday?.[0]?.name || 'N/A'}
+
+ЗАЯВКА ЗА ПРОМЯНА ОТ ПОТРЕБИТЕЛЯ:
 ${modificationText}
 
-Твоята задача е да извлечеш конкретните промени и да ги форматираш като JSON обект.
-Върни само валиден JSON без обяснения. Включи само полетата, които трябва да се променят.
+ТВОЯТА ЗАДАЧА:
+Генерирай КОНКРЕТНИ промени в плана според заявката. ВАЖНО: Генерирай реално съдържание, не само празни структури!
 
-Възможни полета за промяна:
-- caloriesMacros: { plan: { calories, protein_grams, carbs_grams, fat_grams, fiber_grams }, recommendation: {...} }
-- week1Menu: { monday: [...], tuesday: [...], ... }
-- principlesWeek2_4: { generalGuidelines: "...", specificInstructions: [...] }
-- allowedForbiddenFoods: { allowed: [...], forbidden: [...] }
-- hydrationCookingSupplements: { hydration: "...", cookingMethods: [...], supplements: [...] }
-- psychologicalGuidance: { strategies: [...], motivationalMessages: [...] }
-- detailedTargets: { quantitative: [...], descriptive: [...] }
-- profileSummary: "..."
+Примери за правилен отговор:
 
-Отговори само с JSON:`;
+1. Ако потребителят иска "повече протеин":
+{
+  "caloriesMacros": {
+    "plan": {
+      "protein_grams": ${Math.round((currentPlan.caloriesMacros?.plan?.protein_grams || PLAN_MOD_DEFAULT_PROTEIN_GRAMS) * PLAN_MOD_PROTEIN_MULTIPLIER)}
+    }
+  },
+  "week1Menu": {
+    "monday": [
+      {
+        "name": "Гръцко кисело мляко с протеинов прах",
+        "description": "200г кисело мляко, 30г протеинов прах, 1 ч.л. мед",
+        "calories": 250,
+        "protein": 35,
+        "carbs": 20,
+        "fat": 5
+      },
+      ... още 2-3 ястия за деня
+    ],
+    "tuesday": [ ... подобни ястия ... ]
+  }
+}
+
+2. Ако потребителят иска "без мляко":
+{
+  "allowedForbiddenFoods": {
+    "forbidden": ${JSON.stringify([...(currentPlan.allowedForbiddenFoods?.forbidden || []), 'мляко', 'млечни продукти', 'сирене', 'кашкавал', 'извара'])}
+  },
+  "week1Menu": {
+    "monday": [
+      {
+        "name": "Овесена каша с бадемово мляко",
+        "description": "50г овесени ядки, 200мл бадемово мляко, банан",
+        "calories": 280,
+        "protein": 8,
+        "carbs": 45,
+        "fat": 7
+      },
+      ... още ястия БЕЗ млечни продукти
+    ]
+  }
+}
+
+3. Ако потребителят иска "повече разнообразие":
+{
+  "week1Menu": {
+    "monday": [ ... 3-4 РАЗЛИЧНИ ястия ... ],
+    "tuesday": [ ... 3-4 ДРУГИ ястия ... ],
+    "wednesday": [ ... 3-4 ОЩЕ РАЗЛИЧНИ ястия ... ]
+  }
+}
+
+КРИТИЧНО ВАЖНО:
+- Генерирай ПЪЛНИ обекти с реални данни (име, описание, макроси)
+- НЕ връщай празни масиви или обекти без съдържание
+- Генерирай поне 3-4 ястия на ден ако променяш week1Menu
+- Всяко ястие ТРЯБВА да има: name, description, calories, protein, carbs, fat
+- Калориите и макросите трябва да са реалистични
+- Ястията да са на български език
+
+Отговори САМО с валиден JSON обект без никакви обяснения:`;
 
         const modelName = await env.RESOURCES_KV.get('model_plan_generation');
+        
+        console.log(`PLAN_MOD_PARSE_START (${userId}): Calling AI to parse modification: "${modificationText.substring(0, 100)}..."`);
+        
         const parsedResponse = await callModelRef.current(
             modelName,
             parsePrompt,
             env,
-            { temperature: 0.3, maxTokens: 2000 }
+            { temperature: PLAN_MOD_AI_TEMPERATURE, maxTokens: PLAN_MOD_AI_MAX_TOKENS }
         );
+
+        console.log(`PLAN_MOD_PARSE_RESPONSE (${userId}): AI response length: ${parsedResponse?.length || 0} chars`);
 
         // Clean and parse the AI response
         const cleanedJson = cleanGeminiJson(parsedResponse);
         const structuredChanges = safeParseJson(cleanedJson, {});
+
+        // Log what changes were parsed
+        const changeTypes = Object.keys(structuredChanges).filter(k => k !== 'textDescription');
+        console.log(`PLAN_MOD_PARSE_COMPLETE (${userId}): Parsed changes for: ${changeTypes.join(', ') || 'NONE'}`);
+        
+        // Validate that meaningful changes were generated
+        if (changeTypes.length === 0 || Object.keys(structuredChanges).every(k => !structuredChanges[k])) {
+            console.warn(`PLAN_MOD_PARSE_WARN (${userId}): AI returned empty or invalid changes`);
+        }
 
         return {
             textDescription: modificationText,
@@ -10443,7 +10562,7 @@ ${modificationText}
         };
 
     } catch (error) {
-        console.error(`Error parsing plan modification request: ${error.message}`);
+        console.error(`PLAN_MOD_PARSE_ERROR (${userId}): ${error.message}\n${error.stack}`);
         // Return the raw text as fallback
         return {
             textDescription: modificationText,

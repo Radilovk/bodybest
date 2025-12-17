@@ -13,6 +13,18 @@ let isSending = false;
 const MODAL_CLOSE_DELAY_MS = 1500;
 const DASHBOARD_RELOAD_DELAY_MS = 2000;
 
+// Mapping of backend change keys to user-friendly display names
+const CHANGE_DISPLAY_NAMES = {
+  caloriesMacros: 'калории и макроси',
+  week1Menu: 'седмично меню',
+  allowedForbiddenFoods: 'позволени/забранени храни',
+  principlesWeek2_4: 'принципи за седмици 2-4',
+  hydrationCookingSupplements: 'хидратация и добавки',
+  psychologicalGuidance: 'психологическо ръководство',
+  detailedTargets: 'детайлни цели',
+  profileSummary: 'профилно резюме'
+};
+
 const planModificationPrompt = 'Моля, опишете накратко желаните от вас промени в плана.';
 const planModGuidance = [
   'Напишете конкретно коя част от плана искате да се промени (напр. “повече протеин на обяд”).',
@@ -99,7 +111,16 @@ async function submitPlanChangeRequest(messageText, userId) {
     });
     const result = await response.json();
     if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
-    const confirmation = result.message || 'Заявката е приета. Ще актуализираме плана, ако няма здравословен конфликт.';
+    
+    // Show confirmation with details about what was changed
+    let confirmation = result.message || 'Заявката е приета. Ще актуализираме плана, ако няма здравословен конфликт.';
+    if (result.appliedChanges && result.appliedChanges.length > 0) {
+      const changesText = result.appliedChanges
+        .map(key => CHANGE_DISPLAY_NAMES[key] || key)
+        .join(', ');
+      confirmation += `\n\n✅ Променени секции: ${changesText}`;
+    }
+    
     displayPlanModChatMessage(confirmation, 'bot');
     showToast('Заявката е изпратена успешно. Презареждане на плана...', false);
     if (selectors.planModChatInput) selectors.planModChatInput.value = '';
@@ -115,7 +136,10 @@ async function submitPlanChangeRequest(messageText, userId) {
     await new Promise(resolve => setTimeout(resolve, DASHBOARD_RELOAD_DELAY_MS - MODAL_CLOSE_DELAY_MS));
     try {
       await loadDashboardData();
-      showToast('Планът е актуализиран успешно!', false, 3000);
+      const successMsg = result.appliedChanges && result.appliedChanges.length > 0
+        ? `Планът е актуализиран успешно! Променени: ${result.appliedChanges.length} секции.`
+        : 'Планът е актуализиран успешно!';
+      showToast(successMsg, false, 3000);
     } catch (error) {
       console.error('Грешка при презареждане на dashboard:', error);
       showToast('Планът е актуализиран, но има грешка при презареждането. Моля, презаредете страницата.', true, 5000);
