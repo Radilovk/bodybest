@@ -1064,6 +1064,10 @@ const PLAN_MOD_PROTEIN_MULTIPLIER = 1.2; // Multiplier for "more protein" exampl
 const PLAN_MOD_DEFAULT_PROTEIN_GRAMS = 100; // Default protein baseline for examples
 const PLAN_MOD_AI_TEMPERATURE = 0.7; // Higher temperature for creative meal generation
 const PLAN_MOD_AI_MAX_TOKENS = 4000; // Enough tokens for full meal plans
+const PLAN_MOD_DECISION_TEMPERATURE = 0.3; // Lower temperature for decision-making
+const PLAN_MOD_DECISION_MAX_TOKENS = 500; // Limited tokens for decision response
+const PLAN_MOD_PLAN_SUMMARY_FOOD_LIMIT = 15; // Number of foods to include in plan summary
+const PLAN_MOD_EXCLUDED_RESPONSE_KEYS = ['textDescription', 'requiresFullRegeneration', 'reasoning']; // Keys to exclude from changeKeys
 
 const callModelRef = { current: null };
 
@@ -9416,7 +9420,7 @@ async function handleSubmitPlanChangeRequest(request, env) {
         }
         
         // Check if any meaningful changes were parsed
-        const changeKeys = Object.keys(parsedChanges).filter(k => k !== 'textDescription' && k !== 'requiresFullRegeneration' && k !== 'reasoning');
+        const changeKeys = Object.keys(parsedChanges).filter(k => !PLAN_MOD_EXCLUDED_RESPONSE_KEYS.includes(k));
         if (changeKeys.length === 0) {
             console.warn(`PLAN_MOD_WARN (${userId}): AI returned no structured changes`);
             return {
@@ -10472,8 +10476,8 @@ async function parsePlanModificationRequest(modificationText, userId, env) {
             protein: currentPlan.caloriesMacros?.plan?.protein_grams || 'N/A',
             carbs: currentPlan.caloriesMacros?.plan?.carbs_grams || 'N/A',
             fat: currentPlan.caloriesMacros?.plan?.fat_grams || 'N/A',
-            allowedFoods: (currentPlan.allowedForbiddenFoods?.allowed || []).slice(0, 15).join(', ') || 'N/A',
-            forbiddenFoods: (currentPlan.allowedForbiddenFoods?.forbidden || []).slice(0, 15).join(', ') || 'N/A',
+            allowedFoods: (currentPlan.allowedForbiddenFoods?.allowed || []).slice(0, PLAN_MOD_PLAN_SUMMARY_FOOD_LIMIT).join(', ') || 'N/A',
+            forbiddenFoods: (currentPlan.allowedForbiddenFoods?.forbidden || []).slice(0, PLAN_MOD_PLAN_SUMMARY_FOOD_LIMIT).join(', ') || 'N/A',
             week1MenuDays: Object.keys(currentPlan.week1Menu || {}).length,
             sampleMeals: [
                 currentPlan.week1Menu?.monday?.[0]?.name || 'N/A',
@@ -10540,7 +10544,7 @@ async function parsePlanModificationRequest(modificationText, userId, env) {
             modelName,
             decisionPrompt,
             env,
-            { temperature: 0.3, maxTokens: 500 } // Lower temperature for decision-making
+            { temperature: PLAN_MOD_DECISION_TEMPERATURE, maxTokens: PLAN_MOD_DECISION_MAX_TOKENS }
         );
 
         const cleanedDecisionJson = cleanGeminiJson(decisionResponse);
