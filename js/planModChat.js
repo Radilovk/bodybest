@@ -1,8 +1,9 @@
 import { selectors } from './uiElements.js';
 import { apiEndpoints } from './config.js';
-import { openModal, showToast } from './uiHandlers.js';
+import { openModal, showToast, closeModal } from './uiHandlers.js';
 import { escapeHtml } from './utils.js';
-import { currentUserId } from './app.js';
+import { currentUserId, loadDashboardData } from './app.js';
+import { clearCache } from './requestCache.js';
 
 export let planModChatHistory = [];
 export let planModChatContext = null;
@@ -96,8 +97,27 @@ async function submitPlanChangeRequest(messageText, userId) {
     if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
     const confirmation = result.message || 'Заявката е приета. Ще актуализираме плана, ако няма здравословен конфликт.';
     displayPlanModChatMessage(confirmation, 'bot');
-    showToast('Заявката е изпратена и ще бъде разгледана.', false);
+    showToast('Заявката е изпратена успешно. Презареждане на плана...', false);
     if (selectors.planModChatInput) selectors.planModChatInput.value = '';
+    
+    // Изчистваме кеша и презареждаме dashboard данните, за да покажем обновения план
+    clearCache(apiEndpoints.dashboard);
+    
+    // Затваряме модала преди да презаредим данните
+    setTimeout(() => {
+      closeModal('planModChatModal');
+    }, 1500);
+    
+    // Презареждаме dashboard данните след кратка пауза
+    setTimeout(async () => {
+      try {
+        await loadDashboardData();
+        showToast('Планът е актуализиран успешно!', false, 3000);
+      } catch (error) {
+        console.error('Грешка при презареждане на dashboard:', error);
+        showToast('Планът е актуализиран, но има грешка при презареждането. Моля, презаредете страницата.', true, 5000);
+      }
+    }, 2000);
   } catch (e) {
     const errorMsg = `Грешка при изпращане: ${e.message}`;
     displayPlanModChatMessage(errorMsg, 'bot', true);
