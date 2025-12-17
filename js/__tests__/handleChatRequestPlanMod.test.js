@@ -37,7 +37,7 @@ describe('handleChatRequest plan modification marker', () => {
     global.fetch && global.fetch.mockRestore();
   });
 
-  test('does not create event without planModChat source', async () => {
+  test('ignores plan modification signature in generic chat', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ candidates: [{ content: { parts: [{ text: 'ok\n[PLAN_MODIFICATION_REQUEST] change' }] } }] })
@@ -49,35 +49,15 @@ describe('handleChatRequest plan modification marker', () => {
     expect(keys.some(k => k.startsWith('event_planMod_u1_'))).toBe(false);
   });
 
-  test('creates event when source is planModChat', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ candidates: [{ content: { parts: [{ text: 'ok\n[PLAN_MODIFICATION_REQUEST] change' }] } }] })
-    });
-    const request = { json: async () => ({ userId: 'u1', message: 'm', source: 'planModChat' }) };
-    const res = await handleChatRequest(request, { ...env });
-    expect(res.success).toBe(true);
-    const keys = env.USER_METADATA_KV.put.mock.calls.map(c => c[0]);
-    expect(keys.some(k => k.startsWith('event_planMod_u1_'))).toBe(true);
-  });
-
-  test('populates USER_REQUEST correctly', async () => {
+  test('still builds prompt with user request text', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ candidates: [{ content: { parts: [{ text: 'reply' }] } }] })
     });
-    const req1 = { json: async () => ({ userId: 'u1', message: 'first', source: 'planModChat', history: [] }) };
-    await handleChatRequest(req1, { ...env });
-    let body = JSON.parse(global.fetch.mock.calls[0][1].body);
-    const prompt1 = body.contents[0].parts[0].text;
-    expect(prompt1).toContain('first');
-    global.fetch.mockClear();
-
-    const req2 = { json: async () => ({ userId: 'u1', message: 'second', source: 'planModChat', history: [] }) };
-    await handleChatRequest(req2, { ...env });
-    body = JSON.parse(global.fetch.mock.calls[0][1].body);
-    const prompt2 = body.contents[0].parts[0].text;
-    expect(prompt2).toContain('second');
-    expect(prompt1).not.toBe(prompt2);
+    const req = { json: async () => ({ userId: 'u1', message: 'first', source: 'planModChat', history: [] }) };
+    await handleChatRequest(req, { ...env });
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    const prompt = body.contents[0].parts[0].text;
+    expect(prompt).toContain('first');
   });
 });

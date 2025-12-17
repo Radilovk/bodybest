@@ -415,31 +415,26 @@ savePlanChanges()                        // Записва промени
 ---
 
 ### `js/planModChat.js`
-**Отговорност:** Plan modification chat modal
+**Отговорност:** Форма за заявка за промяна на плана (свободен текст)
 
 **Експорти:**
 ```javascript
-setupPlanModChat()                       // Setup modal
-openPlanModChat()                        // Отваря modal
-closePlanModChat()                       // Затваря modal
-sendPlanModMessage(message)              // Изпраща съобщение
+openPlanModificationChat()               // Отваря формата с насоки
+handlePlanModChatSend()                  // Изпраща заявката към API
+clearPlanModChat()                       // Нулира формата
 ```
 
 **Интеграция:**
 ```javascript
-import { setupPlanModChat, openPlanModChat } from './planModChat.js';
+import { openPlanModificationChat } from './planModChat.js';
 
-setupPlanModChat();
-
-document.getElementById('modifyPlanBtn').addEventListener('click', () => {
-  openPlanModChat();
-});
+document.getElementById('planModificationBtn')
+  ?.addEventListener('click', openPlanModificationChat);
 ```
 
 **API:**
-- Изпраща към `/api/chat?source=planModChat`
-- Създава `event_planMod_<userId>` в KV
-- Cron job обработва събитието
+- Изпраща към `/api/submitPlanChangeRequest`
+- Приема финален план и BMI ограничения директно, без cron опашка
 
 ---
 
