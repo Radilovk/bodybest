@@ -99,7 +99,23 @@ async function submitPlanChangeRequest(messageText, userId) {
     });
     const result = await response.json();
     if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
-    const confirmation = result.message || 'Заявката е приета. Ще актуализираме плана, ако няма здравословен конфликт.';
+    
+    // Show confirmation with details about what was changed
+    let confirmation = result.message || 'Заявката е приета. Ще актуализираме плана, ако няма здравословен конфликт.';
+    if (result.appliedChanges && result.appliedChanges.length > 0) {
+      const changesText = result.appliedChanges
+        .map(key => {
+          if (key === 'caloriesMacros') return 'калории и макроси';
+          if (key === 'week1Menu') return 'седмично меню';
+          if (key === 'allowedForbiddenFoods') return 'позволени/забранени храни';
+          if (key === 'principlesWeek2_4') return 'принципи за седмици 2-4';
+          if (key === 'hydrationCookingSupplements') return 'хидратация и добавки';
+          return key;
+        })
+        .join(', ');
+      confirmation += `\n\n✅ Променени секции: ${changesText}`;
+    }
+    
     displayPlanModChatMessage(confirmation, 'bot');
     showToast('Заявката е изпратена успешно. Презареждане на плана...', false);
     if (selectors.planModChatInput) selectors.planModChatInput.value = '';
@@ -115,7 +131,10 @@ async function submitPlanChangeRequest(messageText, userId) {
     await new Promise(resolve => setTimeout(resolve, DASHBOARD_RELOAD_DELAY_MS - MODAL_CLOSE_DELAY_MS));
     try {
       await loadDashboardData();
-      showToast('Планът е актуализиран успешно!', false, 3000);
+      const successMsg = result.appliedChanges && result.appliedChanges.length > 0
+        ? `Планът е актуализиран успешно! Променени: ${result.appliedChanges.length} секции.`
+        : 'Планът е актуализиран успешно!';
+      showToast(successMsg, false, 3000);
     } catch (error) {
       console.error('Грешка при презареждане на dashboard:', error);
       showToast('Планът е актуализиран, но има грешка при презареждането. Моля, презаредете страницата.', true, 5000);
