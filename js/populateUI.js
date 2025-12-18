@@ -238,9 +238,22 @@ function populateDashboardDetailedAnalytics(analyticsData) {
 
     const detailedMetrics = safeGet(analyticsData, 'detailed', []);
     const textualAnalysis = safeGet(analyticsData, 'textualAnalysis');
+    const periodDays = safeGet(analyticsData, 'periodDays', 7);
+
+    // Add period information
+    let periodText = '';
+    if (periodDays === 7) {
+        periodText = 'последните 7 дни';
+    } else if (periodDays === 30) {
+        periodText = 'последните 30 дни';
+    } else if (periodDays > 90) {
+        periodText = 'целия период от началото';
+    } else {
+        periodText = `последните ${periodDays} дни`;
+    }
 
     if (textualAnalysis) {
-        textualAnalysisContainer.innerHTML = `<p>${escapeHtml(textualAnalysis).replace(/\n/g, "<br>")}</p>`;
+        textualAnalysisContainer.innerHTML = `<p style="margin-bottom: 0.5rem;"><small style="color: var(--text-color-secondary);">Анализ за ${periodText}</small></p><p>${escapeHtml(textualAnalysis).replace(/\n/g, "<br>")}</p>`;
     } else {
         textualAnalysisContainer.innerHTML = '<p class="placeholder">Текстовият анализ се генерира или не е наличен...</p>';
     }

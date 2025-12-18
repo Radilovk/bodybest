@@ -9,6 +9,7 @@ import { renderTemplate } from '../utils/templateRenderer.js';
 import { ensureChart } from './chartLoader.js';
 import { setupPlanRegeneration } from './planRegenerator.js';
 import { cachedFetch } from './requestCache.js';
+import { initAdminLogsPeriodSelector, initAdminAnalyticsPeriodSelector, getCurrentLogsPeriod, getCurrentAnalyticsPeriod, formatPeriodText } from './adminAnalyticsPeriodSelector.js';
 
 // AI model configuration keys
 const AI_MODEL_KEYS = [
@@ -1296,6 +1297,30 @@ async function showClient(userId) {
                 updateTagFilterOptions();
                 renderClients();
             }
+            
+            // Initialize period selectors for admin panel
+            initAdminLogsPeriodSelector(async (period) => {
+                try {
+                    const logs = dashData.dailyLogs || [];
+                    const filteredLogs = period === 'all' ? logs : logs.slice(0, period);
+                    await displayDailyLogs(filteredLogs, false);
+                } catch (error) {
+                    console.error("Error filtering logs:", error);
+                }
+            });
+            
+            initAdminAnalyticsPeriodSelector(async (period) => {
+                try {
+                    // Reload dashboard data with the specified period
+                    const url = `${apiEndpoints.dashboard}?userId=${userId}&period=${period}`;
+                    const data = await fetch(url).then(r => r.json());
+                    if (data.success && data.analytics) {
+                        displayDashboardSummary(data);
+                    }
+                } catch (error) {
+                    console.error("Error refreshing analytics:", error);
+                }
+            });
         } else {
             displayInitialAnswers(null, true);
             displayPlanMenu(null, true);
