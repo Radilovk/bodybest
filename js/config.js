@@ -72,7 +72,8 @@ export const apiEndpoints = {
     savePsychTests: `${workerBaseUrl}/api/savePsychTests`,
     getPsychTests: `${workerBaseUrl}/api/getPsychTests`,
      nutrientLookup: `${workerBaseUrl}/nutrient-lookup`,
-    generateMealAlternatives: `${workerBaseUrl}/api/generateMealAlternatives`
+    generateMealAlternatives: `${workerBaseUrl}/api/generateMealAlternatives`,
+    deletePlanChangeNotification: `${workerBaseUrl}/api/deletePlanChangeNotification`
  };
 
 // Cloudflare Account ID за използване в чат асистента

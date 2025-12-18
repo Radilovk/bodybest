@@ -1026,7 +1026,7 @@ async function handleDeleteNotification(notification, listItem) {
     }
     
     try {
-        const response = await fetch('/api/deletePlanChangeNotification', {
+        const response = await fetch(apiEndpoints.deletePlanChangeNotification, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
