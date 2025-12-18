@@ -71,8 +71,9 @@ export const apiEndpoints = {
     setMaintenanceMode: `${workerBaseUrl}/api/setMaintenanceMode`,
     savePsychTests: `${workerBaseUrl}/api/savePsychTests`,
     getPsychTests: `${workerBaseUrl}/api/getPsychTests`,
-     nutrientLookup: `${workerBaseUrl}/nutrient-lookup`
- };
+    nutrientLookup: `${workerBaseUrl}/nutrient-lookup`,
+    deletePlanChangeNotification: `${workerBaseUrl}/api/deletePlanChangeNotification`
+};
 
 // Cloudflare Account ID за използване в чат асистента
 export const cloudflareAccountId = window.CF_ACCOUNT_ID || 'c2015f4060e04bc3c414f78a9946668e';
