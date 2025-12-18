@@ -262,8 +262,9 @@ function renderAlternativeCard(alternative, altIndex) {
                 class="button-primary select-alternative-btn" 
                 data-alt-index="${altIndex}"
                 style="width: 100%; margin-top: 1rem;"
+                aria-label="Избери ${alternative.meal_name || `алтернатива ${altIndex + 1}`}"
             >
-                <svg class="icon" style="width: 1em; height: 1em; margin-right: 0.5rem;">
+                <svg class="icon" style="width: 1em; height: 1em; margin-right: 0.5rem;" aria-hidden="true">
                     <use href="#icon-check"></use>
                 </svg>
                 Избери това
