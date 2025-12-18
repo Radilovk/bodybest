@@ -1904,41 +1904,8 @@
       // Setup meal alternatives functionality
       import { setupMealAlternativesListeners, openMealAlternativesModal } from './js/mealAlternatives.js';
       
-      // Initialize when DOM is ready
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-          setupMealAlternativesListeners();
-          
-          // Delegate click events for alternatives buttons
-          document.addEventListener('click', (e) => {
-            const alternativesBtn = e.target.closest('.alternatives-btn');
-            if (alternativesBtn) {
-              e.stopPropagation(); // Prevent meal card completion toggle
-              
-              const mealCard = alternativesBtn.closest('.meal-card');
-              if (!mealCard) return;
-              
-              const mealIndex = parseInt(alternativesBtn.dataset.mealIndex, 10);
-              const dayKey = alternativesBtn.dataset.day;
-              const mealDataStr = mealCard.dataset.mealData;
-              
-              if (!mealDataStr) {
-                console.error('Meal data not found on card');
-                return;
-              }
-              
-              try {
-                const mealData = JSON.parse(mealDataStr);
-                openMealAlternativesModal(mealData, mealIndex, dayKey);
-              } catch (error) {
-                console.error('Error parsing meal data:', error);
-              }
-            }
-          });
-        });
-      } else {
-        setupMealAlternativesListeners();
-        
+      // Setup alternatives button click handler
+      function setupAlternativesButtonHandler() {
         // Delegate click events for alternatives buttons
         document.addEventListener('click', (e) => {
           const alternativesBtn = e.target.closest('.alternatives-btn');
@@ -1965,6 +1932,17 @@
             }
           }
         });
+      }
+      
+      // Initialize when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          setupMealAlternativesListeners();
+          setupAlternativesButtonHandler();
+        });
+      } else {
+        setupMealAlternativesListeners();
+        setupAlternativesButtonHandler();
       }
     </script>
   </body>

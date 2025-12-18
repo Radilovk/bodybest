@@ -183,7 +183,7 @@ function renderAlternativeCard(alternative, altIndex, originalMeal, mealIndex, d
 /**
  * Замяна на оригиналното хранене с избраната алтернатива
  * @param {Object} alternative - Избраната алтернатива
- * @param {Object} originalMeal - Оригиналното хранене
+ * @param {Object} originalMeal - Оригиналното хранене  
  * @param {number} mealIndex - Индекс на хранението
  * @param {string} dayKey - Ден от седмицата
  */
@@ -240,9 +240,25 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
         // Show success message
         showToast(`Храненето е заменено успешно с "${alternative.meal_name}"`, false, 3000);
         
-        // Reload the UI to reflect changes
+        // Trigger UI refresh by dispatching custom event
+        window.dispatchEvent(new CustomEvent('mealAlternativeSelected', {
+            detail: { mealIndex, dayKey, alternative }
+        }));
+        
+        // Fallback: reload page if event is not handled
         setTimeout(() => {
-            window.location.reload();
+            // Check if the UI has been updated
+            const updatedCard = document.querySelector(`.meal-card[data-index="${mealIndex}"][data-day="${dayKey}"]`);
+            if (updatedCard) {
+                const updatedMealName = updatedCard.querySelector('.meal-name');
+                if (updatedMealName && updatedMealName.textContent !== alternative.meal_name) {
+                    // UI not updated, reload as fallback
+                    window.location.reload();
+                }
+            } else {
+                // Card not found, reload
+                window.location.reload();
+            }
         }, 1000);
         
     } catch (error) {
@@ -258,24 +274,8 @@ export function setupMealAlternativesListeners() {
     const alternativesList = document.getElementById('mealAlternativesList');
     
     if (alternativesList) {
-        // Delegate click events for alternative selection
-        alternativesList.addEventListener('click', (e) => {
-            const selectBtn = e.target.closest('.select-alternative-btn');
-            if (selectBtn) {
-                const altIndex = parseInt(selectBtn.dataset.altIndex, 10);
-                const alternativeCard = selectBtn.closest('.alternative-card');
-                
-                // Get alternative data from DOM
-                const mealName = alternativeCard.querySelector('.alternative-name').textContent;
-                
-                // This is a simplified approach - in real implementation, 
-                // we'd store the full alternative data on the button or card
-                console.log('Selected alternative index:', altIndex);
-                
-                // The actual selection logic will be handled through a stored alternatives array
-                // which we'll add to the global scope when rendering
-            }
-        });
+        // Event listener for alternative selection is added during render
+        // (see renderAlternativesWithContext function)
     }
     
     // Close modal when clicking close button
@@ -304,18 +304,10 @@ export function setupMealAlternativesListeners() {
     }
 }
 
-// Store alternatives globally for selection
-let currentAlternativesData = null;
-let currentMealContext = null;
-
 /**
- * Updates the render function to store alternatives data
+ * Updates the render function to store alternatives data and attach event handlers
  */
 function renderAlternativesWithContext(alternatives, originalMeal, mealIndex, dayKey) {
-    // Store for later use
-    currentAlternativesData = alternatives;
-    currentMealContext = { originalMeal, mealIndex, dayKey };
-    
     const alternativesList = document.getElementById('mealAlternativesList');
     
     alternativesList.innerHTML = `
