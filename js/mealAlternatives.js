@@ -190,7 +190,7 @@ function renderAlternativesWithEventHandlers(alternatives, originalMeal, mealInd
             
             try {
                 await selectAlternative(alternatives[index], originalMeal, mealIndex, dayKey);
-            } catch (error) {
+            } catch {
                 // Error is already handled and displayed in selectAlternative
                 // Re-enable button for retry
                 btn.disabled = false;
