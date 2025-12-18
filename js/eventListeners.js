@@ -253,10 +253,15 @@ export function setupStaticEventListeners() {
             
             // Find the card by matching data attributes
             for (const card of mealCards) {
-                const cardMealData = card.dataset.mealData ? JSON.parse(card.dataset.mealData) : null;
-                if (cardMealData && parseInt(card.dataset.index) === mealIndex) {
-                    targetCard = card;
-                    break;
+                try {
+                    const cardMealData = card.dataset.mealData ? JSON.parse(card.dataset.mealData) : null;
+                    if (cardMealData && parseInt(card.dataset.index) === mealIndex) {
+                        targetCard = card;
+                        break;
+                    }
+                } catch (parseError) {
+                    console.warn('Failed to parse meal data for card:', parseError);
+                    continue;
                 }
             }
             

@@ -2566,22 +2566,50 @@ ${existingMealNames.join(', ')}
                 }
                 throw new Error('No JSON found in response');
             },
-            // Attempt 3: Extract JSON between specific markers
+            // Attempt 3: Find balanced JSON object containing "alternatives"
             () => {
-                const jsonMatch = aiResponse.match(/\{[\s\S]*?"alternatives"[\s\S]*?\}/);
-                if (jsonMatch) {
-                    return JSON.parse(jsonMatch[0]);
+                // Find the start of a JSON object that contains "alternatives"
+                const startIdx = aiResponse.indexOf('{');
+                if (startIdx === -1) throw new Error('No JSON object found');
+                
+                // Balance braces to find complete JSON
+                let depth = 0;
+                let inString = false;
+                let escape = false;
+                
+                for (let i = startIdx; i < aiResponse.length; i++) {
+                    const char = aiResponse[i];
+                    
+                    if (escape) {
+                        escape = false;
+                        continue;
+                    }
+                    
+                    if (char === '\\') {
+                        escape = true;
+                        continue;
+                    }
+                    
+                    if (char === '"') {
+                        inString = !inString;
+                        continue;
+                    }
+                    
+                    if (inString) continue;
+                    
+                    if (char === '{') depth++;
+                    if (char === '}') {
+                        depth--;
+                        if (depth === 0) {
+                            const jsonStr = aiResponse.substring(startIdx, i + 1);
+                            const parsed = JSON.parse(jsonStr);
+                            if (parsed.alternatives) {
+                                return parsed;
+                            }
+                        }
+                    }
                 }
-                throw new Error('No alternatives JSON found');
-            },
-            // Attempt 4: Try to find and extract the alternatives array directly
-            () => {
-                const altMatch = aiResponse.match(/"alternatives"\s*:\s*\[([\s\S]*?)\]/);
-                if (altMatch) {
-                    // Construct minimal valid JSON
-                    return JSON.parse(`{"alternatives": [${altMatch[1]}]}`);
-                }
-                throw new Error('No alternatives array found');
+                throw new Error('No balanced JSON with alternatives found');
             }
         ];
         

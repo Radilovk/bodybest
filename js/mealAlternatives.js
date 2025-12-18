@@ -186,9 +186,6 @@ function renderAlternatives(alternatives, originalMeal, mealIndex, dayKey) {
  * Рендира една карта с алтернатива
  * @param {Object} alternative - Данни за алтернативата
  * @param {number} altIndex - Индекс на алтернативата
- * @param {Object} originalMeal - Оригиналното хранене
- * @param {number} mealIndex - Индекс на хранението
- * @param {string} dayKey - Ден от седмицата
  * @returns {string} HTML string
  */
 function renderAlternativeCard(alternative, altIndex) {
@@ -359,13 +356,19 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
             const mealCard = document.querySelector(`.meal-card[data-index="${mealIndex}"]`);
             if (mealCard) {
                 const mealNameEl = mealCard.querySelector('.meal-name');
-                // Extract just the meal name text (without the check icon)
-                const currentMealName = mealNameEl ? mealNameEl.textContent.trim().split('\n')[0].trim() : '';
-                
-                if (currentMealName !== alternative.meal_name) {
-                    // UI not updated automatically, reload page
-                    console.log('UI not updated, reloading page');
-                    window.location.reload();
+                if (mealNameEl) {
+                    // Get text content, removing any child elements (like check icon)
+                    const textNodes = Array.from(mealNameEl.childNodes)
+                        .filter(node => node.nodeType === Node.TEXT_NODE)
+                        .map(node => node.textContent.trim())
+                        .filter(text => text.length > 0);
+                    const currentMealName = textNodes.join(' ');
+                    
+                    if (currentMealName !== alternative.meal_name) {
+                        // UI not updated automatically, reload page
+                        console.log('UI not updated, reloading page');
+                        window.location.reload();
+                    }
                 }
             }
         }, 500);
