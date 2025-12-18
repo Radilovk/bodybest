@@ -1003,6 +1003,48 @@ function openDetailsSections() {
     });
 }
 
+/**
+ * Handles deletion of a plan change notification
+ * @param {Object} notification - The notification object with userId and id
+ * @param {HTMLElement} listItem - The list item element to remove
+ */
+async function handleDeleteNotification(notification, listItem) {
+    if (!confirm('Сигурни ли сте, че искате да изтриете тази нотификация?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/deletePlanChangeNotification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: notification.userId,
+                notificationId: notification.id
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Remove the notification from the UI
+            listItem.remove();
+            
+            // If no more notifications, show empty state
+            if (notificationsList.children.length === 0) {
+                const emptyLi = document.createElement('li');
+                emptyLi.textContent = 'Няма нови известия.';
+                notificationsList.appendChild(emptyLi);
+                // Keep section visible to show the empty state message
+            }
+        } else {
+            alert(result.message || 'Грешка при изтриване на нотификацията.');
+        }
+    } catch (error) {
+        console.error('Error deleting notification:', error);
+        alert('Грешка при изтриване на нотификацията.');
+    }
+}
+
 async function loadNotifications(options = {}) {
     if (!notificationsList || !notificationsSection) return;
     notificationsList.innerHTML = '';
@@ -1060,7 +1102,8 @@ async function loadNotifications(options = {}) {
                     text: pcr.message, 
                     ts, 
                     type: 'plan_change_request',
-                    status: pcr.status || 'pending'
+                    status: pcr.status || 'pending',
+                    id: pcr.id // Include ID for deletion
                 });
             });
         }
@@ -1089,6 +1132,22 @@ async function loadNotifications(options = {}) {
             
             const textNode = document.createTextNode(`${it.name || it.userId}: ${it.text}`);
             li.appendChild(textNode);
+            
+            // Add delete button for plan change requests
+            if (it.type === 'plan_change_request' && it.id) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '✕';
+                deleteBtn.className = 'notification-delete-btn';
+                deleteBtn.title = 'Изтрий нотификацията';
+                deleteBtn.setAttribute('aria-label', 'Изтрий нотификацията');
+                
+                deleteBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation(); // Prevent opening client profile
+                    await handleDeleteNotification(it, li);
+                });
+                
+                li.appendChild(deleteBtn);
+            }
             
             li.addEventListener('click', () => showClient(it.userId));
             notificationsList.appendChild(li);
