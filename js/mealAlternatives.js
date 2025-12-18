@@ -4,6 +4,9 @@ import { apiEndpoints } from './config.js';
 import { showToast } from './uiHandlers.js';
 import { fullDashboardData } from './app.js';
 
+// Track if a save operation is in progress to prevent modal closing
+let isSavingAlternative = false;
+
 /**
  * Отваря модален прозорец за показване на алтернативни хранения
  * @param {Object} mealData - Данни за текущото хранене
@@ -185,9 +188,15 @@ function renderAlternativesWithEventHandlers(alternatives, originalMeal, mealInd
     const selectButtons = alternativesList.querySelectorAll('.select-alternative-btn');
     selectButtons.forEach((btn, index) => {
         btn.addEventListener('click', async () => {
+            // Prevent multiple simultaneous saves
+            if (isSavingAlternative) {
+                return;
+            }
+            
             btn.disabled = true;
             btn.innerHTML = '<svg class="icon spinner" style="width: 1em; height: 1em;"><use href="#icon-spinner"></use></svg> Замяна...';
             
+            isSavingAlternative = true;
             try {
                 await selectAlternative(alternatives[index], originalMeal, mealIndex, dayKey);
             } catch {
@@ -195,6 +204,8 @@ function renderAlternativesWithEventHandlers(alternatives, originalMeal, mealInd
                 // Re-enable button for retry
                 btn.disabled = false;
                 btn.innerHTML = '<svg class="icon" style="width: 1em; height: 1em; margin-right: 0.5rem;"><use href="#icon-check"></use></svg> Избери това';
+            } finally {
+                isSavingAlternative = false;
             }
         });
     });
@@ -251,8 +262,9 @@ function renderAlternativeCard(alternative, altIndex) {
                 class="button-primary select-alternative-btn" 
                 data-alt-index="${altIndex}"
                 style="width: 100%; margin-top: 1rem;"
+                aria-label="Избери ${alternative.meal_name || `алтернатива ${altIndex + 1}`}"
             >
-                <svg class="icon" style="width: 1em; height: 1em; margin-right: 0.5rem;">
+                <svg class="icon" style="width: 1em; height: 1em; margin-right: 0.5rem;" aria-hidden="true">
                     <use href="#icon-check"></use>
                 </svg>
                 Избери това
@@ -299,26 +311,17 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
             throw new Error('Невалиден индекс на хранене');
         }
         
-        // Store the original meal for potential rollback
-        const originalMealData = { ...planData.week1Menu[dayKey][mealIndex] };
-        
-        // Replace meal in the plan
-        planData.week1Menu[dayKey][mealIndex] = {
-            ...alternative,
-            // Preserve any additional properties from original
-            recipeKey: alternative.recipeKey || originalMeal.recipeKey || null
-        };
-        
-        // Note: planData is already updated in fullDashboardData (reference)
-        // No need to save to localStorage - the global state is updated
-        
-        // Trigger UI refresh immediately
-        window.dispatchEvent(new CustomEvent('mealAlternativeSelected', {
-            detail: { mealIndex, dayKey, alternative }
-        }));
-        
-        // Update backend (API call to save the modified plan)
+        // Update backend FIRST (before updating in-memory data)
+        // This ensures persistence before any UI changes
         try {
+            // Create updated plan with the alternative
+            const updatedPlanData = JSON.parse(JSON.stringify(planData)); // Deep clone
+            updatedPlanData.week1Menu[dayKey][mealIndex] = {
+                ...alternative,
+                // Preserve any additional properties from original
+                recipeKey: alternative.recipeKey || originalMeal.recipeKey || null
+            };
+            
             const response = await fetch(apiEndpoints.updatePlanData, {
                 method: 'POST',
                 headers: {
@@ -326,7 +329,7 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
                 },
                 body: JSON.stringify({
                     userId,
-                    planData
+                    planData: updatedPlanData
                 })
             });
             
@@ -342,18 +345,22 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
             
             console.log('Meal alternative saved successfully to backend');
             
+            // ONLY NOW update the in-memory data (after successful backend save)
+            planData.week1Menu[dayKey][mealIndex] = {
+                ...alternative,
+                recipeKey: alternative.recipeKey || originalMeal.recipeKey || null
+            };
+            
         } catch (backendError) {
-            // If backend update fails, rollback in-memory data
-            console.error('Backend update failed, rolling back:', backendError);
-            planData.week1Menu[dayKey][mealIndex] = originalMealData;
-            
-            // Trigger UI refresh with original data
-            window.dispatchEvent(new CustomEvent('mealAlternativeSelected', {
-                detail: { mealIndex, dayKey, alternative: originalMealData }
-            }));
-            
+            // Backend save failed - do not update in-memory data
+            console.error('Backend update failed:', backendError);
             throw new Error(`Запазването не успя: ${backendError.message}`);
         }
+        
+        // Trigger UI refresh after successful save
+        window.dispatchEvent(new CustomEvent('mealAlternativeSelected', {
+            detail: { mealIndex, dayKey, alternative }
+        }));
         
         // Close modal
         const modal = document.getElementById('mealAlternativesModal');
@@ -365,29 +372,6 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
         
         // Show success message
         showToast(`Храненето е заменено успешно с "${alternative.meal_name}"`, false, 3000);
-        
-        // Force UI refresh after a short delay if event handler doesn't work
-        setTimeout(() => {
-            // Check if the UI has been updated
-            const mealCard = document.querySelector(`.meal-card[data-index="${mealIndex}"]`);
-            if (mealCard) {
-                const mealNameEl = mealCard.querySelector('.meal-name');
-                if (mealNameEl) {
-                    // Get text content, removing any child elements (like check icon)
-                    const textNodes = Array.from(mealNameEl.childNodes)
-                        .filter(node => node.nodeType === Node.TEXT_NODE)
-                        .map(node => node.textContent.trim())
-                        .filter(text => text.length > 0);
-                    const currentMealName = textNodes.join(' ');
-                    
-                    if (currentMealName !== alternative.meal_name) {
-                        // UI not updated automatically, reload page
-                        console.log('UI not updated, reloading page');
-                        window.location.reload();
-                    }
-                }
-            }
-        }, 500);
         
     } catch (error) {
         console.error('Error selecting alternative:', error);
@@ -409,17 +393,25 @@ export function setupMealAlternativesListeners() {
         // (see renderAlternativesWithContext function)
     }
     
+    // Helper function to close modal (with save-in-progress check)
+    const closeModal = () => {
+        if (isSavingAlternative) {
+            showToast('Моля, изчакайте докато промяната се запази...', false, 2000);
+            return;
+        }
+        
+        const modal = document.getElementById('mealAlternativesModal');
+        if (modal) {
+            modal.classList.remove('visible');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+    };
+    
     // Close modal when clicking close button
     const closeButtons = document.querySelectorAll('[data-modal-close="mealAlternativesModal"]');
     closeButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const modal = document.getElementById('mealAlternativesModal');
-            if (modal) {
-                modal.classList.remove('visible');
-                modal.setAttribute('aria-hidden', 'true');
-                document.body.style.overflow = '';
-            }
-        });
+        btn.addEventListener('click', closeModal);
     });
     
     // Close modal when clicking outside
@@ -427,9 +419,7 @@ export function setupMealAlternativesListeners() {
     if (modal) {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                modal.classList.remove('visible');
-                modal.setAttribute('aria-hidden', 'true');
-                document.body.style.overflow = '';
+                closeModal();
             }
         });
     }
