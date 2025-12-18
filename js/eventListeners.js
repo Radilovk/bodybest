@@ -241,6 +241,71 @@ export function setupStaticEventListeners() {
     // Слушател за проверка на деня при връщане към приложението
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    // Слушател за обновяване на UI при избор на алтернативно хранене
+    window.addEventListener('mealAlternativeSelected', async (event) => {
+        const { mealIndex, dayKey, alternative } = event.detail;
+        console.log('Meal alternative selected:', { mealIndex, dayKey, alternative });
+        
+        try {
+            // Find the meal card element and update it
+            const mealCards = document.querySelectorAll('.meal-card');
+            let targetCard = null;
+            
+            // Find the card by matching data attributes
+            for (const card of mealCards) {
+                try {
+                    const cardMealData = card.dataset.mealData ? JSON.parse(card.dataset.mealData) : null;
+                    if (cardMealData && parseInt(card.dataset.index) === mealIndex) {
+                        targetCard = card;
+                        break;
+                    }
+                } catch (parseError) {
+                    console.warn('Failed to parse meal data for card:', parseError);
+                    continue;
+                }
+            }
+            
+            if (targetCard) {
+                // Update the card's meal data
+                targetCard.dataset.mealData = JSON.stringify(alternative);
+                
+                // Update the meal name
+                const mealNameEl = targetCard.querySelector('.meal-name');
+                if (mealNameEl) {
+                    const checkIcon = mealNameEl.querySelector('.check-icon');
+                    mealNameEl.textContent = alternative.meal_name || 'Хранене';
+                    if (checkIcon) {
+                        mealNameEl.appendChild(checkIcon); // Re-add check icon
+                    }
+                }
+                
+                // Update the items list
+                const mealItemsEl = targetCard.querySelector('.meal-items');
+                if (mealItemsEl && alternative.items) {
+                    const itemsHtml = alternative.items.map(item => {
+                        const name = item.name || 'Продукт';
+                        const grams = item.grams ? `<span class="caption">(${item.grams}g)</span>` : '';
+                        return `• ${name} ${grams}`;
+                    }).join('<br>');
+                    mealItemsEl.innerHTML = itemsHtml || '<em class="text-muted">Няма продукти.</em>';
+                }
+                
+                console.log('UI updated successfully for meal card');
+            } else {
+                console.warn('Target meal card not found, UI not updated');
+            }
+            
+            // Recalculate and update macros
+            if (typeof updateMacrosAndAnalytics === 'function') {
+                await updateMacrosAndAnalytics();
+                console.log('Macros and analytics updated');
+            }
+            
+        } catch (error) {
+            console.error('Error updating UI after meal alternative selection:', error);
+        }
+    });
+
     staticListenersSet = true;
 }
 
