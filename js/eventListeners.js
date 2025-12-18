@@ -37,6 +37,7 @@ import { toggleChatWidget, closeChatWidget, clearChat } from './chat.js';
 import * as chatUpload from './chat.js';
 import { computeSwipeTargetIndex } from './swipeUtils.js';
 import { handleAchievementClick } from './achievements.js';
+import { openMealAlternativesModal } from './mealAlternatives.js';
 
 // Guard to prevent attaching static listeners multiple times
 let staticListenersSet = false;
@@ -327,12 +328,10 @@ function handleDelegatedClicks(event) {
         
         try {
             const mealData = JSON.parse(mealDataStr);
-            // Import and call the function dynamically
-            import('./mealAlternatives.js').then(module => {
-                module.openMealAlternativesModal(mealData, mealIndex, dayKey);
-            });
+            openMealAlternativesModal(mealData, mealIndex, dayKey);
         } catch (error) {
             console.error('Error parsing meal data:', error);
+            showToast('Грешка при зареждане на данни за храненето', true, 3000);
         }
         return;
     }
