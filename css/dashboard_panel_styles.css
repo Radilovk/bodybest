@@ -203,19 +203,22 @@ body.vivid-theme .index-card .index-value {
   padding: var(--space-xs);
 }
 #macroMetricsPreview .macro-icon {
-  font-size: 1rem;
+  font-size: 0.85rem;
 }
 #macroMetricsPreview .macro-metric.calories .macro-icon {
   color: var(--text-color-primary);
 }
 #macroMetricsPreview .macro-label {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 400;
 }
 #macroMetricsPreview .macro-value {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 #macroMetricsPreview .macro-subtitle {
-  font-size: 0.85rem;
+  font-size: 0.7rem;
+  font-weight: 400;
 }
 #macroMetricsPreview .macro-value,
 #macroMetricsPreview .macro-subtitle {

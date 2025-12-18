@@ -443,23 +443,23 @@ function renderMacroPreviewGrid(macros) {
     preview.classList.remove('hidden');
     const percents = calculateMacroPercents(macros);
     const list = [
-        { l: 'Калории', v: macros.calories, s: 'kcal', cls: 'calories' },
-        { l: 'Белтъчини', v: macros.protein_percent ?? percents.protein_percent, s: '%' },
-        { l: 'Въглехидрати', v: macros.carbs_percent ?? percents.carbs_percent, s: '%' },
-        { l: 'Мазнини', v: macros.fat_percent ?? percents.fat_percent, s: '%' }
+        { l: 'cal.', v: macros.calories, s: 'kcal', cls: 'calories' },
+        { l: 'prot.', v: macros.protein_percent ?? percents.protein_percent, s: '%' },
+        { l: 'carb.', v: macros.carbs_percent ?? percents.carbs_percent, s: '%' },
+        { l: 'fat.', v: macros.fat_percent ?? percents.fat_percent, s: '%' }
     ];
     const iconMap = {
-        'Калории': 'bi-fire',
-        'Белтъчини': 'bi-egg-fried',
-        'Въглехидрати': 'bi-basket',
-        'Мазнини': 'bi-droplet',
-        'Фибри': 'bi-flower1'
+        'cal.': 'bi-fire',
+        'prot.': 'bi-egg-fried',
+        'carb.': 'bi-basket',
+        'fat.': 'bi-droplet',
+        'fiber.': 'bi-flower1'
     };
     const colorMap = {
-        'Белтъчини': '--macro-protein-color',
-        'Въглехидрати': '--macro-carbs-color',
-        'Мазнини': '--macro-fat-color',
-        'Фибри': '--macro-fiber-color'
+        'prot.': '--macro-protein-color',
+        'carb.': '--macro-carbs-color',
+        'fat.': '--macro-fat-color',
+        'fiber.': '--macro-fiber-color'
     };
     list.forEach(item => {
         const div = document.createElement('div');

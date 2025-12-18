@@ -97,8 +97,8 @@ export async function openMealAlternativesModal(mealData, mealIndex, dayKey, ret
         loadingDiv.style.display = 'none';
         alternativesList.style.display = 'block';
         
-        // Render alternatives
-        renderAlternatives(result.alternatives, mealData, mealIndex, dayKey);
+        // Render alternatives with event handlers attached
+        renderAlternativesWithEventHandlers(result.alternatives, mealData, mealIndex, dayKey);
         
     } catch (error) {
         console.error('Error generating meal alternatives:', error);
@@ -157,13 +157,13 @@ export async function openMealAlternativesModal(mealData, mealIndex, dayKey, ret
 }
 
 /**
- * Рендира алтернативните хранения в списъка
+ * Рендира алтернативните хранения в списъка и прикачва event handlers
  * @param {Array} alternatives - Масив с алтернативи
  * @param {Object} originalMeal - Оригиналното хранене
  * @param {number} mealIndex - Индекс на хранението
  * @param {string} dayKey - Ден от седмицата
  */
-function renderAlternatives(alternatives, originalMeal, mealIndex, dayKey) {
+function renderAlternativesWithEventHandlers(alternatives, originalMeal, mealIndex, dayKey) {
     const alternativesList = document.getElementById('mealAlternativesList');
     
     alternativesList.innerHTML = `
@@ -177,9 +177,27 @@ function renderAlternatives(alternatives, originalMeal, mealIndex, dayKey) {
             </p>
         </div>
         <div class="alternatives-grid">
-            ${alternatives.map((alt, index) => renderAlternativeCard(alt, index, originalMeal, mealIndex, dayKey)).join('')}
+            ${alternatives.map((alt, index) => renderAlternativeCard(alt, index)).join('')}
         </div>
     `;
+    
+    // Attach click handlers
+    const selectButtons = alternativesList.querySelectorAll('.select-alternative-btn');
+    selectButtons.forEach((btn, index) => {
+        btn.addEventListener('click', async () => {
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="icon spinner" style="width: 1em; height: 1em;"><use href="#icon-spinner"></use></svg> Замяна...';
+            
+            try {
+                await selectAlternative(alternatives[index], originalMeal, mealIndex, dayKey);
+            } catch (error) {
+                // Error is already handled and displayed in selectAlternative
+                // Re-enable button for retry
+                btn.disabled = false;
+                btn.innerHTML = '<svg class="icon" style="width: 1em; height: 1em; margin-right: 0.5rem;"><use href="#icon-check"></use></svg> Избери това';
+            }
+        });
+    });
 }
 
 /**
@@ -418,39 +436,3 @@ export function setupMealAlternativesListeners() {
         });
     }
 }
-
-/**
- * Updates the render function to store alternatives data and attach event handlers
- */
-function renderAlternativesWithContext(alternatives, originalMeal, mealIndex, dayKey) {
-    const alternativesList = document.getElementById('mealAlternativesList');
-    
-    alternativesList.innerHTML = `
-        <div class="alternatives-intro" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--color-info-bg); border-radius: var(--radius-md); border-left: 4px solid var(--color-info);">
-            <p style="margin: 0; font-size: var(--fs-sm); color: var(--text-color-secondary);">
-                <svg class="icon" style="width: 1em; height: 1em; vertical-align: middle; margin-right: 0.5rem;">
-                    <use href="#icon-info"></use>
-                </svg>
-                Изберете една от алтернативите, за да замените <strong>${originalMeal.meal_name || 'храненето'}</strong>.
-                Макронутриентите са подобни, но продуктите и ястията са различни.
-            </p>
-        </div>
-        <div class="alternatives-grid">
-            ${alternatives.map((alt, index) => renderAlternativeCard(alt, index)).join('')}
-        </div>
-    `;
-    
-    // Attach click handlers
-    const selectButtons = alternativesList.querySelectorAll('.select-alternative-btn');
-    selectButtons.forEach((btn, index) => {
-        btn.addEventListener('click', async () => {
-            btn.disabled = true;
-            btn.innerHTML = '<svg class="icon spinner" style="width: 1em; height: 1em;"><use href="#icon-spinner"></use></svg> Замяна...';
-            
-            await selectAlternative(alternatives[index], originalMeal, mealIndex, dayKey);
-        });
-    });
-}
-
-// Export the updated render function
-export { renderAlternativesWithContext as renderAlternatives };
