@@ -1414,6 +1414,8 @@ export default {
                 responseBody = await handleGetPendingPlanChangesRequest(request, env);
             } else if (method === 'POST' && path === '/api/rejectPlanChange') {
                 responseBody = await handleRejectPlanChangeRequest(request, env);
+            } else if (method === 'POST' && path === '/api/deletePlanChangeNotification') {
+                responseBody = await handleDeletePlanChangeNotificationRequest(request, env);
             } else if (method === 'POST' && path === '/nutrient-lookup') {
                 responseBody = await handleNutrientLookupRequest(request, env);
             } else {
@@ -4752,6 +4754,7 @@ async function handlePeekAdminNotificationsRequest(request, env) {
             // (stored as 'requestText' in KV, but exposed as 'message' for API consistency)
             const planChangeRequests = unreadPlanChangeRequests
                 .map(pcr => ({
+                    id: pcr.id || null, // Include ID for deletion
                     message: pcr.requestText || '',
                     ts: pcr.timestamp || null,
                     type: 'plan_change_request',
@@ -9424,6 +9427,7 @@ async function handleSubmitPlanChangeRequest(request, env) {
 
         // Create new request object
         const newRequest = {
+            id: crypto.randomUUID(), // Unique identifier for deletion
             requestText: String(requestText).trim(),
             timestamp: new Date().toISOString(),
             status: 'pending', // pending, reviewed, completed, rejected
@@ -9839,6 +9843,79 @@ async function handleRejectPlanChangeRequest(request, env) {
     }
 }
 // ------------- END FUNCTION: handleRejectPlanChangeRequest -------------
+
+// ------------- START FUNCTION: handleDeletePlanChangeNotificationRequest -------------
+/**
+ * Handles deletion of a specific plan change notification.
+ * Removes the notification from the user's plan_change_requests list.
+ * @param {Request} request - The request object
+ * @param {Object} env - Environment variables
+ * @returns {Promise<Object>} Response object
+ */
+async function handleDeletePlanChangeNotificationRequest(request, env) {
+    try {
+        const { userId, notificationId } = await request.json();
+        
+        if (!userId) {
+            return { 
+                success: false, 
+                message: 'Липсва userId.', 
+                statusHint: 400 
+            };
+        }
+
+        if (!notificationId) {
+            return { 
+                success: false, 
+                message: 'Липсва notificationId.', 
+                statusHint: 400 
+            };
+        }
+
+        // Get existing plan change requests
+        const requestsStr = await env.USER_METADATA_KV.get(`${userId}_plan_change_requests`);
+        const requests = safeParseJson(requestsStr, []);
+
+        if (!Array.isArray(requests) || requests.length === 0) {
+            return { 
+                success: false, 
+                message: 'Няма заявки за промяна на плана за този потребител.', 
+                statusHint: 404 
+            };
+        }
+
+        // Filter out the notification with the given ID
+        const filteredRequests = requests.filter(req => req.id !== notificationId);
+
+        // Check if anything was removed
+        if (filteredRequests.length === requests.length) {
+            return { 
+                success: false, 
+                message: 'Нотификацията не е намерена.', 
+                statusHint: 404 
+            };
+        }
+
+        // Update the KV store with filtered requests
+        await env.USER_METADATA_KV.put(`${userId}_plan_change_requests`, JSON.stringify(filteredRequests));
+
+        console.log(`PLAN_CHANGE_NOTIFICATION_DELETED: User ${userId}, Notification ${notificationId}`);
+
+        return {
+            success: true,
+            message: 'Нотификацията е изтрита успешно.'
+        };
+
+    } catch (error) {
+        console.error(`Error in handleDeletePlanChangeNotificationRequest: ${error.message}\n${error.stack}`);
+        return { 
+            success: false, 
+            message: 'Грешка при изтриване на нотификацията.', 
+            statusHint: 500 
+        };
+    }
+}
+// ------------- END FUNCTION: handleDeletePlanChangeNotificationRequest -------------
 
 // ------------- START FUNCTION: handleNutrientLookupRequest -------------
 /**
