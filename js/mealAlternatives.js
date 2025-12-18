@@ -191,7 +191,7 @@ function renderAlternatives(alternatives, originalMeal, mealIndex, dayKey) {
  * @param {string} dayKey - Ден от седмицата
  * @returns {string} HTML string
  */
-function renderAlternativeCard(alternative, altIndex, originalMeal, mealIndex, dayKey) {
+function renderAlternativeCard(alternative, altIndex) {
     const items = alternative.items || [];
     const macros = alternative.macros || {};
     
@@ -433,7 +433,7 @@ function renderAlternativesWithContext(alternatives, originalMeal, mealIndex, da
             </p>
         </div>
         <div class="alternatives-grid">
-            ${alternatives.map((alt, index) => renderAlternativeCard(alt, index, originalMeal, mealIndex, dayKey)).join('')}
+            ${alternatives.map((alt, index) => renderAlternativeCard(alt, index)).join('')}
         </div>
     `;
     

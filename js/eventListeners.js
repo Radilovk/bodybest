@@ -247,9 +247,6 @@ export function setupStaticEventListeners() {
         console.log('Meal alternative selected:', { mealIndex, dayKey, alternative });
         
         try {
-            // Get plan data from localStorage (already updated by mealAlternatives.js)
-            const planData = JSON.parse(localStorage.getItem('planData') || '{}');
-            
             // Find the meal card element and update it
             const mealCards = document.querySelectorAll('.meal-card');
             let targetCard = null;
