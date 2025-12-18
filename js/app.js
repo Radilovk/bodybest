@@ -41,6 +41,7 @@ import {
 } from './chat.js';
 import { initializeAchievements } from './achievements.js';
 import { openPlanModificationChat } from './planModChat.js';
+import { initAnalyticsPeriodSelector, getCurrentPeriod, formatPeriodText } from './analyticsPeriodSelector.js';
 export { openPlanModificationChat };
 
 // Активираме дебъг режима само при локална разработка
@@ -578,7 +579,7 @@ const dashboardCache = getDashboardCache(); // 5 минути TTL
 const profileCache = getProfileCache(); // 5 минути TTL  
 const analyticsCache = getAnalyticsCache(); // 15 минути TTL
 
-export async function loadDashboardData() {
+export async function loadDashboardData(period = null) {
     debugLog("loadDashboardData starting for user:", currentUserId);
     if (!currentUserId) {
          showPlanPendingState('error', "Грешка: Потребителска сесия не е намерена. Моля, <a href='index.html' style='color: var(--primary-color); text-decoration: underline;'>влезте отново</a>.");
@@ -615,6 +616,13 @@ export async function loadDashboardData() {
             scheduleEndOfDaySave();
             initializeAchievements(currentUserId);
             setupDynamicEventListeners();
+            
+            // Initialize analytics period selector
+            initAnalyticsPeriodSelector(() => {
+                // In test mode, period change doesn't need API call
+                showToast("Промяна на период в тестов режим", false, 2000);
+            });
+            
             await checkAdminQueries(currentUserId);
             startAdminQueriesPolling();
 
@@ -634,8 +642,12 @@ export async function loadDashboardData() {
 
         // ОПТИМИЗАЦИЯ: използваме cachedFetch за да избегнем многократни заявки
         // при tab switching или page reload в кратък период от време
-        const data = await cachedFetch(`${apiEndpoints.dashboard}?userId=${currentUserId}`, {
-            ttl: 30000 // 30 секунди кеш - балансира актуалност и производителност
+        let apiUrl = `${apiEndpoints.dashboard}?userId=${currentUserId}`;
+        if (period !== null) {
+            apiUrl += `&period=${period}`;
+        }
+        const data = await cachedFetch(apiUrl, {
+            ttl: period !== null ? 0 : 30000 // Без кеш при промяна на период, иначе 30 секунди
         });
         
         debugLog('Dashboard response received:', { 
@@ -742,6 +754,20 @@ export async function loadDashboardData() {
 
         initializeAchievements(currentUserId);
         setupDynamicEventListeners();
+        
+        // Initialize analytics period selector
+        initAnalyticsPeriodSelector(async (period) => {
+            showLoading(true, "Обновяване на аналитиката...");
+            try {
+                await loadDashboardData(period);
+            } catch (error) {
+                console.error("Error refreshing analytics:", error);
+                showToast("Грешка при обновяване на аналитиката", true);
+            } finally {
+                showLoading(false);
+            }
+        });
+        
         await checkAdminQueries(currentUserId);
         startAdminQueriesPolling();
 

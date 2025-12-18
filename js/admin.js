@@ -9,6 +9,7 @@ import { renderTemplate } from '../utils/templateRenderer.js';
 import { ensureChart } from './chartLoader.js';
 import { setupPlanRegeneration } from './planRegenerator.js';
 import { cachedFetch } from './requestCache.js';
+import { initAdminLogsPeriodSelector, initAdminAnalyticsPeriodSelector, getCurrentLogsPeriod, getCurrentAnalyticsPeriod, formatPeriodText } from './adminAnalyticsPeriodSelector.js';
 
 // AI model configuration keys
 const AI_MODEL_KEYS = [
@@ -681,6 +682,17 @@ function displayDashboardSummary(data) {
         analyticsSummaryDiv.textContent = 'Няма данни';
         return;
     }
+    
+    // Add period indicator
+    const periodDays = analytics.periodDays || 7;
+    const periodText = formatPeriodText(periodDays);
+    const periodIndicator = document.createElement('p');
+    periodIndicator.style.fontSize = '0.9rem';
+    periodIndicator.style.color = '#666';
+    periodIndicator.style.marginBottom = '0.5rem';
+    periodIndicator.textContent = `Период: ${periodText}`;
+    analyticsSummaryDiv.appendChild(periodIndicator);
+    
     analyticsSummaryDiv.appendChild(renderAnalyticsCurrent(analytics.current || {}));
     if (analytics.textualAnalysis) {
         const p = document.createElement('p');
@@ -1355,6 +1367,38 @@ async function showClient(userId) {
                 updateTagFilterOptions();
                 renderClients();
             }
+            
+            // Initialize period selectors for admin panel
+            initAdminLogsPeriodSelector(async (period) => {
+                try {
+                    const logs = dashData.dailyLogs || [];
+                    const filteredLogs = period === 'all' ? logs : logs.slice(0, period);
+                    await displayDailyLogs(filteredLogs, false);
+                } catch (error) {
+                    console.error("Error filtering logs:", error);
+                }
+            });
+            
+            initAdminAnalyticsPeriodSelector(async (period) => {
+                try {
+                    // Reload dashboard data with the specified period
+                    const url = `${apiEndpoints.dashboard}?userId=${userId}&period=${period}`;
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    if (data.success && data.analytics) {
+                        displayDashboardSummary(data);
+                    } else {
+                        console.error("Failed to load analytics:", data.message);
+                        alert('Грешка при обновяване на аналитиката: ' + (data.message || 'Неизвестна грешка'));
+                    }
+                } catch (error) {
+                    console.error("Error refreshing analytics:", error);
+                    alert('Грешка при обновяване на аналитиката: ' + error.message);
+                }
+            });
         } else {
             displayInitialAnswers(null, true);
             displayPlanMenu(null, true);

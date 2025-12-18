@@ -518,6 +518,23 @@
               class="accordion-content"
               role="region"
             >
+                <!-- Period selector for analytics -->
+                <div class="analytics-period-selector" style="margin-bottom: var(--space-md); text-align: center;">
+                  <div class="period-label" style="margin-bottom: var(--space-sm); font-size: 0.9rem; color: var(--text-color-secondary);">
+                    Период на анализ:
+                  </div>
+                  <div class="period-buttons" style="display: flex; gap: var(--space-sm); justify-content: center; flex-wrap: wrap;">
+                    <button class="period-btn" data-period="7" aria-pressed="true" style="padding: 0.5rem 1rem; border: 1px solid var(--border-color); background: var(--primary-color); color: white; border-radius: 4px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;">
+                      Седмица
+                    </button>
+                    <button class="period-btn" data-period="30" aria-pressed="false" style="padding: 0.5rem 1rem; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); border-radius: 4px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;">
+                      Месец
+                    </button>
+                    <button class="period-btn" data-period="all" aria-pressed="false" style="padding: 0.5rem 1rem; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); border-radius: 4px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;">
+                      Всички
+                    </button>
+                  </div>
+                </div>
                 <div
                   id="dashboardTextualAnalysis"
                   style="margin-bottom: var(--space-lg)"
