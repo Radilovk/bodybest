@@ -2,7 +2,6 @@
 
 import { apiEndpoints } from './config.js';
 import { showToast } from './uiHandlers.js';
-import { selectors } from './uiElements.js';
 
 /**
  * Отваря модален прозорец за показване на алтернативни хранения
