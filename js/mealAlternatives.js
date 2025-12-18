@@ -2,6 +2,7 @@
 
 import { apiEndpoints } from './config.js';
 import { showToast } from './uiHandlers.js';
+import { fullDashboardData } from './app.js';
 
 /**
  * Отваря модален прозорец за показване на алтернативни хранения
@@ -54,9 +55,8 @@ export async function openMealAlternativesModal(mealData, mealIndex, dayKey, ret
             throw new Error('Невалидни данни за храненето');
         }
         
-        // Get today's menu from localStorage
-        const planData = JSON.parse(localStorage.getItem('planData') || '{}');
-        const todayMenu = planData.week1_menu?.[dayKey] || [];
+        // Get today's menu from cached dashboard data
+        const todayMenu = fullDashboardData.planData?.week1Menu?.[dayKey] || [];
         
         // Call API to generate alternatives with timeout
         const controller = new AbortController();
@@ -284,34 +284,33 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
             throw new Error('Невалидни параметри');
         }
         
-        // Get plan data from localStorage
-        const planDataStr = localStorage.getItem('planData');
-        if (!planDataStr) {
-            throw new Error('Планът не е намерен в локалното хранилище');
+        // Get plan data from cached dashboard data
+        if (!fullDashboardData.planData || !fullDashboardData.planData.week1Menu) {
+            throw new Error('Планът не е намерен в кеша');
         }
         
-        const planData = JSON.parse(planDataStr);
+        const planData = fullDashboardData.planData;
         
-        if (!planData.week1_menu || !planData.week1_menu[dayKey]) {
+        if (!planData.week1Menu || !planData.week1Menu[dayKey]) {
             throw new Error(`Не е намерено меню за ${dayKey}`);
         }
         
-        if (!Array.isArray(planData.week1_menu[dayKey]) || mealIndex >= planData.week1_menu[dayKey].length) {
+        if (!Array.isArray(planData.week1Menu[dayKey]) || mealIndex >= planData.week1Menu[dayKey].length) {
             throw new Error('Невалиден индекс на хранене');
         }
         
         // Store the original meal for potential rollback
-        const originalMealData = { ...planData.week1_menu[dayKey][mealIndex] };
+        const originalMealData = { ...planData.week1Menu[dayKey][mealIndex] };
         
         // Replace meal in the plan
-        planData.week1_menu[dayKey][mealIndex] = {
+        planData.week1Menu[dayKey][mealIndex] = {
             ...alternative,
             // Preserve any additional properties from original
             recipeKey: alternative.recipeKey || originalMeal.recipeKey || null
         };
         
-        // Update localStorage first for instant UI feedback
-        localStorage.setItem('planData', JSON.stringify(planData));
+        // Note: planData is already updated in fullDashboardData (reference)
+        // No need to save to localStorage - the global state is updated
         
         // Trigger UI refresh immediately
         window.dispatchEvent(new CustomEvent('mealAlternativeSelected', {
@@ -344,10 +343,9 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
             console.log('Meal alternative saved successfully to backend');
             
         } catch (backendError) {
-            // If backend update fails, rollback localStorage
+            // If backend update fails, rollback in-memory data
             console.error('Backend update failed, rolling back:', backendError);
-            planData.week1_menu[dayKey][mealIndex] = originalMealData;
-            localStorage.setItem('planData', JSON.stringify(planData));
+            planData.week1Menu[dayKey][mealIndex] = originalMealData;
             
             // Trigger UI refresh with original data
             window.dispatchEvent(new CustomEvent('mealAlternativeSelected', {
