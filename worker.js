@@ -9854,7 +9854,27 @@ async function handleRejectPlanChangeRequest(request, env) {
  */
 async function handleDeletePlanChangeNotificationRequest(request, env) {
     try {
-        const { userId, notificationId } = await request.json();
+        // Parse and validate request body
+        let body;
+        try {
+            body = await request.json();
+        } catch (parseError) {
+            return { 
+                success: false, 
+                message: 'Невалиден JSON формат.', 
+                statusHint: 400 
+            };
+        }
+
+        if (!body || typeof body !== 'object') {
+            return { 
+                success: false, 
+                message: 'Невалидно тяло на заявката.', 
+                statusHint: 400 
+            };
+        }
+
+        const { userId, notificationId } = body;
         
         if (!userId) {
             return { 
