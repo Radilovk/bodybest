@@ -177,20 +177,9 @@ function renderAlternatives(alternatives, originalMeal, mealIndex, dayKey) {
             </p>
         </div>
         <div class="alternatives-grid">
-            ${alternatives.map((alt, index) => renderAlternativeCard(alt, index)).join('')}
+            ${alternatives.map((alt, index) => renderAlternativeCard(alt, index, originalMeal, mealIndex, dayKey)).join('')}
         </div>
     `;
-    
-    // Attach click handlers to selection buttons
-    const selectButtons = alternativesList.querySelectorAll('.select-alternative-btn');
-    selectButtons.forEach((btn, index) => {
-        btn.addEventListener('click', async () => {
-            btn.disabled = true;
-            btn.innerHTML = '<svg class="icon spinner" style="width: 1em; height: 1em;"><use href="#icon-spinner"></use></svg> Замяна...';
-            
-            await selectAlternative(alternatives[index], originalMeal, mealIndex, dayKey);
-        });
-    });
 }
 
 /**
@@ -397,6 +386,13 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
  * Setup event listeners за modal
  */
 export function setupMealAlternativesListeners() {
+    const alternativesList = document.getElementById('mealAlternativesList');
+    
+    if (alternativesList) {
+        // Event listener for alternative selection is added during render
+        // (see renderAlternativesWithContext function)
+    }
+    
     // Close modal when clicking close button
     const closeButtons = document.querySelectorAll('[data-modal-close="mealAlternativesModal"]');
     closeButtons.forEach(btn => {
@@ -422,3 +418,39 @@ export function setupMealAlternativesListeners() {
         });
     }
 }
+
+/**
+ * Updates the render function to store alternatives data and attach event handlers
+ */
+function renderAlternativesWithContext(alternatives, originalMeal, mealIndex, dayKey) {
+    const alternativesList = document.getElementById('mealAlternativesList');
+    
+    alternativesList.innerHTML = `
+        <div class="alternatives-intro" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--color-info-bg); border-radius: var(--radius-md); border-left: 4px solid var(--color-info);">
+            <p style="margin: 0; font-size: var(--fs-sm); color: var(--text-color-secondary);">
+                <svg class="icon" style="width: 1em; height: 1em; vertical-align: middle; margin-right: 0.5rem;">
+                    <use href="#icon-info"></use>
+                </svg>
+                Изберете една от алтернативите, за да замените <strong>${originalMeal.meal_name || 'храненето'}</strong>.
+                Макронутриентите са подобни, но продуктите и ястията са различни.
+            </p>
+        </div>
+        <div class="alternatives-grid">
+            ${alternatives.map((alt, index) => renderAlternativeCard(alt, index)).join('')}
+        </div>
+    `;
+    
+    // Attach click handlers
+    const selectButtons = alternativesList.querySelectorAll('.select-alternative-btn');
+    selectButtons.forEach((btn, index) => {
+        btn.addEventListener('click', async () => {
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="icon spinner" style="width: 1em; height: 1em;"><use href="#icon-spinner"></use></svg> Замяна...';
+            
+            await selectAlternative(alternatives[index], originalMeal, mealIndex, dayKey);
+        });
+    });
+}
+
+// Export the updated render function
+export { renderAlternativesWithContext as renderAlternatives };
