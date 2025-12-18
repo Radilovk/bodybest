@@ -1947,6 +1947,7 @@ async function handleAnalysisStatusRequest(request, env) {
 async function handleDashboardDataRequest(request, env) {
     const url = new URL(request.url);
     const userId = url.searchParams.get('userId');
+    const analyticsPeriod = url.searchParams.get('period'); // New parameter for analytics period (7, 30, or 'all')
     if (!userId) return { success: false, message: 'Липсва ID на потребител.', statusHint: 400 };
     try {
         const [
@@ -2097,10 +2098,20 @@ async function handleDashboardDataRequest(request, env) {
             macrosWarning = 'Планът няма пълни данни за макроси. За пълна функционалност е препоръчително да регенерирате плана.';
         }
 
-        const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries, currentStatus); // Добавен userId
+        // Determine analytics period days
+        let analyticsPeriodDays = 7; // Default
+        if (analyticsPeriod === '30') {
+            analyticsPeriodDays = 30;
+        } else if (analyticsPeriod === 'all') {
+            analyticsPeriodDays = logEntries.length > 0 ? logEntries.length : 365; // Use all available logs or max 1 year
+        } else if (analyticsPeriod && !isNaN(parseInt(analyticsPeriod))) {
+            analyticsPeriodDays = parseInt(analyticsPeriod);
+        }
+
+        const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries, currentStatus, analyticsPeriodDays); // Add period parameter
         const planDataForClient = { ...finalPlan };
 
-        return { ...baseResponse, planData: planDataForClient, analytics: analyticsData, macrosWarning };
+        return { ...baseResponse, planData: planDataForClient, analytics: analyticsData, macrosWarning, analyticsPeriod: analyticsPeriodDays };
 
     } catch (error) {
         console.error(`Error in handleDashboardDataRequest for ${userId}: ${error.message}\n${error.stack}`);
@@ -8733,7 +8744,7 @@ function buildDeterministicAnalyticsSummary(analytics = {}, metrics = [], userGo
     return sentences.slice(0, 3).join(' ');
 }
 
-async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries = [], currentStatus = {}) {
+async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries = [], currentStatus = {}, customPeriodDays = null) {
     // console.log(`ANALYTICS_CALC (${userId}): Starting calculation.`);
 
     const safePFloat = safeParseFloat;
@@ -8747,6 +8758,9 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
             extraMeals: entry.extraMeals || []
         }))
         : [];
+
+    // Use custom period if provided, otherwise use the default constant
+    const analyticsPeriodDays = customPeriodDays !== null ? customPeriodDays : USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS;
 
     const getAvgLog = (logKey, defaultValue, logs, lookbackDays) => {
         let sum = 0;
@@ -8831,7 +8845,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
     const heightCm = safePFloat(initialAnswers?.height);
     const userGoal = initialAnswers?.goal || 'unknown';
 
-    const logsToConsider = logEntries.slice(0, USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS);
+    const logsToConsider = logEntries.slice(0, analyticsPeriodDays);
 
     let goalProgress = 0;
     let overallHealthScore = 50; // Default
@@ -8850,7 +8864,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
     const daysOrder = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
     const todayDate = new Date();
 
-    for (let i = 0; i < USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS; i++) {
+    for (let i = 0; i < analyticsPeriodDays; i++) {
         const loopDateObj = new Date(todayDate);
         loopDateObj.setDate(todayDate.getDate() - i);
         const dateString = loopDateObj.toISOString().split('T')[0];
@@ -8905,7 +8919,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
 
     averageMealAdherence = totalPlannedMealsInPeriod > 0 ? (totalCompletedMealsInPeriod / totalPlannedMealsInPeriod) * 100 : (daysWithAnyLogEntry > 0 ? 0 : 50); // if logs exist but no plan, 0%, else 50% default
     indexCompletionRate = indexFieldsExpected > 0 ? (indexFieldsLogged / indexFieldsExpected) * 100 : 0;
-    logCompletionRate = (daysWithAnyLogEntry / USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS) * 100;
+    logCompletionRate = (daysWithAnyLogEntry / analyticsPeriodDays) * 100;
     
     // Изчисляване на streak бонус (последователност на логване)
     let currentStreak = 0;
@@ -8913,7 +8927,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
     let tempStreak = 0;
     
     // Обхождаме от днес назад във времето
-    for (let i = 0; i < USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS; i++) {
+    for (let i = 0; i < analyticsPeriodDays; i++) {
         const loopDateObj = new Date(todayDate);
         loopDateObj.setDate(todayDate.getDate() - i);
         const dateString = loopDateObj.toISOString().split('T')[0];
@@ -8959,11 +8973,11 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         qualityBonus
     );
 
-    const avgMood = getAvgLog('mood', 3, logsToConsider, USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS);
-    const avgEnergy = getAvgLog('energy', 3, logsToConsider, USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS);
-    const avgCalmness = getAvgLog('calmness', 3, logsToConsider, USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS); // Assuming calmness is 1-5, higher is better
-    const avgSleep = getAvgLog('sleep', 3, logsToConsider, USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS);
-    const avgHydration = getAvgLog('hydration', 3, logsToConsider, USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS); // Assuming hydration is 1-5
+    const avgMood = getAvgLog('mood', 3, logsToConsider, analyticsPeriodDays);
+    const avgEnergy = getAvgLog('energy', 3, logsToConsider, analyticsPeriodDays);
+    const avgCalmness = getAvgLog('calmness', 3, logsToConsider, analyticsPeriodDays); // Assuming calmness is 1-5, higher is better
+    const avgSleep = getAvgLog('sleep', 3, logsToConsider, analyticsPeriodDays);
+    const avgHydration = getAvgLog('hydration', 3, logsToConsider, analyticsPeriodDays); // Assuming hydration is 1-5
 
     const currentBmiScore = calculateBmiScore(currentWeight, heightCm);
 
@@ -9071,7 +9085,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         currentValueNumeric: currentSleepNumeric,
         currentValueText: currentSleepNumeric !== null ? `${scoreToText(currentSleepNumeric, 'sleep')} (${currentSleepNumeric.toFixed(1)}/5)` : "Няма данни",
         infoTextKey: "sleep_quality_info",
-        periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
+        periodDays: analyticsPeriodDays
     });
 
     const currentCalmnessNumeric = avgCalmness !== "N/A" ? parseFloat(avgCalmness) : null;
@@ -9082,7 +9096,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         currentValueNumeric: currentCalmnessNumeric,
         currentValueText: currentCalmnessNumeric !== null ? `${scoreToText(currentCalmnessNumeric, 'calmness')} (${currentCalmnessNumeric.toFixed(1)}/5)` : "Няма данни",
         infoTextKey: "stress_level_info",
-        periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
+        periodDays: analyticsPeriodDays
     });
     
     const currentEnergyNumeric = avgEnergy !== "N/A" ? parseFloat(avgEnergy) : null;
@@ -9093,7 +9107,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         currentValueNumeric: currentEnergyNumeric,
         currentValueText: currentEnergyNumeric !== null ? `${scoreToText(currentEnergyNumeric, 'general')} (${currentEnergyNumeric.toFixed(1)}/5)` : "Няма данни",
         infoTextKey: "energy_level_info",
-        periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
+        periodDays: analyticsPeriodDays
     });
 
     const currentHydrationNumeric = avgHydration !== "N/A" ? parseFloat(avgHydration) : null;
@@ -9147,7 +9161,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         currentValueNumeric: parseFloat(logCompletionRate.toFixed(1)),
         currentValueText: `${Math.round(logCompletionRate)}%`,
         infoTextKey: "log_consistency_info",
-        periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
+        periodDays: analyticsPeriodDays
     });
 
     const textualAnalysisSummary = buildDeterministicAnalyticsSummary(currentAnalytics, detailedAnalyticsMetrics, userGoal)
@@ -9173,7 +9187,8 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         current: currentAnalytics,
         detailed: detailedAnalyticsMetrics,
         textualAnalysis: textualAnalysisSummary,
-        streak
+        streak,
+        periodDays: analyticsPeriodDays // Add period information to analytics response
     };
     // console.log(`ANALYTICS_CALC (${userLogId}): Calculation finished. Overall score: ${currentAnalytics.overallHealthScore}`);
     return finalAnalyticsObject;

@@ -321,6 +321,12 @@
     <section id="logsTab" class="client-tab" role="tabpanel" aria-hidden="true">
     <details id="logsSection">
       <summary>Дневници</summary>
+      <div class="admin-period-selector" style="margin-bottom: 1rem; padding: 0.5rem; background: var(--card-bg, #f8f9fa); border-radius: 4px;">
+        <label style="font-size: 0.9rem; margin-right: 0.5rem;">Период:</label>
+        <button class="admin-period-btn" data-period="7" style="padding: 0.3rem 0.8rem; margin: 0 0.2rem; border: 1px solid #007bff; background: #007bff; color: white; border-radius: 3px; cursor: pointer; font-size: 0.85rem;">7 дни</button>
+        <button class="admin-period-btn" data-period="30" style="padding: 0.3rem 0.8rem; margin: 0 0.2rem; border: 1px solid #ccc; background: white; color: #333; border-radius: 3px; cursor: pointer; font-size: 0.85rem;">30 дни</button>
+        <button class="admin-period-btn" data-period="all" style="padding: 0.3rem 0.8rem; margin: 0 0.2rem; border: 1px solid #ccc; background: white; color: #333; border-radius: 3px; cursor: pointer; font-size: 0.85rem;">Всички</button>
+      </div>
       <div id="dailyLogs"></div>
       <button id="toggleWeightChart">Покажи графика</button>
       <canvas id="weightChart" width="300" height="200" class="hidden"></canvas>
@@ -338,6 +344,12 @@
         </details>
         <details id="analyticsSection" class="accordion-container">
           <summary class="accordion-header">Анализ</summary>
+          <div class="admin-analytics-period-selector" style="margin-bottom: 1rem; padding: 0.5rem; background: var(--card-bg, #f8f9fa); border-radius: 4px;">
+            <label style="font-size: 0.9rem; margin-right: 0.5rem;">Период:</label>
+            <button class="admin-analytics-period-btn" data-period="7" style="padding: 0.3rem 0.8rem; margin: 0 0.2rem; border: 1px solid #007bff; background: #007bff; color: white; border-radius: 3px; cursor: pointer; font-size: 0.85rem;">7 дни</button>
+            <button class="admin-analytics-period-btn" data-period="30" style="padding: 0.3rem 0.8rem; margin: 0 0.2rem; border: 1px solid #ccc; background: white; color: #333; border-radius: 3px; cursor: pointer; font-size: 0.85rem;">30 дни</button>
+            <button class="admin-analytics-period-btn" data-period="all" style="padding: 0.3rem 0.8rem; margin: 0 0.2rem; border: 1px solid #ccc; background: white; color: #333; border-radius: 3px; cursor: pointer; font-size: 0.85rem;">Всички</button>
+          </div>
           <div id="analyticsSummary"></div>
         </details>
         <details id="planSummarySection" class="accordion-container">
