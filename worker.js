@@ -2544,55 +2544,133 @@ ${existingMealNames.join(', ')}
             throw new Error('AI моделът не върна отговор');
         }
         
-        // Parse AI response
+        // Parse AI response with robust error handling
         let parsedResponse;
-        try {
-            // Clean potential markdown formatting
-            let cleanedResponse = aiResponse.trim();
-            if (cleanedResponse.startsWith('```json')) {
-                cleanedResponse = cleanedResponse.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
-            } else if (cleanedResponse.startsWith('```')) {
-                cleanedResponse = cleanedResponse.replace(/```\s*/g, '').replace(/```\s*$/g, '');
-            }
-            
-            parsedResponse = JSON.parse(cleanedResponse);
-        } catch (parseError) {
-            console.error('Error parsing AI response:', parseError);
-            console.error('AI response:', aiResponse);
-            
-            // Fallback: try to extract JSON from response
-            const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                try {
-                    parsedResponse = JSON.parse(jsonMatch[0]);
-                } catch (e) {
-                    throw new Error('Не може да се парсира отговорът от AI модела');
+        const parseAttempts = [
+            // Attempt 1: Direct parse after basic cleanup
+            () => {
+                let cleanedResponse = aiResponse.trim();
+                // Remove markdown code blocks
+                if (cleanedResponse.startsWith('```json')) {
+                    cleanedResponse = cleanedResponse.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+                } else if (cleanedResponse.startsWith('```')) {
+                    cleanedResponse = cleanedResponse.replace(/```\s*/g, '').replace(/```\s*$/g, '');
                 }
-            } else {
-                throw new Error('Не може да се парсира отговорът от AI модела');
+                return JSON.parse(cleanedResponse);
+            },
+            // Attempt 2: Extract first complete JSON object
+            () => {
+                const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    return JSON.parse(jsonMatch[0]);
+                }
+                throw new Error('No JSON found in response');
+            },
+            // Attempt 3: Extract JSON between specific markers
+            () => {
+                const jsonMatch = aiResponse.match(/\{[\s\S]*?"alternatives"[\s\S]*?\}/);
+                if (jsonMatch) {
+                    return JSON.parse(jsonMatch[0]);
+                }
+                throw new Error('No alternatives JSON found');
+            },
+            // Attempt 4: Try to find and extract the alternatives array directly
+            () => {
+                const altMatch = aiResponse.match(/"alternatives"\s*:\s*\[([\s\S]*?)\]/);
+                if (altMatch) {
+                    // Construct minimal valid JSON
+                    return JSON.parse(`{"alternatives": [${altMatch[1]}]}`);
+                }
+                throw new Error('No alternatives array found');
             }
+        ];
+        
+        let lastError;
+        for (let i = 0; i < parseAttempts.length; i++) {
+            try {
+                parsedResponse = parseAttempts[i]();
+                if (parsedResponse) {
+                    console.log(`Successfully parsed AI response on attempt ${i + 1}`);
+                    break;
+                }
+            } catch (e) {
+                lastError = e;
+                console.warn(`Parse attempt ${i + 1} failed:`, e.message);
+            }
+        }
+        
+        if (!parsedResponse) {
+            console.error('All parse attempts failed. AI response:', aiResponse);
+            throw new Error('Не може да се парсира отговорът от AI модела. Моля, опитайте отново.');
         }
         
         // Validate response structure
         if (!parsedResponse || !parsedResponse.alternatives || !Array.isArray(parsedResponse.alternatives)) {
+            console.error('Invalid response structure:', parsedResponse);
             throw new Error('Невалиден формат на отговора от AI модела');
         }
         
-        // Validate each alternative
+        // Validate and normalize each alternative
         const validAlternatives = parsedResponse.alternatives
-            .filter(alt => {
-                return alt && 
-                       alt.meal_name && 
-                       Array.isArray(alt.items) && 
-                       alt.items.length > 0 &&
-                       alt.macros && 
-                       typeof alt.macros.calories === 'number';
+            .map(alt => {
+                if (!alt) return null;
+                
+                // Ensure meal_name exists
+                if (!alt.meal_name || typeof alt.meal_name !== 'string') {
+                    console.warn('Alternative missing meal_name:', alt);
+                    return null;
+                }
+                
+                // Ensure items array exists and has content
+                if (!Array.isArray(alt.items) || alt.items.length === 0) {
+                    console.warn('Alternative missing or empty items:', alt);
+                    return null;
+                }
+                
+                // Normalize items - ensure each has name and grams
+                const normalizedItems = alt.items
+                    .filter(item => item && item.name)
+                    .map(item => ({
+                        name: String(item.name),
+                        grams: typeof item.grams === 'number' ? item.grams : 
+                               (item.grams ? parseFloat(item.grams) : 100)
+                    }));
+                
+                if (normalizedItems.length === 0) {
+                    console.warn('Alternative has no valid items after normalization:', alt);
+                    return null;
+                }
+                
+                // Ensure macros exist with fallback to current meal's macros
+                const macros = alt.macros || {};
+                const normalizedMacros = {
+                    calories: typeof macros.calories === 'number' ? macros.calories : 
+                             (currentMacros.calories || 0),
+                    protein_grams: typeof macros.protein_grams === 'number' ? macros.protein_grams : 
+                                  (currentMacros.protein_grams || 0),
+                    carbs_grams: typeof macros.carbs_grams === 'number' ? macros.carbs_grams : 
+                                (currentMacros.carbs_grams || 0),
+                    fat_grams: typeof macros.fat_grams === 'number' ? macros.fat_grams : 
+                              (currentMacros.fat_grams || 0)
+                };
+                
+                return {
+                    meal_name: alt.meal_name,
+                    items: normalizedItems,
+                    macros: normalizedMacros,
+                    recipeKey: alt.recipeKey || null
+                };
             })
+            .filter(alt => alt !== null)
             .slice(0, 3); // Take only first 3
         
         if (validAlternatives.length === 0) {
+            console.error('No valid alternatives after filtering:', parsedResponse.alternatives);
             throw new Error('AI моделът не генерира валидни алтернативи');
         }
+        
+        console.log(`Generated ${validAlternatives.length} valid alternative(s)`);
+
         
         return {
             success: true,
