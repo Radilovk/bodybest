@@ -1034,7 +1034,7 @@ async function handleDeleteNotification(notification, listItem) {
                 const emptyLi = document.createElement('li');
                 emptyLi.textContent = 'Няма нови известия.';
                 notificationsList.appendChild(emptyLi);
-                notificationsSection.classList.add('hidden');
+                // Keep section visible to show the empty state message
             }
         } else {
             alert(result.message || 'Грешка при изтриване на нотификацията.');
