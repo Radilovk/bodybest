@@ -209,13 +209,13 @@ body.vivid-theme .index-card .index-value {
   color: var(--text-color-primary);
 }
 #macroMetricsPreview .macro-label {
-  font-size: 0.75rem;
-}
-#macroMetricsPreview .macro-value {
   font-size: 0.9rem;
 }
+#macroMetricsPreview .macro-value {
+  font-size: 1.1rem;
+}
 #macroMetricsPreview .macro-subtitle {
-  font-size: 0.7rem;
+  font-size: 0.85rem;
 }
 #macroMetricsPreview .macro-value,
 #macroMetricsPreview .macro-subtitle {
