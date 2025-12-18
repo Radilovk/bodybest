@@ -19,6 +19,22 @@ jest.unstable_mockModule('../uiHandlers.js', () => ({
     showToast: jest.fn()
 }));
 
+// Mock app.js with fullDashboardData
+jest.unstable_mockModule('../app.js', () => ({
+    fullDashboardData: {
+        planData: {
+            week1Menu: {
+                monday: [
+                    {
+                        meal_name: 'Закуска',
+                        items: [{ name: 'Овесени ядки', grams: 50 }]
+                    }
+                ]
+            }
+        }
+    }
+}));
+
 describe('Meal Alternatives Modal', () => {
     let modal, loadingDiv, alternativesList, modalTitle;
 
@@ -44,18 +60,6 @@ describe('Meal Alternatives Modal', () => {
 
         // Mock sessionStorage
         sessionStorage.setItem('userId', 'test-user-123');
-        
-        // Mock localStorage with plan data
-        localStorage.setItem('planData', JSON.stringify({
-            week1_menu: {
-                monday: [
-                    {
-                        meal_name: 'Закуска',
-                        items: [{ name: 'Овесени ядки', grams: 50 }]
-                    }
-                ]
-            }
-        }));
 
         // Mock fetch globally
         global.fetch = jest.fn();
@@ -64,7 +68,6 @@ describe('Meal Alternatives Modal', () => {
     afterEach(() => {
         jest.clearAllMocks();
         sessionStorage.clear();
-        localStorage.clear();
     });
 
     test('should add "visible" class when modal is opened', async () => {
