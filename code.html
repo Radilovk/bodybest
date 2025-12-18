@@ -284,6 +284,12 @@
         <path d="M17 4L22 9L17 14" />
         <path d="M22 9H10C5.58172 9 2 12.5817 2 17C2 18.1046 2.23969 19.1537 2.66962 20.0981" />
       </symbol>
+      <symbol id="icon-refresh-alt" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0-4.97-4.03-9-9-9-3.93 0-7.24 2.51-8.48 6" />
+        <path d="M3 10v6h6" />
+        <path d="M3 14c0 4.97 4.03 9 9 9 3.93 0 7.24-2.51 8.48-6" />
+        <path d="M21 14V8h-6" />
+      </symbol>
     </svg>
     <!-- ======================= END SVG ICONS DEFINITION ====================== -->
 
@@ -1902,47 +1908,18 @@
     <script type="module" src="js/planModChat.js" defer></script>
     <script type="module">
       // Setup meal alternatives functionality
-      import { setupMealAlternativesListeners, openMealAlternativesModal } from './js/mealAlternatives.js';
+      import { setupMealAlternativesListeners } from './js/mealAlternatives.js';
       
-      // Setup alternatives button click handler
-      function setupAlternativesButtonHandler() {
-        // Delegate click events for alternatives buttons
-        document.addEventListener('click', (e) => {
-          const alternativesBtn = e.target.closest('.alternatives-btn');
-          if (alternativesBtn) {
-            e.stopPropagation(); // Prevent meal card completion toggle
-            
-            const mealCard = alternativesBtn.closest('.meal-card');
-            if (!mealCard) return;
-            
-            const mealIndex = parseInt(alternativesBtn.dataset.mealIndex, 10);
-            const dayKey = alternativesBtn.dataset.day;
-            const mealDataStr = mealCard.dataset.mealData;
-            
-            if (!mealDataStr) {
-              console.error('Meal data not found on card');
-              return;
-            }
-            
-            try {
-              const mealData = JSON.parse(mealDataStr);
-              openMealAlternativesModal(mealData, mealIndex, dayKey);
-            } catch (error) {
-              console.error('Error parsing meal data:', error);
-            }
-          }
-        });
-      }
+      // Note: Alternatives button click handler is now in eventListeners.js
+      // to ensure proper event handling order and prevent conflicts
       
       // Initialize when DOM is ready
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
           setupMealAlternativesListeners();
-          setupAlternativesButtonHandler();
         });
       } else {
         setupMealAlternativesListeners();
-        setupAlternativesButtonHandler();
       }
     </script>
   </body>

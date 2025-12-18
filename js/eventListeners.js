@@ -37,6 +37,7 @@ import { toggleChatWidget, closeChatWidget, clearChat } from './chat.js';
 import * as chatUpload from './chat.js';
 import { computeSwipeTargetIndex } from './swipeUtils.js';
 import { handleAchievementClick } from './achievements.js';
+import { openMealAlternativesModal } from './mealAlternatives.js';
 
 // Guard to prevent attaching static listeners multiple times
 let staticListenersSet = false;
@@ -303,6 +304,38 @@ function handleDelegatedClicks(event) {
         if (type && key) openInfoModalWithDetails(key, type, fullDashboardData);
         return;
     }
+
+    // Handle alternatives button click
+    const alternativesBtn = target.closest('.alternatives-btn');
+    if (alternativesBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const mealCard = alternativesBtn.closest('.meal-card');
+        if (!mealCard) {
+            console.error('Meal card not found for alternatives button');
+            return;
+        }
+        
+        const mealIndex = parseInt(alternativesBtn.dataset.mealIndex, 10);
+        const dayKey = alternativesBtn.dataset.day;
+        const mealDataStr = mealCard.dataset.mealData;
+        
+        if (!mealDataStr) {
+            console.error('Meal data not found on card');
+            return;
+        }
+        
+        try {
+            const mealData = JSON.parse(mealDataStr);
+            openMealAlternativesModal(mealData, mealIndex, dayKey);
+        } catch (error) {
+            console.error('Error parsing meal data:', error);
+            showToast('Грешка при зареждане на данни за храненето', true, 3000);
+        }
+        return;
+    }
+    
     const ratingSquare = target.closest('.rating-square');
     if (ratingSquare) {
         // Ensure this rating square is part of the daily log

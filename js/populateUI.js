@@ -726,7 +726,7 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
         const recipeButtonHtml = (mealItem.recipeKey && recipeData && recipeData[mealItem.recipeKey])
             ? `<button class="button-icon-only info" data-type="recipe" data-key="${mealItem.recipeKey}" title="Виж рецепта" aria-label="Информация за рецепта ${mealItem.meal_name || ''}"><svg class="icon"><use href="#icon-info"/></svg></button>` : '';
         
-        const alternativesButtonHtml = `<button class="button-icon-only alternatives-btn" data-meal-index="${index}" data-day="${currentDayKey}" title="Алтернативи" aria-label="Генерирай алтернативи за ${mealItem.meal_name || 'хранене'}"><svg class="icon"><use href="#icon-swap"/></svg></button>`;
+        const alternativesButtonHtml = `<button class="button-icon-only alternatives-btn" data-meal-index="${index}" data-day="${currentDayKey}" title="Алтернативи" aria-label="Генерирай алтернативи за ${mealItem.meal_name || 'хранене'}"><svg class="icon"><use href="#icon-refresh-alt"/></svg></button>`;
 
         li.innerHTML = `
             <div class="meal-color-bar"></div>
