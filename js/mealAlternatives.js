@@ -4,6 +4,9 @@ import { apiEndpoints } from './config.js';
 import { showToast } from './uiHandlers.js';
 import { fullDashboardData } from './app.js';
 
+// Track if a save operation is in progress to prevent modal closing
+let isSavingAlternative = false;
+
 /**
  * Отваря модален прозорец за показване на алтернативни хранения
  * @param {Object} mealData - Данни за текущото хранене
@@ -185,9 +188,15 @@ function renderAlternativesWithEventHandlers(alternatives, originalMeal, mealInd
     const selectButtons = alternativesList.querySelectorAll('.select-alternative-btn');
     selectButtons.forEach((btn, index) => {
         btn.addEventListener('click', async () => {
+            // Prevent multiple simultaneous saves
+            if (isSavingAlternative) {
+                return;
+            }
+            
             btn.disabled = true;
             btn.innerHTML = '<svg class="icon spinner" style="width: 1em; height: 1em;"><use href="#icon-spinner"></use></svg> Замяна...';
             
+            isSavingAlternative = true;
             try {
                 await selectAlternative(alternatives[index], originalMeal, mealIndex, dayKey);
             } catch {
@@ -195,6 +204,8 @@ function renderAlternativesWithEventHandlers(alternatives, originalMeal, mealInd
                 // Re-enable button for retry
                 btn.disabled = false;
                 btn.innerHTML = '<svg class="icon" style="width: 1em; height: 1em; margin-right: 0.5rem;"><use href="#icon-check"></use></svg> Избери това';
+            } finally {
+                isSavingAlternative = false;
             }
         });
     });
@@ -381,17 +392,25 @@ export function setupMealAlternativesListeners() {
         // (see renderAlternativesWithContext function)
     }
     
+    // Helper function to close modal (with save-in-progress check)
+    const closeModal = () => {
+        if (isSavingAlternative) {
+            showToast('Моля, изчакайте докато промяната се запази...', false, 2000);
+            return;
+        }
+        
+        const modal = document.getElementById('mealAlternativesModal');
+        if (modal) {
+            modal.classList.remove('visible');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+    };
+    
     // Close modal when clicking close button
     const closeButtons = document.querySelectorAll('[data-modal-close="mealAlternativesModal"]');
     closeButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const modal = document.getElementById('mealAlternativesModal');
-            if (modal) {
-                modal.classList.remove('visible');
-                modal.setAttribute('aria-hidden', 'true');
-                document.body.style.overflow = '';
-            }
-        });
+        btn.addEventListener('click', closeModal);
     });
     
     // Close modal when clicking outside
@@ -399,9 +418,7 @@ export function setupMealAlternativesListeners() {
     if (modal) {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                modal.classList.remove('visible');
-                modal.setAttribute('aria-hidden', 'true');
-                document.body.style.overflow = '';
+                closeModal();
             }
         });
     }
