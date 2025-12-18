@@ -185,16 +185,20 @@ function renderAlternativesWithEventHandlers(alternatives, originalMeal, mealInd
     const selectButtons = alternativesList.querySelectorAll('.select-alternative-btn');
     selectButtons.forEach((btn, index) => {
         btn.addEventListener('click', async () => {
+            // Store original button HTML for restoration
+            const originalButtonHTML = btn.innerHTML;
+            
             btn.disabled = true;
             btn.innerHTML = '<svg class="icon spinner" style="width: 1em; height: 1em;"><use href="#icon-spinner"></use></svg> Замяна...';
             
             try {
                 await selectAlternative(alternatives[index], originalMeal, mealIndex, dayKey);
-            } catch {
+                // Success - modal will close, no need to restore button
+            } catch (error) {
                 // Error is already handled and displayed in selectAlternative
                 // Re-enable button for retry
                 btn.disabled = false;
-                btn.innerHTML = '<svg class="icon" style="width: 1em; height: 1em; margin-right: 0.5rem;"><use href="#icon-check"></use></svg> Избери това';
+                btn.innerHTML = originalButtonHTML;
             }
         });
     });
@@ -299,25 +303,27 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
             throw new Error('Невалиден индекс на хранене');
         }
         
-        // Store the original meal for potential rollback
-        const originalMealData = { ...planData.week1Menu[dayKey][mealIndex] };
-        
-        // Replace meal in the plan
-        planData.week1Menu[dayKey][mealIndex] = {
+        // Prepare the updated meal data
+        const updatedMeal = {
             ...alternative,
             // Preserve any additional properties from original
             recipeKey: alternative.recipeKey || originalMeal.recipeKey || null
         };
         
-        // Note: planData is already updated in fullDashboardData (reference)
-        // No need to save to localStorage - the global state is updated
+        // Create a deep copy of planData with the change
+        // Use structuredClone if available (modern browsers), otherwise fall back to JSON
+        const updatedPlanData = typeof structuredClone === 'function' 
+            ? structuredClone(planData)
+            : JSON.parse(JSON.stringify(planData));
+        updatedPlanData.week1Menu[dayKey][mealIndex] = updatedMeal;
         
-        // Trigger UI refresh immediately
-        window.dispatchEvent(new CustomEvent('mealAlternativeSelected', {
-            detail: { mealIndex, dayKey, alternative }
-        }));
+        // Timeout duration for backend save (configurable)
+        const BACKEND_SAVE_TIMEOUT_MS = 15000; // 15 seconds
         
-        // Update backend (API call to save the modified plan)
+        // Update backend FIRST with timeout (API call to save the modified plan)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), BACKEND_SAVE_TIMEOUT_MS);
+        
         try {
             const response = await fetch(apiEndpoints.updatePlanData, {
                 method: 'POST',
@@ -326,9 +332,12 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
                 },
                 body: JSON.stringify({
                     userId,
-                    planData
-                })
+                    planData: updatedPlanData
+                }),
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
             
             if (!response.ok) {
                 throw new Error(`HTTP грешка: ${response.status}`);
@@ -343,17 +352,25 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
             console.log('Meal alternative saved successfully to backend');
             
         } catch (backendError) {
-            // If backend update fails, rollback in-memory data
-            console.error('Backend update failed, rolling back:', backendError);
-            planData.week1Menu[dayKey][mealIndex] = originalMealData;
+            clearTimeout(timeoutId);
             
-            // Trigger UI refresh with original data
-            window.dispatchEvent(new CustomEvent('mealAlternativeSelected', {
-                detail: { mealIndex, dayKey, alternative: originalMealData }
-            }));
+            // Backend update failed - DO NOT update UI
+            console.error('Backend update failed:', backendError);
+            
+            if (backendError.name === 'AbortError') {
+                throw new Error('Заявката отне твърде дълго време. Моля, проверете интернет връзката си и опитайте отново.');
+            }
             
             throw new Error(`Запазването не успя: ${backendError.message}`);
         }
+        
+        // Only update in-memory data AFTER successful backend save
+        planData.week1Menu[dayKey][mealIndex] = updatedMeal;
+        
+        // Trigger UI refresh only after successful save
+        window.dispatchEvent(new CustomEvent('mealAlternativeSelected', {
+            detail: { mealIndex, dayKey, alternative: updatedMeal }
+        }));
         
         // Close modal
         const modal = document.getElementById('mealAlternativesModal');
@@ -365,29 +382,6 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
         
         // Show success message
         showToast(`Храненето е заменено успешно с "${alternative.meal_name}"`, false, 3000);
-        
-        // Force UI refresh after a short delay if event handler doesn't work
-        setTimeout(() => {
-            // Check if the UI has been updated
-            const mealCard = document.querySelector(`.meal-card[data-index="${mealIndex}"]`);
-            if (mealCard) {
-                const mealNameEl = mealCard.querySelector('.meal-name');
-                if (mealNameEl) {
-                    // Get text content, removing any child elements (like check icon)
-                    const textNodes = Array.from(mealNameEl.childNodes)
-                        .filter(node => node.nodeType === Node.TEXT_NODE)
-                        .map(node => node.textContent.trim())
-                        .filter(text => text.length > 0);
-                    const currentMealName = textNodes.join(' ');
-                    
-                    if (currentMealName !== alternative.meal_name) {
-                        // UI not updated automatically, reload page
-                        console.log('UI not updated, reloading page');
-                        window.location.reload();
-                    }
-                }
-            }
-        }, 500);
         
     } catch (error) {
         console.error('Error selecting alternative:', error);
