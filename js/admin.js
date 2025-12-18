@@ -1324,12 +1324,20 @@ async function showClient(userId) {
                 try {
                     // Reload dashboard data with the specified period
                     const url = `${apiEndpoints.dashboard}?userId=${userId}&period=${period}`;
-                    const data = await fetch(url).then(r => r.json());
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
                     if (data.success && data.analytics) {
                         displayDashboardSummary(data);
+                    } else {
+                        console.error("Failed to load analytics:", data.message);
+                        alert('Грешка при обновяване на аналитиката: ' + (data.message || 'Неизвестна грешка'));
                     }
                 } catch (error) {
                     console.error("Error refreshing analytics:", error);
+                    alert('Грешка при обновяване на аналитиката: ' + error.message);
                 }
             });
         } else {

@@ -13,7 +13,13 @@ export function initAdminLogsPeriodSelector(onPeriodChange) {
     periodButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const period = btn.getAttribute('data-period');
-            currentLogsPeriod = period === 'all' ? 'all' : parseInt(period);
+            // Validate and set current period
+            if (period === 'all') {
+                currentLogsPeriod = 'all';
+            } else {
+                const parsedPeriod = parseInt(period);
+                currentLogsPeriod = isNaN(parsedPeriod) ? 7 : parsedPeriod; // Fallback to 7 if invalid
+            }
             setActivePeriod(period, periodButtons);
             
             if (onPeriodChange) {
@@ -33,7 +39,13 @@ export function initAdminAnalyticsPeriodSelector(onPeriodChange) {
     periodButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const period = btn.getAttribute('data-period');
-            currentAnalyticsPeriod = period === 'all' ? 'all' : parseInt(period);
+            // Validate and set current period
+            if (period === 'all') {
+                currentAnalyticsPeriod = 'all';
+            } else {
+                const parsedPeriod = parseInt(period);
+                currentAnalyticsPeriod = isNaN(parsedPeriod) ? 7 : parsedPeriod; // Fallback to 7 if invalid
+            }
             setActivePeriod(period, periodButtons);
             
             if (onPeriodChange) {

@@ -1056,6 +1056,7 @@ const PRINCIPLE_UPDATE_INTERVAL_DAYS = 7; // За ръчна актуализа�
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS = 10;
 const USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS = 7;
 const USER_ACTIVITY_LOG_LIST_LIMIT = 100;
+const MAX_ANALYTICS_PERIOD_DAYS = 365; // Maximum period for analytics (1 year)
 const RECENT_CHAT_MESSAGES_FOR_PRINCIPLES = 10;
 
 // Plan modification constants
@@ -2116,9 +2117,9 @@ async function handleDashboardDataRequest(request, env) {
         if (analyticsPeriod === '30') {
             analyticsPeriodDays = 30;
         } else if (analyticsPeriod === 'all') {
-            analyticsPeriodDays = logEntries.length > 0 ? logEntries.length : 365; // Use all available logs or max 1 year
+            analyticsPeriodDays = logEntries.length > 0 ? Math.min(logEntries.length, MAX_ANALYTICS_PERIOD_DAYS) : MAX_ANALYTICS_PERIOD_DAYS;
         } else if (analyticsPeriod && !isNaN(parseInt(analyticsPeriod))) {
-            analyticsPeriodDays = parseInt(analyticsPeriod);
+            analyticsPeriodDays = Math.min(parseInt(analyticsPeriod), MAX_ANALYTICS_PERIOD_DAYS);
         }
 
         const analyticsData = await calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logEntries, currentStatus, analyticsPeriodDays); // Add period parameter

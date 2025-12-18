@@ -29,7 +29,13 @@ export function initAnalyticsPeriodSelector(onPeriodChange) {
  * Задава активния период и актуализира визуално бутоните
  */
 function setActivePeriod(period, buttons) {
-    currentPeriod = period === 'all' ? 'all' : parseInt(period);
+    // Validate and set current period
+    if (period === 'all') {
+        currentPeriod = 'all';
+    } else {
+        const parsedPeriod = parseInt(period);
+        currentPeriod = isNaN(parsedPeriod) ? 7 : parsedPeriod; // Fallback to 7 days if invalid
+    }
     
     buttons.forEach(btn => {
         const btnPeriod = btn.getAttribute('data-period');
