@@ -30,7 +30,7 @@ export async function openMealAlternativesModal(mealData, mealIndex, dayKey, ret
     alternativesList.style.display = 'none';
     alternativesList.innerHTML = '';
     
-    modal.classList.add('show');
+    modal.classList.add('visible');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
     
@@ -148,7 +148,7 @@ export async function openMealAlternativesModal(mealData, mealIndex, dayKey, ret
         const closeBtn = alternativesList.querySelector('.close-alternatives-modal-btn');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
-                modal.classList.remove('show');
+                modal.classList.remove('visible');
                 modal.setAttribute('aria-hidden', 'true');
                 document.body.style.overflow = '';
             });
@@ -342,7 +342,7 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
         // Close modal
         const modal = document.getElementById('mealAlternativesModal');
         if (modal) {
-            modal.classList.remove('show');
+            modal.classList.remove('visible');
             modal.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = '';
         }
@@ -399,7 +399,7 @@ export function setupMealAlternativesListeners() {
         btn.addEventListener('click', () => {
             const modal = document.getElementById('mealAlternativesModal');
             if (modal) {
-                modal.classList.remove('show');
+                modal.classList.remove('visible');
                 modal.setAttribute('aria-hidden', 'true');
                 document.body.style.overflow = '';
             }
@@ -411,7 +411,7 @@ export function setupMealAlternativesListeners() {
     if (modal) {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                modal.classList.remove('show');
+                modal.classList.remove('visible');
                 modal.setAttribute('aria-hidden', 'true');
                 document.body.style.overflow = '';
             }
