@@ -1,0 +1,241 @@
+/* meal_alternatives_styles.css - Стилове за модален прозорец с алтернативни хранения */
+
+/* Modal specific styles */
+.meal-alternatives-modal-content {
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Alternatives button on meal cards */
+.alternatives-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin-left: 0.5rem;
+}
+
+.alternatives-btn:hover {
+    background: var(--primary-color-hover, var(--primary-color));
+    transform: scale(1.05);
+}
+
+.alternatives-btn:active {
+    transform: scale(0.95);
+}
+
+.alternatives-btn .icon {
+    width: 1.2em;
+    height: 1.2em;
+}
+
+/* Loading state */
+.alternatives-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+}
+
+.alternatives-loading .spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Alternatives grid */
+.alternatives-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+/* Alternative card */
+.alternative-card {
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.alternative-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Alternative header */
+.alternative-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.alternative-name {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-color-primary);
+    flex: 1;
+}
+
+.alternative-badge {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Alternative items */
+.alternative-items {
+    margin-bottom: 1rem;
+}
+
+.alternative-item {
+    padding: 0.375rem 0;
+    font-size: 0.9375rem;
+    color: var(--text-color-secondary);
+    line-height: 1.6;
+}
+
+.alternative-item .caption {
+    color: var(--text-color-muted);
+    font-size: 0.875rem;
+    margin-left: 0.25rem;
+}
+
+/* Alternative macros */
+.alternative-macros {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--surface-background);
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+}
+
+.macro-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.macro-label {
+    font-size: 0.75rem;
+    color: var(--text-color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.macro-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color-primary);
+}
+
+/* Select button */
+.select-alternative-btn {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.select-alternative-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.select-alternative-btn .spinner {
+    animation: spin 1s linear infinite;
+}
+
+/* Mobile specific styles */
+@media (max-width: 640px) {
+    .meal-alternatives-modal-content {
+        max-width: 95vw;
+        padding: 1.25rem;
+    }
+    
+    .alternatives-grid {
+        gap: 1rem;
+    }
+    
+    .alternative-card {
+        padding: 1.25rem;
+    }
+    
+    .alternative-name {
+        font-size: 1rem;
+    }
+    
+    .alternative-macros {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+}
+
+/* Dark theme adjustments */
+body.dark-theme .alternative-card {
+    background: var(--card-bg-dark, #1a1a2e);
+    border-color: var(--border-color-dark, #2d2d44);
+}
+
+body.dark-theme .alternative-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Vivid theme adjustments */
+body.vivid-theme .alternatives-btn {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+}
+
+body.vivid-theme .alternative-badge {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+}
+
+/* Accessibility improvements */
+.alternatives-btn:focus,
+.select-alternative-btn:focus {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* High contrast mode */
+body.high-contrast .alternative-card {
+    border-width: 3px;
+}
+
+body.high-contrast .alternative-card:hover {
+    border-width: 4px;
+}

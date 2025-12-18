@@ -71,7 +71,8 @@ export const apiEndpoints = {
     setMaintenanceMode: `${workerBaseUrl}/api/setMaintenanceMode`,
     savePsychTests: `${workerBaseUrl}/api/savePsychTests`,
     getPsychTests: `${workerBaseUrl}/api/getPsychTests`,
-     nutrientLookup: `${workerBaseUrl}/nutrient-lookup`
+     nutrientLookup: `${workerBaseUrl}/nutrient-lookup`,
+    generateMealAlternatives: `${workerBaseUrl}/api/generateMealAlternatives`
  };
 
 // Cloudflare Account ID за използване в чат асистента

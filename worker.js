@@ -1308,6 +1308,8 @@ export default {
                 responseBody = await handleUpdateStatusRequest(request, env);
             } else if (method === 'POST' && path === '/api/chat') {
                 responseBody = await handleChatRequest(request, env);
+            } else if (method === 'POST' && path === '/api/generateMealAlternatives') {
+                responseBody = await handleGenerateMealAlternativesRequest(request, env);
             } else if (method === 'POST' && path === '/api/log-extra-meal') { // Имплементиран
                  responseBody = await handleLogExtraMealRequest(request, env);
             } else if (method === 'POST' && path === '/api/uploadTestResult') {
@@ -2434,6 +2436,180 @@ async function handleUpdateStatusRequest(request, env) {
      }
 }
 // ------------- END FUNCTION: handleUpdateStatusRequest -------------
+
+// ------------- START FUNCTION: handleGenerateMealAlternativesRequest -------------
+/**
+ * Generates 3 meal alternatives for a specific meal using AI
+ * @param {Request} request - The HTTP request
+ * @param {Object} env - Environment bindings
+ * @returns {Promise<Object>} Response with alternatives
+ */
+async function handleGenerateMealAlternativesRequest(request, env) {
+    try {
+        const { userId, mealIndex, dayKey, currentMeal, todayMenu } = await request.json();
+        
+        if (!userId || mealIndex === undefined || !dayKey || !currentMeal) {
+            return { 
+                success: false, 
+                message: 'Липсват задължителни параметри (userId, mealIndex, dayKey, currentMeal)', 
+                statusHint: 400 
+            };
+        }
+        
+        // Get user's final plan to understand dietary requirements
+        const userPlanStr = await env.USER_METADATA_KV.get(`${userId}_final_plan`);
+        if (!userPlanStr) {
+            return { 
+                success: false, 
+                message: 'Планът не е намерен', 
+                statusHint: 404 
+            };
+        }
+        
+        const userPlan = JSON.parse(userPlanStr);
+        const profileSummary = userPlan.profileSummary || '';
+        const allowedForbidden = userPlan.allowedForbiddenFoods || {};
+        const caloriesMacros = userPlan.caloriesMacros || {};
+        
+        // Get the current meal's macros
+        const currentMacros = currentMeal.macros || {
+            calories: 0,
+            protein_grams: 0,
+            carbs_grams: 0,
+            fat_grams: 0
+        };
+        
+        // Extract existing meal names from today's menu to avoid duplicates
+        const existingMealNames = (todayMenu || []).map(m => (m.meal_name || '').toLowerCase().trim());
+        
+        // Get AI model configuration from KV
+        const chatModel = await env.RESOURCES_KV.get('model_chat') || '@cf/meta/llama-3-8b-instruct';
+        
+        // Build the prompt for generating alternatives
+        const prompt = `Ти си хранителен експерт. Генерирай 3 алтернативни хранения за замяна на следното:
+
+ТЕКУЩО ХРАНЕНЕ: ${currentMeal.meal_name}
+ПРОДУКТИ: ${(currentMeal.items || []).map(i => `${i.name} (${i.grams}g)`).join(', ')}
+
+МАКРОНУТРИЕНТИ (целеви):
+- Калории: ${currentMacros.calories} kcal (±10%)
+- Протеини: ${currentMacros.protein_grams}g (±10%)
+- Въглехидрати: ${currentMacros.carbs_grams}g (±15%)
+- Мазнини: ${currentMacros.fat_grams}g (±15%)
+
+ПРОФИЛ НА ПОТРЕБИТЕЛЯ:
+${profileSummary}
+
+РАЗРЕШЕНИ ХРАНИ: ${JSON.stringify(allowedForbidden.main_allowed_foods || [])}
+ЗАБРАНЕНИ ХРАНИ: ${JSON.stringify(allowedForbidden.main_forbidden_foods || [])}
+
+ИЗБЯГВАЙ ТЕЗИ ХРАНЕНИЯ (вече са в менюто днес):
+${existingMealNames.join(', ')}
+
+ИЗИСКВАНИЯ:
+1. Генерирай 3 РАЗЛИЧНИ алтернативи с подобни макронутриенти
+2. Използвай РАЗЛИЧНИ продукти от оригиналното хранене
+3. Избягвай храненията, които вече са в менюто днес
+4. Всяка алтернатива трябва да бъде реално приложима и вкусна
+5. Спазвай профила и диетичните ограничения
+
+ФОРМАТ НА ОТГОВОРА (СТРОГО JSON):
+{
+  "alternatives": [
+    {
+      "meal_name": "Име на хранението",
+      "items": [
+        {"name": "Продукт 1", "grams": 150},
+        {"name": "Продукт 2", "grams": 100}
+      ],
+      "macros": {
+        "calories": 500,
+        "protein_grams": 30,
+        "carbs_grams": 60,
+        "fat_grams": 15
+      }
+    }
+  ]
+}
+
+Върни САМО JSON, без допълнителен текст.`;
+
+        // Call AI model
+        const aiResponse = await callModel(chatModel, prompt, env, {
+            temperature: 0.8,
+            maxTokens: 2000
+        });
+        
+        if (!aiResponse) {
+            throw new Error('AI моделът не върна отговор');
+        }
+        
+        // Parse AI response
+        let parsedResponse;
+        try {
+            // Clean potential markdown formatting
+            let cleanedResponse = aiResponse.trim();
+            if (cleanedResponse.startsWith('```json')) {
+                cleanedResponse = cleanedResponse.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+            } else if (cleanedResponse.startsWith('```')) {
+                cleanedResponse = cleanedResponse.replace(/```\s*/g, '').replace(/```\s*$/g, '');
+            }
+            
+            parsedResponse = JSON.parse(cleanedResponse);
+        } catch (parseError) {
+            console.error('Error parsing AI response:', parseError);
+            console.error('AI response:', aiResponse);
+            
+            // Fallback: try to extract JSON from response
+            const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                try {
+                    parsedResponse = JSON.parse(jsonMatch[0]);
+                } catch (e) {
+                    throw new Error('Не може да се парсира отговорът от AI модела');
+                }
+            } else {
+                throw new Error('Не може да се парсира отговорът от AI модела');
+            }
+        }
+        
+        // Validate response structure
+        if (!parsedResponse || !parsedResponse.alternatives || !Array.isArray(parsedResponse.alternatives)) {
+            throw new Error('Невалиден формат на отговора от AI модела');
+        }
+        
+        // Validate each alternative
+        const validAlternatives = parsedResponse.alternatives
+            .filter(alt => {
+                return alt && 
+                       alt.meal_name && 
+                       Array.isArray(alt.items) && 
+                       alt.items.length > 0 &&
+                       alt.macros && 
+                       typeof alt.macros.calories === 'number';
+            })
+            .slice(0, 3); // Take only first 3
+        
+        if (validAlternatives.length === 0) {
+            throw new Error('AI моделът не генерира валидни алтернативи');
+        }
+        
+        return {
+            success: true,
+            alternatives: validAlternatives,
+            originalMeal: currentMeal.meal_name
+        };
+        
+    } catch (error) {
+        console.error('Error in handleGenerateMealAlternativesRequest:', error);
+        return {
+            success: false,
+            message: error.message || 'Грешка при генериране на алтернативи',
+            statusHint: 500
+        };
+    }
+}
+// ------------- END FUNCTION: handleGenerateMealAlternativesRequest -------------
 
 // ------------- START FUNCTION: handleChatRequest -------------
 async function handleChatRequest(request, env) {
