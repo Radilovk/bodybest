@@ -97,8 +97,8 @@ export async function openMealAlternativesModal(mealData, mealIndex, dayKey, ret
         loadingDiv.style.display = 'none';
         alternativesList.style.display = 'block';
         
-        // Render alternatives with event listeners attached
-        renderAlternativesWithContext(result.alternatives, mealData, mealIndex, dayKey);
+        // Render alternatives
+        renderAlternatives(result.alternatives, mealData, mealIndex, dayKey);
         
     } catch (error) {
         console.error('Error generating meal alternatives:', error);
@@ -154,6 +154,32 @@ export async function openMealAlternativesModal(mealData, mealIndex, dayKey, ret
             });
         }
     }
+}
+
+/**
+ * Рендира алтернативните хранения в списъка
+ * @param {Array} alternatives - Масив с алтернативи
+ * @param {Object} originalMeal - Оригиналното хранене
+ * @param {number} mealIndex - Индекс на хранението
+ * @param {string} dayKey - Ден от седмицата
+ */
+function renderAlternatives(alternatives, originalMeal, mealIndex, dayKey) {
+    const alternativesList = document.getElementById('mealAlternativesList');
+    
+    alternativesList.innerHTML = `
+        <div class="alternatives-intro" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--color-info-bg); border-radius: var(--radius-md); border-left: 4px solid var(--color-info);">
+            <p style="margin: 0; font-size: var(--fs-sm); color: var(--text-color-secondary);">
+                <svg class="icon" style="width: 1em; height: 1em; vertical-align: middle; margin-right: 0.5rem;">
+                    <use href="#icon-info"></use>
+                </svg>
+                Изберете една от алтернативите, за да замените <strong>${originalMeal.meal_name || 'храненето'}</strong>.
+                Макронутриентите са подобни, но продуктите и ястията са различни.
+            </p>
+        </div>
+        <div class="alternatives-grid">
+            ${alternatives.map((alt, index) => renderAlternativeCard(alt, index, originalMeal, mealIndex, dayKey)).join('')}
+        </div>
+    `;
 }
 
 /**
@@ -394,11 +420,7 @@ export function setupMealAlternativesListeners() {
 }
 
 /**
- * Рендира алтернативните хранения в списъка с прикачени event listeners
- * @param {Array} alternatives - Масив с алтернативи
- * @param {Object} originalMeal - Оригиналното хранене
- * @param {number} mealIndex - Индекс на хранението
- * @param {string} dayKey - Ден от седмицата
+ * Updates the render function to store alternatives data and attach event handlers
  */
 function renderAlternativesWithContext(alternatives, originalMeal, mealIndex, dayKey) {
     const alternativesList = document.getElementById('mealAlternativesList');
@@ -429,3 +451,6 @@ function renderAlternativesWithContext(alternatives, originalMeal, mealIndex, da
         });
     });
 }
+
+// Export the updated render function
+export { renderAlternativesWithContext as renderAlternatives };
