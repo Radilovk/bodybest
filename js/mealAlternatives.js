@@ -303,9 +303,6 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
             throw new Error('Невалиден индекс на хранене');
         }
         
-        // Store the original meal for potential rollback
-        const originalMealData = { ...planData.week1Menu[dayKey][mealIndex] };
-        
         // Prepare the updated meal data
         const updatedMeal = {
             ...alternative,
@@ -313,13 +310,19 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
             recipeKey: alternative.recipeKey || originalMeal.recipeKey || null
         };
         
-        // Create a temporary copy of planData with the change
-        const updatedPlanData = JSON.parse(JSON.stringify(planData));
+        // Create a deep copy of planData with the change
+        // Use structuredClone if available (modern browsers), otherwise fall back to JSON
+        const updatedPlanData = typeof structuredClone === 'function' 
+            ? structuredClone(planData)
+            : JSON.parse(JSON.stringify(planData));
         updatedPlanData.week1Menu[dayKey][mealIndex] = updatedMeal;
+        
+        // Timeout duration for backend save (configurable)
+        const BACKEND_SAVE_TIMEOUT_MS = 15000; // 15 seconds
         
         // Update backend FIRST with timeout (API call to save the modified plan)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), BACKEND_SAVE_TIMEOUT_MS);
         
         try {
             const response = await fetch(apiEndpoints.updatePlanData, {
