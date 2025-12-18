@@ -682,6 +682,17 @@ function displayDashboardSummary(data) {
         analyticsSummaryDiv.textContent = 'Няма данни';
         return;
     }
+    
+    // Add period indicator
+    const periodDays = analytics.periodDays || 7;
+    const periodText = formatPeriodText(periodDays);
+    const periodIndicator = document.createElement('p');
+    periodIndicator.style.fontSize = '0.9rem';
+    periodIndicator.style.color = '#666';
+    periodIndicator.style.marginBottom = '0.5rem';
+    periodIndicator.textContent = `Период: ${periodText}`;
+    analyticsSummaryDiv.appendChild(periodIndicator);
+    
     analyticsSummaryDiv.appendChild(renderAnalyticsCurrent(analytics.current || {}));
     if (analytics.textualAnalysis) {
         const p = document.createElement('p');

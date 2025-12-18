@@ -1944,6 +1944,19 @@ async function handleAnalysisStatusRequest(request, env) {
 // ------------- END FUNCTION: handleAnalysisStatusRequest -------------
 
 // ------------- START FUNCTION: handleDashboardDataRequest -------------
+/**
+ * Handles dashboard data requests with optional analytics period filtering
+ * 
+ * Daily logs storage: Optimized approach using individual KV entries per date
+ * - Key pattern: `{userId}_log_{YYYY-MM-DD}`
+ * - Benefits: Fast individual date access, efficient updates, no data size limits per day
+ * - Returns up to 100 most recent logs (USER_ACTIVITY_LOG_LIST_LIMIT)
+ * 
+ * Analytics period: Configurable via 'period' query parameter
+ * - Default: 7 days (weekly view)
+ * - Options: 7 (week), 30 (month), 'all' (entire history)
+ * - Period parameter only affects analytics calculation, not log retrieval
+ */
 async function handleDashboardDataRequest(request, env) {
     const url = new URL(request.url);
     const userId = url.searchParams.get('userId');
