@@ -730,7 +730,7 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
         const recipeButtonHtml = (effectiveMeal.recipeKey && recipeData && recipeData[effectiveMeal.recipeKey])
             ? `<button class="button-icon-only info" data-type="recipe" data-key="${effectiveMeal.recipeKey}" title="Виж рецепта" aria-label="Информация за рецепта ${effectiveMeal.meal_name || ''}"><svg class="icon"><use href="#icon-info"/></svg></button>` : '';
         
-        const alternativesButtonHtml = `<button class="button-icon-only alternatives-btn" data-meal-index="${index}" data-day="${currentDayKey}" title="Алтернативи" aria-label="Генерирай алтернативи за ${effectiveMeal.meal_name || 'хранене'}"><svg class="icon"><use href="#icon-swap"/></svg></button>`;
+        const alternativesButtonHtml = `<button class="button-icon-only alternatives-btn" data-meal-index="${index}" data-day="${currentDayKey}" title="Алтернативи" aria-label="Генерирай алтернативи за ${effectiveMeal.meal_name || 'хранене'}"><svg class="icon"><use href="#icon-spinner"/></svg></button>`;
 
         li.innerHTML = `
             <div class="meal-color-bar"></div>
@@ -738,11 +738,13 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
                 <h2 class="meal-name">
                     <span class="meal-name-text">${effectiveMeal.meal_name || 'Хранене'}</span>
                     <span class="check-icon" aria-hidden="true"><svg class="icon"><use href="#icon-check"/></svg></span>
-                    ${alternativesButtonHtml}
                 </h2>
                 <div class="meal-items">${itemsHtml}</div>
             </div>
-            ${recipeButtonHtml ? `<div class="actions">${recipeButtonHtml}</div>` : ''}`;
+            <div class="actions">
+                ${alternativesButtonHtml}
+                ${recipeButtonHtml}
+            </div>`;
 
         // Store effective meal data (with cache applied) on the element for later use
         li.dataset.mealData = JSON.stringify(effectiveMeal);

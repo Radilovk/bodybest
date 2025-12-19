@@ -546,16 +546,7 @@ body.vivid-theme .meal-list li .meal-name {
     animation: checkmark-pop 0.3s ease-out;
 }
 
-/* Alternatives button inline styling - positioned right */
-.meal-list li .meal-name .alternatives-btn {
-    margin-left: auto; /* Push to the right */
-    flex-shrink: 0; /* Prevent shrinking */
-}
-
-.meal-list li .meal-name .alternatives-btn svg.icon {
-    width: 1.25em; /* Slightly larger for better visibility */
-    height: 1.25em;
-}
+/* Alternatives button now in actions section - consistent positioning */
 
 @keyframes checkmark-pop {
     from { transform: scale(0); opacity: 0; }
@@ -720,14 +711,20 @@ body.vivid-theme .tracker .metric-rating .rating-value {
 #openExtraMealModalBtn {
     width: 100%;
     margin-bottom: var(--space-xs);
-    justify-content: flex-start;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     padding: var(--space-sm) var(--space-md);
     font-size: var(--fs-base); /* 1rem - Увеличен от 0.85rem */
     min-height: var(--tap-target-min); /* 44px iOS standard */
 }
 #add-note-btn {
     width: 100%;
-    justify-content: flex-start;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     padding: var(--space-sm) var(--space-md);
     margin-bottom: var(--space-xs);
     font-size: var(--fs-base); /* 1rem - Увеличен от 0.85rem */
@@ -736,9 +733,8 @@ body.vivid-theme .tracker .metric-rating .rating-value {
 #openExtraMealModalBtn, #add-note-btn, #planModificationBtn {
     color: var(--card-bg);
 }
-#add-note-btn .menu-icon {
-    margin-right: var(--space-xs);
-    font-size: 1.2em; /* Увеличен от 1em */
+#add-note-btn .bi {
+    font-size: 1.2em; /* Icon size */
 }
 .daily-note-section {
     margin-top: var(--space-md);
@@ -747,6 +743,10 @@ body.vivid-theme .tracker .metric-rating .rating-value {
 #saveLogBtn {
     width: 100%;
     margin-top: var(--space-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     padding: var(--space-sm) var(--space-md);
     font-size: var(--fs-base); /* 1rem - Увеличен от 0.9rem */
     min-height: var(--tap-target-comfortable); /* 48px Android recommendation */
