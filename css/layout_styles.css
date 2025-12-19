@@ -259,11 +259,11 @@ nav.tabs.styled-tabs .tab-btn .tab-icon {
 }
 
 nav.tabs.styled-tabs .tab-btn .tab-label {
-  font-size: 0.7rem; 
+  font-size: 0.65rem; 
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.5px;
   white-space: nowrap;
-  font-weight: 600;
+  font-weight: 500;
   transition: letter-spacing 0.3s ease;
 }
 
@@ -278,7 +278,7 @@ nav.tabs.styled-tabs .tab-btn:hover .tab-icon {
 }
 
 nav.tabs.styled-tabs .tab-btn:hover .tab-label {
-  letter-spacing: 1px;
+  letter-spacing: 0.7px;
 }
 
 nav.tabs.styled-tabs .tab-btn:active {
@@ -287,7 +287,7 @@ nav.tabs.styled-tabs .tab-btn:active {
 
 nav.tabs.styled-tabs .tab-btn[aria-selected="true"] {
   color: var(--text-color-on-primary);
-  font-weight: 700;
+  font-weight: 600;
   background-color: color-mix(in srgb, var(--text-color-on-primary) 8%, var(--primary-color));
 }
 
@@ -301,7 +301,7 @@ nav.tabs.styled-tabs .tab-btn[aria-selected="true"] .tab-icon {
 }
 
 nav.tabs.styled-tabs .tab-btn[aria-selected="true"] .tab-label {
-  letter-spacing: 1px;
+  letter-spacing: 0.7px;
 }
 
 main { 

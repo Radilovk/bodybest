@@ -14,7 +14,7 @@
     cursor: pointer;
 }
 .index-card h4 {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   margin-bottom: var(--space-sm);
   text-align: center;
   color: var(--text-color-secondary); display: flex; align-items: center;
@@ -65,8 +65,8 @@
   to { width: var(--target-width); }
 }
 .index-card .index-value {
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   color: var(--primary-color);
   text-align: center;
   margin-top: var(--space-sm);
@@ -132,7 +132,7 @@ body.vivid-theme .index-card .index-value {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--space-sm);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
 }
 .analytics-card .mini-progress-bar {
   background: var(--surface-background);
@@ -285,7 +285,7 @@ body.vivid-theme #dailyLogCard {
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: var(--space-lg); /* Увеличено разстояние */
 }
-.detailed-metric-item .metric-label { font-weight: 700; color: var(--primary-color); font-size: 1.15em; } /* Леко увеличен шрифт */
+.detailed-metric-item .metric-label { font-weight: 600; color: var(--primary-color); font-size: 1em; }
 body.vivid-theme .detailed-metric-item .metric-label {
   color: color-mix(in srgb, var(--primary-color) 75%, var(--text-color-primary));
 }
@@ -326,12 +326,12 @@ body.vivid-theme .detailed-metric-item .metric-label {
 }
 .detailed-metric-item .value-initial, .detailed-metric-item .value-expected, .detailed-metric-item .value-current {
     font-weight: 500; color: var(--text-color-secondary); 
-    font-size: 1.05em; /* Леко увеличен шрифт */
+    font-size: 0.95em;
 }
 .detailed-metric-item .value-current { 
     color: var(--secondary-color); 
-    font-weight: 700; 
-    font-size: 1.1em; /* Специфично за .value-current */
+    font-weight: 600; 
+    font-size: 1em;
 }
 body.dark-theme .detailed-metric-item .value-current {
     color: var(--primary-color); 
@@ -443,10 +443,10 @@ body.vivid-theme .meal-list li .meal-name {
 }
 
 .meal-list li .meal-items {
-  font-size: 1.1em; /* Запазваме вашия размер */
+  font-size: 0.95em;
   color: var(--text-color-secondary);
-  line-height: 1.4; /* Леко намален line-height за по-компактен текст, ако е приемливо */
-  margin-top: 0; /* Премахваме допълнителен отстъп ако съществува */
+  line-height: 1.4;
+  margin-top: 0;
 }
 
 .meal-list li .meal-items ul {
