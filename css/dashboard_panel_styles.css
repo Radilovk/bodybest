@@ -3,41 +3,43 @@
    ========================================================================== */
 /* --- 6.1. Начално Табло (Dashboard Panel) --- */
 
-/* Dashboard headings - refined and consistent with other tabs */
+/* Dashboard headings - Оптимизирани за мобилен екран */
 #dash-panel h3 {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--fs-lg); /* 1.25rem = 20px - По-голям за четливост */
+  font-weight: 700;
   color: var(--primary-color);
   margin-bottom: var(--space-sm);
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  line-height: var(--lh-tight);
 }
 #dash-panel h3 .icon {
-  width: 1.1em;
-  height: 1.1em;
+  width: 1.2em;
+  height: 1.2em;
 }
 #dash-panel h4 {
-  font-size: 0.9rem;
+  font-size: var(--fs-base); /* 1rem = 16px - Увеличен от 0.9rem */
   font-weight: 600;
   margin-bottom: var(--space-xs);
+  line-height: var(--lh-tight);
 }
 #dash-panel .card {
-  padding: var(--space-md);
+  padding: var(--space-sm); /* Намален от var(--space-md) за по-компактен изглед */
 }
 
 .main-indexes {
   display: grid; 
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-md); 
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Намален минимум */
+  gap: var(--space-sm); /* Намален от var(--space-md) */
   margin-bottom: var(--space-md);
 }
 .index-card {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between; /* Променено от center за по-добро разпределение */
     min-height: auto;
-    padding: var(--space-md);
+    padding: var(--space-sm); /* Намален от var(--space-md) */
     cursor: pointer;
     position: relative;
     border-left: 4px solid var(--primary-color);
@@ -49,7 +51,7 @@
     border-left-color: var(--secondary-color);
 }
 .index-card h4 {
-  font-size: 0.85rem;
+  font-size: var(--fs-sm); /* 0.9375rem = 15px - Увеличен от 0.85rem */
   margin-bottom: var(--space-xs);
   text-align: left;
   color: var(--text-color-secondary); 
@@ -58,16 +60,17 @@
   justify-content: space-between; 
   gap: var(--space-xs);
   margin-top: 0;
-  font-weight: 500;
+  font-weight: 600; /* Увеличен от 500 за по-добра четливост */
+  line-height: var(--lh-tight);
 }
 .index-card h4 i {
-  font-size: 0.9em;
+  font-size: 1.1em; /* Увеличен от 0.9em */
   opacity: 0.8;
 }
 .index-card h4 .index-value { 
   margin: 0; 
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: var(--fs-base); /* 1rem = 16px - Увеличен от 0.9rem */
+  font-weight: 700; /* Увеличен от 600 */
 }
 .index-card .progress-bar-container {
   width: 100%;
@@ -75,9 +78,9 @@
 }
 .progress-bar {
   background: var(--surface-background);
-  border-radius: 4px;
+  border-radius: 6px; /* Увеличен от 4px за по-добра visibility */
   position: relative;
-  height: 8px;
+  height: 10px; /* Увеличен от 8px за по-добра visibility на mobile */
   overflow: visible;
   z-index: 0;
 }
@@ -112,11 +115,12 @@
   to { width: var(--target-width); }
 }
 .index-card .index-value {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: var(--fs-base); /* 1rem = 16px - Увеличен от 0.9rem */
+  font-weight: 700; /* Увеличен от 600 */
   color: var(--primary-color);
   text-align: right;
   margin: 0;
+  line-height: var(--lh-tight);
 }
 body.vivid-theme .index-card .index-value {
   color: color-mix(in srgb, var(--primary-color) 75%, var(--text-color-primary));
@@ -158,11 +162,11 @@ body.vivid-theme .index-card .index-value {
   100% { transform: scale(1); }
 }
 
-/* Analytics Cards Grid */
+/* Analytics Cards Grid - Оптимизиран за mobile */
 .analytics-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-lg);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); /* Намален минимум */
+  gap: var(--space-sm); /* Намален от var(--space-lg) */
 }
 .analytics-card {
   background: rgba(var(--card-bg-rgb), var(--card-bg-opacity));
@@ -170,7 +174,7 @@ body.vivid-theme .index-card .index-value {
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid color-mix(in srgb, var(--primary-color) 20%, transparent);
   border-radius: var(--radius-lg);
-  padding: var(--space-md);
+  padding: var(--space-sm); /* Намален от var(--space-md) */
   box-shadow: var(--shadow-sm);
 }
 .analytics-card h5 {
@@ -178,7 +182,9 @@ body.vivid-theme .index-card .index-value {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--space-sm);
-  font-size: 0.95rem;
+  font-size: var(--fs-base); /* 1rem - Увеличен от 0.95rem */
+  font-weight: 600;
+  line-height: var(--lh-tight);
 }
 .analytics-card .mini-progress-bar {
   background: var(--surface-background);
@@ -400,8 +406,8 @@ body.dark-theme .detailed-metric-item .value-current {
 }
 
 .meal-list li {
-  margin-bottom: calc(var(--space-unit) * 2);
-  padding: var(--space-sm);
+  margin-bottom: var(--space-sm); /* Намален от calc(var(--space-unit) * 2) */
+  padding: var(--space-sm); /* Запазен компактен padding */
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -469,7 +475,7 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-list li .meal-name {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--fs-base); /* 1rem = 16px - Увеличен от 0.9rem */
   color: var(--primary-color);
   margin-top: 0;
   margin-bottom: var(--space-xs);
@@ -477,15 +483,16 @@ body.dark-theme .detailed-metric-item .value-current {
   align-items: center;
   flex-wrap: wrap;
   gap: 0.25rem;
+  line-height: var(--lh-tight);
 }
 body.vivid-theme .meal-list li .meal-name {
   color: color-mix(in srgb, var(--primary-color) 75%, var(--text-color-primary));
 }
 
 .meal-list li .meal-items {
-  font-size: 0.85em;
+  font-size: var(--fs-sm); /* 0.9375rem = 15px - Увеличен от 0.85em */
   color: var(--text-color-secondary);
-  line-height: 1.4;
+  line-height: var(--lh-normal); /* 1.5 - Подобрена четливост */
   margin-top: 0;
 }
 
@@ -548,25 +555,30 @@ body.vivid-theme .meal-list li .meal-name {
     to { transform: scale(1); opacity: 1; }
 }
 
-/* Секцията с бутони - КЛЮЧОВИ ПРОМЕНИ ЗА ВИСОЧИНАТА ТУК */
+/* Секцията с бутони - Оптимизирано за touch accessibility */
 .meal-list li .actions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  justify-content: space-around; /* Може да се промени на flex-start или center, ако min-height се намали много */
+  justify-content: flex-start; /* По-добро подравняване */
   flex-shrink: 0;
-  min-height: auto;      /* ПРОМЕНЕНО: Премахване на фиксираната мин. височина от 70px */
-  gap: var(--space-sm);  /* ПРОМЕНЕНО: Намален gap между бутоните (беше var(--space-lg)) */
-  margin-left: var(--space-sm);
+  min-height: auto;      
+  gap: var(--space-xs);  /* Минимум 8px между бутоните за touch */
+  margin-left: var(--space-xs);
 }
 
 .meal-list li .actions .button-icon-only {
-    padding: calc(var(--space-sm) * 0.85); /* Леко намален padding на самите бутони */
+    padding: 12px; /* Минимум 44x44px tap target */
+    min-width: var(--tap-target-min); /* 44px iOS standard */
+    min-height: var(--tap-target-min);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .meal-list li .actions .button-icon-only svg.icon {
-    width: 1.6em; /* Леко намален размер на иконите */
-    height: 1.6em;
+    width: 1.5em; /* Оптимален размер за visibility */
+    height: 1.5em;
 }
 
 .actions button.info:hover { color: var(--secondary-color); }
@@ -588,14 +600,15 @@ body.vivid-theme .meal-list li .meal-name {
   flex-basis: auto; 
   flex-shrink: 0;
   cursor: default;
-  font-size: 0.85rem;
+  font-size: var(--fs-sm); /* 0.9375rem - Увеличен от 0.85rem */
+  line-height: var(--lh-tight);
 }
 .tracker .metric-rating label[data-tooltip-key]:hover,
 .tracker .metric-rating label[data-tooltip-key]:focus-within .info-btn {
     cursor: help;
 }
 .tracker .metric-rating label .metric-icon {
-  font-size: 1.2em;
+  font-size: 1.4em; /* Увеличен от 1.2em за по-добра visibility */
   margin-right: 0.1em;
   color: var(--text-color-secondary);
 }
@@ -603,12 +616,14 @@ body.vivid-theme .meal-list li .meal-name {
   color: var(--text-color-primary);
 }
 .tracker .metric-rating .rating-value {
-  font-weight: 600; color: var(--primary-color);
+  font-weight: 700; /* Увеличен от 600 */
+  color: var(--primary-color);
   background: color-mix(in srgb, var(--primary-color) 10%, transparent);
   padding: calc(var(--space-xs) * 0.75) var(--space-sm); border-radius: var(--radius-sm);
   margin-left: var(--space-xs); margin-right: var(--space-xs);
-  min-width: 1.5em; text-align: center;
-  font-size: 0.85rem;
+  min-width: 2em; /* Увеличен от 1.5em */
+  text-align: center;
+  font-size: var(--fs-sm); /* 0.9375rem - Увеличен от 0.85rem */
 }
 body.vivid-theme .tracker .metric-rating .rating-value {
   color: color-mix(in srgb, var(--primary-color) 75%, var(--text-color-primary));
@@ -632,22 +647,25 @@ body.vivid-theme .tracker .metric-rating .rating-value {
 
 .rating-squares { 
   display: flex; 
-  gap: 6px; 
+  gap: var(--space-xs); /* 8px за по-добра touch accessibility */
   cursor: pointer; 
   flex-grow: 1; 
-  justify-content: space-between; /* По-добро разпределение */
-  max-width: 200px; /* Ограничена ширина */
+  justify-content: space-between;
+  max-width: 220px; /* Увеличен от 200px */
 }
 .rating-square {
-  width: 32px;
-  height: 16px;
+  width: 36px; /* Увеличен от 32px */
+  height: 20px; /* Увеличен от 16px за по-добра visibility */
   background-color: transparent;
-  border: 1px solid var(--border-color-soft);
+  border: 2px solid var(--border-color-soft); /* Увеличен border за по-добра visibility */
   border-radius: var(--radius-sm);
   transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
-  flex-basis: calc(20% - 5px); /* За 5 правоъгълника с gap 6px (4 gaps * 6px = 24px) */
+  flex-basis: calc(20% - 6.4px); /* За 5 правоъгълника с gap 8px */
 }
-.rating-square:hover { transform: scale(1.1); }
+.rating-square:hover { 
+  transform: scale(1.1); 
+  border-width: 2px; /* Запазен при hover */
+}
 .rating-square.filled.level-1 { background-color: var(--progress-level-1); border-color: var(--progress-level-1); }
 .rating-square.filled.level-2 { background-color: var(--progress-level-2); border-color: var(--progress-level-2); }
 .rating-square.filled.level-3 { background-color: var(--progress-level-3); border-color: var(--progress-level-3); }
@@ -694,21 +712,23 @@ body.vivid-theme .tracker .metric-rating .rating-value {
     margin-bottom: var(--space-xs);
     justify-content: flex-start;
     padding: var(--space-sm) var(--space-md);
-    font-size: 0.85rem;
+    font-size: var(--fs-base); /* 1rem - Увеличен от 0.85rem */
+    min-height: var(--tap-target-min); /* 44px iOS standard */
 }
 #add-note-btn {
     width: 100%;
     justify-content: flex-start;
     padding: var(--space-sm) var(--space-md);
     margin-bottom: var(--space-xs);
-    font-size: 0.85rem;
+    font-size: var(--fs-base); /* 1rem - Увеличен от 0.85rem */
+    min-height: var(--tap-target-min);
 }
 #openExtraMealModalBtn, #add-note-btn, #planModificationBtn {
     color: var(--card-bg);
 }
 #add-note-btn .menu-icon {
     margin-right: var(--space-xs);
-    font-size: 1em;
+    font-size: 1.2em; /* Увеличен от 1em */
 }
 .daily-note-section {
     margin-top: var(--space-md);
@@ -718,7 +738,9 @@ body.vivid-theme .tracker .metric-rating .rating-value {
     width: 100%;
     margin-top: var(--space-md);
     padding: var(--space-sm) var(--space-md);
-    font-size: 0.9rem;
+    font-size: var(--fs-base); /* 1rem - Увеличен от 0.9rem */
+    min-height: var(--tap-target-comfortable); /* 48px Android recommendation */
+    font-weight: 600;
 }
 
 /* Skeleton loading for macro analytics card */
