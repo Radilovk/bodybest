@@ -242,7 +242,7 @@
     margin-bottom: 0;
   }
   nav.tabs.styled-tabs .tab-btn .tab-label {
-    font-size: 0.75rem; /* По-четим текст */
+    font-size: var(--fs-xs); /* 13px - Small but acceptable for secondary labels */
     letter-spacing: 0;
   }
 
