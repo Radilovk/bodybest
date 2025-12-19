@@ -197,7 +197,7 @@ export function toggleDailyNote() {
     const isHidden = selectors.dailyNote.classList.toggle('hidden');
     const icon = '<i class="bi bi-pencil-square"></i>';
     const baseText = "бележка за деня";
-    selectors.addNoteBtn.innerHTML = `${icon} ${isHidden ? `Добави ${baseText}` : `Скрий ${baseText}`}`;
+    selectors.addNoteBtn.innerHTML = `${icon} <span>${isHidden ? `Добави ${baseText}` : `Скрий ${baseText}`}</span>`;
     if (!isHidden) selectors.dailyNote.focus();
 }
 

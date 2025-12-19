@@ -7,35 +7,16 @@
     overflow-y: auto;
 }
 
-/* Alternatives button on meal cards - inline with meal name */
+/* Alternatives button in actions section - inherits sizing from .button-icon-only */
 .alternatives-btn {
-    background: transparent;
-    color: var(--icon-color-muted);
-    border: 1px solid var(--border-color);
-    padding: 0.4rem;
-    border-radius: var(--radius-round);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: 0.5rem;
-    vertical-align: middle;
-    line-height: 1;
-    min-width: 32px; /* Minimum touch target size */
-    min-height: 32px;
+    /* Base styling inherited from .button-icon-only in base_styles.css */
 }
 
 .alternatives-btn:hover {
     background: var(--primary-color);
     color: white;
     border-color: var(--primary-color);
-    transform: rotate(180deg) scale(1.1);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-body.dark-theme .alternatives-btn {
-    border-color: var(--border-color-dark);
 }
 
 body.dark-theme .alternatives-btn:hover {
@@ -45,13 +26,7 @@ body.dark-theme .alternatives-btn:hover {
 }
 
 .alternatives-btn:active {
-    transform: rotate(180deg) scale(0.95);
-}
-
-.alternatives-btn .icon {
-    width: 1em;
-    height: 1em;
-    transition: transform 0.3s ease;
+    transform: scale(0.95);
 }
 
 /* Loading state */
