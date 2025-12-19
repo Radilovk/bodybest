@@ -3,7 +3,7 @@
 import { apiEndpoints } from './config.js';
 import { showToast } from './uiHandlers.js';
 import { fullDashboardData } from './app.js';
-import { cacheMealReplacement, getCachedMealReplacement } from './mealReplacementCache.js';
+import { cacheMealReplacement } from './mealReplacementCache.js';
 
 /**
  * Отваря модален прозорец за показване на алтернативни хранения
@@ -195,7 +195,7 @@ function renderAlternativesWithEventHandlers(alternatives, originalMeal, mealInd
             try {
                 await selectAlternative(alternatives[index], originalMeal, mealIndex, dayKey);
                 // Success - modal will close, no need to restore button
-            } catch (error) {
+            } catch {
                 // Error is already handled and displayed in selectAlternative
                 // Re-enable button for retry
                 btn.disabled = false;
