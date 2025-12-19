@@ -7893,7 +7893,7 @@ function isChatContextFresh(context) {
  * @typedef {Object} ChatContextLogMetrics
  * @property {ChatContextLogEntry[]} entries
  * @property {string} summaryText
- * @property {{mood: string, energy: string, calmness: string, sleep: string}} averages
+ * @property {{health_tone: string, activity: string, stress: string, sleep: string, hydration: string}} averages
  * @property {string} adherenceText
  * @property {string} todaysCompletedMealsKeys
  * @property {string} updatedAt
@@ -9352,6 +9352,11 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
     const avgStress = getAvgLog('stress', 3, logsToConsider, analyticsPeriodDays); // NOTE: Higher stress is WORSE (1=best, 5=worst)
     const avgSleep = getAvgLog('sleep', 3, logsToConsider, analyticsPeriodDays);
     const avgHydration = getAvgLog('hydration', 3, logsToConsider, analyticsPeriodDays);
+    
+    // Map to legacy field names for compatibility with detailed analytics metrics
+    const avgEnergy = avgHealthTone; // health_tone is the new name for energy
+    // Invert stress to get calmness: stress 1 (low stress) = calmness 5 (high calmness)
+    const avgCalmness = (typeof avgStress === 'number' && !isNaN(avgStress)) ? (6 - avgStress) : "N/A";
 
     const currentBmiScore = calculateBmiScore(currentWeight, heightCm);
 
