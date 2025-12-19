@@ -266,28 +266,26 @@ export function setupStaticEventListeners() {
             }
             
             if (targetCard) {
-                // Parse the current meal data to preserve the original meal_name
-                let originalMealName = alternative.meal_name;
-                try {
-                    const currentMealData = JSON.parse(targetCard.dataset.mealData);
-                    originalMealName = currentMealData.meal_name || alternative.meal_name;
-                } catch (e) {
-                    console.warn('Could not parse current meal data, using alternative name');
-                }
-                
-                // Create updated meal data preserving the original meal name
-                const updatedMealData = {
-                    ...alternative,
-                    meal_name: originalMealName
-                };
-                
                 // Update the card's meal data
-                targetCard.dataset.mealData = JSON.stringify(updatedMealData);
+                targetCard.dataset.mealData = JSON.stringify(alternative);
                 
-                // Update the meal name text (preserve the type: Закуска, Обяд, Вечеря)
-                const mealNameTextEl = targetCard.querySelector('.meal-name-text');
-                if (mealNameTextEl) {
-                    mealNameTextEl.textContent = originalMealName;
+                // Update the meal name
+                const mealNameEl = targetCard.querySelector('.meal-name');
+                if (mealNameEl) {
+                    const checkIcon = mealNameEl.querySelector('.check-icon');
+                    const alternativesBtn = mealNameEl.querySelector('.alternatives-btn-inline');
+                    const mealNameText = document.createElement('span');
+                    mealNameText.className = 'meal-name-text';
+                    mealNameText.textContent = alternative.meal_name || 'Хранене';
+                    
+                    mealNameEl.innerHTML = '';
+                    mealNameEl.appendChild(mealNameText);
+                    if (alternativesBtn) {
+                        mealNameEl.appendChild(alternativesBtn); // Re-add alternatives button
+                    }
+                    if (checkIcon) {
+                        mealNameEl.appendChild(checkIcon); // Re-add check icon
+                    }
                 }
                 
                 // Update the items list
@@ -301,7 +299,7 @@ export function setupStaticEventListeners() {
                     mealItemsEl.innerHTML = itemsHtml || '<em class="text-muted">Няма продукти.</em>';
                 }
                 
-                console.log('UI updated successfully for meal card, preserving meal name:', originalMealName);
+                console.log('UI updated successfully for meal card');
             } else {
                 console.warn('Target meal card not found, UI not updated');
             }
