@@ -444,7 +444,7 @@ function renderMacroPreviewGrid(macros) {
     preview.classList.remove('hidden');
     const percents = calculateMacroPercents(macros);
     const list = [
-        { l: 'cal.', v: macros.calories, s: 'kcal', cls: 'calories' },
+        { l: 'cal.', v: macros.calories, s: '', cls: 'calories' },
         { l: 'prot.', v: macros.protein_percent ?? percents.protein_percent, s: '%' },
         { l: 'carb.', v: macros.carbs_percent ?? percents.carbs_percent, s: '%' },
         { l: 'fat.', v: macros.fat_percent ?? percents.fat_percent, s: '%' }
@@ -735,7 +735,8 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
         li.innerHTML = `
             <div class="meal-color-bar"></div>
             <div class="meal-content-wrapper">
-                <h2 class="meal-name">${effectiveMeal.meal_name || 'Хранене'}
+                <h2 class="meal-name">
+                    <span class="meal-name-text">${effectiveMeal.meal_name || 'Хранене'}</span>
                     <span class="check-icon" aria-hidden="true"><svg class="icon"><use href="#icon-check"/></svg></span>
                     ${alternativesButtonHtml}
                 </h2>
