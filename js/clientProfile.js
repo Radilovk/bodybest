@@ -274,12 +274,16 @@ async function fillDashboard(data) {
       logs.forEach(l => {
         const tr = document.createElement('tr');
         const mealsDone = l.data?.completedMealsStatus ? Object.values(l.data.completedMealsStatus).filter(Boolean).length : 0;
+        // Support both new and legacy fields
+        const healthTone = l.data?.health_tone ?? l.data?.energy ?? '';
+        const activity = l.data?.activity ?? l.data?.mood ?? '';
+        const stress = l.data?.stress ?? (l.data?.calmness ? (6 - l.data.calmness) : '') ?? '';
         tr.innerHTML = `
           <td>${l.date}</td>
           <td>${l.data?.weight ?? ''}</td>
-          <td>${l.data?.mood ?? ''}</td>
-          <td>${l.data?.energy ?? ''}</td>
-          <td>${l.data?.calmness ?? ''}</td>
+          <td>${healthTone}</td>
+          <td>${activity}</td>
+          <td>${stress}</td>
           <td>${l.data?.hydration ?? ''}</td>
           <td>${l.data?.sleep ?? ''}</td>
           <td>${mealsDone}</td>`;
@@ -290,7 +294,9 @@ async function fillDashboard(data) {
 
   const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
   const weightVals = logs.map(l => parseFloat(l.data?.weight)).filter(v => !isNaN(v));
-  const energyVals = logs.map(l => parseFloat(l.data?.energy)).filter(v => !isNaN(v));
+  // Support both new and legacy fields
+  const healthToneVals = logs.map(l => parseFloat(l.data?.health_tone ?? l.data?.energy)).filter(v => !isNaN(v));
+  const activityVals = logs.map(l => parseFloat(l.data?.activity ?? l.data?.mood)).filter(v => !isNaN(v));
   const sleepVals = logs.map(l => parseFloat(l.data?.sleep)).filter(v => !isNaN(v));
   const infoContainer = $('analyticsInfo');
   if (infoContainer) {
@@ -299,7 +305,8 @@ async function fillDashboard(data) {
       currentWeight: curW ? `${curW} кг` : undefined,
       bmiValue: data.currentStatus?.bmi,
       avgWeight: weightVals.length ? `${avg(weightVals).toFixed(1)} кг` : undefined,
-      avgEnergy: energyVals.length ? avg(energyVals).toFixed(1) : undefined,
+      avgHealthTone: healthToneVals.length ? avg(healthToneVals).toFixed(1) : undefined,
+      avgActivity: activityVals.length ? avg(activityVals).toFixed(1) : undefined,
       avgSleep: sleepVals.length ? avg(sleepVals).toFixed(1) : undefined,
       weightPeriod: weightVals.length ? `от ${logs.length} дни` : undefined,
       currentStreak: `${data.analytics?.streak?.currentCount || 0} дни`

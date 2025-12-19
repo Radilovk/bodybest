@@ -15,7 +15,7 @@ describe('calculateAnalyticsIndexes engagement score', () => {
     const dateStr = today.toISOString().split('T')[0];
 
     const finalPlan = { week1Menu: { [dayKey]: ['meal1'] } };
-    const logEntries = [{ date: dateStr, data: { mood: 3, energy: 4, completedMealsStatus: {} } }];
+    const logEntries = [{ date: dateStr, data: { health_tone: 3, activity: 4, completedMealsStatus: {} } }];
 
     const result = await calculateAnalyticsIndexes('user', {}, finalPlan, logEntries, {}, {});
     const expected = Math.round(((0) * 0.4) + (((2 / 5) * 100) * 0.4) + (((1 / 7) * 100) * 0.2));
@@ -37,9 +37,9 @@ describe('calculateAnalyticsIndexes engagement score', () => {
       logEntries.push({
         date: dateStr,
         data: {
-          mood: 5,
-          energy: 4.5,
-          calmness: 4.2,
+          health_tone: 5,
+          activity: 4.5,
+          stress: 1.8,  // Lower stress is better
           sleep: 5,
           hydration: 2,
           completedMealsStatus: {

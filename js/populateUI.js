@@ -787,11 +787,11 @@ function populateDashboardLog(dailyLogs, currentStatus, initialData) {
     trackerDiv.appendChild(weightMetricDiv);
 
     const metrics = [
-        { key: 'mood', label: 'Настроение', icon: '<i class="bi bi-emoji-smile"></i>', defaultVal: 3 },
-        { key: 'energy', label: 'Енергия', icon: '<i class="bi bi-lightning-charge"></i>', defaultVal: 3 },
-        { key: 'calmness', label: 'Спокойствие', icon: '<i class="bi bi-yin-yang"></i>', defaultVal: 3 },
-        { key: 'hydration', label: 'Хидратация', icon: '<i class="bi bi-droplet"></i>', defaultVal: 3 },
-        { key: 'sleep', label: 'Сън (нощен)', icon: '<i class="bi bi-moon"></i>', defaultVal: 3 }
+        { key: 'health_tone', label: 'Здраве / тонус', icon: '<i class="bi bi-heart-pulse"></i>', defaultVal: 3 },
+        { key: 'activity', label: 'Физическа активност', icon: '<i class="bi bi-person-walking"></i>', defaultVal: 3 },
+        { key: 'stress', label: 'Стрес / напрежение', icon: '<i class="bi bi-lightning-fill"></i>', defaultVal: 3 },
+        { key: 'sleep', label: 'Качество на съня', icon: '<i class="bi bi-moon"></i>', defaultVal: 3 },
+        { key: 'hydration', label: 'Хидратация', icon: '<i class="bi bi-droplet"></i>', defaultVal: 3 }
     ];
     metrics.forEach(metric => {
         const metricDiv = document.createElement('div');
