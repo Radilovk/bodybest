@@ -2216,11 +2216,16 @@ async function handleLogRequest(request, env) {
         if (inputData.completedMealsStatus !== undefined) log.completedMealsStatus = inputData.completedMealsStatus;
         if (inputData.note !== undefined) log.note = inputData.note;
         if (inputData.weight !== undefined) log.weight = inputData.weight;
+        // New metrics
+        if (inputData.health_tone !== undefined) log.health_tone = inputData.health_tone;
+        if (inputData.activity !== undefined) log.activity = inputData.activity;
+        if (inputData.stress !== undefined) log.stress = inputData.stress;
+        if (inputData.sleep !== undefined) log.sleep = inputData.sleep;
+        if (inputData.hydration !== undefined) log.hydration = inputData.hydration;
+        // Legacy support (will be migrated to new fields)
         if (inputData.mood !== undefined) log.mood = inputData.mood;
         if (inputData.energy !== undefined) log.energy = inputData.energy;
-        if (inputData.sleep !== undefined) log.sleep = inputData.sleep;
         if (inputData.calmness !== undefined) log.calmness = inputData.calmness;
-        if (inputData.hydration !== undefined) log.hydration = inputData.hydration;
 
         // Премахваме служебните полета от обекта за запис, ако са влезли случайно
         delete log.userId;
@@ -2873,10 +2878,11 @@ async function handleChatRequest(request, env) {
             '%%SUPPLEMENT_SUGGESTIONS%%': promptData.suppSuggest,
             '%%TODAY_DATE%%': todayLocaleDate,
             '%%CURRENT_WEIGHT%%': promptData.currW,
-            '%%RECENT_AVG_MOOD%%': promptData.avgMood,
-            '%%RECENT_AVG_ENERGY%%': promptData.avgEnergy,
-            '%%RECENT_AVG_CALMNESS%%': promptData.avgCalmness,
+            '%%RECENT_AVG_HEALTH_TONE%%': promptData.avgHealthTone,
+            '%%RECENT_AVG_ACTIVITY%%': promptData.avgActivity,
+            '%%RECENT_AVG_STRESS%%': promptData.avgStress,
             '%%RECENT_AVG_SLEEP%%': promptData.avgSleep,
+            '%%RECENT_AVG_HYDRATION%%': promptData.avgHydration,
             '%%RECENT_ADHERENCE%%': promptData.adherence,
             '%%TODAYS_MEALS_NAMES%%': promptData.todayMeals,
             '%%TODAYS_COMPLETED_MEALS_KEYS%%': promptData.todaysCompletedMealsKeys,
@@ -6944,11 +6950,26 @@ async function processSingleUserPlan(userId, env) {
             weightChangeStr = `${diff >= 0 ? '+' : ''}${diff.toFixed(1)} кг`;
         }
         const avgOf = (key) => {
-            const vals = logEntries.map(l => safeNum(l[key])).filter(v => v !== null);
+            const vals = logEntries.map(l => {
+                const entry = l;
+                // Support new and legacy fields
+                if (key === 'health_tone') return safeNum(entry.health_tone ?? entry.energy);
+                if (key === 'activity') return safeNum(entry.activity ?? entry.mood);
+                if (key === 'stress') {
+                    if (entry.stress !== undefined) return safeNum(entry.stress);
+                    if (entry.calmness !== undefined) {
+                        const calm = safeNum(entry.calmness);
+                        return calm !== null ? (6 - calm) : null;
+                    }
+                    return null;
+                }
+                return safeNum(entry[key]);
+            }).filter(v => v !== null);
             return vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : 'N/A';
         };
-        const avgMood = avgOf('mood');
-        const avgEnergy = avgOf('energy');
+        const avgHealthTone = avgOf('health_tone');
+        const avgActivity = avgOf('activity');
+        const avgStress = avgOf('stress');
 
         const formattedAnswersForPrompt = Object.entries(initialAnswers).filter(([qId]) => qId !== 'submissionDate' && qId !== 'email' && qId !== 'name').map(([qId, aVal]) => { const qText = questionTextMap.get(qId) || qId.replace(/_/g, ' '); let aText = ''; if (aVal === null || aVal === undefined || String(aVal).trim() === '') aText = '(няма отговор)'; else if (Array.isArray(aVal)) aText = aVal.length > 0 ? aVal.join(', ') : '(няма избран отговор)'; else aText = String(aVal); return `В: ${qText}\nО: ${aText}`; }).join('\n\n').trim();
         const userAnswersJson = JSON.stringify(initialAnswers);
@@ -6970,8 +6991,9 @@ async function processSingleUserPlan(userId, env) {
             '%%EATING_PSYCHOLOGY_SUMMARY%%': (eatingPsychologyContent || '').substring(0, 3000), '%%RECIPE_KEYS%%': Object.keys(recipeData).join(', ') || 'няма налични рецепти за референция',
             '%%RECENT_WEIGHT_KG%%': recentWeight !== null ? `${recentWeight.toFixed(1)} кг` : 'N/A',
             '%%WEIGHT_CHANGE_LAST_7_DAYS%%': weightChangeStr,
-            '%%AVG_MOOD_LAST_7_DAYS%%': avgMood !== 'N/A' ? `${avgMood}/5` : 'N/A',
-            '%%AVG_ENERGY_LAST_7_DAYS%%': avgEnergy !== 'N/A' ? `${avgEnergy}/5` : 'N/A'
+            '%%AVG_HEALTH_TONE_LAST_7_DAYS%%': avgHealthTone !== 'N/A' ? `${avgHealthTone}/5` : 'N/A',
+            '%%AVG_ACTIVITY_LAST_7_DAYS%%': avgActivity !== 'N/A' ? `${avgActivity}/5` : 'N/A',
+            '%%AVG_STRESS_LAST_7_DAYS%%': avgStress !== 'N/A' ? `${avgStress}/5` : 'N/A'
         };
         Object.assign(replacements, targetReplacements, {
             '%%USER_ANSWERS_JSON%%': userAnswersJson,
@@ -7282,11 +7304,32 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
             }
         }
 
-        const getAvg = (k, p=1) => { const v = logEntriesForAvg.map(l => safeParseFloat(l?.data?.[k])).filter(val => val !== null && !isNaN(val) && val >= 1 && val <= 5); return v.length > 0 ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(p) : "N/A"; };
-        const avgMood = getAvg('mood');
-        const avgEnergy = getAvg('energy');
-        const avgCalmness = getAvg('calmness');
+        const getAvg = (k, p=1) => { 
+            const v = logEntriesForAvg.map(l => {
+                const data = l?.data;
+                if (!data) return null;
+                
+                // Support new and legacy fields
+                if (k === 'health_tone') return safeParseFloat(data.health_tone ?? data.energy);
+                if (k === 'activity') return safeParseFloat(data.activity ?? data.mood);
+                if (k === 'stress') {
+                    // If new stress field exists, use it; otherwise invert calmness
+                    if (data.stress !== undefined) return safeParseFloat(data.stress);
+                    if (data.calmness !== undefined) {
+                        const calm = safeParseFloat(data.calmness);
+                        return calm !== null ? (6 - calm) : null; // Invert: 5→1, 1→5
+                    }
+                    return null;
+                }
+                return safeParseFloat(data[k]);
+            }).filter(val => val !== null && !isNaN(val) && val >= 1 && val <= 5);
+            return v.length > 0 ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(p) : "N/A"; 
+        };
+        const avgHealthTone = getAvg('health_tone');
+        const avgActivity = getAvg('activity');
+        const avgStress = getAvg('stress');
         const avgSleep = getAvg('sleep');
+        const avgHydration = getAvg('hydration');
 
         let mealAdherencePercent = "N/A";
         if (finalPlan.week1Menu && typeof finalPlan.week1Menu === 'object' && logEntriesForAvg.length > 0) {
@@ -7329,10 +7372,11 @@ async function handlePrincipleAdjustment(userId, env, calledFromQuizAnalysis = f
             '%%INITIAL_CALORIES_MACROS%%': initCalMac,
             '%%CURRENT_WEIGHT%%': currentWeightStr,
             '%%WEIGHT_CHANGE_LAST_WEEK%%': weightChangeLastWeek,
-            '%%AVERAGE_MOOD_LAST_WEEK%%': `${avgMood}/5`,
-            '%%AVERAGE_ENERGY_LAST_WEEK%%': `${avgEnergy}/5`,
-            '%%AVERAGE_CALMNESS_LAST_WEEK%%': `${avgCalmness}/5`,
+            '%%AVERAGE_HEALTH_TONE_LAST_WEEK%%': `${avgHealthTone}/5`,
+            '%%AVERAGE_ACTIVITY_LAST_WEEK%%': `${avgActivity}/5`,
+            '%%AVERAGE_STRESS_LAST_WEEK%%': `${avgStress}/5`,
             '%%AVERAGE_SLEEP_QUALITY_LAST_WEEK%%': `${avgSleep}/5`,
+            '%%AVERAGE_HYDRATION_LAST_WEEK%%': `${avgHydration}/5`,
             '%%MEAL_ADHERENCE_PERCENT_LAST_WEEK%%': mealAdherencePercent,
             '%%RECENT_CHAT_SUMMARY%%': recentChatSummary,
             '%%USER_SPECIFIC_CONCERNS_FROM_LOGS_OR_CHAT%%': userConcernsSummary
@@ -7458,7 +7502,7 @@ function computeLogMetrics(entries, todayStr = getLocalDate()) {
         return {
             entries: [],
             summaryText: 'Няма скорошни логове.',
-            averages: { mood: 'N/A', energy: 'N/A', calmness: 'N/A', sleep: 'N/A' },
+            averages: { health_tone: 'N/A', activity: 'N/A', stress: 'N/A', sleep: 'N/A', hydration: 'N/A' },
             adherenceText: 'N/A',
             todaysCompletedMealsKeys: 'Няма данни за днес',
             updatedAt: new Date().toISOString()
@@ -7467,34 +7511,41 @@ function computeLogMetrics(entries, todayStr = getLocalDate()) {
 
     const sortedEntries = [...validEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 3);
     const lines = [];
-    let moodSum = 0; let moodCount = 0;
-    let energySum = 0; let energyCount = 0;
-    let calmSum = 0; let calmCount = 0;
+    let healthToneSum = 0; let healthToneCount = 0;
+    let activitySum = 0; let activityCount = 0;
+    let stressSum = 0; let stressCount = 0;
     let sleepSum = 0; let sleepCount = 0;
+    let hydrationSum = 0; let hydrationCount = 0;
     let adherenceCount = 0;
     let todaysCompletedMealsKeys = 'Няма данни за днес';
 
     for (const entry of sortedEntries) {
         const data = entry.log || {};
         const formattedDate = new Date(entry.date).toLocaleDateString('bg-BG', { day: '2-digit', month: 'short' });
-        const mood = safeParseFloat(data.mood, null);
-        const energy = safeParseFloat(data.energy, null);
-        const calmness = safeParseFloat(data.calmness, null);
+        
+        // Support both new and legacy fields
+        const healthTone = safeParseFloat(data.health_tone ?? data.energy, null);
+        const activity = safeParseFloat(data.activity ?? data.mood, null);
+        const stress = safeParseFloat(data.stress ?? (data.calmness ? (6 - data.calmness) : null), null); // Invert calmness to stress
         const sleep = safeParseFloat(data.sleep, null);
+        const hydration = safeParseFloat(data.hydration, null);
+        
         const completedStatus = data.completedMealsStatus && typeof data.completedMealsStatus === 'object'
             ? Object.values(data.completedMealsStatus).filter(v => v === true).length
             : 0;
         adherenceCount += completedStatus;
 
-        if (mood !== null && mood >= 1 && mood <= 5) { moodSum += mood; moodCount++; }
-        if (energy !== null && energy >= 1 && energy <= 5) { energySum += energy; energyCount++; }
-        if (calmness !== null && calmness >= 1 && calmness <= 5) { calmSum += calmness; calmCount++; }
+        if (healthTone !== null && healthTone >= 1 && healthTone <= 5) { healthToneSum += healthTone; healthToneCount++; }
+        if (activity !== null && activity >= 1 && activity <= 5) { activitySum += activity; activityCount++; }
+        if (stress !== null && stress >= 1 && stress <= 5) { stressSum += stress; stressCount++; }
         if (sleep !== null && sleep >= 1 && sleep <= 5) { sleepSum += sleep; sleepCount++; }
+        if (hydration !== null && hydration >= 1 && hydration <= 5) { hydrationSum += hydration; hydrationCount++; }
 
         const summaryParts = [];
-        if (mood !== null) summaryParts.push(`Настр:${data.mood}/5`);
-        if (energy !== null) summaryParts.push(`Енерг:${data.energy}/5`);
-        if (sleep !== null) summaryParts.push(`Сън:${data.sleep}/5`);
+        if (healthTone !== null) summaryParts.push(`Здраве:${healthTone.toFixed(1)}/5`);
+        if (activity !== null) summaryParts.push(`Активност:${activity.toFixed(1)}/5`);
+        if (stress !== null) summaryParts.push(`Стрес:${stress.toFixed(1)}/5`);
+        if (sleep !== null) summaryParts.push(`Сън:${sleep.toFixed(1)}/5`);
         if (completedStatus > 0) summaryParts.push(`${completedStatus} изп. хран.`);
         if (data.note) {
             const trimmed = String(data.note).slice(0, 20);
@@ -7518,10 +7569,11 @@ function computeLogMetrics(entries, todayStr = getLocalDate()) {
         entries: sortedEntries,
         summaryText: lines.join('\n') || 'Няма скорошни логове.',
         averages: {
-            mood: avg(moodSum, moodCount),
-            energy: avg(energySum, energyCount),
-            calmness: avg(calmSum, calmCount),
-            sleep: avg(sleepSum, sleepCount)
+            health_tone: avg(healthToneSum, healthToneCount),
+            activity: avg(activitySum, activityCount),
+            stress: avg(stressSum, stressCount),
+            sleep: avg(sleepSum, sleepCount),
+            hydration: avg(hydrationSum, hydrationCount)
         },
         adherenceText: sortedEntries.length > 0 ? `${adherenceCount} изп. хран. за последните ${sortedEntries.length} дни` : 'N/A',
         todaysCompletedMealsKeys,
@@ -7721,10 +7773,11 @@ function createPromptDataFromContext(context) {
         todayMeals: menuSummary?.[todayKey] || 'няма планирани за днес',
         currW: safeGet(context, ['metrics', 'currentWeightFormatted'], 'N/A'),
         recentLogsSummary: safeGet(context, ['logs', 'summaryText'], 'Няма скорошни логове.'),
-        avgMood: safeGet(context, ['logs', 'averages', 'mood'], 'N/A'),
-        avgEnergy: safeGet(context, ['logs', 'averages', 'energy'], 'N/A'),
-        avgCalmness: safeGet(context, ['logs', 'averages', 'calmness'], 'N/A'),
+        avgHealthTone: safeGet(context, ['logs', 'averages', 'health_tone'], 'N/A'),
+        avgActivity: safeGet(context, ['logs', 'averages', 'activity'], 'N/A'),
+        avgStress: safeGet(context, ['logs', 'averages', 'stress'], 'N/A'),
         avgSleep: safeGet(context, ['logs', 'averages', 'sleep'], 'N/A'),
+        avgHydration: safeGet(context, ['logs', 'averages', 'hydration'], 'N/A'),
         adherence: safeGet(context, ['logs', 'adherenceText'], 'N/A'),
         todaysCompletedMealsKeys: safeGet(context, ['logs', 'todaysCompletedMealsKeys'], 'Няма данни за днес')
     };
@@ -7796,10 +7849,11 @@ function buildPromptDataFromRaw(initialAnswers, finalPlan, currentStatus, logEnt
         todayMeals,
         currW,
         recentLogsSummary: logMetrics.summaryText,
-        avgMood: logMetrics.averages.mood,
-        avgEnergy: logMetrics.averages.energy,
-        avgCalmness: logMetrics.averages.calmness,
+        avgHealthTone: logMetrics.averages.health_tone,
+        avgActivity: logMetrics.averages.activity,
+        avgStress: logMetrics.averages.stress,
         avgSleep: logMetrics.averages.sleep,
+        avgHydration: logMetrics.averages.hydration,
         adherence: logMetrics.adherenceText,
         todaysCompletedMealsKeys: logMetrics.todaysCompletedMealsKeys,
         logEntries: logMetrics.entries,
@@ -9067,7 +9121,28 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         const logsToConsider = logs.slice(0, lookbackDays); // Use only logs within the lookback period
 
         for (const entry of logsToConsider) {
-            const valueStr = safeGetL(entry, ['data', logKey]);
+            let valueStr;
+            const data = entry?.data || {};
+            
+            // Support new and legacy fields
+            if (logKey === 'health_tone') {
+                valueStr = data.health_tone ?? data.energy;
+            } else if (logKey === 'activity') {
+                valueStr = data.activity ?? data.mood;
+            } else if (logKey === 'stress') {
+                // If new stress field exists, use it; otherwise invert calmness
+                if (data.stress !== undefined) {
+                    valueStr = data.stress;
+                } else if (data.calmness !== undefined) {
+                    const calm = safePFloat(data.calmness);
+                    if (calm !== null && !isNaN(calm) && calm >= 1 && calm <= 5) {
+                        valueStr = 6 - calm; // Invert: 5→1, 1→5
+                    }
+                }
+            } else {
+                valueStr = safeGetL(entry, ['data', logKey]);
+            }
+            
             if (valueStr !== undefined && valueStr !== null && String(valueStr).trim() !== '') {
                 const numValue = safePFloat(valueStr);
                 // Assuming mood, energy etc. are 1-5 scales
@@ -9272,22 +9347,26 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         qualityBonus
     );
 
-    const avgMood = getAvgLog('mood', 3, logsToConsider, analyticsPeriodDays);
-    const avgEnergy = getAvgLog('energy', 3, logsToConsider, analyticsPeriodDays);
-    const avgCalmness = getAvgLog('calmness', 3, logsToConsider, analyticsPeriodDays); // Assuming calmness is 1-5, higher is better
+    const avgHealthTone = getAvgLog('health_tone', 3, logsToConsider, analyticsPeriodDays);
+    const avgActivity = getAvgLog('activity', 3, logsToConsider, analyticsPeriodDays);
+    const avgStress = getAvgLog('stress', 3, logsToConsider, analyticsPeriodDays); // NOTE: Higher stress is WORSE (1=best, 5=worst)
     const avgSleep = getAvgLog('sleep', 3, logsToConsider, analyticsPeriodDays);
-    const avgHydration = getAvgLog('hydration', 3, logsToConsider, analyticsPeriodDays); // Assuming hydration is 1-5
+    const avgHydration = getAvgLog('hydration', 3, logsToConsider, analyticsPeriodDays);
 
     const currentBmiScore = calculateBmiScore(currentWeight, heightCm);
 
+    // NOTE: For stress, we need to invert the score since higher stress is worse
+    // stress: 1 (good) → 100%, 5 (bad) → 20%
+    const stressScore = 100 - (score1To5ToPercentage(avgStress) - 20); // Invert: 100 → 20, 20 → 100
+    
     overallHealthScore = capScore(
-        (score1To5ToPercentage(avgMood) * 0.15) +
-        (score1To5ToPercentage(avgEnergy) * 0.15) +
-        (score1To5ToPercentage(avgCalmness) * 0.10) + // Calmness (higher is better)
-        (score1To5ToPercentage(avgSleep) * 0.15) +
-        (score1To5ToPercentage(avgHydration) * 0.10) +
-        (currentBmiScore * 0.20) +
-        (engagementScore * 0.15)
+        (score1To5ToPercentage(avgHealthTone) * 0.20) +  // Increased from 0.15 (health/tone)
+        (score1To5ToPercentage(avgActivity) * 0.15) +     // Physical activity
+        (stressScore * 0.10) +                            // Stress (inverted)
+        (score1To5ToPercentage(avgSleep) * 0.15) +        // Sleep quality
+        (score1To5ToPercentage(avgHydration) * 0.10) +    // Hydration
+        (currentBmiScore * 0.20) +                        // BMI
+        (engagementScore * 0.10)                          // Reduced from 0.15
     );
     
     if (userGoal === 'отслабване') {
