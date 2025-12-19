@@ -249,9 +249,9 @@ nav.tabs.styled-tabs .tab-btn::after {
 }
 
 nav.tabs.styled-tabs .tab-btn .tab-icon {
-  width: 1.25em; /* Reduced from 1.5em */
-  height: 1.25em; /* Reduced from 1.5em */
-  margin-bottom: 0.2rem;
+  width: 1.1em; /* Further reduced for mobile-first */
+  height: 1.1em; /* Further reduced for mobile-first */
+  margin-bottom: 0.15rem;
   flex-shrink: 0;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
               filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -259,9 +259,9 @@ nav.tabs.styled-tabs .tab-btn .tab-icon {
 }
 
 nav.tabs.styled-tabs .tab-btn .tab-label {
-  font-size: 0.625rem; /* Reduced from 0.65rem */ 
+  font-size: 0.6rem; /* Further reduced for cleaner mobile look */ 
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   white-space: nowrap;
   font-weight: 500;
   transition: letter-spacing 0.3s ease;
@@ -273,7 +273,7 @@ nav.tabs.styled-tabs .tab-btn:hover {
 }
 
 nav.tabs.styled-tabs .tab-btn:hover .tab-icon {
-  transform: scale(1.08); /* Reduced from 1.12 */
+  transform: scale(1.05); /* Subtle hover effect */
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
@@ -296,7 +296,7 @@ nav.tabs.styled-tabs .tab-btn[aria-selected="true"]::after {
 }
 
 nav.tabs.styled-tabs .tab-btn[aria-selected="true"] .tab-icon {
-  transform: scale(1.06); /* Reduced from 1.1 */
+  transform: scale(1.03); /* Minimal scale for active state */
   filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.3));
 }
 

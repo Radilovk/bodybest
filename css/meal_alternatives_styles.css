@@ -7,25 +7,33 @@
     overflow-y: auto;
 }
 
-/* Alternatives button in actions section - inherits sizing from .button-icon-only */
-.alternatives-btn {
-    /* Base styling inherited from .button-icon-only in base_styles.css */
+/* Alternatives button in meal name - inline and compact */
+.alternatives-btn-inline {
+    /* Inherits from .button-icon-only but with overrides for inline display */
+    background: transparent;
+    color: var(--icon-color-muted);
+    padding: 0.25rem;
+    border-radius: var(--radius-round);
+    line-height: 1;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.alternatives-btn:hover {
+.alternatives-btn-inline:hover {
     background: var(--primary-color);
     color: white;
     border-color: var(--primary-color);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-body.dark-theme .alternatives-btn:hover {
+body.dark-theme .alternatives-btn-inline:hover {
     background: var(--primary-color);
     border-color: var(--primary-color);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.alternatives-btn:active {
+.alternatives-btn-inline:active {
     transform: scale(0.95);
 }
 
