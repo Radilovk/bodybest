@@ -541,40 +541,9 @@ body.vivid-theme .meal-list li .meal-name {
     opacity: 0.9;
 }
 
-/* Checkbox icon (empty square) - shown when NOT completed */
-.meal-list li .checkbox-icon {
-    display: inline-flex;
-    font-weight: normal;
-    color: var(--text-color-secondary);
-    padding: 12px;
-    min-width: var(--tap-target-min);
-    min-height: var(--tap-target-min);
-    align-items: center;
-    justify-content: center;
-}
-
-.meal-list li .checkbox-icon svg.icon {
-    width: 1.2em;
-    height: 1.2em;
-    stroke: currentColor;
-    stroke-width: 2;
-    fill: none;
-}
-
-/* Hide checkbox when completed */
-.meal-list li.completed .checkbox-icon {
-    display: none;
-}
-
-/* Check icon - shown when completed */
 .meal-list li .check-icon {
     display: none;
     font-weight: normal;
-    padding: 12px;
-    min-width: var(--tap-target-min);
-    min-height: var(--tap-target-min);
-    align-items: center;
-    justify-content: center;
 }
 
 .meal-list li .check-icon svg.icon {
@@ -589,11 +558,6 @@ body.vivid-theme .meal-list li .meal-name {
     display: inline-flex;
     color: color-mix(in srgb, var(--meal-color) 60%, white); /* Същият цвят като вертикалната линия */
     animation: checkmark-pop 0.3s ease-out;
-}
-
-/* Hide alternatives button when meal is completed */
-.meal-list li.completed .alternatives-btn-inline {
-    display: none;
 }
 
 /* Alternatives button now in actions section - consistent positioning */
