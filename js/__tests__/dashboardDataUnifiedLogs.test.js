@@ -8,7 +8,7 @@ describe('handleDashboardDataRequest unified logs', () => {
     const today = new Date();
     const dayKey = daysOrder[today.getDay()];
     const dateStr = today.toISOString().split('T')[0];
-    const aggregated = JSON.stringify([{ date: dateStr, log: { mood: 3, energy: 4, completedMealsStatus: {} } }]);
+    const aggregated = JSON.stringify([{ date: dateStr, log: { health_tone: 3, activity: 4, completedMealsStatus: {} } }]);
 
     const env = {
       USER_METADATA_KV: {

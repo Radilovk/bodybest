@@ -19,7 +19,7 @@ describe('processSingleUserPlan log metrics', () => {
           }
           if (key === `${userId}_final_plan`) return null;
           if (key === `${userId}_current_status`) return JSON.stringify({ weight: 70 });
-          if (key === `${userId}_log_${iso(0)}`) return JSON.stringify({ weight: 70, mood: 4, energy: 3 });
+          if (key === `${userId}_log_${iso(0)}`) return JSON.stringify({ weight: 70, health_tone: 4, activity: 3 });
           if (key === `${userId}_log_${iso(6)}`) return JSON.stringify({ weight: 71 });
           return null;
         }),
@@ -39,7 +39,7 @@ describe('processSingleUserPlan log metrics', () => {
           if (key === 'recipe_data') return '{}';
           if (key === 'model_plan_generation') return 'model';
           if (key === 'prompt_unified_plan_generation_v2') {
-            return '{"profileSummary":"Weight %%RECENT_WEIGHT_KG%% diff %%WEIGHT_CHANGE_LAST_7_DAYS%% mood %%AVG_MOOD_LAST_7_DAYS%% energy %%AVG_ENERGY_LAST_7_DAYS%%","caloriesMacros":{"fiber_percent":10,"fiber_grams":30},"week1Menu":{},"principlesWeek2_4":[],"detailedTargets":{}}';
+            return '{"profileSummary":"Weight %%RECENT_WEIGHT_KG%% diff %%WEIGHT_CHANGE_LAST_7_DAYS%% health_tone %%AVG_HEALTH_TONE_LAST_7_DAYS%% activity %%AVG_ACTIVITY_LAST_7_DAYS%%","caloriesMacros":{"fiber_percent":10,"fiber_grams":30},"week1Menu":{},"principlesWeek2_4":[],"detailedTargets":{}}';
           }
           return null;
         })

@@ -24,7 +24,7 @@ describe('handleGeneratePraiseRequest analytics gating', () => {
           if (key === 'u1_last_praise_analytics') return Promise.resolve(JSON.stringify({ goalProgress: 10, overallHealthScore: 50, bmi: 24 }));
           for (let i = 0; i < 7; i++) {
             if (key === `u1_log_${iso(i)}`) {
-              return Promise.resolve(JSON.stringify({ mood:3, energy:3, calmness:3, sleep:3, hydration:3, completedMealsStatus:{monday_0:true} }));
+              return Promise.resolve(JSON.stringify({ health_tone:3, activity:3, stress:3, sleep:3, hydration:3, completedMealsStatus:{monday_0:true} }));
             }
           }
           return Promise.resolve(null);
@@ -52,7 +52,7 @@ describe('handleGeneratePraiseRequest analytics gating', () => {
           if (key === 'u1_last_praise_analytics') return Promise.resolve(JSON.stringify({ goalProgress: 20, overallHealthScore: 60, bmi: 24.5 }));
           for (let i = 0; i < 7; i++) {
             if (key === `u1_log_${iso(i)}`) {
-              return Promise.resolve(JSON.stringify({ mood:2, energy:2, calmness:2, sleep:2, hydration:2, completedMealsStatus:{monday_0:false} }));
+              return Promise.resolve(JSON.stringify({ health_tone:2, activity:2, stress:4, sleep:2, hydration:2, completedMealsStatus:{monday_0:false} }));
             }
           }
           return Promise.resolve(null);
