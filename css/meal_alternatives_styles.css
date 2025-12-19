@@ -23,13 +23,11 @@
 .alternatives-btn-inline:hover {
     background: var(--primary-color);
     color: white;
-    border-color: var(--primary-color);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 body.dark-theme .alternatives-btn-inline:hover {
     background: var(--primary-color);
-    border-color: var(--primary-color);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 

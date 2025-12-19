@@ -467,7 +467,7 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-list li .meal-content-wrapper {
   flex-grow: 1;
-  padding-right: var(--space-md);
+  padding-right: var(--space-xs); /* Намалено от var(--space-md) за по-близко подравняване */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -510,14 +510,13 @@ body.dark-theme .detailed-metric-item .value-current {
   flex-shrink: 0;
   border-radius: 4px;
   background: transparent;
-  border: 1px solid var(--border-color);
+  border: none; /* Премахната рамка */
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .meal-list li .meal-name .alternatives-btn-inline:hover {
   background: var(--surface-background);
-  border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
