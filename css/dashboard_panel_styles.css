@@ -481,14 +481,28 @@ body.dark-theme .detailed-metric-item .value-current {
   margin-bottom: var(--space-xs);
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Changed from flex-wrap for better layout */
-  gap: 0.5rem; /* Increased from 0.25rem */
+  justify-content: flex-start; /* Changed for better inline layout */
+  gap: 0.25rem; /* Reduced gap for compact layout */
   line-height: var(--lh-tight);
 }
 
 .meal-list li .meal-name .meal-name-text {
   flex: 1;
   min-width: 0; /* Allow text truncation if needed */
+}
+
+/* Alternatives button inline with meal name */
+.meal-list li .meal-name .alternatives-btn-inline {
+  padding: 0.25rem; /* Compact padding */
+  min-width: auto; /* Override default min-width */
+  min-height: auto; /* Override default min-height */
+  margin-left: auto; /* Push to the right */
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.meal-list li .meal-name .alternatives-btn-inline svg.icon {
+  width: 1em; /* Smaller icon for inline display */
+  height: 1em;
 }
 
 body.vivid-theme .meal-list li .meal-name {

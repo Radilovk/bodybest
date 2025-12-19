@@ -273,13 +273,18 @@ export function setupStaticEventListeners() {
                 const mealNameEl = targetCard.querySelector('.meal-name');
                 if (mealNameEl) {
                     const checkIcon = mealNameEl.querySelector('.check-icon');
-                    const alternativesBtn = mealNameEl.querySelector('.alternatives-btn');
-                    mealNameEl.textContent = alternative.meal_name || 'Хранене';
-                    if (checkIcon) {
-                        mealNameEl.appendChild(checkIcon); // Re-add check icon
-                    }
+                    const alternativesBtn = mealNameEl.querySelector('.alternatives-btn-inline');
+                    const mealNameText = document.createElement('span');
+                    mealNameText.className = 'meal-name-text';
+                    mealNameText.textContent = alternative.meal_name || 'Хранене';
+                    
+                    mealNameEl.innerHTML = '';
+                    mealNameEl.appendChild(mealNameText);
                     if (alternativesBtn) {
                         mealNameEl.appendChild(alternativesBtn); // Re-add alternatives button
+                    }
+                    if (checkIcon) {
+                        mealNameEl.appendChild(checkIcon); // Re-add check icon
                     }
                 }
                 
@@ -374,8 +379,8 @@ function handleDelegatedClicks(event) {
         return;
     }
 
-    // Handle alternatives button click
-    const alternativesBtn = target.closest('.alternatives-btn');
+    // Handle alternatives button click (support both old and new class names)
+    const alternativesBtn = target.closest('.alternatives-btn') || target.closest('.alternatives-btn-inline');
     if (alternativesBtn) {
         event.preventDefault();
         event.stopPropagation();
