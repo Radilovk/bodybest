@@ -63,25 +63,42 @@
   --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.12);
   --shadow-soft: 0px 6px 18px rgba(var(--surface-background-rgb), 0.5), 0px 2px 7px rgba(var(--surface-background-rgb), 0.3);
 
+  /* 8-Point Grid System - Стандарт за mobile UI */
   --space-unit: 8px;
-  --space-xs: calc(var(--space-unit) * 1);
-  --space-sm: calc(var(--space-unit) * 2);
-  --space-md: calc(var(--space-unit) * 3);
-  --space-lg: calc(var(--space-unit) * 4);
-  --space-xl: calc(var(--space-unit) * 5);
-  --radius-sm: 0.3rem; --radius-md: 0.6rem; --radius-lg: 0.8rem; --radius-xl: 1rem; --radius-round: 50%;
+  --space-xs: 8px;    /* 1 unit - Минимално разстояние между елементи */
+  --space-sm: 16px;   /* 2 units - Стандартно разстояние в карти */
+  --space-md: 24px;   /* 3 units - Между секции */
+  --space-lg: 32px;   /* 4 units - Между големи блокове */
+  --space-xl: 40px;   /* 5 units - Големи отстояния */
+  
+  /* Border radius */
+  --radius-sm: 0.5rem; 
+  --radius-md: 0.75rem; 
+  --radius-lg: 1rem; 
+  --radius-xl: 1.25rem; 
+  --radius-round: 50%;
+  
+  /* Touch targets - iOS & Android standards */
+  --tap-target-min: 44px;   /* iOS minimum */
+  --tap-target-comfortable: 48px; /* Android recommendation */
 
   --font-primary: 'Inter', 'Nunito Sans', system-ui, sans-serif;
   --font-secondary: var(--font-primary);
-  /* Размери на шрифтове */
-  --fs-base: 1rem;
-  --fs-sm: 0.875rem;
-  --fs-xs: 0.75rem;
-  --fs-md: 1.125rem;
-  --fs-lg: 1.25rem;
-  --fs-xl: 1.5rem;
-  --fs-xxl: 2rem;
-  --fs-3xl: 3rem;
+  /* Размери на шрифтове - Оптимизирани за мобилни екрани */
+  --fs-base: 1rem;           /* 16px - Минимум за body text на mobile */
+  --fs-sm: 0.9375rem;        /* 15px - За secondary text */
+  --fs-xs: 0.8125rem;        /* 13px - За captions, минимално използване */
+  --fs-md: 1.125rem;         /* 18px - За subheadings */
+  --fs-lg: 1.25rem;          /* 20px - За card headings (минимум за mobile) */
+  --fs-xl: 1.5rem;           /* 24px - За page headings */
+  --fs-xxl: 2rem;            /* 32px - За hero titles */
+  --fs-3xl: 3rem;            /* 48px - За large displays */
+  
+  /* Line heights за четливост */
+  --lh-tight: 1.25;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.6;
+  --lh-loose: 1.8;
 
   --color-success: #2ecc71; --color-success-bg: rgba(46, 204, 113, 0.1);
   --color-warning: #f39c12; --color-warning-bg: rgba(243, 156, 18, 0.1);
@@ -442,16 +459,27 @@ textarea { resize: vertical; min-height: 80px; }
 label { display: block; margin-bottom: var(--space-xs); font-weight: 500; font-size: var(--fs-sm); color: var(--text-color-secondary); }
 
 button, .button {
-  font-family: var(--font-secondary); font-weight: 700; padding: 0.7rem 1.3rem;
-  border-radius: var(--radius-md); border: none; cursor: pointer;
+  font-family: var(--font-secondary); 
+  font-weight: 600; 
+  font-size: var(--fs-base); /* 1rem = 16px - Минимум за mobile */
+  padding: 12px 20px; /* Оптимизиран padding за touch */
+  min-height: var(--tap-target-min); /* 44px iOS standard */
+  border-radius: var(--radius-md); 
+  border: none; 
+  cursor: pointer;
   transition: var(--transition-base), transform 0.15s ease-out, box-shadow 0.2s;
-  text-align: center; display: inline-flex; align-items: center; justify-content: center;
-  gap: var(--space-sm); line-height: 1.2;
+  text-align: center; 
+  display: inline-flex; 
+  align-items: center; 
+  justify-content: center;
+  gap: var(--space-xs); /* 8px между icon и text */
+  line-height: var(--lh-tight);
 }
 button:active, .button:active { transform: scale(0.97); }
 button:focus-visible, .button:focus-visible {
-  outline: 2px solid var(--primary-color); outline-offset: 2px;
-  box-shadow: 0 0 0 3px var(--input-focus-shadow);
+  outline: 3px solid var(--primary-color); /* Увеличен от 2px */
+  outline-offset: 3px; /* Увеличен от 2px */
+  box-shadow: 0 0 0 4px var(--input-focus-shadow);
 }
 .button-primary { background-color: var(--primary-color); color: var(--text-color-on-primary); }
 .button-primary:hover { background-color: color-mix(in srgb, var(--primary-color) 85%, black); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
