@@ -3,6 +3,7 @@
 import { apiEndpoints } from './config.js';
 import { showToast } from './uiHandlers.js';
 import { fullDashboardData } from './app.js';
+import { cacheMealReplacement, getCachedMealReplacement } from './mealReplacementCache.js';
 
 /**
  * Отваря модален прозорец за показване на алтернативни хранения
@@ -267,6 +268,8 @@ function renderAlternativeCard(alternative, altIndex) {
 
 /**
  * Замяна на оригиналното хранене с избраната алтернатива
+ * ВАЖНО: Променя само frontend кеша, НЕ записва в бекенда!
+ * Променените калорийни стойности се записват в логовете при маркиране като завършено.
  * @param {Object} alternative - Избраната алтернатива
  * @param {Object} originalMeal - Оригиналното хранене  
  * @param {number} mealIndex - Индекс на хранението
@@ -288,21 +291,6 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
             throw new Error('Невалидни параметри');
         }
         
-        // Get plan data from cached dashboard data
-        if (!fullDashboardData.planData || !fullDashboardData.planData.week1Menu) {
-            throw new Error('Планът не е намерен в кеша');
-        }
-        
-        const planData = fullDashboardData.planData;
-        
-        if (!planData.week1Menu || !planData.week1Menu[dayKey]) {
-            throw new Error(`Не е намерено меню за ${dayKey}`);
-        }
-        
-        if (!Array.isArray(planData.week1Menu[dayKey]) || mealIndex >= planData.week1Menu[dayKey].length) {
-            throw new Error('Невалиден индекс на хранене');
-        }
-        
         // Prepare the updated meal data
         const updatedMeal = {
             ...alternative,
@@ -310,64 +298,22 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
             recipeKey: alternative.recipeKey || originalMeal.recipeKey || null
         };
         
-        // Create a deep copy of planData with the change
-        // Use structuredClone if available (modern browsers), otherwise fall back to JSON
-        const updatedPlanData = typeof structuredClone === 'function' 
-            ? structuredClone(planData)
-            : JSON.parse(JSON.stringify(planData));
-        updatedPlanData.week1Menu[dayKey][mealIndex] = updatedMeal;
+        // Cache the replacement in browser (NOT in backend)
+        const cacheResult = cacheMealReplacement(dayKey, mealIndex, updatedMeal);
         
-        // Timeout duration for backend save (configurable)
-        const BACKEND_SAVE_TIMEOUT_MS = 15000; // 15 seconds
-        
-        // Update backend FIRST with timeout (API call to save the modified plan)
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), BACKEND_SAVE_TIMEOUT_MS);
-        
-        try {
-            const response = await fetch(apiEndpoints.updatePlanData, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    userId,
-                    planData: updatedPlanData
-                }),
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP грешка: ${response.status}`);
-            }
-            
-            const result = await response.json();
-            
-            if (!result.success) {
-                throw new Error(result.message || 'Грешка при запазване на промяната');
-            }
-            
-            console.log('Meal alternative saved successfully to backend');
-            
-        } catch (backendError) {
-            clearTimeout(timeoutId);
-            
-            // Backend update failed - DO NOT update UI
-            console.error('Backend update failed:', backendError);
-            
-            if (backendError.name === 'AbortError') {
-                throw new Error('Заявката отне твърде дълго време. Моля, проверете интернет връзката си и опитайте отново.');
-            }
-            
-            throw new Error(`Запазването не успя: ${backendError.message}`);
+        if (!cacheResult.success) {
+            console.warn('Failed to cache meal replacement:', cacheResult.error);
+            showToast('Предупреждение: Замената може да не се запази след презареждане', true, 3000);
         }
         
-        // Only update in-memory data AFTER successful backend save
-        planData.week1Menu[dayKey][mealIndex] = updatedMeal;
+        console.log(`Meal alternative cached for ${dayKey} meal ${mealIndex} (not saved to backend)`);
         
-        // Trigger UI refresh only after successful save
+        // Update in-memory data immediately (frontend only)
+        if (fullDashboardData.planData && fullDashboardData.planData.week1Menu && fullDashboardData.planData.week1Menu[dayKey]) {
+            fullDashboardData.planData.week1Menu[dayKey][mealIndex] = updatedMeal;
+        }
+        
+        // Trigger UI refresh
         window.dispatchEvent(new CustomEvent('mealAlternativeSelected', {
             detail: { mealIndex, dayKey, alternative: updatedMeal }
         }));
@@ -381,7 +327,7 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
         }
         
         // Show success message
-        showToast(`Храненето е заменено успешно с "${alternative.meal_name}"`, false, 3000);
+        showToast(`Храненето е заменено с "${alternative.meal_name}". Промяната ще бъде записана при маркиране като завършено.`, false, 4000);
         
     } catch (error) {
         console.error('Error selecting alternative:', error);

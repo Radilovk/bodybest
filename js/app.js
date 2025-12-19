@@ -42,6 +42,7 @@ import {
 import { initializeAchievements } from './achievements.js';
 import { openPlanModificationChat } from './planModChat.js';
 import { initAnalyticsPeriodSelector, getCurrentPeriod, formatPeriodText } from './analyticsPeriodSelector.js';
+import { clearMealReplacementCache, getEffectiveMealData } from './mealReplacementCache.js';
 export { openPlanModificationChat };
 
 // Активираме дебъг режима само при локална разработка
@@ -300,6 +301,9 @@ export function resetDailyIntake() {
     todaysMealCompletionStatus = {};
     todaysExtraMeals = [];
     currentIntakeMacros = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+    
+    // Clear meal replacement cache when day changes
+    clearMealReplacementCache();
 }
 
 export function ensureFreshDailyIntake() {
@@ -546,8 +550,13 @@ export function loadCurrentIntake(status = null, extraMeals = null) {
 export function recalculateCurrentIntakeMacros() {
     try {
         ensureFreshDailyIntake();
+        
+        // Get the plan menu with cached replacements applied
+        const originalPlanMenu = fullDashboardData.planData?.week1Menu || {};
+        const planMenuWithCache = applyMealReplacementCache(originalPlanMenu);
+        
         currentIntakeMacros = calculateCurrentMacros(
-            fullDashboardData.planData?.week1Menu || {},
+            planMenuWithCache,
             todaysMealCompletionStatus,
             todaysExtraMeals,
             false,
@@ -556,6 +565,33 @@ export function recalculateCurrentIntakeMacros() {
     } catch (err) {
         console.error('Error recalculating current intake:', err);
     }
+}
+
+/**
+ * Applies cached meal replacements to the plan menu
+ * @param {Object} planMenu - Original plan menu
+ * @returns {Object} Plan menu with cached replacements applied
+ */
+function applyMealReplacementCache(planMenu) {
+    if (!planMenu || typeof planMenu !== 'object') {
+        return planMenu;
+    }
+    
+    const menuWithCache = {};
+    
+    Object.entries(planMenu).forEach(([dayKey, meals]) => {
+        if (!Array.isArray(meals)) {
+            menuWithCache[dayKey] = meals;
+            return;
+        }
+        
+        menuWithCache[dayKey] = meals.map((meal, mealIndex) => {
+            // Get the effective meal (cached or original)
+            return getEffectiveMealData(meal, dayKey, mealIndex);
+        });
+    });
+    
+    return menuWithCache;
 }
 
 export function updateMacrosAndAnalytics() {

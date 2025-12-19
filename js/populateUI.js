@@ -8,6 +8,7 @@ import { ensureChart } from './chartLoader.js';
 import { getNutrientOverride, scaleMacros, calculatePlanMacros, calculateMacroPercents } from './macroUtils.js';
 import { logMacroPayload } from '../utils/debug.js';
 import { ensureMacroAnalyticsElement } from './eventListeners.js';
+import { getEffectiveMealData } from './mealReplacementCache.js';
 
 let macroAnalyticsComponentPromise;
 export let macroChartInstance = null;
@@ -696,13 +697,16 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
 
 
     dailyPlanData.forEach((mealItem, index) => {
+        // Check if there's a cached replacement for this meal
+        const effectiveMeal = getEffectiveMealData(mealItem, currentDayKey, index);
+        
         const li = document.createElement('li');
         li.classList.add('card', 'meal-card', 'soft-shadow');
         li.dataset.day = currentDayKey;
         li.dataset.index = index;
         const mealStatusKey = `${currentDayKey}_${index}`;
 
-        const lowerName = (mealItem.meal_name || '').toLowerCase();
+        const lowerName = (effectiveMeal.meal_name || '').toLowerCase();
         const mealTypeKeywords = {
             breakfast: ['закуска'],
             lunch: ['обяд', 'обед', 'обедно хранене'],
@@ -715,23 +719,23 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
             }
         }
 
-        let itemsHtml = (mealItem.items || []).map(i => {
+        let itemsHtml = (effectiveMeal.items || []).map(i => {
             const name = i.name || 'Неизвестен продукт';
             const grams = i.grams ? `<span class="caption">(${i.grams})</span>` : '';
             return `• ${name} ${grams}`;
         }).join('<br>');
 
-        if (!(mealItem.items && mealItem.items.length > 0)) itemsHtml = '<em class="text-muted">Няма продукти.</em>';
+        if (!(effectiveMeal.items && effectiveMeal.items.length > 0)) itemsHtml = '<em class="text-muted">Няма продукти.</em>';
 
-        const recipeButtonHtml = (mealItem.recipeKey && recipeData && recipeData[mealItem.recipeKey])
-            ? `<button class="button-icon-only info" data-type="recipe" data-key="${mealItem.recipeKey}" title="Виж рецепта" aria-label="Информация за рецепта ${mealItem.meal_name || ''}"><svg class="icon"><use href="#icon-info"/></svg></button>` : '';
+        const recipeButtonHtml = (effectiveMeal.recipeKey && recipeData && recipeData[effectiveMeal.recipeKey])
+            ? `<button class="button-icon-only info" data-type="recipe" data-key="${effectiveMeal.recipeKey}" title="Виж рецепта" aria-label="Информация за рецепта ${effectiveMeal.meal_name || ''}"><svg class="icon"><use href="#icon-info"/></svg></button>` : '';
         
-        const alternativesButtonHtml = `<button class="button-icon-only alternatives-btn" data-meal-index="${index}" data-day="${currentDayKey}" title="Алтернативи" aria-label="Генерирай алтернативи за ${mealItem.meal_name || 'хранене'}"><svg class="icon"><use href="#icon-refresh-alt"/></svg></button>`;
+        const alternativesButtonHtml = `<button class="button-icon-only alternatives-btn" data-meal-index="${index}" data-day="${currentDayKey}" title="Алтернативи" aria-label="Генерирай алтернативи за ${effectiveMeal.meal_name || 'хранене'}"><svg class="icon"><use href="#icon-refresh-alt"/></svg></button>`;
 
         li.innerHTML = `
             <div class="meal-color-bar"></div>
             <div class="meal-content-wrapper">
-                <h2 class="meal-name">${mealItem.meal_name || 'Хранене'}
+                <h2 class="meal-name">${effectiveMeal.meal_name || 'Хранене'}
                     <span class="check-icon" aria-hidden="true"><svg class="icon"><use href="#icon-check"/></svg></span>
                 </h2>
                 <div class="meal-items">${itemsHtml}</div>
@@ -741,8 +745,8 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
                 ${recipeButtonHtml}
             </div>`;
 
-        // Store meal data on the element for later use
-        li.dataset.mealData = JSON.stringify(mealItem);
+        // Store effective meal data (with cache applied) on the element for later use
+        li.dataset.mealData = JSON.stringify(effectiveMeal);
 
         if (todaysMealCompletionStatus[mealStatusKey] === true) {
             li.classList.add('completed');
