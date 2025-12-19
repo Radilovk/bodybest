@@ -272,20 +272,14 @@ export function setupStaticEventListeners() {
                 // Update the meal name
                 const mealNameEl = targetCard.querySelector('.meal-name');
                 if (mealNameEl) {
-                    const checkIcon = mealNameEl.querySelector('.check-icon');
-                    const alternativesBtn = mealNameEl.querySelector('.alternatives-btn-inline');
-                    const mealNameText = document.createElement('span');
-                    mealNameText.className = 'meal-name-text';
-                    mealNameText.textContent = alternative.meal_name || 'Хранене';
+                    const mealNameText = mealNameEl.querySelector('.meal-name-text');
                     
-                    mealNameEl.innerHTML = '';
-                    mealNameEl.appendChild(mealNameText);
-                    if (alternativesBtn) {
-                        mealNameEl.appendChild(alternativesBtn); // Re-add alternatives button
+                    if (mealNameText) {
+                        mealNameText.textContent = alternative.meal_name || 'Хранене';
                     }
-                    if (checkIcon) {
-                        mealNameEl.appendChild(checkIcon); // Re-add check icon
-                    }
+                    
+                    // Meal actions (buttons and icons) are preserved automatically
+                    // No need to recreate them
                 }
                 
                 // Update the items list
