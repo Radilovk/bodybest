@@ -737,13 +737,14 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
             <div class="meal-content-wrapper">
                 <h2 class="meal-name">
                     <span class="meal-name-text">${effectiveMeal.meal_name || 'Хранене'}</span>
-                    ${alternativesButtonHtml}
-                    <span class="check-icon" aria-hidden="true"><svg class="icon"><use href="#icon-check"/></svg></span>
                 </h2>
                 <div class="meal-items">${itemsHtml}</div>
             </div>
             <div class="actions">
                 ${recipeButtonHtml}
+                ${alternativesButtonHtml}
+                <span class="checkbox-icon" aria-hidden="true"><svg class="icon"><use href="#icon-square"/></svg></span>
+                <span class="check-icon" aria-hidden="true"><svg class="icon"><use href="#icon-check"/></svg></span>
             </div>`;
 
         // Store effective meal data (with cache applied) on the element for later use
