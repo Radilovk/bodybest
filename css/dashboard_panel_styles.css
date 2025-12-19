@@ -481,10 +481,16 @@ body.dark-theme .detailed-metric-item .value-current {
   margin-bottom: var(--space-xs);
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.25rem;
+  justify-content: space-between; /* Changed from flex-wrap for better layout */
+  gap: 0.5rem; /* Increased from 0.25rem */
   line-height: var(--lh-tight);
 }
+
+.meal-list li .meal-name .meal-name-text {
+  flex: 1;
+  min-width: 0; /* Allow text truncation if needed */
+}
+
 body.vivid-theme .meal-list li .meal-name {
   color: color-mix(in srgb, var(--primary-color) 75%, var(--text-color-primary));
 }
@@ -540,14 +546,15 @@ body.vivid-theme .meal-list li .meal-name {
     animation: checkmark-pop 0.3s ease-out;
 }
 
-/* Alternatives button inline styling */
+/* Alternatives button inline styling - positioned right */
 .meal-list li .meal-name .alternatives-btn {
-    margin-left: 0;
+    margin-left: auto; /* Push to the right */
+    flex-shrink: 0; /* Prevent shrinking */
 }
 
 .meal-list li .meal-name .alternatives-btn svg.icon {
-    width: 1em;
-    height: 1em;
+    width: 1.25em; /* Slightly larger for better visibility */
+    height: 1.25em;
 }
 
 @keyframes checkmark-pop {
@@ -791,14 +798,15 @@ body.vivid-theme .tracker .metric-rating .rating-value {
 #goalCard h4 {
   position: relative;
   z-index: 1;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-color-secondary);
 }
 
 #goalCard .index-value {
   position: relative;
   z-index: 1;
-  font-size: 0.9rem;
+  font-size: var(--fs-base); /* 1rem = 16px - Унифицирано с другите index-value */
+  font-weight: 700; /* Унифицирано с другите index-value */
 }
 
 /* Подобрена анимация за tracker елементи */

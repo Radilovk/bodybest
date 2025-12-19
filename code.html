@@ -278,11 +278,11 @@
         <path d="M6 18a4 4 0 0 1-2-7.464" />
         <path d="M6.003 5.125a4 4 0 0 0-2.526 5.77" />
       </symbol>
-      <symbol id="icon-swap" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M7 10L2 15L7 20" />
-        <path d="M2 15H14C18.4183 15 22 11.4183 22 7C22 5.89543 21.7603 4.84632 21.3304 3.90193" />
-        <path d="M17 4L22 9L17 14" />
-        <path d="M22 9H10C5.58172 9 2 12.5817 2 17C2 18.1046 2.23969 19.1537 2.66962 20.0981" />
+      <symbol id="icon-swap" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Circular arrows for alternatives - more aesthetic -->
+        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+        <path d="M8 12 L12 8 L16 12" />
+        <path d="M16 12 L12 16 L8 12" />
       </symbol>
       <symbol id="icon-refresh-alt" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 10c0-4.97-4.03-9-9-9-3.93 0-7.24 2.51-8.48 6" />
@@ -586,9 +586,9 @@
               <button
                 id="openExtraMealModalBtn"
                 class="button-secondary"
-                style="width: 100%"
+                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"
               >
-                <svg class="icon"><use href="#icon-utensils"></use></svg> Добави извънредно хранене
+                <svg class="icon"><use href="#icon-utensils"></use></svg> <span>+ добави хранене</span>
               </button>
             </div>
             <!-- Край Меню -->
