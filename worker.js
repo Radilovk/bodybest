@@ -9230,7 +9230,9 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
 
     let indexFieldsLogged = 0;
     let indexFieldsExpected = 0;
-    const indexKeys = ['mood','energy','calmness','sleep','hydration'];
+    // Check for both new and legacy field names for backward compatibility
+    const indexKeys = ['health_tone','activity','stress','sleep','hydration'];
+    const legacyIndexKeys = ['energy','mood','calmness','sleep','hydration'];
 
     let totalPlannedMealsInPeriod = 0;
     let totalCompletedMealsInPeriod = 0;
@@ -9272,8 +9274,10 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
 
             if (hasDataLoggedThisDay) {
                 indexFieldsExpected += indexKeys.length;
-                indexKeys.forEach((key) => {
-                    const val = logEntryForDay.data[key];
+                // Check for both new and legacy field names
+                indexKeys.forEach((key, idx) => {
+                    const legacyKey = legacyIndexKeys[idx];
+                    const val = logEntryForDay.data[key] ?? logEntryForDay.data[legacyKey];
                     if (val !== null && val !== undefined && String(val).trim() !== '') {
                         indexFieldsLogged++;
                     }
@@ -9501,7 +9505,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         currentValueNumeric: currentHydrationNumeric,
         currentValueText: currentHydrationNumeric !== null ? `${scoreToText(currentHydrationNumeric, 'general')} (${currentHydrationNumeric.toFixed(1)}/5)` : "Няма данни",
         infoTextKey: "hydration_status_info",
-        periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
+        periodDays: analyticsPeriodDays
     });
 
     const initialBmiValue = initialWeight && heightCm ? (initialWeight / ((heightCm / 100) ** 2)) : null;
@@ -9524,7 +9528,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         currentValueNumeric: parseFloat(averageMealAdherence.toFixed(1)),
         currentValueText: `${Math.round(averageMealAdherence)}%`,
         infoTextKey: "meal_adherence_info",
-        periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
+        periodDays: analyticsPeriodDays
     });
 
     detailedAnalyticsMetrics.push({
@@ -9534,7 +9538,7 @@ async function calculateAnalyticsIndexes(userId, initialAnswers, finalPlan, logE
         currentValueNumeric: parseFloat(indexCompletionRate.toFixed(1)),
         currentValueText: `${Math.round(indexCompletionRate)}%`,
         infoTextKey: "index_completion_info",
-        periodDays: USER_ACTIVITY_LOG_LOOKBACK_DAYS_ANALYTICS
+        periodDays: analyticsPeriodDays
     });
 
     detailedAnalyticsMetrics.push({
