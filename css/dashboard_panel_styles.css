@@ -433,6 +433,10 @@ body.dark-theme .detailed-metric-item .value-current {
   color: var(--primary-color);
   margin-top: 0; /* Override global h2 margin to align text with top of card */
   margin-bottom: var(--space-xs);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 body.vivid-theme .meal-list li .meal-name {
   color: color-mix(in srgb, var(--primary-color) 75%, var(--text-color-primary));
@@ -472,7 +476,6 @@ body.vivid-theme .meal-list li .meal-name {
 
 .meal-list li .check-icon {
     display: none;
-    margin-left: 1ch; /* На един знак от името */
     font-weight: normal;
 }
 
@@ -485,9 +488,19 @@ body.vivid-theme .meal-list li .meal-name {
 }
 
 .meal-list li.completed .check-icon {
-    display: inline-block;
+    display: inline-flex;
     color: color-mix(in srgb, var(--meal-color) 60%, white); /* Същият цвят като вертикалната линия */
     animation: checkmark-pop 0.3s ease-out;
+}
+
+/* Alternatives button inline styling */
+.meal-list li .meal-name .alternatives-btn {
+    margin-left: 0;
+}
+
+.meal-list li .meal-name .alternatives-btn svg.icon {
+    width: 1em;
+    height: 1em;
 }
 
 @keyframes checkmark-pop {

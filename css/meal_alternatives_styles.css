@@ -7,26 +7,31 @@
     overflow-y: auto;
 }
 
-/* Alternatives button on meal cards */
+/* Alternatives button on meal cards - inline with meal name */
 .alternatives-btn {
-    background: var(--primary-color);
-    color: white;
+    background: transparent;
+    color: var(--icon-color-muted);
     border: none;
-    padding: 0.5rem;
-    border-radius: var(--radius-sm);
+    padding: 0.25rem;
+    border-radius: var(--radius-round);
     cursor: pointer;
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
     margin-left: 0.5rem;
+    vertical-align: middle;
+    line-height: 1;
 }
 
 .alternatives-btn:hover {
-    background: var(--primary-color-hover, var(--primary-color));
-    transform: scale(1.05);
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+body.dark-theme .alternatives-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .alternatives-btn:active {
@@ -34,8 +39,8 @@
 }
 
 .alternatives-btn .icon {
-    width: 1.2em;
-    height: 1.2em;
+    width: 1em;
+    height: 1em;
 }
 
 /* Loading state */
@@ -216,10 +221,6 @@ body.dark-theme .alternative-card:hover {
 }
 
 /* Vivid theme adjustments */
-body.vivid-theme .alternatives-btn {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-}
-
 body.vivid-theme .alternative-badge {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
 }

@@ -273,9 +273,13 @@ export function setupStaticEventListeners() {
                 const mealNameEl = targetCard.querySelector('.meal-name');
                 if (mealNameEl) {
                     const checkIcon = mealNameEl.querySelector('.check-icon');
+                    const alternativesBtn = mealNameEl.querySelector('.alternatives-btn');
                     mealNameEl.textContent = alternative.meal_name || 'Хранене';
                     if (checkIcon) {
                         mealNameEl.appendChild(checkIcon); // Re-add check icon
+                    }
+                    if (alternativesBtn) {
+                        mealNameEl.appendChild(alternativesBtn); // Re-add alternatives button
                     }
                 }
                 
