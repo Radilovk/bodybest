@@ -737,8 +737,11 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
             <div class="meal-content-wrapper">
                 <h2 class="meal-name">
                     <span class="meal-name-text">${effectiveMeal.meal_name || 'Хранене'}</span>
-                    ${alternativesButtonHtml}
-                    <span class="check-icon" aria-hidden="true"><svg class="icon"><use href="#icon-check"/></svg></span>
+                    <span class="meal-actions">
+                        ${alternativesButtonHtml}
+                        <span class="check-icon unchecked" aria-hidden="true"><svg class="icon"><use href="#icon-square"/></svg></span>
+                        <span class="check-icon checked" aria-hidden="true"><svg class="icon"><use href="#icon-check"/></svg></span>
+                    </span>
                 </h2>
                 <div class="meal-items">${itemsHtml}</div>
             </div>
