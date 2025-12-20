@@ -706,17 +706,49 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
         li.dataset.index = index;
         const mealStatusKey = `${currentDayKey}_${index}`;
 
-        const lowerName = (effectiveMeal.meal_name || '').toLowerCase();
+        // Extract meal type from ORIGINAL meal name (not replacement)
+        const originalLowerName = (mealItem.meal_name || '').toLowerCase();
         const mealTypeKeywords = {
             breakfast: ['закуска'],
             lunch: ['обяд', 'обед', 'обедно хранене'],
             dinner: ['вечеря', 'вечерно хранене', 'късна вечеря']
         };
+        
+        let mealTypePrefix = '';
+        let mealType = '';
+        
         for (const [type, words] of Object.entries(mealTypeKeywords)) {
-            if (words.some(word => lowerName.includes(word))) {
+            if (words.some(word => originalLowerName.includes(word))) {
                 li.dataset.mealType = type;
+                mealType = type;
+                // Extract the type prefix (e.g., "Закуска", "Обяд", "Вечеря")
+                const matchedWord = words.find(word => originalLowerName.includes(word));
+                if (matchedWord) {
+                    // Capitalize first letter
+                    mealTypePrefix = matchedWord.charAt(0).toUpperCase() + matchedWord.slice(1);
+                }
                 break;
             }
+        }
+        
+        // If meal is an alternative (effectiveMeal !== mealItem), show type prefix separately
+        const isAlternative = effectiveMeal !== mealItem;
+        let displayMealName = effectiveMeal.meal_name || 'Хранене';
+        
+        // If it's an alternative and we have a type prefix, ensure it's shown
+        if (isAlternative && mealTypePrefix) {
+            // Remove the type prefix from display name if it exists (to avoid duplication)
+            const lowerDisplayName = displayMealName.toLowerCase();
+            const typeWords = mealTypeKeywords[mealType] || [];
+            typeWords.forEach(word => {
+                if (lowerDisplayName.startsWith(word)) {
+                    displayMealName = displayMealName.substring(word.length).trim();
+                    // Remove leading dash or hyphen
+                    displayMealName = displayMealName.replace(/^[\s\-–—:]+/, '');
+                }
+            });
+            // Prepend the type prefix
+            displayMealName = `${mealTypePrefix} - ${displayMealName}`;
         }
 
         let itemsHtml = (effectiveMeal.items || []).map(i => {
@@ -736,11 +768,13 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
             <div class="meal-color-bar"></div>
             <div class="meal-content-wrapper">
                 <h2 class="meal-name">
-                    <span class="meal-name-text">${effectiveMeal.meal_name || 'Хранене'}</span>
+                    <span class="meal-name-text">${displayMealName}</span>
                     <span class="meal-actions">
                         ${alternativesButtonHtml}
-                        <span class="check-icon unchecked" aria-hidden="true"><svg class="icon"><use href="#icon-square"/></svg></span>
-                        <span class="check-icon checked" aria-hidden="true"><svg class="icon"><use href="#icon-check"/></svg></span>
+                        <span class="check-icon-container">
+                            <span class="check-icon unchecked" aria-hidden="true"><svg class="icon"><use href="#icon-square"/></svg></span>
+                            <span class="check-icon checked" aria-hidden="true"><svg class="icon"><use href="#icon-check"/></svg></span>
+                        </span>
                     </span>
                 </h2>
                 <div class="meal-items">${itemsHtml}</div>

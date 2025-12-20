@@ -186,7 +186,7 @@ nav.tabs.styled-tabs .tab-btn {
   flex-direction: column; 
   align-items: center;
   justify-content: center;
-  padding: var(--space-sm) var(--space-md);
+  padding: 0.5rem 0.75rem;
   flex-grow: 1; 
   flex-basis: 0; 
   transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
@@ -249,8 +249,8 @@ nav.tabs.styled-tabs .tab-btn::after {
 }
 
 nav.tabs.styled-tabs .tab-btn .tab-icon {
-  width: 1.1em; /* Further reduced for mobile-first */
-  height: 1.1em; /* Further reduced for mobile-first */
+  width: 1em;
+  height: 1em;
   margin-bottom: 0.15rem;
   flex-shrink: 0;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
@@ -259,7 +259,7 @@ nav.tabs.styled-tabs .tab-btn .tab-icon {
 }
 
 nav.tabs.styled-tabs .tab-btn .tab-label {
-  font-size: 0.6rem; /* Further reduced for cleaner mobile look */ 
+  font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   white-space: nowrap;

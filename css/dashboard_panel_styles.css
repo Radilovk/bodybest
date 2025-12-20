@@ -244,32 +244,33 @@ body.vivid-theme .index-card .index-value {
 
 #macroMetricsPreview {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-  gap: var(--space-xs);
-  margin-top: var(--space-xs);
+  grid-template-columns: repeat(auto-fit, minmax(55px, 1fr));
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
 }
 #detailedAnalyticsAccordion:not(.index-card) #macroMetricsPreview {
   display: none;
 }
 #macroMetricsPreview .macro-metric {
-  padding: var(--space-xs);
+  padding: 0.25rem;
 }
 #macroMetricsPreview .macro-icon {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
 }
 #macroMetricsPreview .macro-metric.calories .macro-icon {
   color: var(--text-color-primary);
 }
 #macroMetricsPreview .macro-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 400;
 }
 #macroMetricsPreview .macro-value {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
 }
 #macroMetricsPreview .macro-subtitle {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 400;
 }
 #macroMetricsPreview .macro-value,
@@ -563,6 +564,9 @@ body.vivid-theme .meal-list li .meal-name {
 
 /* Check icon styles - два типа икони: празно квадратче и checkmark */
 .meal-list li .check-icon {
+    position: absolute;
+    top: 0;
+    left: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -570,6 +574,7 @@ body.vivid-theme .meal-list li .meal-name {
     width: 2rem; /* 32px фиксирана ширина като бутона */
     height: 2rem; /* 32px фиксирана височина */
     flex-shrink: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .meal-list li .check-icon svg.icon {
@@ -579,26 +584,40 @@ body.vivid-theme .meal-list li .meal-name {
     stroke-width: 2;
 }
 
+/* Container за check иконите - резервира space */
+.meal-list li .meal-actions .check-icon-container {
+    position: relative;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+}
+
 /* По подразбиране показваме празното квадратче */
 .meal-list li .check-icon.unchecked {
-    display: inline-flex;
+    opacity: 1;
+    visibility: visible;
     color: var(--text-color-secondary);
-    opacity: 0.5;
+    transform: scale(1);
 }
 
 .meal-list li .check-icon.checked {
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.8);
 }
 
 /* При completed показваме checkmark и скриваме квадратчето */
 .meal-list li.completed .check-icon.unchecked {
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.8);
 }
 
 .meal-list li.completed .check-icon.checked {
-    display: inline-flex;
+    opacity: 1;
+    visibility: visible;
     color: color-mix(in srgb, var(--meal-color) 60%, white);
-    animation: checkmark-pop 0.3s ease-out;
+    transform: scale(1);
 }
 
 .meal-list li.completed .check-icon.checked svg.icon {
@@ -606,9 +625,19 @@ body.vivid-theme .meal-list li .meal-name {
     stroke: none;
 }
 
-/* При completed скриваме alternatives бутона */
+/* При completed скриваме alternatives бутона плавно */
+.meal-list li .alternatives-btn-inline {
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    opacity: 1;
+    visibility: visible;
+}
+
 .meal-list li.completed .alternatives-btn-inline {
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    width: 0;
+    padding: 0;
+    margin: 0;
 }
 
 /* Alternatives button now in actions section - consistent positioning */
@@ -844,34 +873,9 @@ body.vivid-theme .tracker .metric-rating .rating-value {
   }
 }
 
-/* Подобрения за goalCard визуализация */
+/* goalCard - консистентен със другите index карти */
 #goalCard {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color-soft);
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-#goalCard:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-left-color: var(--secondary-color);
-}
-
-#goalCard h4 {
-  position: relative;
-  z-index: 1;
-  font-weight: 600;
-  color: var(--text-color-secondary);
-}
-
-#goalCard .index-value {
-  position: relative;
-  z-index: 1;
-  font-size: var(--fs-base); /* 1rem = 16px - Унифицирано с другите index-value */
-  font-weight: 700; /* Унифицирано с другите index-value */
+  /* Не презаписваме стиловете на .index-card - използваме наследяването */
 }
 
 /* Подобрена анимация за tracker елементи */
