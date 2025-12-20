@@ -245,15 +245,15 @@ body.vivid-theme .index-card .index-value {
 #macroMetricsPreview {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(55px, 1fr));
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
 }
 #detailedAnalyticsAccordion:not(.index-card) #macroMetricsPreview {
   display: none;
 }
 #macroMetricsPreview .macro-metric {
-  padding: 0.5rem;
+  padding: 0.25rem;
 }
 #macroMetricsPreview .macro-icon {
   font-size: 0.75rem;
@@ -594,7 +594,7 @@ body.vivid-theme .meal-list li .meal-name {
 
 /* По подразбиране показваме празното квадратче */
 .meal-list li .check-icon.unchecked {
-    opacity: 0.6;
+    opacity: 1;
     visibility: visible;
     color: var(--text-color-secondary);
     transform: scale(1);
@@ -635,6 +635,9 @@ body.vivid-theme .meal-list li .meal-name {
 .meal-list li.completed .alternatives-btn-inline {
     opacity: 0;
     visibility: hidden;
+    width: 0;
+    padding: 0;
+    margin: 0;
 }
 
 /* Alternatives button now in actions section - consistent positioning */

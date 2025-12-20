@@ -72,7 +72,7 @@
 .accordion-group .accordion-container:last-child { margin-bottom: 0; }
 .accordion-header {
   background-color: color-mix(in srgb, var(--surface-background) 95%, var(--primary-color));
-  padding: 0.5rem var(--space-sm); cursor: pointer; font-weight: 500;
+  padding: 0.625rem var(--space-sm); cursor: pointer; font-weight: 500;
   font-size: 0.9rem; color: var(--primary-color); display: flex;
   justify-content: space-between; align-items: center;
   border-bottom: 1px solid transparent; transition: background-color 0.2s, border-color 0.2s;
