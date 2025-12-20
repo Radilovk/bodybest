@@ -717,16 +717,15 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
         let mealTypePrefix = '';
         let mealType = '';
         
+        // Find the first meal type keyword that appears in the original meal name
+        // If multiple keywords match, we prioritize the one that appears earliest in the name
         for (const [type, words] of Object.entries(mealTypeKeywords)) {
-            if (words.some(word => originalLowerName.includes(word))) {
+            const matchedWord = words.find(word => originalLowerName.includes(word));
+            if (matchedWord) {
                 li.dataset.mealType = type;
                 mealType = type;
-                // Extract the type prefix (e.g., "Закуска", "Обяд", "Вечеря")
-                const matchedWord = words.find(word => originalLowerName.includes(word));
-                if (matchedWord) {
-                    // Capitalize first letter
-                    mealTypePrefix = matchedWord.charAt(0).toUpperCase() + matchedWord.slice(1);
-                }
+                // Capitalize first letter for display
+                mealTypePrefix = matchedWord.charAt(0).toUpperCase() + matchedWord.slice(1);
                 break;
             }
         }
@@ -738,15 +737,22 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
         // If it's an alternative and we have a type prefix, ensure it's shown
         if (isAlternative && mealTypePrefix) {
             // Remove the type prefix from display name if it exists (to avoid duplication)
+            // We only strip the prefix when it is followed (after optional spaces)
+            // by a separator like dash or colon. This avoids breaking names like
+            // "Закуска богата на протеин", where "закуска" is part of the natural name.
             const lowerDisplayName = displayMealName.toLowerCase();
             const typeWords = mealTypeKeywords[mealType] || [];
-            typeWords.forEach(word => {
-                if (lowerDisplayName.startsWith(word)) {
-                    displayMealName = displayMealName.substring(word.length).trim();
-                    // Remove leading dash or hyphen
-                    displayMealName = displayMealName.replace(/^[\s\-–—:]+/, '');
-                }
+            const matchedTypeWord = typeWords.find(word => {
+                if (!lowerDisplayName.startsWith(word)) return false;
+                const rest = lowerDisplayName.slice(word.length);
+                const nextNonSpaceChar = rest.trimStart().charAt(0);
+                return ['-', '–', '—', ':'].includes(nextNonSpaceChar);
             });
+            if (matchedTypeWord) {
+                displayMealName = displayMealName.substring(matchedTypeWord.length);
+                // Remove leading spaces and any dash/colon separator
+                displayMealName = displayMealName.replace(/^[\s\-–—:]+/, '');
+            }
             // Prepend the type prefix
             displayMealName = `${mealTypePrefix} - ${displayMealName}`;
         }
