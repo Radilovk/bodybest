@@ -241,11 +241,3 @@ body.high-contrast .alternative-card:hover {
     font-weight: 600;
     font-size: 0.9375rem;
 }
-
-body.dark-theme .meal-items .alternative-meal-header {
-    color: var(--primary-color);
-}
-
-body.vivid-theme .meal-items .alternative-meal-header {
-    color: var(--primary-color);
-}
