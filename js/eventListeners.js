@@ -269,40 +269,33 @@ export function setupStaticEventListeners() {
                 // Update the card's meal data
                 targetCard.dataset.mealData = JSON.stringify(alternative);
                 
-                // Update the meal name - ЗАДЪЛЖИТЕЛНО: показва САМО типа хранене
-                const mealNameEl = targetCard.querySelector('.meal-name');
-                if (mealNameEl) {
-                    const mealNameText = mealNameEl.querySelector('.meal-name-text');
+                // ВАЖНО: meal-name-text НЕ се променя! Остава същият!
+                // Променяме само meal-items със алтернативно име + алтернативни продукти
+                
+                // Update the items list with alternative name + alternative items
+                const mealItemsEl = targetCard.querySelector('.meal-items');
+                if (mealItemsEl) {
+                    // Build HTML with alternative meal name as header + items list
+                    let itemsHtml = '';
                     
-                    if (mealNameText) {
-                        // Извличаме типа хранене от dataset.mealType на картата
-                        const mealType = targetCard.dataset.mealType;
-                        
-                        // Определяме правилното име за типа
-                        const mealTypeNames = {
-                            breakfast: 'Закуска',
-                            lunch: 'Обяд',
-                            dinner: 'Вечеря',
-                            snack: 'Междинно хранене'
-                        };
-                        
-                        // Показваме САМО типа хранене, без значение че е алтернатива
-                        mealNameText.textContent = mealTypeNames[mealType] || 'Хранене';
+                    // Add alternative meal name as a header/label (not replacing meal-name-text!)
+                    if (alternative.meal_name) {
+                        itemsHtml += `<strong class="alternative-meal-header">${alternative.meal_name}</strong>`;
                     }
                     
-                    // Meal actions (buttons and icons) are preserved automatically
-                    // No need to recreate them
-                }
-                
-                // Update the items list
-                const mealItemsEl = targetCard.querySelector('.meal-items');
-                if (mealItemsEl && alternative.items) {
-                    const itemsHtml = alternative.items.map(item => {
-                        const name = item.name || 'Продукт';
-                        const grams = item.grams ? `<span class="caption">(${item.grams}g)</span>` : '';
-                        return `• ${name} ${grams}`;
-                    }).join('<br>');
-                    mealItemsEl.innerHTML = itemsHtml || '<em class="text-muted">Няма продукти.</em>';
+                    // Add alternative items
+                    if (alternative.items && alternative.items.length > 0) {
+                        const itemsList = alternative.items.map(item => {
+                            const name = item.name || 'Продукт';
+                            const grams = item.grams ? `<span class="caption">(${item.grams}g)</span>` : '';
+                            return `• ${name} ${grams}`;
+                        }).join('<br>');
+                        itemsHtml += itemsList;
+                    } else {
+                        itemsHtml += '<em class="text-muted">Няма продукти.</em>';
+                    }
+                    
+                    mealItemsEl.innerHTML = itemsHtml;
                 }
                 
                 console.log('UI updated successfully for meal card');
