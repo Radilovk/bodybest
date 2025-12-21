@@ -269,13 +269,25 @@ export function setupStaticEventListeners() {
                 // Update the card's meal data
                 targetCard.dataset.mealData = JSON.stringify(alternative);
                 
-                // Update the meal name
+                // Update the meal name - ЗАДЪЛЖИТЕЛНО: показва САМО типа хранене
                 const mealNameEl = targetCard.querySelector('.meal-name');
                 if (mealNameEl) {
                     const mealNameText = mealNameEl.querySelector('.meal-name-text');
                     
                     if (mealNameText) {
-                        mealNameText.textContent = alternative.meal_name || 'Хранене';
+                        // Извличаме типа хранене от dataset.mealType на картата
+                        const mealType = targetCard.dataset.mealType;
+                        
+                        // Определяме правилното име за типа
+                        const mealTypeNames = {
+                            breakfast: 'Закуска',
+                            lunch: 'Обяд',
+                            dinner: 'Вечеря',
+                            snack: 'Междинно хранене'
+                        };
+                        
+                        // Показваме САМО типа хранене, без значение че е алтернатива
+                        mealNameText.textContent = mealTypeNames[mealType] || 'Хранене';
                     }
                     
                     // Meal actions (buttons and icons) are preserved automatically

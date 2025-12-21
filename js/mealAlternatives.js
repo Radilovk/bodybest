@@ -327,7 +327,7 @@ export async function selectAlternative(alternative, originalMeal, mealIndex, da
         }
         
         // Show success message
-        showToast(`Храненето е заменено с "${alternative.meal_name}". Промяната ще бъде записана при маркиране като завършено.`, false, 4000);
+        showToast(`Храненето е заменено успешно. Промяната ще бъде записана при маркиране като завършено.`, false, 4000);
         
     } catch (error) {
         console.error('Error selecting alternative:', error);
