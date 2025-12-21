@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tab Design Demo - ONE BODY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet" />
+    <link href="css/base_styles.css" rel="stylesheet" />
+    <link href="css/layout_styles.css" rel="stylesheet" />
+    <link href="css/components_styles.css" rel="stylesheet" />
+    <link href="css/responsive_styles.css" rel="stylesheet" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: var(--bg-color);
+        }
+        .demo-container {
+            padding: var(--space-lg);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .demo-section {
+            margin-bottom: var(--space-xl);
+        }
+        .demo-section h2 {
+            margin-bottom: var(--space-md);
+            color: var(--text-color-primary);
+        }
+        .theme-switcher {
+            position: fixed;
+            top: var(--space-md);
+            right: var(--space-md);
+            display: flex;
+            gap: var(--space-sm);
+            z-index: 1000;
+        }
+        .theme-switcher button {
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-color-primary);
+            cursor: pointer;
+            font-size: var(--fs-sm);
+            transition: all 0.2s ease;
+        }
+        .theme-switcher button:hover {
+            background: var(--primary-color);
+            color: var(--text-color-on-primary);
+            border-color: var(--primary-color);
+        }
+        .demo-info {
+            background: var(--card-bg);
+            padding: var(--space-lg);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-lg);
+            box-shadow: var(--shadow-md);
+        }
+        .demo-info h1 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+        .demo-info ul {
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- SVG Icons -->
+    <svg style="position: absolute; width: 0; height: 0" aria-hidden="true">
+        <symbol id="icon-chart-line" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+            <path d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"/>
+        </symbol>
+        <symbol id="icon-user" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M15.75 6C15.75 8.07107 14.071 9.75 12 9.75C9.9289 9.75 8.24996 8.07107 8.24996 6C8.24996 3.92893 9.9289 2.25 12 2.25C14.071 2.25 15.75 3.92893 15.75 6Z"/>
+            <path d="M4.5011 20.1182C4.5714 16.0369 7.90184 12.75 12 12.75C16.0982 12.75 19.4287 16.0371 19.4988 20.1185C17.216 21.166 14.6764 21.75 12.0003 21.75C9.32396 21.75 6.78406 21.1659 4.5011 20.1182Z"/>
+        </symbol>
+        <symbol id="icon-calendar" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M6.75 3V5.25M17.25 3V5.25M3 18.75V7.5C3 6.25736 4.00736 5.25 5.25 5.25H18.75C19.9926 5.25 21 6.25736 21 7.5V18.75M3 18.75C3 19.9926 4.00736 21 5.25 21H18.75C19.9926 21 21 19.9926 21 18.75M3 18.75V11.25C3 10.0074 4.00736 9 5.25 9H18.75C19.9926 9 21 10.0074 21 11.25V18.75"/>
+        </symbol>
+        <symbol id="icon-lightbulb" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+            <path d="M12,2A7,7 0 0,0 5,9C5,11.38 6.19,13.47 8,14.74V17A1,1 0 0,0 9,18H15A1,1 0 0,0 16,17V14.74C17.81,13.47 19,11.38 19,9A7,7 0 0,0 12,2M9,21A1,1 0 0,0 10,22H14A1,1 0 0,0 15,21V20H9V21Z"/>
+        </symbol>
+    </svg>
+
+    <!-- Theme Switcher -->
+    <div class="theme-switcher">
+        <button onclick="setTheme('light')">Light</button>
+        <button onclick="setTheme('dark')">Dark</button>
+        <button onclick="setTheme('vivid')">Vivid</button>
+    </div>
+
+    <!-- Header (simplified) -->
+    <header>
+        <div class="header-logo">
+            <div style="width: 50px; height: 50px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--primary-color);">OB</div>
+        </div>
+        <div class="header-user-name">Demo User</div>
+        <button id="menu-toggle" aria-label="Menu">☰</button>
+    </header>
+
+    <!-- Tabs Navigation - THE MAIN DEMO -->
+    <nav class="tabs styled-tabs" role="tablist" aria-label="Main navigation">
+        <button id="dash-tab" class="tab-btn" role="tab" aria-selected="true" aria-controls="dash-panel">
+            <svg class="tab-icon" aria-hidden="true"><use href="#icon-chart-line"></use></svg>
+            <span class="tab-label">Табло</span>
+        </button>
+        <button id="profile-tab" class="tab-btn" role="tab" aria-selected="false" aria-controls="profile-panel">
+            <svg class="tab-icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+            <span class="tab-label">Профил</span>
+        </button>
+        <button id="week-tab" class="tab-btn" role="tab" aria-selected="false" aria-controls="week-panel">
+            <svg class="tab-icon" aria-hidden="true"><use href="#icon-calendar"></use></svg>
+            <span class="tab-label">План</span>
+        </button>
+        <button id="recs-tab" class="tab-btn" role="tab" aria-selected="false" aria-controls="recs-panel">
+            <svg class="tab-icon" aria-hidden="true"><use href="#icon-lightbulb"></use></svg>
+            <span class="tab-label">Съвети</span>
+        </button>
+    </nav>
+
+    <!-- Demo Content -->
+    <main style="padding-top: var(--space-md);">
+        <div class="demo-container">
+            <div class="demo-info">
+                <h1>🎨 Redesigned Tabs Demo</h1>
+                <p><strong>Основни подобрения:</strong></p>
+                <ul>
+                    <li><strong>Икони:</strong> Намалени от 1em на 20px за по-балансиран вид</li>
+                    <li><strong>Надписи:</strong> Подобрена четливост (0.6875rem)</li>
+                    <li><strong>Градиенти:</strong> 3-цветен gradient за модерен вид</li>
+                    <li><strong>Hover ефекти:</strong> Radial glow с smooth animations</li>
+                    <li><strong>Active индикатор:</strong> Светеща линия с box-shadow</li>
+                    <li><strong>Теми:</strong> Адаптиран за Light, Dark и Vivid теми</li>
+                </ul>
+                <p><em>Кликнете върху табовете за да видите анимациите! Сменете темата с бутоните горе вдясно.</em></p>
+            </div>
+
+            <div class="demo-section">
+                <h2>Дизайн характеристики:</h2>
+                <div style="background: var(--card-bg); padding: var(--space-md); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+                    <ul style="line-height: 1.8;">
+                        <li><strong>Visual Hierarchy:</strong> Ясна визуална йерархия с баланс между икони и текст</li>
+                        <li><strong>Touch-Friendly:</strong> 44px минимална височина за touch targets</li>
+                        <li><strong>Smooth Transitions:</strong> Cubic-bezier(0.4, 0, 0.2, 1) за плавни анимации</li>
+                        <li><strong>Accessibility:</strong> ARIA атрибути и keyboard navigation</li>
+                        <li><strong>Performance:</strong> Hardware-accelerated transforms</li>
+                        <li><strong>Modern Effects:</strong> Subtle gradients, glows и shadows</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Tab functionality
+        const tabs = document.querySelectorAll('.tab-btn');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.setAttribute('aria-selected', 'false'));
+                tab.setAttribute('aria-selected', 'true');
+            });
+        });
+
+        // Theme switcher
+        function setTheme(theme) {
+            document.body.classList.remove('light-theme', 'dark-theme', 'vivid-theme');
+            if (theme !== 'light') {
+                document.body.classList.add(theme + '-theme');
+            }
+        }
+    </script>
+</body>
+</html>
