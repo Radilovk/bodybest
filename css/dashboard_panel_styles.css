@@ -518,7 +518,7 @@ body.dark-theme .detailed-metric-item .value-current {
   flex-shrink: 0;
   position: absolute;
   right: 0.5rem; /* Фиксирано на 0.5rem от десния край на контейнера (li) */
-  top: calc(var(--space-sm) + 1rem); /* Центрирано спрямо meal-name: padding на li (16px) + половината от min-height (2rem / 2 = 1rem) */
+  top: calc(var(--space-sm) + 1rem); /* Центрирано спрямо meal-name: padding на li + половината от min-height на meal-name (2rem / 2) */
   transform: translateY(-50%); /* Центриране по вертикала */
 }
 
