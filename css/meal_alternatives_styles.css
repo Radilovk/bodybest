@@ -232,3 +232,20 @@ body.high-contrast .alternative-card {
 body.high-contrast .alternative-card:hover {
     border-width: 4px;
 }
+
+/* Alternative meal name header in meal-items section (after selection) */
+.meal-items .alternative-meal-header {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.9375rem;
+}
+
+body.dark-theme .meal-items .alternative-meal-header {
+    color: var(--primary-color);
+}
+
+body.vivid-theme .meal-items .alternative-meal-header {
+    color: var(--primary-color);
+}

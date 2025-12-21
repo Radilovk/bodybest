@@ -280,7 +280,7 @@ export function setupStaticEventListeners() {
                     
                     // Add alternative meal name as a header/label (not replacing meal-name-text!)
                     if (alternative.meal_name) {
-                        itemsHtml += `<strong style="display: block; margin-bottom: 0.5rem; color: var(--primary-color);">${alternative.meal_name}</strong>`;
+                        itemsHtml += `<strong class="alternative-meal-header">${alternative.meal_name}</strong>`;
                     }
                     
                     // Add alternative items
