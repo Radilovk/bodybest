@@ -735,7 +735,7 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
         const isAlternative = effectiveMeal !== mealItem;
         let displayMealName = effectiveMeal.meal_name || 'Хранене';
         
-        // If it's an alternative and we have a type prefix, ensure it's shown
+        // ЗАДЪЛЖИТЕЛНО: Запази заглавието (закуска/обяд/вечеря) при замяна на хранене
         if (isAlternative && mealTypePrefix) {
             // Remove the type prefix from display name if it exists (to avoid duplication)
             const lowerDisplayName = displayMealName.toLowerCase();
@@ -747,8 +747,11 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
                     displayMealName = displayMealName.replace(/^[\s\-–—:]+/, '');
                 }
             });
-            // Prepend the type prefix
+            // Prepend the type prefix - винаги показваме типа хранене
             displayMealName = `${mealTypePrefix} - ${displayMealName}`;
+        } else if (!isAlternative && !mealTypePrefix && originalLowerName) {
+            // Ако не е намерен тип, но има оригинално име, използваме целия оригинален текст
+            displayMealName = mealItem.meal_name || displayMealName;
         }
 
         let itemsHtml = (effectiveMeal.items || []).map(i => {

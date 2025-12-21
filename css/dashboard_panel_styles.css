@@ -485,11 +485,14 @@ body.dark-theme .detailed-metric-item .value-current {
   justify-content: space-between; /* Разпределя текста и действията */
   gap: var(--space-xs);
   line-height: var(--lh-tight);
+  position: relative; /* За позициониране на абсолютни деца */
+  padding-right: 80px; /* Пространство за meal-actions (2 бутона + gap) */
 }
 
 .meal-list li .meal-name .meal-name-text {
   flex: 1;
   min-width: 0; /* Allow text truncation if needed */
+  padding-right: var(--space-xs); /* Допълнително пространство */
 }
 
 /* Container for buttons and icons - fixed position on the right */
@@ -498,7 +501,10 @@ body.dark-theme .detailed-metric-item .value-current {
   align-items: center;
   gap: 0.5rem; /* 8px между бутони и икони */
   flex-shrink: 0;
-  margin-left: auto;
+  position: absolute;
+  right: 12px; /* Фиксирана позиция от дясната страна */
+  top: 50%;
+  transform: translateY(-50%); /* Центриране по вертикала */
 }
 
 /* Alternatives button - smaller and compact */
@@ -598,19 +604,22 @@ body.vivid-theme .meal-list li .meal-name {
     visibility: visible;
     color: var(--text-color-secondary);
     transform: scale(1);
+    z-index: 1; /* Под checkmark */
 }
 
 .meal-list li .check-icon.checked {
     opacity: 0;
     visibility: hidden;
     transform: scale(0.8);
+    z-index: 2; /* Над квадратчето */
 }
 
-/* При completed показваме checkmark и скриваме квадратчето */
+/* При completed показваме и квадратчето и checkmark заедно */
 .meal-list li.completed .check-icon.unchecked {
-    opacity: 0;
-    visibility: hidden;
-    transform: scale(0.8);
+    opacity: 1; /* ОСТАВА ВИДИМО */
+    visibility: visible; /* ОСТАВА ВИДИМО */
+    color: var(--text-color-secondary);
+    transform: scale(1);
 }
 
 .meal-list li.completed .check-icon.checked {
