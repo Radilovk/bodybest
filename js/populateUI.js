@@ -716,12 +716,10 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
         };
         
         let mealTypePrefix = '';
-        let mealType = '';
         
         for (const [type, words] of Object.entries(mealTypeKeywords)) {
             if (words.some(word => originalLowerName.includes(word))) {
                 li.dataset.mealType = type;
-                mealType = type;
                 // Extract the type prefix (e.g., "Закуска", "Обяд", "Вечеря", "Междинно хранене")
                 const matchedWord = words.find(word => originalLowerName.includes(word));
                 if (matchedWord) {
@@ -732,35 +730,25 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
             }
         }
         
-        // If meal is an alternative (effectiveMeal !== mealItem), show type prefix separately
-        const isAlternative = effectiveMeal !== mealItem;
-        let displayMealName = effectiveMeal.meal_name || 'Хранене';
+        // ЗАДЪЛЖИТЕЛНО: meal_name винаги показва САМО типа хранене (закуска/обяд/вечеря/междинно хранене)
+        // НИКОГА не показва име на храна или продукт - това е в .meal-items секцията
+        let displayMealName;
         
-        // ЗАДЪЛЖИТЕЛНО: Запази заглавието (закуска/обяд/вечеря/междинно хранене) при замяна на хранене
-        if (isAlternative) {
-            if (mealTypePrefix) {
-                // Remove the type prefix from display name if it exists (to avoid duplication)
-                const lowerDisplayName = displayMealName.toLowerCase();
-                const typeWords = mealTypeKeywords[mealType] || [];
-                typeWords.forEach(word => {
-                    if (lowerDisplayName.startsWith(word)) {
-                        displayMealName = displayMealName.substring(word.length).trim();
-                        // Remove leading dash or hyphen
-                        displayMealName = displayMealName.replace(/^[\s\-–—:]+/, '');
-                    }
-                });
-                // Prepend the type prefix - винаги показваме типа хранене
-                displayMealName = `${mealTypePrefix} - ${displayMealName}`;
+        if (mealTypePrefix) {
+            // Показваме САМО типа хранене, без значение дали е оригинал или алтернатива
+            displayMealName = mealTypePrefix;
+        } else {
+            // Fallback ако не е разпознат типа (не трябва да се случва нормално)
+            // Опитваме се да извлечем от оригиналното име
+            const isAlternative = effectiveMeal !== mealItem;
+            if (!isAlternative && originalLowerName) {
+                // Ако е оригинално хранене и има име, използваме целия оригинален текст
+                displayMealName = mealItem.meal_name || 'Хранене';
             } else {
-                // Ако няма мач на тип (липсва закуска/обяд/вечеря), но е алтернатива
-                // Показваме само името на алтернативата
-                // НО ВНИМАНИЕ: Това не трябва да се случи, защото оригиналното хранене винаги трябва да има тип
-                console.warn('Alternative meal without original type prefix detected:', mealItem.meal_name);
-                displayMealName = effectiveMeal.meal_name || 'Хранене';
+                // Ако е алтернатива и няма разпознат тип, използваме generic
+                displayMealName = 'Хранене';
+                console.warn('Meal without recognized type prefix:', mealItem.meal_name);
             }
-        } else if (!isAlternative && !mealTypePrefix && originalLowerName) {
-            // Ако не е намерен тип, но има оригинално име, използваме целия оригинален текст
-            displayMealName = mealItem.meal_name || displayMealName;
         }
 
         let itemsHtml = (effectiveMeal.items || []).map(i => {
