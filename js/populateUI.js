@@ -711,7 +711,8 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
         const mealTypeKeywords = {
             breakfast: ['закуска'],
             lunch: ['обяд', 'обед', 'обедно хранене'],
-            dinner: ['вечеря', 'вечерно хранене', 'късна вечеря']
+            dinner: ['вечеря', 'вечерно хранене', 'късна вечеря'],
+            snack: ['междинно', 'междинно хранене', 'снакс']
         };
         
         let mealTypePrefix = '';
@@ -721,7 +722,7 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
             if (words.some(word => originalLowerName.includes(word))) {
                 li.dataset.mealType = type;
                 mealType = type;
-                // Extract the type prefix (e.g., "Закуска", "Обяд", "Вечеря")
+                // Extract the type prefix (e.g., "Закуска", "Обяд", "Вечеря", "Междинно хранене")
                 const matchedWord = words.find(word => originalLowerName.includes(word));
                 if (matchedWord) {
                     // Capitalize first letter
@@ -735,20 +736,28 @@ function populateDashboardDailyPlan(week1Menu, dailyLogs, recipeData) {
         const isAlternative = effectiveMeal !== mealItem;
         let displayMealName = effectiveMeal.meal_name || 'Хранене';
         
-        // ЗАДЪЛЖИТЕЛНО: Запази заглавието (закуска/обяд/вечеря) при замяна на хранене
-        if (isAlternative && mealTypePrefix) {
-            // Remove the type prefix from display name if it exists (to avoid duplication)
-            const lowerDisplayName = displayMealName.toLowerCase();
-            const typeWords = mealTypeKeywords[mealType] || [];
-            typeWords.forEach(word => {
-                if (lowerDisplayName.startsWith(word)) {
-                    displayMealName = displayMealName.substring(word.length).trim();
-                    // Remove leading dash or hyphen
-                    displayMealName = displayMealName.replace(/^[\s\-–—:]+/, '');
-                }
-            });
-            // Prepend the type prefix - винаги показваме типа хранене
-            displayMealName = `${mealTypePrefix} - ${displayMealName}`;
+        // ЗАДЪЛЖИТЕЛНО: Запази заглавието (закуска/обяд/вечеря/междинно хранене) при замяна на хранене
+        if (isAlternative) {
+            if (mealTypePrefix) {
+                // Remove the type prefix from display name if it exists (to avoid duplication)
+                const lowerDisplayName = displayMealName.toLowerCase();
+                const typeWords = mealTypeKeywords[mealType] || [];
+                typeWords.forEach(word => {
+                    if (lowerDisplayName.startsWith(word)) {
+                        displayMealName = displayMealName.substring(word.length).trim();
+                        // Remove leading dash or hyphen
+                        displayMealName = displayMealName.replace(/^[\s\-–—:]+/, '');
+                    }
+                });
+                // Prepend the type prefix - винаги показваме типа хранене
+                displayMealName = `${mealTypePrefix} - ${displayMealName}`;
+            } else {
+                // Ако няма мач на тип (липсва закуска/обяд/вечеря), но е алтернатива
+                // Показваме само името на алтернативата
+                // НО ВНИМАНИЕ: Това не трябва да се случи, защото оригиналното хранене винаги трябва да има тип
+                console.warn('Alternative meal without original type prefix detected:', mealItem.meal_name);
+                displayMealName = effectiveMeal.meal_name || 'Хранене';
+            }
         } else if (!isAlternative && !mealTypePrefix && originalLowerName) {
             // Ако не е намерен тип, но има оригинално име, използваме целия оригинален текст
             displayMealName = mealItem.meal_name || displayMealName;
