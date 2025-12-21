@@ -66,12 +66,12 @@
     gap: 0.3rem;
   }
   nav.tabs.styled-tabs .tab-btn .tab-icon {
-    width: 0.75em;
-    height: 0.75em;
+    width: 1.3em;
+    height: 1.3em;
   }
   nav.tabs.styled-tabs .tab-btn .tab-label {
-    font-size: 0.7rem;
-    letter-spacing: 0.3px;
+    font-size: 0.65rem;
+    letter-spacing: 0.4px;
   }
 
   .note-base { flex-direction: column; gap: var(--space-xs); align-items: flex-start;}
@@ -239,12 +239,12 @@
     gap: 0.35rem;
   }
   nav.tabs.styled-tabs .tab-btn .tab-icon {
-    width: 0.8em;
-    height: 0.8em;
+    width: 1.4em;
+    height: 1.4em;
   }
   nav.tabs.styled-tabs .tab-btn .tab-label {
-    font-size: 0.75rem;
-    letter-spacing: 0.4px;
+    font-size: 0.65rem;
+    letter-spacing: 0.45px;
   }
 
   .rating-square { 
