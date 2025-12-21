@@ -415,6 +415,7 @@ body.dark-theme .detailed-metric-item .value-current {
   border: 1px solid var(--border-color-soft);
   border-radius: var(--radius-md);
   transition: background-color 0.2s;
+  position: relative; /* За позициониране на meal-actions */
 }
 
 .meal-card {
@@ -478,7 +479,7 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-list li .meal-content-wrapper {
   flex-grow: 1;
-  padding-right: var(--space-xs); /* Намалено от var(--space-md) за по-близко подравняване */
+  padding-right: 0; /* Премахнато - meal-actions ще управлява собственото си позициониране */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -495,7 +496,7 @@ body.dark-theme .detailed-metric-item .value-current {
   justify-content: space-between; /* Разпределя текста и действията */
   gap: var(--space-xs);
   line-height: var(--lh-tight);
-  position: relative; /* За позициониране на абсолютни деца */
+  position: static; /* Променено от relative - meal-actions ще се позиционира спрямо li */
   padding-right: 0; /* Премахнато padding - ще използваме margin вместо това */
   min-height: 2rem; /* Осигурява минимална височина за стабилно позициониране на meal-actions */
 }
@@ -513,11 +514,11 @@ body.dark-theme .detailed-metric-item .value-current {
 .meal-list li .meal-name .meal-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* 8px между бутони и икони - еднаква с margin-right */
+  gap: 0.5rem; /* 8px между бутони и икони - еднаква с отстоянието от десния край */
   flex-shrink: 0;
   position: absolute;
-  right: 0.5rem; /* Фиксирана позиция от дясната страна - равна на gap между елементите */
-  top: 50%;
+  right: 0.5rem; /* Фиксирано на 0.5rem от десния край на контейнера (li) */
+  top: calc(var(--space-sm) + 1rem); /* Центрирано спрямо meal-name: padding на li + половината от min-height на meal-name (2rem / 2) */
   transform: translateY(-50%); /* Центриране по вертикала */
 }
 
