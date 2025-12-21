@@ -445,6 +445,12 @@ body.dark-theme .detailed-metric-item .value-current {
   border-left: 4px solid var(--meal-color);
 }
 
+.meal-card[data-meal-type='snack'] {
+  --meal-color: var(--accent-color);
+  background: color-mix(in srgb, var(--surface-background) 95%, var(--meal-color));
+  border-left: 4px solid var(--meal-color);
+}
+
 /* Meal color bar is no longer needed since we use border-left */
 .meal-color-bar {
   display: none;
@@ -460,6 +466,10 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-card[data-meal-type='breakfast']:hover {
   background-color: color-mix(in srgb, var(--surface-background) 92%, var(--secondary-color));
+}
+
+.meal-card[data-meal-type='snack']:hover {
+  background-color: color-mix(in srgb, var(--surface-background) 92%, var(--accent-color));
 }
 
 .meal-card:hover {
@@ -486,23 +496,23 @@ body.dark-theme .detailed-metric-item .value-current {
   gap: var(--space-xs);
   line-height: var(--lh-tight);
   position: relative; /* За позициониране на абсолютни деца */
-  padding-right: 80px; /* Пространство за meal-actions (2 бутона + gap) */
+  padding-right: 0; /* Премахнато padding - ще използваме margin вместо това */
 }
 
 .meal-list li .meal-name .meal-name-text {
   flex: 1;
   min-width: 0; /* Allow text truncation if needed */
-  padding-right: var(--space-xs); /* Допълнително пространство */
+  margin-right: calc(2rem + 2rem + 0.5rem + 0.5rem); /* Space for: btn(2rem) + gap(0.5rem) + check(2rem) + right-margin(0.5rem) */
 }
 
 /* Container for buttons and icons - fixed position on the right */
 .meal-list li .meal-name .meal-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* 8px между бутони и икони */
+  gap: 0.5rem; /* 8px между бутони и икони - еднаква с margin-right */
   flex-shrink: 0;
   position: absolute;
-  right: 12px; /* Фиксирана позиция от дясната страна */
+  right: 0.5rem; /* Фиксирана позиция от дясната страна - равна на gap между елементите */
   top: 50%;
   transform: translateY(-50%); /* Центриране по вертикала */
 }
