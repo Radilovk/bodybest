@@ -278,7 +278,7 @@ nav.tabs.styled-tabs .tab-btn .tab-icon {
 }
 
 nav.tabs.styled-tabs .tab-btn .tab-label {
-  font-size: 0.65rem;
+  font-size: 0.55rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -286,10 +286,11 @@ nav.tabs.styled-tabs .tab-btn .tab-label {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   opacity: 0.9;
+  color: rgba(230, 240, 250, 0.95);
 }
 
 nav.tabs.styled-tabs .tab-btn:hover {
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(240, 248, 255, 0.98);
   background-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -302,6 +303,7 @@ nav.tabs.styled-tabs .tab-btn:hover .tab-icon {
 nav.tabs.styled-tabs .tab-btn:hover .tab-label {
   letter-spacing: 0.7px;
   opacity: 1;
+  color: rgba(240, 250, 255, 1);
 }
 
 nav.tabs.styled-tabs .tab-btn:active {
@@ -309,7 +311,7 @@ nav.tabs.styled-tabs .tab-btn:active {
 }
 
 nav.tabs.styled-tabs .tab-btn[aria-selected="true"] {
-  color: #ffffff;
+  color: rgba(245, 250, 255, 1);
   font-weight: 700;
   background: linear-gradient(
     180deg,
@@ -334,6 +336,7 @@ nav.tabs.styled-tabs .tab-btn[aria-selected="true"] .tab-icon {
 nav.tabs.styled-tabs .tab-btn[aria-selected="true"] .tab-label {
   letter-spacing: 0.8px;
   opacity: 1;
+  color: rgba(250, 255, 255, 1);
 }
 
 @keyframes tabIconPulse {
