@@ -478,7 +478,7 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-list li .meal-content-wrapper {
   flex-grow: 1;
-  padding-right: var(--space-xs); /* Намалено от var(--space-md) за по-близко подравняване */
+  padding-right: 0; /* Премахнато - meal-actions е вече absolute спрямо meal-card */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -492,10 +492,10 @@ body.dark-theme .detailed-metric-item .value-current {
   margin-bottom: var(--space-xs);
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Разпределя текста и действията */
+  justify-content: flex-start; /* Променено от space-between - meal-actions ще бъде absolute */
   gap: var(--space-xs);
   line-height: var(--lh-tight);
-  position: relative; /* За позициониране на абсолютни деца */
+  position: static; /* Променено от relative - meal-actions ще бъде позициониран спрямо meal-card */
   padding-right: 0; /* Премахнато padding - ще използваме margin вместо това */
   min-height: 2rem; /* Осигурява минимална височина за стабилно позициониране на meal-actions */
 }
@@ -509,16 +509,17 @@ body.dark-theme .detailed-metric-item .value-current {
   text-overflow: ellipsis; /* Показва ... за отрязания текст */
 }
 
-/* Container for buttons and icons - fixed position on the right */
+/* Container for buttons and icons - fixed position on the right, relative to meal-card */
 .meal-list li .meal-name .meal-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* 8px между бутони и икони - еднаква с margin-right */
+  gap: 0.5rem; /* 8px между бутони и икони - еднаква с right margin */
   flex-shrink: 0;
   position: absolute;
-  right: 0.5rem; /* Фиксирана позиция от дясната страна - равна на gap между елементите */
-  top: 50%;
-  transform: translateY(-50%); /* Центриране по вертикала */
+  right: 0.5rem; /* Фиксирана позиция от дясната страна на meal-card - равна на gap между елементите */
+  top: var(--space-sm); /* Позициониране от горния край на meal-card (равно на padding на li) */
+  height: 2rem; /* Височината на meal-name min-height */
+  align-items: center; /* Вертикално центриране на иконите */
 }
 
 /* Alternatives button - smaller and compact */
