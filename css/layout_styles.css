@@ -144,13 +144,16 @@ header h1 { color: var(--header-title-color); margin: 0; font-size: clamp(1.3rem
    ========================================================================== */
 nav.tabs {
   display: flex; flex-wrap: nowrap; background: var(--surface-background);
-  box-shadow: var(--shadow-sm); border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.12), 0 -4px 24px rgba(0,0,0,0.08);
+  border-top: 1px solid var(--border-color);
   overflow-x: auto;
-  position: sticky;
-  top: var(--header-height);
-  z-index: 990;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 999;
   height: var(--tabs-height);
-  position: relative;
 }
 nav.tabs::-webkit-scrollbar { height: 4px; }
 nav.tabs::-webkit-scrollbar-track { background: transparent; }
@@ -175,12 +178,12 @@ nav.tabs.styled-tabs {
   );
   color: var(--text-color-on-primary);
   border-bottom: none;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08), 
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12), 
+              0 -4px 24px rgba(0, 0, 0, 0.08),
               0 -1px 0 rgba(255, 255, 255, 0.1) inset;
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border-top: 1px solid rgba(255, 255, 255, 0.15);
-  position: relative;
   overflow: hidden;
 }
 
@@ -257,7 +260,7 @@ nav.tabs.styled-tabs .tab-btn:hover::before {
 nav.tabs.styled-tabs .tab-btn::after {
   content: '';
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 50%;
   width: 0;
   height: 2.5px;
@@ -272,8 +275,8 @@ nav.tabs.styled-tabs .tab-btn::after {
   transform: translateX(-50%);
   transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.5),
-              0 2px 4px rgba(255, 255, 255, 0.3);
-  border-radius: 2px 2px 0 0;
+              0 -2px 4px rgba(255, 255, 255, 0.3);
+  border-radius: 0 0 2px 2px;
 }
 
 nav.tabs.styled-tabs .tab-btn .tab-icon {
@@ -351,7 +354,8 @@ body.dark-theme nav.tabs.styled-tabs {
     var(--primary-color) 50%,
     color-mix(in srgb, var(--primary-color) 85%, black) 100%
   );
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3), 
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.3), 
+              0 -4px 24px rgba(0, 0, 0, 0.2),
               0 -1px 0 rgba(255, 255, 255, 0.08) inset;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -389,7 +393,8 @@ body.vivid-theme nav.tabs.styled-tabs {
     var(--primary-color) 40%,
     color-mix(in srgb, var(--primary-color) 80%, var(--secondary-color)) 100%
   );
-  box-shadow: 0 2px 16px rgba(0, 217, 255, 0.2), 
+  box-shadow: 0 -2px 16px rgba(0, 217, 255, 0.25), 
+              0 -4px 24px rgba(0, 217, 255, 0.15),
               0 -1px 0 rgba(255, 255, 255, 0.12) inset;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
@@ -436,7 +441,8 @@ body.vivid-theme nav.tabs.styled-tabs .tab-btn[aria-selected="true"] .tab-icon {
 }
 
 main { 
-  padding-top: var(--space-md); 
+  padding-top: var(--space-md);
+  padding-bottom: calc(var(--tabs-height) + var(--space-md));
 }
 .tab-content { display: none; animation: fadeInPanel 0.45s ease-out; }
 .tab-content.active-tab-content { display: block; }
