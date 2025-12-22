@@ -204,7 +204,7 @@
   cursor: pointer;
 }
 #chat-fab {
-  bottom: var(--space-lg); right: var(--space-lg);
+  bottom: calc(var(--tabs-height) + var(--space-lg)); right: var(--space-lg);
   background-color: var(--fab-bg); color: var(--fab-icon);
 }
 #chat-fab.notification::after {
@@ -231,7 +231,7 @@
   animation: spin 1s linear infinite;
 }
 #feedback-fab {
-  bottom: var(--space-lg); left: var(--space-lg);
+  bottom: calc(var(--tabs-height) + var(--space-lg)); left: var(--space-lg);
   background-color: var(--secondary-color); color: var(--text-color-on-secondary);
 }
 #chat-fab:hover, #feedback-fab:hover { transform: scale(1.05) rotate(5deg); }
@@ -239,9 +239,9 @@
 
 
 .chat-widget {
-  position: fixed; bottom: calc(var(--space-lg) + 75px); right: var(--space-lg);
+  position: fixed; bottom: calc(var(--tabs-height) + var(--space-lg) + 75px); right: var(--space-lg);
   width: 360px; max-width: calc(100vw - 2 * var(--space-md));
-  height: 480px; max-height: calc(100vh - var(--space-lg) * 2 - 75px);
+  height: 480px; max-height: calc(100vh - var(--tabs-height) - var(--space-lg) * 2 - 75px);
   background-color: var(--chat-widget-bg); border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg); z-index: 1150; 
   display: flex; flex-direction: column; border: 1px solid var(--border-color);
