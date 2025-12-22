@@ -465,6 +465,57 @@ calculateBodyFat(measurements)           // Body fat %
 
 ## UI Components
 
+### `js/headerEffects.js` 🆕
+**Отговорност:** Header и Tab animation effects
+
+**Експорти:**
+```javascript
+initHeaderAndTabEffects()              // Инициализира всички effects
+```
+
+**Функции:**
+```javascript
+initHeaderScrollEffects()              // Scroll animations за header
+initTabInteractions()                  // Tab click animations
+initMenuButtonEffects()                // Menu button interactions
+simulateHapticFeedback()              // Haptic feedback (10ms vibration)
+```
+
+**Features:**
+- ✨ Header scroll shadow effect
+- 🎯 Logo scale/rotation animation
+- 💫 Menu burger ripple effect
+- 🎨 Tab indicator slide animation
+- 📱 Haptic feedback simulation
+- ⚡ GPU-accelerated animations (60fps)
+- 🎪 Icon bounce effects
+
+**Performance:**
+- RequestAnimationFrame за scroll
+- Passive event listeners
+- Throttled updates
+- Will-change CSS properties
+
+**Използване:**
+```javascript
+import { initHeaderAndTabEffects } from './headerEffects.js';
+
+// Auto-initializes при import
+// Или ръчно:
+initHeaderAndTabEffects();
+```
+
+**CSS Requirements:**
+- `header.scrolled` class за shadow effect
+- `.tab-btn` анимации в `layout_styles.css`
+- Keyframes: `tabPulse`, `indicatorSlide`, `iconBounce`
+
+**Browser Support:**
+- Vibration API: Android Chrome/Firefox
+- Graceful degradation за iOS
+
+---
+
 ### `js/uiHandlers.js`
 **Отговорност:** Event handlers за dashboard
 

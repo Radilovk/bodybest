@@ -43,6 +43,7 @@ import { initializeAchievements } from './achievements.js';
 import { openPlanModificationChat } from './planModChat.js';
 import { initAnalyticsPeriodSelector, getCurrentPeriod, formatPeriodText } from './analyticsPeriodSelector.js';
 import { clearMealReplacementCache, getEffectiveMealData } from './mealReplacementCache.js';
+import { initHeaderAndTabEffects } from './headerEffects.js';
 export { openPlanModificationChat };
 
 // Активираме дебъг режима само при локална разработка

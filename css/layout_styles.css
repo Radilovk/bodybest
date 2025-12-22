@@ -27,19 +27,47 @@ header {
   -webkit-backdrop-filter: blur(var(--glass-blur));
   color: var(--header-title-color);
   padding: var(--space-md) var(--space-lg); display: flex;
-  align-items: center; justify-content: space-between; box-shadow: var(--shadow-md);
+  align-items: center; justify-content: space-between; 
+  box-shadow: var(--shadow-md);
   position: sticky; top: 0; z-index: 1000;
-  height: var(--header-height); 
+  height: var(--header-height);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+  will-change: transform, box-shadow;
+}
+
+/* Enhanced shadow when scrolled */
+header.scrolled {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Subtle scale down when scrolled (optional, can be enabled via JS) */
+header.compact {
+  padding: calc(var(--space-md) * 0.75) var(--space-lg);
 }
 header h1 { color: var(--header-title-color); margin: 0; font-size: clamp(1.3rem, 3.5vw, 1.7rem); }
 .header-logo {
   display: flex;
   align-items: center;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
 .header-logo .logo {
   width: 50px;
   height: 50px;
   object-fit: contain;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+/* Logo interaction effects */
+.header-logo:active .logo {
+  transform: scale(0.95);
+}
+
+@media (hover: hover) {
+  .header-logo:hover .logo {
+    transform: scale(1.05) rotate(-3deg);
+    filter: brightness(1.1);
+  }
 }
 .header-user-name {
   flex: 1;
@@ -51,12 +79,83 @@ header h1 { color: var(--header-title-color); margin: 0; font-size: clamp(1.3rem
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  position: relative;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.01em;
+  transition: transform 0.2s ease;
+}
+
+/* Subtle animation on long names */
+@media (max-width: 360px) {
+  .header-user-name {
+    font-size: clamp(0.95rem, 2.5vw, 1.2rem);
+  }
 }
 #menu-toggle {
-  color: var(--header-title-color); padding: var(--space-sm); margin-left: var(--space-md);
-  background: transparent; border: none; cursor: pointer;
+  color: var(--header-title-color); 
+  padding: var(--space-sm); 
+  margin-left: var(--space-md);
+  background: transparent; 
+  border: none; 
+  cursor: pointer;
+  position: relative;
+  border-radius: var(--radius-md);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-#menu-toggle svg { width: 28px; height: 28px; display: block; }
+
+#menu-toggle svg { 
+  width: 28px; 
+  height: 28px; 
+  display: block;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ripple effect container */
+#menu-toggle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease, opacity 0.4s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Touch/Click feedback */
+#menu-toggle:active {
+  transform: scale(0.92);
+}
+
+#menu-toggle:active::before {
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+}
+
+#menu-toggle:active svg {
+  transform: rotate(90deg);
+}
+
+@media (hover: hover) {
+  #menu-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  
+  #menu-toggle:hover svg {
+    transform: scale(1.1);
+  }
+}
 
 .menu-overlay {
   position: fixed;
@@ -216,7 +315,7 @@ nav.tabs.styled-tabs .tab-btn {
   flex-grow: 1; 
   flex-basis: 0; 
   gap: 0.25rem;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: transparent; 
   border: none;
   color: rgba(255, 255, 255, 0.75);
@@ -227,9 +326,11 @@ nav.tabs.styled-tabs .tab-btn {
   position: relative;
   cursor: pointer;
   z-index: 1;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
 }
 
-/* Subtle glow effect on hover */
+/* Enhanced ripple effect on tap */
 nav.tabs.styled-tabs .tab-btn::before {
   content: '';
   position: absolute;
@@ -240,52 +341,66 @@ nav.tabs.styled-tabs .tab-btn::before {
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(255, 255, 255, 0.2) 0%,
-    rgba(255, 255, 255, 0.1) 40%,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.15) 40%,
     transparent 70%
   );
   transform: translate(-50%, -50%);
   opacity: 0;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
 
-nav.tabs.styled-tabs .tab-btn:hover::before {
-  width: 100%;
+/* Immediate feedback on tap */
+nav.tabs.styled-tabs .tab-btn:active::before {
+  width: 120%;
   height: 150%;
   opacity: 1;
+  transition: all 0.15s ease-out;
 }
 
-/* Активен индикатор - модерна линия с glow */
+@media (hover: hover) {
+  nav.tabs.styled-tabs .tab-btn:hover::before {
+    width: 100%;
+    height: 150%;
+    opacity: 0.6;
+  }
+}
+
+/* Активен индикатор - модерна линия с glow и smooth animation */
 nav.tabs.styled-tabs .tab-btn::after {
   content: '';
   position: absolute;
   top: 0;
   left: 50%;
   width: 0;
-  height: 2.5px;
+  height: 3px;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.9) 20%,
+    rgba(255, 255, 255, 0.85) 15%,
     rgba(255, 255, 255, 1) 50%,
-    rgba(255, 255, 255, 0.9) 80%,
+    rgba(255, 255, 255, 0.85) 85%,
     transparent 100%
   );
   transform: translateX(-50%);
-  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5),
-              0 -2px 4px rgba(255, 255, 255, 0.3);
-  border-radius: 0 0 2px 2px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+              height 0.3s ease,
+              box-shadow 0.3s ease;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4),
+              0 -2px 6px rgba(255, 255, 255, 0.25);
+  border-radius: 0 0 3px 3px;
+  will-change: width;
 }
 
 nav.tabs.styled-tabs .tab-btn .tab-icon {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
   opacity: 0.85;
+  will-change: transform;
 }
 
 nav.tabs.styled-tabs .tab-btn .tab-label {
@@ -293,34 +408,41 @@ nav.tabs.styled-tabs .tab-btn .tab-label {
   font-weight: 500;
   letter-spacing: 0.3px;
   white-space: nowrap;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0.85;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  will-change: opacity, transform;
 }
 
-/* Hover състояние */
+/* Hover състояние с smooth animations */
 nav.tabs.styled-tabs .tab-btn:hover {
   color: rgba(255, 255, 255, 0.95);
   background-color: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
 }
 
 nav.tabs.styled-tabs .tab-btn:hover .tab-icon {
-  transform: translateY(-1px) scale(1.08);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transform: translateY(-2px) scale(1.1);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
   opacity: 1;
 }
 
 nav.tabs.styled-tabs .tab-btn:hover .tab-label {
   opacity: 1;
   letter-spacing: 0.5px;
+  transform: translateY(-1px);
 }
 
-/* Active/pressed състояние */
+/* Active/pressed състояние с bounce effect */
 nav.tabs.styled-tabs .tab-btn:active {
-  transform: scale(0.97);
+  transform: translateY(1px) scale(0.96);
 }
 
-/* Selected (активен) таб */
+nav.tabs.styled-tabs .tab-btn:active .tab-icon {
+  transform: scale(0.92);
+}
+
+/* Selected (активен) таб with enhanced animations */
 nav.tabs.styled-tabs .tab-btn[aria-selected="true"] {
   color: rgba(255, 255, 255, 1);
   font-weight: 600;
@@ -329,22 +451,60 @@ nav.tabs.styled-tabs .tab-btn[aria-selected="true"] {
     rgba(255, 255, 255, 0.15) 0%,
     rgba(255, 255, 255, 0.05) 100%
   );
+  animation: tabPulse 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes tabPulse {
+  0% {
+    transform: scale(0.95);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 nav.tabs.styled-tabs .tab-btn[aria-selected="true"]::after {
-  width: 70%;
+  width: 75%;
+  animation: indicatorSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes indicatorSlide {
+  0% {
+    width: 0;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    width: 75%;
+  }
 }
 
 nav.tabs.styled-tabs .tab-btn[aria-selected="true"] .tab-icon {
-  transform: scale(1.1);
-  filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.4));
+  transform: scale(1.15);
+  filter: drop-shadow(0 3px 8px rgba(255, 255, 255, 0.5));
   opacity: 1;
+  animation: iconBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes iconBounce {
+  0%, 100% {
+    transform: scale(1.15) translateY(0);
+  }
+  50% {
+    transform: scale(1.2) translateY(-2px);
+  }
 }
 
 nav.tabs.styled-tabs .tab-btn[aria-selected="true"] .tab-label {
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
   opacity: 1;
   font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* Адаптации за тъмна тема */
