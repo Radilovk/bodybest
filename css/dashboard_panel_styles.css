@@ -479,7 +479,7 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-list li .meal-content-wrapper {
   flex-grow: 1;
-  padding-right: 0; /* Премахнато - meal-actions ще управлява собственото си позициониране */
+  padding-right: 80px; /* Резервира място за meal-actions (2rem alternatives + 2rem check + gaps = ~80px) */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -491,31 +491,30 @@ body.dark-theme .detailed-metric-item .value-current {
   color: var(--primary-color);
   margin-top: 0;
   margin-bottom: var(--space-xs);
-  display: flex;
-  align-items: center;
-  justify-content: space-between; /* Разпределя текста и действията */
-  gap: var(--space-xs);
+  display: block; /* Променено от flex за да позволи absolute positioning на meal-actions */
   line-height: var(--lh-tight);
-  position: static; /* Променено от relative - meal-actions ще се позиционира спрямо li */
-  padding-right: 0; /* Премахнато padding - ще използваме margin вместо това */
+  position: relative; /* За позициониране на meal-actions спрямо meal-name */
+  padding-right: 0;
 }
 
 .meal-list li .meal-name .meal-name-text {
-  flex: 1;
-  min-width: 0; /* Allow text truncation if needed */
-  margin-right: 0.5rem; /* Минимален margin само за spacing */
+  display: block;
+  padding-right: 0.5rem; /* Малко padding за spacing */
   white-space: normal; /* Позволява пренасяне на текста на нов ред */
   overflow-wrap: break-word; /* Пренася дълги думи */
   word-break: break-word; /* Допълнително пренасяне за дълги думи */
 }
 
-/* Container for buttons and icons - flex items on the right */
+/* Container for buttons and icons - абсолютно позициониране на дясно */
 .meal-list li .meal-name .meal-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
   display: flex;
+  flex-direction: row; /* Хоризонтално подреждане на иконите */
   align-items: center;
   gap: 0.5rem; /* 8px между бутони и икони */
   flex-shrink: 0;
-  margin-left: auto; /* Избутва actions на дясно */
 }
 
 /* Alternatives button - smaller and compact */
