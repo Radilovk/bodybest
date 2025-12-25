@@ -26,8 +26,10 @@ header {
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   color: var(--header-title-color);
-  padding: var(--space-md) var(--space-lg); display: flex;
-  align-items: center; justify-content: space-between; 
+  padding: 0 var(--space-lg); 
+  display: flex;
+  align-items: center; 
+  justify-content: space-between; 
   box-shadow: var(--shadow-md);
   position: sticky; top: 0; z-index: 1000;
   height: var(--header-height);
@@ -42,7 +44,7 @@ header.scrolled {
 
 /* Subtle scale down when scrolled (optional, can be enabled via JS) */
 header.compact {
-  padding: calc(var(--space-md) * 0.75) var(--space-lg);
+  padding: 0 var(--space-lg);
 }
 header h1 { color: var(--header-title-color); margin: 0; font-size: clamp(1.3rem, 3.5vw, 1.7rem); }
 .header-logo {
@@ -283,7 +285,7 @@ nav.tabs.styled-tabs {
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border-top: 1px solid rgba(255, 255, 255, 0.15);
-  overflow: hidden;
+  overflow-x: auto; /* Променено от overflow: hidden за да може да се scroll-ват tabs */
 }
 
 /* Добавяне на subtle pattern/texture overlay */

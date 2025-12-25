@@ -498,28 +498,24 @@ body.dark-theme .detailed-metric-item .value-current {
   line-height: var(--lh-tight);
   position: static; /* Променено от relative - meal-actions ще се позиционира спрямо li */
   padding-right: 0; /* Премахнато padding - ще използваме margin вместо това */
-  min-height: 2rem; /* Осигурява минимална височина за стабилно позициониране на meal-actions */
 }
 
 .meal-list li .meal-name .meal-name-text {
   flex: 1;
   min-width: 0; /* Allow text truncation if needed */
-  margin-right: calc(2rem + 2rem + 0.5rem + 0.5rem); /* Space for: btn(2rem) + gap(0.5rem) + check(2rem) + right-margin(0.5rem) */
-  white-space: nowrap; /* Предотвратява пренасяне на текста на нов ред */
-  overflow: hidden; /* Скрива излишния текст */
-  text-overflow: ellipsis; /* Показва ... за отрязания текст */
+  margin-right: 0.5rem; /* Минимален margin само за spacing */
+  white-space: normal; /* Позволява пренасяне на текста на нов ред */
+  overflow-wrap: break-word; /* Пренася дълги думи */
+  word-break: break-word; /* Допълнително пренасяне за дълги думи */
 }
 
-/* Container for buttons and icons - fixed position on the right */
+/* Container for buttons and icons - flex items on the right */
 .meal-list li .meal-name .meal-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* 8px между бутони и икони - еднаква с отстоянието от десния край */
+  gap: 0.5rem; /* 8px между бутони и икони */
   flex-shrink: 0;
-  position: absolute;
-  right: 0.5rem; /* Фиксирано на 0.5rem от десния край на контейнера (li) */
-  top: calc(var(--space-sm) + 1rem); /* Центрирано спрямо meal-name: padding на li + половината от min-height на meal-name (2rem / 2) */
-  transform: translateY(-50%); /* Центриране по вертикала */
+  margin-left: auto; /* Избутва actions на дясно */
 }
 
 /* Alternatives button - smaller and compact */
