@@ -285,7 +285,7 @@ nav.tabs.styled-tabs {
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border-top: 1px solid rgba(255, 255, 255, 0.15);
-  overflow: hidden;
+  overflow-x: auto; /* Променено от overflow: hidden за да може да се scroll-ват tabs */
 }
 
 /* Добавяне на subtle pattern/texture overlay */
