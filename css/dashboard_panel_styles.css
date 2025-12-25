@@ -479,7 +479,7 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-list li .meal-content-wrapper {
   flex-grow: 1;
-  padding-right: 80px; /* Резервира място за meal-actions (2rem alternatives + 2rem check + gaps = ~80px) */
+  padding-right: var(--meal-actions-width); /* Резервира място за meal-actions */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -511,19 +511,18 @@ body.dark-theme .detailed-metric-item .value-current {
   top: 0;
   right: 0;
   display: flex;
-  flex-direction: row; /* Хоризонтално подреждане на иконите */
   align-items: center;
-  gap: 0.5rem; /* 8px между бутони и икони */
+  gap: var(--meal-actions-gap); /* 8px между бутони и икони */
   flex-shrink: 0;
 }
 
 /* Alternatives button - smaller and compact */
 .meal-list li .meal-name .alternatives-btn-inline {
   padding: 0.375rem; /* 6px padding за по-малък бутон */
-  min-width: 2rem; /* 32px фиксирана ширина */
-  min-height: 2rem; /* 32px фиксирана височина */
-  width: 2rem;
-  height: 2rem;
+  min-width: var(--meal-action-button-size); /* 32px фиксирана ширина */
+  min-height: var(--meal-action-button-size); /* 32px фиксирана височина */
+  width: var(--meal-action-button-size);
+  height: var(--meal-action-button-size);
   flex-shrink: 0;
   border-radius: 4px;
   background: transparent;
@@ -587,8 +586,8 @@ body.vivid-theme .meal-list li .meal-name {
     align-items: center;
     justify-content: center;
     font-weight: normal;
-    width: 2rem; /* 32px фиксирана ширина като бутона */
-    height: 2rem; /* 32px фиксирана височина */
+    width: var(--meal-action-button-size); /* 32px фиксирана ширина като бутона */
+    height: var(--meal-action-button-size); /* 32px фиксирана височина */
     flex-shrink: 0;
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
@@ -603,8 +602,8 @@ body.vivid-theme .meal-list li .meal-name {
 /* Container за check иконите - резервира space */
 .meal-list li .meal-actions .check-icon-container {
     position: relative;
-    width: 2rem;
-    height: 2rem;
+    width: var(--meal-action-button-size);
+    height: var(--meal-action-button-size);
     flex-shrink: 0;
 }
 
