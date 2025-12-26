@@ -50,7 +50,6 @@ export function initializeSelectors() {
         macroAnalyticsCardContainer: 'macroAnalyticsCardContainer',
         macroMetricsGrid: 'macroMetricsGrid',
         macroMetricsPreview: 'macroMetricsPreview',
-        tooltipTracker: 'tooltip-tracker',
         toast: 'toast', chatFab: 'chat-fab', chatWidget: 'chat-widget', chatClose: 'chat-close',
         chatClear: 'chat-clear',
         chatMessages: 'chat-messages', chatInput: 'chat-input', chatSend: 'chat-send',
@@ -70,7 +69,7 @@ export function initializeSelectors() {
         if (!selectors[key] || (key === 'tabButtons' && selectors[key].length === 0)) {
             const optionalOrDynamic = [
                 'menuClose', 'extraMealFormContainer', 'userAllergiesNote', 'userAllergiesList',
-                'feedbackForm', 'tooltipTracker', 'planModInProgressIcon',
+                'feedbackForm', 'planModInProgressIcon',
                 'planModificationBtn',
                 'planModChatModal', 'planModChatMessages', 'planModChatInput',
                 'planModChatSend', 'planModChatClose', 'planModChatClear',

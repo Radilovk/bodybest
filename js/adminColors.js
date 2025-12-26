@@ -57,24 +57,6 @@ function readDefaultTheme(variant) {
   return theme;
 }
 
-let tooltipEl;
-function showColorTooltip(target, text) {
-  if (!tooltipEl) {
-    tooltipEl = document.createElement('div');
-    tooltipEl.className = 'tooltip-tracker';
-    document.body.appendChild(tooltipEl);
-  }
-  tooltipEl.textContent = text;
-  const r = target.getBoundingClientRect();
-  tooltipEl.style.left = `${r.left + window.scrollX}px`;
-  tooltipEl.style.top = `${r.top + window.scrollY - tooltipEl.offsetHeight - 5}px`;
-  tooltipEl.classList.add('visible');
-}
-
-function hideColorTooltip() {
-  if (tooltipEl) tooltipEl.classList.remove('visible');
-}
-
 function createInput(item, container) {
   const label = document.createElement('label');
   label.textContent = item.label || item.var;
@@ -87,14 +69,7 @@ function createInput(item, container) {
   infoBtn.dataset.type = 'colorVar';
   infoBtn.setAttribute('aria-label', `Информация за ${item.label || item.var}`);
   if (item.description) {
-    const showTip = () => showColorTooltip(infoBtn, item.description);
-    const hideTip = () => hideColorTooltip();
-    infoBtn.addEventListener('pointerenter', showTip);
-    infoBtn.addEventListener('focus', showTip);
-    infoBtn.addEventListener('pointerleave', hideTip);
-    infoBtn.addEventListener('blur', hideTip);
-    infoBtn.addEventListener('touchstart', showTip);
-    infoBtn.addEventListener('touchend', hideTip);
+    infoBtn.title = item.description; // Use native tooltip instead
   }
   label.appendChild(infoBtn);
   const input = document.createElement('input');
