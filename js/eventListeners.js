@@ -18,7 +18,7 @@ import {
     handleSaveLog, handleFeedbackFormSubmit, // from app.js
     handleChatSend, handleChatInputKeypress, // from app.js / chat.js
     todaysMealCompletionStatus,
-    activeTooltip, currentUserId,
+    currentUserId,
     setChatModelOverride, setChatPromptOverride,
     autoSaveCompletedMeals,
     updateMacrosAndAnalytics,

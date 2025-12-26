@@ -836,6 +836,10 @@ function populateDashboardLog(dailyLogs, currentStatus, initialData) {
     metrics.forEach(metric => {
         const metricDiv = document.createElement('div');
         metricDiv.className = 'metric-rating';
+        // Add special class for stress metric to reverse colors
+        if (metric.key === 'stress') {
+            metricDiv.classList.add('stress-metric');
+        }
         const currentValue = safeGet(todaysLog, metric.key, metric.defaultVal);
         const labelTooltipText = trackerInfoTexts[metric.key]?.general.replace(/\n/g, ' ') || metric.label;
 

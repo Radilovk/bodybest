@@ -787,6 +787,13 @@ body.vivid-theme .tracker .metric-rating .rating-value {
 .rating-square.filled.level-4 { background-color: var(--progress-level-4); border-color: var(--progress-level-4); }
 .rating-square.filled.level-5 { background-color: var(--progress-level-5); border-color: var(--progress-level-5); }
 
+/* Stress metric uses reversed colors (low stress = green, high stress = red) */
+.metric-rating.stress-metric .rating-square.filled.level-1 { background-color: var(--progress-level-5); border-color: var(--progress-level-5); }
+.metric-rating.stress-metric .rating-square.filled.level-2 { background-color: var(--progress-level-4); border-color: var(--progress-level-4); }
+.metric-rating.stress-metric .rating-square.filled.level-3 { background-color: var(--progress-level-3); border-color: var(--progress-level-3); }
+.metric-rating.stress-metric .rating-square.filled.level-4 { background-color: var(--progress-level-2); border-color: var(--progress-level-2); }
+.metric-rating.stress-metric .rating-square.filled.level-5 { background-color: var(--progress-level-1); border-color: var(--progress-level-1); }
+
 
 
     border-style: solid;
