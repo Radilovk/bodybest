@@ -81,6 +81,12 @@
   /* Touch targets - iOS & Android standards */
   --tap-target-min: 44px;   /* iOS minimum */
   --tap-target-comfortable: 48px; /* Android recommendation */
+  
+  /* Meal card action buttons - за консистентно позициониране */
+  --meal-action-button-size: 2rem; /* 32px за alternatives и check бутони */
+  --meal-actions-gap: 0.5rem; /* 8px между бутоните */
+  --meal-actions-padding: 1rem; /* 16px допълнителен padding отдясно */
+  --meal-actions-width: calc(var(--meal-action-button-size) * 2 + var(--meal-actions-gap) * 2 + var(--meal-actions-padding)); /* 2 бутона + 2 gaps (между бутони и от края) + padding = ~96px */
 
   --font-primary: 'Inter', 'Nunito Sans', system-ui, sans-serif;
   --font-secondary: var(--font-primary);
