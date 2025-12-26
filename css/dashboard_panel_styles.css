@@ -787,37 +787,15 @@ body.vivid-theme .tracker .metric-rating .rating-value {
 .rating-square.filled.level-4 { background-color: var(--progress-level-4); border-color: var(--progress-level-4); }
 .rating-square.filled.level-5 { background-color: var(--progress-level-5); border-color: var(--progress-level-5); }
 
+/* Stress metric uses reversed colors (low stress = green, high stress = red) */
+.metric-rating.stress-metric .rating-square.filled.level-1 { background-color: var(--progress-level-5); border-color: var(--progress-level-5); }
+.metric-rating.stress-metric .rating-square.filled.level-2 { background-color: var(--progress-level-4); border-color: var(--progress-level-4); }
+.metric-rating.stress-metric .rating-square.filled.level-3 { background-color: var(--progress-level-3); border-color: var(--progress-level-3); }
+.metric-rating.stress-metric .rating-square.filled.level-4 { background-color: var(--progress-level-2); border-color: var(--progress-level-2); }
+.metric-rating.stress-metric .rating-square.filled.level-5 { background-color: var(--progress-level-1); border-color: var(--progress-level-1); }
 
-.tooltip-tracker {
-    position: absolute;
-    bottom: 100%; 
-    left: 50%;
-    transform: translateX(-50%) translateY(-var(--space-sm)); 
-    background-color: var(--toast-bg); 
-    color: var(--toast-text);
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-sm);
-    font-size: 0.85rem;
-    white-space: pre-wrap; 
-    z-index: 10;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.2s, visibility 0.2s;
-    box-shadow: var(--shadow-md);
-    min-width: 180px;
-    text-align: left;
-}
-.tooltip-tracker.visible {
-    opacity: 1;
-    visibility: visible;
-}
-.tooltip-tracker::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 6px;
+
+
     border-style: solid;
     border-color: var(--toast-bg) transparent transparent transparent;
 }

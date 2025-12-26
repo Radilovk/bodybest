@@ -4,8 +4,7 @@ import {
     toggleMenu, closeMenu, handleOutsideMenuClick, handleMenuKeydown,
     toggleTheme, activateTab, handleTabKeydown, closeModal, openModal,
     openInfoModalWithDetails, toggleDailyNote, openMainIndexInfo,
-    openInstructionsModal,
-    handleTrackerTooltipShow, handleTrackerTooltipHide, showToast
+    openInstructionsModal, showToast
 } from './uiHandlers.js';
 import { handleLogout } from './auth.js';
 import { openExtraMealModal } from './extraMealForm.js';
@@ -19,7 +18,7 @@ import {
     handleSaveLog, handleFeedbackFormSubmit, // from app.js
     handleChatSend, handleChatInputKeypress, // from app.js / chat.js
     todaysMealCompletionStatus,
-    activeTooltip, currentUserId,
+    currentUserId,
     setChatModelOverride, setChatPromptOverride,
     autoSaveCompletedMeals,
     updateMacrosAndAnalytics,
@@ -208,7 +207,6 @@ export function setupStaticEventListeners() {
                 }
                 if (modalId === 'infoModal') acknowledgeAiUpdate();
             }
-            if (activeTooltip) handleTrackerTooltipHide(); // Call hide from uiHandlers
         }
     });
     if (selectors.chatFab) selectors.chatFab.addEventListener('click', () => toggleChatWidget());
@@ -342,17 +340,6 @@ export function initializeCollapsibleCards() {
 export function setupDynamicEventListeners() {
     document.body.removeEventListener('click', handleDelegatedClicks);
     document.body.addEventListener('click', handleDelegatedClicks);
-
-    if (selectors.dailyTracker) {
-        selectors.dailyTracker.removeEventListener('mouseover', handleTrackerTooltipShow);
-        selectors.dailyTracker.addEventListener('mouseover', handleTrackerTooltipShow);
-        selectors.dailyTracker.removeEventListener('mouseout', handleTrackerTooltipHide);
-        selectors.dailyTracker.addEventListener('mouseout', handleTrackerTooltipHide);
-        selectors.dailyTracker.removeEventListener('focusin', handleTrackerTooltipShow);
-        selectors.dailyTracker.addEventListener('focusin', handleTrackerTooltipShow);
-        selectors.dailyTracker.removeEventListener('focusout', handleTrackerTooltipHide);
-        selectors.dailyTracker.addEventListener('focusout', handleTrackerTooltipHide);
-    }
 }
 
 function handleDelegatedClicks(event) {

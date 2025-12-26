@@ -201,61 +201,6 @@ export function toggleDailyNote() {
     if (!isHidden) selectors.dailyNote.focus();
 }
 
-export function showTrackerTooltip(targetElement, text) {
-    if (!selectors.tooltipTracker) {
-        const tooltipEl = document.createElement('div');
-        tooltipEl.id = 'tooltip-tracker';
-        tooltipEl.className = 'tooltip-tracker';
-        document.body.appendChild(tooltipEl);
-        selectors.tooltipTracker = tooltipEl;
-    }
-    selectors.tooltipTracker.textContent = text;
-    const targetRect = targetElement.getBoundingClientRect();
-    selectors.tooltipTracker.style.left = `${targetRect.left + window.scrollX}px`;
-    selectors.tooltipTracker.style.top = `${targetRect.top + window.scrollY - selectors.tooltipTracker.offsetHeight - 5}px`;
-    selectors.tooltipTracker.classList.add('visible');
-    setActiveTooltip(selectors.tooltipTracker); // Update global state via app.js function
-}
-
-export function hideTrackerTooltip() {
-    const currentActiveTooltip = activeTooltip; // Access global state from app.js
-    if (currentActiveTooltip) {
-        currentActiveTooltip.classList.remove('visible');
-        setActiveTooltip(null); // Update global state via app.js function
-    }
-}
-
-export function handleTrackerTooltipShow(event) {
-    const infoBtn = event.target.closest('.metric-info-btn');
-    const targetLabel = event.target.closest('label[data-tooltip-key]');
-    let elementForTooltip = null;
-    let tooltipKey = null;
-
-    if (infoBtn && infoBtn.parentElement.matches('label[data-tooltip-key]')) {
-        elementForTooltip = infoBtn.parentElement;
-        tooltipKey = elementForTooltip.dataset.tooltipKey;
-    } else if (targetLabel && !infoBtn) {
-        elementForTooltip = targetLabel;
-        tooltipKey = targetLabel.dataset.tooltipKey;
-    }
-
-    if (elementForTooltip && tooltipKey) {
-        const metricInfo = trackerInfoTexts[tooltipKey];
-        const tooltipText = (typeof metricInfo === 'object' ? metricInfo.general : metricInfo) || elementForTooltip.textContent;
-        if (tooltipText) {
-            showTrackerTooltip(elementForTooltip, tooltipText.replace(/\n/g, ' '));
-        }
-    }
-}
-
-export function handleTrackerTooltipHide(event) {
-    const infoBtn = event.target.closest('.metric-info-btn');
-    const targetLabel = event.target.closest('label[data-tooltip-key]');
-    if (infoBtn || targetLabel) {
-        hideTrackerTooltip();
-    }
-}
-
 export function showToast(message, isError = false, duration = 3000) {
     if (!selectors.toast) return;
     selectors.toast.textContent = message;
