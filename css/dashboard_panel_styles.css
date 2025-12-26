@@ -509,7 +509,7 @@ body.dark-theme .detailed-metric-item .value-current {
 .meal-list li .meal-name .meal-actions {
   position: absolute;
   top: 0;
-  right: 0;
+  right: var(--meal-actions-gap); /* Същото разстояние от края като между бутоните */
   display: flex;
   align-items: center;
   gap: var(--meal-actions-gap); /* 8px между бутони и икони */
