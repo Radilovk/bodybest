@@ -479,7 +479,7 @@ body.dark-theme .detailed-metric-item .value-current {
 
 .meal-list li .meal-content-wrapper {
   flex-grow: 1;
-  padding-right: var(--meal-actions-width); /* Резервира място за meal-actions */
+  padding-right: 0; /* Премахнато - meal-actions ще управлява собственото си позициониране */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -491,38 +491,40 @@ body.dark-theme .detailed-metric-item .value-current {
   color: var(--primary-color);
   margin-top: 0;
   margin-bottom: var(--space-xs);
-  display: block; /* Променено от flex за да позволи absolute positioning на meal-actions */
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Разпределя текста и действията */
+  gap: var(--space-xs);
   line-height: var(--lh-tight);
-  position: relative; /* За позициониране на meal-actions спрямо meal-name */
-  padding-right: 0;
+  position: static; /* Променено от relative - meal-actions ще се позиционира спрямо li */
+  padding-right: 0; /* Премахнато padding - ще използваме margin вместо това */
 }
 
 .meal-list li .meal-name .meal-name-text {
-  display: block;
-  padding-right: 0.5rem; /* Малко padding за spacing */
+  flex: 1;
+  min-width: 0; /* Allow text truncation if needed */
+  margin-right: 0.5rem; /* Минимален margin само за spacing */
   white-space: normal; /* Позволява пренасяне на текста на нов ред */
   overflow-wrap: break-word; /* Пренася дълги думи */
   word-break: break-word; /* Допълнително пренасяне за дълги думи */
 }
 
-/* Container for buttons and icons - абсолютно позициониране на дясно */
+/* Container for buttons and icons - flex items on the right */
 .meal-list li .meal-name .meal-actions {
-  position: absolute;
-  top: 0;
-  right: var(--meal-actions-gap); /* Същото разстояние от края като между бутоните */
   display: flex;
   align-items: center;
-  gap: var(--meal-actions-gap); /* 8px между бутони и икони */
+  gap: 0.5rem; /* 8px между бутони и икони */
   flex-shrink: 0;
+  margin-left: auto; /* Избутва actions на дясно */
 }
 
 /* Alternatives button - smaller and compact */
 .meal-list li .meal-name .alternatives-btn-inline {
   padding: 0.375rem; /* 6px padding за по-малък бутон */
-  min-width: var(--meal-action-button-size); /* 32px фиксирана ширина */
-  min-height: var(--meal-action-button-size); /* 32px фиксирана височина */
-  width: var(--meal-action-button-size);
-  height: var(--meal-action-button-size);
+  min-width: 2rem; /* 32px фиксирана ширина */
+  min-height: 2rem; /* 32px фиксирана височина */
+  width: 2rem;
+  height: 2rem;
   flex-shrink: 0;
   border-radius: 4px;
   background: transparent;
@@ -586,8 +588,8 @@ body.vivid-theme .meal-list li .meal-name {
     align-items: center;
     justify-content: center;
     font-weight: normal;
-    width: var(--meal-action-button-size); /* 32px фиксирана ширина като бутона */
-    height: var(--meal-action-button-size); /* 32px фиксирана височина */
+    width: 2rem; /* 32px фиксирана ширина като бутона */
+    height: 2rem; /* 32px фиксирана височина */
     flex-shrink: 0;
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
@@ -602,8 +604,8 @@ body.vivid-theme .meal-list li .meal-name {
 /* Container за check иконите - резервира space */
 .meal-list li .meal-actions .check-icon-container {
     position: relative;
-    width: var(--meal-action-button-size);
-    height: var(--meal-action-button-size);
+    width: 2rem;
+    height: 2rem;
     flex-shrink: 0;
 }
 
