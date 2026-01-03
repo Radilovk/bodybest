@@ -3,7 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Прогресивно уеб приложение за проследяване на хранене, тренировки и здравни показатели с AI-асистирано планиране">
+    <meta name="theme-color" content="#007bff">
     <title>ONE BODY - Вашата Индивидуална Здравна Система</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- iOS PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ONE BODY">
+    <link rel="apple-touch-icon" href="/img/icon-192.png">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/img/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/img/icon-512.png">
     
     <!-- Икони (Bootstrap & FontAwesome) - Запазени от оригиналния файл -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,6 +31,9 @@
     
     <!-- НОВ, ОБЕДИНЕН CSS ФАЙЛ (ще го създадем в следващата стъпка) -->
     <link rel="stylesheet" href="style.css">
+    
+    <!-- PWA Styles -->
+    <link rel="stylesheet" href="/css/pwa.css">
 </head>
 <body id="body">
 
@@ -319,5 +337,8 @@
     
     <!-- НОВ, ОБЕДИНЕН JS ФАЙЛ (ще го създадем в следващата стъпка) -->
     <script src="script.js" type="module" defer></script>
+    
+    <!-- PWA Installation -->
+    <script src="/js/pwaInstall.js" type="module"></script>
 </body>
 </html>
