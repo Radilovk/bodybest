@@ -1,0 +1,236 @@
+/**
+ * PWA Installation Styles
+ * Styles for install button, notifications, and PWA UI elements
+ */
+
+/* Install Button */
+.pwa-install-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--primary-color, #007bff);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  z-index: 1000;
+  transition: all 0.3s ease;
+  animation: slideInUp 0.5s ease-out;
+}
+
+.pwa-install-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+}
+
+.pwa-install-btn:active {
+  transform: translateY(0);
+}
+
+.pwa-install-btn i {
+  font-size: 18px;
+}
+
+/* Update Notification */
+.pwa-update-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  animation: slideInDown 0.5s ease-out;
+}
+
+.pwa-update-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--background-color, #fff);
+  border: 2px solid var(--primary-color, #007bff);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.pwa-update-content i {
+  font-size: 20px;
+  color: var(--primary-color, #007bff);
+}
+
+.pwa-update-content span {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color, #333);
+}
+
+.pwa-update-btn {
+  padding: 6px 16px;
+  background: var(--primary-color, #007bff);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.pwa-update-btn:hover {
+  opacity: 0.9;
+}
+
+.pwa-update-dismiss {
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: var(--text-color-muted, #666);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.pwa-update-dismiss:hover {
+  color: var(--text-color, #333);
+}
+
+/* Success Message */
+.pwa-success-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  animation: slideInDown 0.5s ease-out;
+}
+
+.pwa-success-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  background: #28a745;
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.pwa-success-content i {
+  font-size: 20px;
+}
+
+.pwa-success-content span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Offline Mode Indicator */
+body.offline-mode::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ff9800, #f44336);
+  z-index: 10001;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Animations */
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translate(-50%, -100%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .pwa-install-btn {
+    bottom: 70px; /* Above bottom nav if exists */
+    right: 15px;
+    padding: 10px 18px;
+    font-size: 13px;
+  }
+  
+  .pwa-install-btn span {
+    display: none; /* Show only icon on very small screens */
+  }
+  
+  .pwa-install-btn i {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 400px) {
+  .pwa-update-notification,
+  .pwa-success-message {
+    left: 10px;
+    right: 10px;
+    transform: none;
+  }
+  
+  .pwa-update-content,
+  .pwa-success-content {
+    font-size: 12px;
+  }
+}
+
+/* Dark Theme Support */
+body.dark-theme .pwa-update-content {
+  background: var(--background-color, #1a1a2e);
+  border-color: var(--primary-color, #4dabff);
+}
+
+body.dark-theme .pwa-update-content span {
+  color: var(--text-color, #e0e0e0);
+}
+
+body.dark-theme .pwa-update-dismiss {
+  color: var(--text-color-muted, #888);
+}
+
+body.dark-theme .pwa-update-dismiss:hover {
+  color: var(--text-color, #e0e0e0);
+}
+
+/* Vivid Theme Support */
+body.vivid-theme .pwa-install-btn {
+  background: var(--primary-color, #00d4ff);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+}
+
+body.vivid-theme .pwa-install-btn:hover {
+  box-shadow: 0 6px 16px rgba(0, 212, 255, 0.5);
+}

@@ -3,11 +3,19 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007bff">
     <title>Чат Асистент</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/img/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/img/icon-192.png">
+    
     <link href="css/base_styles.css" rel="stylesheet">
     <link href="css/components_styles.css" rel="stylesheet">
     <link href="css/responsive_styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/pwa.css">
 </head>
 <body>
 <svg style="position:absolute; width:0; height:0;" aria-hidden="true">
@@ -50,5 +58,6 @@
     </div>
 </div>
 <script type="module" src="js/assistantChat.js"></script>
+<script src="/js/pwaInstall.js" type="module"></script>
 </body>
 </html>
