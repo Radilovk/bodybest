@@ -1,6 +1,18 @@
 # BodyBest
 
-A simple static web application for tracking nutrition and workouts.
+A Progressive Web Application (PWA) for tracking nutrition, workouts, and health metrics with AI-assisted planning.
+
+## 📱 Install as App
+
+**BodyBest е пълноценно PWA приложение** - може да бъде инсталирано на вашето устройство:
+
+- ✅ **1-Click Installation** - Автоматичен install prompt след 3 секунди
+- ✅ **Android Support** - Пълна поддръжка на всички Android браузъри (Chrome, Edge, Samsung Internet)
+- ✅ **iOS Support** - Може да се добави към Home Screen в Safari
+- ✅ **Offline работа** - Функционира без интернет връзка
+- ✅ **Auto-updates** - Винаги имате най-новата версия
+
+**Как да инсталирам:** Виж [PWA Installation Guide](./docs/PWA_INSTALLATION_GUIDE.md)
 
 ## 🚀 Quick Start
 
@@ -12,6 +24,7 @@ A simple static web application for tracking nutrition and workouts.
 **[DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md)** - Пълен индекс на цялата документация
 
 ### Core Documentation
+- **[PWA_INSTALLATION_GUIDE.md](./docs/PWA_INSTALLATION_GUIDE.md)** - PWA Installation Guide 📱
 - **[QUICK_START.md](./QUICK_START.md)** - Бърз старт за нови разработчици ⭐
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Цялостна архитектура и философия на проекта
 - **[MODULE_MAP.md](./MODULE_MAP.md)** - Детайлна карта на всички модули и техните отговорности

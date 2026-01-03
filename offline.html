@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007bff">
+    <title>Offline - ONE BODY</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .offline-container {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .offline-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+        
+        p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        .retry-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+        
+        .retry-btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+        }
+        
+        .retry-btn:active {
+            transform: translateY(0);
+        }
+        
+        .offline-features {
+            margin-top: 40px;
+            text-align: left;
+        }
+        
+        .offline-features h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        
+        .feature-list {
+            list-style: none;
+        }
+        
+        .feature-list li {
+            color: #555;
+            font-size: 14px;
+            padding: 8px 0;
+            padding-left: 28px;
+            position: relative;
+        }
+        
+        .feature-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        @media (max-width: 600px) {
+            .offline-container {
+                padding: 40px 24px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .offline-icon {
+                font-size: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📡</div>
+        <h1>Няма интернет връзка</h1>
+        <p>Изглежда сте offline. Проверете интернет връзката си и опитайте отново.</p>
+        
+        <button class="retry-btn" onclick="window.location.reload()">
+            🔄 Опитай отново
+        </button>
+        
+        <div class="offline-features">
+            <h2>Какво можете да правите офлайн:</h2>
+            <ul class="feature-list">
+                <li>Преглед на кеширани данни</li>
+                <li>Логване на хранене (ще се синхронизира по-късно)</li>
+                <li>Преглед на записания план</li>
+                <li>Четене на съхранени анализи</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // Listen for online event
+        window.addEventListener('online', () => {
+            console.log('[Offline Page] Connection restored');
+            
+            // Show notification
+            const notification = document.createElement('div');
+            notification.textContent = 'Връзката е възстановена! Презареждане...';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #28a745;
+                color: white;
+                padding: 16px 32px;
+                border-radius: 8px;
+                font-weight: 600;
+                box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+                z-index: 10000;
+            `;
+            document.body.appendChild(notification);
+            
+            // Reload after 1 second
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        });
+        
+        // Auto-retry every 5 seconds
+        let retryCount = 0;
+        const maxRetries = 6; // 30 seconds total
+        
+        const autoRetry = setInterval(() => {
+            if (navigator.onLine) {
+                console.log('[Offline Page] Online detected, reloading...');
+                clearInterval(autoRetry);
+                window.location.reload();
+            } else {
+                retryCount++;
+                console.log(`[Offline Page] Auto-retry attempt ${retryCount}/${maxRetries}`);
+                
+                if (retryCount >= maxRetries) {
+                    clearInterval(autoRetry);
+                    console.log('[Offline Page] Max retry attempts reached');
+                }
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
