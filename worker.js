@@ -9647,9 +9647,36 @@ async function handleIrisDiagEvent(userId, payload, env) {
     await processSingleUserPlan(userId, env);
 }
 
+function detectFoodPreferenceFromText(text) {
+    const t = typeof text === 'string' ? text.toLowerCase() : '';
+    if (t.includes('веган') || t.includes('vegan')) return 'Веган режим';
+    if (t.includes('вегетариан') || t.includes('vegetarian') || t.includes('без месо')) {
+        return 'Вегетариански режим';
+    }
+    if (t.includes('кето') || t.includes('кетоген') || t.includes('keto')) {
+        return 'Кетогенен режим';
+    }
+    if (t.includes('нисковъглехидрат') || t.includes('low carb')) {
+        return 'Нисковъглехидратен режим';
+    }
+    if (t.includes('без глутен') || t.includes('gluten free')) return 'Безглутенов режим';
+    if (t.includes('без млеч') || t.includes('dairy free')) return 'Безмлечен режим';
+    return null;
+}
+
 // ------------- START BLOCK: UserEventHandlers -------------
 const EVENT_HANDLERS = {
-    planMod: async (userId, env) => {
+    planMod: async (userId, env, payload) => {
+        const description = payload && payload.description ? String(payload.description) : '';
+        const newPref = detectFoodPreferenceFromText(description);
+        if (newPref) {
+            const iaStr = await env.USER_METADATA_KV.get(`${userId}_initial_answers`);
+            const ia = safeParseJson(iaStr, {});
+            if (Object.keys(ia).length > 0) {
+                ia.foodPreference = newPref;
+                await env.USER_METADATA_KV.put(`${userId}_initial_answers`, JSON.stringify(ia));
+            }
+        }
         await processSingleUserPlan(userId, env);
     },
     testResult: async (userId, env, payload) => {
