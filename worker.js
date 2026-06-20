@@ -5327,7 +5327,8 @@ async function handleGetPlanModificationPrompt(request, env) {
             return { success: false, message: 'Липсва промпт или модел.', statusHint: 500 };
         }
 
-        return { success: true, prompt: promptTpl, model };
+        // Return in format expected by client (promptOverride)
+        return { success: true, promptOverride: promptTpl, model };
     } catch (error) {
         console.error(`Error in handleGetPlanModificationPrompt: ${error.message}\n${error.stack}`);
         return { success: false, message: 'Грешка при зареждане на промпта.', statusHint: 500 };
